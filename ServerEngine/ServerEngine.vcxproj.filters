@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Network">
+      <UniqueIdentifier>{e9419ccf-fb13-42a8-a7b6-7b272dcd0492}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\IOCP">
+      <UniqueIdentifier>{d5f84b42-1f72-4c35-b7ca-e1394c2fc255}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pch">
+      <UniqueIdentifier>{3f898855-c09a-4fdf-aefe-c6d8ae65ebe9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Utils">
+      <UniqueIdentifier>{843707d3-7ab7-4fe3-a976-3ac8a6347f7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="global">
+      <UniqueIdentifier>{9ea35f45-3640-461c-9228-485ff9a56af1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Service">
+      <UniqueIdentifier>{5c92c9d0-080d-471f-b2ef-04db3cf3dfe2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Session">
+      <UniqueIdentifier>{4c7cf3dc-7801-4f60-b0ca-50c341f7888a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Listener">
+      <UniqueIdentifier>{29f78ddb-ee17-4215-8f01-1bd516b50172}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Thread">
+      <UniqueIdentifier>{a7e7aaf0-457f-4262-b0a8-ec2cb197123a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Buffer">
+      <UniqueIdentifier>{2dfc1547-5c36-49b5-bcb1-8c9e9ec19ef8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Utils\Buffer">
+      <UniqueIdentifier>{b3ec6d87-4dda-4df3-b0e9-8e313204b9fb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="IOCP.h">
+      <Filter>Network\IOCP</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketHelper.h">
+      <Filter>Network\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="types.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="macro.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="NetAddress.h">
+      <Filter>Network\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="LogUtil.h">
+      <Filter>Network\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="externs.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="Service.h">
+      <Filter>Network\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>Network\Session</Filter>
+    </ClInclude>
+    <ClInclude Include="define.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="OVER_EXP.h">
+      <Filter>Network\Session</Filter>
+    </ClInclude>
+    <ClInclude Include="Listener.h">
+      <Filter>Network\Listener</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadManager.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="TLS.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="SendBuffer.h">
+      <Filter>Network\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="RecvBuffer.h">
+      <Filter>Network\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferReader.h">
+      <Filter>Network\Utils\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferWriter.h">
+      <Filter>Network\Utils\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketUtils.h">
+      <Filter>Network\Utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="IOCP.cpp">
+      <Filter>Network\IOCP</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketHelper.cpp">
+      <Filter>Network\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="NetAddress.cpp">
+      <Filter>Network\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="LogUtil.cpp">
+      <Filter>Network\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="externs.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="Service.cpp">
+      <Filter>Network\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>Network\Session</Filter>
+    </ClCompile>
+    <ClCompile Include="OVER_EXP.cpp">
+      <Filter>Network\Session</Filter>
+    </ClCompile>
+    <ClCompile Include="Listener.cpp">
+      <Filter>Network\Listener</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadManager.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="TLS.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="SendBuffer.cpp">
+      <Filter>Network\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="RecvBuffer.cpp">
+      <Filter>Network\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferReader.cpp">
+      <Filter>Network\Utils\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferWriter.cpp">
+      <Filter>Network\Utils\Buffer</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
