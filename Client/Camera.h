@@ -9,14 +9,13 @@ public:
 
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList*);
 
-	//void GenerateViewMatrix(XMFLOAT3, XMFLOAT3, XMFLOAT3);
 	void GenerateProjectionMatrix(float, float, float, float);
 	void SetViewport(int, int, int, int, float = 0.0f, float = 1.0f);
 	void SetScissorRect(LONG, LONG, LONG, LONG);
 	virtual void SetViewportsAndScissorRects(ID3D12GraphicsCommandList*);
 
-	void SetLookAt(XMFLOAT3, XMFLOAT3, XMFLOAT3);
-	void SetCameraOffset(XMFLOAT3&);
+	void SetLookAt(XMFLOAT3 ohterPosition, XMFLOAT3 lookAt, XMFLOAT3 ohterUp);
+	void SetCameraOffset(XMFLOAT3& cameraOffset);
 	void GenerateViewMatrix();
 
 	void Rotate(float pitch, float yaw, float roll);

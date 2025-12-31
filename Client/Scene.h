@@ -26,7 +26,7 @@ public:
 protected:
 	std::vector<std::shared_ptr<CShader>> shaders{};
 	std::shared_ptr<CPlayer> player;
-	std::shared_ptr<CCamera> camera;
+	CCamera* camera;	// 참조용
 
 	ComPtr<ID3D12RootSignature> graphics_root_signature{};
 };

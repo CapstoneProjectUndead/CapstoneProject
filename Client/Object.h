@@ -27,25 +27,22 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* );
 
 	//
-	void SetPosition(float x, float y, float z);
+	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
-	XMFLOAT3 GetPosition() const { return XMFLOAT3(world_matrix._41, world_matrix._42, world_matrix._43); }
-	XMFLOAT3 GetLook() const { return(Vector3::Normalize(XMFLOAT3(world_matrix._31, world_matrix._32, world_matrix._33))); }
-	XMFLOAT3 GetUp() const { return(Vector3::Normalize(XMFLOAT3(world_matrix._21, world_matrix._22, world_matrix._23)));}
-	XMFLOAT3 GetRight() const { return(Vector3::Normalize(XMFLOAT3(world_matrix._11, world_matrix._12, world_matrix._13)));}
-
-protected:
+public:
 	XMFLOAT4X4 world_matrix;
 
+	// world_matrix 내부 메모리를 직접 참조
+	XMFLOAT3& right = *(XMFLOAT3*)&world_matrix._11;
+	XMFLOAT3& up = *(XMFLOAT3*)&world_matrix._21;
+	XMFLOAT3& look = *(XMFLOAT3*)&world_matrix._31;
+	XMFLOAT3& position = *(XMFLOAT3*)&world_matrix._41;
+protected:
 	std::vector<std::shared_ptr<CMesh>> meshes;
 	std::shared_ptr<CTexture> texture{};
 
 	bool is_visible{ true };
 	BoundingOrientedBox oobb;
-};
 
-class CBillboardObject : public CObject {
-public:
-	void Animate(float, CCamera*) override;
-	void SetLookAt(XMFLOAT3& target);
+	float speed{ 10.0f };
 };
