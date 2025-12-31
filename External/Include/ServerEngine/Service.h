@@ -9,37 +9,38 @@ enum SERVICE_TYPE
 	Client,
 };
 
-using CreateSessionFunc = std::function<Session*(void)>;
+using CreateSessionFunc = std::function<shared_ptr<Session>(void)>;
 
-class Service
+class Service : public enable_shared_from_this<Service>
 {
 public:
 	Service(SERVICE_TYPE, NetAddress, CreateSessionFunc, int32);
 	~Service();
 
 public:
-	IOCP&					GetIocpCore() { return iocp_core; }
-	NetAddress				GetNetAddress() { return net_address; }
-	map<SOCKET, Session*>&	GetSesssions() { return sessions; }
+	IOCP&								GetIocpCore() { return iocp_core; }
+	NetAddress							GetNetAddress() { return net_address; }
+	map<SOCKET, shared_ptr<Session>>&	GetSesssions() { return sessions; }
 
-	Session*				CreateSession();
-	void					AddSession(Session* session);
-	void					ReleaseSession(Session* session);
+	shared_ptr<Session>					CreateSession();
+	void								AddSession(shared_ptr<Session> session);
+	void								ReleaseSession(shared_ptr<Session> session);
 
-	SERVICE_TYPE			GetServiceType() { return service_type; }
-	int32					GetCurrentSessionCount() { return current_session_count; }
-	int32					GetMaxSessionCount() { return max_session_count; }
+	shared_ptr<Service>					GetServiceRef() { return shared_from_this(); }
+	SERVICE_TYPE						GetServiceType() { return service_type; }
+	int32								GetCurrentSessionCount() { return current_session_count; }
+	int32								GetMaxSessionCount() { return max_session_count; }
 
 protected:
-	IOCP					iocp_core;
-	NetAddress				net_address;
-	SERVICE_TYPE			service_type;
-	CreateSessionFunc		create_session_func;
+	IOCP								iocp_core;
+	NetAddress							net_address;
+	SERVICE_TYPE						service_type;
+	CreateSessionFunc					create_session_func;
 
-	int32					current_session_count;
-	int32					max_session_count;
-	map<SOCKET, Session*>	sessions;
-	mutex					lock;
+	int32								current_session_count;
+	int32								max_session_count;
+	map<SOCKET, shared_ptr<Session>>	sessions;
+	mutex								lock;
 };
 
 // ServerService

@@ -49,7 +49,7 @@ void IOCP::WorkerThreadLoop(uint32 timeoutMs)
 		auto compType = exp_over->comp_type;
 		auto session = exp_over->session_ref;
 		auto listener = exp_over->listener_ref;
-		auto service = (session ? session->GetService() : nullptr);
+		auto service = (session ? session->GetServiceRef() : nullptr);
 
 		if (result)
 		{
@@ -126,7 +126,7 @@ void IOCP::WorkerThreadLoop(uint32 timeoutMs)
 			{
 			case COMP_TYPE::OP_RECV:
 			{
-				Service* service = exp_over->session_ref->GetService();
+				shared_ptr<Service> service = exp_over->session_ref->GetServiceRef();
 				exp_over->session_ref->HandleRecv(numOfBytes);
 
 				if (SERVICE_TYPE::Client == service->GetServiceType())
@@ -135,7 +135,7 @@ void IOCP::WorkerThreadLoop(uint32 timeoutMs)
 			break;
 			case COMP_TYPE::OP_SEND: 
 			{
-				Service* service = exp_over->session_ref->GetService();
+				shared_ptr<Service> service = exp_over->session_ref->GetServiceRef();
 				exp_over->session_ref->HandleSend(numOfBytes);
 				delete exp_over;
 			}

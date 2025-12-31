@@ -6,7 +6,6 @@
 
 Session::Session()
 	: prev_remain(0)
-	, service_ref(nullptr)
 	, state(S_STATE::ST_FREE)
 {
 	socket = SocketHelper::CreateSocket();
@@ -31,8 +30,8 @@ bool Session::DoConnect()
 		return false;
 
 	DWORD numOfBytes = 0;
-	SOCKADDR_IN targetAddr = GetService()->GetNetAddress().GetSockAddress();
-	connect_over.session_ref = this;
+	SOCKADDR_IN targetAddr = GetServiceRef()->GetNetAddress().GetSockAddress();
+	connect_over.session_ref = GetSessionRef();
 
 	if (false == SocketHelper::ConnectEx(socket, reinterpret_cast<SOCKADDR*>(&targetAddr), sizeof(targetAddr), nullptr, 0, &numOfBytes, &connect_over.wsa_over))
 	{
@@ -55,7 +54,7 @@ void Session::DoDisconnect(const WCHAR* cause)
 	// temp
 	std::wcout << L"Disconnect : " << cause << endl;
 
-	disconnect_over.session_ref = this;
+	disconnect_over.session_ref = GetSessionRef();
 	if (false == SocketHelper::DisconnectEx(socket, &disconnect_over.wsa_over, TF_REUSE_SOCKET, 0))
 	{
 		int32 errorCode = ::WSAGetLastError();
@@ -76,7 +75,7 @@ void Session::DoRecv()
 	memset(&recv_over.wsa_over, 0, sizeof(recv_over.wsa_over));
 	recv_over.wsabuf.len = recv_over.BufferSize() - prev_remain;
 	recv_over.wsabuf.buf = recv_over.recv_buf.data() + prev_remain;
-	recv_over.session_ref = this;
+	recv_over.session_ref = GetSessionRef();
 
 	WSARecv(socket, &recv_over.wsabuf, 1, 0, &recv_flag,
 		&recv_over.wsa_over, 0);
@@ -113,7 +112,11 @@ void Session::RegisterSend()
 	wsaBufs.reserve(send_queue.size());
 
 	OVER_EXP* send_over = new OVER_EXP(send_queue, wsaBufs);
-	send_over->session_ref = this;
+
+	// OVER_EXP를 동적할당하는 구조에서는
+	// 아래와 같이 Session의 수명관리가 필수는
+	// 아니지만 일단 이렇게 작성했다.
+	send_over->session_ref = GetSessionRef();
 
 	DWORD numOfBytes = 0;
 	if (SOCKET_ERROR == ::WSASend(socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), OUT & numOfBytes, 0, &send_over->wsa_over, nullptr))
@@ -131,6 +134,9 @@ void Session::RegisterSend()
 
 void Session::HandleConnect()
 {
+	// RELEASE_REF
+	connect_over.session_ref = nullptr;
+
 	// 연결 성공
 	is_connect.store(true);
 
@@ -138,7 +144,7 @@ void Session::HandleConnect()
 	OnConnected();
 
 	// TODO : Service class 에서 해당 session을 관리하는 컨테이너에 넣는다.
-	GetService()->AddSession(this);
+	GetServiceRef()->AddSession(GetSessionRef());
 
 	// 수신하기
 	DoRecv();
@@ -146,13 +152,19 @@ void Session::HandleConnect()
 
 void Session::HandleDisConnect()
 {
+	// RELEASE_REF
+	disconnect_over.session_ref = nullptr;
+
 	OnDisconnected(); // 컨텐츠 코드에서 재정의
 
-	GetService()->ReleaseSession(this);
+	GetServiceRef()->ReleaseSession(GetSessionRef());
 }
 
 void Session::HandleRecv(int numOfBytes)
 {
+	// RELEASE_REF
+	recv_over.session_ref = nullptr;
+
 	if (0 == numOfBytes)
 	{
 		DoDisconnect(L"Recv 0 Byte");

@@ -13,17 +13,12 @@ Service::Service(SERVICE_TYPE type, NetAddress address, CreateSessionFunc func, 
 
 Service::~Service()
 {
-	for (auto& value : sessions)
-	{
-		delete value.second;
-		value.second = nullptr;
-	}
 }
 
-Session* Service::CreateSession()
+shared_ptr<Session>	Service::CreateSession()
 {
-	Session* session = create_session_func();
-	session->SetService(this);
+	shared_ptr<Session> session = create_session_func();
+	session->SetServiceRef(shared_from_this());
 
 	// 세션의 소켓을 IOCP에 등록한다.
 	if (false == iocp_core.Register(reinterpret_cast<HANDLE>(session->GetSocket()),
@@ -37,7 +32,7 @@ Session* Service::CreateSession()
 	return session;
 }
 
-void Service::AddSession(Session* session)
+void Service::AddSession(shared_ptr<Session> session)
 {
 	lock_guard<mutex> lg(lock);
 	current_session_count++;
@@ -45,13 +40,11 @@ void Service::AddSession(Session* session)
 	sessions[session->GetSocket()] = session;
 }
 
-void Service::ReleaseSession(Session* session)
+void Service::ReleaseSession(shared_ptr<Session> session)
 {
 	lock_guard<mutex> lg(lock);
 	current_session_count--;
 	ASSERT_CRASH(0 != sessions.erase(session->GetSocket()));
-	delete session;
-	session = nullptr;
 }
 
 
@@ -72,23 +65,10 @@ TcpServerService::~TcpServerService()
 
 bool TcpServerService::StartServer()
 {
-	listener.SetServerService(this);
+	shared_ptr<TcpServerService> serverService = static_pointer_cast<TcpServerService>(shared_from_this());
 
-	if (false == iocp_core.Register(reinterpret_cast<HANDLE>(listener.GetHandle()), 9999))
-	{
-		cout << "IOCP register fail" << endl;
-		LogUtil::error_display(GetLastError());
+	if (false == listener.BeginAccept(serverService))
 		return false;
-	}
-
-	if (false == listener.BindListen(net_address))
-		return false;
-
-	for (int32 i = 0; i < max_session_count; ++i)
-	{
-		if (false == listener.DoAccept())
-			return false;
-	}
 
 	return true;
 }
@@ -111,7 +91,7 @@ bool TcpClientService::StartClientService()
 {
 	const int32 sessionCount = GetMaxSessionCount();
 
-	Session* session = CreateSession();
+	shared_ptr<Session> session = CreateSession();
 	if (false == session->DoConnect())
 		return false;
 

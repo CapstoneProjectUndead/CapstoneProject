@@ -22,6 +22,33 @@ Listener::~Listener()
 	{
 		delete acceptEvent;
 	}
+
+	CloseSocket();
+}
+
+bool Listener::BeginAccept(shared_ptr<TcpServerService> service)
+{
+	server_service = service;
+	if (false == server_service->GetIocpCore().Register(reinterpret_cast<HANDLE>(GetHandle()), 9999))
+	{
+		cout << "IOCP register fail" << endl;
+		LogUtil::error_display(GetLastError());
+		return false;
+	}
+
+	if (false == BindListen(server_service->GetNetAddress()))
+		return false;
+
+	int32 sessionCount = server_service->GetMaxSessionCount();
+	for (int32 i = 0; i < sessionCount; ++i)
+	{
+		OVER_EXP* acceptOver = new OVER_EXP;
+		acceptOver->comp_type = COMP_TYPE::OP_ACCEPT;
+		acceptOver->listener_ref = this;
+		DoAccept(acceptOver);
+	}
+
+	return true;
 }
 
 bool Listener::BindListen(NetAddress address)
@@ -50,42 +77,35 @@ bool Listener::BindListen(NetAddress address)
 	return true;
 }
 
-bool Listener::DoAccept()
+void Listener::DoAccept(OVER_EXP* acceptOver)
 {
-	Session* session = GetServerService()->CreateSession();
+	shared_ptr<Session> session = server_service->CreateSession();
 
-	OVER_EXP* accept_over = new OVER_EXP;
-	accept_over->comp_type = COMP_TYPE::OP_ACCEPT;
-	accept_over->listener_ref = this;
-	accept_over->session_ref = session;
+	acceptOver->session_ref = session;
+	accept_overs.push_back(acceptOver);
 
-	accept_overs.push_back(accept_over);
-
-	if (false == SocketHelper::AcceptEx(listen_socket, session->socket, accept_over->recv_buf.data(), 0, sizeof(SOCKADDR_IN) + 16,
-		sizeof(SOCKADDR_IN) + 16, NULL, &accept_over->wsa_over))
+	if (false == SocketHelper::AcceptEx(listen_socket, session->socket, acceptOver->recv_buf.data(), 0, sizeof(SOCKADDR_IN) + 16,
+		sizeof(SOCKADDR_IN) + 16, NULL, &acceptOver->wsa_over))
 	{
 		int err = WSAGetLastError();
 		if (err != WSA_IO_PENDING)
 		{
 			LogUtil::error_display(err);
-			delete session;
-			return false;
+			DoAccept(acceptOver);
 		}
 	}
-
-	return true;
 }
 
-void Listener::HandleAccept(OVER_EXP* overEXP)
+void Listener::HandleAccept(OVER_EXP* acceptOver)
 {
-	Session* session = overEXP->session_ref;
+	shared_ptr<Session> session = acceptOver->session_ref;
 	assert(session);
 
 	if (false == SocketHelper::SetUpdateAcceptSocket(session->GetSocket(), listen_socket))
 	{
 		cout << "Socket update error" << endl;
 		LogUtil::error_display(::WSAGetLastError());
-		DoAccept();
+		DoAccept(acceptOver);
 		return;
 	}
 
@@ -93,11 +113,16 @@ void Listener::HandleAccept(OVER_EXP* overEXP)
 	int32 sizeOfSockAddr = sizeof(sockAddress);
 	if (SOCKET_ERROR == ::getpeername(session->GetSocket(), OUT reinterpret_cast<SOCKADDR*>(&sockAddress), &sizeOfSockAddr))
 	{
-		DoAccept();
+		DoAccept(acceptOver);
 		return;
 	}
 
 	session->SetNetAddress(NetAddress(sockAddress));
 	session->HandleConnect();
-	DoAccept();
+	DoAccept(acceptOver);
+}
+
+void Listener::CloseSocket()
+{
+	SocketHelper::Close(listen_socket);
 }

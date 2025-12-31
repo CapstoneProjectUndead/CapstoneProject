@@ -9,7 +9,7 @@ enum S_STATE
 	ST_INGAME, 
 };
 
-class Session
+class Session : public enable_shared_from_this<Session>
 {
 	friend class Listener;
 	friend class Service;
@@ -28,8 +28,9 @@ public:
 	SOCKET					GetSocket() { return socket; }
 	void					SetNetAddress(NetAddress address) { net_address = address; }
 	NetAddress				GetNetAddress() { return net_address; }
-	void					SetService(Service* service) { service_ref = service; }
-	Service*				GetService() { return service_ref; }
+	void					SetServiceRef(shared_ptr<Service> service) { service_ref = service; }
+	shared_ptr<Service>		GetServiceRef() { return service_ref.lock(); }
+	shared_ptr<Session>		GetSessionRef() { return shared_from_this(); }
 	void					SetState(S_STATE _state) { state = _state; }
 	S_STATE					GetState() { return state; }
 	bool					IsConnected() { return is_connect; }
@@ -59,7 +60,7 @@ private:
 
 private:
 	SOCKET					socket;
-	Service*				service_ref;
+	weak_ptr<Service>		service_ref;
 	NetAddress				net_address;
 	atomic<bool>			is_connect;
 	int						prev_remain;

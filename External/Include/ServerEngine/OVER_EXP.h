@@ -22,15 +22,15 @@ class OVER_EXP
 	};
 
 public:
-	WSAOVERLAPPED	wsa_over;
-	WSABUF			wsabuf;
-	vector<char>	recv_buf;
-	COMP_TYPE		comp_type;
+	WSAOVERLAPPED			wsa_over;
+	WSABUF					wsabuf;
+	vector<char>			recv_buf;
+	COMP_TYPE				comp_type;
 
-	Listener*		listener_ref;
-	Session*		session_ref;
+	Listener*				listener_ref;
+	shared_ptr<Session>		session_ref;
 
-	int32			recv_buffer_capacity;
+	int32					recv_buffer_capacity;
 
 	// ¼Û½Å¿ë
 	vector<SendBufferRef> send_buffers;

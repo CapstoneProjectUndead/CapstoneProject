@@ -8,19 +8,20 @@ class Listener
 public:
 	Listener();
 	~Listener();
-
-	void SetServerService(TcpServerService* service) { server_service = service; }
-	TcpServerService* GetServerService() { return server_service; }
-
+	
+	bool BeginAccept(shared_ptr<TcpServerService> service);
 	bool BindListen(class NetAddress address);
-	bool DoAccept();
-	void HandleAccept(OVER_EXP*);
+	void DoAccept(OVER_EXP* acceptOver);
+	void HandleAccept(OVER_EXP* acceptOver);
 
 	SOCKET GetHandle() { return listen_socket; }
+	void SetServerService(shared_ptr<TcpServerService> service) { server_service = service; }
+
+	void CloseSocket();
 
 private:
-	SOCKET				listen_socket;
-	TcpServerService*	server_service;
-	vector<OVER_EXP*>	accept_overs;
+	SOCKET							listen_socket;
+	shared_ptr<TcpServerService>	server_service;
+	vector<OVER_EXP*>				accept_overs;
 };
 
