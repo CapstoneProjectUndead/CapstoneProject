@@ -19,6 +19,9 @@
     <Filter Include="Object">
       <UniqueIdentifier>{0d938997-fdb2-460d-a02d-416afe3a6eab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NetworkService">
+      <UniqueIdentifier>{69db58d7-23a5-4730-957a-3958555b4abf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -66,6 +69,9 @@
     <ClInclude Include="GameFramework.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="NetworkService.h">
+      <Filter>NetworkService</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -103,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="GameFramework.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkService.cpp">
+      <Filter>NetworkService</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

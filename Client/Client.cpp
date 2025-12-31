@@ -127,7 +127,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     gGameFramework.OnCreate();
 
     // 서버에 연결하기 위한 초기 작업
-    gNetWorkService.ServiceStart();
+    //gNetWorkService.ServiceStart();
 
     ShowWindow(ghWnd, nCmdShow);
     UpdateWindow(ghWnd);

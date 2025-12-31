@@ -17,6 +17,6 @@ public:
 	void ServiceStart();
 
 private:
-	unique_ptr<TcpClientService> client_service;
+	shared_ptr<TcpClientService> client_service;
 };
 
