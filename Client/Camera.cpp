@@ -21,11 +21,6 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 	commandList->SetGraphicsRoot32BitConstants(1, 16, &projectionMatrix, 16);
 }
 
-//void CCamera::GenerateViewMatrix(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
-//{
-//	view_matrix = Matrix4x4::LookAtLH(position, lookAt, up);
-//}
-
 void CCamera::GenerateProjectionMatrix(float nearPlaneDistance, float farPlaneDistance, float aspectRatio, float fovAngle)
 {
 	projection_matrix = Matrix4x4::PerspectiveFovLH(fovAngle, aspectRatio, nearPlaneDistance, farPlaneDistance);
@@ -55,11 +50,11 @@ void CCamera::SetViewportsAndScissorRects(ID3D12GraphicsCommandList* commandList
 	commandList->RSSetScissorRects(1, &scissor_rect);
 }
 
-void CCamera::SetLookAt(XMFLOAT3 Position, XMFLOAT3 lookAt, XMFLOAT3 Up)
+void CCamera::SetLookAt(XMFLOAT3 ohterPosition, XMFLOAT3 lookAt, XMFLOAT3 ohterUp)
 {
-	position = Position;
+	position = ohterPosition;
 	look_at = lookAt;
-	XMStoreFloat4x4(&view_matrix, XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&lookAt), XMLoadFloat3(&Up)));
+	XMStoreFloat4x4(&view_matrix, XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&lookAt), XMLoadFloat3(&ohterUp)));
 
 	XMVECTORF32 xm32vRight = { view_matrix._11, view_matrix._21, view_matrix._31, 0.0f };
 	XMVECTORF32 xm32vUp = { view_matrix._12, view_matrix._22, view_matrix._32, 0.0f };

@@ -52,7 +52,7 @@ void CScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 {
 	// 플레이어 생성
 	player = std::make_shared<CPlayer>(device, commandList);
-	camera = player->GetCamera();
+	camera = player->GetCameraPtr();
 
 	// create graphics rootsignature
 	graphics_root_signature = CreateGraphicsRootSignature(device);
@@ -67,7 +67,7 @@ void CScene::AnimateObjects(float elapsedTime)
 {
 	player->Update(elapsedTime);
 	for (const auto& shader : shaders) {
-		shader->Animate(elapsedTime, camera.get());
+		shader->Animate(elapsedTime, camera);
 	}
 }
 
