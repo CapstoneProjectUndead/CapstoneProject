@@ -6,7 +6,7 @@
 #include <ServerEngine/ThreadManager.h>
 #include <ServerEngine/Service.h>
 
-#define PORT_NUM 7777
+#include <protocol.h>
 
 class NetworkService
 {

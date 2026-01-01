@@ -1,7 +1,5 @@
 ﻿#include "pch.h"
 
-#define PORT_NUM 7777
-
 
 int main()
 {

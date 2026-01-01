@@ -81,6 +81,8 @@ using std::make_pair;
 #include <ServerEngine/BufferWriter.h>
 #include <ServerEngine/BufferReader.h>
 
+#include <protocol.h>
+
 //extern DBConnector g_db;
 
 

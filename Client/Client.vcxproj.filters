@@ -22,6 +22,9 @@
     <Filter Include="NetworkService">
       <UniqueIdentifier>{69db58d7-23a5-4730-957a-3958555b4abf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Protocol">
+      <UniqueIdentifier>{8f1569b9-6aed-48cf-82c6-cb7f44c3b130}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="NetworkService.h">
       <Filter>NetworkService</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\protocol.h">
+      <Filter>Protocol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
