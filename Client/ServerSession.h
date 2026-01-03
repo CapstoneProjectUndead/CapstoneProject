@@ -14,6 +14,6 @@ public:
 	virtual void			OnSend(int32 len) {}
 	virtual void			OnDisconnected() override;
 
-	virtual void ProcessPacket(Session*, char*, int32 pktSize) override;
+	virtual void			ProcessPacket(Session*, char*, int32 pktSize) override;
 };
 

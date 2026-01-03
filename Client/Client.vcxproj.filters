@@ -19,9 +19,6 @@
     <Filter Include="Object">
       <UniqueIdentifier>{0d938997-fdb2-460d-a02d-416afe3a6eab}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Protocol">
-      <UniqueIdentifier>{8f1569b9-6aed-48cf-82c6-cb7f44c3b130}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{ba0ac249-ec6c-42ec-99c1-41c8d48abfb5}</UniqueIdentifier>
     </Filter>
@@ -30,6 +27,9 @@
     </Filter>
     <Filter Include="Network\Session">
       <UniqueIdentifier>{1fe1b602-f1ed-476b-ba0c-edace247f88d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Protocol">
+      <UniqueIdentifier>{8f1569b9-6aed-48cf-82c6-cb7f44c3b130}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -82,10 +82,10 @@
       <Filter>Network\NetworkService</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\protocol.h">
-      <Filter>Protocol</Filter>
+      <Filter>Network\Protocol</Filter>
     </ClInclude>
     <ClInclude Include="ServerSession.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Network\Session</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -129,7 +129,7 @@
       <Filter>Network\NetworkService</Filter>
     </ClCompile>
     <ClCompile Include="ServerSession.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Network\Session</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

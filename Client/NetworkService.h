@@ -19,6 +19,6 @@ public:
 
 private:
 	shared_ptr<TcpClientService> client_service;
-	shared_ptr<ServerSession> server_session;
+	shared_ptr<ServerSession>	 server_session;
 };
 
