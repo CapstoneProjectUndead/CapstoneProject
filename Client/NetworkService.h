@@ -2,11 +2,12 @@
 #include "Core.h"
 
 #include <ServerEngine/global.h>
-#include <ServerEngine/externs.h>
 #include <ServerEngine/ThreadManager.h>
 #include <ServerEngine/Service.h>
 
 #include <protocol.h>
+
+class ServerSession;
 
 class NetworkService
 {
@@ -18,5 +19,6 @@ public:
 
 private:
 	shared_ptr<TcpClientService> client_service;
+	shared_ptr<ServerSession> server_session;
 };
 
