@@ -22,14 +22,14 @@
     <Filter Include="Network">
       <UniqueIdentifier>{ba0ac249-ec6c-42ec-99c1-41c8d48abfb5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Network\NetworkService">
-      <UniqueIdentifier>{69db58d7-23a5-4730-957a-3958555b4abf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network\Session">
       <UniqueIdentifier>{1fe1b602-f1ed-476b-ba0c-edace247f88d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Network\Protocol">
       <UniqueIdentifier>{8f1569b9-6aed-48cf-82c6-cb7f44c3b130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\NetworkManager">
+      <UniqueIdentifier>{69db58d7-23a5-4730-957a-3958555b4abf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -78,8 +78,8 @@
     <ClInclude Include="GameFramework.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="NetworkService.h">
-      <Filter>Network\NetworkService</Filter>
+    <ClInclude Include="NetworkManager.h">
+      <Filter>Network\NetworkManager</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\protocol.h">
       <Filter>Network\Protocol</Filter>
@@ -125,8 +125,8 @@
     <ClCompile Include="GameFramework.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="NetworkService.cpp">
-      <Filter>Network\NetworkService</Filter>
+    <ClCompile Include="NetworkManager.cpp">
+      <Filter>Network\NetworkManager</Filter>
     </ClCompile>
     <ClCompile Include="ServerSession.cpp">
       <Filter>Network\Session</Filter>

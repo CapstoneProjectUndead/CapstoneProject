@@ -26,7 +26,7 @@ HWND ghWnd;
 CGameFramework gGameFramework;
 
 // 서버 초기화를 담당하는 전역 객체
-NetworkService gNetWorkService;
+NetworkManager gNetWorkService;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,

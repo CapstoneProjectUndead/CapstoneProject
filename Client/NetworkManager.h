@@ -9,11 +9,11 @@
 
 class ServerSession;
 
-class NetworkService
+class NetworkManager
 {
 public:
-	NetworkService();
-	~NetworkService();
+	NetworkManager();
+	~NetworkManager();
 
 	void ServiceStart();
 

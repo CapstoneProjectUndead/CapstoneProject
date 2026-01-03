@@ -1,18 +1,18 @@
-#include "NetworkService.h"
+#include "NetworkManager.h"
 #include "ServerSession.h"
 #include "ServerEngine/SocketHelper.h"
 
-NetworkService::NetworkService()
+NetworkManager::NetworkManager()
 {
 
 }
 
-NetworkService::~NetworkService()
+NetworkManager::~NetworkManager()
 {
 
 }
 
-void NetworkService::ServiceStart()
+void NetworkManager::ServiceStart()
 {
 	setlocale(LC_ALL, "");
 	std::wcout.imbue(std::locale(""));
