@@ -29,6 +29,9 @@ bool CGameFramework::OnCreate()
 	// 렌더링 게임 객체 생성
 	BuildObjects();
 
+	// 창우
+	CKeyMgr::GetInstance().init();
+
 	return true;
 }
 void CGameFramework::OnDestroy()
@@ -338,6 +341,9 @@ void CGameFramework::MoveToNextFrame()
 void CGameFramework::FrameAdvance()
 {
 	timer.Tick(0.0f);
+
+	// 창우
+	CKeyMgr::GetInstance().tick();
 
 	AnimateObjects();
 

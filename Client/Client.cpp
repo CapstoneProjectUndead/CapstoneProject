@@ -6,7 +6,7 @@
 #include "GameFramework.h"
 
 // 서버 
-#include "NetworkService.h"
+#include "NetworkManager.h"
 
 
 #define MAX_LOADSTRING 100

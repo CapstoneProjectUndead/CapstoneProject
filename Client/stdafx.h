@@ -55,6 +55,12 @@ using Microsoft::WRL::ComPtr;
 #define FRAME_BUFFER_WIDTH	800
 #define FRAME_BUFFER_HEIGHT 600
 
+// 창우
+#include "CKeyMgr.h"
+#include "macro.h"
+
+extern HWND ghWnd;
+
 
 //#define _WITH_SWAPCHAIN_FULLSCREEN_STATE
 

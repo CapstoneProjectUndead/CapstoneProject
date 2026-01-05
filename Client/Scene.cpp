@@ -98,10 +98,12 @@ void CScene::ProcessInput()
 	if (GetKeyboardState(key_buffer))
 	{
 		XMFLOAT3 direction{};
-		if (key_buffer[VK_UP] & 0xF0) direction.z++;
-		if (key_buffer[VK_DOWN] & 0xF0) direction.z--;
-		if (key_buffer[VK_LEFT] & 0xF0) direction.x--;
-		if (key_buffer[VK_RIGHT] & 0xF0) direction.x++;
+
+		// 창우
+		if (KEY_PRESSED(KEY::W)) direction.z++;
+		if (KEY_PRESSED(KEY::S)) direction.z--;
+		if (KEY_PRESSED(KEY::A)) direction.x--;
+		if (KEY_PRESSED(KEY::D)) direction.x++;
 
 		if (direction.x != 0 || direction.z != 0) {
 			player->Move(direction, CTimer::GetInstance().GetTimeElapsed());

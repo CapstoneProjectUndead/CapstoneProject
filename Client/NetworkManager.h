@@ -16,9 +16,10 @@ public:
 	~NetworkManager();
 
 	void ServiceStart();
+	void Update();
 
 private:
-	shared_ptr<TcpClientService> client_service;
-	shared_ptr<ServerSession>	 server_session;
+	std::shared_ptr<TcpClientService>	client_service;
+	std::shared_ptr<ServerSession>		server_session;
 };
 
