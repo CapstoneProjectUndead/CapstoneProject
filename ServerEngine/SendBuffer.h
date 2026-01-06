@@ -14,7 +14,7 @@ public:
 	void				Close(uint32 writeSize);
 
 private:
-	vector<BYTE>		buffer;
-	uint32				write_size;
+	std::vector<BYTE>		buffer;
+	uint32					write_size;
 };
 

@@ -1,12 +1,7 @@
 #pragma once
-#include "Core.h"
+#include <memory>
 
-#include <ServerEngine/global.h>
-#include <ServerEngine/ThreadManager.h>
-#include <ServerEngine/Service.h>
-
-#include <protocol.h>
-
+class TcpClientService;
 class ServerSession;
 
 class NetworkManager

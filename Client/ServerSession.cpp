@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "ServerSession.h"
 
 ServerSession::ServerSession()

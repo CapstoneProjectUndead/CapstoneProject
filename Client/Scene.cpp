@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Timer.h"
+#include "CKeyMgr.h"
 
 void CScene::ReleaseUploadBuffers()
 {

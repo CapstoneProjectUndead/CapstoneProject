@@ -30,28 +30,28 @@ UINT gKeyValue[(UINT)KEY::KEY_END]
 	VK_CONTROL,
 };
 
-void CKeyMgr::init()
+void CKeyMgr::Init()
 {
 	for (UINT i = 0; i < (UINT)KEY::KEY_END; ++i)
 		input_vector.emplace_back(KEY_STATE::NONE, false);
 }
 
-void CKeyMgr::tick()
+void CKeyMgr::Tick()
 {
 	if (nullptr == GetFocus())
 	{
 		for (size_t i = 0; i < input_vector.size(); ++i)
 		{
-			if (KEY_STATE::TAP == input_vector[i].State || KEY_STATE::PRESSED == input_vector[i].State)
+			if (KEY_STATE::TAP == input_vector[i].state || KEY_STATE::PRESSED == input_vector[i].state)
 			{
-				input_vector[i].State = KEY_STATE::RELEASED;
+				input_vector[i].state = KEY_STATE::RELEASED;
 			}
-			else if (KEY_STATE::RELEASED == input_vector[i].State)
+			else if (KEY_STATE::RELEASED == input_vector[i].state)
 			{
-				input_vector[i].State = KEY_STATE::NONE;
+				input_vector[i].state = KEY_STATE::NONE;
 			}
 
-			input_vector[i].PrevPressed = false;
+			input_vector[i].prev_pressed = false;
 		}
 	}
 
@@ -63,33 +63,33 @@ void CKeyMgr::tick()
 			if (GetAsyncKeyState(gKeyValue[i]) & 0x8001)
 			{
 				// 이전에는 안눌려있었다.
-				if (!input_vector[i].PrevPressed)
+				if (!input_vector[i].prev_pressed)
 				{
-					input_vector[i].State = KEY_STATE::TAP;
+					input_vector[i].state = KEY_STATE::TAP;
 				}
 				// 이전에도 눌려있었다.
 				else
 				{
-					input_vector[i].State = KEY_STATE::PRESSED;
+					input_vector[i].state = KEY_STATE::PRESSED;
 				}
 
-				input_vector[i].PrevPressed = true;
+				input_vector[i].prev_pressed = true;
 			}
 			// 해당 KEY 가 안눌려있다.
 			else
 			{
-				if (input_vector[i].PrevPressed)
+				if (input_vector[i].prev_pressed)
 				{
 					// 이전 Frame 에서는 눌려있었다.
-					input_vector[i].State = KEY_STATE::RELEASED;
+					input_vector[i].state = KEY_STATE::RELEASED;
 				}
 				else
 				{
 					// 이전에도 안눌려있었고, 지금도 안눌려있다.
-					input_vector[i].State = KEY_STATE::NONE;
+					input_vector[i].state = KEY_STATE::NONE;
 				}
 
-				input_vector[i].PrevPressed = false;
+				input_vector[i].prev_pressed = false;
 			}
 		}
 		 

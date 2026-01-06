@@ -9,7 +9,7 @@ enum S_STATE
 	ST_INGAME, 
 };
 
-class Session : public enable_shared_from_this<Session>
+class Session : public std::enable_shared_from_this<Session>
 {
 	friend class Listener;
 	friend class Service;
@@ -20,31 +20,31 @@ public:
 	virtual ~Session();
 
 public:
-	bool					DoConnect();
-	void					DoDisconnect(const WCHAR* cause);
-	void					DoSend(SendBufferRef sendBuffer);
+	bool						DoConnect();
+	void						DoDisconnect(const WCHAR* cause);
+	void						DoSend(SendBufferRef sendBuffer);
 
 public:
-	SOCKET					GetSocket() { return socket; }
-	void					SetNetAddress(NetAddress address) { net_address = address; }
-	NetAddress				GetNetAddress() { return net_address; }
-	void					SetServiceRef(shared_ptr<Service> service) { service_ref = service; }
-	shared_ptr<Service>		GetServiceRef() { return service_ref.lock(); }
-	shared_ptr<Session>		GetSessionRef() { return shared_from_this(); }
-	void					SetState(S_STATE _state) { state = _state; }
-	S_STATE					GetState() { return state; }
-	bool					IsConnected() { return is_connect; }
+	SOCKET						GetSocket() { return socket; }
+	void						SetNetAddress(NetAddress address) { net_address = address; }
+	NetAddress					GetNetAddress() { return net_address; }
+	void						SetServiceRef(std::shared_ptr<Service> service) { service_ref = service; }
+	std::shared_ptr<Service>	GetServiceRef() { return service_ref.lock(); }
+	std::shared_ptr<Session>	GetSessionRef() { return shared_from_this(); }
+	void						SetState(S_STATE _state) { state = _state; }
+	S_STATE						GetState() { return state; }
+	bool						IsConnected() { return is_connect; }
 
 private:
-	void					DoRecv();
-	void					RegisterSend();
+	void						DoRecv();
+	void						RegisterSend();
 
-	void					HandleConnect();
-	void					HandleDisConnect();
-	void					HandleRecv(int numOfBytes);
-	void					HandleSend(int numOfBytes);
+	void						HandleConnect();
+	void						HandleDisConnect();
+	void						HandleRecv(int numOfBytes);
+	void						HandleSend(int numOfBytes);
 
-	bool					OnRecv(BYTE* buffer, int32 numOfBytes);
+	bool						OnRecv(BYTE* buffer, int32 numOfBytes);
 
 protected:
 	// ÄÁÅÙÃ÷ ÄÚµå¿¡¼­ ÀçÁ¤ÀÇ
@@ -54,17 +54,17 @@ protected:
 	virtual void			ProcessPacket(Session*, char*, int32 pktSize) abstract;
 
 private:
-	mutex					lock;
-	queue<SendBufferRef>	send_queue;
-	atomic<bool>			send_registered;
+	std::mutex					lock;
+	std::queue<SendBufferRef>	send_queue;
+	std::atomic<bool>			send_registered;
 
 private:
-	SOCKET					socket;
-	weak_ptr<Service>		service_ref;
-	NetAddress				net_address;
-	atomic<bool>			is_connect;
-	int						prev_remain;
-	S_STATE					state;
+	SOCKET						socket;
+	std::weak_ptr<Service>		service_ref;
+	NetAddress					net_address;
+	std::atomic<bool>			is_connect;
+	int							prev_remain;
+	S_STATE						state;
 
 private:
 	OVER_EXP				recv_over;

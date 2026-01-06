@@ -1,6 +1,14 @@
+#include "stdafx.h"
 #include "NetworkManager.h"
+#include "Core.h"
+
+#include <ServerEngine/global.h>
+#include <ServerEngine/ThreadManager.h>
+#include <ServerEngine/Service.h>
 #include "ServerSession.h"
 #include "ServerEngine/SocketHelper.h"
+
+#include <protocol.h>
 
 NetworkManager::NetworkManager()
 {
@@ -21,7 +29,7 @@ void NetworkManager::ServiceStart()
 
 	client_service = std::make_shared<TcpClientService>(
        NetAddress(L"127.0.0.1", PORT_NUM),
-       [this]()->shared_ptr<Session> { return make_shared<ServerSession>(); },
+       [this]()->std::shared_ptr<Session> { return std::make_shared<ServerSession>(); },
        1);
 
 	ASSERT_CRASH(client_service->StartClientService());

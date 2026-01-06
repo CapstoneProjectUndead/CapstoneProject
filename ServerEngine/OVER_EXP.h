@@ -22,21 +22,21 @@ class OVER_EXP
 	};
 
 public:
-	WSAOVERLAPPED			wsa_over;
-	WSABUF					wsabuf;
-	vector<char>			recv_buf;
-	COMP_TYPE				comp_type;
+	WSAOVERLAPPED				wsa_over;
+	WSABUF						wsabuf;
+	std::vector<char>			recv_buf;
+	COMP_TYPE					comp_type;
 
-	Listener*				listener_ref;
-	shared_ptr<Session>		session_ref;
+	Listener*					listener_ref;
+	std::shared_ptr<Session>	session_ref;
 
-	int32					recv_buffer_capacity;
+	int32						recv_buffer_capacity;
 
 	// ¼Û½Å¿ë
-	vector<SendBufferRef> send_buffers;
+	std::vector<SendBufferRef>	send_buffers;
 
 	OVER_EXP();
-	OVER_EXP(queue<SendBufferRef>& q, vector<WSABUF>& wsaBuffers);
+	OVER_EXP(std::queue<SendBufferRef>& q, std::vector<WSABUF>& wsaBuffers);
 
 	void	Init() { ZeroMemory(&wsa_over, sizeof(wsa_over)); }
 	int32	BufferSize() { return recv_buffer_capacity; }

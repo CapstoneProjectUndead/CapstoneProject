@@ -72,14 +72,14 @@ enum class KEY_STATE
 
 struct tKeyInfo
 {
-    KEY_STATE   State;
-    bool        PrevPressed;
+    KEY_STATE   state;
+    bool        prev_pressed;
 
     tKeyInfo() = default;
 
     tKeyInfo(KEY_STATE state, bool pressed)
-        : State(state)
-        , PrevPressed(pressed)
+        : state(state)
+        , prev_pressed(pressed)
     {
     }
 };
@@ -105,11 +105,11 @@ private:
     Vec2                    drag_dir;
 
 public:
-    void init();
-    void tick();
+    void Init();
+    void Tick();
 
 public:
-    KEY_STATE GetKeyState(KEY _Key) { return input_vector[(UINT)_Key].State; }
+    KEY_STATE GetKeyState(KEY _Key) { return input_vector[(UINT)_Key].state; }
 
     Vec2 GetMousePos() { return cur_mouse_pos;}
     Vec2 GetPrevMousePos() { return prev_mouse_pos; }

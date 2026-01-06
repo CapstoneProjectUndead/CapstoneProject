@@ -6,14 +6,14 @@ public:
 	ThreadManager();
 	~ThreadManager();
 
-	void Launch(function<void(void)> callback);
+	void Launch(std::function<void(void)> callback);
 	void Join();
 
 	static void InitTLS();
 	static void DestroyTLS();
 
 private:
-	mutex			lock;
-	vector<thread>	threads;
+	std::mutex					lock;
+	std::vector<std::thread>	threads;
 };
 

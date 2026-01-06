@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "GameFramework.h"
 #include "Player.h"
+#include "CKeyMgr.h"
 
 extern HWND ghWnd;
 
@@ -30,7 +31,7 @@ bool CGameFramework::OnCreate()
 	BuildObjects();
 
 	// 창우
-	CKeyMgr::GetInstance().init();
+	CKeyMgr::GetInstance().Init();
 
 	return true;
 }
@@ -343,7 +344,7 @@ void CGameFramework::FrameAdvance()
 	timer.Tick(0.0f);
 
 	// 창우
-	CKeyMgr::GetInstance().tick();
+	CKeyMgr::GetInstance().Tick();
 
 	AnimateObjects();
 

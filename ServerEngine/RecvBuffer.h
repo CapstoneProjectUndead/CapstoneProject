@@ -20,10 +20,10 @@ public:
 	void Clean();
 
 private:
-	vector<BYTE>	buffer;
-	int32			capacity;
-	int32			buffer_size;
-	int32			read_pos;
-	int32			write_pos;
+	std::vector<BYTE>	buffer;
+	int32				capacity;
+	int32				buffer_size;
+	int32				read_pos;
+	int32				write_pos;
 };
 
