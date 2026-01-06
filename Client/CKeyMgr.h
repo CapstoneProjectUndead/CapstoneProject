@@ -22,6 +22,12 @@ struct Vec2
         return out;
     }
 
+    Vec2 operator/(const float scalar) const
+    {
+        Vec2 out{ x / scalar, y / scalar };
+        return out;
+    }
+
     void Normalize()
     {
         XMVECTOR v = XMVectorSet(x, y, 0.f, 0.f);
@@ -102,6 +108,7 @@ private:
     std::vector<tKeyInfo>   input_vector;
     Vec2                    cur_mouse_pos;
     Vec2                    prev_mouse_pos;
+    Vec2                    old_mouse_pos;  // 프레임마다X, 마우스 키 down 이벤트에만 저장
     Vec2                    drag_dir;
 
 public:
@@ -113,6 +120,9 @@ public:
 
     Vec2 GetMousePos() { return cur_mouse_pos;}
     Vec2 GetPrevMousePos() { return prev_mouse_pos; }
+    Vec2 GetOldMousePos() { return old_mouse_pos; }
     Vec2 GetMouseDrag() { return drag_dir; }
+
+    void SetOldMousePos(const POINT& p) { old_mouse_pos.x = p.x; old_mouse_pos.y = p.y;}
 };
 

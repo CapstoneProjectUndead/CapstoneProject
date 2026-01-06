@@ -89,41 +89,32 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	player->Render(commandList);
 }
 
-
-extern POINT oldCursorPos;
-extern HWND ghWnd;
-
 void CScene::ProcessInput()
 {
-	static UCHAR key_buffer[256];
-	if (GetKeyboardState(key_buffer))
-	{
-		XMFLOAT3 direction{};
+	XMFLOAT3 direction{};
 
-		// 창우
-		if (KEY_PRESSED(KEY::W)) direction.z++;
-		if (KEY_PRESSED(KEY::S)) direction.z--;
-		if (KEY_PRESSED(KEY::A)) direction.x--;
-		if (KEY_PRESSED(KEY::D)) direction.x++;
+	// 창우
+	if (KEY_PRESSED(KEY::W)) direction.z++;
+	if (KEY_PRESSED(KEY::S)) direction.z--;
+	if (KEY_PRESSED(KEY::A)) direction.x--;
+	if (KEY_PRESSED(KEY::D)) direction.x++;
 
-		if (direction.x != 0 || direction.z != 0) {
-			player->Move(direction, CTimer::GetInstance().GetTimeElapsed());
-		}
+	if (direction.x != 0 || direction.z != 0) {
+		player->Move(direction, CTimer::GetInstance().GetTimeElapsed());
 	}
 
-	if (GetCapture() == ghWnd) {
+	CKeyMgr& keyManager{ CKeyMgr::GetInstance() };
+
+	if (KEY_PRESSED(KEY::LBTN) || KEY_PRESSED(KEY::RBTN)) {
 		SetCursor(NULL);
-		POINT ptCursorPos;
-		GetCursorPos(&ptCursorPos);
-		float cxMouseDelta = (float)(ptCursorPos.x - oldCursorPos.x) / 3.0f;
-		float cyMouseDelta = (float)(ptCursorPos.y - oldCursorPos.y) / 3.0f;
-		SetCursorPos(oldCursorPos.x, oldCursorPos.y);
-		if (cxMouseDelta || cyMouseDelta)
+		Vec2 prevMousePos{ keyManager.GetPrevMousePos() };
+		Vec2 mouseDelta{ (keyManager.GetMousePos() - prevMousePos) / 3.0f };
+		if (mouseDelta.x || mouseDelta.y)
 		{
-			if (key_buffer[VK_LBUTTON] & 0xF0)
-				player->Rotate(cyMouseDelta, cxMouseDelta, 0.0f);
-			if (key_buffer[VK_RBUTTON] & 0xF0)
-				player->Rotate(cyMouseDelta, 0.0f, -cxMouseDelta);
+			if (KEY_PRESSED(KEY::LBTN))
+				player->Rotate(mouseDelta.y, mouseDelta.x, 0.0f);
+			if (KEY_PRESSED(KEY::RBTN))
+				player->Rotate(mouseDelta.y, 0.0f, -mouseDelta.x);
 		}
 
 	}

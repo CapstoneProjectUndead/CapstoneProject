@@ -453,7 +453,6 @@ void CGameFramework::ProcessKeyboardMessage(HWND hWnd, UINT MessageID, WPARAM wP
 	}
 }
 
-POINT oldCursorPos;
 void CGameFramework::ProcessWindowMessage(HWND hWnd, UINT MessageID, WPARAM wParam, LPARAM lParam)
 {
 	switch (MessageID) {
@@ -465,12 +464,20 @@ void CGameFramework::ProcessWindowMessage(HWND hWnd, UINT MessageID, WPARAM wPar
 	}
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
+	{
 		::SetCapture(hWnd);
+		POINT oldCursorPos;
 		::GetCursorPos(&oldCursorPos);
+		CKeyMgr::GetInstance().SetOldMousePos(oldCursorPos);
+	}
 		break;
 	case WM_LBUTTONUP:
 	case WM_RBUTTONUP:
+	{
 		::ReleaseCapture();
+		Vec2 oldPos{ CKeyMgr::GetInstance().GetOldMousePos() };
+		SetCursorPos(oldPos.x, oldPos.y);
+	}
 		break;
 	case WM_MOUSEMOVE:
 		ProcessMouseMessage(hWnd, MessageID, wParam, lParam);
