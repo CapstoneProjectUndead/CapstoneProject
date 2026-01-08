@@ -93,6 +93,9 @@
     <ClInclude Include="macro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="GeometryLoader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -138,6 +141,9 @@
       <Filter>Network\Session</Filter>
     </ClCompile>
     <ClCompile Include="CKeyMgr.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

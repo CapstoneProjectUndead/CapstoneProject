@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "Timer.h"
 #include "CKeyMgr.h"
+#include "GeometryLoader.h"
 
 void CScene::ReleaseUploadBuffers()
 {
@@ -62,6 +63,10 @@ void CScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 	shader->CreateShader(device, graphics_root_signature.Get());
 	shader->BuildObjects(device, commandList);
 	shaders.push_back(std::move(shader));
+
+
+	// model load
+	//auto rootFrame = GeometryLoader::LoadGeometry("../Modeling/undead_char.bin");
 }
 
 void CScene::AnimateObjects(float elapsedTime)
