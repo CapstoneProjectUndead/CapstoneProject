@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "GameFramework.h"
 #include "Player.h"
-#include "CKeyMgr.h"
+#include "KeyManager.h"
 
 extern HWND ghWnd;
 
@@ -30,8 +30,8 @@ bool CGameFramework::OnCreate()
 	// 렌더링 게임 객체 생성
 	BuildObjects();
 
-	// 창우
-	CKeyMgr::GetInstance().Init();
+	// CKeyMgr 초기화
+	CKeyManager::GetInstance().Init();
 
 	return true;
 }
@@ -170,7 +170,7 @@ void CGameFramework::CreateCommandQueueAndList()
 	// 할당자 생성
 	ThrowIfFailed(d3d_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), (void**)&command_allocator));
 
-	//리스트 생성
+	// 리스트 생성
 	ThrowIfFailed(d3d_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(), NULL, __uuidof(ID3D12GraphicsCommandList), (void**)command_list.GetAddressOf()));
 
 	// 리스트가 생성되면 Open상태가 됨
@@ -343,8 +343,8 @@ void CGameFramework::FrameAdvance()
 {
 	timer.Tick(0.0f);
 
-	// 창우
-	CKeyMgr::GetInstance().Tick();
+	// 키 입력을 매 프레임 갱신
+	CKeyManager::GetInstance().Tick();
 
 	AnimateObjects();
 
@@ -468,14 +468,14 @@ void CGameFramework::ProcessWindowMessage(HWND hWnd, UINT MessageID, WPARAM wPar
 		::SetCapture(hWnd);
 		POINT oldCursorPos;
 		::GetCursorPos(&oldCursorPos);
-		CKeyMgr::GetInstance().SetOldMousePos(oldCursorPos);
+		CKeyManager::GetInstance().SetOldMousePos(oldCursorPos);
 	}
 		break;
 	case WM_LBUTTONUP:
 	case WM_RBUTTONUP:
 	{
 		::ReleaseCapture();
-		Vec2 oldPos{ CKeyMgr::GetInstance().GetOldMousePos() };
+		Vec2 oldPos{ CKeyManager::GetInstance().GetOldMousePos() };
 		SetCursorPos(oldPos.x, oldPos.y);
 	}
 		break;

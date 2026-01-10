@@ -87,7 +87,7 @@
     <ClInclude Include="ServerSession.h">
       <Filter>Network\Session</Filter>
     </ClInclude>
-    <ClInclude Include="CKeyMgr.h">
+    <ClInclude Include="KeyManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="macro.h">
@@ -137,7 +137,7 @@
     <ClCompile Include="ServerSession.cpp">
       <Filter>Network\Session</Filter>
     </ClCompile>
-    <ClCompile Include="CKeyMgr.cpp">
+    <ClCompile Include="KeyManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

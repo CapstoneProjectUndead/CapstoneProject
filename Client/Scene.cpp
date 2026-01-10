@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Timer.h"
-#include "CKeyMgr.h"
+#include "KeyManager.h"
 
 void CScene::ReleaseUploadBuffers()
 {
@@ -103,7 +103,7 @@ void CScene::ProcessInput()
 		player->Move(direction, CTimer::GetInstance().GetTimeElapsed());
 	}
 
-	CKeyMgr& keyManager{ CKeyMgr::GetInstance() };
+	CKeyManager& keyManager{ CKeyManager::GetInstance() };
 
 	if (KEY_PRESSED(KEY::LBTN) || KEY_PRESSED(KEY::RBTN)) {
 		SetCursor(NULL);
