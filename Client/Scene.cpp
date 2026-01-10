@@ -5,6 +5,7 @@
 #include "Timer.h"
 #include "CKeyMgr.h"
 #include "GeometryLoader.h"
+#include <iomanip>
 
 void CScene::ReleaseUploadBuffers()
 {
@@ -67,6 +68,13 @@ void CScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 
 	// model load
 	//auto rootFrame = GeometryLoader::LoadGeometry("../Modeling/undead_char.bin");
+	std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
+	std::ofstream txt("output.txt");
+
+	char ch;
+	while (bin.get(ch)) {
+		txt << ch;   // txt 파일에 문자 그대로 출력
+	}
 }
 
 void CScene::AnimateObjects(float elapsedTime)
