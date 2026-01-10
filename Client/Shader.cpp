@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Shader.h"
 #include "Object.h"
+#include "GeometryLoader.h"
 
 CShader::CShader()
 {
@@ -22,8 +23,8 @@ void CShader::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	auto object = std::make_unique<CObject>();
 	object->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
-	std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(device, commandList);
-	object->SetMesh(mesh);
+	auto rootFrame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
+	object->SetMesh(rootFrame->mesh);
 	objects.push_back(std::move(object));
 }
 

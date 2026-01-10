@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Mesh.h"
 
 // CDiffuseVertex
@@ -47,6 +47,32 @@ void CMesh::Render(ID3D12GraphicsCommandList* commandList)
 		// 렌더링(입력 조립기 작동)
 		commandList->DrawInstanced(vertex_num, 1, offset, 0);
 	}
+}
+
+void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CDiffuseVertex> vertices)
+{
+	vertex_num = num;
+	stride = sizeof(CDiffuseVertex);
+	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	// 삼각형 메쉬를 리소스로 생성
+	vertex_buffer = CreateBufferResource(device, commandList, vertices.data(), stride * vertex_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_upload_buffer.GetAddressOf());
+
+	// 정점 버퍼 뷰 설정
+	vertex_buffer_view.BufferLocation = vertex_buffer->GetGPUVirtualAddress();
+	vertex_buffer_view.StrideInBytes = stride;
+	vertex_buffer_view.SizeInBytes = stride * vertex_num;
+}
+
+void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices)
+{
+	index_num = num;
+
+	index_buffer = CreateBufferResource(device, commandList, indices.data(), sizeof(UINT) * index_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, vertex_upload_buffer.GetAddressOf());
+
+	index_buffer_view.BufferLocation = index_buffer->GetGPUVirtualAddress();
+	index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
+	index_buffer_view.SizeInBytes = sizeof(UINT) * index_num;
 }
 
 // CTriangleMesh
