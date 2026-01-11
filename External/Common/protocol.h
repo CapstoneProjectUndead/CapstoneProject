@@ -19,6 +19,22 @@ constexpr int16 _S_USERLIST = 5;
 
 #pragma pack (push, 1)
 
+struct C_LOGIN : public PacketHeader
+{
+	//char	id[ID_SIZE];
+	//char	password[PW_SIZE];
+
+	C_LOGIN() : PacketHeader(sizeof(C_LOGIN), _C_LOGIN) {}
+};
+
+struct S_LOGIN : public PacketHeader
+{
+	uint64	id;
+	bool	success;
+	//char	name[NAME_SIZE];
+
+	S_LOGIN() : PacketHeader(sizeof(S_LOGIN), _S_LOGIN) {}
+};
 
 
 #pragma pack (pop)

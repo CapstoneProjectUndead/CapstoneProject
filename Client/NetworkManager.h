@@ -2,19 +2,19 @@
 #include <memory>
 
 class TcpClientService;
-class ServerSession;
+class CServerSession;
 
-class NetworkManager
+class CNetworkManager
 {
 public:
-	NetworkManager();
-	~NetworkManager();
+	CNetworkManager();
+	~CNetworkManager();
 
 	void ServiceStart();
 	void Update();
 
 private:
 	std::shared_ptr<TcpClientService>	client_service;
-	std::shared_ptr<ServerSession>		server_session;
+	std::shared_ptr<CServerSession>		server_session;
 };
 

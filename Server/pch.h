@@ -82,6 +82,7 @@ using std::make_pair;
 #include <ServerEngine/BufferReader.h>
 
 #include <protocol.h>
+#include "ClientPacketHandler.h"
 
 //extern DBConnector g_db;
 

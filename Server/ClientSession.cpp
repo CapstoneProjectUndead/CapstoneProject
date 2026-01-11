@@ -1,23 +1,24 @@
 #include "pch.h"
 #include "ClientSession.h"
 
-ClientSession::ClientSession()
+CClientSession::CClientSession()
 {
 }
 
-ClientSession::~ClientSession()
+CClientSession::~CClientSession()
 {
 }
 
-void ClientSession::OnConnected()
+void CClientSession::OnConnected()
 {
 	cout << "ClientSession 접속 성공!" << endl;
 }
 
-void ClientSession::OnDisconnected()
+void CClientSession::OnDisconnected()
 {
 }
 
-void ClientSession::ProcessPacket(Session*, char*, int32 pktSize)
+void CClientSession::ProcessPacket(std::shared_ptr<Session> session, char* buf, int32 pktSize)
 {
+	CClientPacketHandler::HandlePacket(session, buf, pktSize);
 }

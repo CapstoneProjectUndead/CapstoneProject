@@ -31,6 +31,9 @@
     <Filter Include="Network\NetworkManager">
       <UniqueIdentifier>{69db58d7-23a5-4730-957a-3958555b4abf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Network\PacketHandler">
+      <UniqueIdentifier>{4f103850-1b48-4beb-b19d-f3143b8db5ca}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -93,6 +96,9 @@
     <ClInclude Include="macro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ServerPacketHandler.h">
+      <Filter>Network\PacketHandler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -139,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="KeyManager.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerPacketHandler.cpp">
+      <Filter>Network\PacketHandler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
