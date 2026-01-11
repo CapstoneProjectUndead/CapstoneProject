@@ -4,7 +4,6 @@ public:
 	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, color{ XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) } {}
 	CVertex(XMFLOAT3 position, XMFLOAT4 color) : position{ position }, color{color} {}
 
-protected:
 	XMFLOAT3 position{};
 	XMFLOAT4 color{};
 };
@@ -13,7 +12,7 @@ class CDiffuseVertex : public CVertex{
 public:
 	CDiffuseVertex();
 	CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex);
-protected:
+
 	XMFLOAT2 tex{};
 };
 
@@ -38,7 +37,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*);
 
 	// 불러온 모델 데이터 저장용 함수
-	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CDiffuseVertex> vertices);
+	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CVertex> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
 protected:
 	// 정점 버퍼

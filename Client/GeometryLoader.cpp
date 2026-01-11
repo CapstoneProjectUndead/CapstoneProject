@@ -39,58 +39,94 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
 
     auto mesh = std::make_shared<CMesh>();
 
-    // 이름 읽기
     UINT vertexNum;
-    file.read((char*)&vertexNum, sizeof(UINT));
+    file.read(reinterpret_cast<char*>(&vertexNum), sizeof(UINT));
 
-    // 정점 데이터 임시 저장
-    std::vector<XMFLOAT3> positions(vertexNum);
-    std::vector<XMFLOAT4> colors(vertexNum);
-    std::vector<XMFLOAT2> uv0(vertexNum);
-    std::vector<XMFLOAT2> uv1(vertexNum);
-    std::vector<XMFLOAT3> normals(vertexNum);
+    // 3) 임시 버퍼들
+    std::vector<XMFLOAT3> positions;
+    std::vector<XMFLOAT4> colors;
+    std::vector<UINT> indices;
 
-    // <Bounds>:
-    if (br.FindTag("<Bounds>:"))
-    {
-        auto boundsRaw = br.ReadUntilNextTag();
-        //mesh->LoadBounds(boundsRaw);
-    }
-
-    // 3) Positions
+    // --- Positions ---
     if (br.FindTag("<Positions>:"))
     {
-        file.read((char*)positions.data(), sizeof(XMFLOAT3) * vertexNum);
+        UINT count = 0;
+        file.read(reinterpret_cast<char*>(&count), sizeof(UINT));
+
+        positions.resize(count);
+        if (count > 0)
+            file.read(reinterpret_cast<char*>(positions.data()), sizeof(XMFLOAT3) * count);
     }
 
-    // 4) Colors
+    // --- Colors ---
     if (br.FindTag("<Colors>:"))
     {
-        file.read((char*)colors.data(), sizeof(XMFLOAT4) * vertexNum);
+        UINT count = 0;
+        file.read(reinterpret_cast<char*>(&count), sizeof(UINT));
+
+        colors.resize(count);
+        if (count > 0)
+            file.read(reinterpret_cast<char*>(colors.data()), sizeof(XMFLOAT4) * count);
     }
 
-    // 5) UV0
-    if (br.FindTag("<TextureCoords0>:"))
+    if (br.FindTag("<SubMeshes>:"))
     {
-        br.Stream().read((char*)uv0.data(), sizeof(XMFLOAT2) * vertexNum);
-    }
+        UINT subMeshCount = 0;
+        file.read((char*)&subMeshCount, sizeof(UINT));
 
+        // 우리는 일단 첫 번째 SubMesh만 읽는다고 가정
+        if (subMeshCount > 0)
+        {
+            if (br.FindTag("<SubMesh>:"))
+            {
+                UINT subMeshIndex = 0;
+                file.read((char*)&subMeshIndex, sizeof(UINT));  // Unity에서 WriteIntegers의 n
+
+                UINT indexCount = 0;
+                file.read((char*)&indexCount, sizeof(UINT));    // 인덱스 개수
+
+                indices.resize(indexCount);
+                if (indexCount > 0)
+                    file.read((char*)indices.data(), sizeof(UINT) * indexCount);
+            }
+        }
+    }
 
     // </Mesh> 태그 스킵
     br.FindTag("</Mesh>");
 
-    std::vector<CDiffuseVertex> vertices(vertexNum);
+    // 최종 정점 배열 조립
+    std::vector<CVertex> vertices(vertexNum);
 
-    for (int i = 0; i < vertexNum; ++i)
+    for (UINT i = 0; i < vertexNum; ++i)
     {
-        XMFLOAT3 pos = positions.empty() ? XMFLOAT3(0, 0, 0) : positions[i];
-        XMFLOAT4 col = colors.empty() ? XMFLOAT4(1, 1, 1, 1) : colors[i];
-        XMFLOAT2 uv = uv0.empty() ? XMFLOAT2(0, 0) : uv0[i];
+        // Position
+        if (i < positions.size())
+            vertices[i].position = positions[i];
+        else
+            vertices[i].position = XMFLOAT3(0, 0, 0); // 기본값 (필요시 변경)
 
-        vertices[i] = CDiffuseVertex(pos, col, uv);
+        // Color
+        if (i < colors.size())
+            vertices[i].color = colors[i];
+        else
+            vertices[i].color = XMFLOAT4(1, 1, 1, 1); // 기본값 (white)
     }
 
+    // 임시로 사이즈 키움
+    for (UINT i = 0; i < vertexNum; ++i)
+    {
+        vertices[i].position.x *= 100.0f;
+        vertices[i].position.y *= 100.0f;
+        vertices[i].position.z *= 100.0f;
+    }
+
+
+    // vertex, index gpu에 set
     mesh->SetVertices(device, commandList, vertexNum, vertices);
+
+    if (!indices.empty())
+        mesh->SetIndices(device, commandList, indices.size(), indices);
 
     return mesh;
 }

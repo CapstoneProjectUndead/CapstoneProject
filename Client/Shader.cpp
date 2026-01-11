@@ -20,12 +20,23 @@ void CShader::ReleaseUploadBuffer()
 
 void CShader::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	auto object = std::make_unique<CObject>();
-	object->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	{
+		auto object = std::make_unique<CObject>();
+		object->SetPosition(XMFLOAT3(-2.0f, 1.0f, 0.0f));
 
-	auto rootFrame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
-	object->SetMesh(rootFrame->mesh);
-	objects.push_back(std::move(object));
+		auto rootFrame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
+		object->SetMesh(rootFrame->mesh);
+		objects.push_back(std::move(object));
+	}
+
+	{
+		auto object = std::make_unique<CObject>();
+		object->SetPosition(XMFLOAT3(2.0f, 0.0f, 0.0f));
+		std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(device, commandList);
+
+		object->SetMesh(mesh);
+		objects.push_back(std::move(object));
+	}
 }
 
 D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()

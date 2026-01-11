@@ -49,10 +49,10 @@ void CMesh::Render(ID3D12GraphicsCommandList* commandList)
 	}
 }
 
-void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CDiffuseVertex> vertices)
+void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CVertex> vertices)
 {
 	vertex_num = num;
-	stride = sizeof(CDiffuseVertex);
+	stride = sizeof(CVertex);
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	// 삼각형 메쉬를 리소스로 생성
@@ -68,7 +68,7 @@ void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 {
 	index_num = num;
 
-	index_buffer = CreateBufferResource(device, commandList, indices.data(), sizeof(UINT) * index_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, vertex_upload_buffer.GetAddressOf());
+	index_buffer = CreateBufferResource(device, commandList, indices.data(), sizeof(UINT) * index_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, index_upload_buffer.GetAddressOf());
 
 	index_buffer_view.BufferLocation = index_buffer->GetGPUVirtualAddress();
 	index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
