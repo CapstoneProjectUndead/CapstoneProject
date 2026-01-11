@@ -26,8 +26,6 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 HWND ghWnd;
 CGameFramework gGameFramework;
 
-// 서버 초기화를 담당하는 전역 객체
-CNetworkManager gNetWorkService;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -128,7 +126,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     gGameFramework.OnCreate();
 
     // 서버에 연결하기 위한 초기 작업
-    gNetWorkService.ServiceStart();
+    CNetworkManager::GetInstance().ServiceStart();
 
     ShowWindow(ghWnd, nCmdShow);
     UpdateWindow(ghWnd);

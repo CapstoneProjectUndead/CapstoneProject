@@ -6,9 +6,17 @@ class CServerSession;
 
 class CNetworkManager
 {
-public:
+private:
 	CNetworkManager();
+	CNetworkManager(const CNetworkManager&) = delete;
+
+public:
 	~CNetworkManager();
+
+	static CNetworkManager& GetInstance() {
+		static CNetworkManager instance;
+		return instance;
+	}
 
 	void ServiceStart();
 	void Update();
