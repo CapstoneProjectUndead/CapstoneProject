@@ -51,7 +51,7 @@ protected:
 	virtual void			OnConnected() {}
 	virtual void			OnSend(int32 len) {}
 	virtual void			OnDisconnected() {}
-	virtual void			ProcessPacket(Session*, char*, int32 pktSize) abstract;
+	virtual void			ProcessPacket(std::shared_ptr<Session>, char*, int32 pktSize) abstract;
 
 private:
 	std::mutex					lock;
