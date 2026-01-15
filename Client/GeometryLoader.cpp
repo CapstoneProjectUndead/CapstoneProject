@@ -113,15 +113,6 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
             vertices[i].color = XMFLOAT4(1, 1, 1, 1); // 기본값 (white)
     }
 
-    // 임시로 사이즈 키움
-    for (UINT i = 0; i < vertexNum; ++i)
-    {
-        vertices[i].position.x *= 100.0f;
-        vertices[i].position.y *= 100.0f;
-        vertices[i].position.z *= 100.0f;
-    }
-
-
     // vertex, index gpu에 set
     mesh->SetVertices(device, commandList, vertexNum, vertices);
 
