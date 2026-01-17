@@ -32,6 +32,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <memory>
 #include <mutex>
 #include <atomic>
 #include <thread>
@@ -63,6 +64,7 @@ using std::thread;
 using std::function;
 using std::lock_guard;
 using std::enable_shared_from_this;
+using std::static_pointer_cast;
 
 using std::shared_ptr;
 using std::weak_ptr;
@@ -71,7 +73,6 @@ using std::make_shared;
 using std::make_pair;
 
 #include <ServerEngine/global.h>
-#include <ServerEngine/externs.h>
 #include <ServerEngine/ThreadManager.h>
 
 #include <ServerEngine/Session.h>
@@ -81,6 +82,7 @@ using std::make_pair;
 #include <ServerEngine/BufferWriter.h>
 #include <ServerEngine/BufferReader.h>
 
+#include <Struct.h>
 #include <protocol.h>
 #include "ClientPacketHandler.h"
 

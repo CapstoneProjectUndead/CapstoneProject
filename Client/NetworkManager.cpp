@@ -1,15 +1,8 @@
 #include "stdafx.h"
 #include "NetworkManager.h"
-#include "Core.h"
-
-#include <ServerEngine/global.h>
-#include <ServerEngine/ThreadManager.h>
-#include <ServerEngine/Service.h>
 #include "ServerSession.h"
-#include "ServerEngine/SocketHelper.h"
 #include "ServerPacketHandler.h"
 
-#include <protocol.h>
 
 CNetworkManager::CNetworkManager()
 {
@@ -40,7 +33,7 @@ void CNetworkManager::ServiceStart()
 	ASSERT_CRASH(client_service->StartClientService());
 }
 
-void CNetworkManager::Update()
+void CNetworkManager::Tick(float time)
 {
-    client_service->GetIocpCore().WorkerThreadLoop();
+    client_service->GetIocpCore().WorkerThreadLoop(time);
 }

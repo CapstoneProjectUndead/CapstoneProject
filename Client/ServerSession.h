@@ -1,6 +1,4 @@
 #pragma once
-#include "Core.h"
-#include <ServerEngine/global.h>
 #include <ServerEngine/Session.h>
 
 class CServerSession :

@@ -1,6 +1,8 @@
 #pragma once
 #include <ServerEngine\Session.h>
 
+class CPlayer;
+
 class CClientSession :
     public Session
 {
@@ -13,5 +15,11 @@ public:
 	virtual void			OnDisconnected() override;
 
 	virtual void			ProcessPacket(std::shared_ptr<Session>, char*, int32 pktSize) override;
+
+public:
+	void SetPlayer(shared_ptr<CPlayer> pl) { player = pl; }
+
+private:
+	shared_ptr<CPlayer>		player;
 };
 

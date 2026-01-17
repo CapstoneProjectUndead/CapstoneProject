@@ -2,6 +2,10 @@
 #include "GameFramework.h"
 #include "Player.h"
 #include "KeyManager.h"
+#include "NetworkManager.h"
+
+#include "SceneManager.h"
+#include "TestScene.h"
 
 extern HWND ghWnd;
 
@@ -30,7 +34,7 @@ bool CGameFramework::OnCreate()
 	// 렌더링 게임 객체 생성
 	BuildObjects();
 
-	// CKeyMgr 초기화
+	// CKeyManager 초기화
 	CKeyManager::GetInstance().Init();
 
 	return true;
@@ -254,8 +258,15 @@ void CGameFramework::BuildObjects()
 	command_list->Reset(command_allocator.Get(), NULL);
 
 	// 씬 객체 생성
-	now_scene = std::make_unique<CScene>();
-	if (now_scene) now_scene->BuildObjects(d3d_device.Get(), command_list.Get());
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST] = std::make_unique<CTestScene>();
+
+	// 방금 만든 Test Scene을 Active Scene으로 설정
+	CScene* testScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
+	CSceneManager::GetInstance().SetActiveScene(testScene);
+
+	// Scene에서 생성할 오브젝트들 생성
+	if (testScene) 
+		testScene->BuildObjects(d3d_device.Get(), command_list.Get());
 
 	// 그래픽 명령 리스트 명령 큐에 추가
 	command_list->Close();
@@ -266,19 +277,14 @@ void CGameFramework::BuildObjects()
 	waitForGpuComplete();
 
 	//그래픽 리소스들을 생성하는 과정에 생성된 업로드 버퍼들을 소멸시킨다.
-	if (now_scene) now_scene->ReleaseUploadBuffers();
+	if (testScene) 
+		testScene->ReleaseUploadBuffers();
 
 	timer.Reset();
 }
 
 void CGameFramework::ReleaseObjects()
 {
-}
-
-
-void CGameFramework::AnimateObjects()
-{
-	if (now_scene) now_scene->AnimateObjects(timer.GetTimeElapsed());
 }
 
 void CGameFramework::waitForGpuComplete()
@@ -341,17 +347,39 @@ void CGameFramework::MoveToNextFrame()
 
 void CGameFramework::FrameAdvance()
 {
+	CommandBegin();
+
+	// Update & 렌더링
+	Update();
+	Render();
+	
+	CommandEnd();
+}
+
+void CGameFramework::Update()
+{
 	timer.Tick(0.0f);
 
-	// 키 입력을 매 프레임 갱신
+	// 키 입력 처리
 	CKeyManager::GetInstance().Tick();
 
-	AnimateObjects();
+	// 네트워크 패킷 처리
+	CNetworkManager::GetInstance().Tick(0);
 
+	// Scene 오브젝트 Update
+	CSceneManager::GetInstance().Update();
+}
+
+void CGameFramework::Render()
+{
+	CSceneManager::GetInstance().Render(command_list.Get());
+}
+
+void CGameFramework::CommandBegin()
+{
 	// 명령 리셋
 	ThrowIfFailed(command_allocator->Reset());
 	ThrowIfFailed(command_list->Reset(command_allocator.Get(), NULL));
-
 
 	// 뷰포트 씨저 사각형 설정
 	command_list->RSSetViewports(1, &viewport);
@@ -384,17 +412,21 @@ void CGameFramework::FrameAdvance()
 
 	// 원하는 값으로 깊이 스텐실 지우기
 	command_list->ClearDepthStencilView(dsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, NULL);
+}
 
-	// 렌더링 코드
-	if (now_scene) {
-		now_scene->ProcessInput();
-		now_scene->Render(command_list.Get());
-	}
+void CGameFramework::CommandEnd()
+{
+	D3D12_RESOURCE_BARRIER resourceBarrier{};
 
 	// 현재 렌더 타겟에 대한 렌더링이 끝나기를 기다림. GPU가 버퍼를 더 이상 사용하지 않으면 렌더 타겟 -> 프레젠트 상태로 변경
+	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	resourceBarrier.Transition.pResource =
+		render_target_buffers[swap_chain_buffer_index].Get();
 	resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
 	command_list->ResourceBarrier(1, &resourceBarrier);
 
 	ThrowIfFailed(command_list->Close());

@@ -16,17 +16,27 @@ public:
 	ID3D12RootSignature* GetGraphicsRootSignature() { return graphics_root_signature.Get(); }
 	virtual ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*);
 
-	virtual void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*);
+	virtual void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) abstract;
 
 	void AnimateObjects(float);
-	virtual void ProcessInput();
 
 	// 멤버 변수 set
 	virtual void Render(ID3D12GraphicsCommandList*);
+	virtual void Update(float elapsedTime);
+
+	std::shared_ptr<CPlayer> GetMyPlayer() const { return player; }
+	void SetPlayer(std::shared_ptr<CPlayer> _player) { player = _player; }
+
+	void SetCamera(CCamera* _camera) { camera = _camera; }
+
+	std::vector<std::shared_ptr<CPlayer>>& GetOtherPlayers() { return other_players; }
+
 protected:
 	std::vector<std::shared_ptr<CShader>> shaders{};
-	std::shared_ptr<CPlayer> player;
-	CCamera* camera;	// 참조용
+	std::shared_ptr<CPlayer> player;	// 내 플레이어
+	CCamera* camera = nullptr;	// 참조용
+
+	std::vector<std::shared_ptr<CPlayer>> other_players; // 다른 플레이어들
 
 	ComPtr<ID3D12RootSignature> graphics_root_signature{};
 };

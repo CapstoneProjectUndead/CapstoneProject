@@ -1,10 +1,4 @@
 #pragma once
-#include "Core.h"
-
-#include "ServerSession.h"
-#include <ServerEngine/SendBuffer.h>
-
-#include <protocol.h>
 
 using PacketHandlerFunc = std::function<bool(std::shared_ptr<Session>, char*, int32)>;
 extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -17,11 +11,17 @@ enum : uint16
 	PKT_C_LOGIN = 2,
 	PKT_S_LOGIN = 3,
 	PKT_S_LOGINFAIL = 4,
+	PKT_S_MYPLAYER = 5,
+	PKT_S_ADDPLAYER = 6,
+	PKT_S_PLAYERLIST = 7,
 };
 
 // Custom Handlers
 bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len);
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt);
+bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_MyPlayer& pkt);
+bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt);
+bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt);
 
 class CServerPacketHandler
 {
@@ -32,6 +32,9 @@ public:
 			GPacketHandler[i] = Handle_INVALID;
 
 		GPacketHandler[PKT_S_LOGIN] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_LOGIN>(Handle_S_LOGIN, session, buffer, len); };
+		GPacketHandler[PKT_S_MYPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MyPlayer>(Handle_S_MYPLAYER, session, buffer, len); };
+		GPacketHandler[PKT_S_ADDPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddPlayer>(Handle_S_ADDPLAYER, session, buffer, len); };
+		GPacketHandler[PKT_S_PLAYERLIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PLAYER_LIST>(Handle_S_PLAYERLIST, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)
@@ -43,7 +46,7 @@ public:
 	template<typename Packet>
 	static SendBufferRef MakeSendBuffer(Packet pkt)
 	{
-		SendBufferRef sendBuffer = make_shared<SendBuffer>(pkt.GetSize());
+		SendBufferRef sendBuffer = std::make_shared<SendBuffer>(pkt.GetSize());
 		sendBuffer->CopyData(&pkt, pkt.GetSize());
 		sendBuffer->Close(pkt.GetSize());
 

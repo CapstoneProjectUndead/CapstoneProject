@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "Camera.h"
+#include "Timer.h"
+#include "KeyManager.h"
 
 extern HWND ghWnd;
 
@@ -30,6 +32,9 @@ CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 
 void CPlayer::Update(float elapsedTime)
 {
+	// 입력처리
+	ProcessInput();
+
 	Move(velocity);
 
 	camera->Update(position, elapsedTime);
@@ -42,10 +47,47 @@ void CPlayer::Update(float elapsedTime)
 	float deceleration = friction * elapsedTime;
 	if (deceleration > length) deceleration = length;
 	XMStoreFloat3(&velocity, XMVectorAdd(xmvVelocity, XMVectorScale(xmvDeceleration, deceleration)));
+
+	// 여기서 플레이어 위치와 방향 정보를 캐싱
+	{
+		C_Move movePkt;
+		movePkt.info.x = position.x;
+		movePkt.info.y = position.y;
+		movePkt.info.z = position.z;
+	}
 }
 
 void CPlayer::Move(const XMFLOAT3 shift)
 {
 	position = Vector3::Add(position, shift);
 	if (camera) camera->Move(shift);
+}
+
+void CPlayer::ProcessInput()
+{
+	XMFLOAT3 direction{};
+
+	if (KEY_PRESSED(KEY::W)) direction.z++;
+	if (KEY_PRESSED(KEY::S)) direction.z--;
+	if (KEY_PRESSED(KEY::A)) direction.x--;
+	if (KEY_PRESSED(KEY::D)) direction.x++;
+
+	if (direction.x != 0 || direction.z != 0) {
+		Move(direction, CTimer::GetInstance().GetTimeElapsed());
+	}
+
+	CKeyManager& keyManager{ CKeyManager::GetInstance() };
+
+	if (KEY_PRESSED(KEY::LBTN) || KEY_PRESSED(KEY::RBTN)) {
+		SetCursor(NULL);
+		Vec2 prevMousePos{ keyManager.GetPrevMousePos() };
+		Vec2 mouseDelta{ (keyManager.GetMousePos() - prevMousePos) / 3.0f };
+		if (mouseDelta.x || mouseDelta.y)
+		{
+			if (KEY_PRESSED(KEY::LBTN))
+				Rotate(mouseDelta.y, mouseDelta.x, 0.0f);
+			if (KEY_PRESSED(KEY::RBTN))
+				Rotate(mouseDelta.y, 0.0f, -mouseDelta.x);
+		}
+	}
 }

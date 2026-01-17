@@ -11,6 +11,8 @@ public:
 	void Update(float elapsedTime) override;
 	void Move(const XMFLOAT3 shift) override;
 
+	void ProcessInput();
+
 	CCamera* GetCameraPtr() const { return camera.get(); }
 protected:
 	std::shared_ptr<CCamera> camera;

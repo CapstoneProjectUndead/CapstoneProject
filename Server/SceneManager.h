@@ -1,6 +1,7 @@
 #pragma once
+// ¼­¹öÂÊ SceneManager
 
-class CScene;
+#include "Scene.h"
 
 enum class SCENE_TYPE
 {
@@ -27,8 +28,8 @@ public:
     }
 
 public:
+    void    Initialize();
     void    Update();
-    void    Render(ID3D12GraphicsCommandList* commandList);
 
     std::unique_ptr<CScene>* GetScenes() { return scenes; }
 

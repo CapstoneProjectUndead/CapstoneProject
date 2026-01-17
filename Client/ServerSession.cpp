@@ -12,6 +12,10 @@ CServerSession::~CServerSession()
 
 void CServerSession::OnConnected()
 {
+	C_LOGIN loginPkt;
+
+	SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+	DoSend(sendBuffer);
 }
 
 void CServerSession::OnDisconnected()

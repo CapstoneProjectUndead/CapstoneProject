@@ -19,7 +19,7 @@ public:
 	}
 
 	void ServiceStart();
-	void Update();
+	void Tick(float time);
 
 private:
 	std::shared_ptr<TcpClientService>	client_service;
