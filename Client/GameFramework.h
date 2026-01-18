@@ -34,13 +34,23 @@ public:
 
 	// 사용자 입력, 애니메이션, 렌더링 함수
 	//void ProcessInput();
-	void AnimateObjects();
+	//void AnimateObjects();
 	void FrameAdvance();
 
 	//CPU, GPU 동기화 함수
 	void ProcessMouseMessage(HWND , UINT , WPARAM , LPARAM );
 	void ProcessKeyboardMessage(HWND , UINT , WPARAM , LPARAM );
 	void ProcessWindowMessage(HWND, UINT, WPARAM, LPARAM);
+	
+	void Update();
+	void Render();
+
+	void CommandBegin();
+	void CommandEnd();
+
+	ComPtr<ID3D12Device>				GetDevice() { return d3d_device; }
+	ComPtr<ID3D12GraphicsCommandList>	GetCommandList() { return command_list; }
+
 private:
 	int client_width{FRAME_BUFFER_WIDTH};
 	int client_height{FRAME_BUFFER_HEIGHT};
@@ -88,7 +98,5 @@ private:
 	// Timer 관련
 	CTimer& timer{CTimer::GetInstance()};
 	_TCHAR frame_rate_str[50];
-
-	std::unique_ptr<CScene> now_scene{};
 };
 

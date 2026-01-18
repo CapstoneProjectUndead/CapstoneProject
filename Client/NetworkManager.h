@@ -2,19 +2,27 @@
 #include <memory>
 
 class TcpClientService;
-class ServerSession;
+class CServerSession;
 
-class NetworkManager
+class CNetworkManager
 {
+private:
+	CNetworkManager();
+	CNetworkManager(const CNetworkManager&) = delete;
+
 public:
-	NetworkManager();
-	~NetworkManager();
+	~CNetworkManager();
+
+	static CNetworkManager& GetInstance() {
+		static CNetworkManager instance;
+		return instance;
+	}
 
 	void ServiceStart();
-	void Update();
+	void Tick(float time);
 
 private:
 	std::shared_ptr<TcpClientService>	client_service;
-	std::shared_ptr<ServerSession>		server_session;
+	std::shared_ptr<CServerSession>		server_session;
 };
 
