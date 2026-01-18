@@ -1,9 +1,10 @@
 #include "stdafx.h"
-#include "Player.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Timer.h"
 #include "KeyManager.h"
+#include "Player.h"
+#include "MyPlayer.h"
 
 void CScene::ReleaseUploadBuffers()
 {
@@ -51,8 +52,8 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device* device)
 
 void CScene::AnimateObjects(float elapsedTime)
 {
-	if (player) {
-		player->Update(elapsedTime);
+	if (my_player) {
+		my_player->Update(elapsedTime);
 	}
 
 	for (const auto& obj : objects) {
@@ -84,9 +85,9 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 		shader->Render(commandList);
 	}
 
-	if (player) {
-		player->UpdateShaderVariables(commandList);
-		player->Render(commandList);
+	if (my_player) {
+		my_player->UpdateShaderVariables(commandList);
+		my_player->Render(commandList);
 	}
 
 	for (const auto& obj : objects) {

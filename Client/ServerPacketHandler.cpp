@@ -5,6 +5,7 @@
 #include "SceneManager.h"
 #include "TestScene.h"
 #include "Player.h"
+#include "MyPlayer.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -25,13 +26,13 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 
 bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_MyPlayer& pkt)
 {
-	std::shared_ptr<CPlayer> player = std::make_shared<CPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-	player->SetID(pkt.info.id);
-	player->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	myPlayer->SetID(pkt.info.id);
+	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-	scene->SetPlayer(player);
-	scene->SetCamera(player->GetCameraPtr());
+	scene->SetPlayer(myPlayer);
+	scene->SetCamera(myPlayer->GetCameraPtr());
 
 	return true;
 }

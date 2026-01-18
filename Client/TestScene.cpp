@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TestScene.h"
 #include "Player.h"
+#include "MyPlayer.h"
 
 CTestScene::CTestScene()
 {
@@ -13,8 +14,8 @@ CTestScene::~CTestScene()
 void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	// 플레이어 생성
-	//player = std::make_shared<CPlayer>(device, commandList);
-	//camera = player->GetCameraPtr();
+	//my_player = std::make_shared<CMyPlayer>(device, commandList);
+	//camera = my_player->GetCameraPtr();
 
 	// create graphics rootsignature
 	graphics_root_signature = CreateGraphicsRootSignature(device);

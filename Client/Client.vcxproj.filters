@@ -40,6 +40,9 @@
     <Filter Include="Scene\TestScene">
       <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\MyPlayer">
+      <UniqueIdentifier>{e06fed7c-dc95-44c6-a868-e3b3c408ece7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -117,6 +120,9 @@
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
+    <ClInclude Include="MyPlayer.h">
+      <Filter>Object\MyPlayer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -172,6 +178,9 @@
     </ClCompile>
     <ClCompile Include="TestScene.cpp">
       <Filter>Scene\TestScene</Filter>
+    </ClCompile>
+    <ClCompile Include="MyPlayer.cpp">
+      <Filter>Object\MyPlayer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

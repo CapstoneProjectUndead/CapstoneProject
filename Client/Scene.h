@@ -2,6 +2,7 @@
 #include "Shader.h"
 
 class CPlayer;
+class CMyPlayer;
 class CCamera;
 
 class CScene
@@ -24,17 +25,17 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
-	std::shared_ptr<CPlayer> GetMyPlayer() const { return player; }
-	void SetPlayer(std::shared_ptr<CPlayer> _player) { player = _player; }
+	std::shared_ptr<CMyPlayer> GetMyPlayer() const { return my_player; }
+	void SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }
 
 	void SetCamera(CCamera* _camera) { camera = _camera; }
 
 	std::vector<std::shared_ptr<CPlayer>>& GetOtherPlayers() { return objects; }
 
 protected:
-	std::vector<std::shared_ptr<CShader>> shaders{};
-	std::shared_ptr<CPlayer> player;	// 내 플레이어
-	CCamera* camera = nullptr;	// 참조용
+	std::vector<std::shared_ptr<CShader>>	shaders{};
+	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어
+	CCamera*								camera = nullptr;	// 참조용
 
 	std::vector<std::shared_ptr<CPlayer>> objects; // 다른 플레이어 or 오브젝트
 
