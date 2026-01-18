@@ -11,9 +11,10 @@ enum : uint16
 	PKT_C_LOGIN = 2,
 	PKT_S_LOGIN = 3,
 	PKT_S_LOGINFAIL = 4,
-	PKT_S_MYPLAYER = 5,
+	PKT_S_SPAWNPLAYER = 5,
 	PKT_S_ADDPLAYER = 6,
 	PKT_S_PLAYERLIST = 7,
+	pKT_S_REMOVEPLAYER = 8,
 };
 
 // Custom Handlers

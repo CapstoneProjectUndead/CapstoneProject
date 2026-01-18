@@ -95,3 +95,21 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 		obj->Render(commandList);
 	}
 }
+
+void CScene::EnterScene(std::shared_ptr<CObject> obj, UINT id)
+{
+	id_To_Index[id] = objects.size();
+	objects.push_back(obj);
+}
+
+void CScene::LeaveScene(UINT id)
+{
+	UINT idx = id_To_Index[id];
+	UINT last = objects.size() - 1;
+
+	std::swap(objects[idx], objects[last]);
+	id_To_Index[objects[idx]->GetID()] = idx;
+
+	objects.pop_back();
+	id_To_Index.erase(id);
+}

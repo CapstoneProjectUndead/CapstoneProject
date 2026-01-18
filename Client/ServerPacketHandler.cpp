@@ -24,7 +24,7 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	return true;
 }
 
-bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_MyPlayer& pkt)
+bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 	myPlayer->SetID(pkt.info.id);
@@ -44,13 +44,15 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-	scene->GetOtherPlayers().push_back(otherPlayer);
+	scene->EnterScene(otherPlayer, otherPlayer->GetID());
 
 	return true;
 }
 
 bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 {
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+
 	S_PLAYER_LIST::PlayerList userList = pkt.GetPlayerList();
 
 	for (int i = 0; i < pkt.player_count; ++i) {
@@ -65,7 +67,24 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
 		// Active Scene에 다른 유저 입장
-		CSceneManager::GetInstance().GetActiveScene()->GetOtherPlayers().push_back(otherPlayer);
+		scene->EnterScene(otherPlayer, otherPlayer->GetID());
+	}
+
+	return true;
+}
+
+bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt)
+{
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+
+	for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
+		CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
+		if (scene != nullptr) {
+			for (auto& player : scene->GetObjects()) {
+				if (player->GetID() == pkt.info.id)
+					scene->LeaveScene(player->GetID());
+			}
+		}
 	}
 
 	return true;

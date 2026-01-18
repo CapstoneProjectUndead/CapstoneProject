@@ -37,13 +37,13 @@ bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
 
 	// 지금 접속한 유저에게 로그인 허락 패킷 보냄
 	{
-		S_MyPlayer playerPkt;
+		S_SpawnPlayer playerPkt;
 		playerPkt.info.id = player->GetID();
 		playerPkt.info.x = player->GetPosition().x;
 		playerPkt.info.y = player->GetPosition().y;
 		playerPkt.info.z = player->GetPosition().z;
 
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_MyPlayer>(playerPkt);
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_SpawnPlayer>(playerPkt);
 		session->DoSend(sendBuffer);
 	}
 
