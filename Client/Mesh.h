@@ -1,10 +1,9 @@
-﻿#pragma once
+#pragma once
 class CVertex {
 public:
 	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, color{ XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) } {}
 	CVertex(XMFLOAT3 position, XMFLOAT4 color) : position{ position }, color{color} {}
 
-protected:
 	XMFLOAT3 position{};
 	XMFLOAT4 color{};
 };
@@ -14,7 +13,6 @@ public:
 	CDiffuseVertex();
 	CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex);
 
-protected:
 	XMFLOAT2 tex{};
 };
 
@@ -31,11 +29,16 @@ protected:
 class CMesh
 {
 public:
+	CMesh() {}
 	CMesh(ID3D12Device*, ID3D12GraphicsCommandList*);
 
 	void ReleaseUploadBuffer();
 
 	virtual void Render(ID3D12GraphicsCommandList*);
+
+	// 불러온 모델 데이터 저장용 함수
+	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CVertex> vertices);
+	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};

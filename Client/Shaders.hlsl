@@ -3,7 +3,6 @@ cbuffer gameObjectInfo : register(b0)
     float4x4 worldMatrix : packoffset(c0);
 };
 
-
 cbuffer CameraInfo : register(b1)
 {
     float4x4 viewMatrix : packoffset(c0);

@@ -2,6 +2,8 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Timer.h"
+#include "GeometryLoader.h"
+//#include <iomanip>
 #include "KeyManager.h"
 #include "Player.h"
 #include "MyPlayer.h"
