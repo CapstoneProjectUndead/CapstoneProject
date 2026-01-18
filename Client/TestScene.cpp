@@ -21,7 +21,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 	shader->CreateShader(device, graphics_root_signature.Get());
-	shader->BuildObjects(device, commandList);
+	//shader->BuildObjects(device, commandList);
 	shaders.push_back(std::move(shader));
 }
 

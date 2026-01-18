@@ -38,12 +38,12 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_MyPlayer& pkt)
 
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
-	std::shared_ptr<CPlayer> player = std::make_shared<CPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-	player->SetID(pkt.info.id);
-	player->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	otherPlayer->SetID(pkt.info.id);
+	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-	scene->GetOtherPlayers().push_back(player);
+	scene->GetOtherPlayers().push_back(otherPlayer);
 
 	return true;
 }

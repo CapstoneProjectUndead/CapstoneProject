@@ -35,7 +35,7 @@ void CPlayer::Update(float elapsedTime)
 	// 입력처리
 	ProcessInput();
 
-	Move(velocity);
+	//Move(velocity);
 
 	camera->Update(position, elapsedTime);
 	camera->GenerateViewMatrix();

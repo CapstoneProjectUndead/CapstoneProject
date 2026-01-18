@@ -22,21 +22,30 @@ bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
 
+	// Player 위치 지정 (임시)
+	Vec3 pos{};
+	pos.x = rand() % 4 + 1;
+	pos.y = rand() % 4 + 1;
+	pos.z = 0;
+	player->SetPosition(pos);
+
 	// ClientSession이 Plyaer를 참조. (refcount 증가)
 	CAST_CS(session)->SetPlayer(player);
 
 	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
 	player->SetSession(session);
 
-	S_MyPlayer playerPkt;
-	playerPkt.info.id = player->GetID();
-	playerPkt.info.x = 0;
-	playerPkt.info.y = 0;
-	playerPkt.info.z = 0;
-
 	// 지금 접속한 유저에게 로그인 허락 패킷 보냄
-	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_MyPlayer>(playerPkt);
-	session->DoSend(sendBuffer);
+	{
+		S_MyPlayer playerPkt;
+		playerPkt.info.id = player->GetID();
+		playerPkt.info.x = player->GetPosition().x;
+		playerPkt.info.y = player->GetPosition().y;
+		playerPkt.info.z = player->GetPosition().z;
+
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_MyPlayer>(playerPkt);
+		session->DoSend(sendBuffer);
+	}
 
 	CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
 
@@ -76,10 +85,11 @@ bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
 	{
 		S_AddPlayer addPkt;
 		addPkt.info.id = player->GetID();
-		addPkt.info.x = 0;
-		addPkt.info.y = 0;
-		addPkt.info.z = 0;
+		addPkt.info.x = player->GetPosition().x;
+		addPkt.info.y = player->GetPosition().y;
+		addPkt.info.z = player->GetPosition().z;
 
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_AddPlayer>(addPkt);
 		activeScene->BroadCast(sendBuffer, player->GetID());
 	}
 

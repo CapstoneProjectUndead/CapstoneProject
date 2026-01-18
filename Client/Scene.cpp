@@ -55,8 +55,8 @@ void CScene::AnimateObjects(float elapsedTime)
 		player->Update(elapsedTime);
 	}
 
-	for (const auto& otherplayer : other_players) {
-		otherplayer->Update(elapsedTime);
+	for (const auto& obj : objects) {
+		obj->Update(elapsedTime);
 	}
 
 	for (const auto& shader : shaders) {
@@ -89,8 +89,8 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 		player->Render(commandList);
 	}
 
-	for (const auto& otherplayer : other_players) {
-		otherplayer->UpdateShaderVariables(commandList);
-		otherplayer->Render(commandList);
+	for (const auto& obj : objects) {
+		obj->UpdateShaderVariables(commandList);
+		obj->Render(commandList);
 	}
 }

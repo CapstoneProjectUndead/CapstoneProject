@@ -53,7 +53,7 @@ struct S_AddPlayer : public PacketHeader
 {
 	ObjectInfo info;
 
-	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), _S_MYPLAYER) {}
+	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), _S_ADDPLAYER) {}
 };
 
 // 가변인자 패킷
