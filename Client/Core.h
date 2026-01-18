@@ -29,3 +29,4 @@
 #include <assert.h>
 //#include <functional>
 #include <numeric>
+#include <memory>

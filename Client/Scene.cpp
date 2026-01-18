@@ -1,11 +1,12 @@
 #include "stdafx.h"
-#include "Player.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Timer.h"
-#include "CKeyMgr.h"
 #include "GeometryLoader.h"
 //#include <iomanip>
+#include "KeyManager.h"
+#include "Player.h"
+#include "MyPlayer.h"
 
 void CScene::ReleaseUploadBuffers()
 {
@@ -51,37 +52,24 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device* device)
 	return graphicsRootSignature;
 }
 
-void CScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
-{
-	// 플레이어 생성
-	player = std::make_shared<CPlayer>(device, commandList);
-	camera = player->GetCameraPtr();
-
-	// create graphics rootsignature
-	graphics_root_signature = CreateGraphicsRootSignature(device);
-	
-	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-	shader->CreateShader(device, graphics_root_signature.Get());
-	shader->BuildObjects(device, commandList);
-	shaders.push_back(std::move(shader));
-
-
-	// model load
-	/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
-	std::ofstream txt("output.txt");
-
-	char ch;
-	while (bin.get(ch)) {
-		txt << ch;   // txt 파일에 문자 그대로 출력
-	}*/
-}
-
 void CScene::AnimateObjects(float elapsedTime)
 {
-	player->Update(elapsedTime);
+	if (my_player) {
+		my_player->Update(elapsedTime);
+	}
+
+	for (const auto& obj : objects) {
+		obj->Update(elapsedTime);
+	}
+
 	for (const auto& shader : shaders) {
 		shader->Animate(elapsedTime, camera);
 	}
+}
+
+void CScene::Update(float elapsedTime)
+{
+	AnimateObjects(elapsedTime);
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* commandList)
@@ -90,44 +78,40 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	commandList->SetGraphicsRootSignature(graphics_root_signature.Get());
 
 	// camera set
-	camera->SetViewportsAndScissorRects(commandList);
-	camera->UpdateShaderVariables(commandList);
+	if (camera) {
+		camera->SetViewportsAndScissorRects(commandList);
+		camera->UpdateShaderVariables(commandList);
+	}
 
 	for (const auto& shader : shaders) {
 		shader->Render(commandList);
 	}
 
-	player->UpdateShaderVariables(commandList);
-	player->Render(commandList);
+	if (my_player) {
+		my_player->UpdateShaderVariables(commandList);
+		my_player->Render(commandList);
+	}
+
+	for (const auto& obj : objects) {
+		obj->UpdateShaderVariables(commandList);
+		obj->Render(commandList);
+	}
 }
 
-void CScene::ProcessInput()
+void CScene::EnterScene(std::shared_ptr<CObject> obj, UINT id)
 {
-	XMFLOAT3 direction{};
+	id_To_Index[id] = objects.size();
+	objects.push_back(obj);
+}
 
-	// 창우
-	if (KEY_PRESSED(KEY::W)) direction.z++;
-	if (KEY_PRESSED(KEY::S)) direction.z--;
-	if (KEY_PRESSED(KEY::A)) direction.x--;
-	if (KEY_PRESSED(KEY::D)) direction.x++;
+void CScene::LeaveScene(UINT id)
+{
+	UINT idx = id_To_Index[id];
+	UINT last = objects.size() - 1;
 
-	if (direction.x != 0 || direction.z != 0) {
-		player->Move(direction, CTimer::GetInstance().GetTimeElapsed());
-	}
+	std::swap(objects[idx], objects[last]);
+	id_To_Index[objects[idx]->GetID()] = idx;
 
-	CKeyMgr& keyManager{ CKeyMgr::GetInstance() };
-
-	if (KEY_PRESSED(KEY::LBTN) || KEY_PRESSED(KEY::RBTN)) {
-		SetCursor(NULL);
-		Vec2 prevMousePos{ keyManager.GetPrevMousePos() };
-		Vec2 mouseDelta{ (keyManager.GetMousePos() - prevMousePos) / 3.0f };
-		if (mouseDelta.x || mouseDelta.y)
-		{
-			if (KEY_PRESSED(KEY::LBTN))
-				player->Rotate(mouseDelta.y, mouseDelta.x, 0.0f);
-			if (KEY_PRESSED(KEY::RBTN))
-				player->Rotate(mouseDelta.y, 0.0f, -mouseDelta.x);
-		}
-
-	}
+	objects.pop_back();
+	id_To_Index.erase(id);
 }
