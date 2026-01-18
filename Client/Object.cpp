@@ -43,7 +43,7 @@ void CObject::Move(const XMFLOAT3 direction, float distance)
 	}if (direction.x > 0) {
 		shift = Vector3::Add(shift, Vector3::ScalarProduct(right, distance));
 	}
-	Move(shift);
+	Move(Vector3::ScalarProduct(shift, speed, false));
 }
 
 void CObject::Move(const XMFLOAT3 shift)

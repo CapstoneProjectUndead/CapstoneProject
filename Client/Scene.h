@@ -1,5 +1,6 @@
 #pragma once
 #include "Shader.h"
+#include "GeometryLoader.h"
 
 class CPlayer;
 class CCamera;
@@ -29,4 +30,5 @@ protected:
 	CCamera* camera;	// 참조용
 
 	ComPtr<ID3D12RootSignature> graphics_root_signature{};
+	std::unordered_map<std::string, std::unique_ptr<FrameNode>> frames;
 };

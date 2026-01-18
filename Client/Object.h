@@ -29,6 +29,7 @@ public:
 	//
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
+	void SetSpeed(float otherSpeed) { speed = otherSpeed; }
 public:
 	XMFLOAT4X4 world_matrix;
 

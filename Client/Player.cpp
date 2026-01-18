@@ -22,10 +22,6 @@ CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
 	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f)); 
 	camera->SetPlayer(this);
-
-	// 메쉬 설정
-	std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(device, commandList);
-	SetMesh(mesh);
 }
 
 void CPlayer::Update(float elapsedTime)

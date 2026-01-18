@@ -4,7 +4,6 @@
 #include "Scene.h"
 #include "Timer.h"
 #include "CKeyMgr.h"
-#include "GeometryLoader.h"
 //#include <iomanip>
 
 void CScene::ReleaseUploadBuffers()
@@ -53,8 +52,10 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device* device)
 
 void CScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	frames["undead_char"] = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
 	// 플레이어 생성
 	player = std::make_shared<CPlayer>(device, commandList);
+	player->SetMesh(frames["undead_char"]->mesh);
 	camera = player->GetCameraPtr();
 
 	// create graphics rootsignature
