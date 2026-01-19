@@ -107,6 +107,9 @@ bool Handle_C_MOVE(std::shared_ptr<Session> session, C_Move& pkt)
 	movePkt.info.x = pkt.info.x;
 	movePkt.info.y = pkt.info.y;
 	movePkt.info.z = pkt.info.z;
+	movePkt.info.yaw = pkt.info.yaw;
+	movePkt.info.pitch = pkt.info.pitch;
+	movePkt.info.roll = pkt.info.roll;
 
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
 	pScene->BroadCast(sendBuffer, pkt.info.id);

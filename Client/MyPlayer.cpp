@@ -53,6 +53,16 @@ void CMyPlayer::Update(float elapsedTime)
 			movePkt.info.y = position.y;
 			movePkt.info.z = position.z;
 
+			// 별도의 함수 호출 없이 멤버 변수(참조자)를 직접 사용
+			// 1. Pitch: Look 벡터의 Y축 기울기
+			movePkt.info.pitch = XMConvertToDegrees(asinf(-look.y));
+
+			// 2. Yaw: Look 벡터의 X, Z 평면상의 방향
+			movePkt.info.yaw = XMConvertToDegrees(atan2f(look.x, look.z));
+
+			// 3. Roll: Right와 Up의 관계 (일반적으로 캐릭터에선 0에 가깝겠지만 동기화는 필요)
+			movePkt.info.roll = XMConvertToDegrees(atan2f(right.y, up.y));
+
 			SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Move>(movePkt);
 			if (session.lock() != nullptr)
 				session.lock()->DoSend(sendBuffer);

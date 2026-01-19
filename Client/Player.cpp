@@ -6,26 +6,6 @@
 
 extern HWND ghWnd;
 
-// 임시
-XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float deltaTime, float interpSpeed)
-{
-	if (interpSpeed <= 0.f)
-		return current;
-
-	XMFLOAT3 delta = Vector3::Subtract(target, current);
-
-	float scale = deltaTime * interpSpeed;
-
-	// 스케일 클램프
-	if (scale > 1.f) scale = 1.f;
-
-	delta.x *= scale;
-	delta.y *= scale;
-	delta.z *= scale;
-
-	return Vector3::Multiply(current, delta);
-}
-
 // Player
 CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
@@ -39,43 +19,64 @@ CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 
 void CPlayer::Update(float elapsedTime)
 {
-	//Move(velocity);
+    if (false == is_my_player)
+    {
+        // --- [1. 이동 동기화] ---
+        XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
+        XMFLOAT3 clientPos = position;
 
-	if (false == is_my_player)
-	{
-		// 1. 서버에서 받은 목표 위치
-		XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
+        float dist = Vector3::Distance(serverPos, clientPos);
 
-		float dist = Vector3::Distance(serverPos, position);
+        // 2 & 3. 거리 차이에 따른 보정 (순간이동 혹은 보간)
+        if (dist > 3.f)
+        {
+            SetPosition(serverPos);
+        }
+        else if (dist > 1.f)
+        {
+            XMFLOAT3 newPos = Vector3::VInterpTo(position, serverPos, elapsedTime, 8.f);
+            SetPosition(newPos);
+        }
 
-		// 2. 오차가 너무 크면 즉시 스냅
-		if (dist > 3.f)
-		{
-			SetPosition(serverPos);
-		}
-		// 3. 오차가 작으면 부드럽게 보정
-		else if (dist > 1.f)
-		{
-			XMFLOAT3 newPos = VInterpTo(
-				position,
-				serverPos,
-				CTimer::GetInstance().GetTimeElapsed(),
-				8.f
-			);
+        // [이동 로직 보완] dist가 작을 때(지연 없을 때) 자연스럽게 이동
+        if (dist > 0.01f && dist <= 1.f)
+        {
+            XMFLOAT3 diff = Vector3::Subtract(serverPos, clientPos);
+            XMFLOAT3 moveDir = Vector3::Normalize(diff);
 
-			SetPosition(newPos);
-		}
+            // 단순히 elapsedTime만큼 가는게 아니라, 남은 거리에 비례해서 이동해야 부드럽다.
+            float moveDist = dist * elapsedTime;
+            if (moveDist > dist) 
+                moveDist = dist;
 
-		SetPosition(serverPos);
-	}
+            Move(moveDir, moveDist); // Move(방향, 거리)
+        }
 
-	// 감속
-	//XMVECTOR xmvVelocity = XMLoadFloat3(&velocity);
-	//XMVECTOR xmvDeceleration = XMVector3Normalize(XMVectorScale(xmvVelocity, -1.0f));
-	//float length = XMVectorGetX(XMVector3Length(xmvVelocity));
-	//float deceleration = friction * elapsedTime;
-	//if (deceleration > length) deceleration = length;
-	//XMStoreFloat3(&velocity, XMVectorAdd(xmvVelocity, XMVectorScale(xmvDeceleration, deceleration)));
+        // --- [2. 회전 동기화] ---
+        // 현재 내(클라의 상대캐릭터) 행렬에서 현재 각도 추출
+        float curPitch = XMConvertToDegrees(asinf(-look.y));
+        float curYaw = XMConvertToDegrees(atan2f(look.x, look.z));
+        float curRoll = XMConvertToDegrees(atan2f(right.y, up.y));
+
+        // 목표 각도(서버가 준 값)와의 차이 계산
+        float deltaPitch = dest_info.pitch - curPitch;
+        float deltaYaw = dest_info.yaw - curYaw;
+        float deltaRoll = dest_info.roll - curRoll;
+
+        // Yaw 회전 보정 (360도 지점 튀는 현상 방지)
+        if (deltaYaw > 180.f) deltaYaw -= 360.f;
+        if (deltaYaw < -180.f) deltaYaw += 360.f;
+
+        // 회전 속도 설정 및 적용
+        float rotSpeed = 1.0f;
+        if (fabs(deltaPitch) > 0.1f || fabs(deltaYaw) > 0.1f || fabs(deltaRoll) > 0.1f)
+        {
+            // 목표 각도를 향해 매 프레임 조금씩 Rotate
+            Rotate(deltaPitch * elapsedTime,
+                deltaYaw * rotSpeed * elapsedTime,
+                deltaRoll * rotSpeed * elapsedTime);
+        }
+    }
 }
 
 void CPlayer::Move(const XMFLOAT3 shift)

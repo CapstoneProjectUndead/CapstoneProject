@@ -241,6 +241,23 @@ namespace Vector3
 			return(true);
 		return(false);
 	}
+
+	// 추가한 코드
+	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float deltaTime, float interpSpeed)
+	{
+		if (interpSpeed <= 0.f)
+			return current;
+
+		// Target - Current
+		XMFLOAT3 delta = Vector3::Subtract(target, current);
+
+		float scale = deltaTime * interpSpeed;
+		if (scale > 1.f)
+			scale = 1.f;
+
+		// Current + Delta * Scale
+		return Vector3::Add(current, delta, scale);
+	}
 }
 
 //4차원 벡터의 연산
