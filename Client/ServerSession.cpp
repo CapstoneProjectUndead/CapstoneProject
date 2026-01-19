@@ -1,22 +1,28 @@
 #include "stdafx.h"
 #include "ServerSession.h"
+#include "ServerPacketHandler.h"
 
-ServerSession::ServerSession()
+CServerSession::CServerSession()
 {
 }
 
-ServerSession::~ServerSession()
+CServerSession::~CServerSession()
 {
 }
 
-void ServerSession::OnConnected()
+void CServerSession::OnConnected()
+{
+	C_LOGIN loginPkt;
+
+	SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+	DoSend(sendBuffer);
+}
+
+void CServerSession::OnDisconnected()
 {
 }
 
-void ServerSession::OnDisconnected()
+void CServerSession::ProcessPacket(std::shared_ptr<Session> session, char* buf, int32 pktSize)
 {
-}
-
-void ServerSession::ProcessPacket(Session*, char*, int32 pktSize)
-{
+	CServerPacketHandler::HandlePacket(session, buf, pktSize);
 }

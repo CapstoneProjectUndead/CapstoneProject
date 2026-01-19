@@ -200,7 +200,7 @@ bool Session::OnRecv(BYTE* buffer, int32 numOfBytes)
 			break;
 
 		// 컨텐츠단에서 처리
-		ProcessPacket(this, p, packet_size);
+		ProcessPacket(shared_from_this(), p, packet_size);
 		p += packet_size;
 		remainData -= packet_size;
 	}

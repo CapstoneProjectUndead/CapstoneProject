@@ -56,9 +56,22 @@ using Microsoft::WRL::ComPtr;
 #define FRAME_BUFFER_HEIGHT 600
 
 // 창우
+#include "Core.h"
+#include <ServerEngine/global.h>
+#include <ServerEngine/ThreadManager.h>
+#include <ServerEngine/SocketHelper.h>
+#include <ServerEngine/SendBuffer.h>
+#include <ServerEngine/BufferWriter.h>
+#include <ServerEngine/BufferReader.h>
+#include <ServerEngine/Service.h>
+#include <ServerEngine/Session.h>
+
 #include "macro.h"
+#include <Struct.h>
+#include <protocol.h>
 
 extern HWND ghWnd;
+extern class CGameFramework gGameFramework;
 
 
 //#define _WITH_SWAPCHAIN_FULLSCREEN_STATE

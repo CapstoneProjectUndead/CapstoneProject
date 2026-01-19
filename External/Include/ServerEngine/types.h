@@ -1,3 +1,4 @@
+#pragma once
 
 using BYTE = unsigned char;
 using int8 = __int8;

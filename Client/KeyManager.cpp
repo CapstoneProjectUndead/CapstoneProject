@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "CKeyMgr.h"
+#include "KeyManager.h"
 
 
 UINT gKeyValue[(UINT)KEY::KEY_END]
@@ -30,13 +30,13 @@ UINT gKeyValue[(UINT)KEY::KEY_END]
 	VK_CONTROL,
 };
 
-void CKeyMgr::Init()
+void CKeyManager::Init()
 {
 	for (UINT i = 0; i < (UINT)KEY::KEY_END; ++i)
 		input_vector.emplace_back(KEY_STATE::NONE, false);
 }
 
-void CKeyMgr::Tick()
+void CKeyManager::Tick()
 {
 	if (nullptr == GetFocus())
 	{
@@ -94,7 +94,7 @@ void CKeyMgr::Tick()
 		}
 		 
 		// 마우스 좌표 갱신
-		prev_mouse_pos = cur_mouse_pos;
+		prev_mouse_pos = cur_mouse_pos;	
 
 		POINT ptMouse = {};
 		GetCursorPos(&ptMouse);

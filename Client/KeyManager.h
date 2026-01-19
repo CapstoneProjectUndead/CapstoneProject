@@ -90,17 +90,17 @@ struct tKeyInfo
     }
 };
 
-class CKeyMgr
+class CKeyManager
 {
 private:
-    CKeyMgr() {};
-    CKeyMgr(const CKeyMgr&) = delete;
+    CKeyManager() {};
+    CKeyManager(const CKeyManager&) = delete;
 
 public:
-    ~CKeyMgr() {};
+    ~CKeyManager() {};
 
-    static CKeyMgr& GetInstance() {
-        static CKeyMgr instance;
+    static CKeyManager& GetInstance() {
+        static CKeyManager instance;
         return instance;
     }
 
