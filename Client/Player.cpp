@@ -44,7 +44,7 @@ void CPlayer::Update(float elapsedTime)
 	if (false == is_my_player)
 	{
 		// 1. 서버에서 받은 목표 위치
-		XMFLOAT3 serverPos{ dest_pos.x, dest_pos.y, dest_pos.z };
+		XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
 
 		float dist = Vector3::Distance(serverPos, position);
 
@@ -70,12 +70,12 @@ void CPlayer::Update(float elapsedTime)
 	}
 
 	// 감속
-	XMVECTOR xmvVelocity = XMLoadFloat3(&velocity);
-	XMVECTOR xmvDeceleration = XMVector3Normalize(XMVectorScale(xmvVelocity, -1.0f));
-	float length = XMVectorGetX(XMVector3Length(xmvVelocity));
-	float deceleration = friction * elapsedTime;
-	if (deceleration > length) deceleration = length;
-	XMStoreFloat3(&velocity, XMVectorAdd(xmvVelocity, XMVectorScale(xmvDeceleration, deceleration)));
+	//XMVECTOR xmvVelocity = XMLoadFloat3(&velocity);
+	//XMVECTOR xmvDeceleration = XMVector3Normalize(XMVectorScale(xmvVelocity, -1.0f));
+	//float length = XMVectorGetX(XMVector3Length(xmvVelocity));
+	//float deceleration = friction * elapsedTime;
+	//if (deceleration > length) deceleration = length;
+	//XMStoreFloat3(&velocity, XMVectorAdd(xmvVelocity, XMVectorScale(xmvDeceleration, deceleration)));
 }
 
 void CPlayer::Move(const XMFLOAT3 shift)

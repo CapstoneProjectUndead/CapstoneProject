@@ -112,7 +112,17 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		return true;
 
 	auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
-	player->SetDestPos({pkt.info.x, pkt.info.y, pkt.info.z});
+
+	ObjectInfo info;
+	info.id = pkt.info.id;
+	info.x = pkt.info.x;
+	info.y = pkt.info.y;
+	info.z = pkt.info.z;
+	info.yaw = pkt.info.yaw;
+	info.pitch = pkt.info.pitch;
+	info.roll = pkt.info.roll;
+
+	player->SetDestInfo(info);
 
 	return true;
 }

@@ -12,5 +12,18 @@ struct ObjectInfo
 		, x(_x)
 		, y(_y)
 		, z(_z)
+		, yaw{}
+		, pitch{}
+		, roll{}
+	{ }
+
+	ObjectInfo(const ObjectInfo& other)
+		: id(other.id)
+		, x(other.x)
+		, y(other.y)
+		, z(other.z)
+		, yaw(other.yaw)
+		, pitch(other.pitch)
+		, roll(other.roll)
 	{ }
 };
