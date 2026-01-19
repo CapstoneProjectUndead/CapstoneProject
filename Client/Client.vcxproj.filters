@@ -102,8 +102,6 @@
     <ClInclude Include="macro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryLoader.h">
-      <Filter>헤더 파일</Filter>
     <ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
@@ -124,6 +122,9 @@
     </ClInclude>
     <ClInclude Include="MyPlayer.h">
       <Filter>Object\MyPlayer</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryLoader.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -169,8 +170,6 @@
     <ClCompile Include="KeyManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryLoader.cpp">
-      <Filter>소스 파일</Filter>
     <ClCompile Include="ServerPacketHandler.cpp">
       <Filter>Network\PacketHandler</Filter>
     </ClCompile>
@@ -185,6 +184,9 @@
     </ClCompile>
     <ClCompile Include="MyPlayer.cpp">
       <Filter>Object\MyPlayer</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryLoader.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

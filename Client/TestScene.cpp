@@ -24,6 +24,15 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	shader->CreateShader(device, graphics_root_signature.Get());
 	//shader->BuildObjects(device, commandList);
 	shaders.push_back(std::move(shader));
+
+	// model load
+	/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
+	std::ofstream txt("output.txt");
+
+	char ch;
+	while (bin.get(ch)) {
+		txt << ch;   // txt 파일에 문자 그대로 출력
+	}*/
 }
 
 void CTestScene::Update(float elapsedTime)
