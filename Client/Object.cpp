@@ -53,9 +53,43 @@ void CObject::Move(const XMFLOAT3 shift)
 
 void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
-	XMFLOAT4X4 TWorldMatrix;
-	XMStoreFloat4x4(&TWorldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&world_matrix)));
-	commandList->SetGraphicsRoot32BitConstants(0, 16, &TWorldMatrix, 0);
+	{
+		ObjectCB cb{};
+		XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world_matrix));
+		XMStoreFloat4x4(&cb.world_matrix, worldT);
+
+		UINT8* mapped = nullptr;
+		object_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
+		memcpy(mapped, &cb, sizeof(cb));
+		object_cb->Unmap(0, nullptr);
+
+		commandList->SetGraphicsRootConstantBufferView(0, object_cb->GetGPUVirtualAddress());
+	}
+
+	// 2번: MaterialInfo (b2) – float4 materialColor
+	{
+		MaterialCB cb{material.albedo};
+
+		UINT8* mapped = nullptr;
+		material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
+		memcpy(mapped, &cb, sizeof(cb));
+		material_cb->Unmap(0, nullptr);
+
+		commandList->SetGraphicsRootConstantBufferView(2, material_cb->GetGPUVirtualAddress());
+	}
+}
+
+void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+	{
+		ObjectCB cb{};
+		object_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<ObjectCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	}
+
+	{
+		MaterialCB cb{};
+		material_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<MaterialCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	}
 }
 
 void CObject::Render(ID3D12GraphicsCommandList* commandList)
@@ -68,7 +102,6 @@ void CObject::Animate(float elapsedTime, CCamera* camera)
 {
 	static float angle = 0.0f;
 	angle += elapsedTime * 0.5f; // 천천히 회전
-	
 	
 	XMMATRIX rotY = XMMatrixRotationY(angle);
 	XMMATRIX trans = XMMatrixTranslation(world_matrix._41, world_matrix._42, world_matrix._43);

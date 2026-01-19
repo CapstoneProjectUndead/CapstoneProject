@@ -2,34 +2,6 @@
 #include "Mesh.h"
 #include "GeometryLoader.h"
 
-void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<Material>& out)
-{
-    if (!br.FindTag("<Materials>:"))
-        return;
-
-    std::ifstream& file{ br.Stream() };
-
-    char countChar;
-    file.get(countChar);
-    int matCount = (unsigned char)countChar;
-
-    for (int i = 0; i < matCount; ++i)
-    {
-        if (!br.FindTag("<Material>:"))
-            break;
-
-        Material m{};
-        // TODO: Unity WriteMaterials 포맷에 맞게 읽기
-        // 지금은 태그 사이 바이너리 통째로 읽기
-        auto raw = br.ReadUntilNextTag();
-        //m.LoadFromBinary(raw);
-
-        out.push_back(m);
-    }
-
-    br.FindTag("</Materials>");
-}
-
 std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     if (!br.FindTag("<Mesh>:"))

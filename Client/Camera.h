@@ -2,11 +2,18 @@
 
 class CPlayer;
 
+struct CameraCB
+{
+	XMFLOAT4X4 view_matrix;
+	XMFLOAT4X4 projection_matrix;
+};
+
 class CCamera
 {
 public:
 	CCamera();
 
+	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList*);
 
 	void GenerateProjectionMatrix(float, float, float, float);
@@ -30,6 +37,7 @@ public:
 protected:
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
+	ComPtr<ID3D12Resource> camera_cb;
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;

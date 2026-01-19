@@ -18,18 +18,24 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device* device)
 	ID3D12RootSignature* graphicsRootSignature{};
 
 	// root parameter
-	D3D12_ROOT_PARAMETER rootParameters[2];
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParameters[0].Constants.Num32BitValues = 16;
-	rootParameters[0].Constants.ShaderRegister = 0;		// gameObjectInfo
-	rootParameters[0].Constants.RegisterSpace = 0;
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	// gameObjectInfo
+	D3D12_ROOT_PARAMETER rootParameters[3];
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[0].Descriptor.ShaderRegister = 0; // b0
+	rootParameters[0].Descriptor.RegisterSpace = 0;
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParameters[1].Constants.Num32BitValues = 32;
-	rootParameters[1].Constants.ShaderRegister = 1;		// CameraInfo
-	rootParameters[1].Constants.RegisterSpace = 0;
+	// CameraInfo
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[1].Descriptor.ShaderRegister = 1;
+	rootParameters[1].Descriptor.RegisterSpace = 0;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// 2: MaterialInfo (재질 색 등)
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[2].Descriptor.ShaderRegister = 2; // b2
+	rootParameters[2].Descriptor.RegisterSpace = 0;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
@@ -57,6 +63,7 @@ void CScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 	player = std::make_shared<CPlayer>(device, commandList);
 	player->SetMesh(frames["undead_char"]->mesh);
 	camera = player->GetCameraPtr();
+	player->CreateConstantBuffers(device, commandList);
 
 	// create graphics rootsignature
 	graphics_root_signature = CreateGraphicsRootSignature(device);

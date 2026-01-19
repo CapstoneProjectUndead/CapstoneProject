@@ -73,7 +73,13 @@ extern HWND ghWnd;
 }
 #endif
 
-extern ID3D12Resource* CreateBufferResource(ID3D12Device*, ID3D12GraphicsCommandList*, void*, UINT, D3D12_HEAP_TYPE, D3D12_RESOURCE_STATES, ID3D12Resource**);
+template<typename T>
+inline UINT CalculateConstant()
+{
+	return (sizeof(T) + 255) & ~255;
+}
+
+ID3D12Resource* CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* data, UINT bytes, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES resourceStates, ID3D12Resource** uploadBuffer);
 
 inline std::wstring AnsiToWString(const std::string& str)
 {

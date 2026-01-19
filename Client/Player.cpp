@@ -22,6 +22,7 @@ CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
 	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f)); 
 	camera->SetPlayer(this);
+	camera->CreateConstantBuffers(device, commandList);
 }
 
 void CPlayer::Update(float elapsedTime)
