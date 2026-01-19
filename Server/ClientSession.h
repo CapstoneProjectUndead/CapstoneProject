@@ -17,6 +17,7 @@ public:
 	virtual void			ProcessPacket(std::shared_ptr<Session>, char*, int32 pktSize) override;
 
 public:
+	shared_ptr<CPlayer> GetPlayer() { return player; }
 	void SetPlayer(shared_ptr<CPlayer> pl) { player = pl; }
 
 private:

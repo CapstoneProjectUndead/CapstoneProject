@@ -41,7 +41,10 @@ public:
 	XMFLOAT3& up = *(XMFLOAT3*)&world_matrix._21;
 	XMFLOAT3& look = *(XMFLOAT3*)&world_matrix._31;
 	XMFLOAT3& position = *(XMFLOAT3*)&world_matrix._41;
+
 protected:
+	int obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
+
 	std::vector<std::shared_ptr<CMesh>> meshes;
 	std::shared_ptr<CTexture> texture{};
 
@@ -49,7 +52,4 @@ protected:
 	BoundingOrientedBox oobb;
 
 	float speed{ 10.0f };
-
-private:
-	int obj_id = -1;
 };

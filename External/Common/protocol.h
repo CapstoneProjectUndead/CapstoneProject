@@ -106,5 +106,12 @@ struct C_Move : public PacketHeader
 	C_Move() : PacketHeader(sizeof(C_Move), _C_MOVE) {}
 };
 
+struct S_Move : public PacketHeader
+{
+	ObjectInfo info;
+
+	S_Move() : PacketHeader(sizeof(S_Move), _S_MOVE) {}
+};
+
 
 #pragma pack (pop)

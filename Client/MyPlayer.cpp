@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "Camera.h"
 #include "KeyManager.h"
+#include "ServerPacketHandler.h"
 
 
 CMyPlayer::CMyPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -20,6 +21,8 @@ CMyPlayer::CMyPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandLis
 	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
 	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f));
 	camera->SetPlayer(this);
+
+	is_my_player = true;
 }
 
 CMyPlayer::~CMyPlayer()
@@ -37,10 +40,23 @@ void CMyPlayer::Update(float elapsedTime)
 
 	// 여기서 플레이어 위치와 방향 정보를 캐싱
 	{
-		C_Move movePkt;
-		movePkt.info.x = position.x;
-		movePkt.info.y = position.y;
-		movePkt.info.z = position.z;
+		// 10프레임에 한번씩 서버에 패킷을 보낸다.
+		move_packet_send_timer -= elapsedTime;
+
+		if (move_packet_send_timer <= 0) {
+
+			move_packet_send_timer = move_packet_send_dely;
+
+			C_Move movePkt;
+			movePkt.info.id = obj_id;
+			movePkt.info.x = position.x;
+			movePkt.info.y = position.y;
+			movePkt.info.z = position.z;
+
+			SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Move>(movePkt);
+			if (session.lock() != nullptr)
+				session.lock()->DoSend(sendBuffer);
+		}
 	}
 }
 

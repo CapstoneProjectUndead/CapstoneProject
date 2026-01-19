@@ -29,6 +29,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	myPlayer->SetSession(session);
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->SetPlayer(myPlayer);
@@ -86,6 +87,32 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 			}
 		}
 	}
+
+	return true;
+}
+
+bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
+{
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	auto& vec = scene->GetObjects();
+	auto& indexMap = scene->GetIDIndex();
+	std::shared_ptr<CMyPlayer> myPlayer =  scene->GetMyPlayer();
+
+	// 내 플레이어이면 처리하지 않고 나가기
+	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id)
+		return true;
+
+	// 해당 ID가 존재하는 플레이어인지 확인
+	auto it = indexMap.find(pkt.info.id);
+	if (it == indexMap.end())
+		return true;
+
+	uint64 idx = it->second;
+	if (idx >= vec.size())
+		return true;
+
+	auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+	player->SetDestPos({pkt.info.x, pkt.info.y, pkt.info.z});
 
 	return true;
 }

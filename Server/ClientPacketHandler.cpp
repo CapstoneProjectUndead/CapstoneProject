@@ -95,3 +95,21 @@ bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
 
 	return true;
 }
+
+bool Handle_C_MOVE(std::shared_ptr<Session> session, C_Move& pkt)
+{
+	CScene* pScene =CSceneManager::GetInstance().GetActiveScene();
+
+	CAST_CS(session)->GetPlayer()->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
+
+	S_Move movePkt;
+	movePkt.info.id = pkt.info.id;
+	movePkt.info.x = pkt.info.x;
+	movePkt.info.y = pkt.info.y;
+	movePkt.info.z = pkt.info.z;
+
+	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
+	pScene->BroadCast(sendBuffer, pkt.info.id);
+
+	return true;
+}
