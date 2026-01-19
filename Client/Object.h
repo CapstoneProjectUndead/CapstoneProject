@@ -52,6 +52,10 @@ public:
 	//
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
+
+	int  GetID() const { return obj_id; }
+	void SetID(const int id) { obj_id = id; }
+
 	void SetSpeed(float otherSpeed) { speed = otherSpeed; }
 public:
 	XMFLOAT4X4 world_matrix;
@@ -73,4 +77,7 @@ protected:
 	BoundingOrientedBox oobb;
 
 	float speed{ 10.0f };
+
+private:
+	int obj_id = -1;
 };

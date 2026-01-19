@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="소스 파일">
@@ -33,6 +33,18 @@
     </Filter>
     <Filter Include="D3D12">
       <UniqueIdentifier>{cd629c79-ac06-4dd7-94fe-37495b47753e}</UniqueIdentifier>
+	</Filter>
+	<Filter Include="Network\PacketHandler">
+      <UniqueIdentifier>{4f103850-1b48-4beb-b19d-f3143b8db5ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{3bec70d8-a2a0-43c0-a2af-35ef1a7bb67b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\TestScene">
+      <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\MyPlayer">
+      <UniqueIdentifier>{e06fed7c-dc95-44c6-a868-e3b3c408ece7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -66,9 +78,6 @@
     <ClInclude Include="Shader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="GameFramework.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -81,7 +90,7 @@
     <ClInclude Include="ServerSession.h">
       <Filter>Network\Session</Filter>
     </ClInclude>
-    <ClInclude Include="CKeyMgr.h">
+    <ClInclude Include="KeyManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="macro.h">
@@ -89,6 +98,27 @@
     </ClInclude>
     <ClInclude Include="GeometryLoader.h">
       <Filter>헤더 파일</Filter>
+	</ClInclude>
+	<ClInclude Include="ServerPacketHandler.h">
+      <Filter>Network\PacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\Struct.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="TestScene.h">
+      <Filter>Scene\TestScene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\VarialbePacketWriter.h">
+      <Filter>Network\PacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="MyPlayer.h">
+      <Filter>Object\MyPlayer</Filter>
     </ClInclude>
     <ClInclude Include="d3dx12.h">
       <Filter>D3D12</Filter>
@@ -125,9 +155,6 @@
     <ClCompile Include="Shader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="GameFramework.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -137,11 +164,26 @@
     <ClCompile Include="ServerSession.cpp">
       <Filter>Network\Session</Filter>
     </ClCompile>
-    <ClCompile Include="CKeyMgr.cpp">
+    <ClCompile Include="KeyManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
+	</ClCompile>
+	<ClCompile Include="ServerPacketHandler.cpp">
+      <Filter>Network\PacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="TestScene.cpp">
+      <Filter>Scene\TestScene</Filter>
+    </ClCompile>
+    <ClCompile Include="MyPlayer.cpp">
+      <Filter>Object\MyPlayer</Filter>
     </ClCompile>
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>D3D12</Filter>
