@@ -13,7 +13,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
 bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 {
-	//std::cout << "¡§¿« µ«¡ˆ æ ¿∫ ∆–≈∂ ID ¿‘¥œ¥Ÿ!" << std::endl;
+	//std::cout << "Ï†ïÏùò ÎêòÏßÄ ÏïäÏùÄ Ìå®ÌÇ∑ ID ÏûÖÎãàÎã§!" << std::endl;
 	assert(nullptr);
 	return false;
 }
@@ -26,20 +26,20 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 
 bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
-	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->SetPlayer(myPlayer);
-	scene->SetCamera(myPlayer->GetCameraPtr());
+	//scene->SetCamera(myPlayer->GetCameraPtr());
 
 	return true;
 }
 
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
-	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
@@ -57,16 +57,16 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 	for (int i = 0; i < pkt.player_count; ++i) {
 
-		// ¥Ÿ∏• ¿Ø¿˙ ª˝º∫
-		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		// Îã§Î•∏ Ïú†Ï†Ä ÏÉùÏÑ±
+		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 
-		// ¥Ÿ∏• ¿Ø¿˙ ID ∫Œø©
+		// Îã§Î•∏ Ïú†Ï†Ä ID Î∂ÄÏó¨
 		otherPlayer->SetID(userList[i].info.id);
 
-		// ¥Ÿ∏• ¿Ø¿˙ ¿ßƒ° ∫Œø©
+		// Îã§Î•∏ Ïú†Ï†Ä ÏúÑÏπò Î∂ÄÏó¨
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
-		// Active Sceneø° ¥Ÿ∏• ¿Ø¿˙ ¿‘¿Â
+		// Active SceneÏóê Îã§Î•∏ Ïú†Ï†Ä ÏûÖÏû•
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
 	}
 

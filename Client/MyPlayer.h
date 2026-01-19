@@ -5,18 +5,13 @@ class CMyPlayer :
     public CPlayer
 {
 public:
-    using CObject::Move; // ºÎ¸ğÀÇ Move ¸ğµÎ ³ëÃâ
+    using CObject::Move; // ë¶€ëª¨ì˜ Move ëª¨ë‘ ë…¸ì¶œ
 
-    CMyPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    ~CMyPlayer();
+    CMyPlayer();
+    ~CMyPlayer() {};
 
     virtual void Update(float elapsedTime) override;
 
     void ProcessInput();
-
-    CCamera* GetCameraPtr() const { return camera.get(); }
-
-protected:
-    std::shared_ptr<CCamera> camera;
 };
 

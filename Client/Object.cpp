@@ -66,7 +66,6 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 		commandList->SetGraphicsRootConstantBufferView(0, object_cb->GetGPUVirtualAddress());
 	}
 
-	// 2번: MaterialInfo (b2) – float4 materialColor
 	{
 		MaterialCB cb{material.albedo};
 

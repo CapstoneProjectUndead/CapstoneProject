@@ -1,6 +1,6 @@
 #pragma once
 
-class CPlayer;
+class CObject;
 
 struct CameraCB
 {
@@ -33,7 +33,7 @@ public:
 	XMFLOAT3 GetPos() const { return position; }
 	XMFLOAT3 GetOffset() const { return offset; }
 
-	void SetPlayer(CPlayer* otherPlayer) { player = otherPlayer; }
+	void SetTarget(CObject* object) { target_object = object; }
 protected:
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
@@ -49,7 +49,7 @@ protected:
 	XMFLOAT3 offset{};
 	XMFLOAT3 look_at{};
 
-	CPlayer* player;
+	CObject* target_object;	// 소유X, 참조용
 };
 
 
