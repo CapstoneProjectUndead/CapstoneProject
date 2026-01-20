@@ -29,7 +29,9 @@ void CScene::AnimateObjects(float elapsedTime)
 void CScene::Update(float elapsedTime)
 {
 	AnimateObjects(elapsedTime);
-	camera->Update(my_player->position, elapsedTime);
+
+	if(camera)
+		camera->Update(my_player->position, elapsedTime);
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* commandList)
