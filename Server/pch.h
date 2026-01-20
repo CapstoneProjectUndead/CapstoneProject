@@ -86,6 +86,8 @@ using std::make_pair;
 #include <protocol.h>
 #include "ClientPacketHandler.h"
 
+#include "DirectXMathHelper.h"
+
 //extern DBConnector g_db;
 
 

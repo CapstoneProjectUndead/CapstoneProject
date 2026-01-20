@@ -23,7 +23,7 @@ bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
 
 	// Player 위치 지정 (임시)
-	Vec3 pos{};
+	XMFLOAT3 pos{};
 	pos.x = rand() % 4 + 1;
 	pos.y = rand() % 4 + 1;
 	pos.z = 0;
