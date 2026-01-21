@@ -35,6 +35,9 @@ void CMyPlayer::Update(float elapsedTime)
 	// 입력처리
 	ProcessInput();
 
+	SetYawPitch(yaw, pitch);
+	UpdateWorldMatrix();
+
 	camera->Update(position, elapsedTime);
 	camera->GenerateViewMatrix();
 
@@ -55,13 +58,12 @@ void CMyPlayer::Update(float elapsedTime)
 
 			// 별도의 함수 호출 없이 멤버 변수(참조자)를 직접 사용
 			// 1. Pitch: Look 벡터의 Y축 기울기
-			movePkt.info.pitch = XMConvertToDegrees(asinf(-look.y));
+			movePkt.info.pitch = pitch;
 
 			// 2. Yaw: Look 벡터의 X, Z 평면상의 방향
-			movePkt.info.yaw = XMConvertToDegrees(atan2f(look.x, look.z));
+			movePkt.info.yaw = yaw;
 
-			// 3. Roll: Right와 Up의 관계 (일반적으로 캐릭터에선 0에 가깝겠지만 동기화는 필요)
-			movePkt.info.roll = XMConvertToDegrees(atan2f(right.y, up.y));
+			movePkt.info.roll = 0;
 
 			SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Move>(movePkt);
 			if (session.lock() != nullptr)
@@ -91,8 +93,11 @@ void CMyPlayer::ProcessInput()
 		Vec2 mouseDelta{ (keyManager.GetMousePos() - prevMousePos) / 3.0f };
 		if (mouseDelta.x || mouseDelta.y)
 		{
-			if (KEY_PRESSED(KEY::LBTN))
-				Rotate(mouseDelta.y, mouseDelta.x, 0.0f);
+			if (KEY_PRESSED(KEY::LBTN)) {
+				yaw += mouseDelta.x;
+				pitch += mouseDelta.y;
+				pitch = std::clamp(pitch, -89.9f, 89.9f);
+			}
 			if (KEY_PRESSED(KEY::RBTN))
 				Rotate(mouseDelta.y, 0.0f, -mouseDelta.x);
 		}

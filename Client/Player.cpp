@@ -4,6 +4,9 @@
 #include "Timer.h"
 #include "KeyManager.h"
 
+#undef min
+#undef max
+
 extern HWND ghWnd;
 
 // Player
@@ -19,64 +22,102 @@ CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 
 void CPlayer::Update(float elapsedTime)
 {
-    if (false == is_my_player)
-    {
-        // --- [1. 이동 동기화] ---
-        XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
-        XMFLOAT3 clientPos = position;
+     if (is_my_player)
+        return;
 
-        float dist = Vector3::Distance(serverPos, clientPos);
+    /*==========================
+        [1] 위치 동기화 (월드 보간)
+    ==========================*/
 
-        // 2 & 3. 거리 차이에 따른 보정 (순간이동 혹은 보간)
-        if (dist > 3.f)
-        {
-            SetPosition(serverPos);
-        }
-        else if (dist > 1.f)
-        {
-            XMFLOAT3 newPos = Vector3::VInterpTo(position, serverPos, elapsedTime, 8.f);
-            SetPosition(newPos);
-        }
+     XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
+     XMFLOAT3 clientPos = position;
 
-        // [이동 로직 보완] dist가 작을 때(지연 없을 때) 자연스럽게 이동
-        if (dist > 0.01f && dist <= 1.f)
-        {
-            XMFLOAT3 diff = Vector3::Subtract(serverPos, clientPos);
-            XMFLOAT3 moveDir = Vector3::Normalize(diff);
+     XMFLOAT3 toTarget = Vector3::Subtract(serverPos, clientPos);
+     float dist = Vector3::Length(toTarget);
 
-            // 단순히 elapsedTime만큼 가는게 아니라, 남은 거리에 비례해서 이동해야 부드럽다.
-            float moveDist = dist * elapsedTime;
-            if (moveDist > dist) 
-                moveDist = dist;
+     const float SNAP_DIST = 3.0f;      // 너무 멀면 순간이동
+     const float STOP_DIST = 0.05f;     // 이 안이면 정지
+     const float FOLLOW_SPEED = 1.0f; // 네 캐릭터 이동속도
+     const float DAMPING = 10.0f;       // 클수록 더 빨리 멈춤
 
-            Move(moveDir, moveDist); // Move(방향, 거리)
-        }
+     // 1. 너무 멀면 스냅
+     if (dist > SNAP_DIST)
+     {
+         SetPosition(serverPos);
+         velocity = XMFLOAT3(0, 0, 0);
+         return;
+     }
 
-        // --- [2. 회전 동기화] ---
-        // 현재 내(클라의 상대캐릭터) 행렬에서 현재 각도 추출
-        float curPitch = XMConvertToDegrees(asinf(-look.y));
-        float curYaw = XMConvertToDegrees(atan2f(look.x, look.z));
-        float curRoll = XMConvertToDegrees(atan2f(right.y, up.y));
+     // 2. 서버가 RUN 상태일 때만 따라간다
+     if (dist > STOP_DIST)
+     {
+         // 방향
+         XMFLOAT3 dir = Vector3::Normalize(toTarget);
 
-        // 목표 각도(서버가 준 값)와의 차이 계산
-        float deltaPitch = dest_info.pitch - curPitch;
-        float deltaYaw = dest_info.yaw - curYaw;
-        float deltaRoll = dest_info.roll - curRoll;
+         // 목표 속도
+         XMFLOAT3 desiredVel = Vector3::ScalarProduct(dir, FOLLOW_SPEED);
 
-        // Yaw 회전 보정 (360도 지점 튀는 현상 방지)
-        if (deltaYaw > 180.f) deltaYaw -= 360.f;
-        if (deltaYaw < -180.f) deltaYaw += 360.f;
+         // velocity 보간 
+         velocity = Vector3::Add(
+             velocity,
+             Vector3::ScalarProduct(
+                 Vector3::Subtract(desiredVel, velocity),
+                 std::min(1.0f, DAMPING * elapsedTime),
+                 false
+             )
+         );
 
-        // 회전 속도 설정 및 적용
-        float rotSpeed = 1.0f;
-        if (fabs(deltaPitch) > 0.1f || fabs(deltaYaw) > 0.1f || fabs(deltaRoll) > 0.1f)
-        {
-            // 목표 각도를 향해 매 프레임 조금씩 Rotate
-            Rotate(deltaPitch * elapsedTime,
-                deltaYaw * rotSpeed * elapsedTime,
-                deltaRoll * rotSpeed * elapsedTime);
-        }
-    }
+         // 위치 이동
+         XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, elapsedTime, false);
+         position = Vector3::Add(position, frameMove);
+
+         // 방향 동기화
+         SetYaw(dest_info.yaw);
+     }
+     else
+     {
+         // 서버가 IDLE 이거나 거의 도착 → 부드럽게 정지
+         velocity = Vector3::ScalarProduct(
+             velocity,
+             std::max(0.0f, 1.0f - DAMPING * elapsedTime),
+             false
+         );
+
+         XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, elapsedTime, false);
+         position = Vector3::Add(position, frameMove);
+     }
+
+    /*==========================
+        [2] 회전 동기화 (Yaw / Pitch)
+    ==========================*/
+
+    float targetYaw   = dest_info.yaw;
+    float targetPitch = dest_info.pitch;
+
+    // 현재 각도 (멤버 변수)
+    float curYaw   = yaw;
+    float curPitch = pitch;
+
+    // Yaw 360도 경계 보정
+    float deltaYaw = targetYaw - curYaw;
+    if (deltaYaw > 180.f)  deltaYaw -= 360.f;
+    if (deltaYaw < -180.f) deltaYaw += 360.f;
+
+    float deltaPitch = targetPitch - curPitch;
+
+    // 회전 보간 속도
+    const float rotSpeed = 8.0f;
+
+    // 프레임 보간
+    yaw   += deltaYaw   * rotSpeed * elapsedTime;
+    pitch += deltaPitch * rotSpeed * elapsedTime;
+
+    // Pitch 제한 (필수)
+    pitch = std::clamp(pitch, -89.9f, 89.9f);
+
+    // 회전 적용
+    SetYawPitch(yaw, pitch);
+    UpdateWorldMatrix();
 }
 
 void CPlayer::Move(const XMFLOAT3 shift)

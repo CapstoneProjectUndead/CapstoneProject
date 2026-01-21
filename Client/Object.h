@@ -33,6 +33,14 @@ public:
 	int  GetID() const { return obj_id; }
 	void SetID(const int id) { obj_id = id; }
 
+	//=================================
+	// 회전 함수 (테스트)
+	void SetYaw(float _yaw);
+	void SetYawPitch(float yawDeg, float pitchDeg);
+	void UpdateWorldMatrix();
+	void UpdateLookRightFromYaw();
+	//=================================
+
 public:
 	XMFLOAT4X4 world_matrix;
 
@@ -52,4 +60,9 @@ protected:
 	BoundingOrientedBox oobb;
 
 	float speed{ 10.0f };
+
+	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
+	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
+	float		yaw = 0.f;
+	float		pitch = 0.f;
 };
