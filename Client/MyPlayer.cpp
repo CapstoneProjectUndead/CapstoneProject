@@ -35,8 +35,15 @@ void CMyPlayer::Update(float elapsedTime)
 	// 입력처리
 	ProcessInput();
 
+	// 회전 적용
 	SetYawPitch(yaw, pitch);
 	UpdateWorldMatrix();
+
+	// 상태 update
+	if (direction.x == 0 && direction.z == 0)
+		state = IDLE;
+	else
+		state = WALK;
 
 	camera->Update(position, elapsedTime);
 	camera->GenerateViewMatrix();
@@ -55,6 +62,7 @@ void CMyPlayer::Update(float elapsedTime)
 			movePkt.info.x = position.x;
 			movePkt.info.y = position.y;
 			movePkt.info.z = position.z;
+			movePkt.info.state = state;
 
 			// 별도의 함수 호출 없이 멤버 변수(참조자)를 직접 사용
 			// 1. Pitch: Look 벡터의 Y축 기울기
@@ -74,9 +82,9 @@ void CMyPlayer::Update(float elapsedTime)
 
 void CMyPlayer::ProcessInput()
 {
-	XMFLOAT3 direction{};
+	direction = XMFLOAT3{0.f, 0.f, 0.f};
 
-	if (KEY_PRESSED(KEY::W)) direction.z++;
+	if (KEY_PRESSED(KEY::W)) direction.z++; 
 	if (KEY_PRESSED(KEY::S)) direction.z--;
 	if (KEY_PRESSED(KEY::A)) direction.x--;
 	if (KEY_PRESSED(KEY::D)) direction.x++;

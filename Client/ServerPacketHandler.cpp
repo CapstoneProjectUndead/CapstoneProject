@@ -115,6 +115,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 
 	ObjectInfo info;
 	info.id = pkt.info.id;
+	info.state = pkt.info.state;
 	info.x = pkt.info.x;
 	info.y = pkt.info.y;
 	info.z = pkt.info.z;

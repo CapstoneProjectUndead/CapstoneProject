@@ -104,6 +104,7 @@ bool Handle_C_MOVE(std::shared_ptr<Session> session, C_Move& pkt)
 
 	S_Move movePkt;
 	movePkt.info.id = pkt.info.id;
+	movePkt.info.state = pkt.info.state;
 	movePkt.info.x = pkt.info.x;
 	movePkt.info.y = pkt.info.y;
 	movePkt.info.z = pkt.info.z;
