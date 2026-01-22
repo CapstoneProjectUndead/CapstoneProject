@@ -7,18 +7,16 @@ class CCamera;
 
 struct Material
 {
-	std::string name;
-
 	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
-	float roughness{ 0.25f };
-	float metallic{0.1f};
+	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };	// 프레넬 효과 반사양
+	float glossiness{ 0.25f };
 };
 
 struct MaterialCB
 {
 	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
-	/*float roughness{ 0.25f };
-	float metallic{ 0.1f };*/
+	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
+	float glossiness{ 0.25f };
 };
 
 struct ObjectCB

@@ -17,6 +17,7 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
     // 3) 임시 버퍼들
     std::vector<XMFLOAT3> positions;
     std::vector<XMFLOAT4> colors;
+    std::vector<XMFLOAT3> normals;
     std::vector<UINT> indices;
 
     // --- Positions ---
@@ -39,6 +40,17 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
         colors.resize(count);
         if (count > 0)
             file.read(reinterpret_cast<char*>(colors.data()), sizeof(XMFLOAT4) * count);
+    }
+
+    // --- Normals ---
+    if (br.FindTag("<Normals>:"))
+    {
+        UINT count = 0;
+        file.read(reinterpret_cast<char*>(&count), sizeof(UINT));
+
+        normals.resize(count);
+        if (count > 0)
+            file.read(reinterpret_cast<char*>(normals.data()), sizeof(XMFLOAT3) * count);
     }
 
     if (br.FindTag("<SubMeshes>:"))
@@ -68,7 +80,7 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
     br.FindTag("</Mesh>");
 
     // 최종 정점 배열 조립
-    std::vector<CVertex> vertices(vertexNum);
+    std::vector<CMatVertex> vertices(vertexNum);
 
     for (UINT i = 0; i < vertexNum; ++i)
     {
@@ -83,6 +95,12 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
             vertices[i].color = colors[i];
         else
             vertices[i].color = XMFLOAT4(1, 1, 1, 1); // 기본값 (white)
+
+        // Normal
+        if (i < normals.size())
+            vertices[i].normal = normals[i];
+        else
+            vertices[i].normal = XMFLOAT3(1, 1, 1); // 기본값 (white)
     }
 
     // vertex, index gpu에 set

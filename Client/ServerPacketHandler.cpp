@@ -38,12 +38,12 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	myPlayer->SetMesh(frame->mesh);
 
-	Material m{};
+	/*Material m{};
 	m.name = "Red";
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
 	m.roughness = 0.5f;
 	m.metallic = 0.1f;
-	myPlayer->SetMaterial(m);
+	myPlayer->SetMaterial(m);*/
 
 	myPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
@@ -82,12 +82,12 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->SetMesh(frame->mesh);
 
-	Material m{};
+	/*Material m{};
 	m.name = "Red";
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
 	m.roughness = 0.5f;
 	m.metallic = 0.1f;
-	otherPlayer->SetMaterial(m);
+	otherPlayer->SetMaterial(m);*/
 
 	otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
@@ -119,12 +119,12 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 		otherPlayer->SetMesh(frame->mesh);
 
-		Material m{};
+		/*Material m{};
 		m.name = "Red";
 		m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
 		m.roughness = 0.5f;
 		m.metallic = 0.1f;
-		otherPlayer->SetMaterial(m);
+		otherPlayer->SetMaterial(m);*/
 
 		otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 

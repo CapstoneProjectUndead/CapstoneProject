@@ -1,6 +1,7 @@
 #pragma once
 #include "Shader.h"
 #include "GeometryLoader.h"
+#include "LightManager.h"
 
 class CPlayer;
 class CMyPlayer;
@@ -41,4 +42,5 @@ protected:
 	std::unordered_map<uint32_t, size_t>	id_To_Index;
 
 	std::unordered_map<std::string, std::unique_ptr<FrameNode>> frames;
+	std::unique_ptr<CLightManager> light;
 };

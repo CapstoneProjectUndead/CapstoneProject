@@ -20,10 +20,8 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	my_player->SetMesh(frames["undead_char"]->mesh);
 	// material set
 	Material m{};
-	m.name = "Red";
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.roughness = 0.5f;
-	m.metallic = 0.1f;
+	m.glossiness = 0.0f;
 	my_player->SetMaterial(m);
 
 	my_player->CreateConstantBuffers(device, commandList);
@@ -31,6 +29,16 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 	shader->CreateShader(device);
 	shaders.push_back(std::move(shader));
+
+	// test 용 삭제X
+	/*{
+		auto obj = std::make_shared<CObject>();
+		obj->SetMaterial(m);
+		obj->SetMesh(frames["undead_char"]->mesh);
+
+		obj->CreateConstantBuffers(device, commandList);
+		objects.push_back(std::move(obj));
+	}*/
 
 	// 카메라 객체 생성
 	RECT client_rect;
@@ -46,16 +54,18 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	camera->SetTarget(my_player.get());
 
 	camera->CreateConstantBuffers(device, commandList);
+
+	// light 생성
+	light = std::make_unique<CLightManager>();
+	light->Initialize(device, commandList);
 }
 
 void CTestScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	
 }
 
 void CTestScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
-
 }

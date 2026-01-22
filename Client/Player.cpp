@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "Player.h"
 
-extern HWND ghWnd;
-
 // Player
 CPlayer::CPlayer()
 {

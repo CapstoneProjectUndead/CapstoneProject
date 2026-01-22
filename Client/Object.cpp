@@ -67,7 +67,8 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 	}
 
 	{
-		MaterialCB cb{material.albedo};
+		MaterialCB cb{};
+		memcpy(&cb, &material, sizeof(Material));
 
 		UINT8* mapped = nullptr;
 		material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));

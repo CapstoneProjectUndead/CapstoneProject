@@ -32,6 +32,8 @@ void CScene::Update(float elapsedTime)
 
 	if(camera)
 		camera->Update(my_player->position, elapsedTime);
+	if(light)
+		light->Update(camera.get());
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* commandList)
@@ -44,6 +46,9 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 
 		if(camera)
 			camera->UpdateShaderVariables(commandList);
+
+		if (light)
+			light->Render(commandList);
 
 		for (const auto& obj : objects) {
 			if (i == obj->GetShaderIndex())
