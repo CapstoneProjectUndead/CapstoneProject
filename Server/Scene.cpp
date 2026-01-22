@@ -61,3 +61,16 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 	lock_guard<mutex> lg(players_lock);
 	players[player->GetID()] = player;
 }
+
+void CScene::LeaveScene(uint64 playerId)
+{
+	lock_guard<mutex> lg(players_lock);
+	players.erase(playerId);
+
+	S_RemovePlayer removePkt;
+	removePkt.info.id = playerId;
+	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_RemovePlayer>(removePkt);
+	
+	for (auto& player : players)
+		player.second->GetSession()->DoSend(sendBuffer);
+}

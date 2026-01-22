@@ -170,6 +170,7 @@
     <ClCompile Include="TimeManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\External\Common\enum.h" />
     <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
     <ClInclude Include="ClientPacketHandler.h" />

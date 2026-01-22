@@ -3,16 +3,6 @@
 #include "Player.h"
 #include "Job.h"
 
-enum class SCENE_TYPE
-{
-	TEST,
-	MAIN,
-	LOBY,
-	GAME,
-
-	END
-};
-
 class CScene
 {
 	template<typename T, typename PacketType>
@@ -23,13 +13,13 @@ public:
 	~CScene();
 
 	virtual void Update(float elapsedTime);
-
-	SCENE_TYPE GetSceneType() const { return scene_type; }
+	virtual void EnterScene(shared_ptr<CPlayer> player);
+	virtual void LeaveScene(uint64 playerId);
 
 	void BroadCast(SendBufferRef sendBuffer);
 	void BroadCast(SendBufferRef sendBuffer, uint64 exceptID);
 
-	virtual void EnterScene(shared_ptr<CPlayer> player);
+	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
 
 public:
