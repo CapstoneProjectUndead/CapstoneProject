@@ -35,10 +35,6 @@ void CMyPlayer::Update(float elapsedTime)
 	// 입력처리
 	ProcessInput();
 
-	// 회전 적용
-	SetYawPitch(yaw, pitch);
-	UpdateWorldMatrix();
-
 	// 상태 update
 	if (direction.x == 0 && direction.z == 0)
 		state = IDLE;
@@ -105,6 +101,10 @@ void CMyPlayer::ProcessInput()
 				yaw += mouseDelta.x;
 				pitch += mouseDelta.y;
 				pitch = std::clamp(pitch, -89.9f, 89.9f);
+
+				// 회전 적용
+				SetYawPitch(yaw, pitch);
+				UpdateWorldMatrix();
 			}
 			if (KEY_PRESSED(KEY::RBTN))
 				Rotate(mouseDelta.y, 0.0f, -mouseDelta.x);

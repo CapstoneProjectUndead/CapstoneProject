@@ -22,6 +22,9 @@ constexpr int16 _S_REMOVEPLAYER = 8;
 constexpr int16 _C_MOVE = 9;
 constexpr int16 _S_MOVE = 10;
 
+// 서버 권한 + 클라 예측 (테스트)
+constexpr int16 _C_PLAYER_INPUT = 11;
+
 #pragma pack (push, 1)
 
 struct C_LOGIN : public PacketHeader
@@ -111,6 +114,16 @@ struct S_Move : public PacketHeader
 	ObjectInfo info;
 
 	S_Move() : PacketHeader(sizeof(S_Move), _S_MOVE) {}
+};
+
+// 서버 권한 + 클라 예측
+struct C_PlayerInput : public PacketHeader
+{
+	int		playerId;
+	bool	w, a, s, d;
+	float	mouseDeltaX, mouseDeltaY;
+
+	C_PlayerInput() : PacketHeader(sizeof(C_PlayerInput), _C_PLAYER_INPUT) {};
 };
 
 

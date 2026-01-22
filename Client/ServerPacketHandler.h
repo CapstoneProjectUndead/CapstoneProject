@@ -17,6 +17,7 @@ enum : uint16
 	PKT_S_REMOVEPLAYER = 8,
 	PKT_C_MOVE = 9,
 	PKT_S_MOVE = 10,
+	PKT_C_PLAYERINPUT = 11,
 };
 
 // Custom Handlers

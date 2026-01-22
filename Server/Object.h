@@ -39,6 +39,14 @@ public:
     XMFLOAT3                            GetLook() { return look; }
     void                                SetLook(const XMFLOAT3 _look) { look = _look; }
 
+    //=================================
+    // 회전 함수 (테스트)
+    void SetYaw(float _yaw);
+    void SetYawPitch(float yawDeg, float pitchDeg);
+    void UpdateWorldMatrix();
+    void UpdateLookRightFromYaw();
+    //=================================
+
 private:
     static atomic<uint64>               s_idGenerator;
     weak_ptr<Session>                   session;
@@ -53,6 +61,12 @@ private:
     XMFLOAT3& position =    *(XMFLOAT3*)&world_matrix._41;
          
     float                               speed{ 10.f };
+    bool                                is_visible{ true };
+
+    // 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
+    XMFLOAT4	                        orientation = { 0.f, 0.f, 0.f, 1.f };
+    float		                        yaw = 0.f;
+    float		                        pitch = 0.f;
 
     //BoundingOrientedBox oobb; // 충돌은 서버 핵심
 };

@@ -64,6 +64,12 @@ void CObject::Render(ID3D12GraphicsCommandList* commandList)
 		mesh->Render(commandList);
 }
 
+void CObject::SetYaw(float _yaw)
+{
+	yaw = _yaw;
+	UpdateLookRightFromYaw();
+}
+
 void CObject::SetYawPitch(float yawDeg, float pitchDeg)
 {
 	// pitch 제한 (이거 중요)
@@ -102,12 +108,6 @@ void CObject::UpdateLookRightFromYaw()
 		0.0f,
 		-look.x
 	);
-}
-
-void CObject::SetYaw(float _yaw)
-{
-	yaw = _yaw;
-	UpdateLookRightFromYaw(); 
 }
 
 void CObject::Animate(float elapsedTime, CCamera* camera)
