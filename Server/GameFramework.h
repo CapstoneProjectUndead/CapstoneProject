@@ -9,14 +9,8 @@ public:
 	~CGameFramework();
 
 	void Init();
-	void Update();
+	void Update(float elapsedTime);
 
-public:
-    // 메인 루프(Update)에서 호출
-	//void HandlePackets();
-
-private:
-	mutex					queue_mutex;
-	queue<C_PlayerInput>	input_queue;
+	void SendResults();
 };
 
