@@ -84,6 +84,7 @@ using std::make_pair;
 #include <ServerEngine/BufferWriter.h>
 #include <ServerEngine/BufferReader.h>
 
+#include <enum.h>
 #include <Struct.h>
 #include <protocol.h>
 #include <VarialbePacketWriter.h>

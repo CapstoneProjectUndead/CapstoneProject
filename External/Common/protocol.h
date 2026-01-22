@@ -8,8 +8,6 @@ constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 100;
 
 // Packet ID
-// 아래는 예시
-// 우리 게임에 맞게 변형
 constexpr int16 _C_SIGNUP = 0;
 constexpr int16 _S_SIGNRES = 1;
 constexpr int16 _C_LOGIN = 2;
@@ -26,6 +24,8 @@ constexpr int16 _S_MOVE = 10;
 constexpr int16 _C_PLAYER_INPUT = 11;
 
 #pragma pack (push, 1)
+
+static_assert(sizeof(PacketHeader) == 4, "PacketHeader size mismatch!");
 
 struct C_LOGIN : public PacketHeader
 {
@@ -125,6 +125,5 @@ struct C_PlayerInput : public PacketHeader
 
 	C_PlayerInput() : PacketHeader(sizeof(C_PlayerInput), _C_PLAYER_INPUT) {};
 };
-
 
 #pragma pack (pop)

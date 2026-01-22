@@ -58,7 +58,7 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
     }
 
     // 2. 상대가 WALK 상태일 때만 따라간다
-    if (dest_info.state == WALK && dist > 0.05f)
+    if (dest_info.state == PLAYER_STATE::WALK && dist > 0.05f)
     {
         // 방향
         XMFLOAT3 dir = Vector3::Normalize(toTarget);

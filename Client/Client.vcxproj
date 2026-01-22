@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\External\Common\enum.h" />
     <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\Struct.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />

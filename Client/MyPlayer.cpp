@@ -37,9 +37,9 @@ void CMyPlayer::Update(float elapsedTime)
 
 	// ป๓ลย update
 	if (direction.x == 0 && direction.z == 0)
-		state = IDLE;
+		state = PLAYER_STATE::IDLE;
 	else
-		state = WALK;
+		state = PLAYER_STATE::WALK;
 
 	camera->Update(position, elapsedTime);
 	camera->GenerateViewMatrix();

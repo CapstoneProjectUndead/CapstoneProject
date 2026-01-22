@@ -67,6 +67,7 @@ using Microsoft::WRL::ComPtr;
 #include <ServerEngine/Session.h>
 
 #include "macro.h"
+#include <enum.h>
 #include <Struct.h>
 #include <protocol.h>
 

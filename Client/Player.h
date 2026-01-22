@@ -20,7 +20,7 @@ protected:
 	XMFLOAT3 direction{};
 	XMFLOAT3 velocity{1.0f, 1.0f, 1.0f};
 
-	STATE state = IDLE;
+	PLAYER_STATE state = PLAYER_STATE::IDLE;
 	bool is_my_player = false;	// 크게 필요없을 것 같지만, 일단 선언
 	ObjectInfo dest_info{};		// 서버로부터 받은 캐릭터의 위치, 회전 값
 };

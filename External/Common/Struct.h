@@ -1,23 +1,16 @@
 #pragma once
 
-enum STATE
-{
-	IDLE,
-	WALK,
-	RUN,
-};
-
 struct ObjectInfo
 {
-	int	  id;
-	float x, y, z;
-	float yaw, pitch, roll;
-	STATE state;
+	uint32			id;
+	float			x, y, z;
+	float			yaw, pitch, roll;
+	PLAYER_STATE	state;
 
 	ObjectInfo() = default;
 	ObjectInfo(int _id, float _x, float _y, float _z)
 		: id(_id)
-		, state(IDLE)
+		, state(PLAYER_STATE::IDLE)
 		, x(_x)
 		, y(_y)
 		, z(_z)
