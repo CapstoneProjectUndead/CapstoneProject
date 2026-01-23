@@ -2,6 +2,79 @@
 #include "Mesh.h"
 #include "GeometryLoader.h"
 
+AnimationData CGeometryLoader::LoadAnimations(const std::string& filename)
+{
+    AnimationData animData;
+
+    BinaryReader br(filename);
+    if (!br.good())
+        return animData;
+
+    std::ifstream& file = br.Stream();
+    
+    int clipCount = 0;
+    if (br.FindTag("<AnimationClipCount>:")) {
+        file.read((char*)&clipCount, sizeof(int));
+    }
+
+    for (int c = 0; c < clipCount; c++)
+    {
+        AnimationClip clip;
+
+        // <AnimationClip>:
+        br.FindTag("<AnimationClip>:");
+        clip.name = br.ReadName();
+
+        // <ClipLength>:
+         br.FindTag("<ClipLength>:");
+        file.read((char*)&clip.length, sizeof(float));
+
+        // <CurveCount>:
+        br.FindTag("<CurveCount>:");
+        int curveCount = 0;
+        file.read((char*)&curveCount, sizeof(int));
+
+        clip.curves.resize(curveCount);
+
+        for (int i = 0; i < curveCount; i++)
+        {
+            Curve curve;
+
+            // <CurvePath>:
+            br.FindTag("<CurvePath>:");
+            curve.path = br.ReadName();
+
+            // <CurveProperty>:
+            br.FindTag("<CurveProperty>:");
+            curve.property = br.ReadName();
+
+            // <KeyCount>:
+            br.FindTag("<KeyCount>:");
+            int keyCount = 0;
+            file.read((char*)&keyCount, sizeof(int));
+
+            curve.keys.resize(keyCount);
+
+            for (int k = 0; k < keyCount; k++)
+            {
+                // <KeyTime>:
+                br.FindTag("<KeyTime>:");
+                file.read((char*)&curve.keys[k].time, sizeof(float));
+
+                // <KeyValue>:
+                br.FindTag("<KeyValue>:");
+                file.read((char*)&curve.keys[k].value, sizeof(float));
+            }
+
+            clip.curves[i] = std::move(curve);
+        }
+
+        animData.clips.push_back(std::move(clip));
+    }
+
+    return animData;
+}
+
 std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     if (!br.FindTag("<Mesh>:"))
@@ -121,7 +194,7 @@ std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br, ID3D12De
     auto node = std::make_unique<FrameNode>();
 
     // 이름 읽기
-    //node->name = br.ReadName();
+    node->name = br.ReadName();
 
     std::ifstream& file{ br.Stream() };
 

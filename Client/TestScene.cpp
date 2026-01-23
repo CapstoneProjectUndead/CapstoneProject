@@ -16,6 +16,9 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	// 플레이어 생성
 	// model load
 	frames["undead_char"] = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
+	// animation load
+	frames["undead_char"]->animation = CGeometryLoader::LoadAnimations("../Modeling/undead_animation.bin");
+
 	my_player = std::make_shared<CMyPlayer>();
 	my_player->SetMesh(frames["undead_char"]->mesh);
 	// material set
@@ -31,14 +34,22 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	shaders.push_back(std::move(shader));
 
 	// test 용 삭제X
-	/*{
+	{
 		auto obj = std::make_shared<CObject>();
 		obj->SetMaterial(m);
 		obj->SetMesh(frames["undead_char"]->mesh);
 
 		obj->CreateConstantBuffers(device, commandList);
 		objects.push_back(std::move(obj));
-	}*/
+
+		//std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
+		//std::ofstream txt("../Modeling/output_model.txt");
+
+		//char ch;
+		//while (bin.get(ch)) {
+		//	txt << ch;   // txt 파일에 문자 그대로 출력
+		//}
+	}
 
 	// 카메라 객체 생성
 	RECT client_rect;

@@ -2,6 +2,31 @@
 
 class CMesh;
 
+struct Keyframe
+{
+    float time;
+    float value;
+};
+
+struct Curve
+{
+    std::string path;        // bone path
+    std::string property;    // m_LocalPosition.x 등
+    std::vector<Keyframe> keys;
+};
+
+struct AnimationClip
+{
+    std::string name;
+    float length = 0.f;
+    std::vector<Curve> curves;
+};
+
+struct AnimationData
+{
+    std::vector<AnimationClip> clips;
+};
+
 struct FrameNode
 {
 	std::string name;
@@ -12,6 +37,7 @@ struct FrameNode
 	std::shared_ptr<CMesh> mesh;
 
 	std::vector<std::unique_ptr<FrameNode>> children;
+    AnimationData animation;
 };
 
 class BinaryReader {
@@ -44,19 +70,41 @@ public:
 
     std::string ReadName()
     {
-        std::string name;
+        std::string s;
         char ch;
-        while (file.get(ch))
-        {
-            if (std::isspace(static_cast<unsigned char>(ch)) || ch == '<')
-            {
-                if (ch == '<')
-                    file.unget();
+
+        // 문자열 시작 위치로 이동
+        SkipToStringStart();
+
+        // 본문 읽기
+        while (file.get(ch)) {
+            if (ch == '<') {
+                file.unget();
                 break;
             }
-            name.push_back(ch);
+            if (std::isalnum((unsigned char)ch) || ch == '_' || ch == '/')
+                s.push_back(ch);
         }
-        return name;
+
+        return s;
+    }
+
+    void SkipToStringStart()
+    {
+        char ch;
+
+        // 태그 뒤의 ':' 또는 공백 또는 쓰레기 바이트 제거
+        while (file.get(ch))
+        {
+            if (ch == '<') { file.unget(); return; }
+
+            // 문자열의 첫 글자는 알파벳/숫자/언더바
+            if (std::isalnum((unsigned char)ch) || ch == '_')
+            {
+                file.unget(); // 문자열 첫 글자 되돌리기
+                return;
+            }
+        }
     }
 
     bool ReadMatrix(DirectX::XMFLOAT4X4& out)
@@ -93,6 +141,7 @@ private:
 class CGeometryLoader {
 public:
 	static std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    static AnimationData LoadAnimations(const std::string& filename);
 private:
     static std::shared_ptr<CMesh> LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     static std::unique_ptr<FrameNode> LoadFrame(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
