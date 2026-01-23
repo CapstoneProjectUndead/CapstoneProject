@@ -15,7 +15,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
 bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 {
-	//std::cout << "정의 되지 않은 패킷 ID 입니다!" << std::endl;
+	//std::cout << "� 吏  ⑦ ID !" << std::endl;
 	assert(nullptr);
 	return false;
 }
@@ -51,7 +51,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	shader->CreateShader(gGameFramework.GetDevice().Get());
 	scene->GetShaders().push_back(std::move(shader));
 
-	// 카메라 객체 생성
+	// 移대 媛泥 
 	RECT client_rect;
 	GetClientRect(ghWnd, &client_rect);
 	float width{ float(client_rect.right - client_rect.left) };
@@ -65,6 +65,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	camera->SetTarget(myPlayer.get());
 
 	camera->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	myPlayer->SetSession(session);
 
 	scene->SetPlayer(myPlayer);
 	scene->SetCamera(camera);
@@ -105,16 +106,16 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 	for (int i = 0; i < pkt.player_count; ++i) {
 
-		// 다른 유저 생성
+		// ㅻⅨ � 
 		std::shared_ptr<CMyPlayer> otherPlayer = std::make_shared<CMyPlayer>();
 
-		// 다른 유저 ID 부여
+		// ㅻⅨ � ID 遺
 		otherPlayer->SetID(userList[i].info.id);
 
-		// 다른 유저 위치 부여
+		// ㅻⅨ � 移 遺
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
-		// 다른 유저 mesh 설정
+		// ㅻⅨ � mesh ㅼ
 		std::unique_ptr<FrameNode> frame;
 		frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 		otherPlayer->SetMesh(frame->mesh);
@@ -128,7 +129,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
-		// Active Scene에 다른 유저 입장
+		// Active Scene ㅻⅨ � 
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
 	}
 
@@ -148,6 +149,43 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 			}
 		}
 	}
+
+	return true;
+}
+
+bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
+{
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	auto& vec = scene->GetObjects();
+	auto& indexMap = scene->GetIDIndex();
+	std::shared_ptr<CMyPlayer> myPlayer =  scene->GetMyPlayer();
+
+	// 내 플레이어이면 처리하지 않고 나가기
+	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id)
+		return true;
+
+	// 해당 ID가 존재하는 플레이어인지 확인
+	auto it = indexMap.find(pkt.info.id);
+	if (it == indexMap.end())
+		return true;
+
+	uint64 idx = it->second;
+	if (idx >= vec.size())
+		return true;
+
+	auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+
+	ObjectInfo info;
+	info.id = pkt.info.id;
+	info.state = pkt.info.state;
+	info.x = pkt.info.x;
+	info.y = pkt.info.y;
+	info.z = pkt.info.z;
+	info.yaw = pkt.info.yaw;
+	info.pitch = pkt.info.pitch;
+	info.roll = pkt.info.roll;
+
+	player->SetDestInfo(info);
 
 	return true;
 }

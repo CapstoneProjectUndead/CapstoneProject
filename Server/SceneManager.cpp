@@ -8,11 +8,13 @@
 void CSceneManager::Initialize()
 {
 	scenes[(UINT)SCENE_TYPE::TEST] = std::make_unique<CTestScene>();
-	
-	active_scene = scenes[(UINT)SCENE_TYPE::TEST].get();
 }
 
-void CSceneManager::Update()
+void CSceneManager::Update(float elapsedTime)
 {
-
+	for (auto& scene : scenes)
+	{
+		if (scene != nullptr)
+			scene->Update(elapsedTime);
+	}
 }

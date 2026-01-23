@@ -50,7 +50,7 @@ public:
 
 		pkt = bw.Reserve<S_PLAYER_LIST>(1);
 		//pkt->SetPacketSize(4096);
-		pkt->SetPacketType(_S_PLAYERLIST);
+		pkt->SetPacketType((UINT)PacketType::_S_PLAYERLIST);
 	}
 
 	UserList ReserveUserList(uint16 userCount)

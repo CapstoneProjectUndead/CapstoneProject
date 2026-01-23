@@ -7,8 +7,6 @@
 
 // 서버 
 #include "NetworkManager.h"
-#include "ServerPacketHandler.h"
-
 
 #define MAX_LOADSTRING 100
 
@@ -160,7 +158,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
     case WM_KEYDOWN:
     case WM_KEYUP:
-        gGameFramework.ProcessWindowMessage(hWnd, message, wParam, lParam);
+        //gGameFramework.ProcessWindowMessage(hWnd, message, wParam, lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

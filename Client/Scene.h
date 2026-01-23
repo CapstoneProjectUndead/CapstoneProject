@@ -31,6 +31,8 @@ public:
 
 	std::vector<std::shared_ptr<CShader>>&	GetShaders() { return shaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
+	std::vector<std::shared_ptr<CObject>>& GetObjects() { return objects; }
+	std::unordered_map<uint32_t, size_t>& GetIDIndex() { return id_To_Index; }
 
 protected:
 	std::vector<std::shared_ptr<CShader>>	shaders{};

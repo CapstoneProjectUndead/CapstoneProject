@@ -14,7 +14,10 @@ enum : uint16
 	PKT_S_SPAWNPLAYER = 5,
 	PKT_S_ADDPLAYER = 6,
 	PKT_S_PLAYERLIST = 7,
-	pKT_S_REMOVEPLAYER = 8,
+	PKT_S_REMOVEPLAYER = 8,
+	PKT_C_MOVE = 9,
+	PKT_S_MOVE = 10,
+	PKT_C_PLAYERINPUT = 11,
 };
 
 // Custom Handlers
@@ -24,6 +27,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt);
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt);
 bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt);
 bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt);
+bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt);
 
 class CServerPacketHandler
 {
@@ -37,7 +41,8 @@ public:
 		GPacketHandler[PKT_S_SPAWNPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnPlayer>(Handle_S_MYPLAYER, session, buffer, len); };
 		GPacketHandler[PKT_S_ADDPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddPlayer>(Handle_S_ADDPLAYER, session, buffer, len); };
 		GPacketHandler[PKT_S_PLAYERLIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PLAYER_LIST>(Handle_S_PLAYERLIST, session, buffer, len); };
-		GPacketHandler[pKT_S_REMOVEPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RemovePlayer>(Handle_S_REMOVEPLAYER, session, buffer, len); };
+		GPacketHandler[PKT_S_REMOVEPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RemovePlayer>(Handle_S_REMOVEPLAYER, session, buffer, len); };
+		GPacketHandler[PKT_S_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Move>(Handle_S_MOVE, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

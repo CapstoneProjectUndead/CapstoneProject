@@ -6,6 +6,8 @@
 
 // Server
 
+#pragma once
+
 #ifndef PCH_H
 #define PCH_H
 
@@ -42,6 +44,7 @@
 #include <locale>
 #include <assert.h>
 #include <functional>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -70,6 +73,7 @@ using std::shared_ptr;
 using std::weak_ptr;
 using std::unique_ptr;
 using std::make_shared;
+using std::make_unique;
 using std::make_pair;
 
 #include <ServerEngine/global.h>
@@ -82,10 +86,15 @@ using std::make_pair;
 #include <ServerEngine/BufferWriter.h>
 #include <ServerEngine/BufferReader.h>
 
-#include <Struct.h>
+#include <enum.h>
+#include <struct.h>
 #include <protocol.h>
-#include "ClientPacketHandler.h"
+#include <VarialbePacketWriter.h>
 
+#include "ClientPacketHandler.h"
+#include "DirectXMathHelper.h"
+
+extern unique_ptr<class CGameFramework> gGameFramework;
 //extern DBConnector g_db;
 
 

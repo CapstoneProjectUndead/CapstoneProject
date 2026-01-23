@@ -3,16 +3,6 @@
 
 #include "Scene.h"
 
-enum class SCENE_TYPE
-{
-    TEST,
-    MAIN,
-    LOBY,
-    GAME,
-
-    END
-};
-
 class CSceneManager
 {
 private:
@@ -29,15 +19,11 @@ public:
 
 public:
     void    Initialize();
-    void    Update();
+    void    Update(float elapsedTime);
 
-    std::unique_ptr<CScene>* GetScenes() { return scenes; }
-
-    CScene* GetActiveScene() const { return active_scene; }
-    void    SetActiveScene(CScene* scene) { active_scene = scene; }
+    unique_ptr<CScene>* GetScenes() { return scenes; }
 
 private:
-    std::unique_ptr<CScene> scenes[(UINT)SCENE_TYPE::END];
-    CScene*                 active_scene = nullptr;
+    unique_ptr<CScene>      scenes[(UINT)SCENE_TYPE::END];
 };
 
