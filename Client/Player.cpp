@@ -29,8 +29,6 @@ void CPlayer::Move(const XMFLOAT3 shift)
 {
 	position = Vector3::Add(position, shift);
 }
-	//if (camera) camera->Move(shift);
-}
 
 void CPlayer::OpponentMoveSync(float elapsedTime)
 {
