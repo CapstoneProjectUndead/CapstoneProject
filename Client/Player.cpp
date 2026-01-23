@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "Player.h"
-#include "Camera.h"
-#include "Timer.h"
-#include "KeyManager.h"
 
 #undef min
 #undef max
@@ -10,14 +7,10 @@
 extern HWND ghWnd;
 
 // Player
-CPlayer::CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+CPlayer::CPlayer()
 {
 	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-
-	// 메쉬 설정
-	std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(device, commandList);
-	SetMesh(mesh);
 }
 
 void CPlayer::Update(float elapsedTime)
@@ -126,4 +119,5 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     // 회전 적용
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
+}
 }

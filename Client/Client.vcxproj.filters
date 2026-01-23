@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="소스 파일">
@@ -31,7 +31,10 @@
     <Filter Include="Network\NetworkManager">
       <UniqueIdentifier>{69db58d7-23a5-4730-957a-3958555b4abf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Network\PacketHandler">
+    <Filter Include="D3D12">
+      <UniqueIdentifier>{cd629c79-ac06-4dd7-94fe-37495b47753e}</UniqueIdentifier>
+	</Filter>
+	<Filter Include="Network\PacketHandler">
       <UniqueIdentifier>{4f103850-1b48-4beb-b19d-f3143b8db5ca}</UniqueIdentifier>
     </Filter>
     <Filter Include="Scene">
@@ -63,9 +66,6 @@
     <ClInclude Include="Player.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Object.h">
       <Filter>Object</Filter>
     </ClInclude>
@@ -73,12 +73,6 @@
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="DDSTextureLoader.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
@@ -102,7 +96,10 @@
     <ClInclude Include="macro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ServerPacketHandler.h">
+    <ClInclude Include="GeometryLoader.h">
+      <Filter>헤더 파일</Filter>
+	</ClInclude>
+	<ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\packet_struct.h">
@@ -131,6 +128,14 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\struct.h">
       <Filter>헤더 파일</Filter>
+    <ClInclude Include="d3dx12.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -152,13 +157,7 @@
     <ClCompile Include="Object.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="DDSTextureLoader.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Timer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
@@ -176,7 +175,10 @@
     <ClCompile Include="KeyManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="ServerPacketHandler.cpp">
+    <ClCompile Include="GeometryLoader.cpp">
+      <Filter>소스 파일</Filter>
+	</ClCompile>
+	<ClCompile Include="ServerPacketHandler.cpp">
       <Filter>Network\PacketHandler</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
@@ -193,6 +195,11 @@
     </ClCompile>
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

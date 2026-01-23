@@ -9,6 +9,11 @@ cbuffer CameraInfo : register(b1)
     float4x4 projectionMatrix : packoffset(c4);
 };
 
+cbuffer MaterialInfo : register(b2)
+{
+    float4 materialColor : packoffset(c0);
+};
+
 struct VS_INPUT
 {
     float3 position : POSITION;
@@ -33,5 +38,5 @@ VS_OUTPUT VSMain(VS_INPUT input)
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET
 {
-    return input.color;
+    return input.color * materialColor;
 }

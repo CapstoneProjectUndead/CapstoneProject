@@ -1,15 +1,13 @@
 #include "stdafx.h"
 #include "MyPlayer.h"
 #include "Timer.h"
-#include "Camera.h"
 #include "KeyManager.h"
 #include "ServerPacketHandler.h"
 
-
-CMyPlayer::CMyPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
-	: CPlayer(device, commandList)
+CMyPlayer::CMyPlayer()
+	: CPlayer()
 {
-	// Ä«¸Þ¶ó °´Ã¼ »ý¼º
+	// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½
 	RECT client_rect;
 	GetClientRect(ghWnd, &client_rect);
 	float width{ float(client_rect.right - client_rect.left) };
@@ -28,14 +26,15 @@ CMyPlayer::CMyPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandLis
 CMyPlayer::~CMyPlayer()
 {
 
+	
 }
 
 void CMyPlayer::Update(float elapsedTime)
 {
-	// ÀÔ·ÂÃ³¸®
+	// ìž…ë ¥ì²˜ë¦¬
 	ProcessInput();
 
-	// »óÅÂ update
+	// ï¿½ï¿½ï¿½ï¿½ update
 	if (direction.x == 0 && direction.z == 0)
 		state = PLAYER_STATE::IDLE;
 	else
@@ -44,9 +43,10 @@ void CMyPlayer::Update(float elapsedTime)
 	camera->Update(position, elapsedTime);
 	camera->GenerateViewMatrix();
 
-	// ¿©±â¼­ ÇÃ·¹ÀÌ¾î À§Ä¡¿Í ¹æÇâ Á¤º¸¸¦ Ä³½Ì
+	// ï¿½ï¿½ï¿½â¼­ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½
+	// ì—¬ê¸°ì„œ í”Œë ˆì´ì–´ ìœ„ì¹˜ì™€ ë°©í–¥ ì •ë³´ë¥¼ ìºì‹±
 	{
-		// 1ÃÊ¿¡ 5¹ø¾¿ ¼­¹ö¿¡ ÆÐÅ¶À» º¸³½´Ù.
+		// 1ï¿½Ê¿ï¿½ 5ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¶ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		move_packet_send_timer -= elapsedTime;
 
 		if (move_packet_send_timer <= 0) {
@@ -60,11 +60,11 @@ void CMyPlayer::Update(float elapsedTime)
 			movePkt.info.z = position.z;
 			movePkt.info.state = state;
 
-			// º°µµÀÇ ÇÔ¼ö È£Ãâ ¾øÀÌ ¸â¹ö º¯¼ö(ÂüÁ¶ÀÚ)¸¦ Á÷Á¢ »ç¿ë
-			// 1. Pitch: Look º¤ÅÍÀÇ YÃà ±â¿ï±â
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+			// 1. Pitch: Look ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Yï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			movePkt.info.pitch = pitch;
 
-			// 2. Yaw: Look º¤ÅÍÀÇ X, Z Æò¸é»óÀÇ ¹æÇâ
+			// 2. Yaw: Look ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ X, Z ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			movePkt.info.yaw = yaw;
 
 			movePkt.info.roll = 0;
@@ -102,7 +102,7 @@ void CMyPlayer::ProcessInput()
 				pitch += mouseDelta.y;
 				pitch = std::clamp(pitch, -89.9f, 89.9f);
 
-				// È¸Àü Àû¿ë
+				// È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 				SetYawPitch(yaw, pitch);
 				UpdateWorldMatrix();
 			}

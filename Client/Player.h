@@ -7,7 +7,7 @@ class CPlayer : public CObject {
 public:
 	using CObject::Move; // 부모의 Move 모두 노출
 
-	CPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	CPlayer();
 	virtual void Update(float elapsedTime) override;
 	void Move(const XMFLOAT3 shift) override;
 
@@ -23,5 +23,7 @@ protected:
 	PLAYER_STATE state = PLAYER_STATE::IDLE;
 	bool is_my_player = false;	// 크게 필요없을 것 같지만, 일단 선언
 	ObjectInfo dest_info{};		// 서버로부터 받은 캐릭터의 위치, 회전 값
+protected:
+	float friction{ 125.0f };
 };
 
