@@ -33,8 +33,8 @@
     </Filter>
     <Filter Include="D3D12">
       <UniqueIdentifier>{cd629c79-ac06-4dd7-94fe-37495b47753e}</UniqueIdentifier>
-	</Filter>
-	<Filter Include="Network\PacketHandler">
+    </Filter>
+    <Filter Include="Network\PacketHandler">
       <UniqueIdentifier>{4f103850-1b48-4beb-b19d-f3143b8db5ca}</UniqueIdentifier>
     </Filter>
     <Filter Include="Scene">
@@ -98,12 +98,9 @@
     </ClInclude>
     <ClInclude Include="GeometryLoader.h">
       <Filter>헤더 파일</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
-    </ClInclude>
-    <ClInclude Include="..\External\Common\packet_struct.h">
-      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Scene</Filter>
@@ -137,6 +134,9 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\struct.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\packet_struct.h">
+      <Filter>Network\Protocol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -178,7 +178,7 @@
     </ClCompile>
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
-	</ClCompile>
+    </ClCompile>
     <ClCompile Include="ServerPacketHandler.cpp">
       <Filter>Network\PacketHandler</Filter>
     </ClCompile>

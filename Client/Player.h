@@ -10,10 +10,10 @@ public:
 	CPlayer();
 	virtual void Update(float elapsedTime) override;
 	void Move(const XMFLOAT3 shift) override;
-protected:
-	float friction{ 125.0f };
 
 	void SetDestInfo(const ObjectInfo& pos) { dest_info = pos; }
+
+private:
 	void OpponentMoveSync(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
 

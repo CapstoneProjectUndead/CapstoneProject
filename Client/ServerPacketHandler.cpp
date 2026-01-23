@@ -34,6 +34,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
+	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	myPlayer->SetMesh(frame->mesh);
@@ -65,7 +66,6 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	camera->SetTarget(myPlayer.get());
 
 	camera->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-	myPlayer->SetSession(session);
 
 	scene->SetPlayer(myPlayer);
 	scene->SetCamera(camera);
@@ -78,7 +78,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	std::unique_ptr<FrameNode> frame;
 	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
-	std::shared_ptr<CMyPlayer> otherPlayer = std::make_shared<CMyPlayer>();
+	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->SetMesh(frame->mesh);
@@ -107,7 +107,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저 생성
-		std::shared_ptr<CMyPlayer> otherPlayer = std::make_shared<CMyPlayer>();
+		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 
 		// 다른 유저 ID 부여
 		otherPlayer->SetID(userList[i].info.id);
@@ -129,7 +129,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
-		// Active Scene ㅻⅨ � 
+		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
 	}
 
