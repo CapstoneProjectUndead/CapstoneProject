@@ -44,7 +44,6 @@ void CScene::BroadCast(SendBufferRef sendBuffer)
 	lock_guard<mutex> lg(players_lock);
 	for (auto& player : players)
 		player.second->GetSession()->DoSend(sendBuffer);
-	
 }
 
 void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)

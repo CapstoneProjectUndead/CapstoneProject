@@ -105,7 +105,7 @@
     <ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
-    <ClInclude Include="..\External\Common\Struct.h">
+    <ClInclude Include="..\External\Common\packet_struct.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
@@ -127,6 +127,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\enum.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\struct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

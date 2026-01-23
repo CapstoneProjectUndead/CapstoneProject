@@ -46,7 +46,7 @@ void CMyPlayer::Update(float elapsedTime)
 
 	// 여기서 플레이어 위치와 방향 정보를 캐싱
 	{
-		// 10프레임에 한번씩 서버에 패킷을 보낸다.
+		// 1초에 5번씩 서버에 패킷을 보낸다.
 		move_packet_send_timer -= elapsedTime;
 
 		if (move_packet_send_timer <= 0) {

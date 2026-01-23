@@ -68,7 +68,7 @@ using Microsoft::WRL::ComPtr;
 
 #include "macro.h"
 #include <enum.h>
-#include <Struct.h>
+#include <struct.h>
 #include <protocol.h>
 
 extern HWND ghWnd;

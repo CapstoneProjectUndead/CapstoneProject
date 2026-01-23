@@ -149,7 +149,8 @@
   <ItemGroup>
     <ClInclude Include="..\External\Common\enum.h" />
     <ClInclude Include="..\External\Common\protocol.h" />
-    <ClInclude Include="..\External\Common\Struct.h" />
+    <ClInclude Include="..\External\Common\packet_struct.h" />
+    <ClInclude Include="..\External\Common\struct.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GeometryLoader.h" />

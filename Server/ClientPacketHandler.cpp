@@ -16,7 +16,7 @@ bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len)
 	return false;
 }
 
-bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
+bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::TEST);
@@ -29,7 +29,7 @@ bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt)
 	return true;
 }
 
-bool Handle_C_MOVE(std::shared_ptr<Session> session, C_Move& pkt)
+bool Handle_C_MOVE(shared_ptr<Session> session, C_Move& pkt)
 {
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::TEST);
@@ -38,11 +38,11 @@ bool Handle_C_MOVE(std::shared_ptr<Session> session, C_Move& pkt)
 		, (CTestScene*)activeScene
 		, &CTestScene::MovePlayer
 		, pkt);
-
+	
 	return true;
 }
 
-bool Handle_C_PLAYERINPUT(std::shared_ptr<Session> session, C_PlayerInput& pkt)
+bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_PlayerInput& pkt)
 {
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::TEST);

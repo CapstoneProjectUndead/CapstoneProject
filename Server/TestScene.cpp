@@ -67,7 +67,7 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 				if (pl.second->GetID() == player->GetID())
 					continue;
 
-				userList[idx++] = { ObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
+				userList[idx++] = { PackObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
 				pl.second->GetPosition().z} };
 			}
 

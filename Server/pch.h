@@ -6,6 +6,8 @@
 
 // Server
 
+#pragma once
+
 #ifndef PCH_H
 #define PCH_H
 
@@ -85,7 +87,7 @@ using std::make_pair;
 #include <ServerEngine/BufferReader.h>
 
 #include <enum.h>
-#include <Struct.h>
+#include <struct.h>
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
 

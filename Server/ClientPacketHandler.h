@@ -21,9 +21,9 @@ enum : uint16
 };
 
 // Custom Handlers
-bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len);
-bool Handle_C_LOGIN(std::shared_ptr<Session> session, C_LOGIN& pkt);
-bool Handle_C_MOVE(std::shared_ptr<Session> session, C_Move& pkt);
+bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len);
+bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt);
+bool Handle_C_MOVE(shared_ptr<Session> session, C_Move& pkt);
 
 bool Handle_C_PLAYERINPUT(std::shared_ptr<Session> session, C_PlayerInput& pkt);
 
