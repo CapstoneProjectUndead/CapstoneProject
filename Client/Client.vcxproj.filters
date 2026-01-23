@@ -99,10 +99,10 @@
     <ClInclude Include="GeometryLoader.h">
       <Filter>헤더 파일</Filter>
 	</ClInclude>
-	<ClInclude Include="ServerPacketHandler.h">
+    <ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
-    <ClInclude Include="..\External\Common\Struct.h">
+    <ClInclude Include="..\External\Common\packet_struct.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
@@ -128,6 +128,15 @@
     </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryLoader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\enum.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\struct.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -170,7 +179,7 @@
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
 	</ClCompile>
-	<ClCompile Include="ServerPacketHandler.cpp">
+    <ClCompile Include="ServerPacketHandler.cpp">
       <Filter>Network\PacketHandler</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
@@ -190,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryLoader.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

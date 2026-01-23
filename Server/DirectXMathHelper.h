@@ -1,120 +1,7 @@
-// header.h: 표준 시스템 포함 파일
-// 또는 프로젝트 특정 포함 파일이 들어 있는 포함 파일입니다.
-//
-
 #pragma once
 
-#include "targetver.h"
-#define WIN32_LEAN_AND_MEAN             // 거의 사용되지 않는 내용을 Windows 헤더에서 제외합니다.
-// Windows 헤더 파일
-#include <windows.h>
-#include <mmsystem.h>
-// C 런타임 헤더 파일입니다.
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
-
-#include <string>
-#include <wrl.h>
-#include <shellapi.h>
-
-#include <d3d12.h>
-#include <dxgi1_4.h>
-
-#include <d3dcompiler.h>
-
 #include <DirectXMath.h>
-#include <DirectXPackedVector.h>
-#include <DirectXColors.h>
-#include <DirectXCollision.h>
-
-#include <dxgidebug.h>
-
-// STL
-#include <memory>
-#include <deque>
-#include <algorithm>
-#include <vector>
-#include <functional>
-#include <fstream>
-#include <unordered_map>
-
 using namespace DirectX;
-using namespace DirectX::PackedVector;
-
-using Microsoft::WRL::ComPtr;
-
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "dxgi.lib")
-
-#pragma comment(lib, "dxguid.lib")
-
-#pragma comment(lib, "winmm.lib")
-
-#define FRAME_BUFFER_WIDTH	800
-#define FRAME_BUFFER_HEIGHT 600
-
-// 창우
-#include "Core.h"
-#include <ServerEngine/global.h>
-#include <ServerEngine/ThreadManager.h>
-#include <ServerEngine/SocketHelper.h>
-#include <ServerEngine/SendBuffer.h>
-#include <ServerEngine/BufferWriter.h>
-#include <ServerEngine/BufferReader.h>
-#include <ServerEngine/Service.h>
-#include <ServerEngine/Session.h>
-
-#include "macro.h"
-#include <enum.h>
-#include <struct.h>
-#include <protocol.h>
-
-extern HWND ghWnd;
-extern class CGameFramework gGameFramework;
-
-
-//#define _WITH_SWAPCHAIN_FULLSCREEN_STATE
-
-#ifndef ThrowIfFailed
-#define ThrowIfFailed(x)                                              \
-{                                                                     \
-    HRESULT hr__ = (x);                                               \
-    std::wstring wfn = AnsiToWString(__FILE__);                       \
-    if(FAILED(hr__)) { throw CDxException(hr__, L#x, wfn, __LINE__); } \
-}
-#endif
-
-template<typename T>
-inline UINT CalculateConstant()
-{
-	return (sizeof(T) + 255) & ~255;
-}
-
-ID3D12Resource* CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* data, UINT bytes, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES resourceStates, ID3D12Resource** uploadBuffer);
-
-inline std::wstring AnsiToWString(const std::string& str)
-{
-	WCHAR buffer[512];
-	MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, buffer, 512);
-	return std::wstring(buffer);
-}
-
-// 디버그용 클래스 및 매크로(d3d12 책 참고)
-class CDxException {
-public:
-	CDxException() = default;
-	CDxException(HRESULT hr, const std::wstring& functionName, const std::wstring& fileName, int lineNumber);
-
-	std::wstring ToString() const;
-
-	HRESULT error_code{ S_OK };
-	std::wstring function_name;
-	std::wstring file_name;
-	int line_number{ -1 };
-};
 
 #define EPSILON					1.0e-6f
 
@@ -208,7 +95,7 @@ namespace Vector3
 		return(xmf3Result.x);
 	}
 
-	inline float Angle(XMVECTOR& xmvVector1, XMVECTOR& xmvVector2)
+	inline float Angle(const XMVECTOR& xmvVector1, const XMVECTOR& xmvVector2)
 	{
 		XMVECTOR xmvAngle = XMVector3AngleBetweenNormals(xmvVector1, xmvVector2);
 		return(XMVectorGetX(XMVectorACos(xmvAngle)));
@@ -219,11 +106,12 @@ namespace Vector3
 		return(Angle(XMVector3Normalize(XMLoadFloat3(&xmf3Vector1)), XMVector3Normalize(XMLoadFloat3(&xmf3Vector2))));
 	}
 
-	inline XMFLOAT3 TransformNormal(XMFLOAT3& xmf3Vector, XMMATRIX& xmxm4x4Transform)
+	inline XMFLOAT3 TransformNormal(XMFLOAT3& xmf3Vector, const XMMATRIX& xmxm4x4Transform)
 	{
 		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMVector3TransformNormal(XMLoadFloat3(&xmf3Vector), xmxm4x4Transform));
-		return(xmf3Result);
+		XMStoreFloat3(&xmf3Result,
+			XMVector3TransformNormal(XMLoadFloat3(&xmf3Vector), xmxm4x4Transform));
+		return xmf3Result;
 	}
 
 	inline XMFLOAT3 TransformNormal(XMFLOAT3& xmf3Vector, XMFLOAT4X4& xmmtx4x4Matrix)
@@ -231,11 +119,12 @@ namespace Vector3
 		return(TransformNormal(xmf3Vector, XMLoadFloat4x4(&xmmtx4x4Matrix)));
 	}
 
-	inline XMFLOAT3 TransformCoord(XMFLOAT3& xmf3Vector, XMMATRIX& xmxm4x4Transform)
+	inline XMFLOAT3 TransformCoord(XMFLOAT3& xmf3Vector, const XMMATRIX& xmxm4x4Transform)
 	{
 		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMVector3TransformCoord(XMLoadFloat3(&xmf3Vector), xmxm4x4Transform));
-		return(xmf3Result);
+		XMStoreFloat3(&xmf3Result,
+			XMVector3TransformCoord(XMLoadFloat3(&xmf3Vector), xmxm4x4Transform));
+		return xmf3Result;
 	}
 
 	inline XMFLOAT3 TransformCoord(XMFLOAT3& xmf3Vector, XMFLOAT4X4& xmmtx4x4Matrix)
@@ -250,7 +139,7 @@ namespace Vector3
 		return(false);
 	}
 
-	// 추가한 코드
+	// �߰��� �ڵ�
 	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float deltaTime, float interpSpeed)
 	{
 		if (interpSpeed <= 0.f)
@@ -268,7 +157,7 @@ namespace Vector3
 	}
 }
 
-//4차원 벡터의 연산
+//4���� ������ ����
 namespace Vector4
 {
 	inline XMFLOAT4 Add(XMFLOAT4& xmf4Vector1, XMFLOAT4& xmf4Vector2)

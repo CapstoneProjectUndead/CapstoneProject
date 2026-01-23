@@ -1,16 +1,6 @@
 #pragma once
 
-class CScene;
-
-enum class SCENE_TYPE
-{
-    TEST,
-    MAIN,
-    LOBY,
-    GAME,
-
-    END
-};
+#include "Scene.h"
 
 class CSceneManager
 {
