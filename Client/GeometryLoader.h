@@ -2,13 +2,6 @@
 
 class CMesh;
 
-struct Material
-{
-	// 지금 바이너리에는 색, gloss, metallic, 텍스처 이름 등이 들어있음
-	// 처음에는 이름만 잡고, 나중에 상세 필드 확장해도 됨
-	std::string name;
-};
-
 struct FrameNode
 {
 	std::string name;
@@ -19,7 +12,6 @@ struct FrameNode
 	std::shared_ptr<CMesh> mesh;
 
 	std::vector<std::unique_ptr<FrameNode>> children;
-	std::vector<Material> materials;
 };
 
 class BinaryReader {
@@ -103,7 +95,6 @@ public:
 	static std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 private:
     static std::shared_ptr<CMesh> LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    static void LoadMaterials(BinaryReader& br, std::vector<Material>& out);
     static std::unique_ptr<FrameNode> LoadFrame(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 };
 

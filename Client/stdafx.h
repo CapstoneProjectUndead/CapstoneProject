@@ -1,4 +1,4 @@
-﻿// header.h: 표준 시스템 포함 파일
+// header.h: 표준 시스템 포함 파일
 // 또는 프로젝트 특정 포함 파일이 들어 있는 포함 파일입니다.
 //
 
@@ -38,6 +38,7 @@
 #include <vector>
 #include <functional>
 #include <fstream>
+#include <unordered_map>
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -86,7 +87,13 @@ extern class CGameFramework gGameFramework;
 }
 #endif
 
-extern ID3D12Resource* CreateBufferResource(ID3D12Device*, ID3D12GraphicsCommandList*, void*, UINT, D3D12_HEAP_TYPE, D3D12_RESOURCE_STATES, ID3D12Resource**);
+template<typename T>
+inline UINT CalculateConstant()
+{
+	return (sizeof(T) + 255) & ~255;
+}
+
+ID3D12Resource* CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* data, UINT bytes, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES resourceStates, ID3D12Resource** uploadBuffer);
 
 inline std::wstring AnsiToWString(const std::string& str)
 {

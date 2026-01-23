@@ -1,12 +1,19 @@
 #pragma once
 
-class CPlayer;
+class CObject;
+
+struct CameraCB
+{
+	XMFLOAT4X4 view_matrix;
+	XMFLOAT4X4 projection_matrix;
+};
 
 class CCamera
 {
 public:
 	CCamera();
 
+	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList*);
 
 	void GenerateProjectionMatrix(float, float, float, float);
@@ -26,10 +33,11 @@ public:
 	XMFLOAT3 GetPos() const { return position; }
 	XMFLOAT3 GetOffset() const { return offset; }
 
-	void SetPlayer(CPlayer* otherPlayer) { player = otherPlayer; }
+	void SetTarget(CObject* object) { target_object = object; }
 protected:
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
+	ComPtr<ID3D12Resource> camera_cb;
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;
@@ -41,7 +49,7 @@ protected:
 	XMFLOAT3 offset{};
 	XMFLOAT3 look_at{};
 
-	CPlayer* player;
+	CObject* target_object;	// 소유X, 참조용
 };
 
 

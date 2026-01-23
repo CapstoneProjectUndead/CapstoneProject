@@ -6,23 +6,18 @@ class CMyPlayer :
     public CPlayer
 {
 public:
-    using CObject::Move; // ºÎ¸ğÀÇ Move ¸ğµÎ ³ëÃâ
+    using CObject::Move; // ë¶€ëª¨ì˜ Move ëª¨ë‘ ë…¸ì¶œ
 
-    CMyPlayer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    ~CMyPlayer();
+    CMyPlayer();
+    ~CMyPlayer() {};
 
     virtual void Update(float elapsedTime) override;
 
     void ProcessInput();
 
-    CCamera* GetCameraPtr() const { return camera.get(); }
-
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }
     std::shared_ptr<Session> GetSession() const { return session.lock(); }
     void SetSession(std::shared_ptr<Session> _session) { session = _session; }
-
-protected:
-    std::shared_ptr<CCamera> camera;
 
 private:
     std::weak_ptr<Session> session;
