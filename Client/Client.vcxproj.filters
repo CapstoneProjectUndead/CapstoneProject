@@ -132,6 +132,12 @@
     <ClInclude Include="LightManager.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="SkinnedData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -195,6 +201,12 @@
       <Filter>D3D12</Filter>
     </ClCompile>
     <ClCompile Include="LightManager.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedData.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Character.cpp">
       <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>

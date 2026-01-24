@@ -14,13 +14,8 @@ CTestScene::~CTestScene()
 void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	// 플레이어 생성
-	// model load
-	frames["undead_char"] = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
-	// animation load
-	frames["undead_char"]->animation = CGeometryLoader::LoadAnimations("../Modeling/undead_animation.bin");
-
 	my_player = std::make_shared<CMyPlayer>();
-	my_player->SetMesh(frames["undead_char"]->mesh);
+	my_player->Initialize(device, commandList);
 	// material set
 	Material m{};
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
@@ -35,15 +30,15 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 	// test 용 삭제X
 	{
-		auto obj = std::make_shared<CObject>();
+		auto obj = std::make_shared<CCharacter>();
+		obj->Initialize(device, commandList);
 		obj->SetMaterial(m);
-		obj->SetMesh(frames["undead_char"]->mesh);
 
 		obj->CreateConstantBuffers(device, commandList);
 		objects.push_back(std::move(obj));
 
-		//std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
-		//std::ofstream txt("../Modeling/output_model.txt");
+		//std::ifstream bin("../Modeling/undead_animation.bin", std::ios::binary);
+		//std::ofstream txt("../Modeling/output.txt");
 
 		//char ch;
 		//while (bin.get(ch)) {
@@ -61,7 +56,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	camera->SetViewport(0, 0, width, height);
 	camera->SetScissorRect(0, 0, width, height);
 	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
-	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f));
+	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -2.0f));
 	camera->SetTarget(my_player.get());
 
 	camera->CreateConstantBuffers(device, commandList);

@@ -1,9 +1,9 @@
 #pragma once
-#include "Mesh.h"
 #include "Texture.h"
 
 class CShader;
 class CCamera;
+class CMesh;
 
 struct Material
 {
@@ -43,8 +43,8 @@ public:
 	virtual void Move(const XMFLOAT3 direction, float distance);
 	virtual void Move(const XMFLOAT3 shift);
 
-	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
-	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
+	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList* );
 
 	//

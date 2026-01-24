@@ -525,6 +525,28 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
             WriteLocalMatrix("<BoneLocalMatrix>:", bones[i]);
         }
 
+        for (int i = 0; i < bones.Length; i++)
+        {
+            Transform bone = bones[i];
+            int parentIndex = -1;
+
+            Transform parent = bone.parent;
+            if (parent != null)
+            {
+                // bones 배열에서 parent가 몇 번째인지 찾기
+                for (int p = 0; p < bones.Length; p++)
+                {
+                    if (bones[p] == parent)
+                    {
+                        parentIndex = p;
+                        break;
+                    }
+                }
+            }
+
+            WriteInteger("<ParentIndex>:", parentIndex);
+        }
+
         // 2) Bind Pose 저장 (inverse world matrix)
         Matrix4x4[] bindposes = mesh.bindposes;
         WriteMatrixes("<BindPoses>:", bindposes);

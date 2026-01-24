@@ -41,6 +41,5 @@ protected:
 	std::vector<std::shared_ptr<CObject>>	objects;			// 다른 플레이어 or 오브젝트
 	std::unordered_map<uint32_t, size_t>	id_To_Index;
 
-	std::unordered_map<std::string, std::unique_ptr<FrameNode>> frames;
 	std::unique_ptr<CLightManager> light;
 };

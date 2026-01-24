@@ -2,29 +2,13 @@
 
 class CMesh;
 
-struct Keyframe
-{
-    float time;
-    float value;
-};
 
-struct Curve
+struct SkeletonData
 {
-    std::string path;        // bone path
-    std::string property;    // m_LocalPosition.x 등
-    std::vector<Keyframe> keys;
-};
-
-struct AnimationClip
-{
-    std::string name;
-    float length = 0.f;
-    std::vector<Curve> curves;
-};
-
-struct AnimationData
-{
-    std::vector<AnimationClip> clips;
+    std::vector<std::string> bone_names;
+    std::vector<int> parent_index;          // bone_hierarchy    
+    std::vector<XMFLOAT4X4> local_bind_pose;  // BoneLocalMatrix
+    std::vector<XMFLOAT4X4> inverse_bind_pose; // mesh.bindposes
 };
 
 struct FrameNode
@@ -37,7 +21,6 @@ struct FrameNode
 	std::shared_ptr<CMesh> mesh;
 
 	std::vector<std::unique_ptr<FrameNode>> children;
-    AnimationData animation;
 };
 
 class BinaryReader {
@@ -112,6 +95,21 @@ public:
         return static_cast<bool>(file.read(reinterpret_cast<char*>(&out), sizeof(float) * 16));
     }
 
+    void ReadFloat3(XMFLOAT3& v)
+    {
+        file.read((char*)&v.x, sizeof(float));
+        file.read((char*)&v.y, sizeof(float));
+        file.read((char*)&v.z, sizeof(float));
+    }
+
+    void ReadFloat4(XMFLOAT4& v)
+    {
+        file.read((char*)&v.x, sizeof(float));
+        file.read((char*)&v.y, sizeof(float));
+        file.read((char*)&v.z, sizeof(float));
+        file.read((char*)&v.w, sizeof(float));
+    }
+
     // 임시: 사이즈 모르는 바이너리 블록을 “다음 태그 전까지” 통째로 잡는 버전
     std::vector<uint8_t> ReadUntilNextTag()
     {
@@ -138,12 +136,19 @@ private:
 	std::ifstream file;
 };
 
-class CGeometryLoader {
-public:
-	static std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    static AnimationData LoadAnimations(const std::string& filename);
-private:
-    static std::shared_ptr<CMesh> LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    static std::unique_ptr<FrameNode> LoadFrame(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-};
+class AnimationClip;
 
+namespace CGeometryLoader {
+    // load model
+	std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    std::shared_ptr<CMesh> LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    std::unique_ptr<FrameNode> LoadFrame(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+
+    // load animation/skeleton
+    std::unordered_map<std::string, AnimationClip> LoadAnimations(const std::string& filename, int boneCount);
+    SkeletonData LoadSkeleton(const std::string& filename);
+
+    // utility
+    std::unordered_map<std::string, int> BuildPathToBoneIndex(const SkeletonData& skeleton);
+    std::string ExtractBoneName(const std::string& path);
+};

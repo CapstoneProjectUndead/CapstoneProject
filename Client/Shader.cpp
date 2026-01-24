@@ -5,13 +5,20 @@
 
 D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
 {
-	const UINT inputElementDescNum = 3;
+	const UINT inputElementDescNum = 5;
 	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
 
-	//정점은 위치 벡터(POSITION)와 색상(COLOR)을 가진다. 
-	inputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	inputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	inputElementDescs[2] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12 + 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	UINT offset = 0;
+	inputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 12;
+	inputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 16;
+	inputElementDescs[2] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 12;
+	inputElementDescs[3] = { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0	};
+	offset += 16;
+	inputElementDescs[4] = { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0	};
+	offset += 16;
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -150,7 +157,7 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 
 	// root parameter
 	// gameObjectInfo
-	D3D12_ROOT_PARAMETER rootParameters[4];
+	D3D12_ROOT_PARAMETER rootParameters[5];
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
 	rootParameters[0].Descriptor.RegisterSpace = 0;
@@ -173,6 +180,12 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	rootParameters[3].Descriptor.ShaderRegister = 3;
 	rootParameters[3].Descriptor.RegisterSpace = 0;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// SkinningInfo
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[4].Descriptor.ShaderRegister = 4;
+	rootParameters[4].Descriptor.RegisterSpace = 0;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 

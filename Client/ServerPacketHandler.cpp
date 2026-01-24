@@ -30,13 +30,13 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 
-	std::unique_ptr<FrameNode> frame;
-	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	//std::unique_ptr<FrameNode> frame;
+	//frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	myPlayer->SetMesh(frame->mesh);
+	//myPlayer->SetMesh(frame->mesh);
 
 	/*Material m{};
 	m.name = "Red";
@@ -74,13 +74,13 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
-	std::unique_ptr<FrameNode> frame;
-	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	//std::unique_ptr<FrameNode> frame;
+	//frame = CGeometryLoader::L("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	std::shared_ptr<CMyPlayer> otherPlayer = std::make_shared<CMyPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	otherPlayer->SetMesh(frame->mesh);
+	//otherPlayer->SetMesh(frame->mesh);
 
 	/*Material m{};
 	m.name = "Red";
@@ -115,9 +115,9 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
 		// 다른 유저 mesh 설정
-		std::unique_ptr<FrameNode> frame;
-		frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-		otherPlayer->SetMesh(frame->mesh);
+		//std::unique_ptr<FrameNode> frame;
+		//frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		//otherPlayer->SetMesh(frame->mesh);
 
 		/*Material m{};
 		m.name = "Red";

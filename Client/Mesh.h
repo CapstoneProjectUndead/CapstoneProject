@@ -22,6 +22,8 @@ public:
 	CMatVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal);
 
 	XMFLOAT3 normal{};
+	XMUINT4  bone_indices;
+	XMFLOAT4 bone_weights;
 };
 
 class CBillBoardVertex {
