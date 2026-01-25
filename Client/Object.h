@@ -77,8 +77,8 @@ protected:
 	bool is_visible{ true };
 	BoundingOrientedBox oobb;
 
-	float speed{ 10.0f };
-
+	float speed{ 10.0f };	// 오브젝트 기본 속도
+	XMFLOAT3 velocity{};
 private:
 	int obj_id = -1;
 };

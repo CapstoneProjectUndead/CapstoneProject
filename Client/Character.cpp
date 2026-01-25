@@ -23,8 +23,8 @@ void CCharacter::Update(float deltaTime)
     if (current_animation.empty())
         return;
 
-	/*if () {
-		current_animation = std::string("Ganga_idle");
+	/*if (Vector3::Length(velocity) > 0.0f) {
+		current_animation = std::string("Ganga_walk");
 		current_time = 0.0f;
 	}*/
 
