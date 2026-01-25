@@ -11,7 +11,7 @@ extern HWND ghWnd;
 
 CGameFramework::CGameFramework()
 {
-	_tcscpy_s(frame_rate_str, _T("LapProject ("));
+	_tcscpy_s(frame_rate_str, _T("Undead ("));
 
 	viewport = { 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f };
 	scissor_rect = { 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
@@ -441,7 +441,7 @@ void CGameFramework::CommandEnd()
 
 	MoveToNextFrame();
 
-	timer.GetFrameRate(frame_rate_str + 12, 37);
+	timer.GetFrameRate(frame_rate_str + 8, 37);
 	::SetWindowText(ghWnd, frame_rate_str);
 }
 

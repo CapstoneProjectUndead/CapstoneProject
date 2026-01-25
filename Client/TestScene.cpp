@@ -36,15 +36,26 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 		obj->CreateConstantBuffers(device, commandList);
 		objects.push_back(std::move(obj));
+		
 
-		//std::ifstream bin("../Modeling/undead_animation.bin", std::ios::binary);
-		//std::ofstream txt("../Modeling/output.txt");
+		//std::ifstream bin("../Modeling/Undead_Lobby.bin", std::ios::binary);
+		//std::ofstream txt("../Modeling/lobby.txt");
 
 		//char ch;
 		//while (bin.get(ch)) {
 		//	txt << ch;   // txt 파일에 문자 그대로 출력
 		//}
 	}
+	/*{
+		auto obj = std::make_shared<CObject>();
+		std::string filename{ "../Modeling/Undead_Lobby.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(filename, device, commandList);
+		obj->SetMesh(frameRoot->mesh);
+
+
+		obj->CreateConstantBuffers(device, commandList);
+		objects.push_back(std::move(obj));
+	}*/
 
 	// 카메라 객체 생성
 	RECT client_rect;

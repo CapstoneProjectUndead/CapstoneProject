@@ -18,7 +18,7 @@ public:
     void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList) override;
     void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 protected:
-    std::string current_animation{"Ganga_idle"};
+    std::string current_animation{"Ganga_run"};
     CSkinnedData skinned;
     std::vector<XMFLOAT4X4> final_transforms;
     ComPtr<ID3D12Resource> skinned_cb;
