@@ -102,6 +102,9 @@
     <ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
+    <ClInclude Include="ServerPacketHandler.h">
+      <Filter>Network\PacketHandler</Filter>
+    </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Scene</Filter>
     </ClInclude>
@@ -137,6 +140,15 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\packet_struct.h">
       <Filter>Network\Protocol</Filter>
+	</ClInclude>
+	<ClInclude Include="LightManager.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -203,6 +215,15 @@
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="LightManager.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedData.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Character.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -222,6 +243,9 @@
       <Filter>헤더 파일\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="TexShader.hlsl">
+      <Filter>헤더 파일\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Light.hlsl">
       <Filter>헤더 파일\Shaders</Filter>
     </FxCompile>
   </ItemGroup>

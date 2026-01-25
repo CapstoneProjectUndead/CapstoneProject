@@ -30,21 +30,10 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 
-	std::unique_ptr<FrameNode> frame;
-	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	myPlayer->SetMesh(frame->mesh);
-
-	Material m{};
-	m.name = "Red";
-	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.roughness = 0.5f;
-	m.metallic = 0.1f;
-	myPlayer->SetMaterial(m);
 
 	myPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
@@ -75,20 +64,9 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
-	std::unique_ptr<FrameNode> frame;
-	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	otherPlayer->SetMesh(frame->mesh);
-
-	Material m{};
-	m.name = "Red";
-	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.roughness = 0.5f;
-	m.metallic = 0.1f;
-	otherPlayer->SetMaterial(m);
 
 	otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
@@ -116,16 +94,6 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
 		// Active Scene에 다른 유저 입장
-		std::unique_ptr<FrameNode> frame;
-		frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-		otherPlayer->SetMesh(frame->mesh);
-
-		Material m{};
-		m.name = "Red";
-		m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-		m.roughness = 0.5f;
-		m.metallic = 0.1f;
-		otherPlayer->SetMaterial(m);
 
 		otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 

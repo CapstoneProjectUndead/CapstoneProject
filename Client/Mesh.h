@@ -16,6 +16,16 @@ public:
 	XMFLOAT2 tex{};
 };
 
+class CMatVertex : public CVertex{
+public:
+	CMatVertex() : CVertex() {}
+	CMatVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal);
+
+	XMFLOAT3 normal{};
+	XMUINT4  bone_indices;
+	XMFLOAT4 bone_weights;
+};
+
 class CBillBoardVertex {
 public:
 	CBillBoardVertex();
@@ -37,7 +47,8 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*);
 
 	// 불러온 모델 데이터 저장용 함수
-	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<CVertex> vertices);
+	template<typename T>
+	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
 protected:
 	// 정점 버퍼
@@ -88,3 +99,19 @@ class CCubeMesh : public CMesh
 public:
 	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, float = 2.0f, float = 2.0f, float = 2.0f);
 };
+
+template<typename T>
+void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices)
+{
+	vertex_num = num;
+	stride = sizeof(T);
+	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	// 삼각형 메쉬를 리소스로 생성
+	vertex_buffer = CreateBufferResource(device, commandList, vertices.data(), stride * vertex_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_upload_buffer.GetAddressOf());
+
+	// 정점 버퍼 뷰 설정
+	vertex_buffer_view.BufferLocation = vertex_buffer->GetGPUVirtualAddress();
+	vertex_buffer_view.StrideInBytes = stride;
+	vertex_buffer_view.SizeInBytes = stride * vertex_num;
+}

@@ -51,5 +51,3 @@ protected:
 
 	CObject* target_object;	// 소유X, 참조용
 };
-
-
