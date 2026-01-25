@@ -18,6 +18,6 @@ public:
     void MovePlayer(shared_ptr<Session> session, const C_Move& pkt);
 
     // 서버 권한 + 클라 예측 기반 Move
-    void MovePlayer(shared_ptr<Session> session, const C_PlayerInput& pkt);
+    void MovePlayer(shared_ptr<Session> session, const C_Input& pkt);
 };
 

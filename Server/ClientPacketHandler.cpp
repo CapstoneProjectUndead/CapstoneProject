@@ -42,7 +42,7 @@ bool Handle_C_MOVE(shared_ptr<Session> session, C_Move& pkt)
 	return true;
 }
 
-bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_PlayerInput& pkt)
+bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 {
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::TEST);

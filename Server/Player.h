@@ -10,5 +10,9 @@ public:
 	~CPlayer();
 
 	void Update(float elapsedTime) override;
+
+public:
+	uint64_t	last_processed_seq = 0;
+	InputData	current_input;
 };
 

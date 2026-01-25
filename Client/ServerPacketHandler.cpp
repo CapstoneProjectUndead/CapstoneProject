@@ -30,14 +30,16 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 
-	std::unique_ptr<FrameNode> frame;
-	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	//std::unique_ptr<FrameNode> frame;
+	//frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+
+	std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	myPlayer->SetMesh(frame->mesh);
+	myPlayer->SetMesh(mesh);
 
 	Material m{};
 	m.name = "Red";
@@ -75,13 +77,15 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
-	std::unique_ptr<FrameNode> frame;
-	frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	//std::unique_ptr<FrameNode> frame;
+	//frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+
+	std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	otherPlayer->SetMesh(frame->mesh);
+	otherPlayer->SetMesh(mesh);
 
 	Material m{};
 	m.name = "Red";
@@ -116,9 +120,10 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
 		// Active Scene에 다른 유저 입장
-		std::unique_ptr<FrameNode> frame;
-		frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
-		otherPlayer->SetMesh(frame->mesh);
+		//std::unique_ptr<FrameNode> frame;
+		//frame = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		std::shared_ptr<CMesh> mesh = std::make_shared<CCubeMesh>(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		otherPlayer->SetMesh(mesh);
 
 		Material m{};
 		m.name = "Red";
@@ -155,37 +160,47 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 
 bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 {
+	{
+		//CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+		//auto& vec = scene->GetObjects();
+		//auto& indexMap = scene->GetIDIndex();
+		//std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
+		//
+		//// 내 플레이어이면 처리하지 않고 나가기
+		//if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id)
+		//	return true;
+		//
+		//// 해당 ID가 존재하는 플레이어인지 확인
+		//auto it = indexMap.find(pkt.info.id);
+		//if (it == indexMap.end())
+		//	return true;
+		//
+		//uint64 idx = it->second;
+		//if (idx >= vec.size())
+		//	return true;
+		//
+		//auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+		//
+		//ObjectInfo info;
+		//info.id = pkt.info.id;
+		//info.state = pkt.info.state;
+		//info.x = pkt.info.x;
+		//info.y = pkt.info.y;
+		//info.z = pkt.info.z;
+		//info.yaw = pkt.info.yaw;
+		//info.pitch = pkt.info.pitch;
+		//info.roll = pkt.info.roll;
+		//
+		//player->SetDestInfo(info);
+	}
+
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	auto& vec = scene->GetObjects();
 	auto& indexMap = scene->GetIDIndex();
-	std::shared_ptr<CMyPlayer> myPlayer =  scene->GetMyPlayer();
+	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
-	// 내 플레이어이면 처리하지 않고 나가기
-	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id)
-		return true;
 
-	// 해당 ID가 존재하는 플레이어인지 확인
-	auto it = indexMap.find(pkt.info.id);
-	if (it == indexMap.end())
-		return true;
 
-	uint64 idx = it->second;
-	if (idx >= vec.size())
-		return true;
-
-	auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
-
-	ObjectInfo info;
-	info.id = pkt.info.id;
-	info.state = pkt.info.state;
-	info.x = pkt.info.x;
-	info.y = pkt.info.y;
-	info.z = pkt.info.z;
-	info.yaw = pkt.info.yaw;
-	info.pitch = pkt.info.pitch;
-	info.roll = pkt.info.roll;
-
-	player->SetDestInfo(info);
 
 	return true;
 }

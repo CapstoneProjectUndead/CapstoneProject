@@ -110,11 +110,14 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
 	BroadCast(sendBuffer, pkt.info.id);
 }
 
-void CTestScene::MovePlayer(shared_ptr<Session> session, const C_PlayerInput& pkt)
+void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
     auto it = players.find(pkt.playerId);
     if (it == players.end())
         return;
 
     auto player = players[it->first];
+
+	player->last_processed_seq = pkt.seq_num;
+	player->current_input = pkt.input;
 }

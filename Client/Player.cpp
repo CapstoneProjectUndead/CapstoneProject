@@ -19,10 +19,10 @@ void CPlayer::Update(float elapsedTime)
         return;
     
      // 위치 동기화
-     OpponentMoveSync(elapsedTime);
+     //OpponentMoveSync(elapsedTime);
      
      // 회전 동기화 (Yaw / Pitch)
-     OpponentRotateSync(elapsedTime);
+     //OpponentRotateSync(elapsedTime);
 }
 
 void CPlayer::Move(const XMFLOAT3 shift)
