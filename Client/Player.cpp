@@ -38,7 +38,6 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
     XMFLOAT3 toTarget = Vector3::Subtract(serverPos, clientPos);
     float dist = Vector3::Length(toTarget);
 
-    const float FOLLOW_SPEED = 1.0f;   // 네 캐릭터 이동속도
     const float DAMPING = 10.0f;       // 클수록 더 빨리 멈춤
 
     // 1. 너무 멀면 스냅
@@ -56,7 +55,7 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
         XMFLOAT3 dir = Vector3::Normalize(toTarget);
 
         // 목표 속도
-        XMFLOAT3 desiredVel = Vector3::ScalarProduct(dir, FOLLOW_SPEED);
+        XMFLOAT3 desiredVel = Vector3::ScalarProduct(dir, speed);
 
         // velocity 보간 
         velocity = Vector3::Add(
