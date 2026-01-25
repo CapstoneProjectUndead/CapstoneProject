@@ -4,10 +4,9 @@
 #undef min
 #undef max
 
-extern HWND ghWnd;
-
 // Player
 CPlayer::CPlayer()
+	: CCharacter()
 {
 	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -18,16 +17,13 @@ void CPlayer::Update(float elapsedTime)
      if (is_my_player)
         return;
     
+     CCharacter::Update(elapsedTime);
+
      // 위치 동기화
      OpponentMoveSync(elapsedTime);
      
      // 회전 동기화 (Yaw / Pitch)
      OpponentRotateSync(elapsedTime);
-}
-
-void CPlayer::Move(const XMFLOAT3 shift)
-{
-	position = Vector3::Add(position, shift);
 }
 
 void CPlayer::OpponentMoveSync(float elapsedTime)

@@ -14,16 +14,12 @@ CTestScene::~CTestScene()
 void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	// 플레이어 생성
-	// model load
-	frames["undead_char"] = CGeometryLoader::LoadGeometry("../Modeling/undead_char.bin", device, commandList);
 	my_player = std::make_shared<CMyPlayer>();
-	my_player->SetMesh(frames["undead_char"]->mesh);
+	my_player->Initialize(device, commandList);
 	// material set
 	Material m{};
-	m.name = "Red";
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.roughness = 0.5f;
-	m.metallic = 0.1f;
+	m.glossiness = 0.0f;
 	my_player->SetMaterial(m);
 
 	my_player->CreateConstantBuffers(device, commandList);
@@ -31,6 +27,24 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 	shader->CreateShader(device);
 	shaders.push_back(std::move(shader));
+
+	// test 용 삭제X
+	{
+		auto obj = std::make_shared<CCharacter>();
+		obj->Initialize(device, commandList);
+		obj->SetMaterial(m);
+
+		obj->CreateConstantBuffers(device, commandList);
+		objects.push_back(std::move(obj));
+
+		//std::ifstream bin("../Modeling/undead_animation.bin", std::ios::binary);
+		//std::ofstream txt("../Modeling/output.txt");
+
+		//char ch;
+		//while (bin.get(ch)) {
+		//	txt << ch;   // txt 파일에 문자 그대로 출력
+		//}
+	}
 
 	// 카메라 객체 생성
 	RECT client_rect;
@@ -42,20 +56,22 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	camera->SetViewport(0, 0, width, height);
 	camera->SetScissorRect(0, 0, width, height);
 	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
-	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f));
+	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -2.0f));
 	camera->SetTarget(my_player.get());
 
 	camera->CreateConstantBuffers(device, commandList);
+
+	// light 생성
+	light = std::make_unique<CLightManager>();
+	light->Initialize(device, commandList);
 }
 
 void CTestScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	
 }
 
 void CTestScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
-
 }

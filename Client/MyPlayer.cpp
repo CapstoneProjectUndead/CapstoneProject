@@ -12,6 +12,8 @@ CMyPlayer::CMyPlayer()
 
 void CMyPlayer::Update(float elapsedTime)
 {
+	CPlayer::Update(elapsedTime);
+
 	// 입력처리
 	ProcessInput();
 
