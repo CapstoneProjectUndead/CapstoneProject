@@ -111,7 +111,6 @@ SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
 
     skel.bone_names.resize(boneCount);
     skel.parent_index.resize(boneCount);
-    skel.local_bind_pose.resize(boneCount);
     skel.inverse_bind_pose.resize(boneCount);
 
     // 2) BoneName + BoneLocalMatrix (첫 번째 for문)
@@ -119,9 +118,6 @@ SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
     {
         br.FindTag("<BoneName>:");
         skel.bone_names[i] = br.ReadName();
-
-        br.FindTag("<BoneLocalMatrix>:");
-        br.ReadMatrix(skel.local_bind_pose[i]);
     }
 
     // 3) ParentIndex (두 번째 for문)
@@ -142,8 +138,9 @@ SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
         if (bindCount != boneCount)
             skel.inverse_bind_pose.resize(bindCount);
 
-        for (int i = 0; i < bindCount; i++)
+        for (int i = 0; i < bindCount; i++) {
             br.ReadMatrix(skel.inverse_bind_pose[i]);
+        }
     }
 
     return skel;
@@ -241,12 +238,13 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
             br.FindTag("<BoneIndex>:");
             int len = 0;
             file.read((char*)&len, sizeof(int));
-            file.read((char*)&boneIndices[i], sizeof(len));
+
+            file.read((char*)&boneIndices[i], sizeof(UINT) * len);
 
             // <BoneWeight>:
             br.FindTag("<BoneWeight>:");
             file.read((char*)&len, sizeof(int));
-            file.read((char*)&boneWeights[i], sizeof(len));
+            file.read((char*)&boneWeights[i], sizeof(float) * len);
         }
     }
     // </Mesh> 태그 스킵
@@ -283,7 +281,7 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
         if (i < boneWeights.size())
             vertices[i].bone_weights = boneWeights[i];
         else
-            vertices[i].bone_weights = XMFLOAT4(1, 1, 1, 1);
+            vertices[i].bone_weights = XMFLOAT4(1, 0, 0, 0);
     }
 
     // vertex, index gpu에 set

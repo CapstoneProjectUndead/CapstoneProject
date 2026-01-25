@@ -7,7 +7,6 @@ struct SkeletonData
 {
     std::vector<std::string> bone_names;
     std::vector<int> parent_index;          // bone_hierarchy    
-    std::vector<XMFLOAT4X4> local_bind_pose;  // BoneLocalMatrix
     std::vector<XMFLOAT4X4> inverse_bind_pose; // mesh.bindposes
 };
 

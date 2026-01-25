@@ -136,6 +136,7 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	// Interpolate all the bones of this clip at the given time instance.
 	auto clip = animations.find(clipName);
 	clip->second.Interpolate(timePos, toParentTransforms);
+
 	//
 	// Traverse the hierarchy and transform all the bones to the root space.
 	//

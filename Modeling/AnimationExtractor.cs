@@ -10,7 +10,9 @@ public class BinaryModelExporter : EditorWindow
 
     private List<string> m_pTextureNamesListForCounting = new List<string>();
     private List<string> m_pTextureNamesListForWriting = new List<string>();
+    Matrix4x4[] bindWorld;
 
+    
     [MenuItem("Tools/DirectX Binary Exporter")]
     static void Init()
     {
@@ -56,6 +58,8 @@ public class BinaryModelExporter : EditorWindow
         // 2) 메쉬 + 스키닝
         WriteMeshAndSkinning(smr);
 
+        CacheBindPoseWorld(smr.bones);
+
         // 3) 애니메이션
         WriteAnimationData(assetPath, root, smr.bones);
 
@@ -86,7 +90,14 @@ public class BinaryModelExporter : EditorWindow
     // ============================================================
     //  MESH + SKINNING
     // ============================================================
-
+    void DebugPrintBones(Transform[] bones)
+    {
+        Debug.Log("=== Unity Bone Order ===");
+        for (int i = 0; i < bones.Length; i++)
+        {
+            Debug.Log($"{i}: {bones[i].name}");
+        }
+    }
     void WriteMeshAndSkinning(SkinnedMeshRenderer smr)
     {
         Mesh mesh = smr.sharedMesh;
@@ -99,6 +110,7 @@ public class BinaryModelExporter : EditorWindow
 
         // Skinning
         WriteSkinningData(smr);
+        //DebugPrintBones(smr.bones);
     }
 
     void WriteMaterials(Material[] materials)
@@ -192,7 +204,12 @@ public class BinaryModelExporter : EditorWindow
     // ============================================================
     //  ANIMATION EXPORT
     // ============================================================
-
+    void CacheBindPoseWorld(Transform[] bones)
+    {
+        bindWorld = new Matrix4x4[bones.Length];
+        for (int i = 0; i < bones.Length; i++)
+            bindWorld[i] = bones[i].localToWorldMatrix;
+    }
     void WriteAnimationData(string assetPath, Transform root, Transform[] bones)
     {
         Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
@@ -215,15 +232,13 @@ public class BinaryModelExporter : EditorWindow
         WriteString("<AnimationClip>:", clip.name);
         WriteFloat("<ClipLength>:", clip.length);
 
-        Matrix4x4[] bindWorld = new Matrix4x4[bones.Length];
-        for (int i = 0; i < bones.Length; i++)
-            bindWorld[i] = bones[i].localToWorldMatrix;
-
-        List<float> keyTimes = CollectKeyTimes(clip);
+        var keyTimes = CollectKeyTimes(clip);
         WriteInteger("<KeyframeCount>:", keyTimes.Count);
 
         foreach (float t in keyTimes)
+        {
             WriteKeyframe(clip, t, root, bones, bindWorld);
+        }
 
         WriteString("</AnimationClip>");
     }
@@ -245,7 +260,17 @@ public class BinaryModelExporter : EditorWindow
             Matrix4x4 parentBindWorld =
                 parentIndex < 0 ? Matrix4x4.identity : bindWorld[parentIndex];
 
-            Matrix4x4 animatedLocal = parentBindWorld.inverse * animatedWorld;
+            Matrix4x4 animatedLocal;
+
+            if (parentIndex < 0)
+            {
+                animatedLocal = animatedWorld;
+            }
+            else
+            {
+                Matrix4x4 parentAnimatedWorld = bones[parentIndex].localToWorldMatrix;
+                animatedLocal = parentAnimatedWorld.inverse * animatedWorld;
+            }
 
             Vector3 pos;
             Quaternion rot;

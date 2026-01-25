@@ -15,7 +15,6 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	auto skeleton = CGeometryLoader::LoadSkeleton(filename);
 
 	auto animData = CGeometryLoader::LoadAnimations(filename, skeleton.bone_names.size());
-
 	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
 }
 
@@ -23,6 +22,11 @@ void CCharacter::Update(float deltaTime)
 {
     if (current_animation.empty())
         return;
+
+	/*if () {
+		current_animation = std::string("Ganga_idle");
+		current_time = 0.0f;
+	}*/
 
     // 1) 시간 증가
 	current_time += deltaTime;
