@@ -39,6 +39,9 @@ public:
     XMFLOAT3                            GetLook() { return look; }
     void                                SetLook(const XMFLOAT3 _look) { look = _look; }
 
+    float                               GetYaw() const { return yaw; }
+    float                               GetPitch() const { return pitch; }
+
     //=================================
     // 회전 함수 (테스트)
     void SetYaw(float _yaw);

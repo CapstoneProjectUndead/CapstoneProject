@@ -92,6 +92,7 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	}
 }
 
+// 클라 권위 방식
 void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
 {
 	CAST_CS(session)->GetPlayer()->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
@@ -110,14 +111,39 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
 	BroadCast(sendBuffer, pkt.info.id);
 }
 
+// 서버 권위 방식
 void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
-    auto it = players.find(pkt.playerId);
+    auto it = players.find(pkt.info.id);
     if (it == players.end())
         return;
 
     auto player = players[it->first];
 
 	player->last_processed_seq = pkt.seq_num;
-	player->current_input = pkt.input;
+	player->current_input = pkt.info.input;
+
+	//player->Move();
+
+	// 일단은 여기서 클라들에게 전송해준다.
+	// 나중에 반드시 바깥에서 전송하는걸로 바꿔야 한다. 
+	for (auto& pl : players) {
+		S_Move movePkt;
+		movePkt.info.id = pl.second->GetID();
+		movePkt.info.x = pl.second->GetPosition().x;
+
+		// ... (좌표 및 회전 값 대입) ...
+		movePkt.info.x = player->GetPosition().x;
+		movePkt.info.y = player->GetPosition().y;
+		movePkt.info.z = player->GetPosition().z;
+		movePkt.info.yaw = player->GetYaw();
+		movePkt.info.pitch = player->GetPitch();
+
+		// [핵심] 서버가 "너의 n번 입력을 처리한 결과가 이거야"라고 알려줌
+		movePkt.last_seq_num = player->last_processed_seq;
+
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
+
+		BroadCast(sendBuffer);
+	}
 }

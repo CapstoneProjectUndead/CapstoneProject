@@ -128,47 +128,55 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 
 bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 {
-	{
-		//CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-		//auto& vec = scene->GetObjects();
-		//auto& indexMap = scene->GetIDIndex();
-		//std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
-		//
-		//// 내 플레이어이면 처리하지 않고 나가기
-		//if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id)
-		//	return true;
-		//
-		//// 해당 ID가 존재하는 플레이어인지 확인
-		//auto it = indexMap.find(pkt.info.id);
-		//if (it == indexMap.end())
-		//	return true;
-		//
-		//uint64 idx = it->second;
-		//if (idx >= vec.size())
-		//	return true;
-		//
-		//auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
-		//
-		//ObjectInfo info;
-		//info.id = pkt.info.id;
-		//info.state = pkt.info.state;
-		//info.x = pkt.info.x;
-		//info.y = pkt.info.y;
-		//info.z = pkt.info.z;
-		//info.yaw = pkt.info.yaw;
-		//info.pitch = pkt.info.pitch;
-		//info.roll = pkt.info.roll;
-		//
-		//player->SetDestInfo(info);
-	}
-
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	auto& vec = scene->GetObjects();
 	auto& indexMap = scene->GetIDIndex();
 	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
+	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
+	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id) {
+		ObjectInfo info{};
 
+		// 서버가 처리한 시퀀스 넘버를 받아야한다.
+		info.last_seq_num = pkt.last_seq_num;
+		info.id = pkt.info.id;
+		info.input = pkt.info.input;
+		info.state = pkt.info.state;
+		info.x = pkt.info.x;
+		info.y = pkt.info.y;
+		info.z = pkt.info.z;
+		info.yaw = pkt.info.yaw;
+		info.pitch = pkt.info.pitch;
+		info.roll = pkt.info.roll;
 
+		myPlayer->SetDestInfo(info);
+		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	}
+	// 다른 플레이어일 경우
+	else {
+		// 해당 ID가 존재하는 플레이어인지 확인
+		auto it = indexMap.find(pkt.info.id);
+		if (it == indexMap.end())
+			return true;
+
+		uint64 idx = it->second;
+		if (idx >= vec.size())
+			return true;
+
+		auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+
+		ObjectInfo info;
+		info.id = pkt.info.id;
+		info.state = pkt.info.state;
+		info.x = pkt.info.x;
+		info.y = pkt.info.y;
+		info.z = pkt.info.z;
+		info.yaw = pkt.info.yaw;
+		info.pitch = pkt.info.pitch;
+		info.roll = pkt.info.roll;
+
+		player->SetDestInfo(info);
+	}
 
 	return true;
 }

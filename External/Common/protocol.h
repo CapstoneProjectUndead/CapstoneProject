@@ -60,7 +60,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWNPLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 37, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 33, "S_SpawnPlayer size mismatch!");
 
 // 한명의 유저를 보낼 때 
 struct S_AddPlayer : public PacketHeader
@@ -69,7 +69,7 @@ struct S_AddPlayer : public PacketHeader
 
 	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), (UINT)PacketType::_S_ADDPLAYER) {}
 };
-static_assert(sizeof(S_AddPlayer) == 4 + 37, "S_AddPlayer size mismatch!");
+static_assert(sizeof(S_AddPlayer) == 4 + 33, "S_AddPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -113,7 +113,7 @@ struct S_RemovePlayer : public PacketHeader
 
 	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVEPLAYER) {}
 };
-static_assert(sizeof(S_RemovePlayer) == 4 + 37, "S_RemovePlayer size mismatch!");
+static_assert(sizeof(S_RemovePlayer) == 4 + 33, "S_RemovePlayer size mismatch!");
 
 struct C_Move : public PacketHeader
 {
@@ -121,26 +121,25 @@ struct C_Move : public PacketHeader
 
 	C_Move() : PacketHeader(sizeof(C_Move), (UINT)PacketType::_C_MOVE) {}
 };
-static_assert(sizeof(C_Move) == 4 + 37, "C_Move size mismatch!");
+static_assert(sizeof(C_Move) == 4 + 33, "C_Move size mismatch!");
 
 struct S_Move : public PacketHeader
 {
-	PackObjectInfo info;
+	uint64_t		last_seq_num;
+	PackObjectInfo	info;
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 37, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 41, "S_Move size mismatch!");
 
 // 서버 권한 + 클라 예측
 struct C_Input : public PacketHeader
 {
-	uint64		seq_num; // 클라이언트가 자체적으로 1씩 올리는 번호
-	uint32		playerId;
-	InputData	input;
-	float		mouseDeltaX, mouseDeltaY;
+	uint64			seq_num; // 클라이언트가 자체적으로 1씩 올리는 번호
+	PackObjectInfo	info;
 
 	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT) {};
 };
-static_assert(sizeof(C_Input) == 4 + 36, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 41, "C_PlayerInput size mismatch!");
 
 #pragma pack (pop)

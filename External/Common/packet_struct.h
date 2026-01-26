@@ -10,10 +10,16 @@
 
 struct PackObjectInfo
 {
-	uint64			last_seq_num;
 	uint32			id;
+
+	// 서버권위 방식) InputData는 서버권위 방식에서 필요한 데이터이다.
+	InputData		input;
+
 	float			x, y, z;
-	float			yaw, pitch, roll;
+	float			pitch	= 0.0f;
+	float			yaw		= 0.0f;
+	float			roll	= 0.0f; 
+
 	PLAYER_STATE	state;
 
 	PackObjectInfo() = default;
@@ -28,22 +34,8 @@ struct PackObjectInfo
 		, roll{}
 	{ }
 
-	PackObjectInfo(uint64 seqNum, int _id, float _x, float _y, float _z)
-		: last_seq_num(seqNum)
-		, id(_id)
-		, state(PLAYER_STATE::IDLE)
-		, x(_x)
-		, y(_y)
-		, z(_z)
-		, yaw{}
-		, pitch{}
-		, roll{}
-	{
-	}
-
 	PackObjectInfo(const PackObjectInfo& other)
-		: last_seq_num(other.last_seq_num)
-		, id(other.id)
+		: id(other.id)
 		, state(other.state)
 		, x(other.x)
 		, y(other.y)
@@ -54,4 +46,4 @@ struct PackObjectInfo
 	{ }
 };
 
-static_assert(sizeof(PackObjectInfo) == 4 + 33, "PackObjectInfo size mismatch!");
+static_assert(sizeof(PackObjectInfo) == 33, "PackObjectInfo size mismatch!");
