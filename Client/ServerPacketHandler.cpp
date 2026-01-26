@@ -34,8 +34,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-
-	myPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	myPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 	shader->CreateShader(gGameFramework.GetDevice().Get());
@@ -48,13 +47,8 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	float height{ float(client_rect.bottom - client_rect.top) };
 
 	std::shared_ptr<CCamera> camera = std::make_shared<CCamera>();
-	camera->SetViewport(0, 0, width, height);
-	camera->SetScissorRect(0, 0, width, height);
-	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
-	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f));
+	camera->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 	camera->SetTarget(myPlayer.get());
-
-	camera->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	scene->SetPlayer(myPlayer);
 	scene->SetCamera(camera);
@@ -67,8 +61,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-
-	otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	otherPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -95,7 +88,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		// Active Scene에 다른 유저 입장
 
-		otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		otherPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
 		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
