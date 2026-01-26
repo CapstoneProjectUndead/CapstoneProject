@@ -36,13 +36,6 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
-	Material m{};
-	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.glossiness = 0.0f;
-	myPlayer->SetMaterial(m);
-
-	myPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
-
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 	shader->CreateShader(GET_DEVICE);
 	scene->GetShaders().push_back(std::move(shader));
@@ -54,10 +47,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	float height{ float(client_rect.bottom - client_rect.top) };
 
 	std::shared_ptr<CCamera> camera = std::make_shared<CCamera>();
-	camera->SetViewport(0, 0, width, height);
-	camera->SetScissorRect(0, 0, width, height);
-	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
-	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -2.0f));
+	camera->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 	camera->SetTarget(myPlayer.get());
 
 	camera->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
@@ -80,8 +70,6 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
-
-	otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());

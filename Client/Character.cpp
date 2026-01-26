@@ -16,6 +16,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 
 	auto animData = CGeometryLoader::LoadAnimations(filename, skeleton.bone_names.size());
 	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
+	CreateConstantBuffers(device, commandList);
 }
 
 void CCharacter::Update(float deltaTime)

@@ -8,6 +8,7 @@ struct SkinnedDataCB
     XMFLOAT4X4 boneTransforms[100];  // boneCount 이하
 };
 
+// 생성 시 Initialize 호출
 class CCharacter : public CObject
 {
 public:
