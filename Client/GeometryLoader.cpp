@@ -223,9 +223,10 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
         }
     }
 
-
+    bool Skinned{};
     if (br.FindTag("<BoneWeightCount>:"))
     {
+        Skinned = true;
         UINT count = 0;
         file.read((char*)&count, sizeof(UINT));
 
@@ -252,41 +253,36 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
 
 
     // 최종 정점 배열 조립
-    std::vector<CMatVertex> vertices(vertexNum);
-
-    for (UINT i = 0; i < vertexNum; ++i)
+    if (Skinned)
     {
-        // Position
-        if (i < positions.size())
-            vertices[i].position = positions[i];
-        else
-            vertices[i].position = XMFLOAT3(0, 0, 0); // 기본값 (필요시 변경)
+        std::vector<CMatVertex> vertices(vertexNum);
 
-        // Color
-        if (i < colors.size())
-            vertices[i].color = colors[i];
-        else
-            vertices[i].color = XMFLOAT4(1, 1, 1, 1); // 기본값 (white)
+        for (UINT i = 0; i < vertexNum; ++i)
+        {
+            vertices[i].position = (i < positions.size()) ? positions[i] : XMFLOAT3(0, 0, 0);
+            vertices[i].color = (i < colors.size()) ? colors[i] : XMFLOAT4(1, 1, 1, 1);
+            vertices[i].normal = (i < normals.size()) ? normals[i] : XMFLOAT3(0, 1, 0);
 
-        // Normal
-        if (i < normals.size())
-            vertices[i].normal = normals[i];
-        else
-            vertices[i].normal = XMFLOAT3(1, 1, 1); // 기본값 (white)
+            vertices[i].bone_indices = (i < boneIndices.size()) ? boneIndices[i] : XMUINT4{};
+            vertices[i].bone_weights = (i < boneWeights.size()) ? boneWeights[i] : XMFLOAT4(1, 0, 0, 0);
+        }
 
-        if (i < boneIndices.size())
-            vertices[i].bone_indices = boneIndices[i];
-        else
-            vertices[i].bone_indices = XMUINT4{};
-        if (i < boneWeights.size())
-            vertices[i].bone_weights = boneWeights[i];
-        else
-            vertices[i].bone_weights = XMFLOAT4(1, 0, 0, 0);
+        mesh->SetVertices(device, commandList, vertexNum, vertices);
     }
+    else
+    {
+        std::vector<CVertex> vertices(vertexNum);
 
-    // vertex, index gpu에 set
-    mesh->SetVertices(device, commandList, vertexNum, vertices);
+        for (UINT i = 0; i < vertexNum; ++i)
+        {
+            vertices[i].position = (i < positions.size()) ? positions[i] : XMFLOAT3(0, 0, 0);
+            vertices[i].color = (i < colors.size()) ? colors[i] : XMFLOAT4(1, 1, 1, 1);
+            vertices[i].normal = (i < normals.size()) ? normals[i] : XMFLOAT3(0, 1, 0);
+        }
 
+        mesh->SetVertices(device, commandList, vertexNum, vertices);
+    }
+    
     if (!indices.empty())
         mesh->SetIndices(device, commandList, indices.size(), indices);
 
@@ -308,16 +304,15 @@ std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br, ID3D12De
 
     {
         std::streampos pos = file.tellg();
-        if (br.FindTag("<Mesh>:"))
-        {
+
+        while (br.FindTag("<Mesh>:")) {
+            auto mesh = std::shared_ptr<CMesh>();
+
             file.clear();
             file.seekg(pos);
-            node->mesh = LoadMesh(br, device, commandList);
-        }
-        else
-        {
-            file.clear();
-            file.seekg(pos);
+            
+            mesh = LoadMesh(br, device, commandList);
+            node->meshes.push_back(std::move(mesh));
         }
     }
 

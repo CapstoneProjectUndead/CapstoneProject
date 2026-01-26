@@ -30,6 +30,7 @@ public:
 	CObject();
 
 	void ReleaseUploadBuffer();
+	virtual void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 
 	void SetMesh(std::shared_ptr<CMesh>& otherMesh);
 	void SetTexture(CTexture* );

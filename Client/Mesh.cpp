@@ -12,9 +12,14 @@ CDiffuseVertex::CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex)
 {
 }
 
+CDiffuseVertex::CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex, XMFLOAT3 normal)
+	: CVertex(position, color, normal), tex{ tex }
+{
+}
+
 // CMatVertex
 CMatVertex::CMatVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal)
-	:CVertex(position, color), normal{normal}
+	:CVertex(position, color, normal)
 {
 }
 

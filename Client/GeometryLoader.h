@@ -17,7 +17,7 @@ struct FrameNode
 	XMFLOAT4X4 localMatrix{};
 	XMFLOAT4X4 worldMatrix{};
 
-	std::shared_ptr<CMesh> mesh;
+    std::vector<std::shared_ptr<CMesh>> meshes;
 
 	std::vector<std::unique_ptr<FrameNode>> children;
 };
