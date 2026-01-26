@@ -29,8 +29,8 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
 	pos.x = rand() % 4 + 1;
-	pos.y = rand() % 4 + 1;
-	pos.z = 0;
+	pos.y = 0;
+	pos.z = rand() % 3;
 	player->SetPosition(pos);
 
 	// ClientSession이 Plyaer를 참조. (refcount 증가)

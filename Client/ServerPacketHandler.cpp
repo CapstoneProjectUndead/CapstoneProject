@@ -34,11 +34,17 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
-	myPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	Material m{};
+	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
+	m.glossiness = 0.0f;
+	myPlayer->SetMaterial(m);
+
+	myPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-	shader->CreateShader(gGameFramework.GetDevice().Get());
+	shader->CreateShader(GET_DEVICE);
 	scene->GetShaders().push_back(std::move(shader));
 
 	// 카메라 객체 생성
@@ -51,13 +57,19 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	camera->SetViewport(0, 0, width, height);
 	camera->SetScissorRect(0, 0, width, height);
 	camera->GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
-	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -5.0f));
+	camera->SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -2.0f));
 	camera->SetTarget(myPlayer.get());
 
-	camera->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	camera->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 	scene->SetPlayer(myPlayer);
 	scene->SetCamera(camera);
+
+	// light 생성
+	std::unique_ptr<CLightManager>light = std::make_unique<CLightManager>();
+	light->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	scene->SetLight(std::move(light));
 
 	return true;
 }
@@ -67,8 +79,9 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
-	otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -86,6 +99,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		// 다른 유저 생성
 		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
+		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 		// 다른 유저 ID 부여
 		otherPlayer->SetID(userList[i].info.id);
@@ -93,9 +107,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		// 다른 유저 위치 부여
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
-		// Active Scene에 다른 유저 입장
-
-		otherPlayer->CreateConstantBuffers(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
