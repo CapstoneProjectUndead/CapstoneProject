@@ -1,24 +1,22 @@
 #pragma once
-#include "Mesh.h"
 #include "Texture.h"
 
 class CShader;
 class CCamera;
+class CMesh;
 
 struct Material
 {
-	std::string name;
-
 	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
-	float roughness{ 0.25f };
-	float metallic{0.1f};
+	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };	// 프레넬 효과 반사양
+	float glossiness{ 0.25f };
 };
 
 struct MaterialCB
 {
 	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
-	/*float roughness{ 0.25f };
-	float metallic{ 0.1f };*/
+	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
+	float glossiness{ 0.25f };
 };
 
 struct ObjectCB
@@ -45,8 +43,8 @@ public:
 	virtual void Move(const XMFLOAT3 direction, float distance);
 	virtual void Move(const XMFLOAT3 shift);
 
-	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
-	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
+	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList* );
 
 	//
@@ -90,7 +88,8 @@ protected:
 	bool is_visible{ true };
 	BoundingOrientedBox oobb;
 
-	float speed{ 1.0f };
+	float speed{ 1.2f };
+	XMFLOAT3 velocity{};
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };

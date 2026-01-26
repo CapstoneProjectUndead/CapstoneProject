@@ -4,30 +4,26 @@
 #undef min
 #undef max
 
-extern HWND ghWnd;
-
 // Player
 CPlayer::CPlayer()
+	: CCharacter()
 {
 	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 }
 
 void CPlayer::Update(float elapsedTime)
-{
-     if (is_my_player)
-        return;
+{    
+     CCharacter::Update(elapsedTime);
     
-     // 위치 동기화
-     //OpponentMoveSync(elapsedTime);
-     
-     // 회전 동기화 (Yaw / Pitch)
-     //OpponentRotateSync(elapsedTime);
-}
+     if (!is_my_player) {
 
-void CPlayer::Move(const XMFLOAT3 shift)
-{
-	position = Vector3::Add(position, shift);
+         // 위치 동기화
+         OpponentMoveSync(elapsedTime);
+
+         // 회전 동기화 (Yaw / Pitch)
+         OpponentRotateSync(elapsedTime);
+     }
 }
 
 void CPlayer::OpponentMoveSync(float elapsedTime)
@@ -62,13 +58,13 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
             velocity,
             Vector3::ScalarProduct(
                 Vector3::Subtract(desiredVel, velocity),
-                std::min(1.0f, DAMPING * elapsedTime),
+                std::min(1.0f, speed * DAMPING * elapsedTime),
                 false
             )
         );
 
         // 위치 이동
-        XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, elapsedTime, false);
+        XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, speed * elapsedTime, false);
         position = Vector3::Add(position, frameMove);
 
         // 방향 동기화

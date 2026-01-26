@@ -8,11 +8,13 @@ struct CameraCB
 	XMFLOAT4X4 projection_matrix;
 };
 
+// 생성 시 Initialize, SetTarget 호출
 class CCamera
 {
 public:
 	CCamera();
 
+	void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList*);
 
@@ -51,5 +53,3 @@ protected:
 
 	CObject* target_object;	// 소유X, 참조용
 };
-
-

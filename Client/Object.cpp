@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Shader.h"
+#include "Mesh.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -67,7 +68,8 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 	}
 
 	{
-		MaterialCB cb{material.albedo};
+		MaterialCB cb{};
+		memcpy(&cb, &material, sizeof(Material));
 
 		UINT8* mapped = nullptr;
 		material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));

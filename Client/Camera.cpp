@@ -10,6 +10,22 @@ CCamera::CCamera()
 {
 }
 
+void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+	// 카메라 객체 생성
+	RECT client_rect;
+	GetClientRect(ghWnd, &client_rect);
+	float width{ float(client_rect.right - client_rect.left) };
+	float height{ float(client_rect.bottom - client_rect.top) };
+
+	SetViewport(0, 0, width, height);
+	SetScissorRect(0, 0, width, height);
+	GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
+	SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -2.0f));
+
+	CreateConstantBuffers(device, commandList);
+}
+
 void CCamera::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	{
