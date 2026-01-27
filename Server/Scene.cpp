@@ -78,7 +78,10 @@ void CScene::SendPlayersResults()
 		movePkt.last_seq_num = 0;
 
 		// 움직인 플레이어를 제외한 나머지 유저에게 전달.
-		BroadCast(sendBuffer, player->GetID());
+		for (auto& pl : players) {
+			if (pl.second->GetID() == player->GetID()) continue;
+			pl.second->GetSession()->DoSend(sendBuffer);
+		}
 	}
 }
 
