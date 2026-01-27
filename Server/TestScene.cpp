@@ -99,6 +99,8 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
 {
 	CAST_CS(session)->GetPlayer()->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
+	CAST_CS(session)->GetPlayer()->SetYaw(pkt.info.yaw);
+	CAST_CS(session)->GetPlayer()->SetPitch(pkt.info.pitch);
 
 	S_Move movePkt;
 	movePkt.info.id = pkt.info.id;
@@ -126,6 +128,7 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
 
 	mover->SetLastSequence(pkt.seq_num);
+	mover->SetClientDT(pkt.deltaTime);
 	mover->SetInput(input);
 	mover->SetState(pkt.info.state);
 	

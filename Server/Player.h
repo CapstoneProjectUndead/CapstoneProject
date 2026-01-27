@@ -16,6 +16,9 @@ public:
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
 
+	void SetClientDT(const float deltaTime) { client_Dt = deltaTime; }
+	float GetClientDT() const { return client_Dt; }
+
 	void SetInput(const InputData& input) { current_input = input; }
 	InputData GetInput() const { return current_input; }
 
@@ -24,6 +27,7 @@ public:
 
 private:
 	uint64	last_processed_seq = 0;
+	float	client_Dt = 0.f;
 	InputData	current_input;
 	PLAYER_STATE state = PLAYER_STATE::IDLE;
 };

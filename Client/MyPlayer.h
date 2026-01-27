@@ -37,7 +37,7 @@ private:
     void ProcessInput();
 
     // 서버 권위 방식 + 클라 예측 이동 방식
-    void ServerAuthorityMove(float elpasedTime);
+    void ServerAuthorityMove(const float elapsedTime);
     void CaptureInput(InputData& currentInput);
     void PredictMove(const InputData& input, float dt);
 

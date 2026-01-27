@@ -14,7 +14,7 @@ CPlayer::~CPlayer()
 
 void CPlayer::Update(const float elapsedTime)
 {
-	PredictMove(current_input, elapsedTime);
+	PredictMove(current_input, client_Dt);
 
 	// 회전 입력
 	SetYawPitch(yaw, pitch);

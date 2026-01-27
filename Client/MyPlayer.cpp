@@ -4,6 +4,9 @@
 #include "KeyManager.h"
 #include "ServerPacketHandler.h"
 
+#undef min
+#undef max
+
 CMyPlayer::CMyPlayer()
 	: CPlayer()
 {
@@ -14,59 +17,7 @@ void CMyPlayer::Update(float elapsedTime)
 {
 	CPlayer::Update(elapsedTime);
 
-	// 1. 입력 캡처 및 회전 (매 프레임)
-	InputData currentInput;
-	CaptureInput(currentInput);
-
-	// 2. 회전 처리
-	ProcessRotation();
-
-	// 3. 이동 예측 (매 프레임 - 1000 FPS의 부드러움 유지)
-	PredictMove(currentInput, elapsedTime);
-
-	// 누적 DT
-	dt_accumulator += elapsedTime;
-	move_packet_send_timer -= elapsedTime;
-	
-	// 4. 서버 전송 (60hz, 드랍 프레임 대비 while)
-	while (move_packet_send_timer <= 0) {
-
-		move_packet_send_timer += move_packet_send_delay;
-
-		float sendDt = min(dt_accumulator, move_packet_send_delay);
-
-		C_Input inputPkt;
-		inputPkt.seq_num = ++client_seq_counter;
-		inputPkt.deltaTime = sendDt;
-
-		inputPkt.info.id = obj_id;
-		inputPkt.info.w = currentInput.w;
-		inputPkt.info.a = currentInput.a;
-		inputPkt.info.s = currentInput.s;
-		inputPkt.info.d = currentInput.d;
-		inputPkt.info.yaw = yaw;
-		inputPkt.info.pitch = pitch;
-		inputPkt.info.state = state;
-
-		// 패킷 전송
-		if (auto s = session.lock())
-			s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
-
-		// 5. [중요] 장부 기록 위치 및 데이터 수정
-		// elapsedTime 대신 '지난 패킷 이후 누적된 시간(dt_accumulator)'을 저장합니다.
-		history_deque.push_back({
-			inputPkt.seq_num,
-			sendDt,   // 0.001이 아니라 약 0.0166이 들어감
-			currentInput,
-			position    // 현재 예측된 최신 위치
-			});
-
-		if (history_deque.size() > 600)
-			history_deque.pop_front();
-
-		// 누적 시간 초기화
-		dt_accumulator -= sendDt;
-	}
+	ServerAuthorityMove(elapsedTime);
 }
 
 void CMyPlayer::ProcessInput()
@@ -148,8 +99,62 @@ void CMyPlayer::ClientAuthorityMove(float elapsedTime)
 	}
 }
 
-void CMyPlayer::ServerAuthorityMove(float elpasedTime)
+void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 {
+	// 1. 입력 캡처
+	InputData currentInput;
+	CaptureInput(currentInput);
+
+	// 2. 회전 처리
+	ProcessRotation();
+
+	// 누적 DT
+	dt_accumulator += elapsedTime;
+	move_packet_send_timer -= elapsedTime;
+
+	// 3. 서버 전송 주기(60Hz)마다 처리
+	while (move_packet_send_timer <= 0.0f)
+	{
+		move_packet_send_timer += move_packet_send_delay;
+
+		// 이번에 서버로 보낼 실제 dt
+		const float sendDt = std::min(dt_accumulator, move_packet_send_delay);
+
+		// 중요: 예측 이동도 서버와 동일한 dt 단위로
+		PredictMove(currentInput, sendDt);
+
+		// 패킷 생성
+		C_Input inputPkt{};
+		inputPkt.seq_num = ++client_seq_counter;
+		inputPkt.deltaTime = sendDt;
+
+		inputPkt.info.id = obj_id;
+		inputPkt.info.w = currentInput.w;
+		inputPkt.info.a = currentInput.a;
+		inputPkt.info.s = currentInput.s;
+		inputPkt.info.d = currentInput.d;
+		inputPkt.info.yaw = yaw;
+		inputPkt.info.pitch = pitch;
+		inputPkt.info.state = state;
+
+		// 서버 전송
+		if (auto s = session.lock())
+			s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
+
+		// 4. 장부 기록 (서버와 완전히 동일한 dt 저장)
+		history_deque.push_back({
+			inputPkt.seq_num,
+			sendDt,
+			currentInput,
+			position
+			});
+
+		if (history_deque.size() > 600)
+			history_deque.pop_front();
+
+		// 누적 시간 차감
+		dt_accumulator -= sendDt;
+	}
 }
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
@@ -196,6 +201,9 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
+	// 2. 서버 좌표로 스냅
+	SetPosition(serverPos);
+
 	// 1. 서버가 확인한 입력까지 제거 
 	while (!history_deque.empty() &&
 		history_deque.front().seq_num <= last_seq)
@@ -203,20 +211,10 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 		history_deque.pop_front();
 	}
 
-	// 2. 서버 좌표로 스냅
-	SetPosition(serverPos);
-
 	// 3. 남은 미래 입력 재시뮬
 	for (auto& frame : history_deque) {
 		
-		XMFLOAT3 replayDir{ 0.f, 0.f, 0.f };
-		if (frame.input.w) replayDir.z++;
-		if (frame.input.s) replayDir.z--;
-		if (frame.input.a) replayDir.x--;
-		if (frame.input.d) replayDir.x++;
-
-		if (replayDir.x != 0 || replayDir.z != 0)
-			Move(replayDir, frame.deltaTime);
+		PredictMove(frame.input, frame.deltaTime);
 
 		// 장부 위치 갱신
 		frame.predictedPos = position;

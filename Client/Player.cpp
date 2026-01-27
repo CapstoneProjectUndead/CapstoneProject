@@ -19,14 +19,14 @@ void CPlayer::Update(float elapsedTime)
      if (!is_my_player) {
 
          // 위치 동기화
-         OpponentMoveSync(elapsedTime);
+         S_OpponentMoveSync(elapsedTime);
 
          // 회전 동기화 (Yaw / Pitch)
          OpponentRotateSync(elapsedTime);
      }
 }
 
-void CPlayer::OpponentMoveSync(float elapsedTime)
+void CPlayer::C_OpponentMoveSync(float elapsedTime)
 {
     XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
     XMFLOAT3 clientPos = position;
@@ -80,6 +80,58 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
 
         XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, elapsedTime, false);
         position = Vector3::Add(position, frameMove);
+    }
+}
+
+void CPlayer::S_OpponentMoveSync(const float elapsedTime)
+{
+    XMFLOAT3 serverPos{ dest_info.x, dest_info.y, dest_info.z };
+    XMFLOAT3 clientPos = position;
+
+    XMFLOAT3 toTarget = Vector3::Subtract(serverPos, clientPos);
+    float dist = Vector3::Length(toTarget);
+
+    const float SNAP_DIST = 3.0f * speed;
+    const float ARRIVE_DIST = 0.01f * speed;
+
+    // 1. 너무 멀면 스냅
+    if (dist > SNAP_DIST)
+    {
+        SetPosition(serverPos);
+        velocity = XMFLOAT3(0, 0, 0);
+        SetYaw(dest_info.yaw);
+        return;
+    }
+
+    // 2. 서버가 움직이는 중이면 → 정확히 "도착 시간" 기반으로 이동
+    if (dest_info.state == PLAYER_STATE::WALK && dist > ARRIVE_DIST)
+    {
+        // 서버 패킷 주기 = 1/60
+        constexpr float SERVER_TICK = 1.0f / 60.0f;
+
+        // 이번 프레임에 가야 할 비율
+        float alpha = std::min(1.0f, elapsedTime / SERVER_TICK);
+
+        // 위치 직접 보간 (절대 뒤처지지 않음)
+        position = Vector3::Add(
+            position,
+            Vector3::ScalarProduct(toTarget, alpha, false)
+        );
+
+        // 가짜 velocity (애니메이션용)
+        velocity = Vector3::ScalarProduct(
+            Vector3::Normalize(toTarget),
+            speed,
+            false
+        );
+
+        SetYaw(dest_info.yaw);
+    }
+    else
+    {
+        // 3. 거의 도착 → 정확히 서버 위치로 스냅
+        SetPosition(serverPos);
+        velocity = XMFLOAT3(0, 0, 0);
     }
 }
 

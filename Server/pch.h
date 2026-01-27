@@ -97,6 +97,9 @@ using std::make_pair;
 extern unique_ptr<class CGameFramework> gGameFramework;
 //extern DBConnector g_db;
 
+extern const double g_server_targetTick;
+extern const double g_targetDT;
+
 
 #endif //PCH_H
 

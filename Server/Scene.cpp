@@ -48,6 +48,7 @@ void CScene::SendResults()
 void CScene::SendPlayersResults()
 {
 	// 시뮬레이션 돌린 플레이어의 결과를 모든 유저들에게 통보
+	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players)
 	{
 		S_Move movePkt;
@@ -69,7 +70,8 @@ void CScene::SendPlayersResults()
 		movePkt.info.state = player->GetState();
 
 		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
-		player->GetSession()->DoSend(sendBuffer);
+		if (player->GetSession())
+			player->GetSession()->DoSend(sendBuffer);
 
 		// [중요] 시퀀스 번호는 오직 '움직인 본인'에게만 의미가 있음
 		// 받는 사람이 mover일 때만 시퀀스를 넣어주고, 나머지에겐 0을 보냅니다.

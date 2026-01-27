@@ -147,7 +147,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		info.last_seq_num = pkt.last_seq_num;
 		info.id = pkt.info.id;
 		info.input = input;
-		info.state = (PLAYER_STATE)pkt.info.state;
+		info.state = pkt.info.state;
 		info.x = pkt.info.x;
 		info.y = pkt.info.y;
 		info.z = pkt.info.z;
@@ -173,6 +173,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 
 		ObjectInfo info;
 		info.id = pkt.info.id;
+		info.input = input;
 		info.state = pkt.info.state;
 		info.x = pkt.info.x;
 		info.y = pkt.info.y;
