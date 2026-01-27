@@ -16,7 +16,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 
 	// animator 초기화
 	animator = std::make_unique<CAnimator>();
-	animator->Initialize(fileName);
+	animator->Initialize(fileName, std::string("../Modeling/undead_ani.bin"));
 	animator->Play("Ganga_walk");   // 초기 애니메이션
 
 	CreateConstantBuffers(device, commandList);

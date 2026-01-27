@@ -28,7 +28,7 @@ struct AnimationClip
 
 	void Interpolate(float t, std::vector<XMFLOAT4X4>& boneTransforms)const;
 
-	std::vector<BoneAnimation> BoneAnimations;
+	std::vector<BoneAnimation> bone_animations;
 };
 
 class CSkinnedData
@@ -54,14 +54,15 @@ private:
 
 struct SkinnedDataCB
 {
-    XMFLOAT4X4 boneTransforms[100];  // boneCount 이하
+    XMFLOAT4X4 bone_transforms[100];  // boneCount 이하
+	bool skinned;
 };
 
 class CAnimator 
 {
 public:
 	CAnimator() = default;
-    void Initialize(const std::string& fileName);
+    void Initialize(const std::string& charName, const std::string& AniName);
 
 	void Play(const std::string& name);
 

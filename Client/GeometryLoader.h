@@ -12,14 +12,10 @@ struct SkeletonData
 
 struct FrameNode
 {
-	std::string name;
-
-	XMFLOAT4X4 localMatrix{};
-	XMFLOAT4X4 worldMatrix{};
-
+    std::string name;
+    XMFLOAT4X4 localMatrix;
     std::vector<std::shared_ptr<CMesh>> meshes;
-
-	std::vector<std::unique_ptr<FrameNode>> children;
+    std::vector<std::unique_ptr<FrameNode>> children;
 };
 
 class BinaryReader {

@@ -136,13 +136,6 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         binaryWriter.Write(f);
     }
 
-    void WriteFloats(string strHeader, float[] values)
-    {
-        binaryWriter.Write(strHeader);
-        binaryWriter.Write(values.Length);
-        foreach (float f in values) binaryWriter.Write(f);
-    }
-
     void WriteVector(Vector2 v)
     {
         binaryWriter.Write(v.x);
@@ -249,6 +242,13 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         binaryWriter.Write(strHeader);
         binaryWriter.Write(uvs.Length);
         if (uvs.Length > 0) foreach (Vector2 uv in uvs) WriteTextureCoord(uv);
+    }
+
+    void WriteFloats(string header, float[] arr)
+    {
+        binaryWriter.Write(header);
+        binaryWriter.Write(arr.Length);
+        foreach (var v in arr) binaryWriter.Write(v);
     }
 
     void WriteIntegers(int[] pIntegers)
@@ -509,65 +509,36 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         WriteString("</Materials>");
     }
 
-    void WriteSkinningData(SkinnedMeshRenderer skinned)
+    void WriteSkinningData(SkinnedMeshRenderer smr)
     {
-        Mesh mesh = skinned.sharedMesh;
+        Mesh mesh = smr.sharedMesh;
+        Transform[] bones = smr.bones;
 
-        // 1) Bone 목록 저장
-        Transform[] bones = skinned.bones;
         WriteInteger("<BoneCount>:", bones.Length);
 
         for (int i = 0; i < bones.Length; i++)
         {
             WriteString("<BoneName>:", bones[i].name);
-
-            // ★ BoneLocalMatrix는 local TRS matrix
             WriteLocalMatrix("<BoneLocalMatrix>:", bones[i]);
         }
 
         for (int i = 0; i < bones.Length; i++)
         {
-            Transform bone = bones[i];
-            int parentIndex = -1;
-
-            Transform parent = bone.parent;
-            if (parent != null)
-            {
-                // bones 배열에서 parent가 몇 번째인지 찾기
-                for (int p = 0; p < bones.Length; p++)
-                {
-                    if (bones[p] == parent)
-                    {
-                        parentIndex = p;
-                        break;
-                    }
-                }
-            }
-
+            int parentIndex = System.Array.IndexOf(bones, bones[i].parent);
             WriteInteger("<ParentIndex>:", parentIndex);
         }
 
-        // 2) Bind Pose 저장 (inverse world matrix)
-        Matrix4x4[] bindposes = mesh.bindposes;
-        WriteMatrixes("<BindPoses>:", bindposes);
-
-        // 3) Bone Weights 저장
-        BoneWeight[] weights = mesh.boneWeights;
-        WriteInteger("<BoneWeightCount>:", weights.Length);
-
-        for (int i = 0; i < weights.Length; i++)
-        {
-            BoneWeight bw = weights[i];
-            int[] boneIndices = { bw.boneIndex0, bw.boneIndex1, bw.boneIndex2, bw.boneIndex3};
-            float[] boneWeights = { bw.weight0, bw.weight1, bw.weight2, bw.weight3 };
-
-            WriteIntegers("<BoneIndex>:", boneIndices);
-            WriteFloats("<BoneWeight>:", boneWeights);
-        }
+        WriteMatrixes("<BindPoses>:", mesh.bindposes);
     }
 
-    void WriteMeshAndSkinningData(Transform current)
+    void WriteFrameInfo(Transform current)
     {
+        int nTextures = GetTexturesCount(current);
+        WriteObjectName("<Frame>:", m_nFrames++, nTextures, current.gameObject);
+
+        WriteTransform("<Transform>:", current);
+        WriteLocalMatrix("<TransformMatrix>:", current);
+
         MeshFilter meshFilter = current.GetComponent<MeshFilter>();
         MeshRenderer meshRenderer = current.GetComponent<MeshRenderer>();
         SkinnedMeshRenderer skinned = current.GetComponent<SkinnedMeshRenderer>();
@@ -582,21 +553,8 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
             WriteMeshInfo(skinned.sharedMesh);
             WriteMaterials(skinned.materials);
 
-            // ★ 스키닝 데이터는 여기서 저장
             WriteSkinningData(skinned);
         }
-
-        for (int i = 0; i < current.childCount; i++)
-            WriteMeshAndSkinningData(current.GetChild(i));
-    }
-
-    void WriteFrameInfo(Transform current)
-    {
-        int nTextures = GetTexturesCount(current);
-        WriteObjectName("<Frame>:", m_nFrames++, nTextures, current.gameObject);
-
-        WriteTransform("<Transform>:", current);
-        WriteLocalMatrix("<TransformMatrix>:", current);
     }
 
     void WriteFrameHierarchyInfo(Transform child)
@@ -618,13 +576,9 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
 
     void Start()
     {
-        binaryWriter = new BinaryWriter(File.Open(gameObject.name.Replace(" ", "_") + ".bin", FileMode.Create));
+        binaryWriter = new BinaryWriter(File.Open(string.Copy(gameObject.name).Replace(" ", "_") + ".bin", FileMode.Create));
 
-        // 1) 프레임 트리 저장
         WriteFrameHierarchyInfo(transform);
-
-        // 2) 메시 + 스키닝 데이터 저장
-        WriteMeshAndSkinningData(transform);
 
         binaryWriter.Flush();
         binaryWriter.Close();

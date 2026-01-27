@@ -54,7 +54,7 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
         file.read((char*)&keyCount, sizeof(int));
 
         AnimationClip clip;
-        clip.BoneAnimations.resize(boneCount);
+        clip.bone_animations.resize(boneCount);
 
         for (int k = 0; k < keyCount; ++k)
         {
@@ -82,7 +82,7 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
                 br.FindTag("<S>:");
                 br.ReadFloat3(key.scale);
 
-                clip.BoneAnimations[boneIndex].key_frames.push_back(key);
+                clip.bone_animations[boneIndex].key_frames.push_back(key);
             }
 
             br.FindTag("</Keyframe>");
@@ -148,15 +148,14 @@ SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
 
 std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    if (!br.FindTag("<Mesh>:"))
-        return nullptr;
-
     std::ifstream& file{ br.Stream() };
 
     auto mesh = std::make_shared<CMesh>();
 
     UINT vertexNum;
     file.read(reinterpret_cast<char*>(&vertexNum), sizeof(UINT));
+
+    mesh->name = br.ReadName();
 
     // 3) 임시 버퍼들
     std::vector<XMFLOAT3> positions;
@@ -248,9 +247,6 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
             file.read((char*)&boneWeights[i], sizeof(float) * len);
         }
     }
-    // </Mesh> 태그 스킵
-    br.FindTag("</Mesh>");
-
 
     // 최종 정점 배열 조립
     if (Skinned)
@@ -291,33 +287,42 @@ std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device*
 
 std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    // <Frame>: 태그 찾기
     if (!br.FindTag("<Frame>:"))
         return nullptr;
 
     auto node = std::make_unique<FrameNode>();
 
-    // 이름 읽기
+    // Frame 이름
     node->name = br.ReadName();
 
-    std::ifstream& file{ br.Stream() };
+    // Transform
+    br.FindTag("<TransformMatrix>:");
+    br.ReadMatrix(node->localMatrix);
 
+    // Mesh 여러 개 있을 수 있음
+    while (br.FindTag("<Mesh>:"))
     {
-        std::streampos pos = file.tellg();
+        auto mesh = LoadMesh(br, device, commandList);
+        if (mesh)
+            node->meshes.push_back(mesh);
+    }
 
-        while (br.FindTag("<Mesh>:")) {
-            auto mesh = std::shared_ptr<CMesh>();
+    // Children
+    int childCount = 0;
+    if (br.FindTag("<Children>:"))
+    {
+        br.Stream().read((char*)&childCount, sizeof(int));
 
-            file.clear();
-            file.seekg(pos);
-            
-            mesh = LoadMesh(br, device, commandList);
-            node->meshes.push_back(std::move(mesh));
+        for (int i = 0; i < childCount; i++)
+        {
+            auto child = LoadFrame(br, device, commandList);
+            if (child)
+                node->children.push_back(std::move(child));
         }
     }
 
+    br.FindTag("</Frame>");
     return node;
-
 }
 
 std::unique_ptr<FrameNode> CGeometryLoader::LoadGeometry(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

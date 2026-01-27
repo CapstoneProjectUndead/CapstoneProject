@@ -74,6 +74,9 @@ protected:
 	UINT slot_num{};
 	UINT stride{};
 	UINT offset{};
+public:
+	// name
+	std::string name{};
 };
 
 class CTriangleMesh : public CMesh
