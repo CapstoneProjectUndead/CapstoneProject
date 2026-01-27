@@ -118,51 +118,19 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
 void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
 	auto it = players.find(pkt.info.id);
-	if (it == players.end()) return;
+	if (it == players.end()) 
+		return;
 
 	auto mover = it->second; // 실제 움직인 플레이어
 
-	// 1. 이동 처리 (클라 deltaTime 사용)
-	float serverDt = std::min(pkt.deltaTime, 0.1f);
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
 
-	InputData input{};
-	input.w = pkt.info.w;
-	input.a = pkt.info.a;
-	input.s = pkt.info.s;
-	input.d = pkt.info.d;
-
-	mover->PredictMove(input, serverDt);
-	mover->last_processed_seq = pkt.seq_num;
+	mover->SetLastSequence(pkt.seq_num);
+	mover->SetInput(input);
 	mover->SetState(pkt.info.state);
+	
+	// 회전 입력
+	mover->SetYaw(pkt.info.yaw);
+	mover->SetPitch(pkt.info.pitch);
 
-	// 2. 움직인 플레이어와 다른 유저들에게 위치 통보
-	{
-		S_Move movePkt;
-
-		movePkt.last_seq_num = pkt.seq_num;
-		movePkt.info.id = mover->GetID(); // "움직인 사람"의 ID
-		movePkt.info.x = mover->GetPosition().x;
-		movePkt.info.y = mover->GetPosition().y;
-		movePkt.info.z = mover->GetPosition().z;
-		movePkt.info.yaw = pkt.info.yaw;
-		movePkt.info.pitch = pkt.info.pitch;
-
-		// 현재 입력 상태 (애니메이션용)
-		movePkt.info.w = pkt.info.w;
-		movePkt.info.a = pkt.info.a;
-		movePkt.info.s = pkt.info.s;
-		movePkt.info.d = pkt.info.d;
-
-		movePkt.info.state = mover->state;
-
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
-		session->DoSend(sendBuffer);
-
-		// [중요] 시퀀스 번호는 오직 '움직인 본인'에게만 의미가 있음
-		// 받는 사람이 mover일 때만 시퀀스를 넣어주고, 나머지에겐 0을 보냅니다.
-		movePkt.last_seq_num = 0;
-
-		// 움직인 플레이어를 제외한 나머지 유저에게 전달.
-		BroadCast(sendBuffer, mover->GetID());
-	}
 }

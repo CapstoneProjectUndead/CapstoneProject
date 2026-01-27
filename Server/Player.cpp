@@ -12,9 +12,13 @@ CPlayer::~CPlayer()
 
 }
 
-void CPlayer::Update(float elapsedTime)
+void CPlayer::Update(const float elapsedTime)
 {
+	PredictMove(current_input, elapsedTime);
 
+	// 회전 입력
+	SetYawPitch(yaw, pitch);
+	UpdateWorldMatrix();
 }
 
 void CPlayer::PredictMove(const InputData& input, float dt)

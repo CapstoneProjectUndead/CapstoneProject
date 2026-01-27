@@ -10,7 +10,7 @@ public:
 	CObject();
     virtual ~CObject();
 
-    virtual void Update(float elapsedTime);
+    virtual void Update(const float elapsedTime);
 
 public:
     static shared_ptr<CPlayer>          CreatePlayer();
@@ -40,6 +40,8 @@ public:
     void                                SetLook(const XMFLOAT3 _look) { look = _look; }
 
     float                               GetYaw() const { return yaw; }
+
+    void                                SetPitch(const float _pitch) { pitch = _pitch; }
     float                               GetPitch() const { return pitch; }
 
     //=================================
@@ -52,6 +54,8 @@ public:
 
 private:
     static atomic<uint64>               s_idGenerator;
+
+protected:
     weak_ptr<Session>                   session;
     uint64                              obj_id;
 
@@ -63,7 +67,7 @@ private:
     XMFLOAT3& look     =    *(XMFLOAT3*)&world_matrix._31;
     XMFLOAT3& position =    *(XMFLOAT3*)&world_matrix._41;
          
-    float                               speed{ 10.0f };
+    float                               speed{ 1.0f };
     bool                                is_visible{ true };
 
     // 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가

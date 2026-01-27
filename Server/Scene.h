@@ -12,12 +12,17 @@ public:
 	CScene(SCENE_TYPE type);
 	~CScene();
 
-	virtual void Update(float elapsedTime);
+	virtual void Update(const float elapsedTime);
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
 
 	void BroadCast(SendBufferRef sendBuffer);
 	void BroadCast(SendBufferRef sendBuffer, uint64 exceptID);
+
+	void SimulatePlayers(const float elapsedTime);
+
+	void SendResults();
+	void SendPlayersResults();
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }

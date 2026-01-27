@@ -88,7 +88,7 @@ protected:
 	bool is_visible{ true };
 	BoundingOrientedBox oobb;
 
-	float speed{ 10.0f };
+	float speed{ 1.0f };
 	XMFLOAT3 velocity{};
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가

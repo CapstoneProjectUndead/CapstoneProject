@@ -10,11 +10,20 @@ void CSceneManager::Initialize()
 	scenes[(UINT)SCENE_TYPE::TEST] = std::make_unique<CTestScene>();
 }
 
-void CSceneManager::Update(float elapsedTime)
+void CSceneManager::Update(const float elapsedTime)
 {
 	for (auto& scene : scenes)
 	{
 		if (scene != nullptr)
 			scene->Update(elapsedTime);
+	}
+}
+
+void CSceneManager::SendResults()
+{
+	for (auto& scene : scenes)
+	{
+		if (scene != nullptr)
+			scene->SendResults();
 	}
 }
