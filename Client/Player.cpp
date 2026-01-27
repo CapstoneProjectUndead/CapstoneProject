@@ -34,37 +34,39 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
     XMFLOAT3 toTarget = Vector3::Subtract(serverPos, clientPos);
     float dist = Vector3::Length(toTarget);
 
-    const float DAMPING = 10.0f;       // 클수록 더 빨리 멈춤
+    const float DAMPING = 10.0f;   // 클수록 더 빨리 따라가고 더 빨리 멈춤
 
-    // 1. 너무 멀면 스냅
-    if (dist > 3.0f)
+    // 1. 너무 멀면 스냅 (순간이동 보정)
+    if (dist > 3.0f * speed)
     {
         SetPosition(serverPos);
         velocity = XMFLOAT3(0, 0, 0);
+        SetYaw(dest_info.yaw);
         return;
     }
 
-    // 2. 상대가 WALK 상태일 때만 따라간다
-    if (dest_info.state == PLAYER_STATE::WALK && dist > 0.05f)
+    // 2. 서버가 WALK 상태고 아직 충분히 멀면 → 따라가기
+    if (dest_info.state == PLAYER_STATE::WALK && dist > 0.05f * speed)
     {
-        // 방향
+        // 방향 벡터
         XMFLOAT3 dir = Vector3::Normalize(toTarget);
 
-        // 목표 속도
+        // 목표 속도 (초당 이동량 개념)
         XMFLOAT3 desiredVel = Vector3::ScalarProduct(dir, speed);
 
-        // velocity 보간 
+        // velocity를 desiredVel 쪽으로 부드럽게 보간
+        float lerpFactor = std::min(1.0f, DAMPING * elapsedTime);
         velocity = Vector3::Add(
             velocity,
             Vector3::ScalarProduct(
                 Vector3::Subtract(desiredVel, velocity),
-                std::min(1.0f, speed * DAMPING * elapsedTime),
+                lerpFactor,
                 false
             )
         );
 
-        // 위치 이동
-        XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, speed * elapsedTime, false);
+        // 위치 이동 (speed 다시 곱하지 않음!!)
+        XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, elapsedTime, false);
         position = Vector3::Add(position, frameMove);
 
         // 방향 동기화
@@ -72,12 +74,9 @@ void CPlayer::OpponentMoveSync(float elapsedTime)
     }
     else
     {
-        // 서버가 IDLE 이거나 거의 도착 → 부드럽게 정지
-        velocity = Vector3::ScalarProduct(
-            velocity,
-            std::max(0.0f, 1.0f - DAMPING * elapsedTime),
-            false
-        );
+        // 3. 서버가 IDLE 이거나 거의 도착 → 감속하면서 정지
+        float decay = std::max(0.0f, 1.0f - DAMPING * elapsedTime);
+        velocity = Vector3::ScalarProduct(velocity, decay, false);
 
         XMFLOAT3 frameMove = Vector3::ScalarProduct(velocity, elapsedTime, false);
         position = Vector3::Add(position, frameMove);

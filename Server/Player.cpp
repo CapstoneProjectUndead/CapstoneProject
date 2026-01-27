@@ -16,3 +16,16 @@ void CPlayer::Update(float elapsedTime)
 {
 
 }
+
+void CPlayer::PredictMove(const InputData& input, float dt)
+{
+	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
+	if (input.w) dir.z++;
+	if (input.s) dir.z--;
+	if (input.a) dir.x--;
+	if (input.d) dir.x++;
+
+	if (dir.x != 0 || dir.z != 0) {
+		Move(dir, dt);
+	}
+}

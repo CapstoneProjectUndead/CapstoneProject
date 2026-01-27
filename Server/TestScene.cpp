@@ -4,6 +4,9 @@
 #include "ClientSession.h"
 #include "Player.h"
 
+#undef min
+#undef max
+
 #define CAST_CS(session) static_pointer_cast<CClientSession>(session)
 
 
@@ -67,7 +70,7 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 				if (pl.second->GetID() == player->GetID())
 					continue;
 
-				userList[idx++] = { PackObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
+				userList[idx++] = { NetObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
 				pl.second->GetPosition().z} };
 			}
 
@@ -114,36 +117,52 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
 // 서버 권위 방식
 void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
-    auto it = players.find(pkt.info.id);
-    if (it == players.end())
-        return;
+	auto it = players.find(pkt.info.id);
+	if (it == players.end()) return;
 
-    auto player = players[it->first];
+	auto mover = it->second; // 실제 움직인 플레이어
 
-	player->last_processed_seq = pkt.seq_num;
-	player->current_input = pkt.info.input;
+	// 1. 이동 처리 (클라 deltaTime 사용)
+	float serverDt = std::min(pkt.deltaTime, 0.1f);
 
-	//player->Move();
+	InputData input{};
+	input.w = pkt.info.w;
+	input.a = pkt.info.a;
+	input.s = pkt.info.s;
+	input.d = pkt.info.d;
 
-	// 일단은 여기서 클라들에게 전송해준다.
-	// 나중에 반드시 바깥에서 전송하는걸로 바꿔야 한다. 
-	for (auto& pl : players) {
+	mover->PredictMove(input, serverDt);
+	mover->last_processed_seq = pkt.seq_num;
+	mover->SetState(pkt.info.state);
+
+	// 2. 움직인 플레이어와 다른 유저들에게 위치 통보
+	{
 		S_Move movePkt;
-		movePkt.info.id = pl.second->GetID();
-		movePkt.info.x = pl.second->GetPosition().x;
 
-		// ... (좌표 및 회전 값 대입) ...
-		movePkt.info.x = player->GetPosition().x;
-		movePkt.info.y = player->GetPosition().y;
-		movePkt.info.z = player->GetPosition().z;
-		movePkt.info.yaw = player->GetYaw();
-		movePkt.info.pitch = player->GetPitch();
+		movePkt.last_seq_num = pkt.seq_num;
+		movePkt.info.id = mover->GetID(); // "움직인 사람"의 ID
+		movePkt.info.x = mover->GetPosition().x;
+		movePkt.info.y = mover->GetPosition().y;
+		movePkt.info.z = mover->GetPosition().z;
+		movePkt.info.yaw = pkt.info.yaw;
+		movePkt.info.pitch = pkt.info.pitch;
 
-		// [핵심] 서버가 "너의 n번 입력을 처리한 결과가 이거야"라고 알려줌
-		movePkt.last_seq_num = player->last_processed_seq;
+		// 현재 입력 상태 (애니메이션용)
+		movePkt.info.w = pkt.info.w;
+		movePkt.info.a = pkt.info.a;
+		movePkt.info.s = pkt.info.s;
+		movePkt.info.d = pkt.info.d;
+
+		movePkt.info.state = mover->state;
 
 		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
+		session->DoSend(sendBuffer);
 
-		BroadCast(sendBuffer);
+		// [중요] 시퀀스 번호는 오직 '움직인 본인'에게만 의미가 있음
+		// 받는 사람이 mover일 때만 시퀀스를 넣어주고, 나머지에겐 0을 보냅니다.
+		movePkt.last_seq_num = 0;
+
+		// 움직인 플레이어를 제외한 나머지 유저에게 전달.
+		BroadCast(sendBuffer, mover->GetID());
 	}
 }

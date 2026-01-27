@@ -3,10 +3,10 @@
 
 struct FrameHistory 
 {
-    uint64_t    seq_num;
-    float       deltaTime;
-    InputData   input;
-    XMFLOAT3    predictedPos; // 내가 예측했던 결과 좌표
+    uint64_t     seq_num;
+    float        deltaTime;
+    InputData    input;
+    XMFLOAT3     predictedPos; // 내가 예측했던 결과 좌표
 };
 
 

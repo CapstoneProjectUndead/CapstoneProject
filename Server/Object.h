@@ -63,7 +63,7 @@ private:
     XMFLOAT3& look     =    *(XMFLOAT3*)&world_matrix._31;
     XMFLOAT3& position =    *(XMFLOAT3*)&world_matrix._41;
          
-    float                               speed{ 10.f };
+    float                               speed{ 10.0f };
     bool                                is_visible{ true };
 
     // 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가

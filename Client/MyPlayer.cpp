@@ -17,46 +17,55 @@ void CMyPlayer::Update(float elapsedTime)
 	// 1. 입력 캡처 및 회전 (매 프레임)
 	InputData currentInput;
 	CaptureInput(currentInput);
+
+	// 2. 회전 처리
 	ProcessRotation();
 
-	// 2. 이동 예측 (매 프레임 - 1000 FPS의 부드러움 유지)
+	// 3. 이동 예측 (매 프레임 - 1000 FPS의 부드러움 유지)
 	PredictMove(currentInput, elapsedTime);
 
-	// 이번 프레임의 시간을 누적시킨다.
+	// 누적 DT
 	dt_accumulator += elapsedTime;
-
-	// 3. 서버 전송 주기 (60Hz)
 	move_packet_send_timer -= elapsedTime;
-	if (move_packet_send_timer <= 0)
-	{
+	
+	// 4. 서버 전송 (60hz, 드랍 프레임 대비 while)
+	while (move_packet_send_timer <= 0) {
+
 		move_packet_send_timer += move_packet_send_delay;
+
+		float sendDt = min(dt_accumulator, move_packet_send_delay);
 
 		C_Input inputPkt;
 		inputPkt.seq_num = ++client_seq_counter;
+		inputPkt.deltaTime = sendDt;
+
 		inputPkt.info.id = obj_id;
-		inputPkt.info.input = currentInput;
-		inputPkt.info.state = state;
+		inputPkt.info.w = currentInput.w;
+		inputPkt.info.a = currentInput.a;
+		inputPkt.info.s = currentInput.s;
+		inputPkt.info.d = currentInput.d;
 		inputPkt.info.yaw = yaw;
 		inputPkt.info.pitch = pitch;
+		inputPkt.info.state = state;
 
 		// 패킷 전송
 		if (auto s = session.lock())
 			s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
 
-		// 4. [중요] 장부 기록 위치 및 데이터 수정
+		// 5. [중요] 장부 기록 위치 및 데이터 수정
 		// elapsedTime 대신 '지난 패킷 이후 누적된 시간(dt_accumulator)'을 저장합니다.
 		history_deque.push_back({
 			inputPkt.seq_num,
-			dt_accumulator,   // 0.001이 아니라 약 0.0166이 들어감
+			sendDt,   // 0.001이 아니라 약 0.0166이 들어감
 			currentInput,
 			position    // 현재 예측된 최신 위치
 			});
 
-		// 누적 시간 초기화
-		dt_accumulator = 0.0f;
-
 		if (history_deque.size() > 600)
 			history_deque.pop_front();
+
+		// 누적 시간 초기화
+		dt_accumulator -= sendDt;
 	}
 }
 
@@ -187,44 +196,29 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
-	// 1. 장부에서 서버가 확인해준 시퀀스(last_seq) 이전 기록 삭제
-	while (!history_deque.empty() && history_deque.front().seq_num < last_seq) {
+	// 1. 서버가 확인한 입력까지 제거 
+	while (!history_deque.empty() &&
+		history_deque.front().seq_num <= last_seq)
+	{
 		history_deque.pop_front();
 	}
 
-	if (!history_deque.empty() && history_deque.front().seq_num == last_seq)
-	{
-		// 2. 서버가 계산한 좌표와 내가 당시 예측했던 좌표 비교
-		float error = Vector3::Distance(history_deque.front().predictedPos, serverPos);
+	// 2. 서버 좌표로 스냅
+	SetPosition(serverPos);
 
-		// 서버 확인이 끝난 데이터는 삭제
-		history_deque.pop_front();
+	// 3. 남은 미래 입력 재시뮬
+	for (auto& frame : history_deque) {
+		
+		XMFLOAT3 replayDir{ 0.f, 0.f, 0.f };
+		if (frame.input.w) replayDir.z++;
+		if (frame.input.s) replayDir.z--;
+		if (frame.input.a) replayDir.x--;
+		if (frame.input.d) replayDir.x++;
 
-		// 3. 오차가 임계치(0.05f)보다 크면 보정 시작
-		if (error > 0.05f)
-		{
-			// [A] 서버 위치로 즉시 강제 이동 (Snap) (서버가 맞다)
-			SetPosition(serverPos);
+		if (replayDir.x != 0 || replayDir.z != 0)
+			Move(replayDir, frame.deltaTime);
 
-			// [B] 장부에 남은 "아직 서버 확인을 못 받은 미래 입력들"을 재시뮬레이션
-			for (auto& frame : history_deque)
-			{
-				// InputData를 방향 벡터로 변환 (PredictMove와 동일한 로직)
-				XMFLOAT3 replayDir{ 0.f, 0.f, 0.f };
-				if (frame.input.w) replayDir.z++;
-				if (frame.input.s) replayDir.z--;
-				if (frame.input.a) replayDir.x--;
-				if (frame.input.d) replayDir.x++;
-
-				// 재시뮬레이션 수행
-				if (replayDir.x != 0 || replayDir.z != 0) {
-					Move(replayDir, frame.deltaTime);
-				}
-
-				// [중요] 재계산된 위치로 장부의 predictedPos를 업데이트해줍니다.
-				// 그래야 다음 서버 패킷이 왔을 때 또 틀렸다고 판단하지 않습니다.
-				frame.predictedPos = position;
-			}
-		}
+		// 장부 위치 갱신
+		frame.predictedPos = position;
 	}
 }

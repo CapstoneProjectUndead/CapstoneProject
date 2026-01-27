@@ -133,6 +133,12 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	auto& indexMap = scene->GetIDIndex();
 	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
+	InputData input{};
+	input.a = pkt.info.a;
+	input.w = pkt.info.w;
+	input.d = pkt.info.d;
+	input.s = pkt.info.s;
+
 	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id) {
 		ObjectInfo info{};
@@ -140,8 +146,8 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
 		info.last_seq_num = pkt.last_seq_num;
 		info.id = pkt.info.id;
-		info.input = pkt.info.input;
-		info.state = pkt.info.state;
+		info.input = input;
+		info.state = (PLAYER_STATE)pkt.info.state;
 		info.x = pkt.info.x;
 		info.y = pkt.info.y;
 		info.z = pkt.info.z;
@@ -157,11 +163,11 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		// 해당 ID가 존재하는 플레이어인지 확인
 		auto it = indexMap.find(pkt.info.id);
 		if (it == indexMap.end())
-			return true;
+			return false;
 
 		uint64 idx = it->second;
 		if (idx >= vec.size())
-			return true;
+			return false;
 
 		auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
 
