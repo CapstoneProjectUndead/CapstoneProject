@@ -14,7 +14,7 @@ CNetworkManager::~CNetworkManager()
 
 }
 
-void CNetworkManager::ServiceStart()
+void CNetworkManager::ServiceStart(std::wstring address, uint16 port)
 {
 	setlocale(LC_ALL, "");
 	std::wcout.imbue(std::locale(""));
@@ -26,7 +26,7 @@ void CNetworkManager::ServiceStart()
     CServerPacketHandler::Init();
 
 	client_service = std::make_shared<TcpClientService>(
-       NetAddress(L"127.0.0.1", PORT_NUM),
+       NetAddress(address, port),
        [this]()->std::shared_ptr<Session> { return std::make_shared<CServerSession>(); },
        1);
 

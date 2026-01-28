@@ -18,7 +18,7 @@ public:
 		return instance;
 	}
 
-	void ServiceStart();
+	void ServiceStart(std::wstring address, uint16 port);
 	void Tick(float time);
 
 	std::shared_ptr<TcpClientService> ClientService() const { return client_service; }

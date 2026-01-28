@@ -8,6 +8,8 @@
 // 서버 
 #include "NetworkManager.h"
 
+#define NET_ADDRESS L"127.0.0.1"
+
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
@@ -124,7 +126,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     gGameFramework.OnCreate();
 
     // 서버에 연결하기 위한 초기 작업
-    CNetworkManager::GetInstance().ServiceStart();
+    CNetworkManager::GetInstance().ServiceStart(NET_ADDRESS, PORT_NUM);
 
     ShowWindow(ghWnd, nCmdShow);
     UpdateWindow(ghWnd);

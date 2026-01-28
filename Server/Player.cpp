@@ -14,14 +14,14 @@ CPlayer::~CPlayer()
 
 void CPlayer::Update(const float elapsedTime)
 {
-	PredictMove(current_input, elapsedTime);
+	SimulateMove(current_input, elapsedTime);
 
 	// 회전 입력
 	SetYawPitch(yaw, pitch);
 	UpdateWorldMatrix();
 }
 
-void CPlayer::PredictMove(const InputData& input, float dt)
+void CPlayer::SimulateMove(const InputData& input, float dt)
 {
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
 	if (input.w) dir.z++;

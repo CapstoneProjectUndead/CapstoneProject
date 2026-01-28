@@ -24,7 +24,7 @@ public:
 	PLAYER_STATE GetState() const { return state; }
 
 private:
-	void PredictMove(const InputData& input, float dt);
+	void SimulateMove(const InputData& input, float dt);
 
 private:
 	uint64	last_processed_seq = 0;
