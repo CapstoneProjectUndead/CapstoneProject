@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "KeyManager.h"
 #include "ServerPacketHandler.h"
+#include "NetworkManager.h"
 
 #undef min
 #undef max
@@ -74,7 +75,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	// 누적 시간
 	dt_accumulator += elapsedTime;
 
-	if (move_packet_send_timer <= 0.0f)
+	if (move_packet_send_timer <= 0.0f && IS_CONNECT)
 	{
 		move_packet_send_timer += move_packet_send_delay;
 

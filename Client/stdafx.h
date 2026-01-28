@@ -72,9 +72,6 @@ using Microsoft::WRL::ComPtr;
 #include <struct.h>
 #include <protocol.h>
 
-extern const double g_server_targetTick;
-extern const double g_targetDT;
-
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
 

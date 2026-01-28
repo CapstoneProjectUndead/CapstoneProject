@@ -21,8 +21,9 @@ public:
 	void ServiceStart();
 	void Tick(float time);
 
+	std::shared_ptr<TcpClientService> ClientService() const { return client_service; }
+
 private:
 	std::shared_ptr<TcpClientService>	client_service;
-	std::shared_ptr<CServerSession>		server_session;
 };
 

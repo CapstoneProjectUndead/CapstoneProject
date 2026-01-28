@@ -24,10 +24,6 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 HWND ghWnd;
 CGameFramework gGameFramework;
 
-// 서버 틱 (stdafx.h에 extern 선언)
-const double g_server_targetTick = 60.0; // 60Hz
-const double g_targetDT = 1.0 / g_server_targetTick; // 0.01666... (16.6ms)
-
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,

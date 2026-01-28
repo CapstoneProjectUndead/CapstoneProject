@@ -31,6 +31,9 @@ public:
 	int32										GetCurrentSessionCount() { return current_session_count; }
 	int32										GetMaxSessionCount() { return max_session_count; }
 
+	bool										GetConnection() const { return is_connected; }
+	void										SetConnection(const bool connection) { is_connected = connection; }
+
 protected:
 	IOCP										iocp_core;
 	NetAddress									net_address;
@@ -41,6 +44,7 @@ protected:
 	int32										max_session_count;
 	std::map<SOCKET, std::shared_ptr<Session>>	sessions;
 	std::mutex									lock;
+	bool										is_connected;
 };
 
 // ServerService
