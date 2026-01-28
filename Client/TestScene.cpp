@@ -3,6 +3,9 @@
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Mesh.h"
+#include "Shader.h"
+#include "GeometryLoader.h"
+
 CTestScene::CTestScene()
 {
 }
@@ -33,35 +36,25 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		//char ch;
 		//while (bin.get(ch)) {
 		//    if (
-		//        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' ||   // 들여쓰기/띄어쓰기 유지
-		//        (ch >= 'A' && ch <= 'Z') ||
-		//        (ch >= 'a' && ch <= 'z') ||
-		//        ch == '<' || ch == '>' || ch == '/'
-		//       )
+		//        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
+		// (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
 		//    {
 		//        txt << ch;
 		//    }
 		//}
 	}
 	{
-
-		// 파이 로드
+		// Undead_Lobby 로드
 		std::string fileName{ "../Modeling/Undead_Lobby.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 		for (const auto& children : frameRoot->childrens) {
-			auto obj = std::make_shared<CObject>();
-			auto mesh = std::make_shared<CMesh>();
 			if (children->mesh.positions.empty()) break;
-
-			mesh->BuildVertices<CVertex>(device, commandList, children->mesh);
-			mesh->SetIndices(device, commandList, (UINT)children->mesh.indices.size(), children->mesh.indices);
-			obj->SetMesh(mesh);
-			obj->world_matrix = children->localMatrix;
-
+			auto obj = std::make_shared<CObject>();
+			obj->SetMeshFromFile<CVertex>(device, commandList, children->mesh, children->localMatrix);
 			obj->Initialize(device, commandList);
+
 			objects.push_back(std::move(obj));
 		}
-
 	}
 
 	camera = std::make_shared<CCamera>();

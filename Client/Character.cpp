@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "Character.h"
+#include "GeometryLoader.h"
 #include "Mesh.h"
+#include "Character.h"
 
 CCharacter::CCharacter()
 	: CObject()
@@ -13,13 +14,8 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 	for (const auto& children : frameRoot->childrens) {
-		auto mesh = std::make_shared<CMesh>();
 		if (children->mesh.positions.empty()) break;
-
-		mesh->BuildVertices<CVertex>(device, commandList, children->mesh);
-		mesh->SetIndices(device, commandList, (UINT)children->mesh.indices.size(), children->mesh.indices);
-		SetMesh(mesh);
-		//world_matrix = children->localMatrix;
+		SetMeshFromFile<CVertex>(device, commandList, children->mesh, children->localMatrix);
 	}
 
 	// animator 초기화

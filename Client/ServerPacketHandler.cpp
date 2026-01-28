@@ -8,6 +8,7 @@
 #include "MyPlayer.h"
 #include "GeometryLoader.h"
 #include "Camera.h"
+#include "Shader.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 

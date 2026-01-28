@@ -1,11 +1,11 @@
 #pragma once
-#include "Shader.h"
-#include "GeometryLoader.h"
 #include "LightManager.h"
 
 class CPlayer;
 class CMyPlayer;
 class CCamera;
+class CObject;
+class CShader;
 
 class CScene
 {

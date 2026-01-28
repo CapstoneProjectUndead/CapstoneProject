@@ -17,6 +17,7 @@ struct Mesh
     SkeletonData skeleton{};
 };
 
+// 메쉬가 여러 개면 childrens 사용
 struct FrameNode
 {
     std::string name;

@@ -1,9 +1,10 @@
 #pragma once
-#include "Texture.h"
 
 class CShader;
 class CCamera;
 class CMesh;
+class CTexture;
+class Mesh;	// GeometryLoader에 정의
 
 struct Material
 {
@@ -35,8 +36,11 @@ public:
 	void SetMesh(std::shared_ptr<CMesh>& otherMesh);
 	void SetTexture(CTexture* );
 	CTexture* GetTexture() const { return texture.get(); }
-	ID3D12Resource* GetTextureResource() const { return texture->GetTextureResource(); }
+	ID3D12Resource* GetTextureResource() const;
 	void SetMaterial(const Material& otherMaterial) { material = otherMaterial; }
+	// LoadFrame 정보 Set, T: Vertex type
+	template<typename T>
+	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& meshData, const XMFLOAT4X4& localMatrix);
 
 	virtual void Animate(float, CCamera*);
 	virtual void Update(float) {};
@@ -97,3 +101,14 @@ protected:
 	float		yaw = 0.f;
 	float		pitch = 0.f;
 };
+
+template<typename T>
+inline void CObject::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& meshData, const XMFLOAT4X4& localMatrix)
+{
+	auto mesh = std::make_shared<CMesh>();
+
+	mesh->BuildVertices<T>(device, commandList, meshData);
+	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
+	SetMesh(mesh);
+	world_matrix = localMatrix;
+}

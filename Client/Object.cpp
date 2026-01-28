@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "Shader.h"
+#include "GeometryLoader.h"
+#include "Texture.h"
 #include "Mesh.h"
-#include "Object.h"
 #include "Camera.h"
+#include "Object.h"
 
 CObject::CObject()
 {
@@ -31,6 +33,10 @@ void CObject::SetTexture(CTexture* otherTexture)
 	texture.reset(otherTexture);
 }
 
+ID3D12Resource* CObject::GetTextureResource() const
+{
+	return texture->GetTextureResource();
+}
 void CObject::Rotate(float pitch, float yaw, float roll)
 {
 	XMMATRIX rotateMatrix = XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll));
