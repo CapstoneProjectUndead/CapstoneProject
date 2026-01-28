@@ -56,56 +56,13 @@ void CMyPlayer::ProcessInput()
 	}
 }
 
-void CMyPlayer::ClientAuthorityMove(float elapsedTime)
-{
-	// 입력처리
-	ProcessInput();
-
-	// 상태 update
-	if (direction.x == 0 && direction.z == 0)
-		state = PLAYER_STATE::IDLE;
-	else
-		state = PLAYER_STATE::WALK;
-
-	// 여기서 플레이어 위치와 방향 정보를 캐싱
-	{
-		// 1초에 5번씩 서버에 패킷을 보낸다.
-		move_packet_send_timer -= elapsedTime;
-
-		if (move_packet_send_timer <= 0) {
-
-			move_packet_send_timer = move_packet_send_delay;
-
-			C_Move movePkt;
-			movePkt.info.id = obj_id;
-			movePkt.info.x = position.x;
-			movePkt.info.y = position.y;
-			movePkt.info.z = position.z;
-			movePkt.info.state = state;
-
-			// 별도의 함수 호출 없이 멤버 변수(참조자)를 직접 사용
-			// 1. Pitch: Look 벡터의 Y축 기울기
-			movePkt.info.pitch = pitch;
-
-			// 2. Yaw: Look 벡터의 X, Z 평면상의 방향
-			movePkt.info.yaw = yaw;
-
-			movePkt.info.roll = 0;
-
-			SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Move>(movePkt);
-			if (session.lock() != nullptr)
-				session.lock()->DoSend(sendBuffer);
-		}
-	}
-}
-
 void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 {
 	// 1. 입력 캡처
 	InputData currentInput;
 	CaptureInput(currentInput);
 
-	// 2. 회전 처리
+	// 2. 회전 입력
 	ProcessRotation();
 
 	// 누적 DT
@@ -141,7 +98,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 		if (auto s = session.lock())
 			s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
 
-		// 4. 장부 기록 (서버와 완전히 동일한 dt 저장)
+		// 4. 장부 기록
 		history_deque.push_back({
 			inputPkt.seq_num,
 			sendDt,
@@ -201,10 +158,10 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
-	// 2. 서버 좌표로 스냅
+	// 1. 서버 좌표로 스냅
 	SetPosition(serverPos);
 
-	// 1. 서버가 확인한 입력까지 제거 
+	// 2. 서버가 확인한 입력까지 제거 
 	while (!history_deque.empty() &&
 		history_deque.front().seq_num <= last_seq)
 	{

@@ -11,12 +11,7 @@ public:
 	void SetDestInfo(const ObjectInfo& pos) { dest_info = pos; }
 
 private:
-	// 클라이언트 권위
-	void C_OpponentMoveSync(float elapsedTime);
-
-	// 서버 권위
-	void S_OpponentMoveSync(const float elapsedTime);
-
+	void OpponentMoveSync(const float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
 
 protected:

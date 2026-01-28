@@ -11,8 +11,6 @@ public:
 
 	void Update(const float elapsedTime) override;
 
-	void PredictMove(const InputData& input, float dt);
-
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
 
@@ -24,6 +22,9 @@ public:
 
 	void SetState(PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
+
+private:
+	void PredictMove(const InputData& input, float dt);
 
 private:
 	uint64	last_processed_seq = 0;

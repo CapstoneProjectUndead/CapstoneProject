@@ -23,11 +23,10 @@ enum PacketType : uint16_t
 	_S_ADDPLAYER = 6,
 	_S_PLAYERLIST = 7,
 	_S_REMOVEPLAYER = 8,
-	_C_MOVE = 9,
+	_C_PLAYER_INPUT = 9,	// 서버 권위 방식 + 클라 예측 이동
 	_S_MOVE = 10,
 
 	// 서버 권한 + 클라 예측 (테스트)
-	_C_PLAYER_INPUT = 11,
 };
 
 #pragma pack (push, 1)
@@ -115,13 +114,19 @@ struct S_RemovePlayer : public PacketHeader
 };
 static_assert(sizeof(S_RemovePlayer) == 4 + 33, "S_RemovePlayer size mismatch!");
 
-struct C_Move : public PacketHeader
+// 서버 권한 + 클라 예측
+struct C_Input : public PacketHeader
 {
-	NetObjectInfo info;
+	uint64			seq_num;	// 클라이언트가 자체적으로 1씩 올리는 번호
+	float           deltaTime;  // 클라이언트가 이 입력을 유지한 시간
+	NetObjectInfo	info;
 
-	C_Move() : PacketHeader(sizeof(C_Move), (UINT)PacketType::_C_MOVE) {}
+	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT)
+		, deltaTime(0.0f)
+	{
+	};
 };
-static_assert(sizeof(C_Move) == 4 + 33, "C_Move size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 45, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {
@@ -131,18 +136,5 @@ struct S_Move : public PacketHeader
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
 static_assert(sizeof(S_Move) == 4 + 41, "S_Move size mismatch!");
-
-// 서버 권한 + 클라 예측
-struct C_Input : public PacketHeader
-{
-	uint64			seq_num;	// 클라이언트가 자체적으로 1씩 올리는 번호
-	float           deltaTime;  // 클라이언트가 이 입력을 유지한 시간
-	NetObjectInfo	info;
-
-	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT) 
-		, deltaTime(0.0f)
-	{};
-};
-static_assert(sizeof(C_Input) == 4 + 45, "C_PlayerInput size mismatch!");
 
 #pragma pack (pop)

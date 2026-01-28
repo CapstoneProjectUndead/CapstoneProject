@@ -29,11 +29,7 @@ public:
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
 
 private:
-    // 클라 권위 & 서버 권위 공용 코드 (회전은 같은 함수 사용)
     void ProcessRotation();
-
-    // 기존 클라 권위 방식 Move
-    void ClientAuthorityMove(float elapsedTime);
     void ProcessInput();
 
     // 서버 권위 방식 + 클라 예측 이동 방식
@@ -48,7 +44,6 @@ private:
     float move_packet_send_timer = move_packet_send_delay;
 
     // 프레임 시간을 누적시키기 위해서 추가한 변수
-    // 서버 권위 방식에서 필요함
     float dt_accumulator = 0.0f;
 
     // 클라 예측 이동을 위한 시퀀스 넘버

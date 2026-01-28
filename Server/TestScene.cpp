@@ -95,27 +95,6 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	}
 }
 
-// 클라 권위 방식
-void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
-{
-	CAST_CS(session)->GetPlayer()->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
-	CAST_CS(session)->GetPlayer()->SetYaw(pkt.info.yaw);
-	CAST_CS(session)->GetPlayer()->SetPitch(pkt.info.pitch);
-
-	S_Move movePkt;
-	movePkt.info.id = pkt.info.id;
-	movePkt.info.state = pkt.info.state;
-	movePkt.info.x = pkt.info.x;
-	movePkt.info.y = pkt.info.y;
-	movePkt.info.z = pkt.info.z;
-	movePkt.info.yaw = pkt.info.yaw;
-	movePkt.info.pitch = pkt.info.pitch;
-	movePkt.info.roll = pkt.info.roll;
-
-	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
-	BroadCast(sendBuffer, pkt.info.id);
-}
-
 // 서버 권위 방식
 void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
