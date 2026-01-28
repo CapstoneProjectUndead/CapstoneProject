@@ -2,7 +2,7 @@
 #include "TestScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
-
+#include "Mesh.h"
 CTestScene::CTestScene()
 {
 }
@@ -15,11 +15,6 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 {
 	// 플레이어 생성
 	my_player = std::make_shared<CMyPlayer>();
-	// material set
-	Material m{};
-	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.glossiness = 0.0f;
-	my_player->SetMaterial(m);
 	my_player->Initialize(device, commandList);
 	
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
@@ -29,29 +24,44 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	// test 용 삭제X
 	{
 		auto obj = std::make_shared<CCharacter>();
-		obj->SetMaterial(m);
 		obj->Initialize(device, commandList);
-
 		objects.push_back(std::move(obj));
-		
 
-		//std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
+		//std::ifstream bin("../Modeling/Undead_Lobby.bin", std::ios::binary);
 		//std::ofstream txt("../Modeling/char.txt");
 
 		//char ch;
 		//while (bin.get(ch)) {
-		//	txt << ch;   // txt 파일에 문자 그대로 출력
+		//    if (
+		//        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' ||   // 들여쓰기/띄어쓰기 유지
+		//        (ch >= 'A' && ch <= 'Z') ||
+		//        (ch >= 'a' && ch <= 'z') ||
+		//        ch == '<' || ch == '>' || ch == '/'
+		//       )
+		//    {
+		//        txt << ch;
+		//    }
 		//}
 	}
 	{
-		auto obj = std::make_shared<CObject>();
-		std::string filename{ "../Modeling/Undead_Lobby.bin" };
-		auto frameRoot = CGeometryLoader::LoadGeometry(filename, device, commandList);
-		for (auto mesh : frameRoot->meshes)
-			obj->SetMesh(mesh);
 
-		obj->Initialize(device, commandList);
-		objects.push_back(std::move(obj));
+		// 파이 로드
+		std::string fileName{ "../Modeling/Undead_Lobby.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+		for (const auto& children : frameRoot->childrens) {
+			auto obj = std::make_shared<CObject>();
+			auto mesh = std::make_shared<CMesh>();
+			if (children->mesh.positions.empty()) break;
+
+			mesh->BuildVertices<CVertex>(device, commandList, children->mesh);
+			mesh->SetIndices(device, commandList, (UINT)children->mesh.indices.size(), children->mesh.indices);
+			obj->SetMesh(mesh);
+			obj->world_matrix = children->localMatrix;
+
+			obj->Initialize(device, commandList);
+			objects.push_back(std::move(obj));
+		}
+
 	}
 
 	camera = std::make_shared<CCamera>();

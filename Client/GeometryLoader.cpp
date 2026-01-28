@@ -3,33 +3,12 @@
 #include "SkinnedData.h"
 #include "GeometryLoader.h"
 
-std::unordered_map<std::string, int> CGeometryLoader::BuildPathToBoneIndex(const SkeletonData& skeleton)
-{
-    std::unordered_map<std::string, int> map;
-
-    for (int i = 0; i < skeleton.bone_names.size(); i++)
-    {
-        const std::string& boneName = skeleton.bone_names[i];
-        map[boneName] = i;
-    }
-
-    return map;
-}
-
-std::string CGeometryLoader::ExtractBoneName(const std::string& path)
-{
-    size_t pos = path.find_last_of('/');
-    if (pos == std::string::npos)
-        return path;
-    return path.substr(pos + 1);
-}
-
 std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(const std::string& filename, int boneCount)
 {
     std::unordered_map<std::string, AnimationClip> animations;
 
     BinaryReader br(filename);
-    if (!br.good())
+    if (!br.Good())
         return animations;
 
     std::ifstream& file = br.Stream();
@@ -73,14 +52,14 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
                 Keyframe key;
                 key.time_pos = time;
 
-                br.FindTag("<T>:");
-                br.ReadFloat3(key.translation);
+                /*br.FindTag("<T>:");
+                br.Read(key.translation);
 
                 br.FindTag("<R>:");
-                br.ReadFloat4(key.rotation);
+                br.Read(key.rotation);
 
                 br.FindTag("<S>:");
-                br.ReadFloat3(key.scale);
+                br.Read(key.scale);*/
 
                 clip.bone_animations[boneIndex].key_frames.push_back(key);
             }
@@ -96,240 +75,125 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
 
 SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
 {
-    SkeletonData skel{};
+    //SkeletonData skel{};
 
-    BinaryReader br(filename);
-    if (!br.good())
-        return skel;
+    //BinaryReader br(filename);
+    //if (!br.Good())
+    //    return skel;
 
-    std::ifstream& file = br.Stream();
+    //std::ifstream& file = br.Stream();
 
-    // 1) BoneCount
-    int boneCount = 0;
-    if (br.FindTag("<BoneCount>:"))
-        file.read((char*)&boneCount, sizeof(int));
+    //// 1) BoneCount
+    //int boneCount = 0;
+    //if (br.FindTag("<BoneCount>:"))
+    //    file.read((char*)&boneCount, sizeof(int));
 
-    skel.bone_names.resize(boneCount);
-    skel.parent_index.resize(boneCount);
-    skel.inverse_bind_pose.resize(boneCount);
+    //skel.bone_names.resize(boneCount);
+    //skel.parent_index.resize(boneCount);
+    //skel.inverse_bind_pose.resize(boneCount);
 
-    // 2) BoneName + BoneLocalMatrix (첫 번째 for문)
-    for (int i = 0; i < boneCount; i++)
-    {
-        br.FindTag("<BoneName>:");
-        skel.bone_names[i] = br.ReadName();
-    }
+    //// 2) BoneName + BoneLocalMatrix (첫 번째 for문)
+    //for (int i = 0; i < boneCount; i++)
+    //{
+    //    br.FindTag("<BoneName>:");
+    //    skel.bone_names[i] = br.ReadName();
+    //}
 
-    // 3) ParentIndex (두 번째 for문)
-    for (int i = 0; i < boneCount; i++)
-    {
-        br.FindTag("<ParentIndex>:");
-        file.read((char*)&skel.parent_index[i], sizeof(int));
-    }
+    //// 3) ParentIndex (두 번째 for문)
+    //for (int i = 0; i < boneCount; i++)
+    //{
+    //    br.FindTag("<ParentIndex>:");
+    //    file.read((char*)&skel.parent_index[i], sizeof(int));
+    //}
 
-    // 4) BindPoses (배열)
-    if (br.FindTag("<BindPoses>:"))
-    {
-        int bindCount = 0;
-        file.read((char*)&bindCount, sizeof(int));
+    //// 4) BindPoses (배열)
+    //if (br.FindTag("<BindPoses>:"))
+    //{
+    //    int bindCount = 0;
+    //    file.read((char*)&bindCount, sizeof(int));
 
-        // Unity에서 mesh.bindposes.Length == boneCount일 가능성이 높음
-        // 혹시 다르면 맞춰서 resize
-        if (bindCount != boneCount)
-            skel.inverse_bind_pose.resize(bindCount);
+    //    // Unity에서 mesh.bindposes.Length == boneCount일 가능성이 높음
+    //    // 혹시 다르면 맞춰서 resize
+    //    if (bindCount != boneCount)
+    //        skel.inverse_bind_pose.resize(bindCount);
 
-        for (int i = 0; i < bindCount; i++) {
-            br.ReadMatrix(skel.inverse_bind_pose[i]);
-        }
-    }
+    //    for (int i = 0; i < bindCount; i++) {
+    //        skel.inverse_bind_pose[i] = br.Read();
+    //    }
+    //}
 
-    return skel;
+    //return skel;
+    return SkeletonData{};
 }
 
-std::shared_ptr<CMesh> CGeometryLoader::LoadMesh(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
 {
-    std::ifstream& file{ br.Stream() };
+    Mesh mesh;
+    std::string tag;
 
-    auto mesh = std::make_shared<CMesh>();
+    mesh.positions.reserve(br.Read<int>());
+    mesh.normals.reserve(br.Read<int>());
 
-    UINT vertexNum;
-    file.read(reinterpret_cast<char*>(&vertexNum), sizeof(UINT));
-
-    mesh->name = br.ReadName();
-
-    // 3) 임시 버퍼들
-    std::vector<XMFLOAT3> positions;
-    std::vector<XMFLOAT4> colors;
-    std::vector<XMFLOAT3> normals;
-    std::vector<UINT> indices;
-
-    std::vector<XMUINT4> boneIndices;
-    std::vector<XMFLOAT4> boneWeights;
-
-    // --- Positions ---
-    if (br.FindTag("<Positions>:"))
-    {
-        UINT count = 0;
-        file.read(reinterpret_cast<char*>(&count), sizeof(UINT));
-
-        positions.resize(count);
-        if (count > 0)
-            file.read(reinterpret_cast<char*>(positions.data()), sizeof(XMFLOAT3) * count);
-    }
-
-    // --- Colors ---
-    if (br.FindTag("<Colors>:"))
-    {
-        UINT count = 0;
-        file.read(reinterpret_cast<char*>(&count), sizeof(UINT));
-
-        colors.resize(count);
-        if (count > 0)
-            file.read(reinterpret_cast<char*>(colors.data()), sizeof(XMFLOAT4) * count);
-    }
-
-    // --- Normals ---
-    if (br.FindTag("<Normals>:"))
-    {
-        UINT count = 0;
-        file.read(reinterpret_cast<char*>(&count), sizeof(UINT));
-
-        normals.resize(count);
-        if (count > 0)
-            file.read(reinterpret_cast<char*>(normals.data()), sizeof(XMFLOAT3) * count);
-    }
-
-    if (br.FindTag("<SubMeshes>:"))
-    {
-        UINT subMeshCount = 0;
-        file.read((char*)&subMeshCount, sizeof(UINT));
-
-        // 우리는 일단 첫 번째 SubMesh만 읽는다고 가정
-        if (subMeshCount > 0)
+    // mesh 정보 read
+    if (br.FindTag("<Positions>:")) br.ReadVector<XMFLOAT3>(mesh.positions);
+    if(br.FindTag("<Normals>:")) br.ReadVector<XMFLOAT3>(mesh.normals);
+    if (br.FindTag("<SubMeshes>:")) {
+        int subMeshCount = br.Read<UINT>();
+        mesh.indices.reserve(subMeshCount);
+        for (int i = 0; i < subMeshCount; ++i)
         {
-            if (br.FindTag("<SubMesh>:"))
-            {
-                UINT subMeshIndex = 0;
-                file.read((char*)&subMeshIndex, sizeof(UINT));  // Unity에서 WriteIntegers의 n
-
-                UINT indexCount = 0;
-                file.read((char*)&indexCount, sizeof(UINT));    // 인덱스 개수
-
-                indices.resize(indexCount);
-                if (indexCount > 0)
-                    file.read((char*)indices.data(), sizeof(UINT) * indexCount);
-            }
+            std::string tag;
+            br.ReadTag(tag);
+            
+            int index = br.Read<int>();
+            br.ReadVector<UINT>(mesh.indices);
         }
     }
-
-    bool Skinned{};
-    if (br.FindTag("<BoneWeightCount>:"))
-    {
-        Skinned = true;
-        UINT count = 0;
-        file.read((char*)&count, sizeof(UINT));
-
-        boneIndices.resize(count);
-        boneWeights.resize(count);
-
-        for (UINT i = 0; i < count; i++)
-        {
-            // <BoneIndex>:
-            br.FindTag("<BoneIndex>:");
-            int len = 0;
-            file.read((char*)&len, sizeof(int));
-
-            file.read((char*)&boneIndices[i], sizeof(UINT) * len);
-
-            // <BoneWeight>:
-            br.FindTag("<BoneWeight>:");
-            file.read((char*)&len, sizeof(int));
-            file.read((char*)&boneWeights[i], sizeof(float) * len);
-        }
-    }
-
-    // 최종 정점 배열 조립
-    if (Skinned)
-    {
-        std::vector<CMatVertex> vertices(vertexNum);
-
-        for (UINT i = 0; i < vertexNum; ++i)
-        {
-            vertices[i].position = (i < positions.size()) ? positions[i] : XMFLOAT3(0, 0, 0);
-            vertices[i].color = (i < colors.size()) ? colors[i] : XMFLOAT4(1, 1, 1, 1);
-            vertices[i].normal = (i < normals.size()) ? normals[i] : XMFLOAT3(0, 1, 0);
-
-            vertices[i].bone_indices = (i < boneIndices.size()) ? boneIndices[i] : XMUINT4{};
-            vertices[i].bone_weights = (i < boneWeights.size()) ? boneWeights[i] : XMFLOAT4(1, 0, 0, 0);
-        }
-
-        mesh->SetVertices(device, commandList, vertexNum, vertices);
-    }
-    else
-    {
-        std::vector<CVertex> vertices(vertexNum);
-
-        for (UINT i = 0; i < vertexNum; ++i)
-        {
-            vertices[i].position = (i < positions.size()) ? positions[i] : XMFLOAT3(0, 0, 0);
-            vertices[i].color = (i < colors.size()) ? colors[i] : XMFLOAT4(1, 1, 1, 1);
-            vertices[i].normal = (i < normals.size()) ? normals[i] : XMFLOAT3(0, 1, 0);
-        }
-
-        mesh->SetVertices(device, commandList, vertexNum, vertices);
-    }
-    
-    if (!indices.empty())
-        mesh->SetIndices(device, commandList, indices.size(), indices);
 
     return mesh;
 }
 
-std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br)
 {
-    if (!br.FindTag("<Frame>:"))
+    std::string tag;
+    //br.ReadTag(tag);
+    if (!br.FindTag("<Frame>:")) {
         return nullptr;
+    }
 
     auto node = std::make_unique<FrameNode>();
-
-    // Frame 이름
+    // Name
     node->name = br.ReadName();
 
     // Transform
-    br.FindTag("<TransformMatrix>:");
-    br.ReadMatrix(node->localMatrix);
-
-    // Mesh 여러 개 있을 수 있음
-    while (br.FindTag("<Mesh>:"))
-    {
-        auto mesh = LoadMesh(br, device, commandList);
-        if (mesh)
-            node->meshes.push_back(mesh);
+    if (br.FindTag("<Transform>:")) {
+        node->localMatrix = br.Read<XMFLOAT4X4>();
     }
 
-    // Children
-    int childCount = 0;
-    if (br.FindTag("<Children>:"))
+    br.ReadTag(tag);
+    if (br.IsTag(tag, "<Mesh>:"))
     {
-        br.Stream().read((char*)&childCount, sizeof(int));
+        node->mesh = LoadMesh(br);
+    }
+    else if (br.IsTag(tag, "<Children>:")) {
+        int childCount = br.Read<int>();
 
-        for (int i = 0; i < childCount; i++)
+        node->childrens.reserve(childCount);
+        for (int i = 0; i < childCount; ++i)
         {
-            auto child = LoadFrame(br, device, commandList);
-            if (child)
-                node->children.push_back(std::move(child));
+            node->childrens.push_back(LoadFrame(br));
         }
     }
 
-    br.FindTag("</Frame>");
     return node;
 }
 
-std::unique_ptr<FrameNode> CGeometryLoader::LoadGeometry(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+
+std::unique_ptr<FrameNode> CGeometryLoader::LoadGeometry(const std::string& filename)
 {
     BinaryReader br(filename);
-    if (!br.good())
+    if (!br.Good())
         return nullptr;
 
-    return LoadFrame(br, device, commandList);
+    return LoadFrame(br);
 }

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "GeometryLoader.h"
 #include "Mesh.h"
 
 // CDiffuseVertex
@@ -71,6 +72,7 @@ void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 	index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
 	index_buffer_view.SizeInBytes = sizeof(UINT) * index_num;
 }
+
 
 // CTriangleMesh
 CTriangleMesh::CTriangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

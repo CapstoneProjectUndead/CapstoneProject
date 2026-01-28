@@ -13,7 +13,6 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
     private List<string> m_pTextureNamesListForWriting = new List<string>();
 
     private BinaryWriter binaryWriter = null;
-    private int m_nFrames = 0;
 
     bool FindTextureByName(List<string> pTextureNamesList, Texture texture)
     {
@@ -117,6 +116,11 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         {
             binaryWriter.Write("null");
         }
+    }
+
+    void WriteBool(bool i)
+    {
+        binaryWriter.Write(i);
     }
 
     void WriteInteger(int i)
@@ -388,32 +392,56 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         return(nTextures);
     }
 
-    void WriteMeshInfo(Mesh mesh)
+    bool TryGetMesh(Transform t, out Mesh mesh, out Renderer renderer)
     {
-        WriteObjectName("<Mesh>:", mesh.vertexCount, mesh);
+        mesh = null;
+        renderer = null;
 
+        // SkinnedMesh 우선
+        SkinnedMeshRenderer skinned =
+            t.GetComponent<SkinnedMeshRenderer>();
+
+        if (skinned && skinned.sharedMesh) {
+            mesh = skinned.sharedMesh;
+            renderer = skinned;
+            return true;
+        }
+
+        // 일반 Mesh
+        MeshFilter mf = t.GetComponent<MeshFilter>();
+        MeshRenderer mr = t.GetComponent<MeshRenderer>();
+
+        if (mf && mr && mf.sharedMesh) {
+            mesh = mf.sharedMesh;
+            renderer = mr;
+            return true;
+        }
+
+        return false;
+    }
+
+    void WriteMeshInfo(Mesh mesh, Renderer renderer)
+    {
+        WriteString("<Mesh>:");
+
+        // --- Header ---
+        bool skinned = renderer is SkinnedMeshRenderer;
+        int materialCount = renderer.sharedMaterials.Length;
+
+        WriteInteger(mesh.vertexCount);
+        WriteInteger(mesh.subMeshCount);
+        WriteInteger(materialCount);
+        WriteBool(skinned);
+
+        // --- Geometry ---
         WriteBoundingBox("<Bounds>:", mesh.bounds);
-
         if ((mesh.vertices != null) && (mesh.vertices.Length > 0)) WriteVectors("<Positions>:", mesh.vertices);
         if ((mesh.colors != null) && (mesh.colors.Length > 0)) WriteColors("<Colors>:", mesh.colors);
         if ((mesh.uv != null) && (mesh.uv.Length > 0)) WriteTextureCoords("<TextureCoords0>:", mesh.uv);
         if ((mesh.uv2 != null) && (mesh.uv2.Length > 0)) WriteTextureCoords("<TextureCoords1>:", mesh.uv2);
         if ((mesh.normals != null) && (mesh.normals.Length > 0)) WriteVectors("<Normals>:", mesh.normals);
 
-        if ((mesh.normals.Length > 0) && (mesh.tangents.Length > 0))
-        {
-            Vector3[] tangents = new Vector3[mesh.tangents.Length];
-            Vector3[] biTangents = new Vector3[mesh.tangents.Length];
-            for (int i = 0; i < mesh.tangents.Length; i++)
-            {
-                tangents[i] = new Vector3(mesh.tangents[i].x, mesh.tangents[i].y, mesh.tangents[i].z);
-                biTangents[i] = Vector3.Normalize(Vector3.Cross(mesh.normals[i], tangents[i])) * mesh.tangents[i].w;
-            }
-
-            WriteVectors("<Tangents>:", tangents);
-            WriteVectors("<BiTangents>:", biTangents);
-        }
-
+        // --- SubMeshes ---
         WriteInteger("<SubMeshes>:", mesh.subMeshCount);
         if (mesh.subMeshCount > 0)
         {
@@ -423,6 +451,13 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
                 WriteIntegers("<SubMesh>:", i, subindicies);
             }
         }
+
+        // --- Materials ---
+        WriteMaterials(renderer.sharedMaterials);
+
+        // --- Skinning ---
+        if (skinned)
+            WriteSkinningData((SkinnedMeshRenderer)renderer);
 
         WriteString("</Mesh>");
     }
@@ -518,58 +553,29 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
 
         for (int i = 0; i < bones.Length; i++)
         {
-            WriteString("<BoneName>:", bones[i].name);
-            WriteLocalMatrix("<BoneLocalMatrix>:", bones[i]);
-        }
-
-        for (int i = 0; i < bones.Length; i++)
-        {
-            int parentIndex = System.Array.IndexOf(bones, bones[i].parent);
-            WriteInteger("<ParentIndex>:", parentIndex);
+            WriteString(bones[i].name);
+            WriteMatrix(bones[i].localToWorldMatrix);
+            WriteInteger(System.Array.IndexOf(bones, bones[i].parent));
         }
 
         WriteMatrixes("<BindPoses>:", mesh.bindposes);
     }
 
-    void WriteFrameInfo(Transform current)
+    void WriteFrameHierarchyInfo(Transform t)
     {
-        int nTextures = GetTexturesCount(current);
-        WriteObjectName("<Frame>:", m_nFrames++, nTextures, current.gameObject);
+        WriteString("<Frame>:");
+        WriteString(t.name);
+        WriteString("<Transform>:");
+        WriteMatrix(t.localToWorldMatrix);
 
-        WriteTransform("<Transform>:", current);
-        WriteLocalMatrix("<TransformMatrix>:", current);
-
-        MeshFilter meshFilter = current.GetComponent<MeshFilter>();
-        MeshRenderer meshRenderer = current.GetComponent<MeshRenderer>();
-        SkinnedMeshRenderer skinned = current.GetComponent<SkinnedMeshRenderer>();
-
-        if (meshFilter && meshRenderer)
+        if (TryGetMesh(t, out Mesh mesh, out Renderer renderer))
         {
-            WriteMeshInfo(meshFilter.sharedMesh);
-            WriteMaterials(meshRenderer.materials);
+            WriteMeshInfo(mesh, renderer);
         }
-        else if (skinned)
-        {
-            WriteMeshInfo(skinned.sharedMesh);
-            WriteMaterials(skinned.materials);
 
-            WriteSkinningData(skinned);
-        }
-    }
-
-    void WriteFrameHierarchyInfo(Transform child)
-    {
-        WriteFrameInfo(child);
-
-        WriteInteger("<Children>:", child.childCount);
-
-        if (child.childCount > 0)
-        {
-            for (int k = 0; k < child.childCount; k++)
-            {
-                WriteFrameHierarchyInfo(child.GetChild(k));
-            }
-        }
+        WriteInteger("<Children>:", t.childCount);
+        for (int i = 0; i < t.childCount; i++)
+            WriteFrameHierarchyInfo(t.GetChild(i));
 
         WriteString("</Frame>");
     }

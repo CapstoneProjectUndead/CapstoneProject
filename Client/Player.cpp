@@ -14,16 +14,16 @@ CPlayer::CPlayer()
 
 void CPlayer::Update(float elapsedTime)
 {
-     if (is_my_player)
-        return;
+     /*if (is_my_player)
+        return;*/
     
      CCharacter::Update(elapsedTime);
 
-     // 위치 동기화
-     OpponentMoveSync(elapsedTime);
-     
-     // 회전 동기화 (Yaw / Pitch)
-     OpponentRotateSync(elapsedTime);
+     //// 위치 동기화
+     //OpponentMoveSync(elapsedTime);
+     //
+     //// 회전 동기화 (Yaw / Pitch)
+     //OpponentRotateSync(elapsedTime);
 }
 
 void CPlayer::OpponentMoveSync(float elapsedTime)
