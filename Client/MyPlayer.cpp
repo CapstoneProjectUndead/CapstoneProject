@@ -62,28 +62,25 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	InputData currentInput;
 	CaptureInput(currentInput);
 
-	// 2. 회전 입력
+	// 2. 회전
 	ProcessRotation();
 
-	// 누적 DT
-	dt_accumulator += elapsedTime;
+	// 3. 예측 이동
+	PredictMove(currentInput, elapsedTime);
+
+	// 4. 서버 전송 타이머
 	move_packet_send_timer -= elapsedTime;
 
-	// 3. 서버 전송 주기(60Hz)마다 처리
-	while (move_packet_send_timer <= 0.0f)
+	// 누적 시간
+	dt_accumulator += elapsedTime;
+
+	if (move_packet_send_timer <= 0.0f)
 	{
 		move_packet_send_timer += move_packet_send_delay;
-
-		// 이번에 서버로 보낼 실제 dt
-		const float sendDt = std::min(dt_accumulator, move_packet_send_delay);
-
-		// 중요: 예측 이동도 서버와 동일한 dt 단위로
-		PredictMove(currentInput, sendDt);
 
 		// 패킷 생성
 		C_Input inputPkt{};
 		inputPkt.seq_num = ++client_seq_counter;
-		inputPkt.deltaTime = sendDt;
 
 		inputPkt.info.id = obj_id;
 		inputPkt.info.w = currentInput.w;
@@ -101,16 +98,15 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 		// 4. 장부 기록
 		history_deque.push_back({
 			inputPkt.seq_num,
-			sendDt,
+			dt_accumulator,
 			currentInput,
 			position
 			});
 
+		dt_accumulator = 0.0f;
+
 		if (history_deque.size() > 600)
 			history_deque.pop_front();
-
-		// 누적 시간 차감
-		dt_accumulator -= sendDt;
 	}
 }
 
@@ -171,7 +167,7 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	// 3. 남은 미래 입력 재시뮬
 	for (auto& frame : history_deque) {
 		
-		PredictMove(frame.input, frame.deltaTime);
+		PredictMove(frame.input, frame.duration);
 
 		// 장부 위치 갱신
 		frame.predictedPos = position;

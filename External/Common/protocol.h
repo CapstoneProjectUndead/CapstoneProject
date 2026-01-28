@@ -118,11 +118,11 @@ static_assert(sizeof(S_RemovePlayer) == 4 + 33, "S_RemovePlayer size mismatch!")
 struct C_Input : public PacketHeader
 {
 	uint64			seq_num;	// 클라이언트가 자체적으로 1씩 올리는 번호
-	float           deltaTime;  // 클라이언트가 이 입력을 유지한 시간
+	float           duration;  // 클라이언트가 이 입력을 유지한 시간
 	NetObjectInfo	info;
 
 	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT)
-		, deltaTime(0.0f)
+		, duration(0.0f)
 	{
 	};
 };

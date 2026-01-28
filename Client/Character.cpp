@@ -19,7 +19,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	CreateConstantBuffers(device, commandList);
 }
 
-void CCharacter::Update(float deltaTime)
+void CCharacter::Update(float duration)
 {
     if (current_animation.empty())
         return;
@@ -30,7 +30,7 @@ void CCharacter::Update(float deltaTime)
 	}*/
 
     // 1) 시간 증가
-	current_time += deltaTime;
+	current_time += duration;
 
     float start = skinned.GetClipStartTime(current_animation);
     float end = skinned.GetClipEndTime(current_animation);

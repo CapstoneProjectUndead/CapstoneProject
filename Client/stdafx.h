@@ -281,7 +281,7 @@ namespace Vector3
 	}
 
 	// 추가한 코드
-	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float deltaTime, float interpSpeed)
+	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float duration, float interpSpeed)
 	{
 		if (interpSpeed <= 0.f)
 			return current;
@@ -289,7 +289,7 @@ namespace Vector3
 		// Target - Current
 		XMFLOAT3 delta = Vector3::Subtract(target, current);
 
-		float scale = deltaTime * interpSpeed;
+		float scale = duration * interpSpeed;
 		if (scale > 1.f)
 			scale = 1.f;
 

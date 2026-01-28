@@ -107,12 +107,11 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
 
 	mover->SetLastSequence(pkt.seq_num);
-	mover->SetClientDT(pkt.deltaTime);
+	mover->SetClientDT(pkt.duration);
 	mover->SetInput(input);
 	mover->SetState(pkt.info.state);
 	
 	// 회전 입력
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
-
 }

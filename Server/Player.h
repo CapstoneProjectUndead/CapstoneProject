@@ -14,7 +14,7 @@ public:
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
 
-	void SetClientDT(const float deltaTime) { client_Dt = deltaTime; }
+	void SetClientDT(const float duration) { client_Dt = duration; }
 	float GetClientDT() const { return client_Dt; }
 
 	void SetInput(const InputData& input) { current_input = input; }

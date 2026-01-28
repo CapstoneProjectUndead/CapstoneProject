@@ -15,7 +15,7 @@ public:
     CCharacter();
     
     void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    void Update(float deltaTime) override;
+    void Update(float duration) override;
     void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList) override;
     void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 protected:
