@@ -1,4 +1,4 @@
-//#define SKINNED
+#define SKINNED
 
 #ifndef NUM_DIR_LIGHTS
     #define NUM_DIR_LIGHTS 3
@@ -68,27 +68,28 @@ VS_OUTPUT VSMain(VS_INPUT input)
 {
     VS_OUTPUT output;
 
-    //if (gIsSkinning) {
-    //    float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    //    weights[0] = input.bone_weights.x;
-    //    weights[1] = input.bone_weights.y;
-    //    weights[2] = input.bone_weights.z;
-    //    weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
+    if (gIsSkinning)
+    {
+        float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        weights[0] = input.bone_weights.x;
+        weights[1] = input.bone_weights.y;
+        weights[2] = input.bone_weights.z;
+        weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
 
-    //    float3 posL = float3(0.0f, 0.0f, 0.0f);
-    //    float3 normalL = float3(0.0f, 0.0f, 0.0f);
-    //    for (int i = 0; i < 4; ++i)
-    //    {
-    //        // Assume no nonuniform scaling when transforming normals, so 
-    //        // that we do not have to use the inverse-transpose.
+        float3 posL = float3(0.0f, 0.0f, 0.0f);
+        float3 normalL = float3(0.0f, 0.0f, 0.0f);
+        for (int i = 0; i < 4; ++i)
+        {
+            // Assume no nonuniform scaling when transforming normals, so 
+            // that we do not have to use the inverse-transpose.
 
-    //        posL += weights[i] * mul(float4(input.position, 1.0f), gBoneTransforms[input.bone_indices[i]]).xyz;
-    //        normalL += weights[i] * mul(input.normal, (float3x3) gBoneTransforms[input.bone_indices[i]]);
-    //    }
+            posL += weights[i] * mul(float4(input.position, 1.0f), gBoneTransforms[input.bone_indices[i]]).xyz;
+            normalL += weights[i] * mul(input.normal, (float3x3) gBoneTransforms[input.bone_indices[i]]);
+        }
 
-    //    input.position = posL;
-    //    input.normal = normalL;
-    //}
+        input.position = posL;
+        input.normal = normalL;
+    }
     float4 posW = mul(float4(input.position, 1.0f), worldMatrix);
     output.position_world = posW.xyz;
 

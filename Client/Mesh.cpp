@@ -73,6 +73,37 @@ void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 	index_buffer_view.SizeInBytes = sizeof(UINT) * index_num;
 }
 
+template<>
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh)
+{
+	std::vector<CMatVertex> vertices;
+	size_t count = mesh.positions.size();
+	vertices.reserve(count);
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		CMatVertex v{};
+		v.position = mesh.positions[i];
+		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
+		v.color = (i < mesh.colors.size()) ? mesh.colors[i] : XMFLOAT4(1, 1, 1, 1);
+
+		if (i < mesh.bone_weights.size())
+		{
+			v.bone_indices = mesh.bone_weights[i].bone_index;
+			v.bone_weights = mesh.bone_weights[i].weight;
+		}
+		else
+		{
+			v.bone_indices = XMUINT4(0, 0, 0, 0);
+			v.bone_weights = XMFLOAT4(1, 0, 0, 0);
+		}
+
+		vertices.push_back(v);
+	}
+
+	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+}
+
 
 // CTriangleMesh
 CTriangleMesh::CTriangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

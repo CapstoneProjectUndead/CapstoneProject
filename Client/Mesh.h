@@ -57,6 +57,7 @@ public:
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh);
+	
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};
@@ -146,3 +147,6 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
+
+template<>
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh);

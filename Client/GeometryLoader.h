@@ -7,6 +7,12 @@ struct SkeletonData
     std::vector<XMFLOAT4X4> inverse_bind_pose; // mesh.bindposes
 };
 
+struct BoneWeightData
+{
+    XMUINT4 bone_index;
+    XMFLOAT4 weight;
+};
+
 // Load 용 Mesh, 사용X
 struct Mesh
 {
@@ -14,7 +20,7 @@ struct Mesh
     std::vector<XMFLOAT4> colors{};
     std::vector<XMFLOAT3> normals{};
     std::vector<UINT> indices{};
-    SkeletonData skeleton{};
+    std::vector<BoneWeightData> bone_weights;
 };
 
 // 메쉬가 여러 개면 childrens 사용
@@ -171,4 +177,5 @@ namespace CGeometryLoader {
     // load animation/skeleton
     std::unordered_map<std::string, AnimationClip> LoadAnimations(const std::string& filename, int boneCount);
     SkeletonData LoadSkeleton(const std::string& filename);
+    void LoadBoneWeights(BinaryReader& br, Mesh& mesh);
 };

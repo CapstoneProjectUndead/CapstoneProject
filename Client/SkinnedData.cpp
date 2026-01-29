@@ -121,7 +121,7 @@ UINT CSkinnedData::BoneCount()const
 	return bone_hierarchy.size();
 }
 
-void CSkinnedData::Set(std::vector<int>& boneHierarchy,	std::vector<XMFLOAT4X4>& boneOffsets, std::unordered_map<std::string, AnimationClip>& otherAnimations)
+void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<XMFLOAT4X4>& boneOffsets, const std::unordered_map<std::string, AnimationClip>& otherAnimations)
 {
 	bone_hierarchy = boneHierarchy;
 	bone_offsets = boneOffsets;
@@ -174,8 +174,7 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 // animator
 void CAnimator::Initialize(const std::string& charName, const std::string& AniName)
 {
-	auto skeleton = CGeometryLoader::LoadSkeleton(charName);
-
+	SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
 	auto animData = CGeometryLoader::LoadAnimations(AniName, skeleton.bone_names.size());
 	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
 }

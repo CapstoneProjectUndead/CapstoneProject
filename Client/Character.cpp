@@ -15,13 +15,13 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 	for (const auto& children : frameRoot->childrens) {
 		if (children->mesh.positions.empty()) break;
-		SetMeshFromFile<CVertex>(device, commandList, children->mesh, children->localMatrix);
+		SetMeshFromFile<CMatVertex>(device, commandList, children->mesh, children->localMatrix);
 	}
 
 	// animator 초기화
-	//animator = std::make_unique<CAnimator>();
-	//animator->Initialize(fileName, std::string("../Modeling/undead_ani.bin"));
-	//animator->Play("Ganga_walk");   // 초기 애니메이션
+	animator = std::make_unique<CAnimator>();
+	animator->Initialize(fileName, std::string("../Modeling/undead_ani.bin"));
+	animator->Play("Ganga_walk");   // 초기 애니메이션
 
 	CreateConstantBuffers(device, commandList);
 }
