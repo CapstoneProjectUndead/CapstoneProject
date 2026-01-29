@@ -51,5 +51,8 @@ void CCharacter::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsComma
 {
 	CObject::CreateConstantBuffers(device, commandList);
 
-	if (animator) animator->CreateConstantBuffers(device, commandList);
+	if (animator) {
+		animator->CreateConstantBuffers(device, commandList);
+		SetShdaer("skinning");
+	}
 }

@@ -41,28 +41,28 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	if (camera)
 		camera->SetViewportsAndScissorRects(commandList);
 
-	for (int i = 0; i < shaders.size(); ++i) {
-		shaders[i]->RenderBegin(commandList);
+	for (const auto& shader : shaders) {
+		shader.second->RenderBegin(commandList);
 
-		if(camera)
+		if (camera)
 			camera->UpdateShaderVariables(commandList);
 
 		if (light)
 			light->Render(commandList);
 
 		for (const auto& obj : objects) {
-			if (i == obj->GetShaderIndex())
-				shaders[i]->Render(commandList, obj.get());
+			if (shader.first == obj->GetShader())
+				shader.second->Render(commandList, obj.get());
 		}
 
 		if (my_player) {
-			if (i == my_player->GetShaderIndex()) {
+			if (shader.first == my_player->GetShader()) {
 				my_player->UpdateShaderVariables(commandList);
 				my_player->Render(commandList);
 			}
 		}
 
-		shaders[i]->RenderEnd(commandList);
+		shader.second->RenderEnd(commandList);
 	}
 }
 

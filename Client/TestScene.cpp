@@ -4,7 +4,7 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "Shader.h"
-#include "GeometryLoader.h"
+#include "Object.inl"
 
 CTestScene::CTestScene()
 {
@@ -20,9 +20,18 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	my_player = std::make_shared<CMyPlayer>();
 	my_player->Initialize(device, commandList);
 	
-	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-	shader->CreateShader(device);
-	shaders.push_back(std::move(shader));
+	{
+		// static shader
+		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+		shader->CreateShader(device);
+		shaders.emplace("static",std::move(shader));
+	}
+	{
+		// skinning
+		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+		shader->CreateShader(device);
+		shaders.emplace("skinning", std::move(shader));
+	}
 
 	// test 용 삭제X
 	{
@@ -30,18 +39,18 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		obj->Initialize(device, commandList);
 		objects.push_back(std::move(obj));
 
-		//std::ifstream bin("../Modeling/Undead_Lobby.bin", std::ios::binary);
-		//std::ofstream txt("../Modeling/char.txt");
+		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
+		std::ofstream txt("../Modeling/char.txt");
 
-		//char ch;
-		//while (bin.get(ch)) {
-		//    if (
-		//        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
-		// (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
-		//    {
-		//        txt << ch;
-		//    }
-		//}
+		char ch;
+		while (bin.get(ch)) {
+		    if (
+		        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
+		 (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
+		    {
+		        txt << ch;
+		    }
+		}*/
 	}
 	{
 		// Undead_Lobby 로드
@@ -50,7 +59,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		for (const auto& children : frameRoot->childrens) {
 			if (children->mesh.positions.empty()) break;
 			auto obj = std::make_shared<CObject>();
-			obj->SetMeshFromFile<CVertex>(device, commandList, children->mesh, children->localMatrix);
+			obj->SetMeshFromFile<CVertex>(device, commandList, children);
 			obj->Initialize(device, commandList);
 
 			objects.push_back(std::move(obj));

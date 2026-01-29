@@ -30,12 +30,12 @@ public:
 	void									SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }
 	void									SetCamera(std::shared_ptr<CCamera> _camera) { camera = _camera; }
 
-	std::vector<std::shared_ptr<CShader>>&	GetShaders() { return shaders; }
+	//auto& GetShaders() { return shaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
 	std::unordered_map<uint32_t, size_t>&   GetIDIndex() { return id_To_Index; }
 
 protected:
-	std::vector<std::shared_ptr<CShader>>	shaders{};
+	std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
 	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어
 	std::shared_ptr<CCamera>				camera;
 

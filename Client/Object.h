@@ -58,8 +58,8 @@ public:
 	//
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
-	void SetShdaerIndex(UINT index) { shader_index = index; }
-	UINT GetShaderIndex() const { return shader_index; }
+	void SetShdaer(const std::string& name) { shader_name = name; }
+	std::string GetShader() const { return shader_name; }
 
 	int  GetID() const { return obj_id; }
 	void SetID(const int id) { obj_id = id; }
@@ -88,7 +88,7 @@ protected:
 	std::vector<std::shared_ptr<CMesh>> meshes;
 	std::shared_ptr<CTexture> texture{};
 	Material material;
-	UINT shader_index{};
+	std::string shader_name{"static"};	// 적용 쉐이더 이름
 
 	ComPtr<ID3D12Resource> object_cb;
 	ComPtr<ID3D12Resource> material_cb;

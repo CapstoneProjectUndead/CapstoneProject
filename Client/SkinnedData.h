@@ -57,7 +57,6 @@ private:
 struct SkinnedDataCB
 {
     XMFLOAT4X4 bone_transforms[100];  // boneCount 이하
-	bool skinned;
 };
 
 class CAnimator 

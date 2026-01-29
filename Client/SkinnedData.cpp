@@ -209,7 +209,6 @@ void CAnimator::Update(float deltaTime)
 void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
 	SkinnedDataCB cb{};
-	cb.skinned = true;
 	if (!final_transforms.empty()) {
 		UINT boneSize = skinned.BoneCount();
 		for (UINT i = 0; i < boneSize; ++i)
@@ -227,6 +226,5 @@ void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 void CAnimator::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	SkinnedDataCB cb{};
-	cb.skinned = true;
 	skinned_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 }

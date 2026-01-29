@@ -37,9 +37,9 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	myPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
 
-	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+	/*std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 	shader->CreateShader(gGameFramework.GetDevice().Get());
-	scene->GetShaders().push_back(std::move(shader));
+	scene->GetShaders().push_back(std::move(shader));*/
 
 	// 카메라 객체 생성
 	RECT client_rect;

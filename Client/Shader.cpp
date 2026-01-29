@@ -5,7 +5,7 @@
 
 D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
 {
-	const UINT inputElementDescNum = 5;
+	const UINT inputElementDescNum = 3;
 	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
 
 	UINT offset = 0;
@@ -15,10 +15,6 @@ D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
 	offset += 16;
 	inputElementDescs[2] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	offset += 12;
-	inputElementDescs[3] = { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0	};
-	offset += 16;
-	inputElementDescs[4] = { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0	};
-	offset += 16;
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -157,6 +153,92 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 
 	// root parameter
 	// gameObjectInfo
+	D3D12_ROOT_PARAMETER rootParameters[4];
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[0].Descriptor.ShaderRegister = 0;
+	rootParameters[0].Descriptor.RegisterSpace = 0;
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// CameraInfo
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[1].Descriptor.ShaderRegister = 1;
+	rootParameters[1].Descriptor.RegisterSpace = 0;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// MaterialInfo
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[2].Descriptor.ShaderRegister = 2;
+	rootParameters[2].Descriptor.RegisterSpace = 0;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// LightInfo
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].Descriptor.ShaderRegister = 3;
+	rootParameters[3].Descriptor.RegisterSpace = 0;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	// root signature
+	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+	rootSignatureDesc.NumParameters = _countof(rootParameters);
+	rootSignatureDesc.pParameters = rootParameters;
+	rootSignatureDesc.NumStaticSamplers = 0;
+	rootSignatureDesc.pStaticSamplers = nullptr;
+	rootSignatureDesc.Flags = rootSignatureFlags;
+
+	// 임의 길이 데이터를 반환하는 데 사용
+	ComPtr<ID3DBlob> signatureBlob{};
+	ComPtr<ID3DBlob> errorBlob{};
+	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
+
+	return graphicsRootSignature;
+}
+
+void CShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
+{
+	commandList->SetGraphicsRootSignature(graphics_root_signature.Get());
+	commandList->SetPipelineState(pipeline_states.Get());
+}
+
+void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
+{
+	object->UpdateShaderVariables(commandList);
+	object->Render(commandList);
+}
+
+// CSkinningShader
+D3D12_INPUT_LAYOUT_DESC CSkinningShader::CreateInputLayout()
+{
+	const UINT inputElementDescNum = 5;
+	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
+
+	UINT offset = 0;
+	inputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 12;
+	inputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 16;
+	inputElementDescs[2] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 12;
+	inputElementDescs[3] = { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 16;
+	inputElementDescs[4] = { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += 16;
+
+	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
+	inputLayoutDesc.pInputElementDescs = inputElementDescs;
+	inputLayoutDesc.NumElements = inputElementDescNum;
+
+	return inputLayoutDesc;
+}
+
+ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* device)
+{
+	ID3D12RootSignature* graphicsRootSignature{};
+
+	// root parameter
+	// gameObjectInfo
 	D3D12_ROOT_PARAMETER rootParameters[5];
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -206,14 +288,7 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	return graphicsRootSignature;
 }
 
-void CShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
+D3D12_SHADER_BYTECODE CSkinningShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	commandList->SetGraphicsRootSignature(graphics_root_signature.Get());
-	commandList->SetPipelineState(pipeline_states.Get());
-}
-
-void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
-{
-	object->UpdateShaderVariables(commandList);
-	object->Render(commandList);
+	return CompileShaderFromFile(L"SkinningShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
