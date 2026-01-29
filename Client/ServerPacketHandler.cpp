@@ -181,6 +181,11 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		info.roll = pkt.info.roll;
 
 		player->SetDestInfo(info);
+
+		OpponentState state{};
+		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
+		state.serverTimestamp = pkt.timestamp;
+		player->PushOpponentState(state);
 	}
 
 	return true;

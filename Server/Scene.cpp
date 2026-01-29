@@ -68,6 +68,7 @@ void CScene::SendPlayersResults()
 		movePkt.info.d = player->GetInput().d;
 
 		movePkt.info.state = player->GetState();
+		movePkt.timestamp = player->GetTotalSimulationTime();
 
 		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
 		if (player->GetSession())

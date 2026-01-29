@@ -19,7 +19,8 @@ void CPlayer::Update(float elapsedTime)
      if (!is_my_player) {
 
          // 상대 위치 동기화
-         OpponentMoveSync(elapsedTime);
+         //OpponentMoveSync(elapsedTime);
+         OpponentMoveSyncByInterpolation(elapsedTime);
 
          // 회전 동기화 (Yaw / Pitch)
          OpponentRotateSync(elapsedTime);
@@ -107,4 +108,72 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     // 회전 적용
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
+}
+
+void CPlayer::OpponentMoveSyncByInterpolation(float dt)
+{
+    // 1. 최소 데이터 확인 (보간을 위해 최소 2개의 지점이 필요)
+    if (interpolation_deq.size() < 2) return;
+
+    // [안전장치] 너무 멀리 떨어져 있으면 보간이고 뭐고 일단 순간이동 (기존 SNAP 로직)
+    XMFLOAT3 latestServerPos = interpolation_deq.back().position;
+    float distToLatest = Vector3::Length(Vector3::Subtract(latestServerPos, position));
+    const float SNAP_DIST = 5.0f * speed; // 거리 기준은 프로젝트에 맞게 조절
+
+    if (distToLatest > SNAP_DIST)
+    {
+        SetPosition(latestServerPos);
+        interpolation_deq.clear(); // 버퍼도 비워서 새로 시작하게 함
+        return;
+    }
+
+    // 2. 타겟 서버 시간 계산 (최신 패킷 시간 기준 100ms 전 과거)
+    float interpolationDelay = 0.1f;
+    float targetServerTime = interpolation_deq.back().serverTimestamp - interpolationDelay;
+
+    // 3. 타겟 시간을 포함하는 구간(A-B) 찾기
+    OpponentState* frameA = nullptr;
+    OpponentState* frameB = nullptr;
+
+    for (size_t i = 0; i < interpolation_deq.size() - 1; ++i)
+    {
+        if (interpolation_deq[i].serverTimestamp <= targetServerTime &&
+            interpolation_deq[i + 1].serverTimestamp >= targetServerTime)
+        {
+            frameA = &interpolation_deq[i];
+            frameB = &interpolation_deq[i + 1];
+            break;
+        }
+    }
+
+    // 4. 보간 실행
+    if (frameA && frameB)
+    {
+        float timeDiff = frameB->serverTimestamp - frameA->serverTimestamp;
+        float alpha = 0.0f;
+        if (timeDiff > 0.0f)
+            alpha = (targetServerTime - frameA->serverTimestamp) / timeDiff;
+
+        // [핵심] 선형 보간으로 위치 결정
+        XMFLOAT3 nextPos = Vector3::Lerp(frameA->position, frameB->position, alpha);
+
+        // 애니메이션을 위한 속도 계산 (현재 위치와 다음 보간 위치의 차이)
+        velocity = Vector3::ScalarProduct(Vector3::Subtract(nextPos, position), 1.0f / dt, false);
+
+        SetPosition(nextPos);
+        SetYaw(yaw); // 방향도 서버 데이터에 맞게 회전
+    }
+    else if (targetServerTime > interpolation_deq.back().serverTimestamp)
+    {
+        // 만약 타겟 시간이 최신 패킷보다 더 미래라면 (네트워크 지연으로 데이터 부족)
+        // 마지막 알려진 서버 위치로 부드럽게 멈춤 (기존 로직의 도착 스냅과 유사)
+        SetPosition(latestServerPos);
+        velocity = { 0, 0, 0 };
+    }
+
+    // 5. 너무 오래된 장부 정리
+    while (interpolation_deq.size() > 2 && interpolation_deq[1].serverTimestamp < targetServerTime)
+    {
+        interpolation_deq.pop_front();
+    }
 }

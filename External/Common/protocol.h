@@ -130,11 +130,12 @@ static_assert(sizeof(C_Input) == 4 + 45, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {
-	uint64_t		last_seq_num;
+	uint64			last_seq_num;
+	float			timestamp;
 	NetObjectInfo	info;
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 41, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 45, "S_Move size mismatch!");
 
 #pragma pack (pop)

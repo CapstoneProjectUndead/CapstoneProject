@@ -293,6 +293,18 @@ namespace Vector3
 		// Current + Delta * Scale
 		return Vector3::Add(current, delta, scale);
 	}
+
+	inline XMFLOAT3 Lerp(const XMFLOAT3& xmf3Vector1, const XMFLOAT3& xmf3Vector2, float fPercent)
+	{
+		XMFLOAT3 xmf3Result;
+
+		// XMVectorLerp(V0, V1, t) : V0와 V1 사이를 t(0.0~1.0) 비율로 보간
+		XMVECTOR v0 = XMLoadFloat3(&xmf3Vector1);
+		XMVECTOR v1 = XMLoadFloat3(&xmf3Vector2);
+		XMStoreFloat3(&xmf3Result, XMVectorLerp(v0, v1, fPercent));
+
+		return xmf3Result;
+	}
 }
 
 //4차원 벡터의 연산
