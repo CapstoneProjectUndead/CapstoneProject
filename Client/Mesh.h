@@ -1,6 +1,7 @@
 #pragma once
 
-class Mesh;	// GeometryLoader에 정의
+struct Mesh;	// GeometryLoader에 정의
+struct FrameNode;	// GeometryLoader에 정의
 
 class CVertex {
 public:
@@ -56,7 +57,7 @@ public:
 	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
 	template<typename T>
-	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh);
+	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
 	
 protected:
 	// 정점 버퍼
@@ -129,8 +130,11 @@ void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* command
 
 
 template<typename T>
-void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh)
+void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
 {
+	Mesh& mesh{ node->mesh };
+	name = node->name;
+
 	std::vector<T> vertices;
 	size_t count = mesh.positions.size();
 	vertices.reserve(count);
@@ -149,4 +153,4 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 }
 
 template<>
-void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh);
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Shader.h"
-#include "GeometryLoader.h"
 #include "Texture.h"
 #include "Mesh.h"
 #include "Camera.h"

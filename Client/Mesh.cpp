@@ -74,8 +74,11 @@ void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 }
 
 template<>
-void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& mesh)
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
 {
+	Mesh& mesh{ node->mesh };
+	name = node->name;
+
 	std::vector<CMatVertex> vertices;
 	size_t count = mesh.positions.size();
 	vertices.reserve(count);

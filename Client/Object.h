@@ -4,7 +4,10 @@ class CShader;
 class CCamera;
 class CMesh;
 class CTexture;
-class Mesh;	// GeometryLoader에 정의
+
+// GeometryLoader에 정의
+struct Mesh;
+struct FrameNode;
 
 struct Material
 {
@@ -40,7 +43,7 @@ public:
 	void SetMaterial(const Material& otherMaterial) { material = otherMaterial; }
 	// LoadFrame 정보 Set, T: Vertex type
 	template<typename T>
-	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& meshData, const XMFLOAT4X4& localMatrix);
+	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
 
 	virtual void Animate(float, CCamera*);
 	virtual void Update(float) {};
@@ -101,14 +104,3 @@ protected:
 	float		yaw = 0.f;
 	float		pitch = 0.f;
 };
-
-template<typename T>
-inline void CObject::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const Mesh& meshData, const XMFLOAT4X4& localMatrix)
-{
-	auto mesh = std::make_shared<CMesh>();
-
-	mesh->BuildVertices<T>(device, commandList, meshData);
-	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
-	SetMesh(mesh);
-	world_matrix = localMatrix;
-}

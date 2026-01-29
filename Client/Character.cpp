@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "GeometryLoader.h"
+#include "Object.inl"
 #include "Mesh.h"
 #include "Character.h"
 
@@ -15,7 +15,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 	for (const auto& children : frameRoot->childrens) {
 		if (children->mesh.positions.empty()) break;
-		SetMeshFromFile<CMatVertex>(device, commandList, children->mesh, children->localMatrix);
+		SetMeshFromFile<CMatVertex>(device, commandList, children);
 	}
 
 	// animator 초기화
