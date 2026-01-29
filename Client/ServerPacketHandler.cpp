@@ -145,7 +145,6 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
 		info.last_seq_num = pkt.last_seq_num;
-		info.id = pkt.info.id;
 		info.input = input;
 		info.state = pkt.info.state;
 		info.x = pkt.info.x;
@@ -172,7 +171,6 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
 
 		ObjectInfo info;
-		info.id = pkt.info.id;
 		info.input = input;
 		info.state = pkt.info.state;
 		info.x = pkt.info.x;

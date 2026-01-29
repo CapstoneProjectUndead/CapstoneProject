@@ -9,6 +9,7 @@ struct ServerFrameHistory
 	InputData	 input;
 	XMFLOAT3	 position;
 	PLAYER_STATE state;
+	float		 timestamp; 
 };
 
 class CPlayer : public CObject
@@ -32,8 +33,11 @@ public:
 	void RecordFrameHistory(const ServerFrameHistory& history);
 	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return history_deq; }
 
+	float GetTotalSimulationTime() const { return total_simulation_time; }
+
 private:
 	uint64						last_processed_seq;
+	float						total_simulation_time;
 	InputData					current_input;
 	PLAYER_STATE				state;
 	deque<ServerFrameHistory>	history_deq;

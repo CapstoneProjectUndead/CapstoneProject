@@ -123,6 +123,7 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 	frame.seq_num = pkt.seq_num;
 	frame.position = mover->GetPosition();
 	frame.state = mover->GetState();
+	frame.timestamp = mover->GetTotalSimulationTime();
 
 	mover->RecordFrameHistory(frame);
 }

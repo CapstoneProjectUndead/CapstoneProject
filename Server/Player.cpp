@@ -4,6 +4,7 @@
 
 CPlayer::CPlayer()
 	: last_processed_seq(0)
+	, total_simulation_time(0.0f)
 	, current_input{}
 	, state(PLAYER_STATE::IDLE)
 {
@@ -17,6 +18,8 @@ CPlayer::~CPlayer()
 
 void CPlayer::Update(const float elapsedTime)
 {
+	total_simulation_time += elapsedTime;
+
 	// È¸Àü Update
 	SetYawPitch(yaw, pitch);
 	UpdateWorldMatrix();
