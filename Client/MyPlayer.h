@@ -1,12 +1,13 @@
 #pragma once
 #include "Player.h"
 
-struct FrameHistory 
+struct ClientFrameHistory 
 {
-    uint64_t     seq_num;
+    uint64       seq_num;
     float        duration;
     InputData    input;
     XMFLOAT3     predictedPos; // 내가 예측했던 결과 좌표
+    PLAYER_STATE state;
 };
 
 
@@ -47,7 +48,7 @@ private:
     float dt_accumulator = 0.0f;
 
     // 클라 예측 이동을 위한 시퀀스 넘버
-    uint64_t                    client_seq_counter = 0;
-    std::deque<FrameHistory>    history_deque; // 시퀀스 장부
+    uint64                            client_seq_counter = 0;
+    std::deque<ClientFrameHistory>    history_deq; // 시퀀스 장부
 };
 

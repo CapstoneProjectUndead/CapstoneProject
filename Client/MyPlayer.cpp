@@ -88,6 +88,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 		inputPkt.info.a = currentInput.a;
 		inputPkt.info.s = currentInput.s;
 		inputPkt.info.d = currentInput.d;
+		inputPkt.info.state = state;
 		inputPkt.info.yaw = yaw;
 		inputPkt.info.pitch = pitch;
 		inputPkt.info.state = state;
@@ -97,7 +98,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 			s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
 
 		// 4. 장부 기록
-		history_deque.push_back({
+		history_deq.push_back({
 			inputPkt.seq_num,
 			dt_accumulator,
 			currentInput,
@@ -106,8 +107,8 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 
 		dt_accumulator = 0.0f;
 
-		if (history_deque.size() > 600)
-			history_deque.pop_front();
+		if (history_deq.size() > 600)
+			history_deq.pop_front();
 	}
 }
 
@@ -159,14 +160,14 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	SetPosition(serverPos);
 
 	// 2. 서버가 확인한 입력까지 제거 
-	while (!history_deque.empty() &&
-		history_deque.front().seq_num <= last_seq)
+	while (!history_deq.empty() &&
+		history_deq.front().seq_num <= last_seq)
 	{
-		history_deque.pop_front();
+		history_deq.pop_front();
 	}
 
 	// 3. 남은 미래 입력 재시뮬
-	for (auto& frame : history_deque) {
+	for (auto& frame : history_deq) {
 		
 		PredictMove(frame.input, frame.duration);
 

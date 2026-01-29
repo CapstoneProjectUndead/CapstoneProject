@@ -104,14 +104,25 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 
 	auto mover = it->second; // 실제 움직인 플레이어
 
+	if (pkt.seq_num <= mover->GetLastSequence())
+		return;
+
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
 
 	mover->SetLastSequence(pkt.seq_num);
-	mover->SetClientDT(pkt.duration);
 	mover->SetInput(input);
-	mover->SetState(pkt.info.state);
-	
-	// 회전 입력
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
+
+	// 캐릭터를 움직임
+	mover->SimulateMove(input, g_targetDT);
+
+	// 장부 기록
+	ServerFrameHistory frame{};
+	frame.input = input;
+	frame.seq_num = pkt.seq_num;
+	frame.position = mover->GetPosition();
+	frame.state = mover->GetState();
+
+	mover->RecordFrameHistory(frame);
 }

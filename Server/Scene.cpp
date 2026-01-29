@@ -54,14 +54,14 @@ void CScene::SendPlayersResults()
 		S_Move movePkt;
 
 		movePkt.last_seq_num = player->GetLastSequence();
-		movePkt.info.id = player->GetID(); // "움직인 사람"의 ID
+		movePkt.info.id = player->GetID(); // "움직인 플레이어"의 ID
 		movePkt.info.x = player->GetPosition().x;
 		movePkt.info.y = player->GetPosition().y;
 		movePkt.info.z = player->GetPosition().z;
 		movePkt.info.yaw = player->GetYaw();
 		movePkt.info.pitch = player->GetPitch();
 
-		// 현재 입력 상태 (애니메이션용)
+		// 현재 입력 상태 (굳이 보내야하는지 모르겠지만 일단 넣는다.)
 		movePkt.info.w = player->GetInput().w;
 		movePkt.info.a = player->GetInput().a;
 		movePkt.info.s = player->GetInput().s;

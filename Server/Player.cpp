@@ -3,6 +3,9 @@
 #include "Player.h"
 
 CPlayer::CPlayer()
+	: last_processed_seq(0)
+	, current_input{}
+	, state(PLAYER_STATE::IDLE)
 {
 
 }
@@ -14,9 +17,7 @@ CPlayer::~CPlayer()
 
 void CPlayer::Update(const float elapsedTime)
 {
-	SimulateMove(current_input, elapsedTime);
-
-	// 회전 입력
+	// 회전 Update
 	SetYawPitch(yaw, pitch);
 	UpdateWorldMatrix();
 }
@@ -29,7 +30,21 @@ void CPlayer::SimulateMove(const InputData& input, float dt)
 	if (input.a) dir.x--;
 	if (input.d) dir.x++;
 
+	// 상태 update
+	if (dir.x == 0 && dir.z == 0)
+		state = PLAYER_STATE::IDLE;
+	else
+		state = PLAYER_STATE::WALK;
+
 	if (dir.x != 0 || dir.z != 0) {
 		Move(dir, dt);
 	}
+}
+
+void CPlayer::RecordFrameHistory(const ServerFrameHistory& history)
+{
+	history_deq.push_back(history);
+
+	if (history_deq.size() > 600)
+		history_deq.pop_front();
 }

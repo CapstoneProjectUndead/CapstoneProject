@@ -3,6 +3,14 @@
 
 #include "Object.h"
 
+struct ServerFrameHistory
+{
+	uint64		 seq_num;
+	InputData	 input;
+	XMFLOAT3	 position;
+	PLAYER_STATE state;
+};
+
 class CPlayer : public CObject
 {
 public:
@@ -10,12 +18,10 @@ public:
 	~CPlayer();
 
 	void Update(const float elapsedTime) override;
+	void SimulateMove(const InputData& input, float dt);
 
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
-
-	void SetClientDT(const float duration) { client_Dt = duration; }
-	float GetClientDT() const { return client_Dt; }
 
 	void SetInput(const InputData& input) { current_input = input; }
 	InputData GetInput() const { return current_input; }
@@ -23,13 +29,13 @@ public:
 	void SetState(PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
 
-private:
-	void SimulateMove(const InputData& input, float dt);
+	void RecordFrameHistory(const ServerFrameHistory& history);
+	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return history_deq; }
 
 private:
-	uint64	last_processed_seq = 0;
-	float	client_Dt = 0.f;
-	InputData	current_input;
-	PLAYER_STATE state = PLAYER_STATE::IDLE;
+	uint64						last_processed_seq;
+	InputData					current_input;
+	PLAYER_STATE				state;
+	deque<ServerFrameHistory>	history_deq;
 };
 
