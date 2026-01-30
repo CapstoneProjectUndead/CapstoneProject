@@ -2,6 +2,9 @@
 #include "TestScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
+#include "Mesh.h"
+#include "Shader.h"
+#include "Object.inl"
 
 CTestScene::CTestScene()
 {
@@ -15,43 +18,52 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 {
 	// 플레이어 생성
 	my_player = std::make_shared<CMyPlayer>();
-	// material set
-	Material m{};
-	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.glossiness = 0.0f;
-	my_player->SetMaterial(m);
 	my_player->Initialize(device, commandList);
 	
-	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-	shader->CreateShader(device);
-	shaders.push_back(std::move(shader));
+	{
+		// static shader
+		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+		shader->CreateShader(device);
+		shaders.emplace("static",std::move(shader));
+	}
+	{
+		// skinning
+		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+		shader->CreateShader(device);
+		shaders.emplace("skinning", std::move(shader));
+	}
 
 	// test 용 삭제X
 	{
 		auto obj = std::make_shared<CCharacter>();
-		obj->SetMaterial(m);
 		obj->Initialize(device, commandList);
-
 		objects.push_back(std::move(obj));
-		
 
-		//std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
-		//std::ofstream txt("../Modeling/char.txt");
+		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
+		std::ofstream txt("../Modeling/char.txt");
 
-		//char ch;
-		//while (bin.get(ch)) {
-		//	txt << ch;   // txt 파일에 문자 그대로 출력
-		//}
+		char ch;
+		while (bin.get(ch)) {
+		    if (
+		        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
+		 (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
+		    {
+		        txt << ch;
+		    }
+		}*/
 	}
 	{
-		auto obj = std::make_shared<CObject>();
-		std::string filename{ "../Modeling/Undead_Lobby.bin" };
-		auto frameRoot = CGeometryLoader::LoadGeometry(filename, device, commandList);
-		for (auto mesh : frameRoot->meshes)
-			obj->SetMesh(mesh);
+		// Undead_Lobby 로드
+		std::string fileName{ "../Modeling/Undead_Lobby.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+		for (const auto& children : frameRoot->childrens) {
+			if (children->mesh.positions.empty()) break;
+			auto obj = std::make_shared<CObject>();
+			obj->SetMeshFromFile<CVertex>(device, commandList, children);
+			obj->Initialize(device, commandList);
 
-		obj->Initialize(device, commandList);
-		objects.push_back(std::move(obj));
+			objects.push_back(std::move(obj));
+		}
 	}
 
 	camera = std::make_shared<CCamera>();

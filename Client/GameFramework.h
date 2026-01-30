@@ -1,6 +1,6 @@
 #pragma once
-#include "Timer.h"
-#include "Scene.h"
+
+class CTimer;
 
 // d3d device를 다루고 Scene을 관리
 class CGameFramework
@@ -96,7 +96,7 @@ private:
 	D3D12_RECT scissor_rect{};
 
 	// Timer 관련
-	CTimer& timer{CTimer::GetInstance()};
+	CTimer& timer;
 	_TCHAR frame_rate_str[50];
 };
 

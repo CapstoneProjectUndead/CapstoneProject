@@ -1,4 +1,8 @@
 #pragma once
+
+struct Mesh;	// GeometryLoader에 정의
+struct FrameNode;	// GeometryLoader에 정의
+
 class CVertex {
 public:
 	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, color{ XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f)} {}
@@ -52,6 +56,9 @@ public:
 	template<typename T>
 	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
+	template<typename T>
+	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+	
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};
@@ -74,6 +81,9 @@ protected:
 	UINT slot_num{};
 	UINT stride{};
 	UINT offset{};
+public:
+	// name
+	std::string name{};
 };
 
 class CTriangleMesh : public CMesh
@@ -117,3 +127,30 @@ void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* command
 	vertex_buffer_view.StrideInBytes = stride;
 	vertex_buffer_view.SizeInBytes = stride * vertex_num;
 }
+
+
+template<typename T>
+void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+{
+	Mesh& mesh{ node->mesh };
+	name = node->name;
+
+	std::vector<T> vertices;
+	size_t count = mesh.positions.size();
+	vertices.reserve(count);
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		T v{};
+		v.position = mesh.positions[i];
+		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
+		v.color = (i < mesh.colors.size()) ? mesh.colors[i] : XMFLOAT4(1, 1, 1, 1);
+
+		vertices.push_back(v);
+	}
+
+	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+}
+
+template<>
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);

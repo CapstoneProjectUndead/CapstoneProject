@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "Object.inl"
+#include "Mesh.h"
 #include "Character.h"
 
 CCharacter::CCharacter()
@@ -10,27 +12,29 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 {
 	// set 메쉬
 	std::string fileName{ "../Modeling/undead_char.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName, device, commandList);
-	for(auto mesh : frameRoot->meshes)
-		SetMesh(mesh);
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+	for (const auto& children : frameRoot->childrens) {
+		if (children->mesh.positions.empty()) break;
+		SetMeshFromFile<CMatVertex>(device, commandList, children);
+	}
 
 	// animator 초기화
 	animator = std::make_unique<CAnimator>();
-	animator->Initialize(fileName);
+	animator->Initialize(fileName, std::string("../Modeling/undead_ani.bin"));
 	animator->Play("Ganga_walk");   // 초기 애니메이션
 
 	CreateConstantBuffers(device, commandList);
 }
 
-void CCharacter::Update(float duration)
+void CCharacter::Update(float deltaTime)
 {
 	CObject::Update(deltaTime);
 
 	if (animator) {
-		/*if (Vector3::Length(velocity) <= 0.0f)
+		if (Vector3::Length(velocity) < 0.01f)
 			animator->Play("Ganga_idle");
 		else
-			animator->Play("Ganga_walk");*/
+			animator->Play("Ganga_walk");
 
 		animator->Update(deltaTime);
 	}
@@ -47,5 +51,8 @@ void CCharacter::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsComma
 {
 	CObject::CreateConstantBuffers(device, commandList);
 
-	if (animator) animator->CreateConstantBuffers(device, commandList);
+	if (animator) {
+		animator->CreateConstantBuffers(device, commandList);
+		SetShdaer("skinning");
+	}
 }
