@@ -111,6 +111,8 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 
 	mover->SetLastSequence(pkt.seq_num);
 	mover->SetInput(input);
+
+	// 회전은 클라 권위 방식이기 때문에, 클라에서 받은 회전값을 적용한다.
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
 

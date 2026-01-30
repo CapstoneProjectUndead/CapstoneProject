@@ -48,7 +48,7 @@ public:
 	virtual void Animate(float, CCamera*);
 	virtual void Update(float);
 	virtual void Rotate(float pitch, float yaw, float roll);
-	virtual void Move(const XMFLOAT3 direction, float distance);
+	virtual void Move(const XMFLOAT3 direction, float deltaTime);
 
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -59,6 +59,10 @@ public:
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	void SetShdaer(const std::string& name) { shader_name = name; }
 	std::string GetShader() const { return shader_name; }
+
+	XMFLOAT3 GetVelocity() { return velocity; }
+	void     SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
+	void     SetVelocity(float vx, float vy, float vz) { velocity = { vx, vy, vz }; }
 
 	int  GetID() const { return obj_id; }
 	void SetID(const int id) { obj_id = id; }

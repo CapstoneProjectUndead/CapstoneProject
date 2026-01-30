@@ -28,6 +28,7 @@ struct NetObjectInfo
 	bool			d = false;
 
 	float			x, y, z;
+	float			vx, vy, vz;
 	float			pitch	= 0.0f;
 	float			yaw		= 0.0f;
 	float			roll	= 0.0f; 
@@ -56,10 +57,13 @@ struct NetObjectInfo
 		, x(other.x)
 		, y(other.y)
 		, z(other.z)
+		, vx(other.vx)
+		, vy(other.vy)
+		, vz(other.vz)
 		, yaw(other.yaw)
 		, pitch(other.pitch)
 		, roll(other.roll)
 	{ }
 };
 
-static_assert(sizeof(NetObjectInfo) == 33, "PackObjectInfo size mismatch!");
+static_assert(sizeof(NetObjectInfo) == 45, "PackObjectInfo size mismatch!");

@@ -142,28 +142,11 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	auto& indexMap = scene->GetIDIndex();
 	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
-	InputData input{};
-	input.a = pkt.info.a;
-	input.w = pkt.info.w;
-	input.d = pkt.info.d;
-	input.s = pkt.info.s;
-
 	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id) {
-		ObjectInfo info{};
+		myPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
-		info.last_seq_num = pkt.last_seq_num;
-		info.input = input;
-		info.state = pkt.info.state;
-		info.x = pkt.info.x;
-		info.y = pkt.info.y;
-		info.z = pkt.info.z;
-		info.yaw = pkt.info.yaw;
-		info.pitch = pkt.info.pitch;
-		info.roll = pkt.info.roll;
-
-		myPlayer->SetDestInfo(info);
 		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	}
 	// 다른 플레이어일 경우
@@ -178,6 +161,12 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 			return false;
 
 		auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+
+		InputData input{};
+		input.a = pkt.info.a;
+		input.w = pkt.info.w;
+		input.d = pkt.info.d;
+		input.s = pkt.info.s;
 
 		ObjectInfo info;
 		info.input = input;

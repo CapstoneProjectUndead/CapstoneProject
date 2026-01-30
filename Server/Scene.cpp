@@ -55,9 +55,15 @@ void CScene::SendPlayersResults()
 
 		movePkt.last_seq_num = player->GetLastSequence();
 		movePkt.info.id = player->GetID(); // "움직인 플레이어"의 ID
+
 		movePkt.info.x = player->GetPosition().x;
 		movePkt.info.y = player->GetPosition().y;
 		movePkt.info.z = player->GetPosition().z;
+
+		movePkt.info.vx = player->GetVelocity().x;
+		movePkt.info.vy = player->GetVelocity().y;
+		movePkt.info.vz = player->GetVelocity().z;
+
 		movePkt.info.yaw = player->GetYaw();
 		movePkt.info.pitch = player->GetPitch();
 

@@ -59,7 +59,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWNPLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 33, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 45, "S_SpawnPlayer size mismatch!");
 
 // 한명의 유저를 보낼 때 
 struct S_AddPlayer : public PacketHeader
@@ -68,7 +68,7 @@ struct S_AddPlayer : public PacketHeader
 
 	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), (UINT)PacketType::_S_ADDPLAYER) {}
 };
-static_assert(sizeof(S_AddPlayer) == 4 + 33, "S_AddPlayer size mismatch!");
+static_assert(sizeof(S_AddPlayer) == 4 + 45, "S_AddPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -112,7 +112,7 @@ struct S_RemovePlayer : public PacketHeader
 
 	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVEPLAYER) {}
 };
-static_assert(sizeof(S_RemovePlayer) == 4 + 33, "S_RemovePlayer size mismatch!");
+static_assert(sizeof(S_RemovePlayer) == 4 + 45, "S_RemovePlayer size mismatch!");
 
 // 서버 권한 + 클라 예측
 struct C_Input : public PacketHeader
@@ -126,7 +126,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 45, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 57, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {
@@ -136,6 +136,6 @@ struct S_Move : public PacketHeader
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 45, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 57, "S_Move size mismatch!");
 
 #pragma pack (pop)

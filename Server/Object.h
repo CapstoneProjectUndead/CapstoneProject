@@ -15,8 +15,9 @@ public:
 public:
     static shared_ptr<CPlayer>          CreatePlayer();
 
-    void                                Move(const XMFLOAT3& direction, float distance);
+    void                                Move(const XMFLOAT3& direction, float elapsedTime);
     void                                Move(const XMFLOAT3& shift);
+    void                                Move(float elapsedTime);
     void                                Rotate(float pitch, float yaw, float roll);
 
     int                                 GetID() const { return obj_id; }
@@ -29,6 +30,10 @@ public:
     XMFLOAT3                            GetPosition() { return position; }
     void                                SetPosition(const XMFLOAT3& pos) { position = pos; }
     void                                SetPosition(float x, float y, float z) { position = { x, y, z }; }
+
+    XMFLOAT3                            GetVelocity() { return velocity; }
+    void                                SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
+    void                                SetVelocity(float vx, float vy, float vz) { velocity = { vx, vy, vz }; }
 
     XMFLOAT3                            GetRight() { return right; }
     void                                SetRight(const XMFLOAT3 _right) { right = _right; }
@@ -69,6 +74,10 @@ protected:
          
     float                               speed{ 10.0f };
     bool                                is_visible{ true };
+
+    float                               max_speed{ 30.0f };
+    XMFLOAT3                            velocity{};
+    float                               friction{ 8.0f };
 
     // 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
     XMFLOAT4	                        orientation = { 0.f, 0.f, 0.f, 1.f };

@@ -50,9 +50,9 @@ int main()
         CTimeManager::GetInstance().Update();
 
         // 너무 큰 deltaTime 방지 (디버깅 등으로 멈췄을 때 갑자기 수백 번 업데이트 방지)
-        double duration = CTimeManager::GetInstance().GetClampedDeltaTime();
+        double deltaTime = CTimeManager::GetInstance().GetClampedDeltaTime();
 
-        accumulator += duration;
+        accumulator += deltaTime;
 
         bool ticked = false;
 

@@ -21,10 +21,8 @@ struct ObjectInfo
 	// 서버권위 방식) InputData는 서버권위 방식에서 필요한 데이터이다.
 	InputData		input;
 
-	//====================================================
-	// 클라권위 방식) x,y,z 값은 클라 권위에서 필요한 데이터이다.
-	float			x, y, z;
-	//====================================================
+	float			x, y, z;	// 좌표
+	float			vx, vy, vz; // velocity
 
 	float			pitch = 0.0f;
 	float			yaw = 0.0f;
