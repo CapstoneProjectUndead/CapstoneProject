@@ -1,4 +1,6 @@
 #pragma once
+#include "Timer.h"
+#include "NetworkManager.h"
 
 using PacketHandlerFunc = std::function<bool(std::shared_ptr<Session>, char*, int32)>;
 extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -15,9 +17,8 @@ enum : uint16
 	PKT_S_ADDPLAYER = 6,
 	PKT_S_PLAYERLIST = 7,
 	PKT_S_REMOVEPLAYER = 8,
-	PKT_C_MOVE = 9,
+	PKT_C_PLAYERINPUT = 9,
 	PKT_S_MOVE = 10,
-	PKT_C_PLAYERINPUT = 11,
 };
 
 // Custom Handlers
@@ -65,6 +66,9 @@ private:
 	template<typename PacketType, typename ProcessFunc>
 	static bool HandlePacket(ProcessFunc func, std::shared_ptr<Session> session, char* buffer, int32 len)
 	{
+		// 여기서 지터값 측정
+		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(CTimer::GetInstance().GetTimeElapsed());
+
 		PacketType* pkt = reinterpret_cast<PacketType*>(buffer);
 		return func(session, *pkt);
 	}

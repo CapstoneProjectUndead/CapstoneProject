@@ -4,6 +4,9 @@
 #include "ClientSession.h"
 #include "Player.h"
 
+#undef min
+#undef max
+
 #define CAST_CS(session) static_pointer_cast<CClientSession>(session)
 
 
@@ -29,8 +32,8 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
 	pos.x = rand() % 4 + 1;
-	pos.y = rand() % 4 + 1;
-	pos.z = 0;
+	pos.y = 0;
+	pos.z = rand() % 3;
 	player->SetPosition(pos);
 
 	// ClientSession이 Plyaer를 참조. (refcount 증가)
@@ -67,7 +70,7 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 				if (pl.second->GetID() == player->GetID())
 					continue;
 
-				userList[idx++] = { PackObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
+				userList[idx++] = { NetObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
 				pl.second->GetPosition().z} };
 			}
 
@@ -92,29 +95,35 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	}
 }
 
-void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Move& pkt)
+// 서버 권위 방식
+void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
-	CAST_CS(session)->GetPlayer()->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
+	auto it = players.find(pkt.info.id);
+	if (it == players.end()) 
+		return;
 
-	S_Move movePkt;
-	movePkt.info.id = pkt.info.id;
-	movePkt.info.state = pkt.info.state;
-	movePkt.info.x = pkt.info.x;
-	movePkt.info.y = pkt.info.y;
-	movePkt.info.z = pkt.info.z;
-	movePkt.info.yaw = pkt.info.yaw;
-	movePkt.info.pitch = pkt.info.pitch;
-	movePkt.info.roll = pkt.info.roll;
+	auto mover = it->second; // 실제 움직인 플레이어
 
-	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
-	BroadCast(sendBuffer, pkt.info.id);
-}
+	if (pkt.seq_num <= mover->GetLastSequence())
+		return;
 
-void CTestScene::MovePlayer(shared_ptr<Session> session, const C_PlayerInput& pkt)
-{
-    auto it = players.find(pkt.playerId);
-    if (it == players.end())
-        return;
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
 
-    auto player = players[it->first];
+	mover->SetLastSequence(pkt.seq_num);
+	mover->SetInput(input);
+	mover->SetYaw(pkt.info.yaw);
+	mover->SetPitch(pkt.info.pitch);
+
+	// 캐릭터를 움직임
+	mover->SimulateMove(input, g_targetDT);
+
+	// 장부 기록
+	ServerFrameHistory frame{};
+	frame.input = input;
+	frame.seq_num = pkt.seq_num;
+	frame.position = mover->GetPosition();
+	frame.state = mover->GetState();
+	frame.timestamp = mover->GetTotalSimulationTime();
+
+	mover->RecordFrameHistory(frame);
 }

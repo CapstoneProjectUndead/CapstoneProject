@@ -9,7 +9,7 @@ public:
 	~CGameFramework();
 
 	void Init();
-	void Update(float elapsedTime);
+	void Update(const float elapsedTime);
 
 	void SendResults();
 };

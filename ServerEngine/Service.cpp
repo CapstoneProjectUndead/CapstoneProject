@@ -8,6 +8,7 @@ Service::Service(SERVICE_TYPE type, NetAddress address, CreateSessionFunc func, 
 	, create_session_func(func)
 	, current_session_count(0)
 	, max_session_count(maxCount)
+	, is_connected(false)
 {
 }
 

@@ -19,7 +19,8 @@ public:
 
 public:
     void    Initialize();
-    void    Update(float elapsedTime);
+    void    Update(const float elapsedTime);
+    void    SendResults();
 
     unique_ptr<CScene>* GetScenes() { return scenes; }
 

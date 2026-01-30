@@ -17,11 +17,12 @@ void CGameFramework::Init()
     CSceneManager::GetInstance().Initialize();
 }
 
-void CGameFramework::Update(float elapsedTime)
+void CGameFramework::Update(const float elapsedTime)
 {
     CSceneManager::GetInstance().Update(elapsedTime);
 }
 
 void CGameFramework::SendResults()
 {
+    CSceneManager::GetInstance().SendResults();
 }

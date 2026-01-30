@@ -34,6 +34,8 @@ public:
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
 	std::unordered_map<uint32_t, size_t>&   GetIDIndex() { return id_To_Index; }
 
+	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
+
 protected:
 	std::vector<std::shared_ptr<CShader>>	shaders{};
 	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어

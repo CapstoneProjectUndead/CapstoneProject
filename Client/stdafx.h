@@ -278,7 +278,7 @@ namespace Vector3
 	}
 
 	// 추가한 코드
-	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float deltaTime, float interpSpeed)
+	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float duration, float interpSpeed)
 	{
 		if (interpSpeed <= 0.f)
 			return current;
@@ -286,12 +286,24 @@ namespace Vector3
 		// Target - Current
 		XMFLOAT3 delta = Vector3::Subtract(target, current);
 
-		float scale = deltaTime * interpSpeed;
+		float scale = duration * interpSpeed;
 		if (scale > 1.f)
 			scale = 1.f;
 
 		// Current + Delta * Scale
 		return Vector3::Add(current, delta, scale);
+	}
+
+	inline XMFLOAT3 Lerp(const XMFLOAT3& xmf3Vector1, const XMFLOAT3& xmf3Vector2, float fPercent)
+	{
+		XMFLOAT3 xmf3Result;
+
+		// XMVectorLerp(V0, V1, t) : V0와 V1 사이를 t(0.0~1.0) 비율로 보간
+		XMVECTOR v0 = XMLoadFloat3(&xmf3Vector1);
+		XMVECTOR v1 = XMLoadFloat3(&xmf3Vector2);
+		XMStoreFloat3(&xmf3Result, XMVectorLerp(v0, v1, fPercent));
+
+		return xmf3Result;
 	}
 }
 

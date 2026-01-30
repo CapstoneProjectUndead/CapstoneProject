@@ -29,6 +29,7 @@
 #include <list>
 #include <queue>
 #include <stack>
+#include <deque>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -57,6 +58,7 @@ using std::vector;
 using std::list;
 using std::queue;
 using std::stack;
+using std::deque;
 using std::map;
 using std::set;
 using std::unordered_map;
@@ -96,6 +98,9 @@ using std::make_pair;
 
 extern unique_ptr<class CGameFramework> gGameFramework;
 //extern DBConnector g_db;
+
+extern const double g_server_targetTick;
+extern const double g_targetDT;
 
 
 #endif //PCH_H

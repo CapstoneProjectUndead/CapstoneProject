@@ -34,10 +34,15 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	myPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	Material m{};
+	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
+	m.glossiness = 0.0f;
+	myPlayer->SetMaterial(m);
 
 	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-	shader->CreateShader(gGameFramework.GetDevice().Get());
+	shader->CreateShader(GET_DEVICE);
 	scene->GetShaders().push_back(std::move(shader));
 
 	// 카메라 객체 생성
@@ -47,11 +52,19 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	float height{ float(client_rect.bottom - client_rect.top) };
 
 	std::shared_ptr<CCamera> camera = std::make_shared<CCamera>();
-	camera->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	camera->Initialize(GET_DEVICE, GET_CMD_LIST);
 	camera->SetTarget(myPlayer.get());
+
+	camera->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 	scene->SetPlayer(myPlayer);
 	scene->SetCamera(camera);
+
+	// light 생성
+	std::unique_ptr<CLightManager>light = std::make_unique<CLightManager>();
+	light->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	scene->SetLight(std::move(light));
 
 	return true;
 }
@@ -61,7 +74,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	otherPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -79,6 +92,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		// 다른 유저 생성
 		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
+		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 		// 다른 유저 ID 부여
 		otherPlayer->SetID(userList[i].info.id);
@@ -86,9 +100,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		// 다른 유저 위치 부여
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
-		// Active Scene에 다른 유저 입장
-
-		otherPlayer->Initialize(gGameFramework.GetDevice().Get(), gGameFramework.GetCommandList().Get());
+		otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -119,34 +131,62 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	auto& vec = scene->GetObjects();
 	auto& indexMap = scene->GetIDIndex();
-	std::shared_ptr<CMyPlayer> myPlayer =  scene->GetMyPlayer();
+	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
-	// 내 플레이어이면 처리하지 않고 나가기
-	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id)
-		return true;
+	InputData input{};
+	input.a = pkt.info.a;
+	input.w = pkt.info.w;
+	input.d = pkt.info.d;
+	input.s = pkt.info.s;
 
-	// 해당 ID가 존재하는 플레이어인지 확인
-	auto it = indexMap.find(pkt.info.id);
-	if (it == indexMap.end())
-		return true;
+	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
+	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id) {
+		ObjectInfo info{};
 
-	uint64 idx = it->second;
-	if (idx >= vec.size())
-		return true;
+		// 서버가 처리한 시퀀스 넘버를 받아야한다.
+		info.last_seq_num = pkt.last_seq_num;
+		info.input = input;
+		info.state = pkt.info.state;
+		info.x = pkt.info.x;
+		info.y = pkt.info.y;
+		info.z = pkt.info.z;
+		info.yaw = pkt.info.yaw;
+		info.pitch = pkt.info.pitch;
+		info.roll = pkt.info.roll;
 
-	auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+		myPlayer->SetDestInfo(info);
+		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	}
+	// 다른 플레이어일 경우
+	else {
+		// 해당 ID가 존재하는 플레이어인지 확인
+		auto it = indexMap.find(pkt.info.id);
+		if (it == indexMap.end())
+			return false;
 
-	ObjectInfo info;
-	info.id = pkt.info.id;
-	info.state = pkt.info.state;
-	info.x = pkt.info.x;
-	info.y = pkt.info.y;
-	info.z = pkt.info.z;
-	info.yaw = pkt.info.yaw;
-	info.pitch = pkt.info.pitch;
-	info.roll = pkt.info.roll;
+		uint64 idx = it->second;
+		if (idx >= vec.size())
+			return false;
 
-	player->SetDestInfo(info);
+		auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
+
+		ObjectInfo info;
+		info.input = input;
+		info.state = pkt.info.state;
+		info.x = pkt.info.x;
+		info.y = pkt.info.y;
+		info.z = pkt.info.z;
+		info.yaw = pkt.info.yaw;
+		info.pitch = pkt.info.pitch;
+		info.roll = pkt.info.roll;
+
+		player->SetDestInfo(info);
+
+		OpponentState state{};
+		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
+		state.serverTimestamp = pkt.timestamp;
+		player->PushOpponentState(state);
+	}
 
 	return true;
 }

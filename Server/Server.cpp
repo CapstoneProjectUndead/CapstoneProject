@@ -6,6 +6,9 @@
 
 unique_ptr<class CGameFramework> gGameFramework;
 
+const double g_server_targetTick = 60.0; // 60Hz
+const double g_targetDT = 1.0 / g_server_targetTick; // 0.01666... (16.6ms)
+
 
 int main()
 {
@@ -39,8 +42,7 @@ int main()
     }
 
     double accumulator = 0.0;
-    const double targetTick = 60.0; // 60Hz
-    const double targetDT = 1.0 / targetTick; // 0.01666... (16.6ms)
+
 
     while (true)
     {
@@ -48,19 +50,19 @@ int main()
         CTimeManager::GetInstance().Update();
 
         // 너무 큰 deltaTime 방지 (디버깅 등으로 멈췄을 때 갑자기 수백 번 업데이트 방지)
-        double deltaTime = CTimeManager::GetInstance().GetClampedDeltaTime(0.25);
+        double duration = CTimeManager::GetInstance().GetClampedDeltaTime();
 
-        accumulator += deltaTime;
+        accumulator += duration;
 
         bool ticked = false;
 
         // 쌓인 시간만큼 "고정된 16.6ms"씩 업데이트를 돌림
-        while (accumulator >= targetDT)
+        while (accumulator >= g_targetDT)
         {
             // 물리 및 충돌 업데이트 (서버 권위 판정)
-            gGameFramework->Update(static_cast<float>(targetDT));
+            gGameFramework->Update(static_cast<float>(g_targetDT));
 
-            accumulator -= targetDT;
+            accumulator -= g_targetDT;
             ticked = true;
         }
 
@@ -71,7 +73,7 @@ int main()
 
         // CPU 점유율 최적화: 아주 짧게 쉬어줌
         // 남은 시간이 아주 많을 때만 제한적으로 사용하거나 생략 가능
-        if (accumulator < targetDT) {
+        if (accumulator < g_targetDT) {
             std::this_thread::yield();
         }
     }

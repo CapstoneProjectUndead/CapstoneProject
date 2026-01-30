@@ -22,7 +22,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	CreateConstantBuffers(device, commandList);
 }
 
-void CCharacter::Update(float deltaTime)
+void CCharacter::Update(float duration)
 {
 	CObject::Update(deltaTime);
 

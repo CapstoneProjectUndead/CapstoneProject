@@ -352,7 +352,7 @@ void CGameFramework::FrameAdvance()
 	// Update & 렌더링
 	Update();
 	Render();
-	
+	 
 	CommandEnd();
 }
 

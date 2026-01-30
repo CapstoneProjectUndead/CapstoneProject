@@ -140,6 +140,9 @@ void Session::HandleConnect()
 	// 연결 성공
 	is_connect.store(true);
 
+	if (auto service = service_ref.lock())
+		service->SetConnection(true);
+
 	// 콘텐츠쪽에서 재정의
 	OnConnected();
 
