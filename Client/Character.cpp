@@ -24,7 +24,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 
 void CCharacter::Update(float duration)
 {
-	CObject::Update(deltaTime);
+	CObject::Update(duration);
 
 	if (animator) {
 		/*if (Vector3::Length(velocity) <= 0.0f)
@@ -32,7 +32,7 @@ void CCharacter::Update(float duration)
 		else
 			animator->Play("Ganga_walk");*/
 
-		animator->Update(deltaTime);
+		animator->Update(duration);
 	}
 }
 
