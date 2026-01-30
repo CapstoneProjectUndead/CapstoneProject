@@ -8,6 +8,7 @@
 #include "MyPlayer.h"
 #include "GeometryLoader.h"
 #include "Camera.h"
+#include "Shader.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -41,9 +42,17 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	m.glossiness = 0.0f;
 	myPlayer->SetMaterial(m);
 
-	std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-	shader->CreateShader(GET_DEVICE);
-	scene->GetShaders().push_back(std::move(shader));
+	{
+		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+		shader->CreateShader(GET_DEVICE);
+		scene->GetShaders().emplace("static", std::move(shader));
+	}
+
+	{
+		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+		shader->CreateShader(GET_DEVICE);
+		scene->GetShaders().emplace("skinning", std::move(shader));
+	}
 
 	// 카메라 객체 생성
 	RECT client_rect;

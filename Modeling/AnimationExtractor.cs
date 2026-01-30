@@ -52,153 +52,12 @@ public class BinaryModelExporter : EditorWindow
             return;
         }
 
-        // 1) 프레임 트리
-        WriteFrameHierarchy(root);
-
-        // 2) 메쉬 + 스키닝
-        WriteMeshAndSkinning(smr);
-
         CacheBindPoseWorld(smr.bones);
 
-        // 3) 애니메이션
         WriteAnimationData(assetPath, root, smr.bones);
 
         bw.Close();
         Debug.Log("Export 완료: " + savePath);
-    }
-
-    // ============================================================
-    //  FRAME HIERARCHY
-    // ============================================================
-
-    void WriteFrameHierarchy(Transform current)
-    {
-        WriteString("<Frame>:");
-        WriteString(current.name.Replace(" ", "_"));
-
-        WriteTransform("<Transform>:", current);
-        WriteLocalMatrix("<TransformMatrix>:", current);
-
-        WriteInteger("<Children>:", current.childCount);
-
-        for (int i = 0; i < current.childCount; i++)
-            WriteFrameHierarchy(current.GetChild(i));
-
-        WriteString("</Frame>");
-    }
-
-    // ============================================================
-    //  MESH + SKINNING
-    // ============================================================
-    void DebugPrintBones(Transform[] bones)
-    {
-        Debug.Log("=== Unity Bone Order ===");
-        for (int i = 0; i < bones.Length; i++)
-        {
-            Debug.Log($"{i}: {bones[i].name}");
-        }
-    }
-    void WriteMeshAndSkinning(SkinnedMeshRenderer smr)
-    {
-        Mesh mesh = smr.sharedMesh;
-
-        // Mesh Info
-        WriteMeshInfo(mesh);
-
-        // Materials
-        WriteMaterials(smr.sharedMaterials);
-
-        // Skinning
-        WriteSkinningData(smr);
-        //DebugPrintBones(smr.bones);
-    }
-
-    void WriteMaterials(Material[] materials)
-    {
-        WriteInteger("<Materials>:", materials.Length);
-        for (int i = 0; i < materials.Length; i++)
-        {
-            WriteInteger("<Material>:", i);
-
-            if (materials[i].HasProperty("_Color"))
-                WriteColor("<AlbedoColor>:", materials[i].GetColor("_Color"));
-
-            if (materials[i].HasProperty("_EmissionColor"))
-                WriteColor("<EmissiveColor>:", materials[i].GetColor("_EmissionColor"));
-
-            if (materials[i].HasProperty("_SpecColor"))
-                WriteColor("<SpecularColor>:", materials[i].GetColor("_SpecColor"));
-
-            if (materials[i].HasProperty("_Glossiness"))
-                WriteFloat("<Glossiness>:", materials[i].GetFloat("_Glossiness"));
-
-            if (materials[i].HasProperty("_Metallic"))
-                WriteFloat("<Metallic>:", materials[i].GetFloat("_Metallic"));
-
-            if (materials[i].HasProperty("_MainTex"))
-                WriteTextureName("<AlbedoMap>:", materials[i].GetTexture("_MainTex"));
-
-            if (materials[i].HasProperty("_BumpMap"))
-                WriteTextureName("<NormalMap>:", materials[i].GetTexture("_BumpMap"));
-        }
-        WriteString("</Materials>");
-    }
-
-    void WriteMeshInfo(Mesh mesh)
-    {
-        WriteString("<Mesh>:");
-        WriteInteger(mesh.vertexCount);
-
-        WriteBoundingBox("<Bounds>:", mesh.bounds);
-
-        if (mesh.vertices.Length > 0) WriteVectors("<Positions>:", mesh.vertices);
-        if (mesh.colors.Length > 0) WriteColors("<Colors>:", mesh.colors);
-        if (mesh.uv.Length > 0) WriteTextureCoords("<TextureCoords0>:", mesh.uv);
-        if (mesh.normals.Length > 0) WriteVectors("<Normals>:", mesh.normals);
-
-        WriteInteger("<SubMeshes>:", mesh.subMeshCount);
-        for (int i = 0; i < mesh.subMeshCount; i++)
-        {
-            int[] indices = mesh.GetTriangles(i);
-            WriteIntegers("<SubMesh>:", i, indices);
-        }
-
-        WriteString("</Mesh>");
-    }
-
-    void WriteSkinningData(SkinnedMeshRenderer smr)
-    {
-        Mesh mesh = smr.sharedMesh;
-        Transform[] bones = smr.bones;
-
-        WriteInteger("<BoneCount>:", bones.Length);
-
-        for (int i = 0; i < bones.Length; i++)
-        {
-            WriteString("<BoneName>:", bones[i].name);
-            WriteLocalMatrix("<BoneLocalMatrix>:", bones[i]);
-        }
-
-        for (int i = 0; i < bones.Length; i++)
-        {
-            int parentIndex = System.Array.IndexOf(bones, bones[i].parent);
-            WriteInteger("<ParentIndex>:", parentIndex);
-        }
-
-        WriteMatrixes("<BindPoses>:", mesh.bindposes);
-
-        BoneWeight[] weights = mesh.boneWeights;
-        WriteInteger("<BoneWeightCount>:", weights.Length);
-
-        for (int i = 0; i < weights.Length; i++)
-        {
-            BoneWeight bwgt = weights[i];
-            int[] idx = { bwgt.boneIndex0, bwgt.boneIndex1, bwgt.boneIndex2, bwgt.boneIndex3 };
-            float[] w = { bwgt.weight0, bwgt.weight1, bwgt.weight2, bwgt.weight3 };
-
-            WriteIntegers("<BoneIndex>:", idx);
-            WriteFloats("<BoneWeight>:", w);
-        }
     }
 
     // ============================================================
@@ -210,6 +69,7 @@ public class BinaryModelExporter : EditorWindow
         for (int i = 0; i < bones.Length; i++)
             bindWorld[i] = bones[i].localToWorldMatrix;
     }
+
     void WriteAnimationData(string assetPath, Transform root, Transform[] bones)
     {
         Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
@@ -321,44 +181,6 @@ public class BinaryModelExporter : EditorWindow
     }
 
     // WriteXX
-    void WriteTextureName(string strHeader, Texture texture)
-    {
-        bw.Write(strHeader);
-        if (texture)
-        {
-            if (FindTextureByName(m_pTextureNamesListForWriting, texture))
-            {
-                bw.Write("@" + string.Copy(texture.name).Replace(" ", "_"));
-            }
-            else
-            {
-                bw.Write(string.Copy(texture.name).Replace(" ", "_"));
-            }
-        }
-        else
-        {
-            bw.Write("null");
-        }
-    }
-
-    bool FindTextureByName(List<string> pTextureNamesList, Texture texture)
-    {
-        if (texture)
-        {
-            string strTextureName = string.Copy(texture.name).Replace(" ", "_");
-            for (int i = 0; i < pTextureNamesList.Count; i++)
-            {
-                if (pTextureNamesList.Contains(strTextureName)) return (true);
-            }
-            pTextureNamesList.Add(strTextureName);
-            return (false);
-        }
-        else
-        {
-            return (true);
-        }
-    }
-
     void WriteString(string header, string value) { bw.Write(header); bw.Write(value); }
     void WriteString(string value) { bw.Write(value); }
     void WriteInteger(string header, int v) { bw.Write(header); bw.Write(v); }

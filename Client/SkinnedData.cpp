@@ -76,9 +76,9 @@ float AnimationClip::GetClipStartTime()const
 {
 	// Find smallest start time over all bones in this clip.
 	float t = FLT_MAX;
-	for (UINT i = 0; i < BoneAnimations.size(); ++i)
+	for (UINT i = 0; i < bone_animations.size(); ++i)
 	{
-		t = Math::Min(t, BoneAnimations[i].GetStartTime());
+		t = Math::Min(t, bone_animations[i].GetStartTime());
 	}
 
 	return t;
@@ -88,9 +88,9 @@ float AnimationClip::GetClipEndTime()const
 {
 	// Find largest end time over all bones in this clip.
 	float t = 0.0f;
-	for (UINT i = 0; i < BoneAnimations.size(); ++i)
+	for (UINT i = 0; i < bone_animations.size(); ++i)
 	{
-		t = Math::Max(t, BoneAnimations[i].GetEndTime());
+		t = Math::Max(t, bone_animations[i].GetEndTime());
 	}
 
 	return t;
@@ -98,9 +98,9 @@ float AnimationClip::GetClipEndTime()const
 
 void AnimationClip::Interpolate(float t, std::vector<XMFLOAT4X4>& boneTransforms)const
 {
-	for (UINT i = 0; i < BoneAnimations.size(); ++i)
+	for (UINT i = 0; i < bone_animations.size(); ++i)
 	{
-		BoneAnimations[i].Interpolate(t, boneTransforms[i]);
+		bone_animations[i].Interpolate(t, boneTransforms[i]);
 	}
 }
 
@@ -121,7 +121,7 @@ UINT CSkinnedData::BoneCount()const
 	return bone_hierarchy.size();
 }
 
-void CSkinnedData::Set(std::vector<int>& boneHierarchy,	std::vector<XMFLOAT4X4>& boneOffsets, std::unordered_map<std::string, AnimationClip>& otherAnimations)
+void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<XMFLOAT4X4>& boneOffsets, const std::unordered_map<std::string, AnimationClip>& otherAnimations)
 {
 	bone_hierarchy = boneHierarchy;
 	bone_offsets = boneOffsets;
@@ -172,11 +172,10 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 }
 
 // animator
-void CAnimator::Initialize(const std::string& fileName)
+void CAnimator::Initialize(const std::string& charName, const std::string& AniName)
 {
-	auto skeleton = CGeometryLoader::LoadSkeleton(fileName);
-
-	auto animData = CGeometryLoader::LoadAnimations(fileName, skeleton.bone_names.size());
+	SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
+	auto animData = CGeometryLoader::LoadAnimations(AniName, skeleton.bone_names.size());
 	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
 }
 
@@ -213,7 +212,7 @@ void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 	if (!final_transforms.empty()) {
 		UINT boneSize = skinned.BoneCount();
 		for (UINT i = 0; i < boneSize; ++i)
-			cb.boneTransforms[i] = final_transforms[i];
+			cb.bone_transforms[i] = final_transforms[i];
 	}
 
 	UINT8* mapped = nullptr;

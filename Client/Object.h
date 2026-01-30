@@ -1,9 +1,13 @@
 #pragma once
-#include "Texture.h"
 
 class CShader;
 class CCamera;
 class CMesh;
+class CTexture;
+
+// GeometryLoader에 정의
+struct Mesh;
+struct FrameNode;
 
 struct Material
 {
@@ -35,14 +39,16 @@ public:
 	void SetMesh(std::shared_ptr<CMesh>& otherMesh);
 	void SetTexture(CTexture* );
 	CTexture* GetTexture() const { return texture.get(); }
-	ID3D12Resource* GetTextureResource() const { return texture->GetTextureResource(); }
+	ID3D12Resource* GetTextureResource() const;
 	void SetMaterial(const Material& otherMaterial) { material = otherMaterial; }
+	// LoadFrame 정보 Set, T: Vertex type
+	template<typename T>
+	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
 
 	virtual void Animate(float, CCamera*);
-	virtual void Update(float) {};
+	virtual void Update(float);
 	virtual void Rotate(float pitch, float yaw, float roll);
 	virtual void Move(const XMFLOAT3 direction, float distance);
-	virtual void Move(const XMFLOAT3 shift);
 
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -51,8 +57,8 @@ public:
 	//
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
-	void SetShdaerIndex(UINT index) { shader_index = index; }
-	UINT GetShaderIndex() const { return shader_index; }
+	void SetShdaer(const std::string& name) { shader_name = name; }
+	std::string GetShader() const { return shader_name; }
 
 	int  GetID() const { return obj_id; }
 	void SetID(const int id) { obj_id = id; }
@@ -81,7 +87,7 @@ protected:
 	std::vector<std::shared_ptr<CMesh>> meshes;
 	std::shared_ptr<CTexture> texture{};
 	Material material;
-	UINT shader_index{};
+	std::string shader_name{"static"};	// 적용 쉐이더 이름
 
 	ComPtr<ID3D12Resource> object_cb;
 	ComPtr<ID3D12Resource> material_cb;
@@ -90,7 +96,9 @@ protected:
 	BoundingOrientedBox oobb;
 
 	float speed{ 10.0f };
+	float max_speed{ 30.0f };
 	XMFLOAT3 velocity{};
+	float friction{ 8.0f };
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
