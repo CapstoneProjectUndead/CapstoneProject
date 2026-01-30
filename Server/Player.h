@@ -31,6 +31,8 @@ public:
 	PLAYER_STATE GetState() const { return state; }
 
 	void RecordFrameHistory(const ServerFrameHistory& history);
+	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
+
 	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return history_deq; }
 
 	float GetTotalSimulationTime() const { return total_simulation_time; }
