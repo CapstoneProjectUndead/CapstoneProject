@@ -46,10 +46,9 @@ public:
 	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
 
 	virtual void Animate(float, CCamera*);
-	virtual void Update(float) {};
+	virtual void Update(float);
 	virtual void Rotate(float pitch, float yaw, float roll);
 	virtual void Move(const XMFLOAT3 direction, float distance);
-	virtual void Move(const XMFLOAT3 shift);
 
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -97,7 +96,9 @@ protected:
 	BoundingOrientedBox oobb;
 
 	float speed{ 10.0f };
+	float max_speed{ 30.0f };
 	XMFLOAT3 velocity{};
+	float friction{ 8.0f };
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };

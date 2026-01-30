@@ -67,7 +67,7 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
             br.FindTag("</Keyframe>");
         }
 
-        animations[clipName] = clip;
+        animations.emplace(clipName, clip);
     }
 
     return animations;

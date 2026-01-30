@@ -31,10 +31,10 @@ void CCharacter::Update(float deltaTime)
 	CObject::Update(deltaTime);
 
 	if (animator) {
-		/*if (Vector3::Length(velocity) <= 0.0f)
+		if (Vector3::Length(velocity) < 0.01f)
 			animator->Play("Ganga_idle");
 		else
-			animator->Play("Ganga_walk");*/
+			animator->Play("Ganga_walk");
 
 		animator->Update(deltaTime);
 	}
