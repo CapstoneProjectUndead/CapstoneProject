@@ -1,17 +1,20 @@
 #pragma once
 class CVertex {
 public:
-	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, color{ XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) } {}
-	CVertex(XMFLOAT3 position, XMFLOAT4 color) : position{ position }, color{color} {}
+	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, color{ XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f)} {}
+	CVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal) : position{ position }, color{ color }, normal{ normal } {}
+	CVertex(XMFLOAT3 position, XMFLOAT4 color) : position{ position }, color{ color }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f) } {}
 
 	XMFLOAT3 position{};
 	XMFLOAT4 color{};
+	XMFLOAT3 normal{};
 };
 
 class CDiffuseVertex : public CVertex{
 public:
 	CDiffuseVertex();
 	CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex);
+	CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex, XMFLOAT3 normal);
 
 	XMFLOAT2 tex{};
 };
@@ -21,9 +24,8 @@ public:
 	CMatVertex() : CVertex() {}
 	CMatVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal);
 
-	XMFLOAT3 normal{};
-	XMUINT4  bone_indices;
-	XMFLOAT4 bone_weights;
+	XMUINT4  bone_indices{};
+	XMFLOAT4 bone_weights{};
 };
 
 class CBillBoardVertex {

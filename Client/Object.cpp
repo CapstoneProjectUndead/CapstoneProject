@@ -9,6 +9,11 @@ CObject::CObject()
 	XMStoreFloat4x4(&world_matrix, XMMatrixIdentity());
 }
 
+void CObject::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+	CreateConstantBuffers(device, commandList);
+}
+
 void CObject::ReleaseUploadBuffer()
 {
 	// 정점 버퍼를 위한 업로드 버퍼를 소멸시킨다.

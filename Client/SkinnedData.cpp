@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SkinnedData.h"
+#include "GeometryLoader.h"
 
 Keyframe::Keyframe()
 	: time_pos{ 0.0f },
@@ -168,4 +169,63 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 		XMMATRIX finalTransform = XMMatrixMultiply(offset, toRoot);
 		XMStoreFloat4x4(&finalTransforms[i], XMMatrixTranspose(finalTransform));
 	}
+}
+
+// animator
+void CAnimator::Initialize(const std::string& fileName)
+{
+	auto skeleton = CGeometryLoader::LoadSkeleton(fileName);
+
+	auto animData = CGeometryLoader::LoadAnimations(fileName, skeleton.bone_names.size());
+	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
+}
+
+void CAnimator::Play(const std::string& name)
+{
+	if (current_animation != name) {
+		current_animation = name;
+		current_time = 0.0f;
+	}
+}
+
+void CAnimator::Update(float deltaTime)
+{
+	if (current_animation.empty())
+		return;
+
+	current_time += deltaTime;
+
+	float start = skinned.GetClipStartTime(current_animation);
+	float end = skinned.GetClipEndTime(current_animation);
+
+	// 루프 처리
+	if (current_time > end)
+		current_time = start;
+
+	// 본 행렬 계산
+	final_transforms.resize(skinned.BoneCount());
+	skinned.GetFinalTransforms(current_animation, current_time, final_transforms);
+}
+
+void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
+{
+	SkinnedDataCB cb{};
+	if (!final_transforms.empty()) {
+		UINT boneSize = skinned.BoneCount();
+		for (UINT i = 0; i < boneSize; ++i)
+			cb.boneTransforms[i] = final_transforms[i];
+	}
+
+	UINT8* mapped = nullptr;
+	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
+	memcpy(mapped, &cb, sizeof(cb));
+	skinned_cb->Unmap(0, nullptr);
+
+	commandList->SetGraphicsRootConstantBufferView(4, skinned_cb->GetGPUVirtualAddress());
+}
+
+void CAnimator::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+	SkinnedDataCB cb{};
+	skinned_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 }
