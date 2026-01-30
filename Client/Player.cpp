@@ -14,7 +14,7 @@ CPlayer::CPlayer()
 }
 
 void CPlayer::Update(float elapsedTime)
-{    
+{
      CCharacter::Update(elapsedTime);
     
      if (!is_my_player) {

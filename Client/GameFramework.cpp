@@ -1,8 +1,11 @@
 #include "stdafx.h"
-#include "GameFramework.h"
 #include "Player.h"
 #include "KeyManager.h"
 #include "NetworkManager.h"
+
+#include "Timer.h"
+#include "Scene.h"
+#include "GameFramework.h"
 
 #include "SceneManager.h"
 #include "TestScene.h"
@@ -10,6 +13,7 @@
 extern HWND ghWnd;
 
 CGameFramework::CGameFramework()
+	: timer{ CTimer::GetInstance() }
 {
 	_tcscpy_s(frame_rate_str, _T("Undead ("));
 

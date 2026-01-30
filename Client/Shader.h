@@ -3,7 +3,10 @@
 class CObject;
 class CCamera;
 
-// pipeline 상태 객체를 생성하고 게임 오브젝트를 관리하는 클래스
+/*
+pipeline 상태 객체를 생성하고 게임 오브젝트를 관리하는 클래스
+static shader: light만 있는 기본 쉐이더
+*/
 class CShader {
 public:
 	CShader() {};
@@ -38,4 +41,13 @@ public:
 protected:
 	ComPtr<ID3D12PipelineState> pipeline_states{};
 	ComPtr<ID3D12RootSignature> graphics_root_signature{};
+};
+
+// 스키닝 정보 shader
+class CSkinningShader : public CShader
+{
+public:
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 };
