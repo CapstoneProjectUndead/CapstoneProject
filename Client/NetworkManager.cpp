@@ -21,6 +21,8 @@ void CNetworkManager::ServiceStart(std::wstring address, uint16 port)
 
     SocketHelper::Init();
 
+    jitter_measurer = std::make_unique<CJitterMeasurer>();
+
     // 서버로부터 받은 패킷을 처리하는 
     // 헬퍼 클래스를 초기화
     CServerPacketHandler::Init();

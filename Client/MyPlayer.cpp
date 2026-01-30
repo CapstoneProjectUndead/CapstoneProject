@@ -69,7 +69,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	// 3. 예측 이동
 	PredictMove(currentInput, elapsedTime);
 
-	// 4. 서버 전송 타이머
+	// 서버 전송 타이머
 	move_packet_send_timer -= elapsedTime;
 
 	// 누적 시간

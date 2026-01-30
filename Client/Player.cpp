@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Player.h"
+#include "NetworkManager.h"
 
 #undef min
 #undef max
@@ -128,7 +129,9 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
     }
 
     // 2. 타겟 서버 시간 계산 (최신 패킷 시간 기준 100ms 전 과거)
-    float interpolationDelay = 0.1f;
+    float jitter = CNetworkManager::GetInstance().GetJitterMeasurer()->GetCurrentJitter();
+
+    float interpolationDelay = std::clamp(jitter * 0.3f, 0.066f, 0.250f);
     float targetServerTime = interpolation_deq.back().serverTimestamp - interpolationDelay;
 
     // 3. 타겟 시간을 포함하는 구간(A-B) 찾기

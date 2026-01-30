@@ -8,4 +8,4 @@
 #define GET_DEVICE   gGameFramework.GetDevice().Get()
 #define GET_CMD_LIST gGameFramework.GetCommandList().Get()
 
-#define IS_CONNECT true == CNetworkManager::GetInstance().ClientService()->GetConnection()
+#define IS_CONNECT true == CNetworkManager::GetInstance().GetClientService()->GetConnection()
