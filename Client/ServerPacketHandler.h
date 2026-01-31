@@ -66,9 +66,6 @@ private:
 	template<typename PacketType, typename ProcessFunc>
 	static bool HandlePacket(ProcessFunc func, std::shared_ptr<Session> session, char* buffer, int32 len)
 	{
-		// 여기서 지터값 측정
-		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(CTimer::GetInstance().GetTimeElapsed());
-
 		PacketType* pkt = reinterpret_cast<PacketType*>(buffer);
 		return func(session, *pkt);
 	}

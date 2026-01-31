@@ -46,6 +46,7 @@
 #include <assert.h>
 #include <functional>
 #include <algorithm>
+#include <random>
 
 using std::cout;
 using std::endl;

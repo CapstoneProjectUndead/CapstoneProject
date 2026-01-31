@@ -128,10 +128,19 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
         return;
     }
 
-    // 2. 타겟 서버 시간 계산 (최신 패킷 시간 기준 100ms 전 과거)
-    float jitter = CNetworkManager::GetInstance().GetJitterMeasurer()->GetCurrentJitter();
+    // 2. 타겟 서버 시간 계산 (어댑티브 방식)
+    auto measurer = CNetworkManager::GetInstance().GetJitterMeasurer();
+    float jitter = measurer->GetCurrentJitter();
+    float avgInterval = measurer->GetAverageInterval();
 
-    float interpolationDelay = std::clamp(jitter * 0.3f, 0.066f, 0.250f);
+    // [수정된 수식]
+    // 평균적인 패킷 간격(avgInterval)만큼은 최소한 기다려야 다음 패킷이 올 때까지 버팁니다.
+    // 거기에 지터(불안정성)의 가중치를 더합니다.
+    float adaptiveDelay = (avgInterval * 1.5f) + (jitter * 5.0f);
+
+    // 클램프 범위도 상황에 맞게 조절 (최소 2틱 ~ 최대 1초)
+    float interpolationDelay = std::clamp(adaptiveDelay, 0.033f, 1.0f);
+
     float targetServerTime = interpolation_deq.back().serverTimestamp - interpolationDelay;
 
     // 3. 타겟 시간을 포함하는 구간(A-B) 찾기
@@ -160,8 +169,11 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
         // [핵심] 선형 보간으로 위치 결정
         XMFLOAT3 nextPos = Vector3::Lerp(frameA->position, frameB->position, alpha);
 
-        // 애니메이션을 위한 속도 계산 (현재 위치와 다음 보간 위치의 차이)
-        velocity = Vector3::ScalarProduct(Vector3::Subtract(nextPos, position), 1.0f / dt, false);
+        if (dt > 0.0f)
+        {
+            // 애니메이션을 위한 속도 계산 (현재 위치와 다음 보간 위치의 차이)
+            velocity = Vector3::ScalarProduct(Vector3::Subtract(nextPos, position), 1.0f / dt, false);
+        }
 
         SetPosition(nextPos);
         SetYaw(yaw); // 방향도 서버 데이터에 맞게 회전

@@ -186,5 +186,8 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		player->PushOpponentState(state);
 	}
 
+	// 여기서 S_Move 패킷의 지터값 측정
+	CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(CTimer::GetInstance().GetTimeElapsed());
+
 	return true;
 }
