@@ -28,7 +28,9 @@ struct NetObjectInfo
 	bool			d = false;
 
 	float			x, y, z;
-	float			vx, vy, vz;
+	float			vx		= 0.0f;
+	float			vy		= 0.0f;
+	float			vz		= 0.0f;
 	float			pitch	= 0.0f;
 	float			yaw		= 0.0f;
 	float			roll	= 0.0f; 

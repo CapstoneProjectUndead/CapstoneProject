@@ -107,25 +107,12 @@ void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 	if (pkt.seq_num <= mover->GetLastSequence())
 		return;
 
-	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
-
-	mover->SetLastSequence(pkt.seq_num);
-	mover->SetInput(input);
-
 	// 회전은 클라 권위 방식이기 때문에, 클라에서 받은 회전값을 적용한다.
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
 
-	// 캐릭터를 움직임
-	mover->SimulateMove(input, g_targetDT);
-
-	// 장부 기록
-	ServerFrameHistory frame{};
-	frame.input = input;
-	frame.seq_num = pkt.seq_num;
-	frame.position = mover->GetPosition();
-	frame.state = mover->GetState();
-	frame.timestamp = mover->GetTotalSimulationTime();
-
-	mover->RecordFrameHistory(frame);
+	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
+	PendingInput pInput{ input, pkt.seq_num };
+	mover->PushInput(pInput);
 }

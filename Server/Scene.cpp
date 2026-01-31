@@ -67,12 +67,6 @@ void CScene::SendPlayersResults()
 		movePkt.info.yaw = player->GetYaw();
 		movePkt.info.pitch = player->GetPitch();
 
-		// 현재 입력 상태 (굳이 보내야하는지 모르겠지만 일단 넣는다.)
-		movePkt.info.w = player->GetInput().w;
-		movePkt.info.a = player->GetInput().a;
-		movePkt.info.s = player->GetInput().s;
-		movePkt.info.d = player->GetInput().d;
-
 		movePkt.info.state = player->GetState();
 		movePkt.timestamp = player->GetTotalSimulationTime();
 

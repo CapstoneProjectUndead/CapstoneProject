@@ -94,7 +94,6 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 		inputPkt.info.a = currentInput.a;
 		inputPkt.info.s = currentInput.s;
 		inputPkt.info.d = currentInput.d;
-		inputPkt.info.state = state;
 		inputPkt.info.yaw = yaw;
 		inputPkt.info.pitch = pitch;
 		inputPkt.info.state = state;

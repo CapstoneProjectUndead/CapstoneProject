@@ -15,6 +15,9 @@ public:
 	CPlayer();
 	virtual void Update(float elapsedTime) override;
 
+	void SetState(const PLAYER_STATE _state) { state = _state; }
+	PLAYER_STATE GetState() const { return state; }
+
 	void SetDestInfo(const ObjectInfo& pos) { dest_info = pos; }
 	void PushOpponentState(const OpponentState& state) { interpolation_deq.push_back(state); }
 

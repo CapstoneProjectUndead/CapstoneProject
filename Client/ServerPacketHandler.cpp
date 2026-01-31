@@ -109,6 +109,9 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		// 다른 유저 위치 부여
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
+		// 다른 유저 상태 부여
+		otherPlayer->SetState(userList[i].info.state);
+
 		otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 		// Active Scene에 다른 유저 입장

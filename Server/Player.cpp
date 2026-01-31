@@ -5,7 +5,6 @@
 CPlayer::CPlayer()
 	: last_processed_seq(0)
 	, total_simulation_time(0.0f)
-	, current_input{}
 	, state(PLAYER_STATE::IDLE)
 {
 
@@ -20,16 +19,70 @@ void CPlayer::Update(const float elapsedTime)
 {
 	total_simulation_time += elapsedTime;
 
-    UpdateMovement(elapsedTime);
+    if (!input_queue.empty())
+    {
+        // 쌓인 패킷이 있다면, 각 패킷마다 시뮬레이션을 돌림
+        while (!input_queue.empty())
+        {
+            PendingInput pending = input_queue.front();
+            input_queue.pop_front();
+
+            // (가속 -> 속도제한 -> 이동 -> 감속)
+            SimulateMove(pending.input, elapsedTime);
+
+            // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
+            last_processed_seq = pending.seq_num;
+
+            // 매 시뮬레이션 직후 장부 기록 (패킷 하나하나의 결과 기록)
+            ServerFrameHistory frame{};
+            frame.input = pending.input;
+            frame.seq_num = last_processed_seq;
+            frame.position = position;
+            frame.state = state;
+            frame.timestamp = total_simulation_time;
+
+            RecordFrameHistory(frame);
+        }
+    }
+    else
+    {
+        // 패킷이 안 온 프레임이라면 빈 입력을 넣어 관성/마찰만 적용
+        InputData emptyInput{ false, false, false, false };
+        SimulateMove(emptyInput, elapsedTime);
+    }
 
 	// 회전 Update
 	SetYawPitch(yaw, pitch);
 	UpdateWorldMatrix();
 }
 
-void CPlayer::UpdateMovement(const float elapsedTime)
+void CPlayer::SimulateMove(const InputData& input, float dt)
 {
-    // 최대 속도 제한
+    // 1. 방향 계산 (입력이 없으면 dir은 0, 0, 0)
+    XMFLOAT3 dir{ 0.f, 0.f, 0.f };
+    if (input.w) dir.z++;
+    if (input.s) dir.z--;
+    if (input.a) dir.x--;
+    if (input.d) dir.x++;
+
+    // 2. 가속도 적용 (dir이 0이면 가속도도 0이 되어 속도에 영향을 주지 않음)
+    if (Vector3::Length(dir) > 0.0f)
+    {
+        XMFLOAT3 accel{};
+        if (dir.z > 0) accel = Vector3::Add(accel, look);
+        if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
+        if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
+        if (dir.x > 0) accel = Vector3::Add(accel, right);
+
+        velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * dt));
+        state = PLAYER_STATE::WALK;
+    }
+    else
+    {
+        state = PLAYER_STATE::IDLE;
+    }
+
+    // 3. 최대 속도 제한
     float lenXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
     if (lenXZ > max_speed) {
         float ratio = max_speed / lenXZ;
@@ -37,34 +90,15 @@ void CPlayer::UpdateMovement(const float elapsedTime)
         velocity.z *= ratio;
     }
 
-    // 이동
-    position = Vector3::Add(position, Vector3::ScalarProduct(velocity, elapsedTime));
+    // 4. 실제 위치 이동
+    position = Vector3::Add(position, Vector3::ScalarProduct(velocity, dt));
 
-    // 감속(마찰)
+    // 5. 감속(마찰) 적용
     float speedLen = Vector3::Length(velocity);
-    float decel = friction * elapsedTime;
+    float decel = friction * dt;
     if (decel > speedLen) decel = speedLen;
 
     velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
-}
-
-void CPlayer::SimulateMove(const InputData& input, float dt)
-{
-	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
-	if (input.w) dir.z++;
-	if (input.s) dir.z--;
-	if (input.a) dir.x--;
-	if (input.d) dir.x++;
-
-	// 상태 update
-	if (dir.x == 0 && dir.z == 0)
-		state = PLAYER_STATE::IDLE;
-	else
-		state = PLAYER_STATE::WALK;
-
-	if (dir.x != 0 || dir.z != 0) {
-		Move(dir, dt);
-	}
 }
 
 void CPlayer::RecordFrameHistory(const ServerFrameHistory& history)
