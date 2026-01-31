@@ -123,10 +123,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         return FALSE;
     }
 
-    gGameFramework.OnCreate();
-
     // 서버에 연결하기 위한 초기 작업
     CNetworkManager::GetInstance().ServiceStart(NET_ADDRESS, PORT_NUM);
+
+    gGameFramework.OnCreate();
 
     ShowWindow(ghWnd, nCmdShow);
     UpdateWindow(ghWnd);

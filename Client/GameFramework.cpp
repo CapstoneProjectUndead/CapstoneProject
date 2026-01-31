@@ -268,8 +268,9 @@ void CGameFramework::BuildObjects()
 	CScene* testScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
 	CSceneManager::GetInstance().SetActiveScene(testScene);
 
-	// Scene에서 생성할 오브젝트들 생성
-	if (testScene) 
+	// 서버와 연결 체크
+	// 서버와 연결되지 않았다면 Scene에서 생성할 오브젝트들 생성
+	if (testScene && !IS_CONNECT) 
 		testScene->BuildObjects(d3d_device.Get(), command_list.Get());
 
 	// 그래픽 명령 리스트 명령 큐에 추가

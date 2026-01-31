@@ -33,6 +33,7 @@ void CNetworkManager::ServiceStart(std::wstring address, uint16 port)
        1);
 
 	ASSERT_CRASH(client_service->StartClientService());
+    Tick(0);
 }
 
 void CNetworkManager::Tick(float time)
