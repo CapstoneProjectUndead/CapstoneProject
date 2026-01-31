@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Object.h"
+#include "Component.h"
 
 CObject::CObject()
 {
@@ -20,6 +21,13 @@ void CObject::ReleaseUploadBuffer()
 	// 정점 버퍼를 위한 업로드 버퍼를 소멸시킨다.
 	for(const auto& mesh : meshes)
 		mesh->ReleaseUploadBuffer();
+}
+
+void CObject::SetComponent(std::shared_ptr<CComponent> component)
+{
+	component->owner = this;
+	components.push_back(component);
+	component->Initialize();
 }
 
 void CObject::SetMesh(std::shared_ptr<CMesh>& otherMesh)
@@ -40,19 +48,6 @@ void CObject::Rotate(float pitch, float yaw, float roll)
 {
 	XMMATRIX rotateMatrix = XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll));
 	world_matrix = Matrix4x4::Multiply(rotateMatrix, world_matrix);
-}
-
-void CObject::Move(const XMFLOAT3 direction, float deltaTime)
-{
-	XMFLOAT3 accel{};
-
-	if (direction.z > 0) accel = Vector3::Add(accel, look);
-	if (direction.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
-	if (direction.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
-	if (direction.x > 0) accel = Vector3::Add(accel, right);
-
-	// 가속도 적용: velocity += accel * speed * deltaTime
-	velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
 }
 
 void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
@@ -81,6 +76,10 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 
 		commandList->SetGraphicsRootConstantBufferView(2, material_cb->GetGPUVirtualAddress());
 	}
+
+	for (auto& component : components) {
+		component->UpdateShaderVariables(commandList);
+	}
 }
 
 void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -93,6 +92,10 @@ void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 	{
 		MaterialCB cb{};
 		material_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<MaterialCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	}
+
+	for (auto& component : components) {
+		component->CreateConstantBuffers(device, commandList);
 	}
 }
 
@@ -148,28 +151,11 @@ void CObject::UpdateLookRightFromYaw()
 	);
 }
 
-void CObject::Update(float elapsedTime)
+void CObject::Update(const float elapsedTime)
 {
-	// 중력 적용
-	//velocity = Vector3::Add(velocity, Vector3::ScalarProduct(gravity, deltaTime));
-
-	// 최대 속도 제한
-	float lenXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
-	if (lenXZ > max_speed) {
-		float ratio = max_speed / lenXZ;
-		velocity.x *= ratio;
-		velocity.z *= ratio;
+	for (auto& component : components) {
+		component->Update(elapsedTime);
 	}
-
-	// 이동
-	position = Vector3::Add(position, Vector3::ScalarProduct(velocity, elapsedTime));
-
-	// 감속(마찰)
-	float speedLen = Vector3::Length(velocity);
-	float decel = friction * elapsedTime;
-	if (decel > speedLen) decel = speedLen;
-
-	velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
 }
 
 void CObject::Animate(float elapsedTime, CCamera* camera)

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "NetworkManager.h"
+#include "Movement.h"
 
 #undef min
 #undef max
@@ -36,6 +37,9 @@ void CPlayer::OpponentMoveSync(const float elapsedTime)
     XMFLOAT3 toTarget = Vector3::Subtract(serverPos, clientPos);
     float dist = Vector3::Length(toTarget);
 
+    float speed{};
+    if (auto move = GetComponent<CMovementComponent>())
+        speed = move->GetSpeed();
     const float SNAP_DIST = 3.0f * speed;
     const float ARRIVE_DIST = 0.01f * speed;
 
@@ -119,6 +123,10 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
     // [안전장치] 너무 멀리 떨어져 있으면 보간이고 뭐고 일단 순간이동 (기존 SNAP 로직)
     XMFLOAT3 latestServerPos = interpolation_deq.back().position;
     float distToLatest = Vector3::Length(Vector3::Subtract(latestServerPos, position));
+    // Movement가 없으면 speed = 0;
+    float speed{};
+    if (auto move = GetComponent<CMovementComponent>())
+        speed = move->GetSpeed();
     const float SNAP_DIST = 5.0f * speed; // 거리 기준은 프로젝트에 맞게 조절
 
     if (distToLatest > SNAP_DIST)

@@ -166,7 +166,7 @@ private:
 	std::ifstream file;
 };
 
-class AnimationClip;
+struct AnimationClip;
 
 namespace CGeometryLoader {
     // load model

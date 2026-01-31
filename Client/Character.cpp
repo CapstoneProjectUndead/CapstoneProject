@@ -2,6 +2,8 @@
 #include "Object.inl"
 #include "Mesh.h"
 #include "Character.h"
+#include "Movement.h"
+#include "Animator.h"
 
 CCharacter::CCharacter()
 	: CObject()
@@ -18,41 +20,13 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 		SetMeshFromFile<CMatVertex>(device, commandList, children);
 	}
 
-	// animator 초기화
-	animator = std::make_unique<CAnimator>();
-	animator->Initialize(fileName, std::string("../Modeling/undead_ani.bin"));
-	animator->Play("Ganga_walk");   // 초기 애니메이션
+	auto animator = std::make_shared<CAnimatorComponent>();
+	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
+	animator->Play("Ganga_walk");
+	SetComponent(animator);
+	SetShdaer("skinning");
 
-	CreateConstantBuffers(device, commandList);
-}
+	SetComponent(std::make_shared<CMovementComponent>());
 
-void CCharacter::Update(float deltaTime)
-{
-	CObject::Update(deltaTime);
-
-	if (animator) {
-		if (Vector3::Length(velocity) < 0.01f)
-			animator->Play("Ganga_idle");
-		else
-			animator->Play("Ganga_walk");
-
-		animator->Update(deltaTime);
-	}
-}
-
-void CCharacter::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
-{
-	CObject::UpdateShaderVariables(commandList);
-
-	if (animator) animator->UpdateShaderVariables(commandList);
-}
-
-void CCharacter::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
-{
 	CObject::CreateConstantBuffers(device, commandList);
-
-	if (animator) {
-		animator->CreateConstantBuffers(device, commandList);
-		SetShdaer("skinning");
-	}
 }
