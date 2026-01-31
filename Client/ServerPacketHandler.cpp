@@ -81,9 +81,10 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
+	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
+	otherPlayer->SetState(pkt.info.state);
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -112,7 +113,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		// 다른 유저 상태 부여
 		otherPlayer->SetState(userList[i].info.state);
 
-		otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
+		//otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
 		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -166,7 +167,6 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
 		otherPlayer->SetYaw(pkt.info.yaw);
 		otherPlayer->SetPitch(pkt.info.pitch);
-		otherPlayer->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
 		otherPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
 		otherPlayer->SetState(pkt.info.state);
 

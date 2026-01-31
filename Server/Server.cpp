@@ -68,20 +68,6 @@ int main()
 
         // 결과를 클라들에게 브로드캐스트
         if (ticked) {
-
-            //// 가짜 렉 시뮬레이션 (C++11 random 사용)
-            //static std::default_random_engine generator;
-            //// 0ms ~ 50ms 사이의 랜덤 지터를 발생시킴
-            //std::uniform_real_distribution<float> distribution(0.0f, 0.05f);
-            //float fakeJitter = distribution(generator);
-            //
-            //// 실제로는 별도의 큐에 담아 스레드가 지연 후 전송해야 하지만, 
-            //// 간단한 테스트를 위해 sleep을 사용하거나(비권장), 
-            //// 여기서는 개념적으로 '지연 전송'을 시뮬레이션합니다.
-            //
-            //// 테스트용: 강제로 현재 스레드를 랜덤하게 쉬게 함 (서버 성능은 떨어지지만 클라 지터 테스트엔 직빵)
-            //std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(fakeJitter * 1000)));
-
             gGameFramework->SendResults();
         }
 

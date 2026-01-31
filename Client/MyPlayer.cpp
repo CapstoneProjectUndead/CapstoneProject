@@ -182,17 +182,25 @@ void CMyPlayer::SimulateMove(const InputData& input, float dt)
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
-	// 1. 서버 좌표로 스냅
+	// 1. 서버 좌표와 현재 내 좌표의 거리 계산
+	XMFLOAT3 diff = Vector3::Subtract(serverPos, position);
+	float errorDist = Vector3::Length(diff);
+
+	// 2. 오차가 작으면 보정하지 않는다.
+	// 0.02f(2cm)는 우리 게임 상황에 맞게 조절
+	if (errorDist < 0.02f) return;
+
+	// 3. 서버 좌표로 스냅
 	SetPosition(serverPos);
 
-	// 2. 서버가 확인한 입력까지 제거 
+	// 4. 서버가 확인한 입력까지 제거 
 	while (!history_deq.empty() &&
 		history_deq.front().seq_num <= last_seq)
 	{
 		history_deq.pop_front();
 	}
 
-	// 3. 남은 미래 입력 재시뮬
+	// 5. 남은 미래 입력 재시뮬
 	for (auto& frame : history_deq) {
 		
 		SimulateMove(frame.input, frame.duration);

@@ -79,7 +79,6 @@ void CPlayer::OpponentMoveSync(const float elapsedTime)
     {
         // 3. 거의 도착 → 정확히 서버 위치로 스냅
         SetPosition(serverPos);
-        velocity = XMFLOAT3(0, 0, 0);
     }
 }
 
@@ -116,41 +115,18 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
 
 void CPlayer::OpponentMoveSyncByInterpolation(float dt)
 {
-    // 1. 최소 데이터 확인 (보간을 위해 최소 2개의 지점이 필요)
     if (interpolation_deq.size() < 2) return;
 
-    // [안전장치] 너무 멀리 떨어져 있으면 보간이고 뭐고 일단 순간이동 (기존 SNAP 로직)
-    XMFLOAT3 latestServerPos = interpolation_deq.back().position;
-    float distToLatest = Vector3::Length(Vector3::Subtract(latestServerPos, position));
-    // Movement가 없으면 speed = 0;
-    float speed{};
-    if (auto move = GetComponent<CMovementComponent>())
-        speed = move->GetSpeed();
-    const float SNAP_DIST = 5.0f * speed; // 거리 기준은 프로젝트에 맞게 조절
-
-    if (distToLatest > SNAP_DIST)
-    {
-        SetPosition(latestServerPos);
-        interpolation_deq.clear(); // 버퍼도 비워서 새로 시작하게 함
-        return;
-    }
-
-    // 2. 타겟 서버 시간 계산 (어댑티브 방식)
+    // 1. 타겟 시간 및 딜레이 계산 
     auto measurer = CNetworkManager::GetInstance().GetJitterMeasurer();
     float jitter = measurer->GetCurrentJitter();
     float avgInterval = measurer->GetAverageInterval();
 
-    // [수정된 수식]
-    // 평균적인 패킷 간격(avgInterval)만큼은 최소한 기다려야 다음 패킷이 올 때까지 버팁니다.
-    // 거기에 지터(불안정성)의 가중치를 더합니다.
     float adaptiveDelay = (avgInterval * 1.5f) + (jitter * 5.0f);
-
-    // 클램프 범위도 상황에 맞게 조절 (최소 2틱 ~ 최대 1초)
     float interpolationDelay = std::clamp(adaptiveDelay, 0.033f, 1.0f);
-
     float targetServerTime = interpolation_deq.back().serverTimestamp - interpolationDelay;
 
-    // 3. 타겟 시간을 포함하는 구간(A-B) 찾기
+    // 2. 보간 구간 찾기
     OpponentState* frameA = nullptr;
     OpponentState* frameB = nullptr;
 
@@ -165,35 +141,38 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
         }
     }
 
-    // 4. 보간 실행
+    // 3. 보간 실행
     if (frameA && frameB)
     {
         float timeDiff = frameB->serverTimestamp - frameA->serverTimestamp;
-        float alpha = 0.0f;
-        if (timeDiff > 0.0f)
-            alpha = (targetServerTime - frameA->serverTimestamp) / timeDiff;
+        float alpha = (timeDiff > 0.0f) ? (targetServerTime - frameA->serverTimestamp) / timeDiff : 0.0f;
 
-        // [핵심] 선형 보간으로 위치 결정
+        // [핵심] 다음 프레임에 가야 할 목표 위치를 먼저 계산
         XMFLOAT3 nextPos = Vector3::Lerp(frameA->position, frameB->position, alpha);
 
         if (dt > 0.0f)
         {
-            // 애니메이션을 위한 속도 계산 (현재 위치와 다음 보간 위치의 차이)
-            velocity = Vector3::ScalarProduct(Vector3::Subtract(nextPos, position), 1.0f / dt, false);
+            // 현재 position에서 nextPos로 가기 위한 '속도'를 먼저 구함
+            // 이때 position은 아직 업데이트되기 전의 "현재 위치" 이다.
+            XMFLOAT3 moveDelta = Vector3::Subtract(nextPos, position);
+            velocity = Vector3::ScalarProduct(moveDelta, 1.0f / dt, false);
+
+            // 속도가 일정 수준 이상일 때만 WALK 상태로 전환
+            float currentSpeed = Vector3::Length(velocity);
+            if (currentSpeed > 0.05f) { // 0.1이 너무 크면 0.05 정도로 낮춰볼 것
+                state = PLAYER_STATE::WALK;
+            }
+            else {
+                state = PLAYER_STATE::IDLE;
+                velocity = { 0, 0, 0 };
+            }
         }
 
+        // 속도 계산이 끝난 후에 드디어 위치를 옮김
         SetPosition(nextPos);
-        SetYaw(yaw); // 방향도 서버 데이터에 맞게 회전
-    }
-    else if (targetServerTime > interpolation_deq.back().serverTimestamp)
-    {
-        // 만약 타겟 시간이 최신 패킷보다 더 미래라면 (네트워크 지연으로 데이터 부족)
-        // 마지막 알려진 서버 위치로 부드럽게 멈춤 (기존 로직의 도착 스냅과 유사)
-        SetPosition(latestServerPos);
-        velocity = { 0, 0, 0 };
     }
 
-    // 5. 너무 오래된 장부 정리
+    // 4. 장부 정리
     while (interpolation_deq.size() > 2 && interpolation_deq[1].serverTimestamp < targetServerTime)
     {
         interpolation_deq.pop_front();
