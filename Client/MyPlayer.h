@@ -19,6 +19,7 @@ public:
     ~CMyPlayer() {};
 
     virtual void Update(float elapsedTime) override;
+    inline void PreUpdate(float elapsedTime);
 
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }
     std::shared_ptr<Session> GetSession() const { return session.lock(); }
@@ -26,6 +27,7 @@ public:
 
     // 클라이언트 예측을 서버 기준에 맞게 다시 보정하는 코드
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
+    void SimulateMove(const InputData& input, float dt);
 
 private:
     void ProcessRotation();

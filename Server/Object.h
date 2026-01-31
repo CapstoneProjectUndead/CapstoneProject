@@ -17,7 +17,6 @@ public:
 
     void                                Move(const XMFLOAT3& direction, float elapsedTime);
     void                                Move(const XMFLOAT3& shift);
-    void                                Move(float elapsedTime);
     void                                Rotate(float pitch, float yaw, float roll);
 
     int                                 GetID() const { return obj_id; }

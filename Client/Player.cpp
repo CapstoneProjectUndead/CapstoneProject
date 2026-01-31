@@ -21,7 +21,6 @@ void CPlayer::Update(float elapsedTime)
      if (!is_my_player) {
 
          // 상대 위치 동기화
-         //OpponentMoveSync(elapsedTime);
          OpponentMoveSyncByInterpolation(elapsedTime);
 
          // 회전 동기화 (Yaw / Pitch)

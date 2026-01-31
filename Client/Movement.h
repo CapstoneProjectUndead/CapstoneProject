@@ -19,6 +19,10 @@ public:
 
 	void SetSpeed(const float otherSpeed) { speed = otherSpeed; }
 	float GetSpeed() const { return speed; }
+
+	// 서버에서 받은 결과를 바탕으로 재시뮬
+	void Simulate(const XMFLOAT3& dir, float dt);
+
 private:
 	float speed{ 10.0f };
 	float max_speed{ 30.0f };

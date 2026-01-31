@@ -17,8 +17,12 @@ CMyPlayer::CMyPlayer()
 
 void CMyPlayer::Update(float elapsedTime)
 {
+	PreUpdate(elapsedTime);
 	CPlayer::Update(elapsedTime);
+}
 
+void CMyPlayer::PreUpdate(float elapsedTime)
+{
 	ServerAuthorityMove(elapsedTime);
 }
 
@@ -157,6 +161,26 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 	}
 }
 
+void CMyPlayer::SimulateMove(const InputData& input, float dt)
+{
+	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
+	if (input.w) dir.z++;
+	if (input.s) dir.z--;
+	if (input.a) dir.x--;
+	if (input.d) dir.x++;
+
+	// 상태 update
+	if (dir.x == 0 && dir.z == 0)
+		state = PLAYER_STATE::IDLE;
+	else
+		state = PLAYER_STATE::WALK;
+
+	if (dir.x != 0 || dir.z != 0) {
+		if (auto move = GetComponent<CMovementComponent>())
+			move->Simulate(dir, dt);
+	}
+}
+
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
 	// 1. 서버 좌표로 스냅
@@ -172,7 +196,7 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	// 3. 남은 미래 입력 재시뮬
 	for (auto& frame : history_deq) {
 		
-		PredictMove(frame.input, frame.duration);
+		SimulateMove(frame.input, frame.duration);
 
 		// 장부 위치 갱신
 		frame.predictedPos = position;

@@ -20,9 +20,32 @@ void CPlayer::Update(const float elapsedTime)
 {
 	total_simulation_time += elapsedTime;
 
+    UpdateMovement(elapsedTime);
+
 	// 회전 Update
 	SetYawPitch(yaw, pitch);
 	UpdateWorldMatrix();
+}
+
+void CPlayer::UpdateMovement(const float elapsedTime)
+{
+    // 최대 속도 제한
+    float lenXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
+    if (lenXZ > max_speed) {
+        float ratio = max_speed / lenXZ;
+        velocity.x *= ratio;
+        velocity.z *= ratio;
+    }
+
+    // 이동
+    position = Vector3::Add(position, Vector3::ScalarProduct(velocity, elapsedTime));
+
+    // 감속(마찰)
+    float speedLen = Vector3::Length(velocity);
+    float decel = friction * elapsedTime;
+    if (decel > speedLen) decel = speedLen;
+
+    velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
 }
 
 void CPlayer::SimulateMove(const InputData& input, float dt)

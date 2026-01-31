@@ -32,6 +32,7 @@ void CObject::Update(const float elapsedTime)
 
 void CObject::Move(const XMFLOAT3& direction, float elapsedTime)
 {
+	// 1. 입력 → 가속도
 	XMFLOAT3 accel{};
 
 	if (direction.z > 0) accel = Vector3::Add(accel, look);
@@ -39,23 +40,10 @@ void CObject::Move(const XMFLOAT3& direction, float elapsedTime)
 	if (direction.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
 	if (direction.x > 0) accel = Vector3::Add(accel, right);
 
-	// 가속도 적용: velocity += accel * speed * deltaTime
+	// 2. 가속 적용
 	velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * elapsedTime));
 
-	Move(elapsedTime);
-}
-
-void CObject::Move(const XMFLOAT3& shift)
-{
-	position = Vector3::Add(position, shift);
-}
-
-void CObject::Move(float elapsedTime)
-{
-	// 중력 적용
-	//velocity = Vector3::Add(velocity, Vector3::ScalarProduct(gravity, deltaTime));
-
-	// 최대 속도 제한
+	// 3. 최대 속도 제한
 	float lenXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
 	if (lenXZ > max_speed) {
 		float ratio = max_speed / lenXZ;
@@ -63,15 +51,20 @@ void CObject::Move(float elapsedTime)
 		velocity.z *= ratio;
 	}
 
-	// 이동
+	// 4. 이동
 	position = Vector3::Add(position, Vector3::ScalarProduct(velocity, elapsedTime));
 
-	// 감속(마찰)
+	// 5. 감속 (마찰)
 	float speedLen = Vector3::Length(velocity);
 	float decel = friction * elapsedTime;
 	if (decel > speedLen) decel = speedLen;
 
 	velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
+}
+
+void CObject::Move(const XMFLOAT3& shift)
+{
+	position = Vector3::Add(position, shift);
 }
 
 void CObject::Rotate(float pitch, float yaw, float roll)
