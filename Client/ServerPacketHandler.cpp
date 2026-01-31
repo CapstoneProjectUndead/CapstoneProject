@@ -163,30 +163,30 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		if (idx >= vec.size())
 			return false;
 
-		auto player = std::static_pointer_cast<CPlayer>(vec[idx]);
-
-		InputData input{};
-		input.a = pkt.info.a;
-		input.w = pkt.info.w;
-		input.d = pkt.info.d;
-		input.s = pkt.info.s;
-
-		ObjectInfo info;
-		info.input = input;
-		info.state = pkt.info.state;
-		info.x = pkt.info.x;
-		info.y = pkt.info.y;
-		info.z = pkt.info.z;
-		info.yaw = pkt.info.yaw;
-		info.pitch = pkt.info.pitch;
-		info.roll = pkt.info.roll;
-
-		player->SetDestInfo(info);
+		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
+		otherPlayer->SetYaw(pkt.info.yaw);
+		otherPlayer->SetPitch(pkt.info.pitch);
+		otherPlayer->SetPosition(pkt.info.x, pkt.info.y, pkt.info.z);
+		otherPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
+		otherPlayer->SetState(pkt.info.state);
 
 		OpponentState state{};
 		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
 		state.serverTimestamp = pkt.timestamp;
-		player->PushOpponentState(state);
+		otherPlayer->PushOpponentState(state);
+
+		// 이 코드는 일단 유지...
+		{
+			ObjectInfo info;
+			info.state = pkt.info.state;
+			info.x = pkt.info.x;
+			info.y = pkt.info.y;
+			info.z = pkt.info.z;
+			info.yaw = pkt.info.yaw;
+			info.pitch = pkt.info.pitch;
+			info.roll = pkt.info.roll;
+			otherPlayer->SetDestInfo(info);
+		}
 	}
 
 	// 여기서 S_Move 패킷의 지터값 측정
