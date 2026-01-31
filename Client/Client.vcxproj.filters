@@ -46,6 +46,9 @@
     <Filter Include="Object\MyPlayer">
       <UniqueIdentifier>{e06fed7c-dc95-44c6-a868-e3b3c408ece7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{45504bc4-4e5b-4261-8657-a5cd235e8939}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -144,14 +147,23 @@
     <ClInclude Include="LightManager.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="SkinnedData.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Character.h">
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="JitterMeasurer.h">
       <Filter>Network\NetworkManager</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedData.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Movement.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Animator.h">
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -221,14 +233,20 @@
     <ClCompile Include="LightManager.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="SkinnedData.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Character.cpp">
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="JitterMeasurer.cpp">
       <Filter>Network\NetworkManager</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedData.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Movement.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Animator.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

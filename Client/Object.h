@@ -1,5 +1,6 @@
 #pragma once
 
+class CComponent;
 class CShader;
 class CCamera;
 class CMesh;
@@ -36,6 +37,7 @@ public:
 	void ReleaseUploadBuffer();
 	virtual void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 
+	void SetComponent(std::shared_ptr<CComponent> component);
 	void SetMesh(std::shared_ptr<CMesh>& otherMesh);
 	void SetTexture(CTexture* );
 	CTexture* GetTexture() const { return texture.get(); }
@@ -44,11 +46,12 @@ public:
 	// LoadFrame 정보 Set, T: Vertex type
 	template<typename T>
 	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+	template<typename T>
+	T* GetComponent();
 
 	virtual void Animate(float, CCamera*);
-	virtual void Update(float);
+	virtual void Update(const float);
 	virtual void Rotate(float pitch, float yaw, float roll);
-	virtual void Move(const XMFLOAT3 direction, float deltaTime);
 
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -66,8 +69,6 @@ public:
 
 	int  GetID() const { return obj_id; }
 	void SetID(const int id) { obj_id = id; }
-
-	void SetSpeed(float otherSpeed) { speed = otherSpeed; }
 	//=================================
 	// 회전 함수 (테스트)
 	void SetYaw(float _yaw);
@@ -85,6 +86,9 @@ public:
 	XMFLOAT3& look = *(XMFLOAT3*)&world_matrix._31;
 	XMFLOAT3& position = *(XMFLOAT3*)&world_matrix._41;
 
+	// component
+	friend class CMovementComponent;
+	friend class CAnimatorComponent;
 protected:
 	int obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 
@@ -96,16 +100,25 @@ protected:
 	ComPtr<ID3D12Resource> object_cb;
 	ComPtr<ID3D12Resource> material_cb;
 
+	XMFLOAT3 velocity{};
+	std::vector<std::shared_ptr<CComponent>> components;
+
 	bool is_visible{ true };
 	BoundingOrientedBox oobb;
-
-	float speed{ 10.0f };
-	float max_speed{ 30.0f };
-	XMFLOAT3 velocity{};
-	float friction{ 8.0f };
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;
 	float		pitch = 0.f;
 };
+
+template<typename T>
+T* CObject::GetComponent()
+{
+	for (auto& comp : components)
+	{
+		if (T* casted = dynamic_cast<T*>(comp.get()))
+			return casted;
+	}
+	return nullptr;
+}

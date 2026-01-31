@@ -4,6 +4,7 @@
 #include "KeyManager.h"
 #include "ServerPacketHandler.h"
 #include "NetworkManager.h"
+#include "Movement.h"
 
 #undef min
 #undef max
@@ -31,7 +32,8 @@ void CMyPlayer::ProcessInput()
 	if (KEY_PRESSED(KEY::D)) direction.x++;
 
 	if (direction.x != 0 || direction.z != 0) {
-		Move(direction, CTimer::GetInstance().GetTimeElapsed());
+		if (auto move = GetComponent<CMovementComponent>())
+			move->Move(direction, CTimer::GetInstance().GetTimeElapsed());
 	}
 
 	CKeyManager& keyManager{ CKeyManager::GetInstance() };
@@ -150,7 +152,8 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 		state = PLAYER_STATE::WALK;
 
 	if (dir.x != 0 || dir.z != 0) {
-		Move(dir, dt);
+		if (auto move = GetComponent<CMovementComponent>())
+			move->Move(dir, dt);
 	}
 }
 

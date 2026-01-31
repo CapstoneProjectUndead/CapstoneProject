@@ -16,8 +16,11 @@ CTestScene::~CTestScene()
 
 void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	Material m{};
+	m.albedo = XMFLOAT4{ 1.0f, 0.5f, 0.5f, 1.0f };
 	// 플레이어 생성
 	my_player = std::make_shared<CMyPlayer>();
+	my_player->SetMaterial(m);
 	my_player->Initialize(device, commandList);
 	
 	{
@@ -37,6 +40,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	{
 		auto obj = std::make_shared<CCharacter>();
 		obj->Initialize(device, commandList);
+		obj->SetMaterial(m);
 		objects.push_back(std::move(obj));
 	
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
