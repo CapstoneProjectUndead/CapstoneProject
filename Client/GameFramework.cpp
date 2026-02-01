@@ -365,6 +365,9 @@ void CGameFramework::Update()
 {
 	timer.Tick(0.0f);
 
+	// 게임 시작 이후 지금까지 흐른 클라이언트 총 시간 누적
+	g_client_total_time += timer.GetTimeElapsed();
+
 	// 키 입력 처리
 	CKeyManager::GetInstance().Tick();
 

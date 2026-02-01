@@ -39,13 +39,12 @@ public:
 
     float GetClientNow()
     {
-        return CTimer::GetInstance().GetTimeElapsed();
+        return g_client_total_time;
     }
 
     float GetServerNow()
     {
-        server_time = GetClientNow() + clock_offset;
-        return server_time;
+        return GetClientNow() + clock_offset;
     }
 
     inline float Lerp(float a, float b, float t)
@@ -54,6 +53,5 @@ public:
     }
 
 private:
-    float clock_offset = 0.0f;
-    float server_time = 0.0f;
+    double clock_offset = 0.0f;
 };

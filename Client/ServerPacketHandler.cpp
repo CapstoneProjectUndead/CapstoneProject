@@ -25,12 +25,17 @@ bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 
 bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt)
 {
+	C_Pong pongPkt;
+	pongPkt.server_send_time = pkt.server_send_time; // 서버가 보낸 시간 그대로 복사
+	auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Pong>(pongPkt);
+	session->DoSend(sendBuffer);
+
 	return true;
 }
 
 bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt)
 {
-	float now = CTimer::GetInstance().GetTimeElapsed();
+	float now = CNetworkClockManager::GetInstance().GetClientNow();
 	CNetworkClockManager::GetInstance().UpdateClockSync(pkt.clientTime, pkt.serverTime, now);
 	return true;
 }

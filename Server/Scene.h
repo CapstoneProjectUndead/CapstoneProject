@@ -23,6 +23,7 @@ public:
 
 	void SendResults();
 	void SendPlayersResults();
+	void SendPlayersCheckPing();
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
@@ -53,5 +54,6 @@ protected:
 
 private:
 	SCENE_TYPE							scene_type;
+	float								dt_ping_accumulator;
 };
 

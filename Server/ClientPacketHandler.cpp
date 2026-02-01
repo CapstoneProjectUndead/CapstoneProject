@@ -30,6 +30,16 @@ bool Handle_C_PING(shared_ptr<Session> session, C_Ping& pkt)
 
 bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 {
+	auto player = CAST_CS(session)->GetPlayer();
+	if (!player) 
+		return true;
+
+	// 현재 시간 - 패킷에 담겨 돌아온 '보냈던 시간'
+	float rtt = g_server_total_time - pkt.server_send_time;
+
+	// 너무 튀는 값 방지를 위한 보정 (Moving Average)
+	player->UpdatePing(rtt);
+
 	return true;
 }
 

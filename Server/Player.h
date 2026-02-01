@@ -48,9 +48,21 @@ public:
 
 	float GetTotalSimulationTime() const { return total_simulation_time; }
 
+	// 클라의 핑 측정
+	void  SendPing();
+	float GetLastPingSendTime() const { return dt_ping_accumulator; };
+	void  SetLastPingSendTime(float elapsedTime) { dt_ping_accumulator = elapsedTime; };
+	void  UpdatePing(float newRtt)
+	{
+		// 급격한 변화를 막기 위해 기존 값과 섞음 (보통 9:1 비율)
+		ping = (ping * 0.9f) + (newRtt * 0.1f);
+	}
+
 private:
 	uint64						last_processed_seq;
 	float						total_simulation_time;
+	float						ping;
+	float						dt_ping_accumulator;
 	PLAYER_STATE				state;
 	deque<PendingInput>			input_queue;
 	deque<ServerFrameHistory>	history_deq;

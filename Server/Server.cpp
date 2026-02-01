@@ -30,7 +30,7 @@ int main()
     shared_ptr<TcpServerService> serverService = std::make_shared<TcpServerService>(
         NetAddress(L"127.0.0.1", PORT_NUM),
         []() -> shared_ptr<Session> { return make_shared<CClientSession>(); },
-        5);
+        20);
 
     ASSERT_CRASH(serverService->StartServer());
 

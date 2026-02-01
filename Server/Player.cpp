@@ -5,6 +5,8 @@
 CPlayer::CPlayer()
 	: last_processed_seq(0)
 	, total_simulation_time(0.0f)
+    , ping(0.0f)
+    , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
 {
 
@@ -160,4 +162,15 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
     outResult.seq_num = frameA.seq_num;
 
     return true;
+}
+
+void CPlayer::SendPing()
+{
+    S_Ping pingPkt;
+    pingPkt.server_send_time = g_server_total_time; // 현재 서버 누적 시간
+
+    if (session.lock()) {
+        auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Ping>(pingPkt);
+        session.lock()->DoSend(sendBuffer);
+    }
 }

@@ -6,6 +6,7 @@
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
+	, dt_ping_accumulator(0.0f)
 {
 
 }
@@ -43,6 +44,7 @@ void CScene::HandlePackets()
 void CScene::SendResults()
 {
 	SendPlayersResults();
+	SendPlayersCheckPing();
 }
 
 void CScene::SendPlayersResults()
@@ -82,6 +84,22 @@ void CScene::SendPlayersResults()
 		for (auto& pl : players) {
 			if (pl.second->GetID() == player->GetID()) continue;
 			pl.second->GetSession()->DoSend(sendBuffer);
+		}
+	}
+}
+
+void CScene::SendPlayersCheckPing()
+{
+	float now = g_server_total_time;
+
+	lock_guard<mutex> lg(players_lock);
+	for (auto& [id, player] : players) {
+		if (now - player->GetLastPingSendTime() > 1.0f) {
+			auto session = player->GetSession();
+			if (session) {
+				player->SendPing();
+				player->SetLastPingSendTime(now);
+			}
 		}
 	}
 }

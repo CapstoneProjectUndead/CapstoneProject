@@ -23,6 +23,8 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+float g_client_total_time = 0.0f;
+
 HWND ghWnd;
 CGameFramework gGameFramework;
 

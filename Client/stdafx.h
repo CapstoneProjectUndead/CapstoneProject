@@ -72,6 +72,8 @@ using Microsoft::WRL::ComPtr;
 #include <struct.h>
 #include <protocol.h>
 
+extern float g_client_total_time;
+
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
 
