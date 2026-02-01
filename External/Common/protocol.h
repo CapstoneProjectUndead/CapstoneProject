@@ -14,24 +14,53 @@ constexpr int CHAT_SIZE = 100;
 // Packet ID
 enum PacketType : uint16_t
 {
-	_C_SIGNUP = 0,
-	_S_SIGNRES = 1,
-	_C_LOGIN = 2,
-	_S_LOGIN = 3,
-	_S_LOGIN_FAIL = 4,
-	_S_SPAWNPLAYER = 5,
-	_S_ADDPLAYER = 6,
-	_S_PLAYERLIST = 7,
-	_S_REMOVEPLAYER = 8,
-	_C_PLAYER_INPUT = 9,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 10,
-
-	// 서버 권한 + 클라 예측 (테스트)
+	_S_PING = 0,
+	_C_PONG = 1,
+	_C_PING = 2,
+	_S_PONG = 3,
+	_C_SIGNUP = 4,
+	_S_SIGNRES = 5,
+	_C_LOGIN = 6,
+	_S_LOGIN = 7,
+	_S_LOGIN_FAIL = 8,
+	_S_SPAWNPLAYER = 9,
+	_S_ADDPLAYER = 10,
+	_S_PLAYERLIST = 11,
+	_S_REMOVEPLAYER = 12,
+	_C_PLAYER_INPUT = 13,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 14,
 };
 
 #pragma pack (push, 1)
 #include <packet_struct.h>
 static_assert(sizeof(PacketHeader) == 4, "PacketHeader size mismatch!");
+
+//=============
+// 서버 RTT 측정
+struct S_Ping
+{
+	float server_send_time;
+};
+
+struct C_Pong
+{
+	float server_send_time; // 그대로 반사
+};
+//=============
+
+//=============================
+// 클라 clock sync (시간 맞추기)
+struct C_Ping
+{
+	float clientTime;
+};
+
+struct S_Pong
+{
+	float clientTime; // 그대로 반사
+	float serverTime; // 서버가 찍은 시간
+};
+//=============================
 
 struct C_LOGIN : public PacketHeader
 {

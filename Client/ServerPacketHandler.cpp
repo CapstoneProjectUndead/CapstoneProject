@@ -22,6 +22,16 @@ bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 	return false;
 }
 
+bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt)
+{
+	return true;
+}
+
+bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt)
+{
+	return true;
+}
+
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
 

@@ -16,6 +16,16 @@ bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len)
 	return false;
 }
 
+bool Handle_C_PING(shared_ptr<Session> session, C_Ping& pkt)
+{
+	return true;
+}
+
+bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
+{
+	return true;
+}
+
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
