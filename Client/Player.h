@@ -14,6 +14,7 @@ class CPlayer : public CCharacter {
 public:
 	CPlayer();
 	virtual void Update(float elapsedTime) override;
+	void PreUpdate(float elapsedTime);
 
 	void SetState(const PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
@@ -24,9 +25,7 @@ public:
 private:
 	void OpponentMoveSync(const float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
-
-	// 
-	void OpponentMoveSyncByInterpolation(float dt);
+	void OpponentMoveSyncByInterpolation(float elapsedTime);
 
 protected:
 	float friction{ 125.0f };

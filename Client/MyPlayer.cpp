@@ -18,6 +18,7 @@ CMyPlayer::CMyPlayer()
 void CMyPlayer::Update(float elapsedTime)
 {
 	PreUpdate(elapsedTime);
+
 	CPlayer::Update(elapsedTime);
 }
 
@@ -85,22 +86,9 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	{
 		move_packet_send_timer += move_packet_send_delay;
 
-		// 패킷 생성
+		// 패킷 생성 & 서버 전송
 		C_Input inputPkt{};
-		inputPkt.seq_num = ++client_seq_counter;
-
-		inputPkt.info.id = obj_id;
-		inputPkt.info.w = currentInput.w;
-		inputPkt.info.a = currentInput.a;
-		inputPkt.info.s = currentInput.s;
-		inputPkt.info.d = currentInput.d;
-		inputPkt.info.yaw = yaw;
-		inputPkt.info.pitch = pitch;
-		inputPkt.info.state = state;
-
-		// 서버 전송
-		if (auto s = session.lock())
-			s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
+		SendInputPacket(inputPkt, currentInput);
 
 		// 4. 장부 기록
 		history_deq.push_back({
@@ -160,6 +148,23 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 	}
 }
 
+void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
+{
+	inputPkt.seq_num = ++client_seq_counter;
+	inputPkt.info.id = obj_id;
+	inputPkt.info.w = input.w;
+	inputPkt.info.a = input.a;
+	inputPkt.info.s = input.s;
+	inputPkt.info.d = input.d;
+	inputPkt.info.yaw = yaw;
+	inputPkt.info.pitch = pitch;
+	inputPkt.info.state = state;
+
+	// 서버 전송
+	if (auto s = session.lock())
+		s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
+}
+
 void CMyPlayer::SimulateMove(const InputData& input, float dt)
 {
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
@@ -187,8 +192,8 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	float errorDist = Vector3::Length(diff);
 
 	// 2. 오차가 작으면 보정하지 않는다.
-	// 0.02f(2cm)는 우리 게임 상황에 맞게 조절
-	if (errorDist < 0.02f) return;
+	// 0.01f(1cm)는 우리 게임 상황에 맞게 조절
+	if (errorDist < 0.01f) return;
 
 	// 3. 서버 좌표로 스냅
 	SetPosition(serverPos);

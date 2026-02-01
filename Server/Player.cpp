@@ -56,7 +56,7 @@ void CPlayer::Update(const float elapsedTime)
 	UpdateWorldMatrix();
 }
 
-void CPlayer::SimulateMove(const InputData& input, float dt)
+void CPlayer::SimulateMove(const InputData& input, float deltaTime)
 {
     // 1. 방향 계산 (입력이 없으면 dir은 0, 0, 0)
     XMFLOAT3 dir{ 0.f, 0.f, 0.f };
@@ -69,12 +69,15 @@ void CPlayer::SimulateMove(const InputData& input, float dt)
     if (Vector3::Length(dir) > 0.0f)
     {
         XMFLOAT3 accel{};
+
         if (dir.z > 0) accel = Vector3::Add(accel, look);
         if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
         if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
         if (dir.x > 0) accel = Vector3::Add(accel, right);
 
-        velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * dt));
+        // 가속도 적용: velocity += accel * speed * deltaTime
+        velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
+
         state = PLAYER_STATE::WALK;
     }
     else
@@ -91,11 +94,11 @@ void CPlayer::SimulateMove(const InputData& input, float dt)
     }
 
     // 4. 실제 위치 이동
-    position = Vector3::Add(position, Vector3::ScalarProduct(velocity, dt));
+    position = Vector3::Add(position, Vector3::ScalarProduct(velocity, deltaTime));
 
     // 5. 감속(마찰) 적용
     float speedLen = Vector3::Length(velocity);
-    float decel = friction * dt;
+    float decel = friction * deltaTime;
     if (decel > speedLen) decel = speedLen;
 
     velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
@@ -109,6 +112,7 @@ void CPlayer::RecordFrameHistory(const ServerFrameHistory& history)
 		history_deq.pop_front();
 }
 
+// 나중에 유저간의 충돌 처리를 할 경우 사용될 함수.
 bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 {
     if (history_deq.empty()) return false;

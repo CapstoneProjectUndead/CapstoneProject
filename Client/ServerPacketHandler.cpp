@@ -9,6 +9,7 @@
 #include "GeometryLoader.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Movement.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -32,10 +33,10 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
+	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	Material m{};
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
@@ -85,6 +86,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	otherPlayer->SetID(pkt.info.id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->SetState(pkt.info.state);
+	otherPlayer->GetComponent<CMovementComponent>()->SetSimulationActive(false);
 
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -112,6 +114,8 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		// 다른 유저 상태 부여
 		otherPlayer->SetState(userList[i].info.state);
+
+		otherPlayer->GetComponent<CMovementComponent>()->SetSimulationActive(false);
 
 		//otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
 
@@ -167,7 +171,6 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
 		otherPlayer->SetYaw(pkt.info.yaw);
 		otherPlayer->SetPitch(pkt.info.pitch);
-		otherPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
 		otherPlayer->SetState(pkt.info.state);
 
 		OpponentState state{};

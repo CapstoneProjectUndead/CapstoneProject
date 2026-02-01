@@ -31,7 +31,7 @@ public:
 	~CPlayer();
 
 	void Update(const float elapsedTime) override;
-	void SimulateMove(const InputData& input, float dt);
+	void SimulateMove(const InputData& input, float deltaTime);
 
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }

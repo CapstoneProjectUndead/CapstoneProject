@@ -38,6 +38,8 @@ private:
     void CaptureInput(InputData& currentInput);
     void PredictMove(const InputData& input, float dt);
 
+    void SendInputPacket(C_Input& inputPkt, const InputData& input);
+
 private:
     std::weak_ptr<Session> session;
 

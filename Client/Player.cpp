@@ -16,16 +16,21 @@ CPlayer::CPlayer()
 
 void CPlayer::Update(float elapsedTime)
 {
-     CCharacter::Update(elapsedTime);
-    
-     if (!is_my_player) {
+    PreUpdate(elapsedTime);
 
-         // 상대 위치 동기화
-         OpponentMoveSyncByInterpolation(elapsedTime);
+    CCharacter::Update(elapsedTime);
+}
 
-         // 회전 동기화 (Yaw / Pitch)
-         OpponentRotateSync(elapsedTime);
-     }
+void CPlayer::PreUpdate(float elapsedTime)
+{
+    if (!is_my_player) {
+
+        // 상대 위치 동기화
+        OpponentMoveSyncByInterpolation(elapsedTime);
+
+        // 회전 동기화 (Yaw / Pitch)
+        OpponentRotateSync(elapsedTime);
+    }
 }
 
 void CPlayer::OpponentMoveSync(const float elapsedTime)
@@ -113,7 +118,7 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     UpdateWorldMatrix();
 }
 
-void CPlayer::OpponentMoveSyncByInterpolation(float dt)
+void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
 {
     if (interpolation_deq.size() < 2) return;
 
@@ -147,19 +152,30 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
         float timeDiff = frameB->serverTimestamp - frameA->serverTimestamp;
         float alpha = (timeDiff > 0.0f) ? (targetServerTime - frameA->serverTimestamp) / timeDiff : 0.0f;
 
-        // [핵심] 다음 프레임에 가야 할 목표 위치를 먼저 계산
+        // [핵심] 다음 프레임에 가야 할 목표 위치
         XMFLOAT3 nextPos = Vector3::Lerp(frameA->position, frameB->position, alpha);
 
-        if (dt > 0.0f)
-        {
-            // 현재 position에서 nextPos로 가기 위한 '속도'를 먼저 구함
-            // 이때 position은 아직 업데이트되기 전의 "현재 위치" 이다.
-            XMFLOAT3 moveDelta = Vector3::Subtract(nextPos, position);
-            velocity = Vector3::ScalarProduct(moveDelta, 1.0f / dt, false);
+        // [추가된 검증 로직] 
+        // Frame A와 Frame B 사이의 거리가 너무 작으면(사실상 제자리), 
+        // 아예 속도 계산을 하지 않고 강제로 정지시킵니다.
+        float intervalDist = Vector3::Length(Vector3::Subtract(frameB->position, frameA->position));
 
-            // 속도가 일정 수준 이상일 때만 WALK 상태로 전환
+        // 0.01f = 1cm. 두 패킷 사이의 거리가 1cm 미만이면 멈춘 것으로 간주
+        if (intervalDist < 0.01f)
+        {
+            state = PLAYER_STATE::IDLE;
+            velocity = { 0, 0, 0 };
+        }
+        else if (elapsedTime > 0.0f)
+        {
+            // 움직임이 확실할 때만 정밀 속도 계산 수행
+            XMFLOAT3 moveDelta = Vector3::Subtract(nextPos, position);
+            velocity = Vector3::ScalarProduct(moveDelta, 1.0f / elapsedTime, false);
+
             float currentSpeed = Vector3::Length(velocity);
-            if (currentSpeed > 0.05f) { // 0.1이 너무 크면 0.05 정도로 낮춰볼 것
+
+            // 임계값을 0.05보다 약간 여유 있게 0.1로 올리거나 유지
+            if (currentSpeed > 0.05f) {
                 state = PLAYER_STATE::WALK;
             }
             else {
@@ -169,7 +185,7 @@ void CPlayer::OpponentMoveSyncByInterpolation(float dt)
         }
 
         // 속도 계산이 끝난 후에 드디어 위치를 옮김
-        SetPosition(nextPos);
+        //SetPosition(nextPos);
     }
 
     // 4. 장부 정리
