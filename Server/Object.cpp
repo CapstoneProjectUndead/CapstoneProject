@@ -30,43 +30,6 @@ void CObject::Update(const float elapsedTime)
 
 }
 
-void CObject::Move(const XMFLOAT3& direction, float elapsedTime)
-{
-	// 1. 입력 → 가속도
-	XMFLOAT3 accel{};
-
-	if (direction.z > 0) accel = Vector3::Add(accel, look);
-	if (direction.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
-	if (direction.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
-	if (direction.x > 0) accel = Vector3::Add(accel, right);
-
-	// 2. 가속 적용
-	velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * elapsedTime));
-
-	// 3. 최대 속도 제한
-	float lenXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
-	if (lenXZ > max_speed) {
-		float ratio = max_speed / lenXZ;
-		velocity.x *= ratio;
-		velocity.z *= ratio;
-	}
-
-	// 4. 이동
-	position = Vector3::Add(position, Vector3::ScalarProduct(velocity, elapsedTime));
-
-	// 5. 감속 (마찰)
-	float speedLen = Vector3::Length(velocity);
-	float decel = friction * elapsedTime;
-	if (decel > speedLen) decel = speedLen;
-
-	velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
-}
-
-void CObject::Move(const XMFLOAT3& shift)
-{
-	position = Vector3::Add(position, shift);
-}
-
 void CObject::Rotate(float pitch, float yaw, float roll)
 {
     XMMATRIX rotateMatrix = XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll));

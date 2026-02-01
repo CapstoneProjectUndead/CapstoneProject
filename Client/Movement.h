@@ -22,10 +22,8 @@ public:
 
 	// 서버에서 받은 결과를 바탕으로 재시뮬
 	void Simulate(const XMFLOAT3& dir, float dt);
-	void SetSimulationActive(bool active) { is_simulated = active; }
 
 private:
-	bool  is_simulated = true;
 	float speed{ 10.0f };
 	float max_speed{ 30.0f };
 	float friction{ 8.0f };

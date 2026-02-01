@@ -15,8 +15,6 @@ public:
 public:
     static shared_ptr<CPlayer>          CreatePlayer();
 
-    void                                Move(const XMFLOAT3& direction, float elapsedTime);
-    void                                Move(const XMFLOAT3& shift);
     void                                Rotate(float pitch, float yaw, float roll);
 
     int                                 GetID() const { return obj_id; }

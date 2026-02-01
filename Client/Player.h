@@ -23,9 +23,8 @@ public:
 	void PushOpponentState(const OpponentState& state) { interpolation_deq.push_back(state); }
 
 private:
-	void OpponentMoveSync(const float elapsedTime);
-	void OpponentRotateSync(float elapsedTime);
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
+	void OpponentRotateSync(float elapsedTime);
 
 protected:
 	float friction{ 125.0f };
