@@ -5,6 +5,7 @@
 #include "ServerPacketHandler.h"
 #include "NetworkManager.h"
 #include "Movement.h"
+#include "NetworkClockManager.h"
 
 #undef min
 #undef max
@@ -17,6 +18,10 @@ CMyPlayer::CMyPlayer()
 
 void CMyPlayer::Update(float elapsedTime)
 {
+	// 1초 주기로 서버와 Ping-Pong
+	// 서버와 시간대를 맞추기 위한 작업
+	SendPingToServer(elapsedTime);
+
 	PreUpdate(elapsedTime);
 
 	CPlayer::Update(elapsedTime);
@@ -82,8 +87,8 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	// 누적 시간
 	dt_accumulator += elapsedTime;
 
-	if (move_packet_send_timer <= 0.0f && IS_CONNECT)
-	{
+	if (move_packet_send_timer <= 0.0f && IS_CONNECT) {
+
 		move_packet_send_timer += move_packet_send_delay;
 
 		// 패킷 생성 & 서버 전송
@@ -163,6 +168,16 @@ void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 	// 서버 전송
 	if (auto s = session.lock())
 		s->DoSend(CServerPacketHandler::MakeSendBuffer<C_Input>(inputPkt));
+}
+
+void CMyPlayer::SendPingToServer(const float elapsedTime)
+{
+	dt_ping_accumulator += elapsedTime;
+
+	if (dt_ping_accumulator >= 1.0f) {
+		CNetworkClockManager::GetInstance().SendPing(GetSession());
+		dt_ping_accumulator -= 1.0f;
+	}
 }
 
 void CMyPlayer::SimulateMove(const InputData& input, float dt)

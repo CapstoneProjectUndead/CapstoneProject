@@ -102,6 +102,7 @@ extern unique_ptr<class CGameFramework> gGameFramework;
 
 extern const double g_server_targetTick;
 extern const double g_targetDT;
+extern float  g_server_total_time;
 
 
 #endif //PCH_H

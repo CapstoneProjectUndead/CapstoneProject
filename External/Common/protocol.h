@@ -37,28 +37,36 @@ static_assert(sizeof(PacketHeader) == 4, "PacketHeader size mismatch!");
 
 //=============
 // 서버 RTT 측정
-struct S_Ping
+struct S_Ping : public PacketHeader
 {
 	float server_send_time;
+
+	S_Ping() : PacketHeader(sizeof(S_Ping), (UINT)PacketType::_S_PING) {}
 };
 
-struct C_Pong
+struct C_Pong : public PacketHeader
 {
 	float server_send_time; // 그대로 반사
+
+	C_Pong() : PacketHeader(sizeof(C_Pong), (UINT)PacketType::_C_PONG) {}
 };
 //=============
 
 //=============================
 // 클라 clock sync (시간 맞추기)
-struct C_Ping
+struct C_Ping : public PacketHeader
 {
 	float clientTime;
+
+	C_Ping() : PacketHeader(sizeof(C_Ping), (UINT)PacketType::_C_PING) {}
 };
 
-struct S_Pong
+struct S_Pong : public PacketHeader
 {
 	float clientTime; // 그대로 반사
 	float serverTime; // 서버가 찍은 시간
+
+	S_Pong() : PacketHeader(sizeof(S_Pong), (UINT)PacketType::_S_PONG) {}
 };
 //=============================
 

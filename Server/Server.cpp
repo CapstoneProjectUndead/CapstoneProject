@@ -8,6 +8,7 @@ unique_ptr<class CGameFramework> gGameFramework;
 
 const double g_server_targetTick = 60.0; // 60Hz
 const double g_targetDT = 1.0 / g_server_targetTick; // 0.01666... (16.6ms)
+float        g_server_total_time = 0.0f;
 
 
 int main()
@@ -51,6 +52,8 @@ int main()
 
         // 너무 큰 deltaTime 방지 (디버깅 등으로 멈췄을 때 갑자기 수백 번 업데이트 방지)
         double deltaTime = CTimeManager::GetInstance().GetClampedDeltaTime();
+
+        g_server_total_time += deltaTime;
 
         accumulator += deltaTime;
 

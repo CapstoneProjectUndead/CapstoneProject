@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ClientPacketHandler.h"
 #include "ClientSession.h"
+#include "TimeManager.h"
 #include "SceneManager.h"
 #include "TestScene.h"
 #include "Player.h"
@@ -18,6 +19,12 @@ bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len)
 
 bool Handle_C_PING(shared_ptr<Session> session, C_Ping& pkt)
 {
+	S_Pong pongPkt;
+	pongPkt.clientTime = pkt.clientTime;
+	pongPkt.serverTime = g_server_total_time;
+	auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Pong>(pongPkt);
+	session->DoSend(sendBuffer);
+
 	return true;
 }
 

@@ -39,6 +39,7 @@ private:
     void PredictMove(const InputData& input, float dt);
 
     void SendInputPacket(C_Input& inputPkt, const InputData& input);
+    void SendPingToServer(const float elapsedTime);
 
 private:
     std::weak_ptr<Session> session;
@@ -48,6 +49,7 @@ private:
 
     // 프레임 시간을 누적시키기 위해서 추가한 변수
     float dt_accumulator = 0.0f;
+    float dt_ping_accumulator = 0.0f;
 
     // 클라 예측 이동을 위한 시퀀스 넘버
     uint64                            client_seq_counter = 0;

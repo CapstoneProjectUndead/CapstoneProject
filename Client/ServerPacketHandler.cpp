@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Movement.h"
+#include "NetworkClockManager.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -29,6 +30,8 @@ bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt)
 
 bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt)
 {
+	float now = CTimer::GetInstance().GetTimeElapsed();
+	CNetworkClockManager::GetInstance().UpdateClockSync(pkt.clientTime, pkt.serverTime, now);
 	return true;
 }
 
