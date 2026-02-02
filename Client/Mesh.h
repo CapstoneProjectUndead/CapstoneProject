@@ -5,20 +5,19 @@ struct FrameNode;	// GeometryLoader에 정의
 
 class CVertex {
 public:
-	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, color{ XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f)} {}
-	CVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal) : position{ position }, color{ color }, normal{ normal } {}
-	CVertex(XMFLOAT3 position, XMFLOAT4 color) : position{ position }, color{ color }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f) } {}
+	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f)} {}
+	CVertex(XMFLOAT3 position, XMFLOAT3 normal) : position{ position }, normal{ normal } {}
+	CVertex(XMFLOAT3 position) : position{ position }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f) } {}
 
 	XMFLOAT3 position{};
-	XMFLOAT4 color{};
 	XMFLOAT3 normal{};
 };
 
 class CDiffuseVertex : public CVertex{
 public:
 	CDiffuseVertex();
-	CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex);
-	CDiffuseVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT2 tex, XMFLOAT3 normal);
+	CDiffuseVertex(XMFLOAT3 position, XMFLOAT2 tex);
+	CDiffuseVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal);
 
 	XMFLOAT2 tex{};
 };
@@ -26,7 +25,7 @@ public:
 class CMatVertex : public CVertex{
 public:
 	CMatVertex() : CVertex() {}
-	CMatVertex(XMFLOAT3 position, XMFLOAT4 color, XMFLOAT3 normal);
+	CMatVertex(XMFLOAT3 position, XMFLOAT3 normal);
 
 	XMUINT4  bone_indices{};
 	XMFLOAT4 bone_weights{};
@@ -144,7 +143,6 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 		T v{};
 		v.position = mesh.positions[i];
 		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
-		v.color = (i < mesh.colors.size()) ? mesh.colors[i] : XMFLOAT4(1, 1, 1, 1);
 
 		vertices.push_back(v);
 	}
