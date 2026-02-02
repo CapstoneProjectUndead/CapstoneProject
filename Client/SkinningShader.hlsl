@@ -48,7 +48,6 @@ cbuffer SkinningInfo : register(b4)
 struct VS_INPUT
 {
     float3 position : POSITION;
-    float4 color : COLOR;
     float3 normal : NORMAL;
 #ifdef SKINNED
     uint4 bone_indices : BLENDINDICES;
