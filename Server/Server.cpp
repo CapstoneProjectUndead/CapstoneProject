@@ -8,7 +8,7 @@ unique_ptr<class CGameFramework> gGameFramework;
 
 const double g_server_targetTick = 60.0; // 60Hz
 const double g_targetDT = 1.0 / g_server_targetTick; // 0.01666... (16.6ms)
-float        g_server_total_time = 0.0f;
+double       g_server_total_time = 0.0f;
 
 
 int main()
@@ -35,8 +35,7 @@ int main()
     ASSERT_CRASH(serverService->StartServer());
 
     // 네트워크 패킷을 받는 워커 스레드 5개 배치
-    for (int i = 0; i < 5; ++i)
-    {
+    for (int i = 0; i < 5; ++i) {
         GThreadManager->Launch([&serverService]() {
             serverService->GetIocpCore().WorkerThreadLoop();
             });
@@ -44,24 +43,23 @@ int main()
 
     double accumulator = 0.0;
 
+    while (true) {
 
-    while (true)
-    {
         // 시간 계산 (delta_time)
         CTimeManager::GetInstance().Update();
 
         // 너무 큰 deltaTime 방지 (디버깅 등으로 멈췄을 때 갑자기 수백 번 업데이트 방지)
         double deltaTime = CTimeManager::GetInstance().GetClampedDeltaTime();
 
-        g_server_total_time += deltaTime;
-
         accumulator += deltaTime;
 
         bool ticked = false;
 
         // 쌓인 시간만큼 "고정된 16.6ms"씩 업데이트를 돌림
-        while (accumulator >= g_targetDT)
-        {
+        while (accumulator >= g_targetDT) {
+
+            g_server_total_time += g_targetDT;
+
             // 물리 및 충돌 업데이트 (서버 권위 판정)
             gGameFramework->Update(static_cast<float>(g_targetDT));
 

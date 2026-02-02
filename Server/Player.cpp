@@ -4,7 +4,7 @@
 
 CPlayer::CPlayer()
 	: last_processed_seq(0)
-	, total_simulation_time(0.0f)
+	, server_timestamp(0.0f)
     , ping(0.0f)
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
@@ -19,7 +19,7 @@ CPlayer::~CPlayer()
 
 void CPlayer::Update(const float elapsedTime)
 {
-	total_simulation_time += elapsedTime;
+	server_timestamp = static_cast<float>(g_server_total_time);
 
     if (!input_queue.empty())
     {
@@ -41,9 +41,9 @@ void CPlayer::Update(const float elapsedTime)
             frame.seq_num = last_processed_seq;
             frame.position = position;
             frame.state = state;
-            frame.timestamp = total_simulation_time;
+            frame.timestamp = static_cast<float>(server_timestamp);
 
-            RecordFrameHistory(frame);
+            RecordServerFrameHistory(frame);
         }
     }
     else
@@ -106,38 +106,38 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
 }
 
-void CPlayer::RecordFrameHistory(const ServerFrameHistory& history)
+void CPlayer::RecordServerFrameHistory(const ServerFrameHistory& history)
 {
-	history_deq.push_back(history);
+	server_history_deq.push_back(history);
 
-	if (history_deq.size() > 600)
-		history_deq.pop_front();
+	if (server_history_deq.size() > RENDER_BUFFER_MAX_SIZE)
+		server_history_deq.pop_front();
 }
 
 // 나중에 유저간의 충돌 처리를 할 경우 사용될 함수.
 bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 {
-    if (history_deq.empty()) return false;
+    if (server_history_deq.empty()) return false;
 
     // 1. 범위를 벗어난 요청 처리 (너무 오래됐거나 너무 최신인 경우)
-    if (targetTime <= history_deq.front().timestamp)
+    if (targetTime <= server_history_deq.front().timestamp)
     {
-        outResult = history_deq.front();
+        outResult = server_history_deq.front();
         return true;
     }
-    if (targetTime >= history_deq.back().timestamp)
+    if (targetTime >= server_history_deq.back().timestamp)
     {
-        outResult = history_deq.back();
+        outResult = server_history_deq.back();
         return true;
     }
 
     // 2. 이진 탐색으로 targetTime보다 크거나 같은 첫 번째 원소 찾기
-    auto it = std::lower_bound(history_deq.begin(), history_deq.end(), targetTime,
+    auto it = std::lower_bound(server_history_deq.begin(), server_history_deq.end(), targetTime,
         [](const ServerFrameHistory& frame, float time) {
             return frame.timestamp < time;
         });
 
-    if (it == history_deq.begin() || it == history_deq.end())
+    if (it == server_history_deq.begin() || it == server_history_deq.end())
     {
         outResult = *it;
         return true;

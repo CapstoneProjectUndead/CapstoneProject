@@ -70,7 +70,7 @@ void CScene::SendPlayersResults()
 		movePkt.info.pitch = player->GetPitch();
 
 		movePkt.info.state = player->GetState();
-		movePkt.timestamp = player->GetTotalSimulationTime();
+		movePkt.timestamp = player->GetServerTime();
 
 		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
 		if (player->GetSession())
@@ -94,7 +94,7 @@ void CScene::SendPlayersCheckPing()
 
 	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players) {
-		if (now - player->GetLastPingSendTime() > 1.0f) {
+		if (now - player->GetLastPingSendTime() > 2.0f) {
 			auto session = player->GetSession();
 			if (session) {
 				player->SendPing();

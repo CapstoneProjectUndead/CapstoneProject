@@ -39,14 +39,14 @@ public:
 	void SetState(PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
 
-	void RecordFrameHistory(const ServerFrameHistory& history);
+	void RecordServerFrameHistory(const ServerFrameHistory& history);
 	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
 
-	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return history_deq; }
+	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return server_history_deq; }
 	deque<PendingInput>& GetInputQueue() { return input_queue; }
 	void PushInput(const PendingInput& input) { input_queue.push_back(input); }
 
-	float GetTotalSimulationTime() const { return total_simulation_time; }
+	float GetServerTime() const { return server_timestamp; }
 
 	// 클라의 핑 측정
 	void  SendPing();
@@ -60,11 +60,11 @@ public:
 
 private:
 	uint64						last_processed_seq;
-	float						total_simulation_time;
+	float						server_timestamp;
 	float						ping;
 	float						dt_ping_accumulator;
 	PLAYER_STATE				state;
 	deque<PendingInput>			input_queue;
-	deque<ServerFrameHistory>	history_deq;
+	deque<ServerFrameHistory>	server_history_deq;
 };
 

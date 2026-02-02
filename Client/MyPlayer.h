@@ -6,7 +6,7 @@ struct ClientFrameHistory
     uint64       seq_num;
     float        duration;
     InputData    input;
-    XMFLOAT3     predictedPos; // 내가 예측했던 결과 좌표
+    XMFLOAT3     predicted_pos; // 내가 예측했던 결과 좌표
     PLAYER_STATE state;
 };
 
@@ -37,6 +37,7 @@ private:
     void ServerAuthorityMove(const float elapsedTime);
     void CaptureInput(InputData& currentInput);
     void PredictMove(const InputData& input, float dt);
+    void RecordClientFrameHistory(const ClientFrameHistory& history);
 
     void SendInputPacket(C_Input& inputPkt, const InputData& input);
     void SendPingToServer(const float elapsedTime);
@@ -53,6 +54,6 @@ private:
 
     // 클라 예측 이동을 위한 시퀀스 넘버
     uint64                            client_seq_counter = 0;
-    std::deque<ClientFrameHistory>    history_deq; // 시퀀스 장부
+    std::deque<ClientFrameHistory>    client_history_deq; // 시퀀스 장부
 };
 

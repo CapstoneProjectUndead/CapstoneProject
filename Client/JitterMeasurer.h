@@ -20,13 +20,17 @@ public:
         if (last_arrival_time > 0.0f) {
             float actualInterval = currentTime - last_arrival_time;
 
-            // 1. 패킷 사이의 평균 간격을 업데이트 (지수 이동 평균)
-            // 서버가 0.5초마다 보낸다면 이 값이 서서히 0.5로 수렴합니다.
-            avg_interval = (avg_interval * 0.9f) + (actualInterval * 0.1f);
+            const float MAX_REASONABLE_INTERVAL = 0.25f;      // 250ms 이상은 드랍/렉으로 간주
+            if (actualInterval < MAX_REASONABLE_INTERVAL) {
 
-            // 2. 지터 계산 (실제 간격과 평균 간격의 차이)
-            float jitter = std::abs(actualInterval - avg_interval);
-            current_jitter = (current_jitter * 0.9f) + (jitter * 0.1f);
+                // 1. 패킷 사이의 평균 간격을 업데이트 (지수 이동 평균)
+                // 서버가 0.5초마다 보낸다면 이 값이 서서히 0.5로 수렴합니다.
+                avg_interval = (avg_interval * 0.9f) + (actualInterval * 0.1f);
+
+                // 2. 지터 계산 (실제 간격과 평균 간격의 차이)
+                float jitter = std::abs(actualInterval - avg_interval);
+                current_jitter = (current_jitter * 0.9f) + (jitter * 0.1f);
+            }
         }
 
         last_arrival_time = currentTime;

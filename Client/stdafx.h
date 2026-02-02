@@ -72,7 +72,10 @@ using Microsoft::WRL::ComPtr;
 #include <struct.h>
 #include <protocol.h>
 
-extern float g_client_total_time;
+#define CLIENT_HISTORY_MAX_SIZE 120
+#define RENDER_BUFFER_MAX_SIZE 60
+
+extern double g_client_total_time;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;

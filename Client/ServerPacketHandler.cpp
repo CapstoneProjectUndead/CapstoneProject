@@ -132,8 +132,6 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		// 다른 유저 상태 부여
 		otherPlayer->SetState(userList[i].info.state);
 
-		//otherPlayer->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
-
 		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
 	}
@@ -188,10 +186,10 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		otherPlayer->SetPitch(pkt.info.pitch);
 		otherPlayer->SetState(pkt.info.state);
 
-		OpponentState state{};
+		OpponentFrameHistory state{};
 		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
-		state.serverTimestamp = pkt.timestamp;
-		otherPlayer->PushOpponentState(state);
+		state.server_timestamp = pkt.timestamp;
+		otherPlayer->RecordOpponentFrameHistory(state);
 
 		// 회전을 위해 남겨둠
 		{
@@ -204,7 +202,8 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	}
 
 	// 여기서 S_Move 패킷의 지터값 측정
-	CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(CTimer::GetInstance().GetTimeElapsed());
+	float now = CNetworkClockManager::GetInstance().GetClientNow();
+	CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
 
 	return true;
 }

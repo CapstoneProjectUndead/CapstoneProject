@@ -35,7 +35,7 @@ enum PacketType : uint16_t
 #include <packet_struct.h>
 static_assert(sizeof(PacketHeader) == 4, "PacketHeader size mismatch!");
 
-//=============
+//=============================
 // 서버 RTT 측정
 struct S_Ping : public PacketHeader
 {
@@ -50,7 +50,7 @@ struct C_Pong : public PacketHeader
 
 	C_Pong() : PacketHeader(sizeof(C_Pong), (UINT)PacketType::_C_PONG) {}
 };
-//=============
+//=============================
 
 //=============================
 // 클라 clock sync (시간 맞추기)

@@ -166,7 +166,7 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="NetworkClockManager.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Network\NetworkManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -252,7 +252,7 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="NetworkClockManager.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Network\NetworkManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

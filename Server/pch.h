@@ -97,12 +97,14 @@ using std::make_pair;
 #include "ClientPacketHandler.h"
 #include "DirectXMathHelper.h"
 
+#define RENDER_BUFFER_MAX_SIZE 60
+
 extern unique_ptr<class CGameFramework> gGameFramework;
 //extern DBConnector g_db;
 
 extern const double g_server_targetTick;
 extern const double g_targetDT;
-extern float  g_server_total_time;
+extern double  g_server_total_time;
 
 
 #endif //PCH_H

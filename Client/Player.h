@@ -3,9 +3,9 @@
 
 class CCamera;
 
-struct OpponentState 
+struct OpponentFrameHistory 
 {
-	float	 serverTimestamp; // 서버에서 찍어준 도장
+	float	 server_timestamp; // 서버에서 찍어준 도장
 	XMFLOAT3 position;
 };
 
@@ -20,7 +20,7 @@ public:
 	PLAYER_STATE GetState() const { return state; }
 
 	void SetDestInfo(const ObjectInfo& pos) { dest_info = pos; }
-	void PushOpponentState(const OpponentState& state) { interpolation_deq.push_back(state); }
+	void RecordOpponentFrameHistory(const OpponentFrameHistory& state);
 
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
@@ -34,6 +34,6 @@ protected:
 	bool is_my_player = false;	
 	ObjectInfo dest_info{};		// 서버로부터 받은 캐릭터의 위치, 회전 값
 
-	std::deque<OpponentState> interpolation_deq;
+	std::deque<OpponentFrameHistory> interpolation_deq;
 };
 

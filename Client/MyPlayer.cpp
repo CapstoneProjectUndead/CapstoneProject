@@ -84,7 +84,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	// 서버 전송 타이머
 	move_packet_send_timer -= elapsedTime;
 
-	// 누적 시간
+	// 누적 시간 (이동 거리 누적)
 	dt_accumulator += elapsedTime;
 
 	if (move_packet_send_timer <= 0.0f && IS_CONNECT) {
@@ -96,17 +96,15 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 		SendInputPacket(inputPkt, currentInput);
 
 		// 4. 장부 기록
-		history_deq.push_back({
-			inputPkt.seq_num,
-			dt_accumulator,
-			currentInput,
-			position
-			});
+		ClientFrameHistory history{};
+		history.seq_num = inputPkt.seq_num;
+		history.input = currentInput;
+		history.duration = dt_accumulator;
+		history.predicted_pos = position;
+		history.state = state;
+		RecordClientFrameHistory(history);
 
 		dt_accumulator = 0.0f;
-
-		if (history_deq.size() > 600)
-			history_deq.pop_front();
 	}
 }
 
@@ -153,6 +151,14 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 	}
 }
 
+void CMyPlayer::RecordClientFrameHistory(const ClientFrameHistory& history)
+{
+	client_history_deq.push_back(history);
+
+	if (client_history_deq.size() > CLIENT_HISTORY_MAX_SIZE)
+		client_history_deq.pop_front();
+}
+
 void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 {
 	inputPkt.seq_num = ++client_seq_counter;
@@ -174,9 +180,11 @@ void CMyPlayer::SendPingToServer(const float elapsedTime)
 {
 	dt_ping_accumulator += elapsedTime;
 
-	if (dt_ping_accumulator >= 1.0f) {
-		CNetworkClockManager::GetInstance().SendPing(GetSession());
-		dt_ping_accumulator -= 1.0f;
+	if (dt_ping_accumulator >= 1.0f && IS_CONNECT) {
+		if (GetSession()) {
+			CNetworkClockManager::GetInstance().SendPing(GetSession());
+			dt_ping_accumulator -= 1.0f;
+		}
 	}
 }
 
@@ -214,18 +222,17 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	SetPosition(serverPos);
 
 	// 4. 서버가 확인한 입력까지 제거 
-	while (!history_deq.empty() &&
-		history_deq.front().seq_num <= last_seq)
-	{
-		history_deq.pop_front();
+	while (!client_history_deq.empty() &&
+		client_history_deq.front().seq_num <= last_seq) {
+		client_history_deq.pop_front();
 	}
 
 	// 5. 남은 미래 입력 재시뮬
-	for (auto& frame : history_deq) {
+	for (auto& frame : client_history_deq) {
 		
 		SimulateMove(frame.input, frame.duration);
 
 		// 장부 위치 갱신
-		frame.predictedPos = position;
+		frame.predicted_pos = position;
 	}
 }
