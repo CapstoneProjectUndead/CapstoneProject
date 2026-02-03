@@ -68,9 +68,12 @@ using Microsoft::WRL::ComPtr;
 #include <ServerEngine/Session.h>
 
 #include "macro.h"
+#include <chrono>
 #include <enum.h>
 #include <struct.h>
 #include <protocol.h>
+
+//#define GENERATE_LAG
 
 #define CLIENT_HISTORY_MAX_SIZE 120
 #define RENDER_BUFFER_MAX_SIZE 60

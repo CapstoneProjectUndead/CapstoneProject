@@ -11,6 +11,7 @@
 #include "Shader.h"
 #include "Movement.h"
 #include "NetworkClockManager.h"
+#include "NetworkManager.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -169,6 +170,10 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
 		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+
+		// 여기서 S_Move 패킷의 지터값 측정
+		float now = CNetworkClockManager::GetInstance().GetClientNow();
+		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
 	}
 	// 다른 플레이어일 경우
 	else {
@@ -186,11 +191,6 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		otherPlayer->SetPitch(pkt.info.pitch);
 		otherPlayer->SetState(pkt.info.state);
 
-		OpponentFrameHistory state{};
-		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
-		state.server_timestamp = pkt.timestamp;
-		otherPlayer->RecordOpponentFrameHistory(state);
-
 		// 회전을 위해 남겨둠
 		{
 			ObjectInfo info;
@@ -199,11 +199,23 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 			info.roll = pkt.info.roll;
 			otherPlayer->SetDestInfo(info);
 		}
-	}
 
-	// 여기서 S_Move 패킷의 지터값 측정
-	float now = CNetworkClockManager::GetInstance().GetClientNow();
-	CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
+		OpponentFrameHistory state{};
+		state.player_id = pkt.info.id;
+		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
+		state.server_timestamp = pkt.timestamp;
+
+#ifdef GENERATE_LAG
+		// 렉 시뮬레이터 작동
+		CNetworkManager::GetInstance().OnRecvOpponentPos(state);
+#else
+		otherPlayer->RecordOpponentFrameHistory(state);
+
+		// 여기서 S_Move 패킷의 지터값 측정
+		float now = CNetworkClockManager::GetInstance().GetClientNow();
+		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
+#endif
+	}
 
 	return true;
 }

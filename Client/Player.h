@@ -5,6 +5,7 @@ class CCamera;
 
 struct OpponentFrameHistory 
 {
+	uint64	 player_id;
 	float	 server_timestamp; // 서버에서 찍어준 도장
 	XMFLOAT3 position;
 };

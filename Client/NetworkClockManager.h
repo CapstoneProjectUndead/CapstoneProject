@@ -36,13 +36,11 @@ public:
         float newOffset = estimatedServerNow - clientRecvTime;
 
         // clock_offset이 0이거나 초기 상태라면 즉시 동기화
-        if (!initialized)
-        {
+        if (!initialized) {
             clock_offset = newOffset;
             initialized = true;
         }
-        else
-        {
+        else {
             // 이후부터는 미세한 오차만 보정
             clock_offset = (clock_offset * 0.9) + (double(newOffset) * 0.1);
         }

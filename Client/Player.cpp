@@ -54,10 +54,15 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
     float serverNow = CNetworkClockManager::GetInstance().GetServerNow();
 
     auto measurer = CNetworkManager::GetInstance().GetJitterMeasurer();
+
+#ifdef GENERATE_LAG
+    float adaptiveDelay = (measurer->GetAverageInterval() * 2.0f) + (measurer->GetCurrentJitter() * 15.0f);
+#else
     float adaptiveDelay = (measurer->GetAverageInterval() * 1.5f) + (measurer->GetCurrentJitter() * 5.0f);
+#endif 
 
     // 60틱(16ms) 기준이므로 최소 딜레이를 조금 여유 있게 잡음
-    float interpolationDelay = std::clamp(adaptiveDelay, 0.05f, 1.0f);
+    float interpolationDelay = std::clamp(adaptiveDelay, 0.05f, 2.0f);
 
     // 기본 타겟 시간
     float targetServerTime = serverNow - interpolationDelay;

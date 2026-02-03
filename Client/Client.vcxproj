@@ -184,6 +184,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="GameFramework.h" />
+    <ClInclude Include="LagSimulator.h" />
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Mesh.h" />
@@ -221,6 +222,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="GameFramework.cpp" />
+    <ClCompile Include="LagSimulator.cpp" />
     <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Movement.cpp" />
