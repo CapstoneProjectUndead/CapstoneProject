@@ -214,9 +214,15 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	XMFLOAT3 diff = Vector3::Subtract(serverPos, position);
 	float errorDist = Vector3::Length(diff);
 
-	// 2. 오차가 작으면 보정하지 않는다.
-	// 0.01f(1cm)는 우리 게임 상황에 맞게 조절
-	if (errorDist < 0.01f) return;
+	// 2. 보정 정책
+	if (errorDist < 0.01f) {
+		position = Vector3::Add(position, diff, 0.1f);
+		return;
+	}
+	else if (errorDist < 0.2f) {
+		position = Vector3::Add(position, diff, 0.5f);
+		return;
+	}
 
 	// 3. 서버 좌표로 스냅
 	SetPosition(serverPos);

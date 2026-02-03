@@ -3,6 +3,7 @@
 #include "NetworkManager.h"
 #include "Movement.h"
 #include "NetworkClockManager.h"
+#include "JitterMeasurer.h"
 
 #undef min
 #undef max
@@ -126,7 +127,7 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
                 state = PLAYER_STATE::IDLE;
                 velocity = { 0.0f, 0.0f, 0.0f };
                 // 정지 상태라도 위치 보정은 해야 함 (미세한 떨림 방지 위해 nextPos로 이동)
-                SetPosition(nextPos);
+                //SetPosition(nextPos);
             }
             else if (elapsedTime > 0.0f) {
                 // 속도 역산
