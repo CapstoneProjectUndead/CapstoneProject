@@ -6,6 +6,13 @@
 #include "Object.h"
 #include "Component.h"
 
+// Material
+void CMaterial::SetTexture(const std::shared_ptr<CTexture>& tex)
+{
+	texture = tex;
+}
+
+// Object
 CObject::CObject()
 {
 	XMStoreFloat4x4(&world_matrix, XMMatrixIdentity());
@@ -35,15 +42,16 @@ void CObject::SetMesh(std::shared_ptr<CMesh>& otherMesh)
 	meshes.push_back(otherMesh);
 }
 
-void CObject::SetTexture(CTexture* otherTexture)
+void CObject::SetMaterial(CMaterial* otherMaterial)
 {
-	texture.reset(otherTexture);
+	material.reset(otherMaterial);
 }
 
-ID3D12Resource* CObject::GetTextureResource() const
+void CObject::SetMaterial(std::shared_ptr<CMaterial>& m)
 {
-	return texture->GetTextureResource();
+	material = m;
 }
+
 void CObject::Rotate(float pitch, float yaw, float roll)
 {
 	XMMATRIX rotateMatrix = XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll));
@@ -65,9 +73,11 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 		commandList->SetGraphicsRootConstantBufferView(0, object_cb->GetGPUVirtualAddress());
 	}
 
-	{
+	if(material) {
 		MaterialCB cb{};
-		memcpy(&cb, &material, sizeof(Material));
+		cb.albedo = material->albedo;
+		cb.fresnel = material->fresnel;
+		cb.glossiness = material->glossiness;
 
 		UINT8* mapped = nullptr;
 		material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
@@ -156,6 +166,11 @@ void CObject::Update(const float elapsedTime)
 	for (auto& component : components) {
 		component->Update(elapsedTime);
 	}
+}
+
+UINT CObject::GetSRVIndex() const
+{
+	return material->texture->GetDescriptorIndex();
 }
 
 void CObject::Animate(float elapsedTime, CCamera* camera)

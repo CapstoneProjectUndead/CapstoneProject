@@ -5,6 +5,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Object.inl"
+#include "Texture.h"
 
 CTestScene::CTestScene()
 {
@@ -16,11 +17,8 @@ CTestScene::~CTestScene()
 
 void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	Material m{};
-	m.albedo = XMFLOAT4{ 1.0f, 0.5f, 0.5f, 1.0f };
 	// 플레이어 생성
 	my_player = std::make_shared<CMyPlayer>();
-	my_player->SetMaterial(m);
 	my_player->Initialize(device, commandList);
 	
 	{
@@ -40,7 +38,6 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	{
 		auto obj = std::make_shared<CCharacter>();
 		obj->Initialize(device, commandList);
-		obj->SetMaterial(m);
 		objects.push_back(std::move(obj));
 	
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
@@ -65,7 +62,18 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			auto obj = std::make_shared<CObject>();
 			obj->SetMeshFromFile<CVertex>(device, commandList, children);
 			obj->Initialize(device, commandList);
-	
+			// texture
+			std::shared_ptr<CTexture> tex = std::make_shared<CTexture>(std::string("floor"));
+			tex->CreateTextureResource(device, commandList, std::wstring(L"../Modeling/tex/Floor.dds"));
+			CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
+			UINT srvIndex = heapManager->Allocate();
+			tex->SetDescriptorIndex(srvIndex);
+			tex->CreateSrv(device, heapManager->GetCPUHandle(srvIndex));
+			// material
+			std::shared_ptr<CMaterial> m = std::make_shared<CMaterial>(std::string("floor"));
+			m->SetTexture(tex);
+			obj->SetMaterial(m);
+
 			objects.push_back(std::move(obj));
 		}
 	}

@@ -3,16 +3,40 @@
 #include "Object.h"
 #include "GeometryLoader.h"
 
+void CDescriptorHeapManager::Initialize(ID3D12Device* device, UINT numDescriptors)
+{
+	num_desc = numDescriptors;
+	descriptor_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.NumDescriptors = numDescriptors;
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptor_heap));
+
+	cpu_start = descriptor_heap->GetCPUDescriptorHandleForHeapStart();
+	gpu_start = descriptor_heap->GetGPUDescriptorHandleForHeapStart();
+}
+
+void CShader::CreateDescriptorHeap(ID3D12Device* device, UINT numDescriptors)
+{
+	heap_manager = std::make_unique<CDescriptorHeapManager>();
+	heap_manager->Initialize(device, numDescriptors);
+}
+
 D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
 {
-	const UINT inputElementDescNum = 2;
+	const UINT inputElementDescNum = 3;
 	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
 
 	UINT offset = 0;
 	inputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += 12;
+	offset += sizeof(XMFLOAT3);
 	inputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += 12;
+	offset += sizeof(XMFLOAT3);
+	inputElementDescs[2] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += sizeof(XMFLOAT2);
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -149,9 +173,18 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
+	const int numDesc{ 100 };
+	D3D12_DESCRIPTOR_RANGE descriptorRanges;
+	// texture
+	descriptorRanges.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRanges.NumDescriptors = numDesc;
+	descriptorRanges.BaseShaderRegister = 0;
+	descriptorRanges.RegisterSpace = 0;
+	descriptorRanges.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	// root parameter
 	// gameObjectInfo
-	D3D12_ROOT_PARAMETER rootParameters[4];
+	D3D12_ROOT_PARAMETER rootParameters[6];
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
 	rootParameters[0].Descriptor.RegisterSpace = 0;
@@ -175,14 +208,41 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	rootParameters[3].Descriptor.RegisterSpace = 0;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+	// SkinningInfo
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[4].Descriptor.ShaderRegister = 4;
+	rootParameters[4].Descriptor.RegisterSpace = 0;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// table
+	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[5].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[5].DescriptorTable.pDescriptorRanges = &descriptorRanges;
+	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// static sampler
+	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.ShaderRegister = 0;
+	samplerDesc.RegisterSpace = 0;
+	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	// root signature
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.NumParameters = _countof(rootParameters);
 	rootSignatureDesc.pParameters = rootParameters;
-	rootSignatureDesc.NumStaticSamplers = 0;
-	rootSignatureDesc.pStaticSamplers = nullptr;
+	rootSignatureDesc.NumStaticSamplers = 1;
+	rootSignatureDesc.pStaticSamplers = &samplerDesc;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
 	// 임의 길이 데이터를 반환하는 데 사용
@@ -191,17 +251,29 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 
+	// CreateHeap
+	CreateDescriptorHeap(device, numDesc);
+
 	return graphicsRootSignature;
 }
-
 void CShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
 {
+	if (heap_manager) {
+		ID3D12DescriptorHeap* heaps[] = { heap_manager->GetHeap() };
+		commandList->SetDescriptorHeaps(1, heaps);
+	}
 	commandList->SetGraphicsRootSignature(graphics_root_signature.Get());
 	commandList->SetPipelineState(pipeline_states.Get());
 }
 
 void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
 {
+	if (heap_manager) {
+		UINT srvIndex = object->GetSRVIndex();
+		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = heap_manager->GetGPUHandle(srvIndex);
+
+		commandList->SetGraphicsRootDescriptorTable(5, gpuHandle);
+	}
 	object->UpdateShaderVariables(commandList);
 	object->Render(commandList);
 }
@@ -214,13 +286,13 @@ D3D12_INPUT_LAYOUT_DESC CSkinningShader::CreateInputLayout()
 
 	UINT offset = 0;
 	inputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += 12;
+	offset += sizeof(XMFLOAT3);
 	inputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += 12;
+	offset += sizeof(XMFLOAT3);
 	inputElementDescs[2] = { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += 16;
+	offset += sizeof(XMFLOAT4);
 	inputElementDescs[3] = { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += 16;
+	offset += sizeof(XMFLOAT4);
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -287,4 +359,9 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 D3D12_SHADER_BYTECODE CSkinningShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
 	return CompileShaderFromFile(L"SkinningShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CSkinningShader::CreatePixelShader(ID3DBlob** shaderBlob)
+{
+	return CompileShaderFromFile(L"SkinningShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }

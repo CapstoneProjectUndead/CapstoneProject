@@ -7,9 +7,12 @@ public:
 
 	const char* GetName() const { return name.c_str(); }
 	ID3D12Resource* GetTextureResource() const { return texture.Get(); }
+	void SetDescriptorIndex(UINT index) { descriptor_index = index; }
+	UINT GetDescriptorIndex() const { return descriptor_index; }
 private:
 	std::string name{};
 	ComPtr<ID3D12Resource> texture;
 	ComPtr<ID3D12Resource> upload_buffer;
+	int descriptor_index{};
 };
 

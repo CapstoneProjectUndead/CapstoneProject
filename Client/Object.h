@@ -10,11 +10,19 @@ class CTexture;
 struct Mesh;
 struct FrameNode;
 
-struct Material
+class CMaterial
 {
+public:
+	CMaterial() = default;
+	CMaterial(std::string name) : name{ name } {}
+	void SetTexture(const std::shared_ptr<CTexture>& tex);
+public:
 	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
 	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };	// 프레넬 효과 반사양
 	float glossiness{ 0.25f };
+
+	std::shared_ptr<CTexture> texture;
+	std::string name;
 };
 
 struct MaterialCB
@@ -37,17 +45,18 @@ public:
 	void ReleaseUploadBuffer();
 	virtual void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 
+	//set
 	void SetComponent(std::shared_ptr<CComponent> component);
 	void SetMesh(std::shared_ptr<CMesh>& otherMesh);
-	void SetTexture(CTexture* );
-	CTexture* GetTexture() const { return texture.get(); }
-	ID3D12Resource* GetTextureResource() const;
-	void SetMaterial(const Material& otherMaterial) { material = otherMaterial; }
+	void SetMaterial(CMaterial* );
+	void SetMaterial(std::shared_ptr<CMaterial>&);
 	// LoadFrame 정보 Set, T: Vertex type
 	template<typename T>
 	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
 	template<typename T>
+	//get
 	T* GetComponent();
+	UINT GetSRVIndex() const;
 
 	virtual void Animate(float, CCamera*);
 	virtual void Update(const float);
@@ -93,8 +102,7 @@ protected:
 	int obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 
 	std::vector<std::shared_ptr<CMesh>> meshes;
-	std::shared_ptr<CTexture> texture{};
-	Material material;
+	std::shared_ptr<CMaterial> material;
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
 
 	ComPtr<ID3D12Resource> object_cb;
