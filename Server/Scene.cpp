@@ -122,6 +122,7 @@ void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 
 void CScene::SimulatePlayers(const float elapsedTime)
 {
+	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players) {
 		player->Update(elapsedTime);
 	}
