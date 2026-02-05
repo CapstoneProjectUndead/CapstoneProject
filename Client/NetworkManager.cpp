@@ -28,8 +28,8 @@ void CNetworkManager::ServiceStart(std::wstring address, uint16 port)
    
 #ifdef GENERATE_LAG
     lag_simulator = std::make_unique<CLagSimulator>();
-    lag_simulator->SetLatency(1000);
-    lag_simulator->SetJitter(500);
+    lag_simulator->SetLatency(2000);
+    lag_simulator->SetJitter(50);
 #endif 
 
     // 서버로부터 받은 패킷을 처리하는 

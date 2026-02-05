@@ -24,7 +24,11 @@ void CPlayer::Update(const float elapsedTime)
     // 회전 Update
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
+    ProcessInputQueue(elapsedTime);
+}
 
+void CPlayer::ProcessInputQueue(const float elapsedTime)
+{
     if (!input_queue.empty())
     {
         // 쌓인 패킷이 있다면, 각 패킷마다 시뮬레이션을 돌림
@@ -39,7 +43,7 @@ void CPlayer::Update(const float elapsedTime)
             // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
             last_processed_seq = pending.seq_num;
 
-            // 매 시뮬레이션 직후 장부 기록 (패킷 하나하나의 결과 기록)
+            // 장부 기록 
             ServerFrameHistory frame{};
             frame.input = pending.input;
             frame.seq_num = last_processed_seq;
@@ -48,13 +52,28 @@ void CPlayer::Update(const float elapsedTime)
             frame.timestamp = static_cast<float>(last_simulated_time);
 
             RecordServerFrameHistory(frame);
+
+            last_simulated_time += g_targetDT;
         }
     }
     else
     {
-        // 패킷이 안 온 프레임이라면 빈 입력을 넣어 관성/마찰만 적용
+        // 입력이 없어도 마찰/중력 계산을 위해 1회 업데이트
         InputData emptyInput{ false, false, false, false };
         SimulateMove(emptyInput, elapsedTime);
+
+        if (last_simulated_time < g_server_total_time)
+            last_simulated_time = static_cast<float>(g_server_total_time);
+
+        // 장부 기록 
+        ServerFrameHistory frame{};
+        frame.input = emptyInput;
+        frame.seq_num = last_processed_seq;
+        frame.position = position;
+        frame.state = state;
+        frame.timestamp = static_cast<float>(last_simulated_time);
+
+        RecordServerFrameHistory(frame);
     }
 }
 

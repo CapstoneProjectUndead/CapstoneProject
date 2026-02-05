@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Movement.h"
 #include "Object.h"
+#include "Player.h"
 
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
@@ -17,6 +18,14 @@ void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 
 void CMovementComponent::Update(const float deltaTime)
 {
+	if (owner == nullptr)
+		return;
+
+	// 상대 플레이어이라면 return
+	auto p = dynamic_cast<CPlayer*>(owner);
+	if (p != nullptr && !p->GetIsMyPlayer())
+		return;
+
 	// 중력 적용
 	//velocity = Vector3::Add(velocity, Vector3::ScalarProduct(gravity, deltaTime));
 

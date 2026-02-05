@@ -55,17 +55,20 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
 
     auto measurer = CNetworkManager::GetInstance().GetJitterMeasurer();
 
+    // 1. 목표 딜레이 계산 (기존 로직)
+        // Jitter가 튈 때마다 이 값은 미친 듯이 널뛰기를 합니다.
 #ifdef GENERATE_LAG
-    float adaptiveDelay = (measurer->GetAverageInterval() * 2.0f) + (measurer->GetCurrentJitter() * 15.0f);
+    float rawDelay = (measurer->GetAverageInterval() * 2.0f) + (measurer->GetCurrentJitter() * 25.0f);
 #else
-    float adaptiveDelay = (measurer->GetAverageInterval() * 1.5f) + (measurer->GetCurrentJitter() * 5.0f);
+    float rawDelay = (measurer->GetAverageInterval() * 1.5f) + (measurer->GetCurrentJitter() * 5.0f);
 #endif 
+    float targetDelay = std::clamp(rawDelay, 0.05f, 2.0f);
 
     // 60틱(16ms) 기준이므로 최소 딜레이를 조금 여유 있게 잡음
-    float interpolationDelay = std::clamp(adaptiveDelay, 0.05f, 2.0f);
+    smoothed_delay = std::lerp(smoothed_delay, targetDelay, 0.01f);
 
     // 기본 타겟 시간
-    float targetServerTime = serverNow - interpolationDelay;
+    float targetServerTime = serverNow - smoothed_delay;
 
     // ---------------------------------------------------------
     // 2. 시간 축 보정 (Time Warp & Clamp)
@@ -74,7 +77,7 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
     // [Time Warp] 렉이 풀려서 데이터가 몰렸거나 시계가 너무 뒤처진 경우
     // 버퍼가 1초(60개) 크기이므로, 0.7초 이상 차이나면 최신으로 강제 견인
     if (interpolation_deq.back().server_timestamp - targetServerTime > 0.7f) {
-        targetServerTime = interpolation_deq.back().server_timestamp - interpolationDelay;
+        targetServerTime = interpolation_deq.back().server_timestamp - smoothed_delay;
     }
 
     // [안전장치] 미래 데이터 방지 (데이터 부족 시 대기)
@@ -116,39 +119,21 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
         // 4-2. 목표 위치 계산
         XMFLOAT3 nextPos = Vector3::Lerp(frameA->position, frameB->position, alpha);
 
-        // [Spatial Teleport] 디버깅 해제 직후 등, 거리가 너무 멀면 즉시 이동
+        // 4-3. 텔레포트 체크 (오차가 너무 클 때만)
         float distToTarget = Vector3::Length(Vector3::Subtract(nextPos, position));
         if (distToTarget > 5.0f) {
             SetPosition(nextPos);
-            velocity = { 0.0f, 0.0f, 0.0f };
+            // 텔레포트 시엔 잠시 멈춤 상태로 두거나, 서버 상태를 따르거나 선택
+            // (보통 멀리서 텔포되면 잠깐 IDLE인 게 자연스러울 수 있음)
             state = PLAYER_STATE::IDLE;
         }
         else {
-            // [Movement] 미세 움직임 필터링 및 속도 계산
-            float intervalDist = Vector3::Length(Vector3::Subtract(frameB->position, frameA->position));
+            // 상태 동기화
+            state = frameB->state;
 
-            // 두 패킷 사이 거리가 1cm 미만이면 정지로 간주
-            if (intervalDist < 0.01f) {
-                state = PLAYER_STATE::IDLE;
-                velocity = { 0.0f, 0.0f, 0.0f };
-                // 정지 상태라도 위치 보정은 해야 함 (미세한 떨림 방지 위해 nextPos로 이동)
-                //SetPosition(nextPos);
-            }
-            else if (elapsedTime > 0.0f) {
-                // 속도 역산
-                XMFLOAT3 moveDelta = Vector3::Subtract(nextPos, position);
-                velocity = Vector3::ScalarProduct(moveDelta, 1.0f / elapsedTime, false);
-
-                float currentSpeed = Vector3::Length(velocity);
-
-                if (currentSpeed > 0.05f) {
-                    state = PLAYER_STATE::WALK;
-                }
-                else {
-                    state = PLAYER_STATE::IDLE;
-                    velocity = { 0.0f, 0.0f, 0.0f };
-                }
-            }
+            // 위치 동기화
+            // 미세하게 움직이든 멈춰있든, 보간된 좌표로 매 프레임 이동
+            SetPosition(nextPos);
         }
     }
 
