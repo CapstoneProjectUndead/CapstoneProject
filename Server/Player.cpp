@@ -4,7 +4,7 @@
 
 CPlayer::CPlayer()
 	: last_processed_seq(0)
-	, server_timestamp(0.0f)
+	, last_simulated_time(0.0f)
     , ping(0.0f)
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
@@ -19,7 +19,11 @@ CPlayer::~CPlayer()
 
 void CPlayer::Update(const float elapsedTime)
 {
-	server_timestamp = static_cast<float>(g_server_total_time);
+    last_simulated_time = static_cast<float>(g_server_total_time);
+
+    // 회전 Update
+    SetYawPitch(yaw, pitch);
+    UpdateWorldMatrix();
 
     if (!input_queue.empty())
     {
@@ -41,7 +45,7 @@ void CPlayer::Update(const float elapsedTime)
             frame.seq_num = last_processed_seq;
             frame.position = position;
             frame.state = state;
-            frame.timestamp = static_cast<float>(server_timestamp);
+            frame.timestamp = static_cast<float>(last_simulated_time);
 
             RecordServerFrameHistory(frame);
         }
@@ -52,10 +56,6 @@ void CPlayer::Update(const float elapsedTime)
         InputData emptyInput{ false, false, false, false };
         SimulateMove(emptyInput, elapsedTime);
     }
-
-	// 회전 Update
-	SetYawPitch(yaw, pitch);
-	UpdateWorldMatrix();
 }
 
 void CPlayer::SimulateMove(const InputData& input, float deltaTime)

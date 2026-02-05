@@ -12,6 +12,7 @@ private:
     // 0.9는 반응이 빠르고, 0.99는 수치가 아주 안정적입니다.
     const float         alpha = 0.1f;
 
+    uint64              current_sample = 0;
     const size_t        MAX_SAMPLES = 60;                   // 최근 60개 패킷(약 1초)의 평균을 계산
     std::deque<float>   jitter_sample_deq;                  // 최근 지터 값들을 담을 버퍼
 
@@ -19,6 +20,8 @@ public:
     // 패킷이 도착했을 때 호출
     void OnPacketArrival(float currentTime)
     {
+        ++current_sample;
+
         // 1. 첫 패킷 처리: 기준 시간만 잡고 나감
         if (last_arrival_time <= 0.0f) {
             last_arrival_time = currentTime;
@@ -56,6 +59,8 @@ public:
         // 마지막 도착 시간 갱신
         last_arrival_time = currentTime;
     }
+
+    int GetSampleCount() const { return current_sample; }
 
     float GetAverageInterval() const { return avg_interval; }
 

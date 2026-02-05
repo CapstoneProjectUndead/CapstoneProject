@@ -46,7 +46,7 @@ public:
 	deque<PendingInput>& GetInputQueue() { return input_queue; }
 	void PushInput(const PendingInput& input) { input_queue.push_back(input); }
 
-	float GetServerTime() const { return server_timestamp; }
+	float GetLastSimulatedTime() const { return last_simulated_time; }
 
 	// 클라의 핑 측정
 	void  SendPing();
@@ -60,7 +60,7 @@ public:
 
 private:
 	uint64						last_processed_seq;
-	float						server_timestamp;
+	float						last_simulated_time;
 	float						ping;
 	float						dt_ping_accumulator;
 	PLAYER_STATE				state;

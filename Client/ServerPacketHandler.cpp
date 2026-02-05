@@ -202,6 +202,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 
 		OpponentFrameHistory state{};
 		state.player_id = pkt.info.id;
+		state.state = pkt.info.state;
 		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
 		state.server_timestamp = pkt.timestamp;
 
