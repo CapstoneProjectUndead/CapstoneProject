@@ -23,6 +23,12 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+// 콘솔창 띄우기 함수
+void CreateDebugConsole();
+
+// ImGui 윈도우 메시지 처리 함수가 있다고 컴파일러에게 알려줌
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 double g_client_total_time = 0.0f;
 
 HWND ghWnd;
@@ -116,6 +122,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     RECT rc = { 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
     AdjustWindowRect(&rc, dwstyle, FALSE);
 
+    // 디버그 콘솔 생성!
+    CreateDebugConsole();
+
     //hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
     ghWnd = CreateWindow(szWindowClass, szTitle, dwstyle,
         CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);
@@ -152,6 +161,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    // =========================================================================
+    // ImGui가 마우스/키보드 입력을 먼저 확인하도록 함
+    // 여기서 true가 반환되면 ImGui가 입력을 먹은 것이므로, 게임 로직은 건너뜀
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+        return true;
+    // =========================================================================
+
+
     switch (message)
     {
     case WM_SIZE:
@@ -191,4 +208,26 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+// 콘솔창 띄우기 함수
+void CreateDebugConsole()
+{
+#ifdef _DEBUG // 디버그 모드일 때만 콘솔창을 띄운다 (Release 때는 안 뜸)
+
+    // 1. 콘솔창 할당
+    if (::AllocConsole() == TRUE)
+    {
+        // 2. stdio(printf) 출력을 방금 만든 콘솔로 연결 (Redirection)
+        FILE* fp;
+        freopen_s(&fp, "CONOUT$", "w", stdout);
+        freopen_s(&fp, "CONOUT$", "w", stderr);
+        freopen_s(&fp, "CONIN$", "r", stdin); // cin 입력도 가능하게 함
+
+        // 3. 콘솔창 제목 설정 (선택 사항)
+        SetConsoleTitle(L"Server Debug Console");
+
+        printf("Debug Console Initialized!\n");
+    }
+#endif
 }
