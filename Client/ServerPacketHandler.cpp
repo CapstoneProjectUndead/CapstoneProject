@@ -3,7 +3,7 @@
 #include "ServerSession.h"
 #include "GameFramework.h"
 #include "SceneManager.h"
-#include "TestScene.h"
+#include "LobbyScene.h"
 #include "Player.h"
 #include "MyPlayer.h"
 #include "GeometryLoader.h"

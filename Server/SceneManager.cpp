@@ -2,12 +2,12 @@
 #include "SceneManager.h"
 // ¼­¹öÂÊ SceneManager
 
-#include "TestScene.h"
+#include "LobbyScene.h"
 
 
 void CSceneManager::Initialize()
 {
-	scenes[(UINT)SCENE_TYPE::TEST] = std::make_unique<CTestScene>();
+	scenes[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
 }
 
 void CSceneManager::Update(const float elapsedTime)

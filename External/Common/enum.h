@@ -12,9 +12,8 @@ enum class PLAYER_STATE : uint8_t
 
 enum class SCENE_TYPE
 {
-	TEST,
+	LOBBY,
 	MAIN,
-	LOBY,
 	GAME,
 
 	END

@@ -1,12 +1,12 @@
 #pragma once
 #include "Scene.h"
 
-class CTestScene :
+class CLobbyScene :
     public CScene
 {
 public:
-    CTestScene();
-    ~CTestScene();
+    CLobbyScene();
+    ~CLobbyScene();
 
     virtual void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) override;
     virtual void Update(float elapsedTime) override;

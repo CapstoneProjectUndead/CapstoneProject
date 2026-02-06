@@ -1,20 +1,20 @@
 #include "stdafx.h"
-#include "TestScene.h"
+#include "LobbyScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Object.inl"
 
-CTestScene::CTestScene()
+CLobbyScene::CLobbyScene()
 {
 }
 
-CTestScene::~CTestScene()
+CLobbyScene::~CLobbyScene()
 {
 }
 
-void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	Material m{};
 	m.albedo = XMFLOAT4{ 1.0f, 0.5f, 0.5f, 1.0f };
@@ -79,12 +79,12 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	light->Initialize(device, commandList);
 }
 
-void CTestScene::Update(float elapsedTime)
+void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 }
 
-void CTestScene::Render(ID3D12GraphicsCommandList* commandList)
+void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
 }

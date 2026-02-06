@@ -40,14 +40,14 @@
     <Filter Include="Scene">
       <UniqueIdentifier>{3bec70d8-a2a0-43c0-a2af-35ef1a7bb67b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Scene\TestScene">
-      <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Object\MyPlayer">
       <UniqueIdentifier>{e06fed7c-dc95-44c6-a868-e3b3c408ece7}</UniqueIdentifier>
     </Filter>
     <Filter Include="Component">
       <UniqueIdentifier>{45504bc4-4e5b-4261-8657-a5cd235e8939}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Lobby Scene">
+      <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -114,8 +114,8 @@
     <ClInclude Include="SceneManager.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="TestScene.h">
-      <Filter>Scene\TestScene</Filter>
+    <ClInclude Include="LobbyScene.h">
+      <Filter>Scene\Lobby Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h">
       <Filter>Network\PacketHandler</Filter>
@@ -221,8 +221,8 @@
     <ClCompile Include="Scene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="TestScene.cpp">
-      <Filter>Scene\TestScene</Filter>
+    <ClCompile Include="LobbyScene.cpp">
+      <Filter>Scene\Lobby Scene</Filter>
     </ClCompile>
     <ClCompile Include="MyPlayer.cpp">
       <Filter>Object\MyPlayer</Filter>

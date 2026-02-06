@@ -3,7 +3,7 @@
 #include "ClientSession.h"
 #include "TimeManager.h"
 #include "SceneManager.h"
-#include "TestScene.h"
+#include "LobbyScene.h"
 #include "Player.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
@@ -45,12 +45,12 @@ bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
-	assert(activeScene->GetSceneType() == SCENE_TYPE::TEST);
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 
 	activeScene->PushPacketJob(session
-		, (CTestScene*)activeScene
-		, &CTestScene::EnterPlayer
+		, (CLobbyScene*)activeScene
+		, &CLobbyScene::EnterPlayer
 		, pkt);
 
 	return true;
@@ -58,13 +58,13 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 
 bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 {
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TEST].get();
-	assert(activeScene->GetSceneType() == SCENE_TYPE::TEST);
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 
 	activeScene->PushPacketJob(
 		session,
-		(CTestScene*)activeScene,
-		&CTestScene::MovePlayer,
+		(CLobbyScene*)activeScene,
+		&CLobbyScene::MovePlayer,
 		pkt
 	);
 

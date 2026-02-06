@@ -2,12 +2,12 @@
 // ServerÂÊ TestScene
 #include "Scene.h"
 
-class CTestScene :
+class CLobbyScene :
     public CScene
 {
 public:
-    CTestScene();
-    ~CTestScene();
+    CLobbyScene();
+    ~CLobbyScene();
 
     virtual void Update(float elapsedTime) override;
 

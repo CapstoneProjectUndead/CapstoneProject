@@ -2,7 +2,7 @@
 #include "ClientSession.h"
 #include "SceneManager.h"
 #include "Player.h"
-#include "TestScene.h"
+#include "LobbyScene.h"
 
 
 CClientSession::CClientSession()

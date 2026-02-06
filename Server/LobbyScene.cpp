@@ -1,6 +1,6 @@
 #include "pch.h"
 // Server쪽 TestScene
-#include "TestScene.h"
+#include "LobbyScene.h"
 #include "ClientSession.h"
 #include "Player.h"
 
@@ -10,21 +10,21 @@
 #define CAST_CS(session) static_pointer_cast<CClientSession>(session)
 
 
-CTestScene::CTestScene()
-    : CScene(SCENE_TYPE::TEST)
+CLobbyScene::CLobbyScene()
+    : CScene(SCENE_TYPE::LOBBY)
 {
 }
 
-CTestScene::~CTestScene()
+CLobbyScene::~CLobbyScene()
 {
 }
 
-void CTestScene::Update(float elapsedTime)
+void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 }
 
-void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
+void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
@@ -96,7 +96,7 @@ void CTestScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 }
 
 // 서버 권위 방식
-void CTestScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
+void CLobbyScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
 	auto it = players.find(pkt.info.id);
 	if (it == players.end()) 
