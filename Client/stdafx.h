@@ -74,7 +74,7 @@ using Microsoft::WRL::ComPtr;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
-
+#define DEBUG
 
 //#define _WITH_SWAPCHAIN_FULLSCREEN_STATE
 

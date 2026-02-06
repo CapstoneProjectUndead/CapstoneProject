@@ -64,7 +64,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			obj->Initialize(device, commandList);
 			// texture
 			std::shared_ptr<CTexture> tex = std::make_shared<CTexture>(std::string("floor"));
-			tex->CreateTextureResource(device, commandList, std::wstring(L"../Modeling/tex/Floor.dds"));
+			tex->CreateTextureResource(device, commandList, std::wstring(L"../Modeling/tex/Rock.dds"));
 			CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
 			UINT srvIndex = heapManager->Allocate();
 			tex->SetDescriptorIndex(srvIndex);

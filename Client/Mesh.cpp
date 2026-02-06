@@ -106,7 +106,6 @@ void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsComman
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
 
-
 // CTriangleMesh
 CTriangleMesh::CTriangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 	: CMesh(device, commandList)

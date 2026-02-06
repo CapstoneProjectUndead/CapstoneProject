@@ -53,8 +53,8 @@ public:
 	// LoadFrame 정보 Set, T: Vertex type
 	template<typename T>
 	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
-	template<typename T>
 	//get
+	template<typename T>
 	T* GetComponent();
 	UINT GetSRVIndex() const;
 
@@ -85,7 +85,13 @@ public:
 	void UpdateWorldMatrix();
 	void UpdateLookRightFromYaw();
 	//=================================
-
+	// 충돌관련
+	// mesh들의 boundingbox 계산
+	void ComputeBoundingBox();
+	bool IsColliding(CObject* other);
+	void CreateDebugBoundingBoxMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	void RenderDebugBoundingBox(ID3D12GraphicsCommandList* commandList);
+	
 public:
 	XMFLOAT4X4 world_matrix;
 
@@ -112,8 +118,10 @@ protected:
 	std::vector<std::shared_ptr<CComponent>> components;
 
 	bool is_visible{ true };
-	BoundingOrientedBox oobb;
 
+	BoundingBox box;      // 로컬 공간 기준
+	std::shared_ptr<CMesh> debug_bbox_mesh;  // 디버그용 라인 박스
+	
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;
@@ -129,4 +137,27 @@ T* CObject::GetComponent()
 			return casted;
 	}
 	return nullptr;
+}
+
+static const UINT g_BoxLineIndices[24] =
+{
+	0,1, 1,2, 2,3, 3,0,   // 앞면
+	4,5, 5,6, 6,7, 7,4,   // 뒷면
+	0,4, 1,5, 2,6, 3,7    // 앞-뒤 연결
+};
+
+static void GetBoxCorners(const BoundingBox& box, XMFLOAT3 out[8])
+{
+	XMFLOAT3 c = box.Center;
+	XMFLOAT3 e = box.Extents;
+
+	out[0] = { c.x - e.x, c.y - e.y, c.z - e.z };
+	out[1] = { c.x + e.x, c.y - e.y, c.z - e.z };
+	out[2] = { c.x + e.x, c.y + e.y, c.z - e.z };
+	out[3] = { c.x - e.x, c.y + e.y, c.z - e.z };
+
+	out[4] = { c.x - e.x, c.y - e.y, c.z + e.z };
+	out[5] = { c.x + e.x, c.y - e.y, c.z + e.z };
+	out[6] = { c.x + e.x, c.y + e.y, c.z + e.z };
+	out[7] = { c.x - e.x, c.y + e.y, c.z + e.z };
 }

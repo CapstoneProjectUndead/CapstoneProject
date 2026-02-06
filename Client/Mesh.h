@@ -59,7 +59,6 @@ public:
 
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
-	
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};

@@ -20,7 +20,10 @@ CObject::CObject()
 
 void CObject::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	ComputeBoundingBox();
 	CreateConstantBuffers(device, commandList);
+	CreateDebugBoundingBoxMesh(device, commandList);
+
 }
 
 void CObject::ReleaseUploadBuffer()
@@ -139,7 +142,6 @@ void CObject::UpdateWorldMatrix()
 {
 	XMMATRIX rot = XMMatrixRotationQuaternion(XMLoadFloat4(&orientation));
 	XMMATRIX trans = XMMatrixTranslation(position.x, position.y, position.z);
-
 	XMStoreFloat4x4(&world_matrix, rot * trans);
 }
 
@@ -183,4 +185,87 @@ void CObject::Animate(float elapsedTime, CCamera* camera)
 
 	XMMATRIX world = rotY * trans;
 	XMStoreFloat4x4(&world_matrix, world);
+}
+
+void CObject::ComputeBoundingBox()
+{
+	XMFLOAT3 minPt(FLT_MAX, FLT_MAX, FLT_MAX);
+	XMFLOAT3 maxPt(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+	for (auto& mesh : meshes)
+	{
+		XMFLOAT3 c = mesh->box.Center;
+		XMFLOAT3 e = mesh->box.Extents;
+
+		XMFLOAT3 meshMin(c.x - e.x, c.y - e.y, c.z - e.z);
+		XMFLOAT3 meshMax(c.x + e.x, c.y + e.y, c.z + e.z);
+
+		minPt.x = min(minPt.x, meshMin.x);
+		minPt.y = min(minPt.y, meshMin.y);
+		minPt.z = min(minPt.z, meshMin.z);
+
+		maxPt.x = max(maxPt.x, meshMax.x);
+		maxPt.y = max(maxPt.y, meshMax.y);
+		maxPt.z = max(maxPt.z, meshMax.z);
+	}
+
+	// min/max → center/extents 변환
+	box.Center = XMFLOAT3(
+		(minPt.x + maxPt.x) * 0.5f,
+		(minPt.y + maxPt.y) * 0.5f,
+		(minPt.z + maxPt.z) * 0.5f
+	);
+
+	box.Extents = XMFLOAT3(
+		(maxPt.x - minPt.x) * 0.5f,
+		(maxPt.y - minPt.y) * 0.5f,
+		(maxPt.z - minPt.z) * 0.5f
+	);
+}
+
+bool CObject::IsColliding(CObject* other)
+{
+	return box.Intersects(other->box);
+}
+
+void CObject::CreateDebugBoundingBoxMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+	// 1) 꼭짓점 계산 (로컬 공간 기준)
+	XMFLOAT3 corners[8];
+	GetBoxCorners(box, corners);
+
+	struct DebugVertex {
+		XMFLOAT3 pos;
+		XMFLOAT3 color;
+	};
+
+	std::vector<DebugVertex> vertices(8);
+	for (int i = 0; i < 8; i++)
+	{
+		vertices[i].pos = corners[i];
+		vertices[i].color = XMFLOAT3(1, 0, 0); // 빨간색
+	}
+
+	// 2) CMesh 생성
+	debug_bbox_mesh = std::make_shared<CMesh>(device, commandList);
+
+	// 3) 정점 버퍼 생성
+	debug_bbox_mesh->SetVertices(device, commandList, 8, vertices);
+
+	// 4) 인덱스 버퍼 생성
+	std::vector<UINT> indices(g_BoxLineIndices, g_BoxLineIndices + 24);
+	debug_bbox_mesh->SetIndices(device, commandList, 24, indices);
+
+	// 5) 라인 리스트로 설정
+	debug_bbox_mesh->primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+}
+
+void CObject::RenderDebugBoundingBox(ID3D12GraphicsCommandList* commandList)
+{
+	if (!debug_bbox_mesh) return;
+
+	// world_matrix는 이미 ObjectCB로 셰이더에 전달됨
+	// 디버그 박스도 동일 world_matrix 사용
+
+	debug_bbox_mesh->Render(commandList);
 }
