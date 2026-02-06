@@ -153,8 +153,9 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
     bool skinned = br.Read<bool>();
 
     // mesh 정보 read
-    if (br.FindTag("<Positions>:")) br.ReadVector<XMFLOAT3>(mesh.positions);
-    if(br.FindTag("<Normals>:")) br.ReadVector<XMFLOAT3>(mesh.normals);
+    if (br.FindTag("<Bounds>:")) mesh.bounds = br.Read<BoundingBox>();
+    if (br.FindTag("<Positions>:")) br.ReadVectors<XMFLOAT3>(mesh.positions);
+    if(br.FindTag("<Normals>:")) br.ReadVectors<XMFLOAT3>(mesh.normals);
     if (br.FindTag("<SubMeshes>:")) {
         int subMeshCount = br.Read<UINT>();
         mesh.indices.reserve(subMeshCount);
@@ -164,7 +165,7 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
             br.ReadTag(tag);
             
             int index = br.Read<int>();
-            br.ReadVector<UINT>(mesh.indices);
+            br.ReadVectors<UINT>(mesh.indices);
         }
     }
     if (skinned) {

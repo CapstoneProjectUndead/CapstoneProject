@@ -28,5 +28,5 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 
 	SetComponent(std::make_shared<CMovementComponent>());
 
-	CObject::CreateConstantBuffers(device, commandList);
+	CObject::Initialize(device, commandList);
 }

@@ -10,6 +10,7 @@ inline void CObject::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommand
 
 	mesh->BuildVertices<T>(device, commandList, node);
 	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
+	mesh->SetBounds(meshData.bounds);
 	SetMesh(mesh);
 	world_matrix = node->localMatrix;
 }

@@ -21,6 +21,7 @@ struct Mesh
     std::vector<XMFLOAT3> normals{};
     std::vector<UINT> indices{};
     std::vector<BoneWeightData> bone_weights;
+    BoundingBox bounds;
 };
 
 // 메쉬가 여러 개면 childrens 사용
@@ -153,7 +154,7 @@ public:
     }
 
     template<typename T>
-    void ReadVector(std::vector<T>& out)
+    void ReadVectors(std::vector<T>& out)
     {
         int count = Read<int>();
         out.resize(count);
