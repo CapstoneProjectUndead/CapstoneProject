@@ -73,12 +73,24 @@ void Session::DoRecv()
 
 	DWORD recv_flag = 0;
 	memset(&recv_over.wsa_over, 0, sizeof(recv_over.wsa_over));
-	recv_over.wsabuf.len = recv_over.BufferSize() - prev_remain;
+
+	// 버퍼 전체 크기에서 이미 차 있는(prev_remain) 만큼을 뺀 나머지가 수신 가능한 길이
+	recv_over.wsabuf.len = (ULONG)(recv_over.BufferSize() - prev_remain);
+
+	// 버퍼의 시작점이 아니라, 이미 차 있는 데이터 바로 다음 위치부터 저장함
 	recv_over.wsabuf.buf = recv_over.recv_buf.data() + prev_remain;
+
 	recv_over.session_ref = GetSessionRef();
 
-	WSARecv(socket, &recv_over.wsabuf, 1, 0, &recv_flag,
-		&recv_over.wsa_over, 0);
+	// 비동기 수신 시작
+	if (SOCKET_ERROR == ::WSARecv(socket, &recv_over.wsabuf, 1, nullptr, &recv_flag, &recv_over.wsa_over, nullptr))
+	{
+		int32 errorCode = ::WSAGetLastError();
+		if (errorCode != WSA_IO_PENDING)
+		{
+			DoDisconnect(L"WSARecv Error");
+		}
+	}
 }
 
 void Session::DoSend(SendBufferRef sendBuffer)
@@ -175,14 +187,20 @@ void Session::HandleRecv(int numOfBytes)
 	}
 
 	if (false == OnRecv((BYTE*)recv_over.recv_buf.data(), numOfBytes))
+	{
+		assert(nullptr);
 		return;
+	}
 
 	DoRecv();
 }
 
 bool Session::OnRecv(BYTE* buffer, int32 numOfBytes)
 {
+	// 이번에 새로 받은 데이터 + 지난번에 남았던 데이터 합산
 	int remainData = numOfBytes + prev_remain;
+
+	// 데이터의 시작점 (버퍼의 0번지)
 	char* p = recv_over.recv_buf.data();
 
 	while (remainData >= sizeof(PacketHeader))
@@ -190,28 +208,36 @@ bool Session::OnRecv(BYTE* buffer, int32 numOfBytes)
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(p);
 		int packet_size = header->GetSize();
 
-		if (packet_size <= 0 || packet_size > recv_over.BufferSize())
+		// [방어 코드] 패킷 사이즈가 너무 작거나 버퍼보다 크면 에러
+		if (packet_size < sizeof(PacketHeader) || packet_size > recv_over.BufferSize())
 		{
 			// 비정상 패킷 감지 (해킹 or 버그)
-			DoDisconnect(L"recv error");
+			DoDisconnect(L"Invalid Packet Size");
 			return false;
 		}
 
-		// 패킷 사이즈 보다 numOfBytes가 작다면 break하고
+		// 패킷이 아직 다 안 왔으면 중단하고 다음 recv를 기다림
 		// 다음 recv 때 처리.
 		if (remainData < packet_size)
 			break;
 
 		// 컨텐츠단에서 처리
-		ProcessPacket(shared_from_this(), p, packet_size);
+		ProcessPacket(GetSessionRef(), p, packet_size);
 		p += packet_size;
 		remainData -= packet_size;
 	}
 
 	// 남은 데이터 복사
-	prev_remain = remainData;
+	// 루프가 끝나고 남은 조각(remainData)이 있다면 버퍼의 맨 앞으로 이동
 	if (remainData > 0)
-		memmove(recv_over.recv_buf.data(), p, remainData);
+	{
+		// p는 현재 처리되지 않은 남은 데이터의 시작 위치임
+		// 이를 버퍼의 가장 앞(data())으로 복사해서 다음 데이터와 이어지게 함
+		::memmove(recv_over.recv_buf.data(), p, remainData);
+	}
+
+	// 다음 DoRecv에서 사용할 수 있게 남은 바이트 수 저장
+	prev_remain = remainData;
 
 	return true;
 }

@@ -6,18 +6,18 @@
 OVER_EXP::OVER_EXP()
 	: listener_ref(nullptr)
 	, session_ref(nullptr)
-	, recv_buffer_capacity(0)
+	, recv_buffer_size(0)
 {
 	Init();
 	comp_type = OP_RECV;
 	recv_buf.resize(BUFFER_SIZE * BUFFER_COUNT);
-	recv_buffer_capacity = BUFFER_SIZE * BUFFER_COUNT;
+	recv_buffer_size = BUFFER_SIZE * BUFFER_COUNT;
 }
 
 OVER_EXP::OVER_EXP(queue<SendBufferRef>& q, vector<WSABUF>& wsaBuffers)
 	: listener_ref(nullptr)
 	, session_ref(nullptr)
-	, recv_buffer_capacity(0)
+	, recv_buffer_size(0)
 {
 	Init();
 	comp_type = OP_SEND;

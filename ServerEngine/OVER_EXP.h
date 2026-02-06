@@ -30,7 +30,7 @@ public:
 	Listener*					listener_ref;
 	std::shared_ptr<Session>	session_ref;
 
-	int32						recv_buffer_capacity;
+	int32						recv_buffer_size;
 
 	// ¼Û½Å¿ë
 	std::vector<SendBufferRef>	send_buffers;
@@ -39,5 +39,5 @@ public:
 	OVER_EXP(std::queue<SendBufferRef>& q, std::vector<WSABUF>& wsaBuffers);
 
 	void	Init() { ZeroMemory(&wsa_over, sizeof(wsa_over)); }
-	int32	BufferSize() { return recv_buffer_capacity; }
+	int32	BufferSize() { return recv_buffer_size; }
 };
