@@ -30,6 +30,7 @@ void CreateDebugConsole();
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 double g_client_total_time = 0.0f;
+bool   g_run = true;
 
 HWND ghWnd;
 CGameFramework gGameFramework;
@@ -60,7 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    while (true) {
+    while (g_run) {
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
             if (msg.message == WM_QUIT) break;
             if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {

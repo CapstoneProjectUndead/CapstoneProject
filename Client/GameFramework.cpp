@@ -274,6 +274,7 @@ void CGameFramework::BuildObjects()
 
 	// 방금 만든 Test Scene을 Active Scene으로 설정
 	CScene* lobbyScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
+	lobbyScene->SetSceneType(SCENE_TYPE::TITLE);
 	CSceneManager::GetInstance().SetActiveScene(lobbyScene);
 
 	// 서버와 연결 체크

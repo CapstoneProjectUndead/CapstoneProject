@@ -79,6 +79,7 @@ using Microsoft::WRL::ComPtr;
 #define RENDER_BUFFER_MAX_SIZE 60
 
 extern double g_client_total_time;
+extern bool g_run;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;

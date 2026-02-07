@@ -23,6 +23,9 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
+	SCENE_TYPE GetSceneType() const { return scene_type; }
+	void SetSceneType(SCENE_TYPE type) { scene_type = type; }
+
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);
 
@@ -37,6 +40,8 @@ public:
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 
 protected:
+	SCENE_TYPE								scene_type;
+
 	std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
 	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어
 	std::shared_ptr<CCamera>				camera;

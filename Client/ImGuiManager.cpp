@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "ImGuiManager.h"
+#include "SceneManager.h"
+#include "TitleScene.h"
 
 #undef min
 #undef max
@@ -133,6 +135,11 @@ void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indica
 
 void CImGuiManager::DrawLogInUI()
 {
+    // Title Scene 에서만 로그인 UI를 그린다. 아니라면 return!
+    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
+    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE)
+        return;
+
     DrawTitle();
 
     static bool show_login_window = false;
@@ -232,12 +239,12 @@ void CImGuiManager::DrawLogInUI()
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));  // 눌렀을 때 
 
             if (ImGui::Button((const char*)u8"나가기", ImVec2(200, 55))) {
-
+                g_run = false;
             }
             ImGui::PopStyleColor(3);
 
             // =========================================================
-            // [추가] 비활성화 종료
+            // 비활성화 종료
             // 반드시 EndDisabled를 호출해야 이후 UI(로그인 창 등)는 정상적으로 클릭됩니다.
             // =========================================================
             ImGui::EndDisabled();
@@ -256,13 +263,13 @@ void CImGuiManager::DrawLogInUI()
 
         // 화면 중앙에 고정 (해상도에 따라 좌표는 조절하세요)
         ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(400, 220), ImGuiCond_Always); // 크기 고정
+        ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always); // 크기 고정
 
         // 로그인 창용 플래그 (제목 표시줄은 남겨둠)
         ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
-        if (ImGui::Begin((const char*)u8"로그인", &show_login_window, loginFlags))
-        {
+        if (ImGui::Begin((const char*)u8"로그인", &show_login_window, loginFlags)) {
+
             // 이미지 그리기
             //if (m_loginImageHandle.ptr != 0) {
             //    // 이미지 가운데 정렬을 위한 계산 (창 너비 - 이미지 너비) / 2
@@ -325,14 +332,13 @@ void CImGuiManager::DrawLogInUI()
     }
     else if (show_sign_window) {
         // 화면 중앙에 고정 (해상도에 따라 좌표는 조절하세요)
-        ImGui::SetNextWindowPos(ImVec2(210, 220), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(400, 230), ImGuiCond_Always); // 크기 고정
+        ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(390, 230), ImGuiCond_Always); // 크기 고정
 
         // 로그인 창용 플래그 (제목 표시줄은 남겨둠)
         ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
-        if (ImGui::Begin((const char*)u8"회원가입", &show_sign_window, loginFlags))
-        {
+        if (ImGui::Begin((const char*)u8"회원가입", &show_sign_window, loginFlags)) {
             // 이미지 그리기
             //if (m_loginImageHandle.ptr != 0) {
             //    // 이미지 가운데 정렬을 위한 계산 (창 너비 - 이미지 너비) / 2
@@ -370,8 +376,8 @@ void CImGuiManager::DrawLogInUI()
             float btnWidth = 380.0f;
             ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
-            if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50)))
-            {
+            if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
+
                 printf("가입 신청 ID: %s\n", id);
                 // SendPacket(id, pw)...
 
@@ -386,8 +392,7 @@ void CImGuiManager::DrawLogInUI()
     }
 
     // 둘 중 하나라도 true면 팝업을 열라고 명령
-    if (is_login_loading || is_signup_loading)
-    {
+    if (is_login_loading || is_signup_loading) {
         ImGui::OpenPopup("LoadingPopup");
     }
 
@@ -395,8 +400,7 @@ void CImGuiManager::DrawLogInUI()
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
     // 팝업 그리기 (코드는 딱 한 번만 존재함!)
-    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
         // 뱅글이 그리기
         LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
 
@@ -414,8 +418,8 @@ void CImGuiManager::DrawLogInUI()
         ImGui::Spacing();
 
         // 취소 버튼
-        if (ImGui::Button("Cancel"))
-        {
+        if (ImGui::Button("Cancel")) {
+
             // 무엇이 로딩 중이었든 둘 다 꺼버림
             is_login_loading = false;
             is_signup_loading = false;
@@ -513,12 +517,10 @@ bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& 
 
     // 2. [1층] 이미지를 그립니다.
     // 텍스처가 있으면 그리고, 없으면(0이면) 그냥 빈 공간만 차지하게 둡니다.
-    if (texturePtr != 0)
-    {
+    if (texturePtr != 0) {
         ImGui::Image((ImTextureID)texturePtr, size);
     }
-    else
-    {
+    else {
         // 이미지가 아직 로드 안 됐을 때를 대비해 투명 박스 처리
         ImGui::Dummy(size);
     }
