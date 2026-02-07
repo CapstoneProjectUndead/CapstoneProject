@@ -40,6 +40,9 @@
     <Filter Include="Scene\LobbyScene">
       <UniqueIdentifier>{66c4d67c-1047-45e5-a81c-1af571735750}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB">
+      <UniqueIdentifier>{c9646e04-2265-42e6-93ae-9eac4a464ebc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -77,6 +80,9 @@
     </ClCompile>
     <ClCompile Include="Job.cpp">
       <Filter>Network\Job</Filter>
+    </ClCompile>
+    <ClCompile Include="DBManager.cpp">
+      <Filter>DB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\enum.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DBManager.h">
+      <Filter>DB</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
