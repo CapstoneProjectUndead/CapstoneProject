@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "ImGuiManager.h"
 
+#undef min
+#undef max
+
 CImGuiManager::CImGuiManager()
 {
 
@@ -90,10 +93,49 @@ void CImGuiManager::Shutdown()
     }
 }
 
+void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indicator_radius, const ImVec4& main_color, const ImVec4& backdrop_color, const int circle_count, const float speed)
+{
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    if (window->SkipItems) {
+        return;
+    }
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiID id = window->GetID(label);
+
+    const ImVec2 pos = window->DC.CursorPos;
+    const float circle_radius = indicator_radius / 10.0f;
+    const ImRect bb(pos, ImVec2(pos.x + indicator_radius * 2.0f, pos.y + indicator_radius * 2.0f));
+    ImGui::ItemSize(bb);
+    if (!ImGui::ItemAdd(bb, id)) {
+        return;
+    }
+
+    // 시간 기반으로 회전 각도 계산
+    const float t = g.Time;
+    const auto degree_offset = 2.0f * IM_PI / circle_count;
+
+    for (int i = 0; i < circle_count; ++i) {
+        const auto x = indicator_radius * std::sin(degree_offset * i);
+        const auto y = indicator_radius * std::cos(degree_offset * i);
+        const auto growth = std::max(0.0f, std::sin(t * speed - i * degree_offset));
+
+        ImVec4 color;
+        color.x = main_color.x * growth + backdrop_color.x * (1.0f - growth);
+        color.y = main_color.y * growth + backdrop_color.y * (1.0f - growth);
+        color.z = main_color.z * growth + backdrop_color.z * (1.0f - growth);
+        color.w = 1.0f;
+
+        window->DrawList->AddCircleFilled(ImVec2(pos.x + indicator_radius + x, pos.y + indicator_radius - y), circle_radius + growth * circle_radius, ImGui::GetColorU32(color));
+    }
+}
+
 void CImGuiManager::DrawLogInUI()
 {
     static bool show_login_window = false;
     static bool show_sign_window = false;
+    static bool is_login_loading = false;
+    static bool is_signup_loading = false;
 
     // =========================================================
     // 1. 메인 버튼 창 (고정시키기)
@@ -101,6 +143,8 @@ void CImGuiManager::DrawLogInUI()
 
     // [핵심 1] Always로 설정하면 매 프레임 위치/크기를 강제로 덮어씌웁니다.
     ImGui::SetNextWindowPos(ImVec2(310, 320), ImGuiCond_Always);
+
+    //ImGui::SetNextWindowBgAlpha(0.0f);
 
     // [핵심 2] 플래그 조합 (OR 연산자 | 사용)
     // ImGuiWindowFlags_NoMove: 마우스로 드래그 불가
@@ -112,9 +156,16 @@ void CImGuiManager::DrawLogInUI()
     if (ImGui::Begin("Main Menu", NULL, mainBtnFlags)) {
         if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 40))) {
             show_login_window = true;
+            show_sign_window = false;
         }
+
+        // 버튼 사이에 간격 좀 주기
+        //ImGui::SameLine(); // 옆으로 나란히 배치하고 싶으면 이 줄 추가 (없으면 아래로 배치)
+        //ImGui::Spacing();
+
         if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 40))) {
             show_sign_window = true;
+            show_login_window = false;
         }
         ImGui::End();
     }
@@ -164,8 +215,14 @@ void CImGuiManager::DrawLogInUI()
             {
                 printf("Login Requested! ID: %s\n", id);
                 // SendPacket(id, pw)...
+
+                memset(id, 0, sizeof(id));
+                memset(pw, 0, sizeof(pw));
+                show_login_window = false;
+                is_login_loading = true;
             }
         }
+
         ImGui::End();
     }
     else if (show_sign_window) {
@@ -193,7 +250,7 @@ void CImGuiManager::DrawLogInUI()
             static char pw[64] = "";
             static char name[64] = "";
 
-            ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
+            ImGui::Text((const char*)u8"ID / PW / Name 을 입력하세요.");
             ImGui::Separator();
 
             ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
@@ -211,8 +268,54 @@ void CImGuiManager::DrawLogInUI()
             {
                 printf("가입 신청 ID: %s\n", id);
                 // SendPacket(id, pw)...
+
+                memset(id, 0, sizeof(id));
+                memset(pw, 0, sizeof(pw));
+                memset(name, 0, sizeof(name));
+                show_sign_window = false;
+                is_signup_loading = true;
             }
         }
         ImGui::End();
+    }
+
+    // 둘 중 하나라도 true면 팝업을 열라고 명령
+    if (is_login_loading || is_signup_loading)
+    {
+        ImGui::OpenPopup("LoadingPopup");
+    }
+
+    // 화면 중앙 설정
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    // 팝업 그리기 (코드는 딱 한 번만 존재함!)
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        // 뱅글이 그리기
+        LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+
+        ImGui::Spacing();
+        ImGui::SameLine();
+        ImGui::Spacing();
+        ImGui::SameLine();
+
+        // 상황에 따라 텍스트를 다르게 보여줄 수도 있음 (선택 사항)
+        if (is_login_loading)
+            ImGui::Text((const char*)u8"로그인 중입니다...");
+        else
+            ImGui::Text((const char*)u8"가입 처리 중입니다...");
+
+        ImGui::Spacing();
+
+        // 취소 버튼
+        if (ImGui::Button("Cancel"))
+        {
+            // 무엇이 로딩 중이었든 둘 다 꺼버림
+            is_login_loading = false;
+            is_signup_loading = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
     }
 }
