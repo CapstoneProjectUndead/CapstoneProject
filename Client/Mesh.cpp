@@ -2,24 +2,24 @@
 #include "GeometryLoader.h"
 #include "Mesh.h"
 
-// CDiffuseVertex
-CDiffuseVertex::CDiffuseVertex()
+// CMatVertex
+CMatVertex::CMatVertex()
 	: CVertex(), tex{}
 {
 }
 
-CDiffuseVertex::CDiffuseVertex(XMFLOAT3 position, XMFLOAT2 tex)
+CMatVertex::CMatVertex(XMFLOAT3 position, XMFLOAT2 tex)
 	: CVertex(position), tex{ tex }
 {
 }
 
-CDiffuseVertex::CDiffuseVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal)
+CMatVertex::CMatVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal)
 	: CVertex(position, normal), tex{ tex }
 {
 }
 
-// CMatVertex
-CMatVertex::CMatVertex(XMFLOAT3 position, XMFLOAT3 normal)
+// CSkinnedVertex
+CSkinnedVertex::CSkinnedVertex(XMFLOAT3 position, XMFLOAT3 normal)
 	:CVertex(position, normal)
 {
 }
@@ -74,18 +74,18 @@ void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 }
 
 template<>
-void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
 {
 	Mesh& mesh{ node->mesh };
 	name = node->name;
 
-	std::vector<CMatVertex> vertices;
+	std::vector<CSkinnedVertex> vertices;
 	size_t count = mesh.positions.size();
 	vertices.reserve(count);
 
 	for (size_t i = 0; i < count; ++i)
 	{
-		CMatVertex v{};
+		CSkinnedVertex v{};
 		v.position = mesh.positions[i];
 		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
 
@@ -105,6 +105,30 @@ void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsComman
 
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
+
+template<>
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+{
+	Mesh& mesh{ node->mesh };
+	name = node->name;
+
+	std::vector<CMatVertex> vertices;
+	size_t count = mesh.positions.size();
+	vertices.reserve(count);
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		CMatVertex v{};
+		v.position = mesh.positions[i];
+		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
+		v.tex = (i < mesh.texcoords.size()) ? mesh.texcoords[i] : XMFLOAT2(0, 0);
+
+		vertices.push_back(v);
+	}
+
+	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+}
+
 
 // CTriangleMesh
 CTriangleMesh::CTriangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -135,14 +159,14 @@ CRectangleMesh::CRectangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 {
 	// 정점 버퍼 생성
 	vertex_num = 4;
-	stride = sizeof(CDiffuseVertex);
+	stride = sizeof(CMatVertex);
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	CDiffuseVertex vertices[] = {
-		CDiffuseVertex(XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)),
-		CDiffuseVertex(XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f)),
-		CDiffuseVertex(XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f)),
-		CDiffuseVertex(XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f))
+	CMatVertex vertices[] = {
+		CMatVertex(XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)),
+		CMatVertex(XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f)),
+		CMatVertex(XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f)),
+		CMatVertex(XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f))
 	};
 
 	// 삼각형 메쉬를 리소스로 생성
@@ -172,17 +196,17 @@ CRectangleMesh::CRectangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 {
 	// 정점 버퍼 생성
 	vertex_num = 4;
-	stride = sizeof(CDiffuseVertex);
+	stride = sizeof(CMatVertex);
 	//primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	float halfWidth = width * 0.5f;
 	float halfHeight = height * 0.5f;
 
-	CDiffuseVertex vertices[] = {
-		CDiffuseVertex(XMFLOAT3(-halfWidth,  halfHeight, 0.0f), XMFLOAT2(0.0f, 0.0f)),
-		CDiffuseVertex(XMFLOAT3(halfWidth,  halfHeight, 0.0f), XMFLOAT2(1.0f, 0.0f)),
-		CDiffuseVertex(XMFLOAT3(halfWidth, -halfHeight, 0.0f), XMFLOAT2(1.0f, 1.0f)),
-		CDiffuseVertex(XMFLOAT3(-halfWidth, -halfHeight, 0.0f), XMFLOAT2(0.0f, 1.0f))
+	CMatVertex vertices[] = {
+		CMatVertex(XMFLOAT3(-halfWidth,  halfHeight, 0.0f), XMFLOAT2(0.0f, 0.0f)),
+		CMatVertex(XMFLOAT3(halfWidth,  halfHeight, 0.0f), XMFLOAT2(1.0f, 0.0f)),
+		CMatVertex(XMFLOAT3(halfWidth, -halfHeight, 0.0f), XMFLOAT2(1.0f, 1.0f)),
+		CMatVertex(XMFLOAT3(-halfWidth, -halfHeight, 0.0f), XMFLOAT2(0.0f, 1.0f))
 	};
 
 	// 삼각형 메쉬를 리소스로 생성
@@ -255,66 +279,66 @@ CCubeMesh::CCubeMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandLis
 	const size_t vertexSize = 36;
 
 	vertex_num = vertexSize;
-	stride = sizeof(CDiffuseVertex);
+	stride = sizeof(CMatVertex);
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	float x = width * 0.5f, y = height * 0.5f, z = depth * 0.5f;
 
-	CDiffuseVertex vertices[vertexSize];
+	CMatVertex vertices[vertexSize];
 	int i{};
 
 	// ⓐ 앞면(Front)
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(1.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(1.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(1.0f, 1.0f));
 
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(1.0f, 1.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(0.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(0.0f, 1.0f));
 
 	// ⓒ 윗면(Top)
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(1.0f, 1.0f));
 
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(1.0f, 1.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(0.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(0.0f, 1.0f));
 
 	// ⓔ 뒷면(Back)
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 1.0f));
 
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 1.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 1.0f));
 
 	// ⓖ 아래면(Bottom)
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(1.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(1.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
 
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 1.0f));
 
 	// ⓘ 왼쪽면(Left)
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(1.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, -z), XMFLOAT2(1.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(1.0f, 1.0f));
 
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(1.0f, 1.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, +y, +z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, -z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(-x, -y, +z), XMFLOAT2(0.0f, 1.0f));
 
 	// ⓚ 오른쪽면(Right)
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, +z), XMFLOAT2(1.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
 
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(0.0f, 0.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
-	vertices[i++] = CDiffuseVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(0.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, +y, -z), XMFLOAT2(0.0f, 0.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, +z), XMFLOAT2(1.0f, 1.0f));
+	vertices[i++] = CMatVertex(XMFLOAT3(+x, -y, -z), XMFLOAT2(0.0f, 1.0f));
 
 
 	// 삼각형 메쉬를 리소스로 생성

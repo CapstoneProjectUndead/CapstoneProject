@@ -17,7 +17,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 	for (const auto& children : frameRoot->childrens) {
 		if (children->mesh.positions.empty()) break;
-		SetMeshFromFile<CMatVertex>(device, commandList, children);
+		SetMeshFromFile<CSkinnedVertex>(device, commandList, children);
 	}
 
 	auto animator = std::make_shared<CAnimatorComponent>();

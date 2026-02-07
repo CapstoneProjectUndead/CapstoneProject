@@ -13,15 +13,39 @@ struct BoneWeightData
     XMFLOAT4 weight;
 };
 
+struct MaterialData
+{
+    XMFLOAT4 albedoColor{ 1,1,1,1 };
+    XMFLOAT4 emissiveColor{ 0,0,0,1 };
+    XMFLOAT4 specularColor{ 1,1,1,1 };
+
+    float glossiness = 0.0f;
+    float smoothness = 0.0f;
+    float metallic = 0.0f;
+    float specularHighlight = 0.0f;
+    float glossyReflection = 0.0f;
+
+    std::string albedoMap;
+    std::string specularMap;
+    std::string metallicMap;
+    std::string normalMap;
+    std::string emissionMap;
+    std::string detailAlbedoMap;
+    std::string detailNormalMap;
+};
+
 // Load 용 Mesh, 사용X
 struct Mesh
 {
-    std::vector<XMFLOAT3> positions{};
-    std::vector<XMFLOAT4> colors{};
-    std::vector<XMFLOAT3> normals{};
-    std::vector<UINT> indices{};
+    std::vector<XMFLOAT3> positions;
+    std::vector<XMFLOAT4> colors;
+    std::vector<XMFLOAT2> texcoords;
+    std::vector<XMFLOAT3> normals;
+    std::vector<MaterialData> materials;
+    std::vector<UINT> indices;
     std::vector<BoneWeightData> bone_weights;
     BoundingBox bounds;
+
 };
 
 // 메쉬가 여러 개면 childrens 사용
@@ -88,21 +112,25 @@ public:
     // tag 나올 때까지 읽기
     bool FindTag(const std::string& tag)
     {
+        // 현재 위치 저장
+        std::streampos originalPos = file.tellg();
+
         size_t matched = 0;
         char ch;
-        while (file.get(ch))
-        {
-            if (ch == tag[matched])
-            {
+        while (file.get(ch)) {
+            if (ch == tag[matched]) {
                 matched++;
                 if (matched == tag.size())
-                    return true;
+                    return true; // 찾았으면 그대로 true
             }
-            else
-            {
+            else {
                 matched = (ch == tag[0]) ? 1 : 0;
             }
         }
+
+        // 못 찾았으면 파일 포인터 복구
+        file.clear(); // EOF 플래그 제거
+        file.seekg(originalPos);
         return false;
     }
 
@@ -173,6 +201,7 @@ namespace CGeometryLoader {
     // load model
 	std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename);
     Mesh LoadMesh(BinaryReader& br);
+    void LoadMaterials(BinaryReader& br, std::vector<MaterialData>& materials);
     std::unique_ptr<FrameNode> LoadFrame(BinaryReader& br);
 
     // load animation/skeleton

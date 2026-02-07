@@ -142,6 +142,89 @@ void CGeometryLoader::LoadBoneWeights(BinaryReader& br, Mesh& mesh)
     }
 }
 
+void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>& materials)
+{
+    // <Materials>:
+    if (!br.FindTag("<Materials>:"))
+        return;
+
+    int materialCount = br.Read<int>();
+    materials.resize(materialCount);
+
+    for (int i = 0; i < materialCount; ++i) {
+        std::string tag;
+        br.ReadTag(tag); // "<Material>:"
+        int matIndex = br.Read<int>();
+
+        MaterialData& mat = materials[matIndex];
+
+        // --- Colors ---
+        if (br.FindTag("<AlbedoColor>:"))
+            mat.albedoColor = br.Read<XMFLOAT4>();
+
+        if (br.FindTag("<EmissiveColor>:"))
+            mat.emissiveColor = br.Read<XMFLOAT4>();
+
+        if (br.FindTag("<SpecularColor>:"))
+            mat.specularColor = br.Read<XMFLOAT4>();
+
+        // --- Floats ---
+        if (br.FindTag("<Glossiness>:"))
+            mat.glossiness = br.Read<float>();
+
+        if (br.FindTag("<Smoothness>:"))
+            mat.smoothness = br.Read<float>();
+
+        if (br.FindTag("<Metallic>:"))
+            mat.metallic = br.Read<float>();
+
+        if (br.FindTag("<SpecularHighlight>:"))
+            mat.specularHighlight = br.Read<float>();
+
+        if (br.FindTag("<GlossyReflection>:"))
+            mat.glossyReflection = br.Read<float>();
+
+        // --- Textures ---
+        if (br.FindTag("<AlbedoMap>:")) {
+            mat.albedoMap = br.ReadName();
+            if (mat.albedoMap == "null") mat.albedoMap.clear();
+        }
+
+        if (br.FindTag("<SpecularMap>:")) {
+            mat.specularMap = br.ReadName();
+            if (mat.specularMap == "null") mat.specularMap.clear();
+        }
+
+        if (br.FindTag("<MetallicMap>:")) {
+            mat.metallicMap = br.ReadName();
+            if (mat.metallicMap == "null") mat.metallicMap.clear();
+        }
+
+        if (br.FindTag("<NormalMap>:")) {
+            mat.normalMap = br.ReadName();
+            if (mat.normalMap == "null") mat.normalMap.clear();
+        }
+
+        if (br.FindTag("<EmissionMap>:")) {
+            mat.emissionMap = br.ReadName();
+            if (mat.emissionMap == "null") mat.emissionMap.clear();
+        }
+
+        if (br.FindTag("<DetailAlbedoMap>:")) {
+            mat.detailAlbedoMap = br.ReadName();
+            if (mat.detailAlbedoMap == "null") mat.detailAlbedoMap.clear();
+        }
+
+        if (br.FindTag("<DetailNormalMap>:")) {
+            mat.detailNormalMap = br.ReadName();
+            if (mat.detailNormalMap == "null") mat.detailNormalMap.clear();
+        }
+    }
+
+    // </Materials>
+    br.FindTag("</Materials>");
+}
+
 Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
 {
     Mesh mesh;
@@ -155,6 +238,10 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
     // mesh 정보 read
     if (br.FindTag("<Bounds>:")) mesh.bounds = br.Read<BoundingBox>();
     if (br.FindTag("<Positions>:")) br.ReadVectors<XMFLOAT3>(mesh.positions);
+    // TextureCoords read
+    if (materialCount > 0) {
+        if (br.FindTag("<TextureCoords0>:")) br.ReadVectors<XMFLOAT2>(mesh.texcoords);
+    }
     if(br.FindTag("<Normals>:")) br.ReadVectors<XMFLOAT3>(mesh.normals);
     if (br.FindTag("<SubMeshes>:")) {
         int subMeshCount = br.Read<UINT>();
@@ -167,6 +254,10 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
             int index = br.Read<int>();
             br.ReadVectors<UINT>(mesh.indices);
         }
+    }
+    // meterial 정보 read
+    if (materialCount > 0) {
+        LoadMaterials(br, mesh.materials);
     }
     if (skinned) {
         LoadBoneWeights(br, mesh);
