@@ -17,6 +17,12 @@
 #pragma comment(lib, "ServerEngine\\ServerEngine.lib")
 #endif
 
+#ifdef _DEBUG
+#pragma comment(lib, "MySQL\\Debug\\mysqlcppconn.lib")
+#else
+#pragma comment(lib, "MySQL\\Release\\mysqlcppconn.lib")
+#endif
+
 
 // 여기에 미리 컴파일하려는 헤더 추가
 #include <winsock2.h>
@@ -96,6 +102,7 @@ using std::make_pair;
 
 #include "ClientPacketHandler.h"
 #include "DirectXMathHelper.h"
+#include "DBManager.h"
 
 #define RENDER_BUFFER_MAX_SIZE 60
 
