@@ -2,6 +2,9 @@
 #include "ImGuiManager.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
+#include "SessionManager.h"
+#include "ServerSession.h"
+#include "ServerPacketHandler.h"
 
 #undef min
 #undef max
@@ -153,7 +156,7 @@ void CImGuiManager::DrawLogInUI()
         // =========================================================
 
         // Always로 설정하면 매 프레임 위치/크기를 강제로 덮어씌웁니다.
-        ImGui::SetNextWindowPos(ImVec2(300, 330), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
 
         ImGui::SetNextWindowBgAlpha(0.0f);
 
@@ -321,6 +324,15 @@ void CImGuiManager::DrawLogInUI()
                 printf("Login Requested! ID: %s\n", id);
                 // SendPacket(id, pw)...
 
+                C_LOGIN loginPkt;
+                COPY_STRING(loginPkt.id, id);
+                COPY_STRING(loginPkt.password, pw);
+                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+
+                auto session = CSessionManager::GetInstance().GetServerSession();
+                if (session)
+                    CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+
                 memset(id, 0, sizeof(id));
                 memset(pw, 0, sizeof(pw));
                 show_login_window = false;
@@ -380,6 +392,16 @@ void CImGuiManager::DrawLogInUI()
 
                 printf("가입 신청 ID: %s\n", id);
                 // SendPacket(id, pw)...
+
+                C_SIGNUP signUpPkt;
+                COPY_STRING(signUpPkt.id, id);
+                COPY_STRING(signUpPkt.password, pw);
+                COPY_STRING(signUpPkt.name, name);
+                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
+
+                auto session = CSessionManager::GetInstance().GetServerSession();
+                if (session)
+                    CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
 
                 memset(id, 0, sizeof(id));
                 memset(pw, 0, sizeof(pw));

@@ -56,6 +56,11 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 	return true;
 }
 
+bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
+{
+	return true;
+}
+
 bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 {
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();

@@ -28,7 +28,7 @@ bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len);
 bool Handle_C_PING(shared_ptr<Session> session, C_Ping& pkt);
 bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt);
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt);
-
+bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt);
 bool Handle_C_PLAYERINPUT(std::shared_ptr<Session> session, C_Input& pkt);
 
 class CClientPacketHandler
@@ -42,6 +42,7 @@ public:
 		GPacketHandler[PKT_C_PING] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Ping>(Handle_C_PING, session, buffer, len); };
 		GPacketHandler[PKT_C_PONG] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Pong>(Handle_C_PONG, session, buffer, len); };
 		GPacketHandler[PKT_C_LOGIN] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_LOGIN>(Handle_C_LOGIN, session, buffer, len); };	
+		GPacketHandler[PKT_C_SIGNUP] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_SIGNUP>(Handle_C_SIGNUP, session, buffer, len); };	
 		GPacketHandler[PKT_C_PLAYERINPUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Input>(Handle_C_PLAYERINPUT, session, buffer, len); };
 	}
 

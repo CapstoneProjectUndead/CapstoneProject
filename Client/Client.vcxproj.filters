@@ -210,6 +210,9 @@
     <ClInclude Include="ImGuiManager.h">
       <Filter>ImGUI\ImGuiManager</Filter>
     </ClInclude>
+    <ClInclude Include="SessionManager.h">
+      <Filter>Network\Session</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -325,6 +328,9 @@
     </ClCompile>
     <ClCompile Include="ImGuiManager.cpp">
       <Filter>ImGUI\ImGuiManager</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionManager.cpp">
+      <Filter>Network\Session</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

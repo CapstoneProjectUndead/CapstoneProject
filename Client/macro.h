@@ -9,3 +9,5 @@
 #define GET_CMD_LIST gGameFramework.GetCommandList().Get()
 
 #define IS_CONNECT true == CNetworkManager::GetInstance().GetClientService()->GetConnection()
+
+#define COPY_STRING(dest, src)  memset(dest, 0, sizeof(dest)); memcpy(dest, src, strlen(src));

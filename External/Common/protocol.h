@@ -6,8 +6,8 @@
 #include <ServerEngine/PacketUtils.h>
 
 constexpr int PORT_NUM = 7777;
-constexpr int ID_SIZE = 30;
-constexpr int PW_SIZE = 30;
+constexpr int ID_SIZE = 40;
+constexpr int PW_SIZE = 40;
 constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 100;
 
@@ -70,14 +70,24 @@ struct S_Pong : public PacketHeader
 };
 //=============================
 
+struct C_SIGNUP : public PacketHeader
+{
+	char	id[ID_SIZE];
+	char	password[PW_SIZE];
+	char	name[NAME_SIZE];
+
+	C_SIGNUP() : PacketHeader(sizeof(C_SIGNUP), _C_SIGNUP) {}
+};
+static_assert(sizeof(C_SIGNUP) == 4 + 100, "C_SIGNUP size mismatch!");
+
 struct C_LOGIN : public PacketHeader
 {
-	//char	id[ID_SIZE];
-	//char	password[PW_SIZE];
+	char	id[ID_SIZE];
+	char	password[PW_SIZE];
 
 	C_LOGIN() : PacketHeader(sizeof(C_LOGIN), (UINT)PacketType::_C_LOGIN) {}
 };
-static_assert(sizeof(C_LOGIN) == 4, "C_LOGIN size mismatch!");
+static_assert(sizeof(C_LOGIN) == 4 + 80, "C_LOGIN size mismatch!");
 
 struct S_LOGIN : public PacketHeader
 {
