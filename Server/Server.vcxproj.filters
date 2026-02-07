@@ -40,6 +40,9 @@
     <Filter Include="Scene\LobbyScene">
       <UniqueIdentifier>{66c4d67c-1047-45e5-a81c-1af571735750}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\TitleScene">
+      <UniqueIdentifier>{dd356f9e-e8b2-4587-a82f-814865a372f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -77,6 +80,9 @@
     </ClCompile>
     <ClCompile Include="Job.cpp">
       <Filter>Network\Job</Filter>
+    </ClCompile>
+    <ClCompile Include="TitleScene.cpp">
+      <Filter>Scene\TitleScene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\enum.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="TitleScene.h">
+      <Filter>Scene\TitleScene</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

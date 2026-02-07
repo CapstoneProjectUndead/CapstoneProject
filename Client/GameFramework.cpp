@@ -11,6 +11,7 @@
 #include "LobbyScene.h"
 
 #include "ImGuiManager.h"
+#include "TitleScene.h"
 
 extern HWND ghWnd;
 
@@ -269,10 +270,10 @@ void CGameFramework::BuildObjects()
 	command_list->Reset(command_allocator.Get(), NULL);
 
 	// 씬 객체 생성
-	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE] = std::make_unique<CTitleScene>();
 
 	// 방금 만든 Test Scene을 Active Scene으로 설정
-	CScene* lobbyScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	CScene* lobbyScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
 	CSceneManager::GetInstance().SetActiveScene(lobbyScene);
 
 	// 서버와 연결 체크

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_win32.h"
 #include "ImGui/imgui_impl_dx12.h"
@@ -20,12 +20,15 @@ public:
 
 public:
     void Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat);
-    void Update(); // ¸Å ÇÁ·¹ÀÓ ½ÃÀÛ (Tick)
-    void Render(ID3D12GraphicsCommandList* cmdList); // ±×¸®±â ¸í·É
+    void Update(); // ë§¤ í”„ë ˆì„ ì‹œì‘ (Tick)
+    void Render(ID3D12GraphicsCommandList* cmdList); // ê·¸ë¦¬ê¸° ëª…ë ¹
     void Shutdown();
 
 private:
-    // DX12´Â ImGui ÆùÆ®¿ë ÈüÀÌ ²À ÇÊ¿äÇÕ´Ï´Ù.
+	void DrawLogInUI();
+
+private:
+    // DX12ëŠ” ImGui í°íŠ¸ìš© í™ì´ ê¼­ í•„ìš”í•©ë‹ˆë‹¤.
     ID3D12DescriptorHeap* m_pSrvDescHeap = nullptr;
 };
 
