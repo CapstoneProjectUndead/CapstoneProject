@@ -4,6 +4,10 @@
 #include "ImGui/imgui_impl_dx12.h"
 #include "ImGui/imgui_internal.h"
 
+// 헬퍼 함수 
+// 인자: (텍스처 핸들(ptr), 버튼 텍스트, 버튼 크기)
+bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
+
 
 class CImGuiManager
 {
@@ -31,9 +35,12 @@ private:
 		, const int circle_count, const float speed);
 
 	void DrawLogInUI();
+	void DrawTitle();
 
 private:
     // DX12는 ImGui 폰트용 힙이 꼭 필요합니다.
     ID3D12DescriptorHeap* m_pSrvDescHeap = nullptr;
+
+	ImFont* title_font = nullptr;
 };
 

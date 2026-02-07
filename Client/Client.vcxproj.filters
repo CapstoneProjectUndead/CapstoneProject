@@ -55,6 +55,9 @@
     <Filter Include="Scene\TitleScene">
       <UniqueIdentifier>{bb306bdd-9e86-4399-a4e3-3be1d85fdd67}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImGUI\ImGuiManager">
+      <UniqueIdentifier>{f4f8e154-298a-44d7-b837-e3eed4e30591}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -177,9 +180,6 @@
     <ClInclude Include="LagSimulator.h">
       <Filter>Network\NetworkManager</Filter>
     </ClInclude>
-    <ClInclude Include="ImGuiManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="ImGui\imconfig.h">
       <Filter>ImGUI</Filter>
     </ClInclude>
@@ -206,6 +206,9 @@
     </ClInclude>
     <ClInclude Include="TitleScene.h">
       <Filter>Scene\TitleScene</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiManager.h">
+      <Filter>ImGUI\ImGuiManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -321,7 +324,7 @@
       <Filter>Scene\TitleScene</Filter>
     </ClCompile>
     <ClCompile Include="ImGuiManager.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>ImGUI\ImGuiManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
