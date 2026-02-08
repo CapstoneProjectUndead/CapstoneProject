@@ -58,27 +58,22 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		// lobby_uv 로드
 		std::string fileName{ "../Modeling/lobby_uv.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
+		CMaterialManager matManager{};
+		CTextureManager texManager{};
 		// child value -> object
 		for (const auto& children : frameRoot->childrens) {
 			if (children->mesh.positions.empty()) break;
 			auto obj = std::make_shared<CObject>();
 			obj->SetMeshFromFile<CMatVertex>(device, commandList, children);
+			// SetMaterial
+			std::string name{ children->mesh.materials[0].albedoMap };	// material 하나 소유함
+			auto tex = texManager.GetTexture(device, commandList, heapManager, name);
+			auto mat = matManager.GetMeterial(name, tex);
+			obj->SetMaterial(mat);
+
 			obj->Initialize(device, commandList);
-			// texture
-			std::string name{ children->mesh.materials[0].albedoMap };
-			std::shared_ptr<CTexture> tex = std::make_shared<CTexture>(name);
-			std::wstring wname{ name.begin(), name.end()};
-
-			tex->CreateTextureResource(device, commandList, std::wstring(L"../Modeling/tex/" + wname + L".dds"));
-			CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
-			UINT srvIndex = heapManager->Allocate();
-			tex->SetDescriptorIndex(srvIndex);
-			tex->CreateSrv(device, heapManager->GetCPUHandle(srvIndex));
-			// material
-			std::shared_ptr<CMaterial> m = std::make_shared<CMaterial>(name);
-			m->SetTexture(tex);
-			obj->SetMaterial(m);
-
 			objects.push_back(std::move(obj));
 		}
 	}
