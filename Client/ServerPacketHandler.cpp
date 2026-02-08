@@ -12,6 +12,7 @@
 #include "Movement.h"
 #include "NetworkClockManager.h"
 #include "NetworkManager.h"
+#include "ImGuiManager.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -41,8 +42,35 @@ bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt)
 	return true;
 }
 
+bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
+{
+	if (pkt.success) {
+		printf("signup success! \n");
+
+		// 1. 로딩창 끄기
+		CImGuiManager::GetInstance().SetSignupLoading(false);
+		CImGuiManager::GetInstance().SetLoginLoading(false);
+		CImGuiManager::GetInstance().CloseAllWindow();
+	}
+	else {
+		printf("signup fail...! \n");
+
+	}
+
+	return true;
+}
+
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
+	if (pkt.success) {
+		printf("log In Success! \n");
+
+		// 2. 씬 전환 (INGAME 씬으로)
+		//CSceneManager::GetInstance().LoadScene(SCENE_TYPE::INGAME);
+	}
+	else {
+		printf("log In fail...! \n");
+	}
 
 	return true;
 }

@@ -29,6 +29,7 @@ enum : uint16
 bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len);
 bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt);
 bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt);
+bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt);
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt);
 bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt);
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt);
@@ -46,6 +47,7 @@ public:
 
 		GPacketHandler[PKT_S_PING] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Ping>(Handle_S_PING, session, buffer, len); };
 		GPacketHandler[PKT_S_PONG] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Pong>(Handle_S_PONG, session, buffer, len); };
+		GPacketHandler[PKT_S_SIGNRES] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SIGN_RES>(Handle_S_SIGNRES, session, buffer, len); };
 		GPacketHandler[PKT_S_LOGIN] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_LOGIN>(Handle_S_LOGIN, session, buffer, len); };
 		GPacketHandler[PKT_S_SPAWNPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnPlayer>(Handle_S_MYPLAYER, session, buffer, len); };
 		GPacketHandler[PKT_S_ADDPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddPlayer>(Handle_S_ADDPLAYER, session, buffer, len); };

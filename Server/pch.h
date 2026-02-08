@@ -113,6 +113,8 @@ extern const double g_server_targetTick;
 extern const double g_targetDT;
 extern double  g_server_total_time;
 
+#define CON CDBManager::GetInstance().GetCon()
+
 
 #endif //PCH_H
 

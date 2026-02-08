@@ -145,11 +145,6 @@ void CImGuiManager::DrawLogInUI()
 
     DrawTitle();
 
-    static bool show_login_window = false;
-    static bool show_sign_window = false;
-    static bool is_login_loading = false;
-    static bool is_signup_loading = false;
-
     if (!show_login_window && !show_sign_window && !is_login_loading && !is_signup_loading) {
         // =========================================================
         // 1. 메인 버튼 창 (고정시키기)
@@ -415,40 +410,41 @@ void CImGuiManager::DrawLogInUI()
 
     // 둘 중 하나라도 true면 팝업을 열라고 명령
     if (is_login_loading || is_signup_loading) {
+
         ImGui::OpenPopup("LoadingPopup");
-    }
 
-    // 화면 중앙 설정
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        // 화면 중앙 설정
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    // 팝업 그리기 (코드는 딱 한 번만 존재함!)
-    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
-        // 뱅글이 그리기
-        LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+        // 팝업 그리기 (코드는 딱 한 번만 존재함!)
+        if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+            // 뱅글이 그리기
+            LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
 
-        ImGui::Spacing();
-        ImGui::SameLine();
-        ImGui::Spacing();
-        ImGui::SameLine();
+            ImGui::Spacing();
+            ImGui::SameLine();
+            ImGui::Spacing();
+            ImGui::SameLine();
 
-        // 상황에 따라 텍스트를 다르게 보여줄 수도 있음 (선택 사항)
-        if (is_login_loading)
-            ImGui::Text((const char*)u8"로그인 중입니다...");
-        else
-            ImGui::Text((const char*)u8"가입 처리 중입니다...");
+            // 상황에 따라 텍스트를 다르게 보여줄 수도 있음 (선택 사항)
+            if (is_login_loading)
+                ImGui::Text((const char*)u8"로그인 중입니다...");
+            else
+                ImGui::Text((const char*)u8"가입 처리 중입니다...");
 
-        ImGui::Spacing();
+            ImGui::Spacing();
 
-        // 취소 버튼
-        if (ImGui::Button("Cancel")) {
+            // 취소 버튼
+            if (ImGui::Button("Cancel")) {
 
-            // 무엇이 로딩 중이었든 둘 다 꺼버림
-            is_login_loading = false;
-            is_signup_loading = false;
-            ImGui::CloseCurrentPopup();
+                // 무엇이 로딩 중이었든 둘 다 꺼버림
+                is_login_loading = false;
+                is_signup_loading = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
         }
-
-        ImGui::EndPopup();
     }
 }
 

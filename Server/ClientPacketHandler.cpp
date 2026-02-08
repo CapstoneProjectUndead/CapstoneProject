@@ -5,6 +5,7 @@
 #include "SceneManager.h"
 #include "LobbyScene.h"
 #include "Player.h"
+#include "TitleScene.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -58,6 +59,14 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 
 bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 {
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
+	assert(activeScene->GetSceneType() == SCENE_TYPE::TITLE);
+
+	activeScene->PushPacketJob(session
+		, (CTitleScene*)activeScene
+		, &CTitleScene::HandleSignUp
+		, pkt);
+
 	return true;
 }
 

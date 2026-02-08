@@ -29,6 +29,12 @@ public:
     void Render(ID3D12GraphicsCommandList* cmdList); // 그리기 명령
     void Shutdown();
 
+	void SetLoginLoading(bool loading) { is_login_loading = loading; }
+	void SetSignupLoading(bool loading) { is_signup_loading = loading; }
+
+	// 필요하다면 창을 강제로 닫는 기능
+	void CloseAllWindow() { show_login_window = false; show_sign_window = false; }
+
 private:
 	void LoadingIndicatorCircle(const char* label, const float indicator_radius
 		, const ImVec4& main_color, const ImVec4& backdrop_color
@@ -42,5 +48,10 @@ private:
     ID3D12DescriptorHeap* m_pSrvDescHeap = nullptr;
 
 	ImFont* title_font = nullptr;
+
+	bool show_login_window = false;
+	bool show_sign_window = false;
+	bool is_login_loading = false;
+	bool is_signup_loading = false;
 };
 

@@ -80,6 +80,14 @@ struct C_SIGNUP : public PacketHeader
 };
 static_assert(sizeof(C_SIGNUP) == 4 + 100, "C_SIGNUP size mismatch!");
 
+struct S_SIGN_RES : public PacketHeader
+{
+	bool success;
+
+	S_SIGN_RES() : PacketHeader(sizeof(S_SIGN_RES), _S_SIGNRES) {}
+};
+static_assert(sizeof(S_SIGN_RES) == 4 + 1, "S_SIGN_RES size mismatch!");
+
 struct C_LOGIN : public PacketHeader
 {
 	char	id[ID_SIZE];

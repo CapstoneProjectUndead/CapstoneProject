@@ -2,11 +2,13 @@
 #include "SceneManager.h"
 // ¼­¹öÂÊ SceneManager
 
+#include "TitleScene.h"
 #include "LobbyScene.h"
 
 
 void CSceneManager::Initialize()
 {
+	scenes[(UINT)SCENE_TYPE::TITLE] = std::make_unique<CTitleScene>();
 	scenes[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
 }
 
