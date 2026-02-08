@@ -46,12 +46,12 @@ bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
-	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
+	assert(activeScene->GetSceneType() == SCENE_TYPE::TITLE);
 
 	activeScene->PushPacketJob(session
-		, (CLobbyScene*)activeScene
-		, &CLobbyScene::EnterPlayer
+		, (CTitleScene*)activeScene
+		, &CTitleScene::HandleLogIn
 		, pkt);
 
 	return true;

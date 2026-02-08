@@ -3,6 +3,8 @@
 // **** 클라/서버 공용 헤더 파일 ****
 //==================================
 
+#define ROOM_NAME_MAX 100
+
 struct InputData 
 {
 	// 이동 관련 (서버가 검증)
@@ -69,4 +71,14 @@ struct ObjectInfo
 		, roll(other.roll)
 	{
 	}
+};
+
+struct RoomListInfo
+{
+	uint16	room_id;	// 방 ID
+	uint16  room_cnt;	// 총 몇개의 방이 있는지
+	char	room_name[ROOM_NAME_MAX]; // 100자
+	uint16	current_player;
+	uint16	max_player;
+	bool	is_ingame;	// 게임이 이미 시작된 방인지
 };

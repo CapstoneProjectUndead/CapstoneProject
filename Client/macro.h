@@ -11,3 +11,6 @@
 #define IS_CONNECT true == CNetworkManager::GetInstance().GetClientService()->GetConnection()
 
 #define COPY_STRING(dest, src)  memset(dest, 0, sizeof(dest)); memcpy(dest, src, strlen(src));
+
+#define G_RATIO_X (ImGui::GetIO().DisplaySize.x / FRAME_BUFFER_WIDTH)
+#define G_RATIO_Y (ImGui::GetIO().DisplaySize.y / FRAME_BUFFER_HEIGHT)

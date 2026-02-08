@@ -77,3 +77,23 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 		return;  // DB 에러 처리
 	}
 }
+
+void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
+{
+	// 싱글
+	if (!pkt.is_multi) {
+		S_LOGIN loginPkt;
+		loginPkt.success = true;
+		loginPkt.is_multi = false;
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
+		session->DoSend(sendBuffer);
+	}
+	// 멀티
+	else {
+		S_LOGIN loginPkt;
+		loginPkt.success = true;
+		loginPkt.is_multi = true;
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
+		session->DoSend(sendBuffer);
+	}
+}

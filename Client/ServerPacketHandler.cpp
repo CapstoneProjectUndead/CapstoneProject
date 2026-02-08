@@ -50,6 +50,7 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		// 1. 로딩창 끄기
 		CImGuiManager::GetInstance().SetSignupLoading(false);
 		CImGuiManager::GetInstance().SetLoginLoading(false);
+		CImGuiManager::GetInstance().SetSignUpResult(true);
 		CImGuiManager::GetInstance().CloseAllWindow();
 	}
 	else {
@@ -62,11 +63,27 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
-	if (pkt.success) {
+	// 싱글
+	if (pkt.success && !pkt.is_multi) {
 		printf("log In Success! \n");
+
+		// 1. 로딩창 끄기
+		CImGuiManager::GetInstance().SetSignupLoading(false);
+		CImGuiManager::GetInstance().SetLoginLoading(false);
+		CImGuiManager::GetInstance().SetSignInResult(true);
+		CImGuiManager::GetInstance().CloseAllWindow();
 
 		// 2. 씬 전환 (INGAME 씬으로)
 		//CSceneManager::GetInstance().LoadScene(SCENE_TYPE::INGAME);
+	}
+	// 멀티
+	else if (pkt.success && pkt.is_multi) {
+		// 1. 로딩창 끄기
+		CImGuiManager::GetInstance().SetSignupLoading(false);
+		CImGuiManager::GetInstance().SetLoginLoading(false);
+		CImGuiManager::GetInstance().SetSignInResult(true);
+		CImGuiManager::GetInstance().SetTitleDraw(false);
+		CImGuiManager::GetInstance().CloseAllWindow();
 	}
 	else {
 		printf("log In fail...! \n");

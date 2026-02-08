@@ -14,5 +14,6 @@ public:
 
 public:
     void HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt);
+    void HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt);
 };
 

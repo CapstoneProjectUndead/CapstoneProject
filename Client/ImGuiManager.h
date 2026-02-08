@@ -7,6 +7,7 @@
 // 헬퍼 함수 
 // 인자: (텍스처 핸들(ptr), 버튼 텍스트, 버튼 크기)
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
+std::string CP949ToUTF8(const std::string& strCP949);
 
 
 class CImGuiManager
@@ -29,8 +30,11 @@ public:
     void Render(ID3D12GraphicsCommandList* cmdList); // 그리기 명령
     void Shutdown();
 
+	void SetTitleDraw(bool result) { is_title_draw = result; }
 	void SetLoginLoading(bool loading) { is_login_loading = loading; }
 	void SetSignupLoading(bool loading) { is_signup_loading = loading; }
+	void SetSignUpResult(bool result) { is_signup_success = result; }
+	void SetSignInResult(bool result) { is_signin_success = result; }
 
 	// 필요하다면 창을 강제로 닫는 기능
 	void CloseAllWindow() { show_login_window = false; show_sign_window = false; }
@@ -41,17 +45,29 @@ private:
 		, const int circle_count, const float speed);
 
 	void DrawLogInUI();
+	void DrawLogInUI2();
 	void DrawTitle();
+	void DrawRoomListUI();
 
 private:
     // DX12는 ImGui 폰트용 힙이 꼭 필요합니다.
-    ID3D12DescriptorHeap* m_pSrvDescHeap = nullptr;
+    ID3D12DescriptorHeap* srv_desc_heap = nullptr;
+	std::vector<RoomListInfo> room_vec;
 
 	ImFont* title_font = nullptr;
+	ImFont* title_font2 = nullptr;
 
-	bool show_login_window = false;
-	bool show_sign_window = false;
-	bool is_login_loading = false;
-	bool is_signup_loading = false;
+	bool is_title_draw = true;
+	bool show_login_window = false;	// 로그인 입력창 띄우기
+	bool show_sign_window = false;	// 회원가입창 띄우기
+	bool is_login_loading = false;	// 로딩중 화면
+	bool is_signup_loading = false; // 로딩중 화면
+
+	bool is_multi_signin = false;
+	bool is_signup_success = false; // 회원가입 성공여부
+	bool is_signin_success = false; // 로그인 성공여부
+
+	bool show_room_list_window = false;
+
+	uint16 selected_room_id = -1;
 };
-
