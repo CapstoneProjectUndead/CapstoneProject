@@ -45,9 +45,14 @@ private:
 		, const int circle_count, const float speed);
 
 	void DrawLogInUI();
-	void DrawLogInUI2();
+
+	void DrawTitleUI();
 	void DrawTitle();
+	void DrawLoadingPopUp();
+	void DrawLoadingPopUpResult();
+
 	void DrawRoomListUI();
+
 
 private:
     // DX12는 ImGui 폰트용 힙이 꼭 필요합니다.
@@ -60,14 +65,15 @@ private:
 	bool is_title_draw = true;
 	bool show_login_window = false;	// 로그인 입력창 띄우기
 	bool show_sign_window = false;	// 회원가입창 띄우기
-	bool is_login_loading = false;	// 로딩중 화면
-	bool is_signup_loading = false; // 로딩중 화면
+
+	bool is_login_loading = false;	// 로딩 팝업 띄우기
+	bool is_signup_loading = false; // 로딩 팝업 띄우기
 
 	bool is_multi_signin = false;
 	bool is_signup_success = false; // 회원가입 성공여부
 	bool is_signin_success = false; // 로그인 성공여부
 
-	bool show_room_list_window = false;
+	bool show_room_list_window = false;	// 룸매칭 화면 뜨위기
 
 	uint16 selected_room_id = -1;
 };

@@ -1,6 +1,14 @@
 #include "pch.h"
 // 서버쪽 TitleScene
 #include "TitleScene.h"
+#include "ClientSession.h"
+#include "Player.h"
+
+#undef min
+#undef max
+
+#define CAST_CS(session) static_pointer_cast<CClientSession>(session)
+
 
 CTitleScene::CTitleScene()
 	: CScene(SCENE_TYPE::TITLE)
@@ -80,6 +88,10 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 
 void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
+	// CUser 생성
+	// ID 발급
+	// 클라한테 ID와 함께 로그인 허락 패킷을 보낸다. (S_LOGIN)
+
 	// 싱글
 	if (!pkt.is_multi) {
 		S_LOGIN loginPkt;

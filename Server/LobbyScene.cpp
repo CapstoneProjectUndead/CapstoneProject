@@ -1,8 +1,9 @@
 #include "pch.h"
-// Server쪽 TestScene
+// Server쪽 LobbyScene
 #include "LobbyScene.h"
 #include "ClientSession.h"
 #include "Player.h"
+#include "User.h"
 
 #undef min
 #undef max
@@ -26,8 +27,16 @@ void CLobbyScene::Update(float elapsedTime)
 
 void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
+	// User 객체 생성
+	shared_ptr<CUser> user;
+	if (!CAST_CS(session)->GetUser())
+		user = make_shared<CUser>();
+
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
+
+	user->SetPlayer(player);
+	player->SetID(user->GetID());
 
 	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
@@ -37,7 +46,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	player->SetPosition(pos);
 
 	// ClientSession이 Plyaer를 참조. (refcount 증가)
-	CAST_CS(session)->SetPlayer(player);
+	CAST_CS(session)->SetUser(user);
 
 	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
 	player->SetSession(session);
@@ -55,6 +64,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	}
 
 	// 지금 접속한 유저에게 다른 유저의 정보도 알려준다.
+	// 여기서는 가변길이 패킷을 보낸다.
 	{
 		if (!players.empty()) {
 

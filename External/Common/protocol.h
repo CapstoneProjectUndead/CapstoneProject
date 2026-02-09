@@ -23,14 +23,15 @@ enum PacketType : uint16_t
 	_C_LOGIN = 6,
 	_S_LOGIN = 7,
 	_S_LOGIN_FAIL = 8,
-	_C_ROOM_CREATE = 8,
-	_S_ROOMLIST = 8,
-	_S_SPAWNPLAYER = 9,
-	_S_ADDPLAYER = 10,
-	_S_PLAYERLIST = 11,
-	_S_REMOVEPLAYER = 12,
-	_C_PLAYER_INPUT = 13,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 14,
+	_C_ROOM_CREATE = 9,
+	_C_ROOM_ENTER = 10,
+	_S_ROOMLIST = 11,
+	_S_SPAWNPLAYER = 12,
+	_S_ADDPLAYER = 13,
+	_S_PLAYERLIST = 14,
+	_S_REMOVEPLAYER = 15,
+	_C_PLAYER_INPUT = 16,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 17,
 };
 
 #pragma pack (push, 1)

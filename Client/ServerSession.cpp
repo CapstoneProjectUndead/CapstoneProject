@@ -15,9 +15,8 @@ void CServerSession::OnConnected()
 {
 	CSessionManager::GetInstance().SetServerSession(std::static_pointer_cast<CServerSession>(GetSessionRef()));
 
-	C_LOGIN loginPkt;
-
-	SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+	//C_LOGIN loginPkt;
+	//SendBufferRef sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
 	//DoSend(sendBuffer);
 }
 

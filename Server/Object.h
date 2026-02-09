@@ -3,6 +3,7 @@
 
 class CPlayer;
 class Session;
+class CUser;
 
 class CObject
 {
@@ -23,6 +24,10 @@ public:
     weak_ptr<Session>                   GetSessionWeak() const { return session; }
     shared_ptr<Session>                 GetSession() const { return session.lock(); }
     void                                SetSession(shared_ptr<Session> _session) { session = _session; }
+
+    weak_ptr<CUser>                     GetUserWeak() const { return user; }
+    shared_ptr<CUser>                   GetUser() const { return user.lock(); }
+    void                                SetUser(shared_ptr<CUser> _user) { user = _user; }
 
     XMFLOAT3                            GetPosition() { return position; }
     void                                SetPosition(const XMFLOAT3& pos) { position = pos; }
@@ -54,10 +59,8 @@ public:
     void UpdateLookRightFromYaw();
     //=================================
 
-private:
-    static atomic<uint64>               s_idGenerator;
-
 protected:
+    weak_ptr<CUser>                     user;
     weak_ptr<Session>                   session;
     uint64                              obj_id;
 

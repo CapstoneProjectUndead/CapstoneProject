@@ -3,6 +3,13 @@
 
 #include "Scene.h"
 
+class Room
+{
+public:
+    unique_ptr<CScene>      scenes[(UINT)SCENE_TYPE::END];
+};
+
+
 class CSceneManager
 {
 private:
@@ -26,5 +33,7 @@ public:
 
 private:
     unique_ptr<CScene>      scenes[(UINT)SCENE_TYPE::END];
+
+    map<uint32, shared_ptr<Room>> rooms;
 };
 

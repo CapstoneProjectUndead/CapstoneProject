@@ -58,6 +58,9 @@
     <Filter Include="ImGUI\ImGuiManager">
       <UniqueIdentifier>{f4f8e154-298a-44d7-b837-e3eed4e30591}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\User">
+      <UniqueIdentifier>{9c79dc36-4810-45ed-b0fa-be35ef16547a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -213,6 +216,9 @@
     <ClInclude Include="SessionManager.h">
       <Filter>Network\Session</Filter>
     </ClInclude>
+    <ClInclude Include="User.h">
+      <Filter>Object\User</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -331,6 +337,9 @@
     </ClCompile>
     <ClCompile Include="SessionManager.cpp">
       <Filter>Network\Session</Filter>
+    </ClCompile>
+    <ClCompile Include="User.cpp">
+      <Filter>Object\User</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

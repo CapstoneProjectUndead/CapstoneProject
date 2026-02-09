@@ -3,6 +3,7 @@
 #include "SceneManager.h"
 #include "Player.h"
 #include "LobbyScene.h"
+#include "User.h"
 
 
 CClientSession::CClientSession()
@@ -20,7 +21,8 @@ void CClientSession::OnConnected()
 
 void CClientSession::OnDisconnected()
 {
-	if (nullptr != player) {
+	if (nullptr != user) {
+		auto player = user->GetPlayer();
 		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
 			CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
 			if (scene != nullptr) {

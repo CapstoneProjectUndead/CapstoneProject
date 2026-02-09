@@ -19,6 +19,14 @@ void CSceneManager::Update(const float elapsedTime)
 		if (scene != nullptr)
 			scene->Update(elapsedTime);
 	}
+
+	//for (auto& [id, room] : rooms) 
+	//{
+	//	for (auto& scene : room->scenes) 
+	// {
+	//		scene->Update(elapsedTime);
+	//	}
+	//}
 }
 
 void CSceneManager::SendResults()

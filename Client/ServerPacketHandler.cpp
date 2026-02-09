@@ -13,6 +13,7 @@
 #include "NetworkClockManager.h"
 #include "NetworkManager.h"
 #include "ImGuiManager.h"
+#include "User.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -63,6 +64,10 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
+	// Title Scene으로 시작
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	assert(scene->GetSceneType() == SCENE_TYPE::TITLE);
+
 	// 싱글
 	if (pkt.success && !pkt.is_multi) {
 		printf("log In Success! \n");
@@ -84,9 +89,17 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 		CImGuiManager::GetInstance().SetSignInResult(true);
 		CImGuiManager::GetInstance().SetTitleDraw(false);
 		CImGuiManager::GetInstance().CloseAllWindow();
-	}
-	else {
-		printf("log In fail...! \n");
+
+		// 2. User 생성
+		std::shared_ptr<CUser> user = std::make_shared<CUser>();
+
+		// session, id 저장
+		user->SetSession(session);
+		user->SetID(pkt.id);
+
+		// User Refcount 증가
+		CAST_SS(session)->SetUser(user);
+
 	}
 
 	return true;

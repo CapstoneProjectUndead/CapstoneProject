@@ -75,7 +75,7 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
     info.max_player = 4;
     info.room_cnt = 1;
     info.room_id = 2;
-    COPY_STRING(info.room_name, "보물 파밍 가자");
+    COPY_STRING(info.room_name, "초보 환영");
     room_vec.push_back(info);
 }
 
@@ -86,8 +86,8 @@ void CImGuiManager::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    //DrawLogInUI2();
-    DrawRoomListUI();
+    DrawTitleUI();
+    //DrawRoomListUI();
 
     // === 여기서부터 UI 코드를 작성하면 됩니다 ===
     // 테스트용 데모 창 띄우기
@@ -469,7 +469,7 @@ void CImGuiManager::DrawLogInUI()
     }
 }
 
-void CImGuiManager::DrawLogInUI2()
+void CImGuiManager::DrawTitleUI()
 {
     // Title Scene 에서만 로그인 UI를 그린다. 아니라면 return!
     CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
@@ -600,6 +600,7 @@ void CImGuiManager::DrawLogInUI2()
             ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
             if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50))) {
+
                 printf("Login Requested! ID: %s\n", id);
 
                 C_LOGIN loginPkt;
@@ -658,7 +659,6 @@ void CImGuiManager::DrawLogInUI2()
             if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
 
                 printf("가입 신청 ID: %s\n", id);
-                // SendPacket(id, pw)...
 
                 C_SIGNUP signUpPkt;
                 COPY_STRING(signUpPkt.id, id);
@@ -684,82 +684,15 @@ void CImGuiManager::DrawLogInUI2()
     // 4. 로딩 팝업
     // ============
 
-    if (is_login_loading || is_signup_loading) {
-
-        ImGui::OpenPopup("LoadingPopup");
-
-        // BeginPopupModal은 OpenPopup("LoadingPopup")이 호출된 적이 있어야만 true를 반환합니다.
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-        if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            // 뱅글이 그리기
-            LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
-
-            ImGui::Spacing(); ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
-
-            if (is_login_loading)
-                ImGui::Text((const char*)u8"로그인 중입니다...");
-            else
-                ImGui::Text((const char*)u8"가입 처리 중입니다...");
-
-            ImGui::Spacing();
-
-            if (ImGui::Button("Cancel")) {
-                is_login_loading = false;
-                is_signup_loading = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-    }
+    if (is_login_loading || is_signup_loading)
+        DrawLoadingPopUp();
 
     // =================
     // 5. 로딩 팝업 결과
     // =================
-    if (is_signup_success || is_signin_success) {
 
-        ImGui::OpenPopup("SuccessPopup");
-
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-        if (ImGui::BeginPopupModal("SuccessPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::Spacing(); ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
-
-            if (is_signup_success && !is_signin_success)
-                ImGui::Text((const char*)u8"가입 성공!");
-            else if (!is_signup_success && !is_signin_success)
-                ImGui::Text((const char*)u8"가입 실패...!");
-
-            if (is_signin_success && !is_signup_success)
-                ImGui::Text((const char*)u8"로그인 성공!");
-            else if(!is_signin_success && !is_signup_success)
-                ImGui::Text((const char*)u8"로그인 실패...!");
-
-            ImGui::Spacing();
-
-            if (ImGui::Button((const char*)u8"확인")) {
-
-                // 가입을 시도했고, 가입 성공하면
-                if (is_signup_success) {
-                    is_signup_success = false;
-                    show_room_list_window = true;
-                }
-
-                // 로그인을 시도했고, 로그인 성공하면
-                if (is_signin_success) {
-                    is_signin_success = false;
-                    show_room_list_window = true;
-                }
-
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-    }
+    if (is_signup_success || is_signin_success)
+        DrawLoadingPopUpResult();
 
     // ==============
     // 6. 룸 매칭 화면
@@ -771,7 +704,7 @@ void CImGuiManager::DrawLogInUI2()
 
 void CImGuiManager::DrawTitle()
 {
-    if (is_title_draw) {
+    if (is_title_draw && !show_room_list_window) {
 
         // =========================================================
         // [배경 색 덧칠하기]
@@ -848,6 +781,90 @@ void CImGuiManager::DrawTitle()
         ImGui::End();
 
         ImGui::PopStyleVar();
+    }
+}
+
+void CImGuiManager::DrawLoadingPopUp()
+{
+    if (!ImGui::IsPopupOpen("LoadingPopup")) {
+        ImGui::OpenPopup("LoadingPopup");
+    }
+
+    // BeginPopupModal은 OpenPopup("LoadingPopup")이 호출된 적이 있어야만 true를 반환합니다.
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        // 뱅글이 그리기
+        LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+
+        ImGui::Spacing(); ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+        if (is_login_loading)
+            ImGui::Text((const char*)u8"로그인 중입니다...");
+        else
+            ImGui::Text((const char*)u8"가입 처리 중입니다...");
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Cancel")) {
+            is_login_loading = false;
+            is_signup_loading = false;
+            ImGui::CloseCurrentPopup();
+
+            // 이건 테스트 임시용 (무조건 지울 것!)
+            show_room_list_window = true;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void CImGuiManager::DrawLoadingPopUpResult()
+{
+    if (!ImGui::IsPopupOpen("SuccessPopup")) {
+        ImGui::OpenPopup("SuccessPopup");
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("SuccessPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Spacing();
+        ImGui::SameLine();
+        ImGui::Spacing();
+        ImGui::SameLine();
+
+        if (is_signup_success && !is_signin_success)
+            ImGui::Text((const char*)u8"가입 성공!");
+        else if (!is_signup_success && !is_signin_success)
+            ImGui::Text((const char*)u8"가입 실패...!");
+
+        if (is_signin_success && !is_signup_success)
+            ImGui::Text((const char*)u8"로그인 성공!");
+        else if (!is_signin_success && !is_signup_success)
+            ImGui::Text((const char*)u8"로그인 실패...!");
+
+        ImGui::Spacing();
+
+        if (ImGui::Button((const char*)u8"확인")) {
+
+            // 가입을 시도했고, 가입 성공하면
+            if (is_signup_success) {
+                is_signup_success = false;
+            }
+
+            // 로그인을 시도했고, 로그인 성공하면
+            if (is_signin_success) {
+                is_signin_success = false;
+
+                // 룸 매칭 UI 화면으로 전환
+                show_room_list_window = true;
+            }
+
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
     }
 }
 
@@ -1020,16 +1037,17 @@ void CImGuiManager::DrawRoomListUI()
         if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
             if (selected_room_id != 0) {
                 // 입장 로직
+                ImGui::OpenPopup("EnterLoading");
             }
         }
         ImGui::SameLine(0, spacing);
 
         if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
             // 뒤로가기 로직
+            show_room_list_window = false;
         }
 
         ImGui::PopStyleColor(4);
-
 
         // ----------------
         // 5. 팝업 (방 생성)
@@ -1068,14 +1086,29 @@ void CImGuiManager::DrawRoomListUI()
         }
         ImGui::PopStyleColor(); // 팝업 텍스트 색상 복구
 
+        //================
+        // 방 입장 팝업 생성
+        //================
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-        // ============================================
+        if (ImGui::BeginPopupModal("EnterLoading", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+            LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+
+            if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+        ImGui::PopStyleColor(); // 팝업 텍스트 색상 복구
+
+        // =====================================
         //  파란 배경(메인 윈도우) 클릭 시 선택 해제
-        // ============================================
+        // =====================================
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
             selected_room_id = 0;
         }
-
     }
     ImGui::End();
     ImGui::PopStyleVar();
