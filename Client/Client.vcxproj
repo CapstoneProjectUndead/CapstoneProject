@@ -171,6 +171,7 @@
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="MyPlayer.h" />
     <ClInclude Include="NetworkManager.h" />
@@ -206,6 +207,7 @@
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshRenderer.cpp" />
     <ClCompile Include="Movement.cpp" />
     <ClCompile Include="MyPlayer.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
@@ -273,7 +275,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Object.inl" />
+    <None Include="MeshComponent.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

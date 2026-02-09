@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "Object.inl"
-#include "Mesh.h"
+#include "MeshComponent.inl"
 #include "Character.h"
 #include "Movement.h"
 #include "Animator.h"
+#include "Mesh.h"
 
 CCharacter::CCharacter()
 	: CObject()
@@ -17,15 +17,21 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 	for (const auto& children : frameRoot->childrens) {
 		if (children->mesh.positions.empty()) break;
-		SetMeshFromFile<CSkinnedVertex>(device, commandList, children);
+		// mesh
+		auto meshComp = std::make_shared<CMeshComponent>();
+		SetComponent(meshComp);
+		meshComp->SetMeshFromFile<CMatVertex>(device, commandList, children);
+		world_matrix = children->localMatrix;
 	}
 
+	// animator
 	auto animator = std::make_shared<CAnimatorComponent>();
 	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
 	animator->Play("Ganga_walk");
 	SetComponent(animator);
 	SetShdaer("skinning");
 
+	// movement
 	SetComponent(std::make_shared<CMovementComponent>());
 
 	CObject::Initialize(device, commandList);

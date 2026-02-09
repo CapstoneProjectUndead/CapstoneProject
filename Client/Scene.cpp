@@ -53,10 +53,6 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 		for (const auto& obj : objects) {
 			if (shader.first == obj->GetShader()) {
 				shader.second->Render(commandList, obj.get());
-#ifdef DEBUG
-				obj->RenderDebugBoundingBox(commandList);
-#endif
-
 			}
 		}
 
@@ -64,9 +60,6 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 			if (shader.first == my_player->GetShader()) {
 				my_player->UpdateShaderVariables(commandList);
 				my_player->Render(commandList);
-#ifdef DEBUG
-				my_player->RenderDebugBoundingBox(commandList);
-#endif
 			}
 		}
 

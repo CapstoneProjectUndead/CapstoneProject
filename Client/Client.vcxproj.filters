@@ -165,6 +165,9 @@
     <ClInclude Include="Animator.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -248,6 +251,9 @@
     <ClCompile Include="Animator.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -277,8 +283,8 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Object.inl">
-      <Filter>Object</Filter>
+    <None Include="MeshComponent.inl">
+      <Filter>Component</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -1,9 +1,9 @@
 #pragma once
 #include "GeometryLoader.h"
-#include "Object.h"
+#include "MeshRenderer.h"
 
 template<typename T>
-inline void CObject::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+inline void CMeshComponent::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
 {
 	auto mesh = std::make_shared<CMesh>();
 	Mesh& meshData{ node->mesh };
@@ -12,5 +12,4 @@ inline void CObject::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommand
 	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
 	mesh->SetBounds(meshData.bounds);
 	SetMesh(mesh);
-	world_matrix = node->localMatrix;
 }

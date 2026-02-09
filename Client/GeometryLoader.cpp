@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Mesh.h"
 #include "SkinnedData.h"
 #include "GeometryLoader.h"
 

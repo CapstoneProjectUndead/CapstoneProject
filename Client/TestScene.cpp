@@ -2,10 +2,10 @@
 #include "TestScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
-#include "Mesh.h"
 #include "Shader.h"
-#include "Object.inl"
+#include "MeshComponent.inl"
 #include "Texture.h"
+#include "Mesh.h"
 
 CTestScene::CTestScene()
 {
@@ -54,26 +54,36 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		}*/
 	}
 	{
-		// 수정 필요, 로드에 너무 오래 걸림
-		// lobby_uv 로드
 		std::string fileName{ "../Modeling/lobby_uv.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 		CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
 		CMaterialManager matManager{};
 		CTextureManager texManager{};
-		// child value -> object
+
 		for (const auto& children : frameRoot->childrens) {
 			if (children->mesh.positions.empty()) break;
 			auto obj = std::make_shared<CObject>();
-			obj->SetMeshFromFile<CMatVertex>(device, commandList, children);
-			// SetMaterial
-			std::string name{ children->mesh.materials[0].albedoMap };	// material 하나 소유함
+			// 1) MeshComponent 생성
+			auto meshComp = std::make_shared<CMeshComponent>();
+			obj->SetComponent(meshComp);
+			meshComp->SetMeshFromFile<CMatVertex>(device, commandList, children);
+			obj->world_matrix = children->localMatrix;
+
+			// 2) MaterialComponent 생성
+			auto matComp = std::make_shared<CMaterialComponent>();
+			obj->SetComponent(matComp);
+
+			std::string name{ children->mesh.materials[0].albedoMap };
 			auto tex = texManager.GetTexture(device, commandList, heapManager, name);
 			auto mat = matManager.GetMeterial(name, tex);
-			obj->SetMaterial(mat);
+			matComp->SetMaterial(mat);
+
+			// 3) MeshRendererComponent 생성
+			obj->SetComponent(std::make_shared<CMeshRendererComponent>());
 
 			obj->Initialize(device, commandList);
+
 			objects.push_back(std::move(obj));
 		}
 	}
