@@ -85,6 +85,7 @@ public:
         bool sawCloseBracket = false;
 
         // 2. ':' 나올 때까지 읽기
+        std::streampos pos = file.tellg();
         while (file.get(ch))
         {
             // 제어문자 제거 (\0, \r, \b 등)
@@ -99,6 +100,10 @@ public:
             // ':'는 태그의 진짜 끝
             if (ch == ':' && sawCloseBracket)
                 break;
+            else if (ch == '<' && sawCloseBracket) {
+                file.seekg(pos);
+                break;
+            }
         }
 
         return true;
@@ -112,9 +117,6 @@ public:
     // tag 나올 때까지 읽기
     bool FindTag(const std::string& tag)
     {
-        // 현재 위치 저장
-        std::streampos originalPos = file.tellg();
-
         size_t matched = 0;
         char ch;
         while (file.get(ch)) {
@@ -127,10 +129,7 @@ public:
                 matched = (ch == tag[0]) ? 1 : 0;
             }
         }
-
-        // 못 찾았으면 파일 포인터 복구
-        file.clear(); // EOF 플래그 제거
-        file.seekg(originalPos);
+        
         return false;
     }
 

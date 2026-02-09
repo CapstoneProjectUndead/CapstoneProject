@@ -20,7 +20,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 		// mesh
 		auto meshComp = std::make_shared<CMeshComponent>();
 		SetComponent(meshComp);
-		meshComp->SetMeshFromFile<CMatVertex>(device, commandList, children);
+		meshComp->SetMeshFromFile<CSkinnedVertex>(device, commandList, children);
 		world_matrix = children->localMatrix;
 	}
 

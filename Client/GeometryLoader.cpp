@@ -140,88 +140,78 @@ void CGeometryLoader::LoadBoneWeights(BinaryReader& br, Mesh& mesh)
         mesh.bone_weights[i].weight = br.Read<XMFLOAT4>();
     }
 }
-
 void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>& materials)
 {
     // <Materials>:
-    if (!br.FindTag("<Materials>:"))
+    std::string tag;
+    br.ReadTag(tag);
+    if (!br.IsTag(tag, "<Materials>:"))
         return;
 
     int materialCount = br.Read<int>();
     materials.resize(materialCount);
 
     for (int i = 0; i < materialCount; ++i) {
-        std::string tag;
-        br.ReadTag(tag); // "<Material>:"
+        // <Material>:
+        br.ReadTag(tag);
         int matIndex = br.Read<int>();
-
         MaterialData& mat = materials[matIndex];
 
-        // --- Colors ---
-        if (br.FindTag("<AlbedoColor>:"))
-            mat.albedoColor = br.Read<XMFLOAT4>();
+        // 다음 태그들을 순차적으로 읽는다
+        while (true) {
+            std::streampos pos = br.Stream().tellg();
+            if (!br.ReadTag(tag))
+                break;
 
-        if (br.FindTag("<EmissiveColor>:"))
-            mat.emissiveColor = br.Read<XMFLOAT4>();
-
-        if (br.FindTag("<SpecularColor>:"))
-            mat.specularColor = br.Read<XMFLOAT4>();
-
-        // --- Floats ---
-        if (br.FindTag("<Glossiness>:"))
-            mat.glossiness = br.Read<float>();
-
-        if (br.FindTag("<Smoothness>:"))
-            mat.smoothness = br.Read<float>();
-
-        if (br.FindTag("<Metallic>:"))
-            mat.metallic = br.Read<float>();
-
-        if (br.FindTag("<SpecularHighlight>:"))
-            mat.specularHighlight = br.Read<float>();
-
-        if (br.FindTag("<GlossyReflection>:"))
-            mat.glossyReflection = br.Read<float>();
-
-        // --- Textures ---
-        if (br.FindTag("<AlbedoMap>:")) {
-            mat.albedoMap = br.ReadName();
-            if (mat.albedoMap == "null") mat.albedoMap.clear();
-        }
-
-        if (br.FindTag("<SpecularMap>:")) {
-            mat.specularMap = br.ReadName();
-            if (mat.specularMap == "null") mat.specularMap.clear();
-        }
-
-        if (br.FindTag("<MetallicMap>:")) {
-            mat.metallicMap = br.ReadName();
-            if (mat.metallicMap == "null") mat.metallicMap.clear();
-        }
-
-        if (br.FindTag("<NormalMap>:")) {
-            mat.normalMap = br.ReadName();
-            if (mat.normalMap == "null") mat.normalMap.clear();
-        }
-
-        if (br.FindTag("<EmissionMap>:")) {
-            mat.emissionMap = br.ReadName();
-            if (mat.emissionMap == "null") mat.emissionMap.clear();
-        }
-
-        if (br.FindTag("<DetailAlbedoMap>:")) {
-            mat.detailAlbedoMap = br.ReadName();
-            if (mat.detailAlbedoMap == "null") mat.detailAlbedoMap.clear();
-        }
-
-        if (br.FindTag("<DetailNormalMap>:")) {
-            mat.detailNormalMap = br.ReadName();
-            if (mat.detailNormalMap == "null") mat.detailNormalMap.clear();
+            if (br.IsTag(tag, "</Materials>"))
+                return;
+            if (br.IsTag(tag, "<AlbedoColor>:"))
+                mat.albedoColor = br.Read<XMFLOAT4>();
+            else if (br.IsTag(tag, "<EmissiveColor>:"))
+                mat.emissiveColor = br.Read<XMFLOAT4>();
+            else if (br.IsTag(tag, "<SpecularColor>:"))
+                mat.specularColor = br.Read<XMFLOAT4>();
+            else if (br.IsTag(tag, "<Glossiness>:"))
+                mat.glossiness = br.Read<float>();
+            else if (br.IsTag(tag, "<Smoothness>:"))
+                mat.smoothness = br.Read<float>();
+            else if (br.IsTag(tag, "<Metallic>:"))
+                mat.metallic = br.Read<float>();
+            else if (br.IsTag(tag, "<SpecularHighlight>:"))
+                mat.specularHighlight = br.Read<float>();
+            else if (br.IsTag(tag, "<GlossyReflection>:"))
+                mat.glossyReflection = br.Read<float>();
+            // --- Textures ---
+            else if (br.IsTag(tag, "<AlbedoMap>:")) {
+                mat.albedoMap = br.ReadName();
+                if (mat.albedoMap == "null") mat.albedoMap.clear();
+            }
+            else if (br.IsTag(tag, "<SpecularMap>:")) {
+                mat.specularMap = br.ReadName();
+                if (mat.specularMap == "null") mat.specularMap.clear();
+            }
+            else if (br.IsTag(tag, "<MetallicMap>:")) {
+                mat.metallicMap = br.ReadName();
+                if (mat.metallicMap == "null") mat.metallicMap.clear();
+            }
+            else if (br.IsTag(tag, "<NormalMap>:")) {
+                mat.normalMap = br.ReadName();
+                if (mat.normalMap == "null") mat.normalMap.clear();
+            }
+            else if (br.IsTag(tag, "<EmissionMap>:")) {
+                mat.emissionMap = br.ReadName();
+                if (mat.emissionMap == "null") mat.emissionMap.clear();
+            }
+            else if (br.IsTag(tag, "<DetailAlbedoMap>:")) {
+                mat.detailAlbedoMap = br.ReadName();
+                if (mat.detailAlbedoMap == "null") mat.detailAlbedoMap.clear();
+            }
+            else if (br.IsTag(tag, "<DetailNormalMap>:")) {
+                mat.detailNormalMap = br.ReadName();
+                if (mat.detailNormalMap == "null") mat.detailNormalMap.clear();
+            }
         }
     }
-
-    // </Materials>
-    br.FindTag("</Materials>");
 }
 
 Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
