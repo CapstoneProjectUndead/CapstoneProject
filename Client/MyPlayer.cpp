@@ -6,6 +6,7 @@
 #include "NetworkManager.h"
 #include "Movement.h"
 #include "NetworkClockManager.h"
+#include "User.h"
 
 #undef min
 #undef max

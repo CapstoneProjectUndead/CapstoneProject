@@ -27,11 +27,14 @@ void CLobbyScene::Update(float elapsedTime)
 
 void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
-
 	// User 객체 생성
 	shared_ptr<CUser> user;
-	if (!CAST_CS(session)->GetUser())
+	if (!CAST_CS(session)->GetUser()) {
 		user = make_shared<CUser>();
+
+		// ClientSession이 Plyaer를 참조. (refcount 증가)
+		CAST_CS(session)->SetUser(user);
+	}
 
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
@@ -46,11 +49,11 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	pos.z = rand() % 3;
 	player->SetPosition(pos);
 
-	// ClientSession이 Plyaer를 참조. (refcount 증가)
-	CAST_CS(session)->SetUser(user);
-
 	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
 	player->SetSession(session);
+
+	// Player도 CUser를 약한 참조 (refcount 증가 x)
+	player->SetUser(CAST_CS(session)->GetUser());
 
 	// 지금 접속한 유저에게 로그인 허락 패킷 보냄
 	{

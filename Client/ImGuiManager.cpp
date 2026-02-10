@@ -63,16 +63,16 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
 
     // 임시
     RoomListInfo info{};
-    info.current_player = 1;
-    info.is_ingame = false;
+    info.total_player = 1;
+    info.is_in_game = false;
     info.max_player = 4;
     info.room_cnt = 1;
     info.room_id = 1;
     COPY_STRING(info.room_name, "보물 파밍 가자");
     room_vec.push_back(info);
 
-    info.current_player = 1;
-    info.is_ingame = false;
+    info.total_player = 1;
+    info.is_in_game = false;
     info.max_player = 4;
     info.room_cnt = 1;
     info.room_id = 2;
@@ -1031,7 +1031,7 @@ void CImGuiManager::DrawRoomListUI()
                         // SendEnterRoomPacket(selected_room_id); 
                     }
 
-                    ImGui::TableSetColumnIndex(2); ImGui::Text("%d / %d", room.current_player, room.max_player);
+                    ImGui::TableSetColumnIndex(2); ImGui::Text("%d / %d", room.total_player, room.max_player);
                 }
                 ImGui::PopStyleColor(4);
                 ImGui::EndTable();
@@ -1129,7 +1129,25 @@ void CImGuiManager::DrawRoomListUI()
             ImGui::Spacing();
 
             if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
+
+                static int roomCounter = 1;
+
+                // 방 이름이 비어있는지 체크
+                if (strlen(roomName) == 0) {
+                    // 없다면 아래처럼 기본 이름을 세팅합니다.
+                    sprintf_s(roomName, sizeof(roomName), "Unknown Room %d", roomCounter++);
+                }
+
                 printf("방 생성 요청: %s\n", roomName);
+
+                C_CreateRoom createPkt;
+                auto serverSession = CSessionManager::GetInstance().GetServerSession();
+                auto user = serverSession->GetUser();
+                createPkt.user_id = user->GetUserID();
+                COPY_STRING(createPkt.room_name, roomName);
+                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
+                serverSession->DoSend(sendBuffer);
+
                 memset(roomName, 0, sizeof(roomName));
                 ImGui::CloseCurrentPopup();
             }

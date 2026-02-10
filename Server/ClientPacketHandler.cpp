@@ -56,7 +56,7 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 		, &CLobbyScene::EnterPlayer
 		, pkt);
 #else
-	CScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
 
 	titleScene->PushPacketJob(session
@@ -70,7 +70,7 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 
 bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt)
 {
-	CScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
 
 	titleScene->PushPacketJob(session
@@ -83,13 +83,21 @@ bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt)
 
 bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 {
-	CScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
 
 	titleScene->PushPacketJob(session
 		, (CTitleScene*)titleScene
 		, &CTitleScene::HandleSignUp
 		, pkt);
+
+	return true;
+}
+
+bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
+{
+	auto& sceneManager = CSceneManager::GetInstance();
+	sceneManager.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
 
 	return true;
 }

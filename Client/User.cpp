@@ -10,4 +10,5 @@ CUser::CUser()
 
 CUser::~CUser()
 {
+	my_player = nullptr;
 }

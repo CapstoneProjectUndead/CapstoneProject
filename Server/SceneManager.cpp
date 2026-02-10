@@ -4,6 +4,8 @@
 
 #include "TitleScene.h"
 #include "LobbyScene.h"
+#include "Player.h"
+#include "User.h"
 
 atomic<uint64> CRoom::s_room_id_generator = 1;
 
@@ -57,7 +59,10 @@ void CSceneManager::Update(const float elapsedTime)
 	{
 		for (auto& scene : room->GetScenes())
 		{
-			scene->Update(elapsedTime);
+			if (scene)
+			{
+				scene->Update(elapsedTime);
+			}
 		}
 	}
 #endif
@@ -81,15 +86,31 @@ void CSceneManager::SendResults()
 	{
 		for (auto& scene : room->GetScenes())
 		{
-			scene->SendResults();
+			if (scene)
+			{
+				scene->SendResults();
+			}
 		}
 	}
 #endif
 
 }
 
-void CSceneManager::CreateRoom(const string& name)
+void CSceneManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 {
-	shared_ptr<CRoom> room = make_shared<CRoom>(name);
+	unique_ptr<CRoom> room = make_unique<CRoom>(name);
 	room->GetScenes()[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>();
+
+	shared_ptr<CPlayer> player = CObject::CreatePlayer();
+	player->SetUser(user);
+	player->SetID(user->GetUserID());
+	player->SetRoomID(room->GetRoomID());
+	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+
+	user->SetPlayer(player);
+	user->SetRoomID(room->GetRoomID());
+
+	room->GetScenes()[(UINT)SCENE_TYPE::LOBBY]->EnterScene(player);
+
+	rooms[room->GetRoomID()] = std::move(room);
 }

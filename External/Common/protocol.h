@@ -113,10 +113,11 @@ struct S_LOGIN : public PacketHeader
 {
 	uint64	user_id;
 	bool	success;
+	char	name[NAME_SIZE];
 
 	S_LOGIN() : PacketHeader(sizeof(S_LOGIN), (UINT)PacketType::_S_LOGIN) {}
 };
-static_assert(sizeof(S_LOGIN) == 4 + 9, "S_LOGIN size mismatch!");
+static_assert(sizeof(S_LOGIN) == 4 + 29, "S_LOGIN size mismatch!");
 
 struct S_LOGOUT : public PacketHeader
 {
@@ -126,11 +127,14 @@ struct S_LOGOUT : public PacketHeader
 };
 static_assert(sizeof(S_LOGOUT) == 4 + 1, "S_LOGOUT size mismatch!");
 
-struct C_CreateRoom
+struct C_CreateRoom : public PacketHeader
 {
-	uint64 player_id;
-	char room_name[ROOM_NAME_MAX];
+	uint64 user_id;
+	char   room_name[ROOM_NAME_MAX];
+
+	C_CreateRoom() : PacketHeader(sizeof(C_CreateRoom), (UINT)PacketType::_C_ROOM_CREATE) {}
 };
+static_assert(sizeof(C_CreateRoom) == 4 + 108, "C_CreateRoom size mismatch!");
 
 // 내 플레이어를 보낼 떄
 struct S_SpawnPlayer : public PacketHeader

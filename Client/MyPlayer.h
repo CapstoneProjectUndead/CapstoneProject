@@ -10,6 +10,7 @@ struct ClientFrameHistory
     PLAYER_STATE state;
 };
 
+class CUser;
 
 class CMyPlayer :
     public CPlayer
@@ -24,6 +25,10 @@ public:
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }
     std::shared_ptr<Session> GetSession() const { return session.lock(); }
     void SetSession(std::shared_ptr<Session> _session) { session = _session; }
+
+    std::weak_ptr<CUser>      GetUserWeak() const { return user; }
+    std::shared_ptr<CUser>    GetUser() const { return user.lock(); }
+    void SetUser(std::shared_ptr<CUser> _user) { user = _user; }
 
     // 클라이언트 예측을 서버 기준에 맞게 다시 보정하는 코드
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
@@ -44,6 +49,7 @@ private:
 
 private:
     std::weak_ptr<Session> session;
+    std::weak_ptr<CUser>   user;
 
     const float move_packet_send_delay = 1.0f / 60.0f;
     float move_packet_send_timer = move_packet_send_delay;

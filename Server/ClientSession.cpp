@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "ClientSession.h"
 #include "SceneManager.h"
+#include "User.h"
 #include "Player.h"
 #include "LobbyScene.h"
-#include "User.h"
+#include "TitleScene.h"
 
 
 CClientSession::CClientSession()
@@ -42,9 +43,12 @@ void CClientSession::OnDisconnected()
 			auto& room = iter->second;
 			room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
 		}
+
+		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
 	}
 #endif 
 
+	user = nullptr;
 }
 
 void CClientSession::ProcessPacket(std::shared_ptr<Session> session, char* buf, int32 pktSize)
