@@ -13,17 +13,18 @@ enum : uint16
 	PKT_C_SIGNUP = 4,
 	PKT_S_SIGNRES = 5,
 	PKT_C_LOGIN = 6,
-	PKT_S_LOGIN = 7,
-	PKT_S_LOGIN_FAIL = 8,
-	PKT_C_ROOM_CREATE = 9,
-	PKT_C_ROOM_ENTER = 10,
-	PKT_S_ROOMLIST = 11,
-	PKT_S_SPAWNPLAYER = 12,
-	PKT_S_ADDPLAYER = 13,
-	PKT_S_PLAYERLIST = 14,
-	PKT_S_REMOVEPLAYER = 15,
-	PKT_C_PLAYER_INPUT = 16,	// 서버 권위 방식 + 클라 예측 이동
-	PKT_S_MOVE = 17,
+	PKT_C_LOGOUT = 7,
+	PKT_S_LOGIN = 8,
+	PKT_S_LOGOUT = 9,
+	PKT_C_ROOM_CREATE = 10,
+	PKT_C_ROOM_ENTER = 11,
+	PKT_S_ROOMLIST = 12,
+	PKT_S_SPAWNPLAYER = 13,
+	PKT_S_ADDPLAYER = 14,
+	PKT_S_PLAYERLIST = 15,
+	PKT_S_REMOVEPLAYER = 16,
+	PKT_C_PLAYER_INPUT = 17,	// 서버 권위 방식 + 클라 예측 이동
+	PKT_S_MOVE = 18,
 };
 
 // Custom Handlers
@@ -31,6 +32,7 @@ bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len);
 bool Handle_C_PING(shared_ptr<Session> session, C_Ping& pkt);
 bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt);
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt);
+bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt);
 bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt);
 bool Handle_C_PLAYERINPUT(std::shared_ptr<Session> session, C_Input& pkt);
 
@@ -45,6 +47,7 @@ public:
 		GPacketHandler[PKT_C_PING] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Ping>(Handle_C_PING, session, buffer, len); };
 		GPacketHandler[PKT_C_PONG] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Pong>(Handle_C_PONG, session, buffer, len); };
 		GPacketHandler[PKT_C_LOGIN] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_LOGIN>(Handle_C_LOGIN, session, buffer, len); };	
+		GPacketHandler[PKT_C_LOGOUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_LOGOUT>(Handle_C_LOGOUT, session, buffer, len); };
 		GPacketHandler[PKT_C_SIGNUP] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_SIGNUP>(Handle_C_SIGNUP, session, buffer, len); };	
 		GPacketHandler[PKT_C_PLAYER_INPUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Input>(Handle_C_PLAYERINPUT, session, buffer, len); };
 	}

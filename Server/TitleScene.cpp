@@ -88,12 +88,26 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 
 void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
-	// CUser 생성
-	// ID 발급
-	// 클라한테 ID와 함께 로그인 허락 패킷을 보낸다. (S_LOGIN)
+	// CUser 생성 (생성자 안에서 ID발급)
+	shared_ptr<CUser> user = make_shared<CUser>();
 
+	// CUser 컨테이너에 저장
+	EnterUser(user);
+
+	// 클라한테 ID와 함께 로그인 허락 패킷을 보낸다. (S_LOGIN)
 	S_LOGIN loginPkt;
 	loginPkt.success = true;
+	loginPkt.id = user->GetID();
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
+	session->DoSend(sendBuffer);
+}
+
+void CTitleScene::HandleLogOut(shared_ptr<Session> session, const C_LOGOUT& pkt)
+{
+	LeaveUser(pkt.user_id);
+
+	S_LOGOUT logOutPkt;
+	logOutPkt.success = true;
+	auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_LOGOUT>(logOutPkt);
 	session->DoSend(sendBuffer);
 }

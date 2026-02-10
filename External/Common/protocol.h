@@ -21,17 +21,18 @@ enum PacketType : uint16_t
 	_C_SIGNUP = 4,
 	_S_SIGNRES = 5,
 	_C_LOGIN = 6,
-	_S_LOGIN = 7,
-	_S_LOGIN_FAIL = 8,
-	_C_ROOM_CREATE = 9,
-	_C_ROOM_ENTER = 10,
-	_S_ROOMLIST = 11,
-	_S_SPAWNPLAYER = 12,
-	_S_ADDPLAYER = 13,
-	_S_PLAYERLIST = 14,
-	_S_REMOVEPLAYER = 15,
-	_C_PLAYER_INPUT = 16,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 17,
+	_C_LOGOUT = 7,
+	_S_LOGIN = 8,
+	_S_LOGOUT = 9,
+	_C_ROOM_CREATE = 10,
+	_C_ROOM_ENTER = 11,
+	_S_ROOMLIST = 12,
+	_S_SPAWNPLAYER = 13,
+	_S_ADDPLAYER = 14,
+	_S_PLAYERLIST = 15,
+	_S_REMOVEPLAYER = 16,
+	_C_PLAYER_INPUT = 17,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 18,
 };
 
 #pragma pack (push, 1)
@@ -100,15 +101,30 @@ struct C_LOGIN : public PacketHeader
 };
 static_assert(sizeof(C_LOGIN) == 4 + 80, "C_LOGIN size mismatch!");
 
+struct C_LOGOUT : public PacketHeader
+{
+	uint64 user_id;
+
+	C_LOGOUT() : PacketHeader(sizeof(C_LOGOUT), (UINT)PacketType::_C_LOGOUT) {}
+};
+static_assert(sizeof(C_LOGOUT) == 4 + 8, "C_LOGOUT size mismatch!");
+
 struct S_LOGIN : public PacketHeader
 {
 	uint64	id;
 	bool	success;
-	//char	name[NAME_SIZE];
 
 	S_LOGIN() : PacketHeader(sizeof(S_LOGIN), (UINT)PacketType::_S_LOGIN) {}
 };
 static_assert(sizeof(S_LOGIN) == 4 + 9, "S_LOGIN size mismatch!");
+
+struct S_LOGOUT : public PacketHeader
+{
+	bool	success;
+
+	S_LOGOUT() : PacketHeader(sizeof(S_LOGOUT), (UINT)PacketType::_S_LOGOUT) {}
+};
+static_assert(sizeof(S_LOGOUT) == 4 + 1, "S_LOGOUT size mismatch!");
 
 // 내 플레이어를 보낼 떄
 struct S_SpawnPlayer : public PacketHeader

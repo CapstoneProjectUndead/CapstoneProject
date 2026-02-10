@@ -2,6 +2,7 @@
 // ServerÂÊ Scene
 #include "Player.h"
 #include "Job.h"
+#include "User.h"
 
 class CScene
 {
@@ -15,6 +16,9 @@ public:
 	virtual void Update(const float elapsedTime);
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
+
+	void EnterUser(shared_ptr<CUser> user);
+	void LeaveUser(uint64 id);
 
 	void BroadCast(SendBufferRef sendBuffer);
 	void BroadCast(SendBufferRef sendBuffer, uint64 exceptID);
@@ -46,6 +50,9 @@ public:
 	void HandlePackets();
 
 protected:
+	mutex								users_lock;
+	map<uint64, shared_ptr<CUser>>		users;
+
 	mutex								players_lock;
 	map<uint64, shared_ptr<CPlayer>>	players;
 

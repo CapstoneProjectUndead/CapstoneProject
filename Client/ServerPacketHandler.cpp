@@ -86,8 +86,15 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	// User Refcount 증가
 	CAST_SS(session)->SetUser(user);
 
-	// 씬 전환 (INGAME 씬으로) (임시)
-	//CSceneManager::GetInstance().LoadScene(SCENE_TYPE::INGAME);
+	return true;
+}
+
+bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
+{
+	if (pkt.success) {
+		CAST_SS(session)->SetUser(nullptr);
+		CImGuiManager::GetInstance().SetIsOnlie(false);
+	}
 
 	return true;
 }

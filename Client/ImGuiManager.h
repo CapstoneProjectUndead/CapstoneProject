@@ -35,6 +35,7 @@ public:
 	void SetSignupLoading(bool loading) { is_signup_loading = loading; }
 	void SetSignUpResult(bool result) { is_signup_success = result; }
 	void SetSignInResult(bool result) { is_signin_success = result; }
+	void SetIsOnlie(bool result) { is_online = result; }
 
 	// 필요하다면 창을 강제로 닫는 기능
 	void CloseAllWindow() { show_login_window = false; show_sign_window = false; }
@@ -54,8 +55,17 @@ private:
 	void DrawLogInUI();
 	//===================
 
-	void DrawTitleUI();
 	void DrawTitle();
+	void DrawTitleUI();
+
+	void DrawTitleMainWindow();
+	void DrawFirstMenuButton(bool& menu);
+	void DrawSecondMenuButton(bool& menu);
+	void DrawThirdMenuButton(bool& menu);
+
+	void DrawSignInWidow();
+	void DrawSignUpWindow();
+
 	void DrawLoadingPopUp();
 	void DrawLoadingPopUpResult();
 
@@ -79,7 +89,7 @@ private:
 
 	bool is_signup_success = false; // 회원가입 성공여부
 	bool is_signin_success = false; // 로그인 성공여부
-	bool is_logedin = false;		// 로그인 여부
+	bool is_online = false;			// 로그인 여부
 
 	bool show_room_list_window = false;	// 룸매칭 화면 뜨위기
 

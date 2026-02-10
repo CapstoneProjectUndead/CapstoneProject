@@ -15,17 +15,18 @@ enum : uint16
 	PKT_C_SIGNUP = 4,
 	PKT_S_SIGNRES = 5,
 	PKT_C_LOGIN = 6,
-	PKT_S_LOGIN = 7,
-	PKT_S_LOGIN_FAIL = 8,
-	PKT_C_ROOM_CREATE = 9,
-	PKT_C_ROOM_ENTER = 10,
-	PKT_S_ROOMLIST = 11,
-	PKT_S_SPAWNPLAYER = 12,
-	PKT_S_ADDPLAYER = 13,
-	PKT_S_PLAYERLIST = 14,
-	PKT_S_REMOVEPLAYER = 15,
-	PKT_C_PLAYER_INPUT = 16,	// 서버 권위 방식 + 클라 예측 이동
-	PKT_S_MOVE = 17,
+	PKT_C_LOGOUT = 7,
+	PKT_S_LOGIN = 8,
+	PKT_S_LOGOUT = 9,
+	PKT_C_ROOM_CREATE = 10,
+	PKT_C_ROOM_ENTER = 11,
+	PKT_S_ROOMLIST = 12,
+	PKT_S_SPAWNPLAYER = 13,
+	PKT_S_ADDPLAYER = 14,
+	PKT_S_PLAYERLIST = 15,
+	PKT_S_REMOVEPLAYER = 16,
+	PKT_C_PLAYER_INPUT = 17,	// 서버 권위 방식 + 클라 예측 이동
+	PKT_S_MOVE = 18,
 };
 
 // Custom Handlers
@@ -34,6 +35,7 @@ bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt);
 bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt);
 bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt);
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt);
+bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt);
 bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt);
 bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt);
 bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt);
@@ -52,6 +54,7 @@ public:
 		GPacketHandler[PKT_S_PONG] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Pong>(Handle_S_PONG, session, buffer, len); };
 		GPacketHandler[PKT_S_SIGNRES] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SIGN_RES>(Handle_S_SIGNRES, session, buffer, len); };
 		GPacketHandler[PKT_S_LOGIN] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_LOGIN>(Handle_S_LOGIN, session, buffer, len); };
+		GPacketHandler[PKT_S_LOGOUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_LOGOUT>(Handle_S_LOGOUT, session, buffer, len); };
 		GPacketHandler[PKT_S_SPAWNPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnPlayer>(Handle_S_MYPLAYER, session, buffer, len); };
 		GPacketHandler[PKT_S_ADDPLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddPlayer>(Handle_S_ADDPLAYER, session, buffer, len); };
 		GPacketHandler[PKT_S_PLAYERLIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PLAYER_LIST>(Handle_S_PLAYERLIST, session, buffer, len); };

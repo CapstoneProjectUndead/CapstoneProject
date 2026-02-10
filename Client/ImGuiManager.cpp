@@ -5,6 +5,7 @@
 #include "SessionManager.h"
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
+#include "User.h"
 
 #undef min
 #undef max
@@ -479,222 +480,175 @@ void CImGuiManager::DrawTitleUI()
     // 배경과 타이틀 그리기
     DrawTitle();
 
-    // 멀티플레이 메뉴(로그인/가입)를 보여줄지 여부
-    // false: [싱글] [멀티] [나가기]
-    // true : [로그인] [회원가입] [뒤로가기]
-    static bool show_multiplayer_select = false;
-
     // =========================================
     // 1. 메인 버튼 창 (상태에 따라 버튼 내용이 바뀜)
     // =========================================
-
     if (!show_login_window && !show_sign_window && !is_login_loading && !is_signup_loading && !show_room_list_window) {
-
-        // Always로 설정하면 매 프레임 위치/크기를 강제로 덮어씌웁니다.
-        ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.0f); // 배경 투명
-
-        // 플래그 설정
-        ImGuiWindowFlags mainBtnFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
-        mainBtnFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-        // 배경 테두리 없애기
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-        if (ImGui::Begin("Main Menu", NULL, mainBtnFlags))
-        {
-            // [비활성화 조건] 
-            // 로그인/회원가입 창이 떴거나 로딩 중이면 뒤에 있는 버튼 클릭 금지
-            bool should_disable = show_login_window || show_sign_window || is_login_loading || is_signup_loading;
-            ImGui::BeginDisabled(should_disable);
-
-            // 버튼 스타일 공통 적용 (회색)
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));
-
-            // =====================================
-            // [CASE 1] 초기 화면: 싱글 / 멀티 / 나가기
-            // =====================================
-            if (!show_multiplayer_select)
-            {
-                // 1. 싱글 플레이
-                if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
-                    printf("싱글 플레이 로그인 시도.\n");
-                    // 바로 LobbyScene으로 입장
-                    CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
-                }
-                ImGui::Spacing(); ImGui::Spacing();
-
-                // 2. 멀티 플레이 (누르면 메뉴 변경)
-                if (ImGui::Button((const char*)u8"멀티 플레이", ImVec2(200, 55))) {
-                    show_multiplayer_select = true; // 상태 변경!
-                }
-                ImGui::Spacing(); ImGui::Spacing();
-
-                // 3. 나가기
-                if (ImGui::Button((const char*)u8"나가기", ImVec2(200, 55))) {
-                    PostQuitMessage(0); // 프로그램 종료
-                }
-            }
-            // ============================================
-            // [CASE 2] 멀티 메뉴: 로그인 / 회원가입 / 뒤로가기
-            // ============================================
-            else
-            {
-                // 1. 로그인
-                if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
-                    show_login_window = true;
-                    show_sign_window = false;
-                }
-                ImGui::Spacing(); ImGui::Spacing();
-
-                // 2. 회원가입
-                if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 55))) {
-                    show_sign_window = true;
-                    show_login_window = false;
-                }
-                ImGui::Spacing(); ImGui::Spacing();
-
-                // 3. 뒤로가기 (누르면 초기 화면으로)
-                if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
-                    show_multiplayer_select = false; // 상태 원복!
-                }
-            }
-
-            ImGui::PopStyleColor(3); // 스타일 복구
-            ImGui::EndDisabled(); // 비활성화 종료
-            ImGui::End();
-        }
-        ImGui::PopStyleVar(); // 테두리 스타일 복구
+        DrawTitleMainWindow();
     }
 
     // ============
     // 2. 로그인 창
     // ============
     if (show_login_window) {
-        ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always);
-        ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-        if (ImGui::Begin((const char*)u8"로그인", &show_login_window, loginFlags)) {
-            static char id[64] = "";
-            static char pw[64] = "";
-
-            ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
-            ImGui::Separator();
-
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
-            ImGui::PushItemWidth(230.0f);
-            ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
-            ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
-            ImGui::PopItemWidth();
-            ImGui::PopStyleColor(1);
-
-            ImGui::Spacing(); ImGui::Spacing();
-
-            float btnWidth = 380.0f;
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
-
-            if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50))) {
-
-                printf("Login Requested! ID: %s\n", id);
-
-                C_LOGIN loginPkt;
-                COPY_STRING(loginPkt.id, id);
-                COPY_STRING(loginPkt.password, pw);
-                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
-
-                auto session = CSessionManager::GetInstance().GetServerSession();
-                if (session)
-                    CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
-
-                memset(id, 0, sizeof(id));
-                memset(pw, 0, sizeof(pw));
-                show_login_window = false;
-                is_login_loading = true;
-            }
-        }
-        ImGui::End();
+        DrawSignInWidow();
     }
+
     // =============
     // 3. 회원가입 창
     // =============
-    else if (show_sign_window) {
-        ImGui::SetNextWindowPos(ImVec2(210 * G_RATIO_X, 260 * G_RATIO_Y), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(390, 230), ImGuiCond_Always);
-        ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-        if (ImGui::Begin((const char*)u8"회원가입", &show_sign_window, loginFlags)) {
-            static char id[64] = "";
-            static char pw[64] = "";
-            static char name[64] = "";
-
-            ImGui::Text((const char*)u8"ID / PW / Name 을 입력하세요.");
-            ImGui::Separator();
-
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));          // 평상시 배경
-
-            ImGui::PushItemWidth(230.0f);
-
-            ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
-            ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
-            ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
-
-            ImGui::PopItemWidth();
-
-            ImGui::PopStyleColor(1);
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            // 버튼도 가운데 정렬
-            float btnWidth = 380.0f;
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
-
-            if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
-
-                printf("가입 신청 ID: %s\n", id);
-
-                C_SIGNUP signUpPkt;
-                COPY_STRING(signUpPkt.id, id);
-                COPY_STRING(signUpPkt.password, pw);
-                COPY_STRING(signUpPkt.name, name);
-                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
-
-                auto session = CSessionManager::GetInstance().GetServerSession();
-                if (session)
-                    CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
-
-                memset(id, 0, sizeof(id));
-                memset(pw, 0, sizeof(pw));
-                memset(name, 0, sizeof(name));
-                show_sign_window = false;
-                is_signup_loading = true;
-            }
-        }
-        ImGui::End();
+    if (show_sign_window) {
+        DrawSignUpWindow();
     }
 
     // ============
     // 4. 로딩 팝업
     // ============
 
-    if (is_login_loading || is_signup_loading)
+    if (is_login_loading || is_signup_loading) {
         DrawLoadingPopUp();
+    }
 
     // =================
     // 5. 로딩 팝업 결과
     // =================
 
-    if (is_signup_success || is_signin_success)
+    if (is_signup_success || is_signin_success) {
         DrawLoadingPopUpResult();
+    }
 
     // ==============
     // 6. 룸 매칭 화면
     // ==============
     if (show_room_list_window) {
         DrawRoomListUI();
+    }
+}
+
+void CImGuiManager::DrawTitleMainWindow()
+{
+    // 멀티플레이 메뉴(로그인/가입)를 보여줄지 여부
+    // false: [싱글] [멀티] [나가기]
+    // true : [로그인] [회원가입] [뒤로가기]
+    static bool show_multiplayer_select = false;
+
+    // Always로 설정하면 매 프레임 위치/크기를 강제로 덮어씌웁니다.
+    ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.0f); // 배경 투명
+
+    // 플래그 설정
+    ImGuiWindowFlags mainBtnFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
+    mainBtnFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+    // 배경 테두리 없애기
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+    if (ImGui::Begin("Main Menu", NULL, mainBtnFlags))
+    {
+        // [비활성화 조건] 
+        // 로그인/회원가입 창이 떴거나 로딩 중이면 뒤에 있는 버튼 클릭 금지
+        bool should_disable = show_login_window || show_sign_window || is_login_loading || is_signup_loading;
+        ImGui::BeginDisabled(should_disable);
+
+        // 버튼 스타일 공통 적용 (회색)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));
+
+        // =====================================
+        // [CASE 1] 초기 화면: 싱글 / 멀티 / 나가기
+        // =====================================
+        if (!show_multiplayer_select) {
+            DrawFirstMenuButton(show_multiplayer_select);
+        }
+        // ====================================================
+        // [CASE 2] 멀티 메뉴(오프라인): 로그인 / 회원가입 / 뒤로가기
+        // ====================================================
+        else if (!is_online) {
+            DrawSecondMenuButton(show_multiplayer_select);
+        }
+        // ===================================================
+        // [CASE 3] 멀티 메뉴(온라인): 방 검색 / 로그아웃 / 뒤로가기
+        // ===================================================
+        else {
+            DrawThirdMenuButton(show_multiplayer_select);
+        }
+
+        ImGui::PopStyleColor(3); // 스타일 복구
+        ImGui::EndDisabled(); // 비활성화 종료
+        ImGui::End();
+    }
+    ImGui::PopStyleVar(); // 테두리 스타일 복구
+}
+
+void CImGuiManager::DrawFirstMenuButton(bool& menu)
+{
+    // 1. 싱글 플레이
+    if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
+        printf("싱글 플레이 로그인 시도.\n");
+        // 바로 LobbyScene으로 입장
+        CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+    }
+    ImGui::Spacing(); ImGui::Spacing();
+
+    // 2. 멀티 플레이 (누르면 메뉴 변경)
+    if (ImGui::Button((const char*)u8"멀티 플레이", ImVec2(200, 55))) {
+        menu = true; // 상태 변경!
+    }
+    ImGui::Spacing(); ImGui::Spacing();
+
+    // 3. 나가기
+    if (ImGui::Button((const char*)u8"나가기", ImVec2(200, 55))) {
+        PostQuitMessage(0); // 프로그램 종료
+    }
+}
+
+void CImGuiManager::DrawSecondMenuButton(bool& menu)
+{
+    // 1. 로그인
+    if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
+        show_login_window = true;
+        show_sign_window = false;
+    }
+    ImGui::Spacing(); ImGui::Spacing();
+
+    // 2. 회원가입
+    if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 55))) {
+        show_sign_window = true;
+        show_login_window = false;
+    }
+    ImGui::Spacing(); ImGui::Spacing();
+
+    // 3. 뒤로가기 (누르면 초기 화면으로)
+    if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
+        menu = false; // 상태 원복!
+    }
+}
+
+void CImGuiManager::DrawThirdMenuButton(bool& menu)
+{
+    // 1. 방 검색
+    if (ImGui::Button((const char*)u8"방 검색", ImVec2(200, 55))) {
+        show_login_window = false;
+        show_sign_window = false;
+        show_room_list_window = true;
+    }
+    ImGui::Spacing();  ImGui::Spacing();
+
+    // 2. 로그아웃
+    if (ImGui::Button((const char*)u8"로그아웃", ImVec2(200, 55))) {
+        C_LOGOUT logOutPkt;
+        auto serverSession = CSessionManager::GetInstance().GetServerSession();
+        auto user = serverSession->GetUser();
+        logOutPkt.user_id = user->GetID();
+        auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGOUT>(logOutPkt);
+        serverSession->DoSend(sendBuffer);
+    }
+    ImGui::Spacing();  ImGui::Spacing();
+
+    // 3. 뒤로가기 (누르면 초기 화면으로)
+    if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
+        menu = false; // 상태 원복!
     }
 }
 
@@ -780,6 +734,110 @@ void CImGuiManager::DrawTitle()
     }
 }
 
+void CImGuiManager::DrawSignInWidow()
+{
+    ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always);
+    ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+
+    if (ImGui::Begin((const char*)u8"로그인", &show_login_window, loginFlags)) {
+        static char id[64] = "";
+        static char pw[64] = "";
+
+        ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
+        ImGui::Separator();
+
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+        ImGui::PushItemWidth(230.0f);
+        ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
+        ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
+        ImGui::PopItemWidth();
+        ImGui::PopStyleColor(1);
+
+        ImGui::Spacing(); ImGui::Spacing();
+
+        float btnWidth = 380.0f;
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
+
+        if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50))) {
+
+            printf("Login Requested! ID: %s\n", id);
+
+            C_LOGIN loginPkt;
+            COPY_STRING(loginPkt.id, id);
+            COPY_STRING(loginPkt.password, pw);
+            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+
+            auto session = CSessionManager::GetInstance().GetServerSession();
+            if (session)
+                CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+
+            memset(id, 0, sizeof(id));
+            memset(pw, 0, sizeof(pw));
+            show_login_window = false;
+            is_login_loading = true;
+        }
+    }
+    ImGui::End();
+}
+
+void CImGuiManager::DrawSignUpWindow()
+{
+    ImGui::SetNextWindowPos(ImVec2(210 * G_RATIO_X, 260 * G_RATIO_Y), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(390, 230), ImGuiCond_Always);
+    ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+
+    if (ImGui::Begin((const char*)u8"회원가입", &show_sign_window, loginFlags)) {
+        static char id[64] = "";
+        static char pw[64] = "";
+        static char name[64] = "";
+
+        ImGui::Text((const char*)u8"ID / PW / Name 을 입력하세요.");
+        ImGui::Separator();
+
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));          // 평상시 배경
+
+        ImGui::PushItemWidth(230.0f);
+
+        ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
+        ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
+        ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
+
+        ImGui::PopItemWidth();
+
+        ImGui::PopStyleColor(1);
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        // 버튼도 가운데 정렬
+        float btnWidth = 380.0f;
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
+
+        if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
+
+            printf("가입 신청 ID: %s\n", id);
+
+            C_SIGNUP signUpPkt;
+            COPY_STRING(signUpPkt.id, id);
+            COPY_STRING(signUpPkt.password, pw);
+            COPY_STRING(signUpPkt.name, name);
+            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
+
+            auto session = CSessionManager::GetInstance().GetServerSession();
+            if (session)
+                CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+
+            memset(id, 0, sizeof(id));
+            memset(pw, 0, sizeof(pw));
+            memset(name, 0, sizeof(name));
+            show_sign_window = false;
+            is_signup_loading = true;
+        }
+    }
+    ImGui::End();
+}
+
 void CImGuiManager::DrawLoadingPopUp()
 {
     if (!ImGui::IsPopupOpen("LoadingPopup")) {
@@ -809,7 +867,7 @@ void CImGuiManager::DrawLoadingPopUp()
             ImGui::CloseCurrentPopup();
 
             // 이건 테스트 임시용 (무조건 지울 것!)
-            show_room_list_window = true;
+            //show_room_list_window = true;
         }
 
         ImGui::EndPopup();
@@ -855,6 +913,9 @@ void CImGuiManager::DrawLoadingPopUpResult()
 
                 // 룸 매칭 UI 화면으로 전환
                 show_room_list_window = true;
+
+                // 온라인 상태로 바꿈
+                is_online = true;
             }
 
             ImGui::CloseCurrentPopup();

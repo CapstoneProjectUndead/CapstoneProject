@@ -9,7 +9,7 @@
 void CSceneManager::Initialize()
 {
 	scenes[(UINT)SCENE_TYPE::TITLE] = std::make_unique<CTitleScene>();
-	scenes[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
+	//scenes[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
 }
 
 void CSceneManager::Update(const float elapsedTime)
@@ -23,7 +23,7 @@ void CSceneManager::Update(const float elapsedTime)
 	//for (auto& [id, room] : rooms) 
 	//{
 	//	for (auto& scene : room->scenes) 
-	// {
+	//	{
 	//		scene->Update(elapsedTime);
 	//	}
 	//}
@@ -36,4 +36,12 @@ void CSceneManager::SendResults()
 		if (scene != nullptr)
 			scene->SendResults();
 	}
+
+	//for (auto& [id, room] : rooms)
+	//{
+	//	for (auto& scene : room->scenes)
+	//	{
+	//		scene->SendResults();
+	//	}
+	//}
 }
