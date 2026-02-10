@@ -10,6 +10,5 @@ inline void CMeshComponent::SetMeshFromFile(ID3D12Device* device, ID3D12Graphics
 
 	mesh->BuildVertices<T>(device, commandList, node);
 	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
-	mesh->SetBounds(meshData.bounds);
 	SetMesh(mesh);
 }

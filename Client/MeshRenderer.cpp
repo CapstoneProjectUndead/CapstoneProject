@@ -3,6 +3,7 @@
 #include "Mesh.h"
 #include "Object.h"
 #include "Texture.h"
+#include "Collider.h"
 
 // Material
 void CMaterial::SetTexture(const std::shared_ptr<CTexture>& tex)

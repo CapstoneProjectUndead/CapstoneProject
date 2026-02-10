@@ -6,6 +6,8 @@
 #include "MeshComponent.inl"
 #include "Texture.h"
 #include "Mesh.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 CTestScene::CTestScene()
 {
@@ -82,6 +84,12 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			// 3) MeshRendererComponent 생성
 			obj->SetComponent(std::make_shared<CMeshRendererComponent>());
 
+			// 4) ColliderComponent 생성
+			auto boxCollider = std::make_shared<CBoxColliderComponent>();
+			obj->SetComponent(boxCollider);
+			boxCollider->SetLocalBounds(children->mesh.bounds);
+			//CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
 			obj->Initialize(device, commandList);
 
 			objects.push_back(std::move(obj));
@@ -100,6 +108,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 void CTestScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 }
 
 void CTestScene::Render(ID3D12GraphicsCommandList* commandList)

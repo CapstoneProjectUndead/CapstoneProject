@@ -55,7 +55,6 @@ public:
 	template<typename T>
 	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
-	void SetBounds(const BoundingBox& bound) { box = bound; }
 
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
@@ -81,8 +80,6 @@ protected:
 	UINT slot_num{};
 	UINT stride{};
 	UINT offset{};
-
-	BoundingBox box;
 public:
 	// name
 	std::string name{};
@@ -113,6 +110,7 @@ class CCubeMesh : public CMesh
 {
 public:
 	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, float = 2.0f, float = 2.0f, float = 2.0f);
+	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, const XMFLOAT3&);
 };
 
 template<typename T>

@@ -73,3 +73,9 @@ public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
 };
+
+class CDebugRendererComponent : public CMeshRendererComponent
+{
+public:
+    void Update(const float deltaTime) override {};
+};

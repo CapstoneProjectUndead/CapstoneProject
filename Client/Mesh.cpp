@@ -350,3 +350,79 @@ CCubeMesh::CCubeMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandLis
 	vertex_buffer_view.SizeInBytes = stride * vertex_num;
 }
 
+CCubeMesh::CCubeMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const XMFLOAT3& halfSize )
+	: CMesh(device, commandList)
+{
+	const size_t vertexSize = 36;
+
+	vertex_num = vertexSize;
+	stride = sizeof(CVertex);
+	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+	float x = halfSize.x, y = halfSize.y, z = halfSize.z;
+
+	CVertex vertices[vertexSize];
+	int i{};
+
+	// ⓐ 앞면(Front)
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
+
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
+
+	// ⓒ 윗면(Top)
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
+
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
+
+	// ⓔ 뒷면(Back)
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
+
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
+
+	// ⓖ 아래면(Bottom)
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
+
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
+
+	// ⓘ 왼쪽면(Left)
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
+
+	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
+
+	// ⓚ 오른쪽면(Right)
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
+
+	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
+	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
+
+
+	// 삼각형 메쉬를 리소스로 생성
+	vertex_buffer = CreateBufferResource(device, commandList, vertices, stride * vertex_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_upload_buffer.GetAddressOf());
+
+	// 정점 버퍼 뷰 설정
+	vertex_buffer_view.BufferLocation = vertex_buffer->GetGPUVirtualAddress();
+	vertex_buffer_view.StrideInBytes = stride;
+	vertex_buffer_view.SizeInBytes = stride * vertex_num;
+}

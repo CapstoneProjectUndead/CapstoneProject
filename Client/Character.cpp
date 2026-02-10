@@ -4,6 +4,8 @@
 #include "Movement.h"
 #include "Animator.h"
 #include "Mesh.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 CCharacter::CCharacter()
 	: CObject()
@@ -22,6 +24,12 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
 		SetComponent(meshComp);
 		meshComp->SetMeshFromFile<CSkinnedVertex>(device, commandList, children);
 		world_matrix = children->localMatrix;
+
+		// Collider
+		auto boxCollider = std::make_shared<CBoxColliderComponent>();
+		SetComponent(boxCollider);
+		boxCollider->SetLocalBounds(children->mesh.bounds);
+		CPhysicsManager::GetInstance().SetCollider(boxCollider);
 	}
 
 	// animator
