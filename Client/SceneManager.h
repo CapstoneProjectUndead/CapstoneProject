@@ -25,6 +25,8 @@ public:
     CScene* GetActiveScene() const { return active_scene; }
     void    SetActiveScene(CScene* scene) { active_scene = scene; }
 
+    void ChangeScene(SCENE_TYPE type);
+
 private:
     std::unique_ptr<CScene> scenes[(UINT)SCENE_TYPE::END];
     CScene*                 active_scene = nullptr;

@@ -92,20 +92,8 @@ void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// ID 발급
 	// 클라한테 ID와 함께 로그인 허락 패킷을 보낸다. (S_LOGIN)
 
-	// 싱글
-	if (!pkt.is_multi) {
-		S_LOGIN loginPkt;
-		loginPkt.success = true;
-		loginPkt.is_multi = false;
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
-		session->DoSend(sendBuffer);
-	}
-	// 멀티
-	else {
-		S_LOGIN loginPkt;
-		loginPkt.success = true;
-		loginPkt.is_multi = true;
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
-		session->DoSend(sendBuffer);
-	}
+	S_LOGIN loginPkt;
+	loginPkt.success = true;
+	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
+	session->DoSend(sendBuffer);
 }

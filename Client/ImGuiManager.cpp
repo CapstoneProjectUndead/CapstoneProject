@@ -484,7 +484,6 @@ void CImGuiManager::DrawTitleUI()
     // true : [로그인] [회원가입] [뒤로가기]
     static bool show_multiplayer_select = false;
 
-
     // =========================================
     // 1. 메인 버튼 창 (상태에 따라 버튼 내용이 바뀜)
     // =========================================
@@ -522,9 +521,8 @@ void CImGuiManager::DrawTitleUI()
                 // 1. 싱글 플레이
                 if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
                     printf("싱글 플레이 로그인 시도.\n");
-                    show_login_window = true;
-                    show_sign_window = false;
-                    is_multi_signin = false;
+                    // 바로 LobbyScene으로 입장
+                    CSceneManager::GetInstance();
                 }
                 ImGui::Spacing(); ImGui::Spacing();
 
@@ -548,7 +546,6 @@ void CImGuiManager::DrawTitleUI()
                 if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
                     show_login_window = true;
                     show_sign_window = false;
-                    is_multi_signin = true;
                 }
                 ImGui::Spacing(); ImGui::Spacing();
 
@@ -604,7 +601,6 @@ void CImGuiManager::DrawTitleUI()
                 printf("Login Requested! ID: %s\n", id);
 
                 C_LOGIN loginPkt;
-                loginPkt.is_multi = is_multi_signin;
                 COPY_STRING(loginPkt.id, id);
                 COPY_STRING(loginPkt.password, pw);
                 auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);

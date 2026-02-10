@@ -7,6 +7,7 @@
 #include "Object.inl"
 
 CTitleScene::CTitleScene()
+	: CScene(SCENE_TYPE::TITLE)
 {
 }
 
@@ -26,5 +27,13 @@ void CTitleScene::Update(float elapsedTime)
 }
 
 void CTitleScene::Render(ID3D12GraphicsCommandList*)
+{
+}
+
+void CTitleScene::Enter()
+{
+}
+
+void CTitleScene::Exit()
 {
 }

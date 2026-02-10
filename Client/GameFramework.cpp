@@ -269,18 +269,19 @@ void CGameFramework::BuildObjects()
 {
 	command_list->Reset(command_allocator.Get(), NULL);
 
-	// 씬 객체 생성
+	// 모든 씬 객체 생성
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE] = std::make_unique<CTitleScene>();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
 
-	// 방금 만든 Test Scene을 Active Scene으로 설정
-	CScene* lobbyScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
-	lobbyScene->SetSceneType(SCENE_TYPE::TITLE);
-	CSceneManager::GetInstance().SetActiveScene(lobbyScene);
+	// 시작 Scene은 항상 TitleScene 이지만,
+	// 해당 Scene 작업을 위해서, 여기서 유연하게 바꾸면 된다.
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
+	CSceneManager::GetInstance().SetActiveScene(activeScene);
 
 	// 서버와 연결 체크
 	// 서버와 연결되지 않았다면 Scene에서 생성할 오브젝트들 생성
-	if (lobbyScene && !IS_CONNECT)
-		lobbyScene->BuildObjects(d3d_device.Get(), command_list.Get());
+	if (activeScene && !IS_CONNECT)
+		activeScene->BuildObjects(d3d_device.Get(), command_list.Get());
 
 	// 그래픽 명령 리스트 명령 큐에 추가
 	command_list->Close();
@@ -291,8 +292,8 @@ void CGameFramework::BuildObjects()
 	waitForGpuComplete();
 
 	//그래픽 리소스들을 생성하는 과정에 생성된 업로드 버퍼들을 소멸시킨다.
-	if (lobbyScene)
-		lobbyScene->ReleaseUploadBuffers();
+	if (activeScene)
+		activeScene->ReleaseUploadBuffers();
 
 	timer.Reset();
 }

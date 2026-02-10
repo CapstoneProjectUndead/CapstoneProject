@@ -7,6 +7,7 @@
 #include "Object.inl"
 
 CLobbyScene::CLobbyScene()
+	: CScene(SCENE_TYPE::LOBBY)
 {
 }
 
@@ -87,4 +88,12 @@ void CLobbyScene::Update(float elapsedTime)
 void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
+}
+
+void CLobbyScene::Enter()
+{
+}
+
+void CLobbyScene::Exit()
+{
 }

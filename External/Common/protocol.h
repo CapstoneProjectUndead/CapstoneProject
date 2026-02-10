@@ -93,24 +93,22 @@ static_assert(sizeof(S_SIGN_RES) == 4 + 1, "S_SIGN_RES size mismatch!");
 
 struct C_LOGIN : public PacketHeader
 {
-	bool    is_multi;
 	char	id[ID_SIZE];
 	char	password[PW_SIZE];
 
 	C_LOGIN() : PacketHeader(sizeof(C_LOGIN), (UINT)PacketType::_C_LOGIN) {}
 };
-static_assert(sizeof(C_LOGIN) == 4 + 81, "C_LOGIN size mismatch!");
+static_assert(sizeof(C_LOGIN) == 4 + 80, "C_LOGIN size mismatch!");
 
 struct S_LOGIN : public PacketHeader
 {
 	uint64	id;
 	bool	success;
-	bool    is_multi;
 	//char	name[NAME_SIZE];
 
 	S_LOGIN() : PacketHeader(sizeof(S_LOGIN), (UINT)PacketType::_S_LOGIN) {}
 };
-static_assert(sizeof(S_LOGIN) == 4 + 10, "S_LOGIN size mismatch!");
+static_assert(sizeof(S_LOGIN) == 4 + 9, "S_LOGIN size mismatch!");
 
 // 내 플레이어를 보낼 떄
 struct S_SpawnPlayer : public PacketHeader

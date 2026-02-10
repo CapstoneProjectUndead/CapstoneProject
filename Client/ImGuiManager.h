@@ -38,13 +38,21 @@ public:
 
 	// 필요하다면 창을 강제로 닫는 기능
 	void CloseAllWindow() { show_login_window = false; show_sign_window = false; }
+	
+	void Reset()
+	{
+		show_login_window = show_sign_window = is_login_loading = is_signup_loading = false;
+	}
 
 private:
 	void LoadingIndicatorCircle(const char* label, const float indicator_radius
 		, const ImVec4& main_color, const ImVec4& backdrop_color
 		, const int circle_count, const float speed);
 
+	//===================
+	// 안쓰는 함수 (참고용)
 	void DrawLogInUI();
+	//===================
 
 	void DrawTitleUI();
 	void DrawTitle();
@@ -69,9 +77,9 @@ private:
 	bool is_login_loading = false;	// 로딩 팝업 띄우기
 	bool is_signup_loading = false; // 로딩 팝업 띄우기
 
-	bool is_multi_signin = false;
 	bool is_signup_success = false; // 회원가입 성공여부
 	bool is_signin_success = false; // 로그인 성공여부
+	bool is_logedin = false;		// 로그인 여부
 
 	bool show_room_list_window = false;	// 룸매칭 화면 뜨위기
 

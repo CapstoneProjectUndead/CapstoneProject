@@ -10,8 +10,8 @@ class CShader;
 class CScene
 {
 public:
-	CScene() = default;
-	~CScene() = default;
+	CScene(SCENE_TYPE type);
+	~CScene();
 
 	void ReleaseUploadBuffers();
 
@@ -19,21 +19,24 @@ public:
 
 	void AnimateObjects(float);
 
-	// 멤버 변수 set
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
-	SCENE_TYPE GetSceneType() const { return scene_type; }
-	void SetSceneType(SCENE_TYPE type) { scene_type = type; }
+	// Scene 이 전환될 때, 호출 될 함수
+	virtual void Enter() abstract;
+	virtual void Exit() abstract;
 
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);
 
+	// 멤버 변수 set
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }
 	void									SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }
 	void									SetCamera(std::shared_ptr<CCamera> _camera) { camera = _camera; }
 
-	auto& GetShaders() { return shaders; }
+	SCENE_TYPE								GetSceneType() const { return scene_type; }
+
+	auto&									GetShaders() { return shaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
 	std::unordered_map<uint32_t, size_t>&   GetIDIndex() { return id_To_Index; }
 
