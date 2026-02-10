@@ -21,6 +21,8 @@ void CClientSession::OnConnected()
 
 void CClientSession::OnDisconnected()
 {
+
+#ifdef SCENE_TEST
 	if (nullptr != user) {
 		auto player = user->GetPlayer();
 		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
@@ -30,6 +32,19 @@ void CClientSession::OnDisconnected()
 			}
 		}
 	}
+#else
+	if (nullptr != user) {
+		auto player = user->GetPlayer();
+		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
+
+			auto& rooms = CSceneManager::GetInstance().GetRooms();
+			auto iter = rooms.find(user->GetRoomID());
+			auto& room = iter->second;
+			room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
+		}
+	}
+#endif 
+
 }
 
 void CClientSession::ProcessPacket(std::shared_ptr<Session> session, char* buf, int32 pktSize)

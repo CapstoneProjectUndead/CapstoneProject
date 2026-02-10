@@ -640,7 +640,7 @@ void CImGuiManager::DrawThirdMenuButton(bool& menu)
         C_LOGOUT logOutPkt;
         auto serverSession = CSessionManager::GetInstance().GetServerSession();
         auto user = serverSession->GetUser();
-        logOutPkt.user_id = user->GetID();
+        logOutPkt.user_id = user->GetUserID();
         auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGOUT>(logOutPkt);
         serverSession->DoSend(sendBuffer);
     }

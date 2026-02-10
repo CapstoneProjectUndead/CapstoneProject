@@ -97,7 +97,7 @@ void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// 클라한테 ID와 함께 로그인 허락 패킷을 보낸다. (S_LOGIN)
 	S_LOGIN loginPkt;
 	loginPkt.success = true;
-	loginPkt.id = user->GetID();
+	loginPkt.user_id = user->GetUserID();
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
 	session->DoSend(sendBuffer);
 }

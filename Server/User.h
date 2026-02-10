@@ -13,15 +13,18 @@ public:
 	shared_ptr<Session>  GetSession() const { return session.lock(); }
 	void                 SetSession(shared_ptr<Session> _session) { session = _session; }
 
-	uint64 GetID() const { return user_id; }
+	uint64 GetUserID() const { return user_id; }
+	uint32 GetRoomID() const { return room_id; }
+	void   SetRoomID(const uint32 id) { room_id = id; }
 
 	shared_ptr<CPlayer> GetPlayer() { return player; }
 	void SetPlayer(shared_ptr<CPlayer> _player) { player = _player; }
 
 private:
-	static atomic<uint64> s_idGenerator;
+	static atomic<uint64> s_userid_generator;
 
 	const uint64          user_id;
+	uint32				  room_id;
 	weak_ptr<Session>	  session;
 	shared_ptr<CPlayer>	  player;
 };

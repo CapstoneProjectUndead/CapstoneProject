@@ -26,11 +26,17 @@ public:
 
 	bool GetIsMyPlayer() const { return is_my_player; }
 
+	uint32 GetRoomID() const { return room_id; }
+	void SetRoomID(const uint32 id) { room_id = id; }
+
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
 
 protected:
+	uint32 room_id; // 이 플레이어가 참여하고 있는 방 ID
+	SCENE_TYPE current_scene_type; // 현재 플레이어가 속한 씬 (방이 씬을 포함하고 있는 구조)
+
 	float friction{ 125.0f };
 	XMFLOAT3 direction{};
 

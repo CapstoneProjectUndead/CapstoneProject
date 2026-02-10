@@ -40,6 +40,9 @@ public:
 	void SetState(PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
 
+	void SetCurrentSceneType(SCENE_TYPE type) { current_scene_type = type; }
+	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
+
 	void RecordServerFrameHistory(const ServerFrameHistory& history);
 	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
 
@@ -60,6 +63,7 @@ public:
 	}
 
 private:
+	SCENE_TYPE					current_scene_type; // 현재 플레이어가 속한 씬 (방이 씬을 포함하고 있는 구조)
 	uint64						last_processed_seq;
 	float						last_simulated_time;
 	float						ping;

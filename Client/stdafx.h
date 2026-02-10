@@ -74,6 +74,7 @@ using Microsoft::WRL::ComPtr;
 #include <protocol.h>
 
 //#define GENERATE_LAG
+//#define SCENE_TEST
 
 #define CLIENT_HISTORY_MAX_SIZE 120
 #define RENDER_BUFFER_MAX_SIZE 60

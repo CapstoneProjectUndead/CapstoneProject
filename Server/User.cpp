@@ -2,10 +2,10 @@
 #include "User.h"
 // ServerÂÊ User
 
-atomic<uint64> CUser::s_idGenerator = 1;
+atomic<uint64> CUser::s_userid_generator = 1;
 
 CUser::CUser()
-	: user_id(s_idGenerator++)
+	: user_id(s_userid_generator++)
 {
 
 }

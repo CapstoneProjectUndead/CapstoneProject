@@ -47,32 +47,34 @@ bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
-	assert(activeScene->GetSceneType() == SCENE_TYPE::TITLE);
+#ifdef SCENE_TEST
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 	
 	activeScene->PushPacketJob(session
-		, (CTitleScene*)activeScene
+		, (CLobbyScene*)activeScene
+		, &CLobbyScene::EnterPlayer
+		, pkt);
+#else
+	CScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
+
+	titleScene->PushPacketJob(session
+		, (CTitleScene*)titleScene
 		, &CTitleScene::HandleLogIn
 		, pkt);
-
-	//CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
-	//assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
-	//
-	//activeScene->PushPacketJob(session
-	//	, (CLobbyScene*)activeScene
-	//	, &CLobbyScene::EnterPlayer
-	//	, pkt);
+#endif
 
 	return true;
 }
 
 bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt)
 {
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
-	assert(activeScene->GetSceneType() == SCENE_TYPE::TITLE);
+	CScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
 
-	activeScene->PushPacketJob(session
-		, (CTitleScene*)activeScene
+	titleScene->PushPacketJob(session
+		, (CTitleScene*)titleScene
 		, &CTitleScene::HandleLogOut
 		, pkt);
 
@@ -81,11 +83,11 @@ bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt)
 
 bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 {
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
-	assert(activeScene->GetSceneType() == SCENE_TYPE::TITLE);
+	CScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
 
-	activeScene->PushPacketJob(session
-		, (CTitleScene*)activeScene
+	titleScene->PushPacketJob(session
+		, (CTitleScene*)titleScene
 		, &CTitleScene::HandleSignUp
 		, pkt);
 
@@ -94,6 +96,7 @@ bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 
 bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 {
+#ifdef SCENE_TEST
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 
@@ -103,6 +106,9 @@ bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 		&CLobbyScene::MovePlayer,
 		pkt
 	);
+#else
+
+#endif
 
 	return true;
 }

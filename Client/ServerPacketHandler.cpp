@@ -81,7 +81,7 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 
 	// session, id 저장
 	user->SetSession(session);
-	user->SetID(pkt.id);
+	user->SetUserID(pkt.user_id);
 
 	// User Refcount 증가
 	CAST_SS(session)->SetUser(user);

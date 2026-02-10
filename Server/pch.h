@@ -8,6 +8,8 @@
 
 #pragma once
 
+//#define SCENE_TEST
+
 #ifndef PCH_H
 #define PCH_H
 

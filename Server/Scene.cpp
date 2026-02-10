@@ -131,7 +131,7 @@ void CScene::SimulatePlayers(const float elapsedTime)
 void CScene::EnterUser(shared_ptr<CUser> user)
 {
 	lock_guard<mutex> lg(users_lock);
-	users[user->GetID()] = user;
+	users[user->GetUserID()] = user;
 }
 
 void CScene::LeaveUser(uint64 id)

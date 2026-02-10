@@ -76,9 +76,9 @@ struct NetRoomListInfo
 	uint16	room_id;	// 방 ID
 	uint16  room_cnt;	// 총 몇개의 방이 있는지
 	char	room_name[ROOM_NAME_MAX]; // 100자
-	uint16	current_player;
+	uint16	total_player;
 	uint16	max_player;
-	bool	is_ingame;	// 게임이 이미 시작된 방인지
+	bool	is_in_game;	// 게임이 이미 시작된 방인지
 };
 
 static_assert(sizeof(NetRoomListInfo) == 109, "NetRoomListInfo size mismatch!");

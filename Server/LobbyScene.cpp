@@ -27,6 +27,7 @@ void CLobbyScene::Update(float elapsedTime)
 
 void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
+
 	// User 객체 생성
 	shared_ptr<CUser> user;
 	if (!CAST_CS(session)->GetUser())
@@ -36,7 +37,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
 
 	user->SetPlayer(player);
-	player->SetID(user->GetID());
+	player->SetID(user->GetUserID());
 
 	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
