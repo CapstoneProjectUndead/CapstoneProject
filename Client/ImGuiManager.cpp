@@ -522,7 +522,7 @@ void CImGuiManager::DrawTitleUI()
                 if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
                     printf("싱글 플레이 로그인 시도.\n");
                     // 바로 LobbyScene으로 입장
-                    CSceneManager::GetInstance();
+                    CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
                 }
                 ImGui::Spacing(); ImGui::Spacing();
 
