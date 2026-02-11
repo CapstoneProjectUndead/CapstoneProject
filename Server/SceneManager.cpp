@@ -96,21 +96,31 @@ void CSceneManager::SendResults()
 
 }
 
-void CSceneManager::CreateRoom(const string& name, shared_ptr<CUser> user)
+uint32 CSceneManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 {
 	unique_ptr<CRoom> room = make_unique<CRoom>(name);
 	room->GetScenes()[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>();
+	uint32 roomId = room->GetRoomID();
 
+	// 플레이어 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
+
+	// 유저를 약한 참조 (refcount 증가x)
 	player->SetUser(user);
+
 	player->SetID(user->GetUserID());
-	player->SetRoomID(room->GetRoomID());
+	player->SetRoomID(roomId);
 	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 
+	// 유저가 자신의 플레이어를 참조 (refcount 증가)
 	user->SetPlayer(player);
-	user->SetRoomID(room->GetRoomID());
+	user->SetRoomID(roomId);
 
+	// 플레이어 Lobby씬 입장
 	room->GetScenes()[(UINT)SCENE_TYPE::LOBBY]->EnterScene(player);
 
+	// 방 map에 저장
 	rooms[room->GetRoomID()] = std::move(room);
+
+	return roomId;
 }

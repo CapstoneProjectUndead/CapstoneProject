@@ -62,11 +62,10 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
         srv_desc_heap->GetGPUDescriptorHandleForHeapStart());
 
     // 임시
-    RoomListInfo info{};
+    RoomInfo info{};
     info.total_player = 1;
     info.is_in_game = false;
     info.max_player = 4;
-    info.room_cnt = 1;
     info.room_id = 1;
     COPY_STRING(info.room_name, "보물 파밍 가자");
     room_vec.push_back(info);
@@ -74,7 +73,6 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
     info.total_player = 1;
     info.is_in_game = false;
     info.max_player = 4;
-    info.room_cnt = 1;
     info.room_id = 2;
     COPY_STRING(info.room_name, "초보 환영");
     room_vec.push_back(info);
@@ -87,8 +85,28 @@ void CImGuiManager::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
+    static bool lastInputState = false; // 이전 프레임의 입력 허용 상태
+    bool currentInputState = IsUIInputEnabled();
+    HWND hwnd = ghWnd; // 전역 윈도우 핸들 사용 권장
+    
+    // 상태가 변했거나, 강제 리셋이 필요한 경우에만 실행
+    if (currentInputState != lastInputState || need_reset_focus || show_login_window)
+    {
+        if (currentInputState && !show_login_window)
+            EnableIME(hwnd);  // UI 모드: 한글 허용
+        else
+            DisableIME(hwnd); // 게임 모드: 한글 차단
+    
+        if (need_reset_focus)
+        {
+            ImGui::SetWindowFocus(nullptr);
+            ImGui::CloseCurrentPopup();
+            need_reset_focus = false;
+        }
+        lastInputState = currentInputState;
+    }
+
     DrawTitleUI();
-    //DrawRoomListUI();
 
     // === 여기서부터 UI 코드를 작성하면 됩니다 ===
     // 테스트용 데모 창 띄우기
@@ -118,6 +136,39 @@ void CImGuiManager::Shutdown()
     if (srv_desc_heap) { 
         srv_desc_heap->Release(); 
         srv_desc_heap = nullptr; 
+    }
+}
+
+bool CImGuiManager::IsUIInputEnabled()
+{
+    bool result = true;
+
+    // 1. 타이틀 씬이면 무조건 입력 받음
+    CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+    if (scene && scene->GetSceneType() == SCENE_TYPE::TITLE)
+        result = true;
+    else
+        result = false;
+
+    // 2. 팝업이 떠있거나 로딩 중이면 입력 받음
+    //if (show_login_window || show_sign_window)
+    //    result = true;
+
+    // 3. 그 외(게임 플레이 중)에는 입력 차단!
+    return result;
+}
+
+void CImGuiManager::ResetIMEState(HWND hwnd)
+{
+    HIMC himc = ImmGetContext(hwnd);
+    if (himc)
+    {
+        // 현재 조합 중인 한글(예: '가...')을 강제로 취소시킴
+        ImmNotifyIME(himc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
+        // IME 상태를 닫음 (영어 모드 전환 효과)
+        ImmSetOpenStatus(himc, FALSE);
+        ImmReleaseContext(hwnd, himc);
+        printf("[System] IME State Force Reset.\n");
     }
 }
 
@@ -505,7 +556,8 @@ void CImGuiManager::DrawTitleUI()
     // 4. 로딩 팝업
     // ============
 
-    if (is_login_loading || is_signup_loading) {
+    if (is_login_loading || is_signup_loading || is_room_enter_loading 
+        || is_room_create_loading || is_single_loading) {
         DrawLoadingPopUp();
     }
 
@@ -584,18 +636,21 @@ void CImGuiManager::DrawTitleMainWindow()
 void CImGuiManager::DrawFirstMenuButton(bool& menu)
 {
     // 1. 싱글 플레이
-    if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
-        printf("싱글 플레이 로그인 시도.\n");
-        // 바로 LobbyScene으로 입장
+    if (!is_single_loading && ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
+        printf("싱글 플레이 입장.\n");
+
+        is_single_loading = true;
         CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
     }
-    ImGui::Spacing(); ImGui::Spacing();
+    ImGui::Spacing(); 
+    ImGui::Spacing();
 
     // 2. 멀티 플레이 (누르면 메뉴 변경)
     if (ImGui::Button((const char*)u8"멀티 플레이", ImVec2(200, 55))) {
         menu = true; // 상태 변경!
     }
-    ImGui::Spacing(); ImGui::Spacing();
+    ImGui::Spacing(); 
+    ImGui::Spacing();
 
     // 3. 나가기
     if (ImGui::Button((const char*)u8"나가기", ImVec2(200, 55))) {
@@ -856,14 +911,24 @@ void CImGuiManager::DrawLoadingPopUp()
 
         if (is_login_loading)
             ImGui::Text((const char*)u8"로그인 중입니다...");
-        else
+        else if (is_signup_loading)
             ImGui::Text((const char*)u8"가입 처리 중입니다...");
+        else if (is_room_create_loading)
+            ImGui::Text((const char*)u8"방 생성 중입니다...");
+        else if (is_room_enter_loading)
+            ImGui::Text((const char*)u8"방 입장 중입니다...");
+        else if (is_single_loading)
+            ImGui::Text((const char*)u8"싱글 플레이 입장 중입니다...");
 
         ImGui::Spacing();
 
         if (ImGui::Button("Cancel")) {
             is_login_loading = false;
             is_signup_loading = false;
+            is_room_create_loading = false;
+            is_room_enter_loading = false;
+            is_single_loading = false;
+
             ImGui::CloseCurrentPopup();
 
             // 이건 테스트 임시용 (무조건 지울 것!)
@@ -928,17 +993,22 @@ void CImGuiManager::DrawLoadingPopUpResult()
 void CImGuiManager::DrawRoomListUI()
 {
     CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE) // 혹은 LOBBY
+    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE) 
         return;
 
+    // =================
+    //  메인 윈도우 시작
+    // =================
+    DrawRoomListMainWindow();
+}
+
+void CImGuiManager::DrawRoomListMainWindow()
+{
     // 1. 전체 배경색 (파란색)
     ImGui::GetBackgroundDrawList()->AddRectFilled(
         ImVec2(0, 0), ImGui::GetIO().DisplaySize,
         ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.4f)));
 
-    // =================
-    //  메인 윈도우 시작
-    // =================
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.0f); // 투명 배경
@@ -946,16 +1016,16 @@ void CImGuiManager::DrawRoomListUI()
 
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoResize;
 
-    if (ImGui::Begin("MatchingWindow", NULL, windowFlags))
-    {
+    if (ImGui::Begin("MatchingWindow", NULL, windowFlags)) {
+
         // -----------------------------------------------------
         // 1. 타이틀 "UNDEAD"
         // -----------------------------------------------------
-        ImGui::Spacing(); 
-        ImGui::Spacing(); 
+        ImGui::Spacing();
+        ImGui::Spacing();
         ImGui::Spacing();
 
-        if (title_font2) 
+        if (title_font2)
             ImGui::PushFont(title_font2);
 
         const char* titleText = "UNDEAD";
@@ -969,214 +1039,31 @@ void CImGuiManager::DrawRoomListUI()
         ImGui::Text(titleText);
         ImGui::PopStyleColor();
 
-        if (title_font2) 
+        if (title_font2)
             ImGui::PopFont();
 
-        ImGui::Spacing(); 
+        ImGui::Spacing();
         ImGui::Spacing();
 
         // -----------------
         // 2. 방 목록 테이블
         // -----------------
-        float tableWidth = 700.0f * G_RATIO_X;
-        float tableHeight = 300.0f * G_RATIO_Y;
-
-        ImGui::SetCursorPosX((windowWidth - tableWidth) * 0.5f);
-
-        // 테이블 배경 (Child)
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.9f, 0.9f, 0.9f, 0.7f));
-
-        if (ImGui::BeginChild("TableArea", ImVec2(tableWidth, tableHeight), true, ImGuiWindowFlags_None)) {
-
-            static ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-
-            if (ImGui::BeginTable("RoomTable", 3, tableFlags)) {
-
-                ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f);
-                ImGui::TableSetupColumn((const char*)u8"방 제목", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn((const char*)u8"인원", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-
-                // 헤더 글자색 검정으로 변경
-                ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 검정
-                ImGui::TableHeadersRow();
-                ImGui::PopStyleColor(2);
-
-                // 내용물 스타일
-                ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.9f, 0.9f, 0.0f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(1.0f, 1.0f, 0.0f, 0.8f));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 검정
-
-                for (const auto& room : room_vec) {
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0); ImGui::Text("%u", room.room_id);
-
-                    std::string utf8Name = CP949ToUTF8(room.room_name);
-
-                    // "방제목##방ID" 형태로 문자열을 만듭니다.
-                    // 예: "초보환영##10" -> 화면엔 "초보환영"만 보이고, ID는 10번으로 구분됨
-                    std::string uniqueLabel = utf8Name + "##" + std::to_string(room.room_id);
-
-                    ImGui::TableSetColumnIndex(1);
-
-                    bool is_selected = (selected_room_id == room.room_id);
-                    if (ImGui::Selectable(uniqueLabel.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-                        selected_room_id = room.room_id;
-                        printf("room ID: %d\n", selected_room_id);
-                    }
-
-                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                        selected_room_id = room.room_id;
-                        // SendEnterRoomPacket(selected_room_id); 
-                    }
-
-                    ImGui::TableSetColumnIndex(2); ImGui::Text("%d / %d", room.total_player, room.max_player);
-                }
-                ImGui::PopStyleColor(4);
-                ImGui::EndTable();
-            }
-
-            // ===============================
-            // 테이블 영역 빈 곳 클릭 시 선택 해제
-            // ===============================
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
-            {
-                selected_room_id = 0;
-            }
-
-        }
-        ImGui::EndChild();
-        ImGui::PopStyleColor(); // ChildBg 복구
+        DrawRoomListTable();
 
         // ---------------
         // 3. 새로고침 버튼
         // ---------------
-        float refreshBtnSize = 60.0f;
-        ImGui::SetCursorPosX((windowWidth + tableWidth) * 0.5f - refreshBtnSize);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
-
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
-        // 버튼 글자색 지정을 위해 스타일 추가 (검정)
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(refreshBtnSize, refreshBtnSize))) {
-            // 새로고침 로직
-            printf("새로고침\n");
-        }
-        ImGui::PopStyleColor(2); // Button, Text
-
+        DrawRefreshButton();
 
         // ----------------
         // 4. 하단 버튼 3개
         // ----------------
-        ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-
-        float btnWidth = 200.0f * G_RATIO_X;
-        float btnHeight = 60.0f * G_RATIO_Y;
-        float spacing = 50.0f * G_RATIO_X;
-
-        float totalBtnWidth = (btnWidth * 3) + (spacing * 2);
-        ImGui::SetCursorPosX((windowWidth - totalBtnWidth) * 0.5f);
-
-        // 버튼 스타일
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.55f, 0.25f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.65f, 0.35f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.85f, 0.45f, 0.15f, 1.0f));
-        // 버튼 글자색 검정
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        if (ImGui::Button((const char*)u8"방 만들기", ImVec2(btnWidth, btnHeight))) {
-            ImGui::OpenPopup("CreateRoom");
-        }
-        ImGui::SameLine(0, spacing);
-
-        if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
-            if (selected_room_id != 0) {
-                // 입장 로직
-                ImGui::OpenPopup("EnterLoading");
-            }
-        }
-        ImGui::SameLine(0, spacing);
-
-        if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
-            // 뒤로가기 로직
-            show_room_list_window = false;
-        }
-
-        ImGui::PopStyleColor(4);
+        DrawThreeButton();
 
         // ----------------
         // 5. 팝업 (방 생성)
         // ----------------
-        ImGui::SetNextWindowPos(ImVec2(windowWidth * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-        // 팝업 내부 글자색도 검정으로 설정하기 위해 스타일 Push
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            static char roomName[128] = "";
-
-            ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
-            ImGui::Spacing();
-
-            ImGui::PushItemWidth(300.0f);
-            ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
-            ImGui::PopItemWidth();
-
-            ImGui::Spacing(); 
-            ImGui::Separator(); 
-            ImGui::Spacing();
-
-            if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
-
-                static int roomCounter = 1;
-
-                // 방 이름이 비어있는지 체크
-                if (strlen(roomName) == 0) {
-                    // 없다면 아래처럼 기본 이름을 세팅합니다.
-                    sprintf_s(roomName, sizeof(roomName), "Unknown Room %d", roomCounter++);
-                }
-
-                printf("방 생성 요청: %s\n", roomName);
-
-                C_CreateRoom createPkt;
-                auto serverSession = CSessionManager::GetInstance().GetServerSession();
-                auto user = serverSession->GetUser();
-                createPkt.user_id = user->GetUserID();
-                COPY_STRING(createPkt.room_name, roomName);
-                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
-                serverSession->DoSend(sendBuffer);
-
-                memset(roomName, 0, sizeof(roomName));
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::SameLine();
-
-            if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
-                memset(roomName, 0, sizeof(roomName));
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::EndPopup();
-        }
-        ImGui::PopStyleColor(); // 팝업 텍스트 색상 복구
-
-        //================
-        // 방 입장 팝업 생성
-        //================
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        if (ImGui::BeginPopupModal("EnterLoading", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-
-            LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
-
-            if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-        ImGui::PopStyleColor(); // 팝업 텍스트 색상 복구
+        DrawRoomCreatePopUp();
 
         // =====================================
         //  파란 배경(메인 윈도우) 클릭 시 선택 해제
@@ -1187,6 +1074,205 @@ void CImGuiManager::DrawRoomListUI()
     }
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+void CImGuiManager::DrawRoomListTable()
+{
+    float windowWidth = ImGui::GetWindowSize().x;
+    float tableWidth = 700.0f * G_RATIO_X;
+    float tableHeight = 300.0f * G_RATIO_Y;
+
+    ImGui::SetCursorPosX((windowWidth - tableWidth) * 0.5f);
+
+    // 테이블 배경 (Child)
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.9f, 0.9f, 0.9f, 0.7f));
+
+    if (ImGui::BeginChild("TableArea", ImVec2(tableWidth, tableHeight), true, ImGuiWindowFlags_None)) {
+
+        static ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+
+        if (ImGui::BeginTable("RoomTable", 3, tableFlags)) {
+
+            ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+            ImGui::TableSetupColumn((const char*)u8"방 제목", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn((const char*)u8"인원", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+
+            // 헤더 글자색 검정으로 변경
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 검정
+            ImGui::TableHeadersRow();
+            ImGui::PopStyleColor(2);
+
+            // 내용물 스타일
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.9f, 0.9f, 0.0f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(1.0f, 1.0f, 0.0f, 0.8f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 검정
+            
+            int rowNum = 1;
+            for (const auto& room : room_vec) {
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); 
+                ImGui::Text("%d", rowNum++);
+
+                std::string utf8Name = CP949ToUTF8(room.room_name);
+
+                // "방제목##방ID" 형태로 문자열을 만듭니다.
+                // 예: "초보환영##10" -> 화면엔 "초보환영"만 보이고, ID는 10번으로 구분됨
+                std::string uniqueLabel = utf8Name + "##" + std::to_string(room.room_id);
+
+                ImGui::TableSetColumnIndex(1);
+
+                bool is_selected = (selected_room_id == room.room_id);
+                if (ImGui::Selectable(uniqueLabel.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+                    selected_room_id = room.room_id;
+                    printf("room ID: %d\n", selected_room_id);
+                }
+
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                    selected_room_id = room.room_id;
+                    // SendEnterRoomPacket(selected_room_id); 
+                }
+
+                ImGui::TableSetColumnIndex(2); ImGui::Text("%d / %d", room.total_player, room.max_player);
+            }
+            ImGui::PopStyleColor(4);
+            ImGui::EndTable();
+        }
+
+        // ===============================
+        // 테이블 영역 빈 곳 클릭 시 선택 해제
+        // ===============================
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
+        {
+            selected_room_id = 0;
+        }
+
+    }
+    ImGui::EndChild();
+    ImGui::PopStyleColor(); // ChildBg 복구
+}
+
+void CImGuiManager::DrawRefreshButton()
+{
+    float windowWidth = ImGui::GetWindowSize().x;
+    float tableWidth = 700.0f * G_RATIO_X;
+    float tableHeight = 300.0f * G_RATIO_Y;
+    float refreshBtnSize = 60.0f;
+
+    ImGui::SetCursorPosX((windowWidth + tableWidth) * 0.5f - refreshBtnSize);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
+    // 버튼 글자색 지정을 위해 스타일 추가 (검정)
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(refreshBtnSize, refreshBtnSize))) {
+        // 새로고침 로직
+        printf("새로고침\n");
+    }
+    ImGui::PopStyleColor(2); // Button, Text
+}
+
+void CImGuiManager::DrawThreeButton()
+{
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    float windowWidth = ImGui::GetWindowSize().x;
+    float btnWidth = 200.0f * G_RATIO_X;
+    float btnHeight = 60.0f * G_RATIO_Y;
+    float spacing = 50.0f * G_RATIO_X;
+
+    float totalBtnWidth = (btnWidth * 3) + (spacing * 2);
+    ImGui::SetCursorPosX((windowWidth - totalBtnWidth) * 0.5f);
+
+    // 버튼 스타일
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.55f, 0.25f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.65f, 0.35f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.85f, 0.45f, 0.15f, 1.0f));
+    // 버튼 글자색 검정
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    if (ImGui::Button((const char*)u8"방 만들기", ImVec2(btnWidth, btnHeight))) {
+        ImGui::OpenPopup("CreateRoom");
+    }
+    ImGui::SameLine(0, spacing);
+
+    if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
+        if (selected_room_id != 0) {
+            // 입장 로직
+            is_room_enter_loading = true;
+        }
+    }
+    ImGui::SameLine(0, spacing);
+
+    if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
+        // 뒤로가기 로직
+        show_room_list_window = false;
+    }
+
+    ImGui::PopStyleColor(4);
+}
+
+void CImGuiManager::DrawRoomCreatePopUp()
+{
+    float windowWidth = ImGui::GetWindowSize().x;
+
+    ImGui::SetNextWindowPos(ImVec2(windowWidth * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    // 팝업 내부 글자색도 검정으로 설정하기 위해 스타일 Push
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static char roomName[128] = "";
+
+        ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
+        ImGui::Spacing();
+
+        ImGui::PushItemWidth(300.0f);
+        ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
+        ImGui::PopItemWidth();
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
+
+            auto serverSession = CSessionManager::GetInstance().GetServerSession();
+            auto user = serverSession->GetUser();
+            int id = user->GetUserID();
+
+            // 방 이름이 비어있는지 체크
+            if (strlen(roomName) == 0) {
+                // 없다면 아래처럼 기본 이름을 세팅합니다.
+                sprintf_s(roomName, sizeof(roomName), "Unknown Room %d", id);
+            }
+
+            printf("방 생성 요청: %s\n", roomName);
+
+            C_CreateRoom createPkt;
+            createPkt.user_id = user->GetUserID();
+            COPY_STRING(createPkt.room_name, roomName);
+            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
+            serverSession->DoSend(sendBuffer);
+
+            memset(roomName, 0, sizeof(roomName));
+            ImGui::CloseCurrentPopup();
+            is_room_create_loading = true;
+        }
+        ImGui::SameLine();
+
+        if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
+            memset(roomName, 0, sizeof(roomName));
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::PopStyleColor(); // 팝업 텍스트 색상 복구
 }
 
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size)

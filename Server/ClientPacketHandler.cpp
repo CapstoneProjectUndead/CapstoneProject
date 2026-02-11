@@ -97,7 +97,11 @@ bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
 {
 	auto& sceneManager = CSceneManager::GetInstance();
-	sceneManager.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
+	uint32 roomID = sceneManager.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
+	S_CreateRoom createRoomPkt;
+	createRoomPkt.room_id = roomID;
+	auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_CreateRoom>(createRoomPkt);
+	session->DoSend(sendBuffer);
 
 	return true;
 }

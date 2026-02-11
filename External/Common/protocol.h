@@ -26,13 +26,14 @@ enum PacketType : uint16_t
 	_S_LOGOUT = 9,
 	_C_ROOM_CREATE = 10,
 	_C_ROOM_ENTER = 11,
-	_S_ROOMLIST = 12,
-	_S_SPAWNPLAYER = 13,
-	_S_ADDPLAYER = 14,
-	_S_PLAYERLIST = 15,
-	_S_REMOVEPLAYER = 16,
-	_C_PLAYER_INPUT = 17,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 18,
+	_S_ROOM_CREATE = 12,
+	_S_ROOMLIST = 13,
+	_S_SPAWNPLAYER = 14,
+	_S_ADDPLAYER = 15,
+	_S_PLAYERLIST = 16,
+	_S_REMOVEPLAYER = 17,
+	_C_PLAYER_INPUT = 18,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 19,
 };
 
 #pragma pack (push, 1)
@@ -135,6 +136,14 @@ struct C_CreateRoom : public PacketHeader
 	C_CreateRoom() : PacketHeader(sizeof(C_CreateRoom), (UINT)PacketType::_C_ROOM_CREATE) {}
 };
 static_assert(sizeof(C_CreateRoom) == 4 + 108, "C_CreateRoom size mismatch!");
+
+struct S_CreateRoom : public PacketHeader
+{
+	uint64 room_id;
+
+	S_CreateRoom() : PacketHeader(sizeof(S_CreateRoom), (UINT)PacketType::_S_ROOM_CREATE) {}
+};
+static_assert(sizeof(S_CreateRoom) == 4 + 8, "S_CreateRoom size mismatch!");
 
 // 내 플레이어를 보낼 떄
 struct S_SpawnPlayer : public PacketHeader

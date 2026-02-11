@@ -54,7 +54,7 @@ public:
     CTitleScene* GetTitleScene() const { return title_scene.get(); }
     map<uint32, unique_ptr<CRoom>>& GetRooms() { return rooms; }
 
-    void CreateRoom(const string& name, shared_ptr<CUser> user);
+    uint32 CreateRoom(const string& name, shared_ptr<CUser> user);
 
 private:
 #ifdef SCENE_TEST

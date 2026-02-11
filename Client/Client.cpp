@@ -8,6 +8,8 @@
 // 서버 
 #include "NetworkManager.h"
 
+#include "ImGuiManager.h"
+
 #define NET_ADDRESS L"127.0.0.1"
 
 #define MAX_LOADSTRING 100
@@ -126,7 +128,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     AdjustWindowRect(&rc, dwstyle, FALSE);
 
     // 디버그 콘솔 생성
-    CreateDebugConsole();
+    //CreateDebugConsole();
 
     //hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
     ghWnd = CreateWindow(szWindowClass, szTitle, dwstyle,

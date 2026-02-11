@@ -99,6 +99,19 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 	return true;
 }
 
+bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
+{
+	CImGuiManager::GetInstance().SetRoomCreateLoading(false);
+
+	CImGuiManager::GetInstance().CloseAllWindow();
+
+	CImGuiManager::GetInstance().ReserveResetFocus();
+
+	CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+
+	return true;
+}
+
 bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();

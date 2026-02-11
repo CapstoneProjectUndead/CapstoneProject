@@ -29,6 +29,9 @@ public:
 	uint32 GetRoomID() const { return room_id; }
 	void SetRoomID(const uint32 id) { room_id = id; }
 
+	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
+	void SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
+
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);

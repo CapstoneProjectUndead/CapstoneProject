@@ -32,6 +32,8 @@ void CTitleScene::Render(ID3D12GraphicsCommandList*)
 
 void CTitleScene::Enter()
 {
+	if (my_player)
+		my_player->SetCurrentSceneType(SCENE_TYPE::TITLE);
 }
 
 void CTitleScene::Exit()

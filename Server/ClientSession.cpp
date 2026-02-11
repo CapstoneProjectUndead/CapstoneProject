@@ -35,16 +35,23 @@ void CClientSession::OnDisconnected()
 	}
 #else
 	if (nullptr != user) {
-		auto player = user->GetPlayer();
-		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
-
-			auto& rooms = CSceneManager::GetInstance().GetRooms();
-			auto iter = rooms.find(user->GetRoomID());
-			auto& room = iter->second;
-			room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
-		}
-
 		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
+
+		auto player = user->GetPlayer();
+		if (!player)
+			return;
+
+		if (player->GetRoomID() == -1)
+			return;
+
+		auto& rooms = CSceneManager::GetInstance().GetRooms();
+		auto iter = rooms.find(player->GetRoomID());
+		if (iter == rooms.end())
+			return;
+
+		auto& room = iter->second;
+		room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
+
 	}
 #endif 
 

@@ -101,6 +101,9 @@ void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
 void CLobbyScene::Enter()
 {
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
+
+	if (my_player)
+		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 }
 
 void CLobbyScene::Exit()

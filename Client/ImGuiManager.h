@@ -1,8 +1,11 @@
 ﻿#pragma once
-#include "ImGui/imgui.h"
-#include "ImGui/imgui_impl_win32.h"
-#include "ImGui/imgui_impl_dx12.h"
-#include "ImGui/imgui_internal.h"
+#include <ImGui/imgui.h>
+#include <ImGui/imgui_impl_win32.h>
+#include <ImGui/imgui_impl_dx12.h>
+#include <ImGui/imgui_internal.h>
+
+#include <imm.h>
+#pragma comment(lib, "imm32.lib")
 
 // 헬퍼 함수 
 // 인자: (텍스처 핸들(ptr), 버튼 텍스트, 버튼 크기)
@@ -29,10 +32,41 @@ public:
     void Update(); // 매 프레임 시작 (Tick)
     void Render(ID3D12GraphicsCommandList* cmdList); // 그리기 명령
     void Shutdown();
+	bool IsUIInputEnabled();
+	void ResetIMEState(HWND hwnd);
+
+	// 게임 모드: 한글 입력기 완전 제거
+	void DisableIME(HWND hwnd)
+	{
+		// 이미 제거된 상태면 패스
+		if (default_imc != nullptr) return;
+
+		// 현재 윈도우의 IME 연결을 끊고, 원래 핸들을 저장해둠 (나중에 복구용)
+		default_imc = ImmAssociateContext(hwnd, NULL);
+
+		printf("[System] IME Disabled (Game Mode)\n");
+	}
+
+	// UI 모드: 한글 입력기 복구
+	void EnableIME(HWND hwnd)
+	{
+		// 저장해둔 핸들이 없으면 패스
+		if (default_imc == nullptr) return;
+
+		// IME 다시 연결
+		ImmAssociateContext(hwnd, default_imc);
+		default_imc = nullptr;
+
+		printf("[System] IME Enabled (UI Mode)\n");
+	}
 
 	void SetTitleDraw(bool result) { is_title_draw = result; }
+
 	void SetLoginLoading(bool loading) { is_login_loading = loading; }
 	void SetSignupLoading(bool loading) { is_signup_loading = loading; }
+	void SetRoomCreateLoading(bool loading) { is_room_create_loading = loading; }
+	void SetRoomEnterLoading(bool loading) { is_room_enter_loading = loading; }
+
 	void SetSignUpResult(bool result) { is_signup_success = result; }
 	void SetSignInResult(bool result) { is_signin_success = result; }
 	void SetIsOnlie(bool result) { is_online = result; }
@@ -44,6 +78,8 @@ public:
 	{
 		show_login_window = show_sign_window = is_login_loading = is_signup_loading = false;
 	}
+
+	void ReserveResetFocus() { need_reset_focus = true; }
 
 private:
 	void LoadingIndicatorCircle(const char* label, const float indicator_radius
@@ -70,22 +106,34 @@ private:
 	void DrawLoadingPopUpResult();
 
 	void DrawRoomListUI();
+	void DrawRoomListMainWindow();
+	void DrawRoomListTable();
+	void DrawRefreshButton();
+	void DrawThreeButton();	// 방 만들기 / 방 입장 / 뒤로가기
 
+	void DrawRoomCreatePopUp();
 
 private:
     // DX12는 ImGui 폰트용 힙이 꼭 필요합니다.
     ID3D12DescriptorHeap* srv_desc_heap = nullptr;
-	std::vector<RoomListInfo> room_vec;
+	HIMC				  default_imc = nullptr;
+
+	std::vector<RoomInfo> room_vec;
 
 	ImFont* title_font = nullptr;
 	ImFont* title_font2 = nullptr;
+
+	bool need_reset_focus = false;
 
 	bool is_title_draw = true;
 	bool show_login_window = false;	// 로그인 입력창 띄우기
 	bool show_sign_window = false;	// 회원가입창 띄우기
 
+	bool is_single_loading = false; // 로딩 팝업 띄우기
 	bool is_login_loading = false;	// 로딩 팝업 띄우기
 	bool is_signup_loading = false; // 로딩 팝업 띄우기
+	bool is_room_create_loading = false; // 로딩 팝업 띄우기
+	bool is_room_enter_loading = false; // 로딩 팝업 띄우기
 
 	bool is_signup_success = false; // 회원가입 성공여부
 	bool is_signin_success = false; // 로그인 성공여부
