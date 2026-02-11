@@ -2,7 +2,7 @@
 #include "ImGuiManager.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
-#include "SessionManager.h"
+#include "ServerSessionManager.h"
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
@@ -397,9 +397,9 @@ void CImGuiManager::DrawLogInUI()
                 COPY_STRING(loginPkt.password, pw);
                 auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
 
-                auto session = CSessionManager::GetInstance().GetServerSession();
+                auto session = CServerSessionManager::GetInstance().GetServerSession();
                 if (session)
-                    CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+                    CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
 
                 memset(id, 0, sizeof(id));
                 memset(pw, 0, sizeof(pw));
@@ -467,9 +467,9 @@ void CImGuiManager::DrawLogInUI()
                 COPY_STRING(signUpPkt.name, name);
                 auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
 
-                auto session = CSessionManager::GetInstance().GetServerSession();
+                auto session = CServerSessionManager::GetInstance().GetServerSession();
                 if (session)
-                    CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+                    CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
 
                 memset(id, 0, sizeof(id));
                 memset(pw, 0, sizeof(pw));
@@ -565,7 +565,7 @@ void CImGuiManager::DrawTitleUI()
     // 5. 로딩 팝업 결과
     // =================
 
-    if (is_signup_success || is_signin_success) {
+    if (signup_alarm || is_signin_success) {
         DrawLoadingPopUpResult();
     }
 
@@ -693,7 +693,7 @@ void CImGuiManager::DrawThirdMenuButton(bool& menu)
     // 2. 로그아웃
     if (ImGui::Button((const char*)u8"로그아웃", ImVec2(200, 55))) {
         C_LOGOUT logOutPkt;
-        auto serverSession = CSessionManager::GetInstance().GetServerSession();
+        auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
         auto user = serverSession->GetUser();
         logOutPkt.user_id = user->GetUserID();
         auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGOUT>(logOutPkt);
@@ -823,9 +823,9 @@ void CImGuiManager::DrawSignInWidow()
             COPY_STRING(loginPkt.password, pw);
             auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
 
-            auto session = CSessionManager::GetInstance().GetServerSession();
+            auto session = CServerSessionManager::GetInstance().GetServerSession();
             if (session)
-                CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+                CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
 
             memset(id, 0, sizeof(id));
             memset(pw, 0, sizeof(pw));
@@ -879,9 +879,9 @@ void CImGuiManager::DrawSignUpWindow()
             COPY_STRING(signUpPkt.name, name);
             auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
 
-            auto session = CSessionManager::GetInstance().GetServerSession();
+            auto session = CServerSessionManager::GetInstance().GetServerSession();
             if (session)
-                CSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
+                CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
 
             memset(id, 0, sizeof(id));
             memset(pw, 0, sizeof(pw));
@@ -960,7 +960,7 @@ void CImGuiManager::DrawLoadingPopUpResult()
 
         if (is_signin_success && !is_signup_success)
             ImGui::Text((const char*)u8"로그인 성공!");
-        else if (!is_signin_success && !is_signup_success)
+        else if (!is_signin_success && is_signup_success)
             ImGui::Text((const char*)u8"로그인 실패...!");
 
         ImGui::Spacing();
@@ -970,6 +970,9 @@ void CImGuiManager::DrawLoadingPopUpResult()
             // 가입을 시도했고, 가입 성공하면
             if (is_signup_success) {
                 is_signup_success = false;
+            }
+            else {
+                signup_alarm = false;
             }
 
             // 로그인을 시도했고, 로그인 성공하면
@@ -1242,7 +1245,7 @@ void CImGuiManager::DrawRoomCreatePopUp()
 
         if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
 
-            auto serverSession = CSessionManager::GetInstance().GetServerSession();
+            auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
             auto user = serverSession->GetUser();
             int id = user->GetUserID();
 

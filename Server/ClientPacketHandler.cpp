@@ -65,6 +65,15 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 		, (CTitleScene*)titleScene
 		, &CTitleScene::HandleLogIn
 		, pkt);
+
+	const auto& users = CSceneManager::GetInstance().GetTitleScene()->GetUsers();
+	for (auto& user : users) {
+		auto session = user.second->GetSession();
+		if (session) {
+
+		}
+	}
+
 #endif
 
 	return true;
@@ -101,6 +110,7 @@ bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
 	auto& roomManger = CRoomManager::GetInstance();
 	uint32 roomID = roomManger.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
 
+	// 유저에게 방 생성을 허락.
 	S_CreateRoom createRoomPkt;
 	createRoomPkt.room_id = roomID;
 	auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_CreateRoom>(createRoomPkt);

@@ -44,6 +44,15 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 	string pw = to_utf8(pkt.password);
 	string username = to_utf8(pkt.name);
 
+	if (id.size() == 1) {
+		S_SIGN_RES failPkt;
+		failPkt.success = false;
+		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(failPkt);
+		session->DoSend(sendBuffer);
+
+		return;
+	}
+
 	try
 	{
 		std::unique_ptr<sql::PreparedStatement> pstmt(CON->prepareStatement(

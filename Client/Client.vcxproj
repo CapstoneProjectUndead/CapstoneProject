@@ -207,7 +207,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="ServerPacketHandler.h" />
     <ClInclude Include="ServerSession.h" />
-    <ClInclude Include="SessionManager.h" />
+    <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SkinnedData.h" />
     <ClInclude Include="stdafx.h" />
@@ -255,7 +255,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="ServerPacketHandler.cpp" />
     <ClCompile Include="ServerSession.cpp" />
-    <ClCompile Include="SessionManager.cpp" />
+    <ClCompile Include="ServerSessionManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SkinnedData.cpp" />
     <ClCompile Include="stdafx.cpp">

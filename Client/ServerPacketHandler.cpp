@@ -58,7 +58,13 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 	}
 	else {
 		printf("signup fail...! \n");
+		CImGuiManager::GetInstance().SetSignUpResult(false);
+		CImGuiManager::GetInstance().SetSignUpAlarm(true);
 
+		// 로딩창 끄기
+		CImGuiManager::GetInstance().SetSignupLoading(false);
+		CImGuiManager::GetInstance().SetLoginLoading(false);
+		CImGuiManager::GetInstance().CloseAllWindow();
 	}
 
 	return true;

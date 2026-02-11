@@ -2,17 +2,17 @@
 
 class CServerSession;
 
-class CSessionManager
+class CServerSessionManager
 {
 private:
-	CSessionManager();
-	CSessionManager(const CSessionManager&) = delete;
+	CServerSessionManager();
+	CServerSessionManager(const CServerSessionManager&) = delete;
 
 public:
-	~CSessionManager();
+	~CServerSessionManager();
 
-	static CSessionManager& GetInstance() {
-		static CSessionManager instance;
+	static CServerSessionManager& GetInstance() {
+		static CServerSessionManager instance;
 		return instance;
 	}
 

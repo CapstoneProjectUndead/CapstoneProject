@@ -67,6 +67,7 @@ public:
 	void SetRoomCreateLoading(bool loading) { is_room_create_loading = loading; }
 	void SetRoomEnterLoading(bool loading) { is_room_enter_loading = loading; }
 
+	void SetSignUpAlarm(bool alarm) { signup_alarm = alarm; }
 	void SetSignUpResult(bool result) { is_signup_success = result; }
 	void SetSignInResult(bool result) { is_signin_success = result; }
 	void SetIsOnlie(bool result) { is_online = result; }
@@ -81,11 +82,11 @@ public:
 
 	void ReserveResetFocus() { need_reset_focus = true; }
 
-private:
 	void LoadingIndicatorCircle(const char* label, const float indicator_radius
 		, const ImVec4& main_color, const ImVec4& backdrop_color
 		, const int circle_count, const float speed);
 
+private:
 	//===================
 	// 안쓰는 함수 (참고용)
 	void DrawLogInUI();
@@ -135,6 +136,7 @@ private:
 	bool is_room_create_loading = false; // 로딩 팝업 띄우기
 	bool is_room_enter_loading = false; // 로딩 팝업 띄우기
 
+	bool signup_alarm = false;
 	bool is_signup_success = false; // 회원가입 성공여부
 	bool is_signin_success = false; // 로그인 성공여부
 	bool is_online = false;			// 로그인 여부
