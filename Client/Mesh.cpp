@@ -350,79 +350,223 @@ CCubeMesh::CCubeMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandLis
 	vertex_buffer_view.SizeInBytes = stride * vertex_num;
 }
 
-CCubeMesh::CCubeMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const XMFLOAT3& halfSize )
+CCubeMesh::CCubeMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const XMFLOAT3& halfSize)
 	: CMesh(device, commandList)
 {
-	const size_t vertexSize = 36;
-
-	vertex_num = vertexSize;
 	stride = sizeof(CVertex);
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
-	float x = halfSize.x, y = halfSize.y, z = halfSize.z;
 
-	CVertex vertices[vertexSize];
-	int i{};
+	float x = halfSize.x;
+	float y = halfSize.y;
+	float z = halfSize.z;
 
-	// ⓐ 앞면(Front)
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
+	// 8개의 꼭짓점
+	XMFLOAT3 p[8] =
+	{
+		{-x, -y, -z}, // 0
+		{-x, +y, -z}, // 1
+		{+x, +y, -z}, // 2
+		{+x, -y, -z}, // 3
+		{-x, -y, +z}, // 4
+		{-x, +y, +z}, // 5
+		{+x, +y, +z}, // 6
+		{+x, -y, +z}  // 7
+	};
 
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
+	// 12개의 모서리 → 24개의 정점
+	std::vector<CVertex> vertices =
+	{
+		// 앞면
+		CVertex(p[0]), CVertex(p[1]),
+		CVertex(p[1]), CVertex(p[2]),
+		CVertex(p[2]), CVertex(p[3]),
+		CVertex(p[3]), CVertex(p[0]),
 
-	// ⓒ 윗면(Top)
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
+		// 뒷면
+		CVertex(p[4]), CVertex(p[5]),
+		CVertex(p[5]), CVertex(p[6]),
+		CVertex(p[6]), CVertex(p[7]),
+		CVertex(p[7]), CVertex(p[4]),
 
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
+		// 연결선
+		CVertex(p[0]), CVertex(p[4]),
+		CVertex(p[1]), CVertex(p[5]),
+		CVertex(p[2]), CVertex(p[6]),
+		CVertex(p[3]), CVertex(p[7])
+	};
 
-	// ⓔ 뒷면(Back)
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
+	vertex_num = (UINT)vertices.size();
 
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
+	// 버퍼 생성
+	vertex_buffer = CreateBufferResource(
+		device, commandList,
+		vertices.data(),
+		stride * vertex_num,
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+		vertex_upload_buffer.GetAddressOf()
+	);
 
-	// ⓖ 아래면(Bottom)
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
-
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
-
-	// ⓘ 왼쪽면(Left)
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
-
-	vertices[i++] = CVertex(XMFLOAT3(-x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(-x, -y, +z));
-
-	// ⓚ 오른쪽면(Right)
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
-
-	vertices[i++] = CVertex(XMFLOAT3(+x, +y, -z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, +z));
-	vertices[i++] = CVertex(XMFLOAT3(+x, -y, -z));
-
-
-	// 삼각형 메쉬를 리소스로 생성
-	vertex_buffer = CreateBufferResource(device, commandList, vertices, stride * vertex_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_upload_buffer.GetAddressOf());
-
-	// 정점 버퍼 뷰 설정
 	vertex_buffer_view.BufferLocation = vertex_buffer->GetGPUVirtualAddress();
 	vertex_buffer_view.StrideInBytes = stride;
 	vertex_buffer_view.SizeInBytes = stride * vertex_num;
+}
+
+CSphereMesh::CSphereMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, UINT sliceCount, UINT stackCount)
+	: CMesh(device, commandList)
+{
+	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+	stride = sizeof(CVertex);
+
+	std::vector<CVertex> vertices;
+	std::vector<UINT> indices;
+
+	// 위도/경도 기반 구 생성
+	for (UINT i = 0; i <= stackCount; i++)
+	{
+		float phi = XM_PI * i / stackCount; // 0 ~ PI
+
+		for (UINT j = 0; j <= sliceCount; j++)
+		{
+			float theta = XM_2PI * j / sliceCount; // 0 ~ 2PI
+
+			float x = radius * sinf(phi) * cosf(theta);
+			float y = radius * cosf(phi);
+			float z = radius * sinf(phi) * sinf(theta);
+
+			vertices.emplace_back(XMFLOAT3(x, y, z));
+		}
+	}
+
+	// 선형 인덱스 생성
+	for (UINT i = 0; i < stackCount; i++)
+	{
+		for (UINT j = 0; j < sliceCount; j++)
+		{
+			UINT a = i * (sliceCount + 1) + j;
+			UINT b = a + 1;
+			UINT c = a + (sliceCount + 1);
+			UINT d = c + 1;
+
+			// 위도선
+			indices.push_back(a);
+			indices.push_back(b);
+
+			// 경도선
+			indices.push_back(a);
+			indices.push_back(c);
+		}
+	}
+
+	vertex_num = (UINT)vertices.size();
+	index_num = (UINT)indices.size();
+
+	SetVertices(device, commandList, vertex_num, vertices);
+	SetIndices(device, commandList, index_num, indices);
+}
+
+CCapsuleMesh::CCapsuleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, float height, UINT sliceCount, UINT stackCount)
+	: CMesh(device, commandList)
+{
+	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+	stride = sizeof(CVertex);
+
+	std::vector<CVertex> vertices;
+	std::vector<UINT> indices;
+
+	float halfH = height * 0.5f;
+
+	// 1) 원기둥 몸통 (수직선)
+	for (UINT i = 0; i < sliceCount; i++)
+	{
+		float theta = XM_2PI * i / sliceCount;
+
+		float x = radius * cosf(theta);
+		float z = radius * sinf(theta);
+
+		vertices.emplace_back(XMFLOAT3(x, +halfH, z)); // top circle
+		vertices.emplace_back(XMFLOAT3(x, -halfH, z)); // bottom circle
+
+		UINT a = i * 2;
+		UINT b = a + 1;
+
+		indices.push_back(a);
+		indices.push_back(b);
+	}
+
+	// 2) 위쪽 반구
+	UINT baseTop = (UINT)vertices.size();
+
+	for (UINT i = 0; i <= stackCount; i++)
+	{
+		float phi = XM_PIDIV2 * i / stackCount; // 0 ~ PI/2
+
+		for (UINT j = 0; j <= sliceCount; j++)
+		{
+			float theta = XM_2PI * j / sliceCount;
+
+			float x = radius * sinf(phi) * cosf(theta);
+			float y = radius * cosf(phi) + halfH;
+			float z = radius * sinf(phi) * sinf(theta);
+
+			vertices.emplace_back(XMFLOAT3(x, y, z));
+		}
+	}
+
+	for (UINT i = 0; i < stackCount; i++)
+	{
+		for (UINT j = 0; j < sliceCount; j++)
+		{
+			UINT a = baseTop + i * (sliceCount + 1) + j;
+			UINT b = a + 1;
+			UINT c = a + (sliceCount + 1);
+
+			indices.push_back(a);
+			indices.push_back(b);
+
+			indices.push_back(a);
+			indices.push_back(c);
+		}
+	}
+
+	// 3) 아래쪽 반구
+	UINT baseBottom = (UINT)vertices.size();
+
+	for (UINT i = 0; i <= stackCount; i++)
+	{
+		float phi = XM_PIDIV2 * i / stackCount; // 0 ~ PI/2
+
+		for (UINT j = 0; j <= sliceCount; j++)
+		{
+			float theta = XM_2PI * j / sliceCount;
+
+			float x = radius * sinf(phi) * cosf(theta);
+			float y = -radius * cosf(phi) - halfH;
+			float z = radius * sinf(phi) * sinf(theta);
+
+			vertices.emplace_back(XMFLOAT3(x, y, z));
+		}
+	}
+
+	for (UINT i = 0; i < stackCount; i++)
+	{
+		for (UINT j = 0; j < sliceCount; j++)
+		{
+			UINT a = baseBottom + i * (sliceCount + 1) + j;
+			UINT b = a + 1;
+			UINT c = a + (sliceCount + 1);
+
+			indices.push_back(a);
+			indices.push_back(b);
+
+			indices.push_back(a);
+			indices.push_back(c);
+		}
+	}
+
+	vertex_num = (UINT)vertices.size();
+	index_num = (UINT)indices.size();
+
+	SetVertices(device, commandList, vertex_num, vertices);
+	SetIndices(device, commandList, index_num, indices);
 }

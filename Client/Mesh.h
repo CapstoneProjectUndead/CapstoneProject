@@ -113,6 +113,18 @@ public:
 	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, const XMFLOAT3&);
 };
 
+class CSphereMesh : public CMesh
+{
+public:
+	CSphereMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, UINT sliceCount = 16, UINT stackCount = 16);
+};
+
+class CCapsuleMesh : public CMesh
+{
+public:
+	CCapsuleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, float height, UINT sliceCount = 16, UINT stackCount = 8);
+};
+
 template<typename T>
 void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices)
 {

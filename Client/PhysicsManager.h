@@ -6,7 +6,7 @@ class CMovementComponent;
 
 struct EndPoint {
     float value;   // minX 또는 maxX
-    CColliderComponent* col;        // collider index
+    CColliderComponent* col;
     bool is_min;    // true = min, false = max
 };
 
@@ -26,10 +26,11 @@ public:
     void SetCollider(std::shared_ptr<CColliderComponent> c) {
         colliders.push_back(c);
     }
+    void ResolveCollision(CColliderComponent* a, CColliderComponent* b, float dt);
+    float ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal);
 
     void Update(float deltaTime);
-    void Move(CColliderComponent* collider, CMovementComponent* moveCom, const XMFLOAT3& delta);
-    XMFLOAT3 ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b);
+    void ApplyMovement(float dt);
 private:
     void BroadPhaseSAP(std::vector<std::pair<CColliderComponent*, CColliderComponent*>>& outPairs);
 

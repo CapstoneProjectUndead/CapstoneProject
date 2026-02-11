@@ -6,27 +6,24 @@
 
 void CPhysicsManager::Update(float dt)
 {
-    // 1) 모든 collider world_bounds 갱신
-    for (auto& col : colliders) {
-        if (!col->owner) continue;
-
-        auto moveCom = col->owner->GetComponent<CMovementComponent>();
-        if (!moveCom) continue;
-
-        Move(col.get(), moveCom, moveCom->desired_move);
-    }
-
-    // 3) SAP broad-phase
+    // 1) SAP broad-phase
     std::vector<std::pair<CColliderComponent*, CColliderComponent*>> pairs;
     BroadPhaseSAP(pairs);
 
-    // 4) Narrow-phase 충돌 처리
-    for (auto& p : pairs)
-    {
-        if (p.first->Intersect(p.second))
-        {
-        }
+    // 2) Narrow-phase 충돌 처리
+    for (auto& p : pairs) {
+        auto* a = p.first;
+        auto* b = p.second;
+
+        // Shape 기반 narrow-phase
+        if (!a->Intersects(b))
+            continue;
+
+        ResolveCollision(a, b, dt);
     }
+
+    // 3) 위치 업데이트
+    ApplyMovement(dt);
 }
 
 void CPhysicsManager::BroadPhaseSAP(std::vector<std::pair<CColliderComponent*, CColliderComponent*>>& outPairs)
@@ -34,86 +31,107 @@ void CPhysicsManager::BroadPhaseSAP(std::vector<std::pair<CColliderComponent*, C
     std::vector<EndPoint> endpoints;
     endpoints.reserve(colliders.size() * 2);
 
-    for (auto col : colliders)
-    {
-        const auto& box = col->world_bounds;
+    // X Axis
+    // 왼쪽 오른쪽 끝 점
+    for (auto col : colliders) {
+        const auto& box = col->aabb;
         endpoints.push_back(EndPoint{ box.Center.x - box.Extents.x, col.get(), true});
         endpoints.push_back(EndPoint{ box.Center.x + box.Extents.x, col.get(), false });
     }
 
+    // 정렬
     std::sort(endpoints.begin(), endpoints.end(),
         [](const EndPoint& a, const EndPoint& b) {
             return a.value < b.value;
         });
 
+    // 충돌 예상 시 push
     std::vector<CColliderComponent*> active;
 
-    for (auto& ep : endpoints)
-    {
-        if (ep.is_min)
-        {
+    for (auto& ep : endpoints) {
+        if (ep.is_min) {
             for (auto other : active)
                 outPairs.push_back({ ep.col, other });
 
             active.push_back(ep.col);
         }
-        else
-        {
+        else {
             active.erase(std::remove(active.begin(), active.end(), ep.col), active.end());
         }
     }
 }
 
-void CPhysicsManager::Move(CColliderComponent* collider, CMovementComponent* moveCom, const XMFLOAT3& delta)
+void CPhysicsManager::ApplyMovement(float dt)
 {
-    CObject* obj = collider->owner;
-    if (!obj || !moveCom) return;
-
-    XMFLOAT3 oldPos = obj->position;
-
-    obj->position = Vector3::Add(obj->position, delta);
-    collider->Update(0);
-
-    for (auto& c : colliders)
+    for (auto& col : colliders)
     {
-        if (c.get() == collider) continue;
-        if (c->owner == obj)     continue;
+        CObject* obj = col->owner;
+        CMovementComponent* move = obj->GetComponent<CMovementComponent>();
 
-        if (collider->Intersect(c.get()))
-        {
-            obj->position = oldPos;
-            collider->Update(0);
+        if (!move) continue;
 
-            XMFLOAT3 normal = ComputeCollisionNormal(collider, c.get());
-            moveCom->Slide(normal);
-            return;
-        }
+        XMFLOAT3 moveVec = move->desired_move;
+
+        moveVec = Vector3::ScalarProduct(obj->GetVelocity(), dt);
+
+        // 실제 이동 적용
+        obj->position = Vector3::Add(obj->position, moveVec);
     }
 }
 
-XMFLOAT3 CPhysicsManager::ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b)
+void CPhysicsManager::ResolveCollision(CColliderComponent* a, CColliderComponent* b, float dt)
 {
-    const auto& A = a->world_bounds;
-    const auto& B = b->world_bounds;
+    CObject* objA = a->owner;
+    CObject* objB = b->owner;
 
-    XMFLOAT3 n{ 0,0,0 };
+    // 충돌 normal 계산 (A → B 방향)
+    XMFLOAT3 normal = {
+        objA->position.x - objB->position.x,
+        objA->position.y - objB->position.y,
+        objA->position.z - objB->position.z
+    };
 
-    float dx = (A.Center.x - B.Center.x);
-    float px = (A.Extents.x + B.Extents.x) - fabsf(dx);
+    XMVECTOR n = XMVector3Normalize(XMLoadFloat3(&normal));
+    XMStoreFloat3(&normal, n);
 
-    float dy = (A.Center.y - B.Center.y);
-    float py = (A.Extents.y + B.Extents.y) - fabsf(dy);
+    // penetration 계산
+    float penetration = ComputePenetration(a->GetAABB(), b->GetAABB(), normal);
 
-    float dz = (A.Center.z - B.Center.z);
-    float pz = (A.Extents.z + B.Extents.z) - fabsf(dz);
+    // correction = normal * penetration * 0.5
+    XMVECTOR corr = n * (penetration * 0.5f);
 
-    // 가장 적게 겹친 축을 충돌 법선으로 사용
-    if (px < py && px < pz)
-        n = XMFLOAT3{ dx > 0 ? 1.0f : -1.0f, 0, 0 };
-    else if (py < pz)
-        n = XMFLOAT3{ 0, dy > 0 ? 1.0f : -1.0f, 0 };
-    else
-        n = XMFLOAT3{ 0, 0, dz > 0 ? 1.0f : -1.0f };
+    // A 이동
+    XMFLOAT3 corrA;
+    XMStoreFloat3(&corrA, corr);
+    objA->position.x += corrA.x;
+    objA->position.y += corrA.y;
+    objA->position.z += corrA.z;
 
-    return n;
+    // B 이동 (반대 방향)
+    objB->position.x -= corrA.x;
+    objB->position.y -= corrA.y;
+    objB->position.z -= corrA.z;
+
+    // MovementComponent 슬라이딩 처리
+    if (auto moveA = objA->GetComponent<CMovementComponent>())
+        moveA->Slide(normal);
+
+    if (auto moveB = objB->GetComponent<CMovementComponent>())
+        moveB->Slide({ -normal.x, -normal.y, -normal.z });
+}
+
+float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal)
+{
+    float dx = (a.Extents.x + b.Extents.x) - fabsf(a.Center.x - b.Center.x);
+    float dy = (a.Extents.y + b.Extents.y) - fabsf(a.Center.y - b.Center.y);
+    float dz = (a.Extents.z + b.Extents.z) - fabsf(a.Center.z - b.Center.z);
+
+    // normal 방향으로 가장 작은 penetration을 선택
+    float pen = 0.0f;
+
+    if (fabsf(normal.x) > 0.5f) pen = dx;
+    else if (fabsf(normal.y) > 0.5f) pen = dy;
+    else pen = dz;
+
+    return pen;
 }

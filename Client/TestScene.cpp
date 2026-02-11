@@ -38,10 +38,11 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	
 	// test 용 삭제X
 	{
-		auto obj = std::make_shared<CCharacter>();
+		/*auto obj = std::make_shared<CCharacter>();
 		obj->Initialize(device, commandList);
 		objects.push_back(std::move(obj));
-	
+		*/
+
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
 		std::ofstream txt("../Modeling/char.txt");
 	
@@ -84,11 +85,18 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			// 3) MeshRendererComponent 생성
 			obj->SetComponent(std::make_shared<CMeshRendererComponent>());
 
-			// 4) ColliderComponent 생성
-			auto boxCollider = std::make_shared<CBoxColliderComponent>();
-			obj->SetComponent(boxCollider);
-			boxCollider->SetLocalBounds(children->mesh.bounds);
-			//CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			if (children->name == "Table") {
+				// 4) ColliderComponent 생성
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
+				auto boxCollider = std::make_shared<CColliderComponent>(shape);
+				obj->SetComponent(boxCollider);
+				CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
+				auto debugMesh = std::make_shared<CMeshComponent>();
+				obj->SetComponent(debugMesh);
+				std::shared_ptr<CMesh> meshss = std::make_shared<CCubeMesh>(device, commandList, children->mesh.bounds.Extents);
+				debugMesh->SetMesh(meshss);
+			}
 
 			obj->Initialize(device, commandList);
 
@@ -96,6 +104,7 @@ void CTestScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		}
 	}
 	
+	// camera
 	camera = std::make_shared<CCamera>();
 	camera->SetTarget(my_player.get());
 	camera->Initialize(device, commandList);

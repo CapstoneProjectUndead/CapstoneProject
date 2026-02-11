@@ -14,33 +14,52 @@ CCharacter::CCharacter()
 
 void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	// set 메쉬
-	std::string fileName{ "../Modeling/undead_char.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-	for (const auto& children : frameRoot->childrens) {
-		if (children->mesh.positions.empty()) break;
-		// mesh
-		auto meshComp = std::make_shared<CMeshComponent>();
-		SetComponent(meshComp);
-		meshComp->SetMeshFromFile<CSkinnedVertex>(device, commandList, children);
-		world_matrix = children->localMatrix;
+    std::string fileName{ "../Modeling/undead_char.bin" };
+    auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-		// Collider
-		auto boxCollider = std::make_shared<CBoxColliderComponent>();
-		SetComponent(boxCollider);
-		boxCollider->SetLocalBounds(children->mesh.bounds);
-		CPhysicsManager::GetInstance().SetCollider(boxCollider);
-	}
+    // 1) Mesh 로드 + totalBounds 계산
+    BoundingBox totalBounds;
+    bool firstBounds = true;
 
-	// animator
-	auto animator = std::make_shared<CAnimatorComponent>();
-	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
-	animator->Play("Ganga_walk");
-	SetComponent(animator);
-	SetShdaer("skinning");
+    for (const auto& child : frameRoot->childrens) {
+        if (child->mesh.positions.empty())
+            continue;
 
-	// movement
-	SetComponent(std::make_shared<CMovementComponent>());
+        // mesh component
+        auto meshComp = std::make_shared<CMeshComponent>();
+        SetComponent(meshComp);
+        meshComp->SetMeshFromFile<CSkinnedVertex>(device, commandList, child);
 
-	CObject::Initialize(device, commandList);
+        // bounds merge
+        if (firstBounds) {
+            totalBounds = child->mesh.bounds;
+            firstBounds = false;
+        }
+        else {
+            BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
+        }
+    }
+
+    // 4) ColliderComponent 생성
+    std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(totalBounds.Extents);
+    auto boxCollider = std::make_shared<CColliderComponent>(shape);
+    SetComponent(boxCollider);
+    CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
+    auto debugMesh = std::make_shared<CMeshComponent>();
+    SetComponent(debugMesh);
+    std::shared_ptr<CMesh> meshss = std::make_shared<CCubeMesh>(device, commandList, totalBounds.Extents);
+    debugMesh->SetMesh(meshss);
+
+    // 4) Animator
+    auto animator = std::make_shared<CAnimatorComponent>();
+    animator->Initialize(fileName, "../Modeling/undead_ani.bin");
+    animator->Play("Ganga_walk");
+    SetComponent(animator);
+    SetShdaer("skinning");
+
+    // 5) Movement
+    SetComponent(std::make_shared<CMovementComponent>());
+
+    CObject::Initialize(device, commandList);
 }
