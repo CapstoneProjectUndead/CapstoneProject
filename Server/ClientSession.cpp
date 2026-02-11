@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "LobbyScene.h"
 #include "TitleScene.h"
+#include "RoomManager.h"
 
 
 CClientSession::CClientSession()
@@ -44,7 +45,7 @@ void CClientSession::OnDisconnected()
 		if (player->GetRoomID() == -1)
 			return;
 
-		auto& rooms = CSceneManager::GetInstance().GetRooms();
+		auto& rooms = CRoomManager::GetInstance().GetRooms();
 		auto iter = rooms.find(player->GetRoomID());
 		if (iter == rooms.end())
 			return;

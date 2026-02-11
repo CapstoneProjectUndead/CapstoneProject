@@ -90,9 +90,9 @@ void CImGuiManager::Update()
     HWND hwnd = ghWnd; // 전역 윈도우 핸들 사용 권장
     
     // 상태가 변했거나, 강제 리셋이 필요한 경우에만 실행
-    if (currentInputState != lastInputState || need_reset_focus || show_login_window)
+    if (currentInputState != lastInputState || need_reset_focus)
     {
-        if (currentInputState && !show_login_window)
+        if (currentInputState && !show_login_window && !show_sign_window)
             EnableIME(hwnd);  // UI 모드: 한글 허용
         else
             DisableIME(hwnd); // 게임 모드: 한글 차단
@@ -151,8 +151,8 @@ bool CImGuiManager::IsUIInputEnabled()
         result = false;
 
     // 2. 팝업이 떠있거나 로딩 중이면 입력 받음
-    //if (show_login_window || show_sign_window)
-    //    result = true;
+    if (show_login_window || show_sign_window)
+        result = false;
 
     // 3. 그 외(게임 플레이 중)에는 입력 차단!
     return result;

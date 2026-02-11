@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "GameFramework.h"
 #include "SceneManager.h"
+#include "RoomManager.h"
 
 CGameFramework::CGameFramework()
 {
@@ -20,9 +21,11 @@ void CGameFramework::Init()
 void CGameFramework::Update(const float elapsedTime)
 {
     CSceneManager::GetInstance().Update(elapsedTime);
+    CRoomManager::GetInstance().Update(elapsedTime);
 }
 
 void CGameFramework::SendResults()
 {
     CSceneManager::GetInstance().SendResults();
+    CRoomManager::GetInstance().SendResults();
 }
