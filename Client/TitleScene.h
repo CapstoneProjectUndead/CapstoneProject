@@ -30,7 +30,6 @@ public:
     virtual void DrawUI() override;
 
 public:
-
     bool IsUIInputEnabled();
 
     // -----------------------------------------------------
@@ -52,6 +51,8 @@ public:
 
     // 데이터 갱신
     std::unordered_map<uint32, RoomInfo>& GetRooms() { return rooms; }
+    const std::unordered_map<uint32, RoomInfo>& GetRooms() const { return rooms; }
+
     int GetSelectedRoomID() { return selected_room_id; }
     void SetSelectedRoomID(int id) { selected_room_id = id; }
 

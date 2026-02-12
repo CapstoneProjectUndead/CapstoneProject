@@ -39,24 +39,30 @@ void CClientSession::OnDisconnected()
 		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
 
 		auto player = user->GetPlayer();
-		if (!player)
-			return;
+		if (player) {
+			if (player->GetRoomID() != -1) {
+				auto& roomManager = CRoomManager::GetInstance();
 
-		if (player->GetRoomID() == -1)
-			return;
+				lock_guard<mutex> lg(roomManager.GetMutex());
+				auto room = roomManager.FindRoom(player->GetRoomID());
+				if (room) {
+					// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
+					room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
 
-		auto& rooms = CRoomManager::GetInstance().GetRooms();
-		auto iter = rooms.find(player->GetRoomID());
-		if (iter == rooms.end())
-			return;
-
-		auto& room = iter->second;
-		room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
+					// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
+					if (room->SearchPlayersAllScene()) {
+						roomManager.DestroyRoomNoLock(room->GetRoomID());
+					}
+				}
+			}
+		}
 
 	}
-#endif 
 
 	user = nullptr;
+
+#endif
+
 }
 
 void CClientSession::ProcessPacket(std::shared_ptr<Session> session, char* buf, int32 pktSize)

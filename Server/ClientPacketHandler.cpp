@@ -117,8 +117,8 @@ bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 		pkt
 	);
 #else
-	int a = 0;
+
 #endif
-	int b = 0;
+
 	return true;
 }

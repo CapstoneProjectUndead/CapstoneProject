@@ -104,6 +104,15 @@ void CScene::SendPlayersCheckPing()
 	}
 }
 
+bool CScene::HasPlayers()
+{
+	lock_guard<mutex> lg(players_lock);
+	if (!players.empty())
+		return true;
+	else
+		return false;
+}
+
 void CScene::BroadCast(SendBufferRef sendBuffer)
 {
 	lock_guard<mutex> lg(players_lock);

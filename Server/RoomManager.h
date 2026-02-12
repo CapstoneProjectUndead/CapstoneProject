@@ -21,9 +21,15 @@ public:
     void    Initialize();
     void    Update(const float elapsedTime);
     void    SendResults();
+
+public:
     uint32  CreateRoom(const string& name, shared_ptr<CUser> user);
+    void    DestroyRoomLock(uint32 roomId);
+    void    DestroyRoomNoLock(uint32 roomId);
+    CRoom*  FindRoom(uint32 roomId);
 
     const unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() const { return rooms; }
+    mutex& GetMutex() { return rooms_lock; }
 
 private:
     mutex rooms_lock;

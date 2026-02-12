@@ -48,3 +48,17 @@ void CRoom::SendResults()
 		}
 	}
 }
+
+bool CRoom::SearchPlayersAllScene()
+{
+	for (auto& scene : scenes)
+	{
+		if (scene)
+		{
+			if (scene->HasPlayers())
+				return false;
+		}
+	}
+
+	return true;
+}

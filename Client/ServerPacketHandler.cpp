@@ -53,10 +53,8 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		ActionResult result;
 		result.Success("가입 성공!");
 		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
-		//CImGuiManager::GetInstance().SetPopUpResult(result);
 
 		// 로딩창 끄기
-		//CImGuiManager::GetInstance().StopLoading();
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 	}
 	else {
@@ -65,11 +63,9 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		// 가입 실패
 		ActionResult result;
 		result.Success("가입 실패!");
-		//CImGuiManager::GetInstance().SetPopUpResult(result);
 		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 
 		// 로딩창 끄기
-		//CImGuiManager::GetInstance().StopLoading();
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 	}
 
@@ -86,11 +82,9 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	if (pkt.success) {
 		ActionResult result;
 		result.Success("로그인 성공!");
-		//CImGuiManager::GetInstance().SetPopUpResult(result);
 		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 
 		// 로딩창 끄기
-		//CImGuiManager::GetInstance().StopLoading();
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 
 		// User 생성
@@ -107,11 +101,9 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	else {
 		ActionResult result;
 		result.Fail("로그인 실패!");
-		//CImGuiManager::GetInstance().SetPopUpResult(result);
 		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 
 		// 로딩창 끄기
-		//CImGuiManager::GetInstance().StopLoading();
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 	}
 
@@ -121,11 +113,9 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
 	if (pkt.success) {
-		//CImGuiManager::GetInstance().StopLoading();
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 		ActionResult result;
 		result.Success("로그아웃 성공!");
-		//CImGuiManager::GetInstance().SetPopUpResult(result);
 		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 		CAST_SS(session)->SetUser(nullptr);
 	}
@@ -136,12 +126,15 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 {
 	RoomInfo info{ pkt.room_info.room_id, pkt.room_info.room_name, pkt.room_info.current_player_count, pkt.room_info.is_game_start };
-	//CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
 	CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
 
 	CImGuiManager::GetInstance().ReserveResetFocus();
 
 	CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+
+	auto player = CSceneManager::GetInstance().GetActiveScene()->GetMyPlayer();
+	player->SetSession(session);
+	player->SetUser(CAST_SS(session)->GetUser());
 
 	return true;
 }
@@ -150,13 +143,48 @@ bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt)
 {
 	S_Room_List::RoomList userList = pkt.GetRoomList();
 
+	uint32* newRoom = nullptr;
+	if (pkt.room_count > 0)
+		newRoom = new uint32[pkt.room_count];
+
 	for (int i = 0; i < pkt.room_count; ++i) {
+		newRoom[i] = userList[i].room_info.room_id;
+
 		RoomInfo info{userList[i].room_info.room_id, userList[i].room_info.room_name
 			, userList[i].room_info.current_player_count, userList[i].room_info.is_game_start};
 
-		//CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
 		CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
 	}
+	
+	// 프로그램을 끄지않고 로그아웃하고 로그인 했을 때,
+	// 기존에는 있었는데 없어진 방 체크
+	auto& rooms = CSceneManager::GetInstance().GetTitleScene()->GetRooms();
+	if (pkt.room_count == 0) {
+		rooms.clear();
+	}
+	else {
+		for (auto it = rooms.begin(); it != rooms.end(); ) {
+			int id = it->first;
+
+			bool found = false;
+			for (int i = 0; i < pkt.room_count; ++i) {
+				if (newRoom[i] == id) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				it = rooms.erase(it); // 삭제 + 다음 iterator 반환
+			}
+			else {
+				++it;
+			}
+		}
+	}
+
+	if (newRoom != nullptr)
+		delete[] newRoom;
 
 	return true;
 }

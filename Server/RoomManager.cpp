@@ -15,17 +15,7 @@ CRoomManager::~CRoomManager()
 
 void CRoomManager::Initialize()
 {
-	// 임시
-	{
-		RoomInfo info{};
-		info.current_player_count = 1;
-		info.is_game_start = false;
-		info.room_id = 1;
-		COPY_STRING(info.room_name, "테스트 Room");
 
-		unique_ptr<CRoom> room = make_unique<CRoom>(info);
-		rooms[info.room_id] = std::move(room);
-	}
 }
 
 void CRoomManager::Update(const float elapsedTime)
@@ -96,4 +86,21 @@ uint32 CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	session->DoSend(sendBuffer);
 
 	return roomId;
+}
+
+void CRoomManager::DestroyRoomLock(uint32 roomId)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	rooms.erase(roomId);
+}
+
+void CRoomManager::DestroyRoomNoLock(uint32 roomId)
+{
+	rooms.erase(roomId);
+}
+
+CRoom* CRoomManager::FindRoom(uint32 roomId)
+{
+	auto iter = rooms.find(roomId);
+	return iter->second.get();
 }
