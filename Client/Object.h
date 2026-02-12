@@ -69,6 +69,7 @@ public:
 	// component
 	friend class CMovementComponent;
 	friend class CAnimatorComponent;
+	friend class CPhysicsManager;
 protected:
 	int obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 
@@ -80,7 +81,10 @@ protected:
 	std::vector<std::shared_ptr<CComponent>> components;
 
 	bool is_visible{ true };
-	
+	float jump_power{ 12.0f };
+	bool is_grounded{};
+	float friction{ 9.0f };
+
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;

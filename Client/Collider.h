@@ -52,7 +52,15 @@ private:
     float radius;
 };
 
-// 충돌 모양 데이터 제공자. 물리 계산X
+/*
+충돌 모양 데이터 제공자. 물리 계산X
+* ColliderComponent 생성법
+* 원하는 shape을 인자로 넘겨주면 됨
+std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
+auto boxCollider = std::make_shared<CColliderComponent>(shape);
+obj->SetComponent(boxCollider);
+CPhysicsManager::GetInstance().SetCollider(boxCollider);
+*/
 class CColliderComponent : public CComponent
 {
 public:

@@ -29,5 +29,4 @@ public:
 private:
 	float speed{ 10.0f };
 	float max_speed{ 30.0f };
-	float friction{ 8.0f };
 };

@@ -45,13 +45,6 @@ void CMovementComponent::Update(const float deltaTime)
 
     // movement가 아닌 phsicsManager에서 움직임 처리
     desired_move = Vector3::ScalarProduct(owner->velocity, deltaTime);
-
-    // 감속(마찰)
-    float speedLen = Vector3::Length(owner->velocity);
-    float decel = friction * deltaTime;
-    if (decel > speedLen) decel = speedLen;
-
-    owner->velocity = Vector3::Add( owner->velocity, Vector3::ScalarProduct(owner->velocity, -decel, true) );
 }
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
@@ -80,7 +73,7 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
 
     // 5. 감속 (마찰)
     float speedLen = Vector3::Length(owner->velocity);
-    float decel = friction * dt;
+    float decel = owner->friction * dt;
     if (decel > speedLen) decel = speedLen;
 
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(owner->velocity, -decel, true));

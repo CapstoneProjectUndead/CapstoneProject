@@ -28,6 +28,8 @@ public:
     }
     void ApplyCollision(CColliderComponent* a, CColliderComponent* b, float dt);
     float ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal);
+    bool CheckGround(CColliderComponent* col);
+    void ApplyGravity(float dt);
 
     void Update(float deltaTime);
     void ApplyMovement(float dt);
@@ -35,4 +37,5 @@ private:
     void BroadPhaseSAP(std::vector<std::pair<CColliderComponent*, CColliderComponent*>>& outPairs);
 
     std::vector<std::shared_ptr<CColliderComponent>> colliders;
+    float gravity{-9.8f};
 };

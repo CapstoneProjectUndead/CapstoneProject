@@ -22,7 +22,10 @@ void CPhysicsManager::Update(float dt)
         ApplyCollision(a, b, dt);
     }
 
-    // 3) 위치 업데이트
+    // 중력
+    ApplyGravity(dt);
+
+    // 위치 업데이트
     ApplyMovement(dt);
 }
 
@@ -121,4 +124,52 @@ float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBo
     else pen = dz;
 
     return pen;
+}
+
+bool CPhysicsManager::CheckGround(CColliderComponent* col)
+{
+    const auto& aabb = col->aabb;
+
+    for (auto& other : colliders)
+    {
+        if (other.get() == col) continue;
+
+        const auto& b = other->aabb;
+
+        // 바닥 판정: AABB bottom이 다른 AABB top보다 아래로 내려갔는가?
+        if (aabb.Center.y - aabb.Extents.y <= b.Center.y + b.Extents.y + 0.05f) {
+            // XZ가 겹쳐야 진짜 바닥
+            bool overlapX = fabs(aabb.Center.x - b.Center.x) <= (aabb.Extents.x + b.Extents.x);
+            bool overlapZ = fabs(aabb.Center.z - b.Center.z) <= (aabb.Extents.z + b.Extents.z);
+
+            if (overlapX && overlapZ)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+void CPhysicsManager::ApplyGravity(float dt)
+{
+    for (auto& col : colliders)
+    {
+        CObject* obj = col->owner;
+
+        // 1) 지면 체크
+        obj->is_grounded = CheckGround(col.get());
+
+        // 2) 중력 적용
+        if (!obj->is_grounded)
+            obj->velocity.y += gravity * dt;
+        else
+            obj->velocity.y = 0;
+
+        // 감속(마찰)
+        float speedLen = Vector3::Length(obj->velocity);
+        float decel = obj->friction * dt;
+        if (decel > speedLen) decel = speedLen;
+
+        obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
+    }
 }
