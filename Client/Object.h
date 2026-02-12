@@ -4,25 +4,10 @@ class CComponent;
 class CShader;
 class CCamera;
 class CMesh;
-class CTexture;
 
 // GeometryLoader에 정의
 struct Mesh;
 struct FrameNode;
-
-struct Material
-{
-	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
-	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };	// 프레넬 효과 반사양
-	float glossiness{ 0.25f };
-};
-
-struct MaterialCB
-{
-	XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
-	XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
-	float glossiness{ 0.25f };
-};
 
 struct ObjectCB
 {
@@ -35,19 +20,15 @@ public:
 	CObject();
 
 	void ReleaseUploadBuffer();
+	// 항상 값 초기화 후 마지막에 호출
 	virtual void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 
+	//set
 	void SetComponent(std::shared_ptr<CComponent> component);
-	void SetMesh(std::shared_ptr<CMesh>& otherMesh);
-	void SetTexture(CTexture* );
-	CTexture* GetTexture() const { return texture.get(); }
-	ID3D12Resource* GetTextureResource() const;
-	void SetMaterial(const Material& otherMaterial) { material = otherMaterial; }
-	// LoadFrame 정보 Set, T: Vertex type
+	//get
 	template<typename T>
-	void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
-	template<typename T>
-	T* GetComponent();
+	T* GetComponent() const;
+	UINT GetSRVIndex() const;
 
 	virtual void Animate(float, CCamera*);
 	virtual void Update(const float);
@@ -77,7 +58,6 @@ public:
 	void UpdateWorldMatrix();
 	void UpdateLookRightFromYaw();
 	//=================================
-
 public:
 	XMFLOAT4X4 world_matrix;
 
@@ -90,22 +70,21 @@ public:
 	// component
 	friend class CMovementComponent;
 	friend class CAnimatorComponent;
+	friend class CPhysicsManager;
 protected:
 	int obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 
-	std::vector<std::shared_ptr<CMesh>> meshes;
-	std::shared_ptr<CTexture> texture{};
-	Material material;
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
 
 	ComPtr<ID3D12Resource> object_cb;
-	ComPtr<ID3D12Resource> material_cb;
 
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;
 
 	bool is_visible{ true };
-	BoundingOrientedBox oobb;
+	float jump_power{ 12.0f };
+	bool is_grounded{};
+	float friction{ 9.0f };
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
@@ -114,7 +93,7 @@ protected:
 };
 
 template<typename T>
-T* CObject::GetComponent()
+T* CObject::GetComponent() const
 {
 	for (auto& comp : components)
 	{

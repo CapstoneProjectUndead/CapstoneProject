@@ -82,7 +82,7 @@ extern double g_client_total_time;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
-
+#define DEBUG
 
 //#define _WITH_SWAPCHAIN_FULLSCREEN_STATE
 
@@ -134,25 +134,25 @@ inline void Swap(float* pfS, float* pfT) { float fTemp = *pfS; *pfS = *pfT; *pfT
 namespace Math
 {
 	template<typename T>
-	T Min(const T& a, const T& b)
+	inline T Min(const T& a, const T& b)
 	{
 		return a < b ? a : b;
 	}
 
 	template<typename T>
-	T Max(const T& a, const T& b)
+	inline T Max(const T& a, const T& b)
 	{
 		return a > b ? a : b;
 	}
 
 	template<typename T>
-	T Lerp(const T& a, const T& b, float t)
+	inline T Lerp(const T& a, const T& b, float t)
 	{
 		return a + (b - a) * t;
 	}
 
 	template<typename T>
-	T Clamp(const T& x, const T& low, const T& high)
+	inline T Clamp(const T& x, const T& low, const T& high)
 	{
 		return x < low ? low : (x > high ? high : x);
 	}

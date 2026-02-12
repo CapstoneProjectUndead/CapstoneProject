@@ -1,10 +1,9 @@
 #include "stdafx.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Mesh.h"
 #include "Camera.h"
 #include "Object.h"
-#include "Component.h"
+#include "MeshRenderer.h"
 
 CObject::CObject()
 {
@@ -14,13 +13,14 @@ CObject::CObject()
 void CObject::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	CreateConstantBuffers(device, commandList);
+
 }
 
 void CObject::ReleaseUploadBuffer()
 {
 	// 정점 버퍼를 위한 업로드 버퍼를 소멸시킨다.
-	for(const auto& mesh : meshes)
-		mesh->ReleaseUploadBuffer();
+	for (auto& component : components)
+		component->ReleaseUploadBuffer();
 }
 
 void CObject::SetComponent(std::shared_ptr<CComponent> component)
@@ -30,20 +30,6 @@ void CObject::SetComponent(std::shared_ptr<CComponent> component)
 	component->Initialize();
 }
 
-void CObject::SetMesh(std::shared_ptr<CMesh>& otherMesh)
-{
-	meshes.push_back(otherMesh);
-}
-
-void CObject::SetTexture(CTexture* otherTexture)
-{
-	texture.reset(otherTexture);
-}
-
-ID3D12Resource* CObject::GetTextureResource() const
-{
-	return texture->GetTextureResource();
-}
 void CObject::Rotate(float pitch, float yaw, float roll)
 {
 	XMMATRIX rotateMatrix = XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll));
@@ -65,18 +51,6 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 		commandList->SetGraphicsRootConstantBufferView(0, object_cb->GetGPUVirtualAddress());
 	}
 
-	{
-		MaterialCB cb{};
-		memcpy(&cb, &material, sizeof(Material));
-
-		UINT8* mapped = nullptr;
-		material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-		memcpy(mapped, &cb, sizeof(cb));
-		material_cb->Unmap(0, nullptr);
-
-		commandList->SetGraphicsRootConstantBufferView(2, material_cb->GetGPUVirtualAddress());
-	}
-
 	for (auto& component : components) {
 		component->UpdateShaderVariables(commandList);
 	}
@@ -89,11 +63,6 @@ void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 		object_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<ObjectCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 	}
 
-	{
-		MaterialCB cb{};
-		material_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<MaterialCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
-	}
-
 	for (auto& component : components) {
 		component->CreateConstantBuffers(device, commandList);
 	}
@@ -101,8 +70,8 @@ void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 
 void CObject::Render(ID3D12GraphicsCommandList* commandList)
 {
-	for (const auto& mesh : meshes)
-		mesh->Render(commandList);
+	for (auto& component : components)
+		component->Render(commandList);
 }
 
 void CObject::SetYaw(float _yaw)
@@ -129,7 +98,6 @@ void CObject::UpdateWorldMatrix()
 {
 	XMMATRIX rot = XMMatrixRotationQuaternion(XMLoadFloat4(&orientation));
 	XMMATRIX trans = XMMatrixTranslation(position.x, position.y, position.z);
-
 	XMStoreFloat4x4(&world_matrix, rot * trans);
 }
 
@@ -156,6 +124,17 @@ void CObject::Update(const float elapsedTime)
 	for (auto& component : components) {
 		component->Update(elapsedTime);
 	}
+}
+
+UINT CObject::GetSRVIndex() const
+{
+	auto matComp = GetComponent<CMaterialComponent>();
+	if (!matComp) return 0;
+
+	auto mat = matComp->GetMaterial();
+	if (!mat || !mat->texture) return 0;
+
+	return mat->texture->GetDescriptorIndex();
 }
 
 void CObject::Animate(float elapsedTime, CCamera* camera)

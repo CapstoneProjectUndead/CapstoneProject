@@ -171,6 +171,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Animator.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
+    <ClInclude Include="Collider.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="JitterMeasurer.h" />
@@ -188,11 +189,13 @@ call ClientCopy.bat</Command>
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="MyPlayer.h" />
     <ClInclude Include="NetworkClockManager.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
@@ -211,6 +214,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Animator.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
+    <ClCompile Include="Collider.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="JitterMeasurer.cpp" />
     <ClCompile Include="KeyManager.cpp">
@@ -225,11 +229,13 @@ call ClientCopy.bat</Command>
     <ClCompile Include="LagSimulator.cpp" />
     <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshRenderer.cpp" />
     <ClCompile Include="Movement.cpp" />
     <ClCompile Include="MyPlayer.cpp" />
     <ClCompile Include="NetworkClockManager.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
@@ -293,7 +299,7 @@ call ClientCopy.bat</Command>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Object.inl" />
+    <None Include="MeshComponent.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

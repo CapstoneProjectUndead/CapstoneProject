@@ -2,9 +2,12 @@
 #include "LobbyScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
-#include "Mesh.h"
 #include "Shader.h"
-#include "Object.inl"
+#include "MeshComponent.inl"
+#include "Texture.h"
+#include "Mesh.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 CLobbyScene::CLobbyScene()
 {
@@ -16,11 +19,8 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	Material m{};
-	m.albedo = XMFLOAT4{ 1.0f, 0.5f, 0.5f, 1.0f };
 	// 플레이어 생성
 	my_player = std::make_shared<CMyPlayer>();
-	my_player->SetMaterial(m);
 	my_player->Initialize(device, commandList);
 	
 	{
@@ -38,11 +38,11 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	
 	// test 용 삭제X
 	{
-		auto obj = std::make_shared<CCharacter>();
+		/*auto obj = std::make_shared<CCharacter>();
 		obj->Initialize(device, commandList);
-		obj->SetMaterial(m);
 		objects.push_back(std::move(obj));
-	
+		*/
+
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
 		std::ofstream txt("../Modeling/char.txt");
 	
@@ -57,19 +57,67 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		}*/
 	}
 	{
-		// Undead_Lobby 로드
-		std::string fileName{ "../Modeling/Undead_Lobby.bin" };
+		std::string fileName{ "../Modeling/lobby_uv.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
+		CMaterialManager matManager{};
+		CTextureManager texManager{};
+
 		for (const auto& children : frameRoot->childrens) {
 			if (children->mesh.positions.empty()) break;
 			auto obj = std::make_shared<CObject>();
-			obj->SetMeshFromFile<CVertex>(device, commandList, children);
+			// 1) MeshComponent 생성
+			auto meshComp = std::make_shared<CMeshComponent>();
+			obj->SetComponent(meshComp);
+			meshComp->SetMeshFromFile<CMatVertex>(device, commandList, children);
+			obj->world_matrix = children->localMatrix;
+
+			// 2) MaterialComponent 생성
+			auto matComp = std::make_shared<CMaterialComponent>();
+			obj->SetComponent(matComp);
+
+			std::string name{ children->mesh.materials[0].albedoMap };
+			auto tex = texManager.GetTexture(device, commandList, heapManager, name);
+			auto mat = matManager.GetMeterial(name, tex);
+			matComp->SetMaterial(mat);
+
+			// 3) MeshRendererComponent 생성
+			obj->SetComponent(std::make_shared<CMeshRendererComponent>());
+
+			if (children->name == "Floor") {
+				// 4) ColliderComponent 생성
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
+				auto boxCollider = std::make_shared<CColliderComponent>(shape);
+				obj->SetComponent(boxCollider);
+				CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
+				auto debugMesh = std::make_shared<CMeshComponent>();
+				obj->SetComponent(debugMesh);
+				std::shared_ptr<CMesh> meshss = std::make_shared<CCubeMesh>(device, commandList, children->mesh.bounds.Extents);
+				debugMesh->SetMesh(meshss);
+			}
+
+			if (children->name == "Table") {
+				// 4) ColliderComponent 생성
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
+				auto boxCollider = std::make_shared<CColliderComponent>(shape);
+				obj->SetComponent(boxCollider);
+				CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
+				auto debugMesh = std::make_shared<CMeshComponent>();
+				obj->SetComponent(debugMesh);
+				std::shared_ptr<CMesh> meshss = std::make_shared<CCubeMesh>(device, commandList, children->mesh.bounds.Extents);
+				debugMesh->SetMesh(meshss);
+			}
+
 			obj->Initialize(device, commandList);
-	
+
 			objects.push_back(std::move(obj));
 		}
 	}
 	
+	// camera
 	camera = std::make_shared<CCamera>();
 	camera->SetTarget(my_player.get());
 	camera->Initialize(device, commandList);
@@ -82,6 +130,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 }
 
 void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)

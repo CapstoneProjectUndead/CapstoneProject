@@ -51,8 +51,9 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 			light->Render(commandList);
 
 		for (const auto& obj : objects) {
-			if (shader.first == obj->GetShader())
+			if (shader.first == obj->GetShader()) {
 				shader.second->Render(commandList, obj.get());
+			}
 		}
 
 		if (my_player) {

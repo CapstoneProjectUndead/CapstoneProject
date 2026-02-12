@@ -57,11 +57,6 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetID(pkt.info.id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
-	Material m{};
-	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
-	m.glossiness = 0.0f;
-	myPlayer->SetMaterial(m);
-
 	{
 		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 		shader->CreateShader(GET_DEVICE);
