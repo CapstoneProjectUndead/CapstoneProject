@@ -21,15 +21,19 @@ void CBoxShape::Update(const XMMATRIX& worldMatrix)
     XMFLOAT4 rot;
     DecomposeMatrix(worldMatrix, pos, rot, scale);
 
-    // Center
-    obb.Center = pos;
+    // pivot을 world space로 변환
+    XMVECTOR p = XMLoadFloat3(&pivot);
+    XMVECTOR q = XMLoadFloat4(&rot);
+    XMVECTOR pivotWorld = XMVector3Rotate(p, q);
+
+    XMFLOAT3 pivotOffset;
+    XMStoreFloat3(&pivotOffset, pivotWorld);
+
+    // Center = world position + pivot offset
+    obb.Center = Vector3::Add(pos, pivotOffset);
 
     // Extents (half size) → scale 반영
-    obb.Extents = XMFLOAT3(
-        base_extents.x * scale.x,
-        base_extents.y * scale.y,
-        base_extents.z * scale.z
-    );
+    obb.Extents = Vector3::Multiply(base_extents, scale);
 
     // Orientation
     obb.Orientation = rot;
@@ -58,7 +62,16 @@ void CSphereShape::Update(const XMMATRIX& worldMatrix)
     XMFLOAT4 rot;
     DecomposeMatrix(worldMatrix, pos, rot, scale);
 
-    sphere.Center = pos;
+    // pivot을 world space로 변환
+    XMVECTOR p = XMLoadFloat3(&pivot);
+    XMVECTOR q = XMLoadFloat4(&rot);
+    XMVECTOR pivotWorld = XMVector3Rotate(p, q);
+
+    XMFLOAT3 pivotOffset;
+    XMStoreFloat3(&pivotOffset, pivotWorld);
+
+    // Center = world position + pivot offset
+    sphere.Center = Vector3::Add(pos, pivotOffset);
 
     float uniformScale = scale.x; // uniform 가정
     sphere.Radius = radius * uniformScale;
@@ -73,46 +86,6 @@ void CSphereShape::ComputeAABB(BoundingBox& outAABB) const
     XMVECTOR maxV = XMVectorSet(c.x + r, c.y + r, c.z + r, 0);
 
     BoundingBox::CreateFromPoints(outAABB, minV, maxV);
-}
-
-void CCapsuleShape::Update(const XMMATRIX& worldMatrix)
-{
-    XMFLOAT3 pos, scale;
-    XMFLOAT4 rot;
-    DecomposeMatrix(worldMatrix, pos, rot, scale);
-
-    XMVECTOR center = XMLoadFloat3(&pos);
-    XMVECTOR q = XMLoadFloat4(&rot);
-
-    XMVECTOR up = XMVector3Rotate( XMVectorSet(0, 1, 0, 0), q);
-
-    float half = (height * scale.y) * 0.5f;
-
-    XMVECTOR topV = center + up * half;
-    XMVECTOR bottomV = center - up * half;
-
-    XMStoreFloat3(&top, topV);
-    XMStoreFloat3(&bottom, bottomV);
-
-    radius = base_radius * scale.x;
-}
-
-void CCapsuleShape::ComputeAABB(BoundingBox& outAABB) const
-{
-    XMVECTOR topV = XMLoadFloat3(&top);
-    XMVECTOR bottomV = XMLoadFloat3(&bottom);
-
-    XMVECTOR minV = XMVectorMin(topV, bottomV);
-    XMVECTOR maxV = XMVectorMax(topV, bottomV);
-
-    XMFLOAT3 minF, maxF;
-    XMStoreFloat3(&minF, minV);
-    XMStoreFloat3(&maxF, maxV);
-
-    minF.x -= radius; minF.y -= radius; minF.z -= radius;
-    maxF.x += radius; maxF.y += radius; maxF.z += radius;
-
-    BoundingBox::CreateFromPoints(outAABB, XMLoadFloat3(&minF), XMLoadFloat3(&maxF));
 }
 
 // component

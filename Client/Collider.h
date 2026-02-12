@@ -17,12 +17,17 @@ public:
 
     // 디버그 렌더링용 (선택)
     virtual void Render() const {}
+
+    // 우선 y축만 설정
+    XMFLOAT3 pivot{};
 };
 
 // obb 기반
 class CBoxShape : public CColliderShape {
 public:
-    CBoxShape(XMFLOAT3 extents) : base_extents{extents} {};
+    CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{}) : base_extents{ extents } {
+        pivot = p;
+    };
 
     void Update(const XMMATRIX& worldMatrix) override;
     void ComputeAABB(BoundingBox& outAABB) const override;
@@ -34,8 +39,9 @@ private:
 
 class CSphereShape : public CColliderShape {
 public:
-    CSphereShape(float r) : radius(r) {
+    CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{}) : radius(r) {
         sphere.Radius = r;
+        pivot = p;
     }
 
     void Update(const XMMATRIX& worldMatrix) override;
@@ -44,23 +50,6 @@ public:
 private:
     BoundingSphere sphere;
     float radius;
-};
-
-class CCapsuleShape : public CColliderShape {
-public:
-    CCapsuleShape(float r, float h) 
-        : radius(r), height(h), base_radius{r} { }
-
-    void Update(const XMMATRIX& worldMatrix) override;
-    void ComputeAABB(BoundingBox& outAABB) const override;
-private:
-    float radius;
-    float base_radius;
-    float height;
-
-    // 월드 공간에서의 캡슐 중심선
-    XMFLOAT3 top;
-    XMFLOAT3 bottom;
 };
 
 // 충돌 모양 데이터 제공자. 물리 계산X

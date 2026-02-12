@@ -19,7 +19,7 @@ void CPhysicsManager::Update(float dt)
         if (!a->Intersects(b))
             continue;
 
-        ResolveCollision(a, b, dt);
+        ApplyCollision(a, b, dt);
     }
 
     // 3) 위치 업데이트
@@ -79,7 +79,7 @@ void CPhysicsManager::ApplyMovement(float dt)
     }
 }
 
-void CPhysicsManager::ResolveCollision(CColliderComponent* a, CColliderComponent* b, float dt)
+void CPhysicsManager::ApplyCollision(CColliderComponent* a, CColliderComponent* b, float dt)
 {
     CObject* objA = a->owner;
     CObject* objB = b->owner;
@@ -90,34 +90,21 @@ void CPhysicsManager::ResolveCollision(CColliderComponent* a, CColliderComponent
         objA->position.y - objB->position.y,
         objA->position.z - objB->position.z
     };
-
-    XMVECTOR n = XMVector3Normalize(XMLoadFloat3(&normal));
-    XMStoreFloat3(&normal, n);
+    normal = Vector3::Normalize(normal);
+    //XMStoreFloat3(&normal, n);
 
     // penetration 계산
     float penetration = ComputePenetration(a->GetAABB(), b->GetAABB(), normal);
 
     // correction = normal * penetration * 0.5
-    XMVECTOR corr = n * (penetration * 0.5f);
-
-    // A 이동
-    XMFLOAT3 corrA;
-    XMStoreFloat3(&corrA, corr);
-    objA->position.x += corrA.x;
-    objA->position.y += corrA.y;
-    objA->position.z += corrA.z;
-
-    // B 이동 (반대 방향)
-    objB->position.x -= corrA.x;
-    objB->position.y -= corrA.y;
-    objB->position.z -= corrA.z;
+    XMFLOAT3 corr = Vector3::ScalarProduct(normal, (penetration * 0.5f));
 
     // MovementComponent 슬라이딩 처리
     if (auto moveA = objA->GetComponent<CMovementComponent>())
-        moveA->Slide(normal);
+        moveA->Slide(corr);
 
     if (auto moveB = objB->GetComponent<CMovementComponent>())
-        moveB->Slide({ -normal.x, -normal.y, -normal.z });
+        moveB->Slide({ Vector3::ScalarProduct(corr, -1) });
 }
 
 float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal)

@@ -110,19 +110,13 @@ class CCubeMesh : public CMesh
 {
 public:
 	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, float = 2.0f, float = 2.0f, float = 2.0f);
-	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, const XMFLOAT3&);
+	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, const XMFLOAT3&, const XMFLOAT3& = XMFLOAT3{});
 };
 
 class CSphereMesh : public CMesh
 {
 public:
-	CSphereMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, UINT sliceCount = 16, UINT stackCount = 16);
-};
-
-class CCapsuleMesh : public CMesh
-{
-public:
-	CCapsuleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, float height, UINT sliceCount = 16, UINT stackCount = 8);
+	CSphereMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, const XMFLOAT3& pivot = XMFLOAT3{}, UINT sliceCount = 16, UINT stackCount = 16);
 };
 
 template<typename T>

@@ -26,7 +26,7 @@ public:
     void SetCollider(std::shared_ptr<CColliderComponent> c) {
         colliders.push_back(c);
     }
-    void ResolveCollision(CColliderComponent* a, CColliderComponent* b, float dt);
+    void ApplyCollision(CColliderComponent* a, CColliderComponent* b, float dt);
     float ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal);
 
     void Update(float deltaTime);
