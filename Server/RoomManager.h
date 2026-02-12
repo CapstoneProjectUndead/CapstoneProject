@@ -18,14 +18,15 @@ public:
     }
 
 public:
+    void    Initialize();
     void    Update(const float elapsedTime);
     void    SendResults();
     uint32  CreateRoom(const string& name, shared_ptr<CUser> user);
 
-    map<uint32, unique_ptr<CRoom>>& GetRooms() { return rooms; }
+    const unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() const { return rooms; }
 
 private:
     mutex rooms_lock;
-    map<uint32, unique_ptr<CRoom>> rooms;
+    unordered_map<uint32, unique_ptr<CRoom>> rooms;
 };
 

@@ -27,7 +27,7 @@ enum PacketType : uint16_t
 	_C_ROOM_CREATE = 10,
 	_C_ROOM_ENTER = 11,
 	_S_ROOM_CREATE = 12,
-	_S_ROOMLIST = 13,
+	_S_ROOM_LIST = 13,
 	_S_SPAWNPLAYER = 14,
 	_S_ADDPLAYER = 15,
 	_S_PLAYERLIST = 16,
@@ -135,17 +135,42 @@ struct C_CreateRoom : public PacketHeader
 
 	C_CreateRoom() : PacketHeader(sizeof(C_CreateRoom), (UINT)PacketType::_C_ROOM_CREATE) {}
 };
-static_assert(sizeof(C_CreateRoom) == 4 + 108, "C_CreateRoom size mismatch!");
+static_assert(sizeof(C_CreateRoom) == 4 + 58, "C_CreateRoom size mismatch!");
 
 struct S_CreateRoom : public PacketHeader
 {
-	uint64 room_id;
+	NetRoomInfo room_info;
 
 	S_CreateRoom() : PacketHeader(sizeof(S_CreateRoom), (UINT)PacketType::_S_ROOM_CREATE) {}
 };
-static_assert(sizeof(S_CreateRoom) == 4 + 8, "S_CreateRoom size mismatch!");
+static_assert(sizeof(S_CreateRoom) == 4 + 57, "S_CreateRoom size mismatch!");
 
-// 내 플레이어를 보낼 떄
+// 가변길이 패킷
+// 여러 방 정보를 패킷에 담아서 보낸다.
+struct S_Room_List : public PacketHeader
+{
+	struct Room
+	{
+		NetRoomInfo room_info;
+	};
+
+	uint16  buff_offset;
+	uint16	room_count;
+
+	S_Room_List() : PacketHeader(sizeof(S_Room_List), (UINT)PacketType::_S_ROOM_LIST) {}
+
+	using RoomList = PacketList<S_Room_List::Room>;
+
+	RoomList GetRoomList()
+	{
+		BYTE* data = reinterpret_cast<BYTE*>(this);
+		data += buff_offset;
+		return RoomList(reinterpret_cast<Room*>(data), room_count);
+	}
+};
+static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
+
+// 내 플레이어를 보낼 때
 struct S_SpawnPlayer : public PacketHeader
 {
 	NetObjectInfo info;
@@ -211,11 +236,10 @@ static_assert(sizeof(S_RemovePlayer) == 4 + 45, "S_RemovePlayer size mismatch!")
 struct C_Input : public PacketHeader
 {
 	uint64			seq_num;	// 클라이언트가 자체적으로 1씩 올리는 번호
-	float           duration;  // 클라이언트가 이 입력을 유지한 시간
+	float           duration;   // 클라이언트가 이 입력을 유지한 시간
 	NetObjectInfo	info;
 
 	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT)
-		, duration(0.0f)
 	{
 	};
 };

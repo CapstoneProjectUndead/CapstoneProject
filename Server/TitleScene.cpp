@@ -3,6 +3,7 @@
 #include "TitleScene.h"
 #include "ClientSession.h"
 #include "Player.h"
+#include "RoomManager.h"
 
 #undef min
 #undef max
@@ -44,7 +45,7 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 	string pw = to_utf8(pkt.password);
 	string username = to_utf8(pkt.name);
 
-	if (id.size() == 1) {
+	if ((id.size() == 1) || (pw.size() == 1)) {
 		S_SIGN_RES failPkt;
 		failPkt.success = false;
 		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(failPkt);
@@ -109,6 +110,7 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 
 void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
+	// 유저 로그인 처리
 	{
 		// CUser 생성 (생성자 안에서 ID발급)
 		shared_ptr<CUser> user = make_shared<CUser>();
@@ -128,6 +130,32 @@ void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 		loginPkt.user_id = user->GetUserID();
 		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
 		session->DoSend(sendBuffer);
+	}
+
+	// 지금 로그인한 유저는 룸 매칭 화면으로 가게된다.
+	// 그러면 현재 입장 가능한 방 목록을 알려줘야한다.
+	{
+		const auto& rooms = CRoomManager::GetInstance().GetRooms();
+		if (!rooms.empty()) {
+
+			int32 roomCount = rooms.size();
+			int32 pktSize = sizeof(S_Room_List) + sizeof(S_Room_List::Room) * roomCount;
+
+			S_ROOMLIST_WRITE pktWriter;
+			S_ROOMLIST_WRITE::RoomList roomList = pktWriter.ReserveRoomList(roomCount);
+
+			int idx = 0;
+			for (auto& room : rooms) {
+
+				if (room.second->GetIsGameStart() == true)
+					continue;
+
+				roomList[idx++] = S_Room_List::Room{ NetRoomInfo{room.second->GetRoomInfo()}};
+			}
+
+			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
+			session->DoSend(sendBuffer);
+		}
 	}
 
 	//{

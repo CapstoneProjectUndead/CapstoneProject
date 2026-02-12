@@ -16,6 +16,7 @@ CGameFramework::~CGameFramework()
 void CGameFramework::Init()
 {
     CSceneManager::GetInstance().Initialize();
+    CRoomManager::GetInstance().Initialize();
 }
 
 void CGameFramework::Update(const float elapsedTime)

@@ -3,7 +3,7 @@
 // **** 클라/서버 공용 헤더 파일 ****
 //==================================
 
-#define ROOM_NAME_MAX 100
+#define ROOM_NAME_MAX 50
 
 struct InputData 
 {
@@ -75,9 +75,17 @@ struct ObjectInfo
 
 struct RoomInfo
 {
-	uint16	room_id;	// 방 ID
-	char	room_name[ROOM_NAME_MAX]; // 100자
-	uint16	total_player;
-	uint16	max_player;
-	bool	is_in_game;	// 게임이 이미 시작된 방인지
+	uint32	room_id;	// 방 ID
+	char	room_name[ROOM_NAME_MAX]; // 50자
+	uint16	current_player_count;
+	bool	is_game_start;	// 게임이 이미 시작된 방인지
+
+	RoomInfo() = default;
+	RoomInfo(uint32 id, const char* name, uint16 cnt, bool gameStart)
+		: room_id(id)
+		, current_player_count(cnt)
+		, is_game_start(gameStart)
+	{
+		strncpy_s(room_name, name, ROOM_NAME_MAX - 1);
+	}
 };

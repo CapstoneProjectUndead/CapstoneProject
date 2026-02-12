@@ -73,11 +73,28 @@ static_assert(sizeof(NetObjectInfo) == 45, "NetObjectInfo size mismatch!");
 
 struct NetRoomInfo
 {
-	uint16	room_id;	// 방 ID
+	uint32	room_id;	// 방 ID
 	char	room_name[ROOM_NAME_MAX]; // 100자
-	uint16	total_player;
-	uint16	max_player;
-	bool	is_in_game;	// 게임이 이미 시작된 방인지
+	uint16	current_player_count;
+	bool	is_game_start;	// 게임이 이미 시작된 방인지
+
+	NetRoomInfo() = default;
+
+	NetRoomInfo(const NetRoomInfo& other)
+		: room_id(other.room_id)
+		, current_player_count(other.current_player_count)
+		, is_game_start(other.is_game_start)
+	{
+		COPY_STRING(room_name, other.room_name);
+	}
+
+	NetRoomInfo(const RoomInfo& other)
+		: room_id(other.room_id)
+		, current_player_count(other.current_player_count)
+		, is_game_start(other.is_game_start)
+	{
+		COPY_STRING(room_name, other.room_name);
+	}
 };
 
-static_assert(sizeof(NetRoomInfo) == 107, "NetRoomInfo size mismatch!");
+static_assert(sizeof(NetRoomInfo) == 57, "NetRoomInfo size mismatch!");

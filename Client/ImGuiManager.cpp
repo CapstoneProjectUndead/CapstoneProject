@@ -10,6 +10,8 @@
 #undef min
 #undef max
 
+#define ROOM_MAX_PLAYER 4
+
 
 CImGuiManager::CImGuiManager()
 {
@@ -48,22 +50,6 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
         srv_desc_heap,
         srv_desc_heap->GetCPUDescriptorHandleForHeapStart(),
         srv_desc_heap->GetGPUDescriptorHandleForHeapStart());
-
-    // 임시
-    RoomInfo info{};
-    info.total_player = 1;
-    info.is_in_game = false;
-    info.max_player = 4;
-    info.room_id = 1;
-    COPY_STRING(info.room_name, "보물 파밍 가자");
-    room_vec.push_back(info);
-
-    info.total_player = 1;
-    info.is_in_game = false;
-    info.max_player = 4;
-    info.room_id = 2;
-    COPY_STRING(info.room_name, "초보 환영");
-    room_vec.push_back(info);
 }
 
 void CImGuiManager::Update()
@@ -80,8 +66,8 @@ void CImGuiManager::Update()
     HWND hwnd = ghWnd;
 
     // 상태 변경 시에만 IME 제어
-    if (currentInputState != lastInputState || need_reset_focus)
-    {
+    if (currentInputState != lastInputState || need_reset_focus) {
+
         if (currentInputState) {
             EnableIME(hwnd);
         }
@@ -145,7 +131,7 @@ bool CImGuiManager::IsUIInputEnabled()
         state = false;
 
     // 로딩 중에는 입력 차단 (선택 사항)
-    if ((ui_state == TitleUIState::Login) || (ui_state == TitleUIState::SignUp))
+    if ((ui_state == TitleUIState::Login))
         state = false;
 
     return state;
@@ -218,7 +204,7 @@ void CImGuiManager::DrawTitleUI()
 
     case TitleUIState::Login:
         // 로그인 창
-        DrawSignInWindow();
+        DrawLogInWindow();
         break;
 
     case TitleUIState::SignUp:
@@ -344,6 +330,8 @@ void CImGuiManager::DrawTitleMainWindow()
 
                 if (ImGui::Button((const char*)u8"로그아웃", ImVec2(200, 55))) {
 
+                    StartLoading(LoadingType::Logout);
+
                     // 로그아웃 패킷 전송 로직...
                     auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
                     if (serverSession) {
@@ -378,7 +366,7 @@ void CImGuiManager::DrawTitleMainWindow()
     ImGui::PopStyleVar();
 }
 
-void CImGuiManager::DrawSignInWindow()
+void CImGuiManager::DrawLogInWindow()
 {
     ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always);
@@ -506,6 +494,7 @@ void CImGuiManager::DrawLoadingPopUp()
         const char* txt = "로딩 중...";
         switch (loading_type) {
         case LoadingType::Login:      txt = (const char*)u8"로그인 중입니다..."; break;
+        case LoadingType::Logout:      txt = (const char*)u8"로그아웃 중입니다..."; break;
         case LoadingType::SignUp:     txt = (const char*)u8"가입 처리 중입니다..."; break;
         case LoadingType::RoomCreate: txt = (const char*)u8"방 생성 중입니다..."; break;
         case LoadingType::RoomEnter:  txt = (const char*)u8"방 입장 중입니다..."; break;
@@ -641,7 +630,7 @@ void CImGuiManager::DrawRoomListTable()
             ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // 선택 시 노란색
 
             int rowNum = 1;
-            for (const auto& room : room_vec) {
+            for (const auto& [id, room] : rooms) {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("%d", rowNum++);
@@ -662,7 +651,7 @@ void CImGuiManager::DrawRoomListTable()
                 }
 
                 ImGui::TableSetColumnIndex(2);
-                ImGui::Text("%d / %d", room.total_player, room.max_player);
+                ImGui::Text("%d / %d", room.current_player_count, ROOM_MAX_PLAYER);
             }
             ImGui::PopStyleColor(2);
             ImGui::EndTable();

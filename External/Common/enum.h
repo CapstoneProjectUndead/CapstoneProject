@@ -14,7 +14,6 @@ enum class SCENE_TYPE
 {
 	TITLE,
 	LOBBY,
-	MAIN,
 	GAME,
 
 	END

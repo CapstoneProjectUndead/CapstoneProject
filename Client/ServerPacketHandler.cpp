@@ -112,6 +112,7 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
 	if (pkt.success) {
+		CImGuiManager::GetInstance().StopLoading();
 		ActionResult result;
 		result.Success("로그아웃 성공!");
 		CImGuiManager::GetInstance().SetPopUpResult(result);
@@ -123,9 +124,26 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 
 bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 {
+	RoomInfo info{ pkt.room_info.room_id, pkt.room_info.room_name, pkt.room_info.current_player_count, pkt.room_info.is_game_start };
+	CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
+
 	CImGuiManager::GetInstance().ReserveResetFocus();
 
 	CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+
+	return true;
+}
+
+bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt)
+{
+	S_Room_List::RoomList userList = pkt.GetRoomList();
+
+	for (int i = 0; i < pkt.room_count; ++i) {
+		RoomInfo info{userList[i].room_info.room_id, userList[i].room_info.room_name
+			, userList[i].room_info.current_player_count, userList[i].room_info.is_game_start};
+
+		CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
+	}
 
 	return true;
 }

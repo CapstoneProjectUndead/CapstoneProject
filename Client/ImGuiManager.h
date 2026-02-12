@@ -27,8 +27,9 @@ enum class TitleUIState
 enum class LoadingType
 {
     None,
-    Login,
     SignUp,
+    Login,
+    Logout,
     RoomCreate,
     RoomEnter,
     SinglePlay
@@ -106,7 +107,7 @@ public:
     void SetRoomCreatePopup(bool show) { show_room_create_popup = show; }
 
     // 데이터 갱신
-    std::vector<RoomInfo>& GetRoomVec() { return room_vec; }
+    std::unordered_map<uint32, RoomInfo>& GetRooms() { return rooms; }
     int GetSelectedRoomID() { return selected_room_id; }
     void SetSelectedRoomID(int id) { selected_room_id = id; }
 
@@ -120,7 +121,7 @@ private:
     void DrawTitleUI();
 
     void DrawTitleMainWindow();     // 메인/멀티선택 메뉴 통합
-    void DrawSignInWindow();
+    void DrawLogInWindow();
     void DrawSignUpWindow();
     void DrawRoomListUI();          // 방 목록 전체
     void DrawRoomListTable();       // 테이블 부분
@@ -136,7 +137,7 @@ private:
     ID3D12DescriptorHeap* srv_desc_heap = nullptr;
     HIMC m_hDefaultIMC = nullptr; // IME 핸들 저장
 
-    std::vector<RoomInfo> room_vec;
+    std::unordered_map<uint32, RoomInfo> rooms;
     ImFont* title_font = nullptr;
     ImFont* title_font2 = nullptr;
 

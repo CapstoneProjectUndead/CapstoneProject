@@ -25,9 +25,6 @@ void CSceneManager::Initialize()
 #else
 	title_scene = make_unique<CTitleScene>();
 
-	//shared_ptr<CRoom> room = make_shared<CRoom>("초보 환영");
-	//room->GetScenes()[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>();
-
 #endif
 }
 
