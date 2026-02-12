@@ -14,6 +14,7 @@
 #include "NetworkManager.h"
 #include "ImGuiManager.h"
 #include "User.h"
+#include "TitleScene.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -51,10 +52,12 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		// 가입 성공
 		ActionResult result;
 		result.Success("가입 성공!");
-		CImGuiManager::GetInstance().SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
+		//CImGuiManager::GetInstance().SetPopUpResult(result);
 
 		// 로딩창 끄기
-		CImGuiManager::GetInstance().StopLoading();
+		//CImGuiManager::GetInstance().StopLoading();
+		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 	}
 	else {
 		printf("signup fail...! \n");
@@ -62,10 +65,12 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		// 가입 실패
 		ActionResult result;
 		result.Success("가입 실패!");
-		CImGuiManager::GetInstance().SetPopUpResult(result);
+		//CImGuiManager::GetInstance().SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 
 		// 로딩창 끄기
-		CImGuiManager::GetInstance().StopLoading();
+		//CImGuiManager::GetInstance().StopLoading();
+		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 	}
 
 	return true;
@@ -81,10 +86,12 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	if (pkt.success) {
 		ActionResult result;
 		result.Success("로그인 성공!");
-		CImGuiManager::GetInstance().SetPopUpResult(result);
+		//CImGuiManager::GetInstance().SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 
 		// 로딩창 끄기
-		CImGuiManager::GetInstance().StopLoading();
+		//CImGuiManager::GetInstance().StopLoading();
+		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 
 		// User 생성
 		std::shared_ptr<CUser> user = std::make_shared<CUser>();
@@ -100,10 +107,12 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	else {
 		ActionResult result;
 		result.Fail("로그인 실패!");
-		CImGuiManager::GetInstance().SetPopUpResult(result);
+		//CImGuiManager::GetInstance().SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 
 		// 로딩창 끄기
-		CImGuiManager::GetInstance().StopLoading();
+		//CImGuiManager::GetInstance().StopLoading();
+		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 	}
 
 	return true;
@@ -112,10 +121,12 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
 	if (pkt.success) {
-		CImGuiManager::GetInstance().StopLoading();
+		//CImGuiManager::GetInstance().StopLoading();
+		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 		ActionResult result;
 		result.Success("로그아웃 성공!");
-		CImGuiManager::GetInstance().SetPopUpResult(result);
+		//CImGuiManager::GetInstance().SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 		CAST_SS(session)->SetUser(nullptr);
 	}
 
@@ -125,7 +136,8 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 {
 	RoomInfo info{ pkt.room_info.room_id, pkt.room_info.room_name, pkt.room_info.current_player_count, pkt.room_info.is_game_start };
-	CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
+	//CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
+	CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
 
 	CImGuiManager::GetInstance().ReserveResetFocus();
 
@@ -142,7 +154,8 @@ bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt)
 		RoomInfo info{userList[i].room_info.room_id, userList[i].room_info.room_name
 			, userList[i].room_info.current_player_count, userList[i].room_info.is_game_start};
 
-		CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
+		//CImGuiManager::GetInstance().GetRooms().insert({ info.room_id, info });
+		CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
 	}
 
 	return true;

@@ -26,6 +26,9 @@ public:
 	virtual void Enter() abstract;
 	virtual void Exit() abstract;
 
+	// UI 그리기가 필요한 Scene들은 호출
+	virtual void DrawUI() {};
+
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);
 

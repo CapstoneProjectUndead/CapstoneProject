@@ -73,6 +73,7 @@ using Microsoft::WRL::ComPtr;
 #include <struct.h>
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
+#include "UICommon.h"
 
 //#define GENERATE_LAG
 //#define SCENE_TEST

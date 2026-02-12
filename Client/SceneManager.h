@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "TitleScene.h"
 
 class CSceneManager
 {
@@ -24,6 +25,11 @@ public:
 
     CScene* GetActiveScene() const { return active_scene; }
     void    SetActiveScene(CScene* scene) { active_scene = scene; }
+
+    CTitleScene* GetTitleScene() const 
+    { 
+        return static_cast<CTitleScene*>(scenes[(UINT)SCENE_TYPE::TITLE].get()); 
+    }
 
     void ChangeScene(SCENE_TYPE type);
 
