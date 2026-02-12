@@ -3,16 +3,9 @@
 class CScene;
 class CUser;
 
-enum class ROOM_SCENE_TYPE
-{
-    LOBBY,
-    GAME,
-    END,
-};
-
 class CRoom
 {
-    using SceneArray = array<unique_ptr<CScene>, (UINT)ROOM_SCENE_TYPE::END>;
+    using SceneArray = array<unique_ptr<CScene>, (UINT)SCENE_TYPE::END>;
 public:
     CRoom(string name);
     ~CRoom();

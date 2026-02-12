@@ -20,10 +20,10 @@ void CRoom::Update(const float elapsedTime)
 {
 	for (auto& scene : scenes)
 	{
-		if (!scene)
-			assert(nullptr);
-
-		scene->Update(elapsedTime);
+		if (scene)
+		{
+			scene->Update(elapsedTime);
+		}
 	}
 }
 
@@ -31,9 +31,9 @@ void CRoom::SendResults()
 {
 	for (auto& scene : scenes)
 	{
-		if (!scene)
-			assert(nullptr);
-
-		scene->SendResults();
+		if (scene)
+		{
+			scene->SendResults();
+		}
 	}
 }
