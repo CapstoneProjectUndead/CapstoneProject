@@ -21,7 +21,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
 bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 {
-	//std::cout << "ì •ì˜ ë˜ì§€ ì•Šì€ íŒ¨í‚· ID ì…ë‹ˆë‹¤!" << std::endl;
+	//std::cout << "Á¤ÀÇ µÇÁö ¾ÊÀº ÆĞÅ¶ ID ÀÔ´Ï´Ù!" << std::endl;
 	assert(nullptr);
 	return false;
 }
@@ -29,7 +29,7 @@ bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt)
 {
 	C_Pong pongPkt;
-	pongPkt.server_send_time = pkt.server_send_time; // ì„œë²„ê°€ ë³´ë‚¸ ì‹œê°„ ê·¸ëŒ€ë¡œ ë³µì‚¬
+	pongPkt.server_send_time = pkt.server_send_time; // ¼­¹ö°¡ º¸³½ ½Ã°£ ±×´ë·Î º¹»ç
 	auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Pong>(pongPkt);
 	session->DoSend(sendBuffer);
 
@@ -48,23 +48,24 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 	if (pkt.success) {
 		printf("signup success! \n");
 
-		// ë¡œê·¸ì¸ ì„±ê³µ
-		CImGuiManager::GetInstance().SetSignUpResult(true);
+		// °¡ÀÔ ¼º°ø
+		ActionResult result;
+		result.Success("°¡ÀÔ ¼º°ø!");
+		CImGuiManager::GetInstance().SetPopUpResult(result);
 
-		// ë¡œë”©ì°½ ë„ê¸°
-		CImGuiManager::GetInstance().SetSignupLoading(false);
-		CImGuiManager::GetInstance().SetLoginLoading(false);
-		CImGuiManager::GetInstance().CloseAllWindow();
+		// ·ÎµùÃ¢ ²ô±â
+		CImGuiManager::GetInstance().StopLoading();
 	}
 	else {
 		printf("signup fail...! \n");
-		CImGuiManager::GetInstance().SetSignUpResult(false);
-		CImGuiManager::GetInstance().SetSignUpAlarm(true);
 
-		// ë¡œë”©ì°½ ë„ê¸°
-		CImGuiManager::GetInstance().SetSignupLoading(false);
-		CImGuiManager::GetInstance().SetLoginLoading(false);
-		CImGuiManager::GetInstance().CloseAllWindow();
+		// °¡ÀÔ ½ÇÆĞ
+		ActionResult result;
+		result.Success("°¡ÀÔ ½ÇÆĞ!");
+		CImGuiManager::GetInstance().SetPopUpResult(result);
+
+		// ·ÎµùÃ¢ ²ô±â
+		CImGuiManager::GetInstance().StopLoading();
 	}
 
 	return true;
@@ -72,25 +73,38 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
-	// Title Sceneìœ¼ë¡œ ì‹œì‘
+	// Title SceneÀ¸·Î ½ÃÀÛ
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	assert(scene->GetSceneType() == SCENE_TYPE::TITLE);
 
-	// ë¡œë”©ì°½ ë„ê¸°
-	CImGuiManager::GetInstance().SetSignupLoading(false);
-	CImGuiManager::GetInstance().SetLoginLoading(false);
-	CImGuiManager::GetInstance().SetSignInResult(true);
-	CImGuiManager::GetInstance().CloseAllWindow();
+	// ·Î±×ÀÎ ¼º°ø
+	if (pkt.success) {
+		ActionResult result;
+		result.Success("·Î±×ÀÎ ¼º°ø!");
+		CImGuiManager::GetInstance().SetPopUpResult(result);
 
-	// User ìƒì„±
-	std::shared_ptr<CUser> user = std::make_shared<CUser>();
+		// ·ÎµùÃ¢ ²ô±â
+		CImGuiManager::GetInstance().StopLoading();
 
-	// session, id ì €ì¥
-	user->SetSession(session);
-	user->SetUserID(pkt.user_id);
+		// User »ı¼º
+		std::shared_ptr<CUser> user = std::make_shared<CUser>();
 
-	// User Refcount ì¦ê°€
-	CAST_SS(session)->SetUser(user);
+		// session, id ÀúÀå (¾àÇÑ ÂüÁ¶)
+		user->SetSession(session);
+		user->SetUserID(pkt.user_id);
+
+		// User Refcount Áõ°¡
+		CAST_SS(session)->SetUser(user);
+	}
+	// ·Î±×ÀÎ ½ÇÆĞ
+	else {
+		ActionResult result;
+		result.Fail("·Î±×ÀÎ ½ÇÆĞ!");
+		CImGuiManager::GetInstance().SetPopUpResult(result);
+
+		// ·ÎµùÃ¢ ²ô±â
+		CImGuiManager::GetInstance().StopLoading();
+	}
 
 	return true;
 }
@@ -98,8 +112,10 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
 	if (pkt.success) {
+		ActionResult result;
+		result.Success("·Î±×¾Æ¿ô ¼º°ø!");
+		CImGuiManager::GetInstance().SetPopUpResult(result);
 		CAST_SS(session)->SetUser(nullptr);
-		CImGuiManager::GetInstance().SetIsOnlie(false);
 	}
 
 	return true;
@@ -107,10 +123,6 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 
 bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 {
-	CImGuiManager::GetInstance().SetRoomCreateLoading(false);
-
-	CImGuiManager::GetInstance().CloseAllWindow();
-
 	CImGuiManager::GetInstance().ReserveResetFocus();
 
 	CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
@@ -145,7 +157,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 		scene->GetShaders().emplace("skinning", std::move(shader));
 	}
 
-	// ì¹´ë©”ë¼ ê°ì²´ ìƒì„±
+	// Ä«¸Ş¶ó °´Ã¼ »ı¼º
 	RECT client_rect;
 	GetClientRect(ghWnd, &client_rect);
 	float width{ float(client_rect.right - client_rect.left) };
@@ -160,7 +172,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	scene->SetPlayer(myPlayer);
 	scene->SetCamera(camera);
 
-	// light ìƒì„±
+	// light »ı¼º
 	std::unique_ptr<CLightManager>light = std::make_unique<CLightManager>();
 	light->Initialize(GET_DEVICE, GET_CMD_LIST);
 
@@ -191,20 +203,20 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 	for (int i = 0; i < pkt.player_count; ++i) {
 
-		// ë‹¤ë¥¸ ìœ ì € ìƒì„±
+		// ´Ù¸¥ À¯Àú »ı¼º
 		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
-		// ë‹¤ë¥¸ ìœ ì € ID ë¶€ì—¬
+		// ´Ù¸¥ À¯Àú ID ºÎ¿©
 		otherPlayer->SetID(userList[i].info.id);
 
-		// ë‹¤ë¥¸ ìœ ì € ìœ„ì¹˜ ë¶€ì—¬
+		// ´Ù¸¥ À¯Àú À§Ä¡ ºÎ¿©
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
 
-		// ë‹¤ë¥¸ ìœ ì € ìƒíƒœ ë¶€ì—¬
+		// ´Ù¸¥ À¯Àú »óÅÂ ºÎ¿©
 		otherPlayer->SetState(userList[i].info.state);
 
-		// Active Sceneì— ë‹¤ë¥¸ ìœ ì € ì…ì¥
+		// Active Scene¿¡ ´Ù¸¥ À¯Àú ÀÔÀå
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());
 	}
 
@@ -235,20 +247,20 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	auto& indexMap = scene->GetIDIndex();
 	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
-	// ë‚´ í”Œë ˆì´ì–´ì´ë©´, ë‚´ í”Œë ˆì´ì–´ ë³´ì •ìš© í•¨ìˆ˜ í˜¸ì¶œ
+	// ³» ÇÃ·¹ÀÌ¾îÀÌ¸é, ³» ÇÃ·¹ÀÌ¾î º¸Á¤¿ë ÇÔ¼ö È£Ãâ
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id) {
 		myPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
 
-		// ì„œë²„ê°€ ì²˜ë¦¬í•œ ì‹œí€€ìŠ¤ ë„˜ë²„ë¥¼ ë°›ì•„ì•¼í•œë‹¤.
+		// ¼­¹ö°¡ Ã³¸®ÇÑ ½ÃÄö½º ³Ñ¹ö¸¦ ¹Ş¾Æ¾ßÇÑ´Ù.
 		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
-		// ì—¬ê¸°ì„œ S_Move íŒ¨í‚·ì˜ ì§€í„°ê°’ ì¸¡ì •
+		// ¿©±â¼­ S_Move ÆĞÅ¶ÀÇ ÁöÅÍ°ª ÃøÁ¤
 		float now = CNetworkClockManager::GetInstance().GetClientNow();
 		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
 	}
-	// ë‹¤ë¥¸ í”Œë ˆì´ì–´ì¼ ê²½ìš°
+	// ´Ù¸¥ ÇÃ·¹ÀÌ¾îÀÏ °æ¿ì
 	else {
-		// í•´ë‹¹ IDê°€ ì¡´ì¬í•˜ëŠ” í”Œë ˆì´ì–´ì¸ì§€ í™•ì¸
+		// ÇØ´ç ID°¡ Á¸ÀçÇÏ´Â ÇÃ·¹ÀÌ¾îÀÎÁö È®ÀÎ
 		auto it = indexMap.find(pkt.info.id);
 		if (it == indexMap.end())
 			return false;
@@ -262,7 +274,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		otherPlayer->SetPitch(pkt.info.pitch);
 		otherPlayer->SetState(pkt.info.state);
 
-		// íšŒì „ì„ ìœ„í•´ ë‚¨ê²¨ë‘ 
+		// È¸ÀüÀ» À§ÇØ ³²°ÜµÒ
 		{
 			ObjectInfo info;
 			info.yaw = pkt.info.yaw;
@@ -278,12 +290,12 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 		state.server_timestamp = pkt.timestamp;
 
 #ifdef GENERATE_LAG
-		// ë ‰ ì‹œë®¬ë ˆì´í„° ì‘ë™
+		// ·º ½Ã¹Ä·¹ÀÌÅÍ ÀÛµ¿
 		CNetworkManager::GetInstance().OnRecvOpponentPos(state);
 #else
 		otherPlayer->RecordOpponentFrameHistory(state);
 
-		// ì—¬ê¸°ì„œ S_Move íŒ¨í‚·ì˜ ì§€í„°ê°’ ì¸¡ì •
+		// ¿©±â¼­ S_Move ÆĞÅ¶ÀÇ ÁöÅÍ°ª ÃøÁ¤
 		float now = CNetworkClockManager::GetInstance().GetClientNow();
 		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
 #endif

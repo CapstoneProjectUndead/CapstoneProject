@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_impl_win32.h>
 #include <ImGui/imgui_impl_dx12.h>
@@ -7,141 +7,149 @@
 #include <imm.h>
 #pragma comment(lib, "imm32.lib")
 
-// í—¬í¼ í•¨ìˆ˜ 
-// ì¸ì: (í…ìŠ¤ì²˜ í•¸ë“¤(ptr), ë²„íŠ¼ í…ìŠ¤íŠ¸, ë²„íŠ¼ í¬ê¸°)
+// ÇïÆÛ ÇÔ¼ö 
+// ÀÎÀÚ: (ÅØ½ºÃ³ ÇÚµé(ptr), ¹öÆ° ÅØ½ºÆ®, ¹öÆ° Å©±â)
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
 std::string CP949ToUTF8(const std::string& strCP949);
 
+// 1. ¸ŞÀÎ UI È­¸é »óÅÂ (ÇÑ ¹ø¿¡ ÇÏ³ª¸¸ º¸ÀÓ)
+enum class TitleUIState
+{
+    None,               // UI ¾øÀ½ (ÀÎ°ÔÀÓ µî)
+    Main,               // ÃÊ±â È­¸é [½Ì±Û][¸ÖÆ¼][³ª°¡±â]
+    MultiSelect,        // ¸ÖÆ¼ ¸Ş´º [·Î±×ÀÎ][°¡ÀÔ] or [¹æ°Ë»ö][·Î±×¾Æ¿ô]
+    Login,              // ·Î±×ÀÎ ÀÔ·Â Ã¢
+    SignUp,             // È¸¿ø°¡ÀÔ ÀÔ·Â Ã¢
+    RoomList            // ¹æ ¸ñ·Ï (¸ÅÄª È­¸é)
+};
+
+// 2. ·Îµù ÆË¾÷ Á¾·ù
+enum class LoadingType
+{
+    None,
+    Login,
+    SignUp,
+    RoomCreate,
+    RoomEnter,
+    SinglePlay
+};
+
+// 3. °á°ú ÆË¾÷ µ¥ÀÌÅÍ (¼º°ø/½ÇÆĞ ¸Ş½ÃÁö)
+struct ActionResult
+{
+    bool is_visible = false;
+    bool is_success = false; 
+    std::string message;
+
+    void Success(const std::string& _message)
+    {
+        is_visible = true;
+        is_success = true;
+        message = _message;
+    }
+
+    void Fail(const std::string& _message)
+    {
+        is_visible = true;
+        is_success = false;
+        message = _message;
+    }
+};
+
+// ÇïÆÛ ÇÔ¼ö
+bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
+std::string CP949ToUTF8(const std::string& strCP949);
 
 class CImGuiManager
 {
 private:
-	CImGuiManager();
-	CImGuiManager(const CImGuiManager&) = delete;
+    CImGuiManager();
+    CImGuiManager(const CImGuiManager&) = delete;
 
 public:
-	~CImGuiManager();
+    ~CImGuiManager();
 
-	static CImGuiManager& GetInstance() {
-		static CImGuiManager instance;
-		return instance;
-	}
+    static CImGuiManager& GetInstance() {
+        static CImGuiManager instance;
+        return instance;
+    }
 
 public:
     void Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat);
-    void Update(); // ë§¤ í”„ë ˆì„ ì‹œì‘ (Tick)
-    void Render(ID3D12GraphicsCommandList* cmdList); // ê·¸ë¦¬ê¸° ëª…ë ¹
+    void Update();
+    void Render(ID3D12GraphicsCommandList* cmdList);
     void Shutdown();
-	bool IsUIInputEnabled();
-	void ResetIMEState(HWND hwnd);
 
-	// ê²Œì„ ëª¨ë“œ: í•œê¸€ ì…ë ¥ê¸° ì™„ì „ ì œê±°
-	void DisableIME(HWND hwnd)
-	{
-		// ì´ë¯¸ ì œê±°ëœ ìƒíƒœë©´ íŒ¨ìŠ¤
-		if (default_imc != nullptr) return;
+    // IME ¹× ÀÔ·Â Á¦¾î °ü·Ã
+    bool IsUIInputEnabled();
+    void ResetIMEState(HWND hwnd);
+    void DisableIME(HWND hwnd);
+    void EnableIME(HWND hwnd);
+    void ClearFocus(HWND hwnd);
+    void ReserveResetFocus() { need_reset_focus = true; }
 
-		// í˜„ì¬ ìœˆë„ìš°ì˜ IME ì—°ê²°ì„ ëŠê³ , ì›ë˜ í•¸ë“¤ì„ ì €ì¥í•´ë‘  (ë‚˜ì¤‘ì— ë³µêµ¬ìš©)
-		default_imc = ImmAssociateContext(hwnd, NULL);
+    // -----------------------------------------------------
+    // »óÅÂ º¯°æ ÇÔ¼öµé (¿ÜºÎ¿¡¼­ È£Ãâ)
+    // -----------------------------------------------------
+    void SetUIState(TitleUIState state) { ui_state = state; }
+    TitleUIState GetUIState() const { return ui_state; }
 
-		printf("[System] IME Disabled (Game Mode)\n");
-	}
+    void StartLoading(LoadingType type) { loading_type = type; }
+    void StopLoading() { loading_type = LoadingType::None; }
 
-	// UI ëª¨ë“œ: í•œê¸€ ì…ë ¥ê¸° ë³µêµ¬
-	void EnableIME(HWND hwnd)
-	{
-		// ì €ì¥í•´ë‘” í•¸ë“¤ì´ ì—†ìœ¼ë©´ íŒ¨ìŠ¤
-		if (default_imc == nullptr) return;
+    void SetPopUpResult(const ActionResult& result) { pop_up_result = result; }
 
-		// IME ë‹¤ì‹œ ì—°ê²°
-		ImmAssociateContext(hwnd, default_imc);
-		default_imc = nullptr;
+    void ShowResultPopup(bool is_success, const std::string& msg);
+    void CloseResultPopup();
 
-		printf("[System] IME Enabled (UI Mode)\n");
-	}
+    void SetOnline(bool online) { is_online = online; }
+    void SetRoomCreatePopup(bool show) { show_room_create_popup = show; }
 
-	void SetTitleDraw(bool result) { is_title_draw = result; }
+    // µ¥ÀÌÅÍ °»½Å
+    std::vector<RoomInfo>& GetRoomVec() { return room_vec; }
+    int GetSelectedRoomID() { return selected_room_id; }
+    void SetSelectedRoomID(int id) { selected_room_id = id; }
 
-	void SetLoginLoading(bool loading) { is_login_loading = loading; }
-	void SetSignupLoading(bool loading) { is_signup_loading = loading; }
-	void SetRoomCreateLoading(bool loading) { is_room_create_loading = loading; }
-	void SetRoomEnterLoading(bool loading) { is_room_enter_loading = loading; }
-
-	void SetSignUpAlarm(bool alarm) { signup_alarm = alarm; }
-	void SetSignUpResult(bool result) { is_signup_success = result; }
-	void SetSignInResult(bool result) { is_signin_success = result; }
-	void SetIsOnlie(bool result) { is_online = result; }
-
-	// í•„ìš”í•˜ë‹¤ë©´ ì°½ì„ ê°•ì œë¡œ ë‹«ëŠ” ê¸°ëŠ¥
-	void CloseAllWindow() { show_login_window = false; show_sign_window = false; }
-	
-	void Reset()
-	{
-		show_login_window = show_sign_window = is_login_loading = is_signup_loading = false;
-	}
-
-	void ReserveResetFocus() { need_reset_focus = true; }
-
-	void LoadingIndicatorCircle(const char* label, const float indicator_radius
-		, const ImVec4& main_color, const ImVec4& backdrop_color
-		, const int circle_count, const float speed);
+    static void LoadingIndicatorCircle(const char* label, const float indicator_radius
+        , const ImVec4& main_color, const ImVec4& backdrop_color
+        , const int circle_count, const float speed);
 
 private:
-	//===================
-	// ì•ˆì“°ëŠ” í•¨ìˆ˜ (ì°¸ê³ ìš©)
-	void DrawLogInUI();
-	//===================
+    // UI ±×¸®±â ÇÔ¼öµé
+    void DrawTitle();
+    void DrawTitleUI();
 
-	void DrawTitle();
-	void DrawTitleUI();
+    void DrawTitleMainWindow();     // ¸ŞÀÎ/¸ÖÆ¼¼±ÅÃ ¸Ş´º ÅëÇÕ
+    void DrawSignInWindow();
+    void DrawSignUpWindow();
+    void DrawRoomListUI();          // ¹æ ¸ñ·Ï ÀüÃ¼
+    void DrawRoomListTable();       // Å×ÀÌºí ºÎºĞ
+    void DrawRoomCreatePopUp();     // ¹æ »ı¼º ÆË¾÷
 
-	void DrawTitleMainWindow();
-	void DrawFirstMenuButton(bool& menu);
-	void DrawSecondMenuButton(bool& menu);
-	void DrawThirdMenuButton(bool& menu);
+    void DrawLoadingPopUp();        // ·Îµù (»±±ÛÀÌ)
+    void DrawLoadingPopUpResult();  // °á°ú È®ÀÎ Ã¢
 
-	void DrawSignInWidow();
-	void DrawSignUpWindow();
-
-	void DrawLoadingPopUp();
-	void DrawLoadingPopUpResult();
-
-	void DrawRoomListUI();
-	void DrawRoomListMainWindow();
-	void DrawRoomListTable();
-	void DrawRefreshButton();
-	void DrawThreeButton();	// ë°© ë§Œë“¤ê¸° / ë°© ì…ì¥ / ë’¤ë¡œê°€ê¸°
-
-	void DrawRoomCreatePopUp();
+    void DrawRefreshButton();
+    void DrawThreeButton();
 
 private:
-    // DX12ëŠ” ImGui í°íŠ¸ìš© í™ì´ ê¼­ í•„ìš”í•©ë‹ˆë‹¤.
     ID3D12DescriptorHeap* srv_desc_heap = nullptr;
-	HIMC				  default_imc = nullptr;
+    HIMC m_hDefaultIMC = nullptr; // IME ÇÚµé ÀúÀå
 
-	std::vector<RoomInfo> room_vec;
+    std::vector<RoomInfo> room_vec;
+    ImFont* title_font = nullptr;
+    ImFont* title_font2 = nullptr;
 
-	ImFont* title_font = nullptr;
-	ImFont* title_font2 = nullptr;
+    // -----------------------------------------------------
+    // [ÇÙ½É] ¸®ÆÑÅä¸µµÈ »óÅÂ º¯¼öµé
+    // -----------------------------------------------------
+    TitleUIState ui_state = TitleUIState::Main;
+    LoadingType loading_type = LoadingType::None;
+    ActionResult pop_up_result;
 
-	bool need_reset_focus = false;
-
-	bool is_title_draw = true;
-	bool show_login_window = false;	// ë¡œê·¸ì¸ ì…ë ¥ì°½ ë„ìš°ê¸°
-	bool show_sign_window = false;	// íšŒì›ê°€ì…ì°½ ë„ìš°ê¸°
-
-	bool is_single_loading = false; // ë¡œë”© íŒì—… ë„ìš°ê¸°
-	bool is_login_loading = false;	// ë¡œë”© íŒì—… ë„ìš°ê¸°
-	bool is_signup_loading = false; // ë¡œë”© íŒì—… ë„ìš°ê¸°
-	bool is_room_create_loading = false; // ë¡œë”© íŒì—… ë„ìš°ê¸°
-	bool is_room_enter_loading = false; // ë¡œë”© íŒì—… ë„ìš°ê¸°
-
-	bool signup_alarm = false;
-	bool is_signup_success = false; // íšŒì›ê°€ì… ì„±ê³µì—¬ë¶€
-	bool is_signin_success = false; // ë¡œê·¸ì¸ ì„±ê³µì—¬ë¶€
-	bool is_online = false;			// ë¡œê·¸ì¸ ì—¬ë¶€
-
-	bool show_room_list_window = false;	// ë£¸ë§¤ì¹­ í™”ë©´ ëœ¨ìœ„ê¸°
-
-	uint16 selected_room_id = -1;
+    bool is_online = false;
+    bool is_title_draw = true;
+    bool need_reset_focus = false;
+    bool show_room_create_popup = false;
+    int  selected_room_id = 0;
 };

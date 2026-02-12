@@ -25,6 +25,7 @@ public:
     map<uint32, unique_ptr<CRoom>>& GetRooms() { return rooms; }
 
 private:
+    mutex rooms_lock;
     map<uint32, unique_ptr<CRoom>> rooms;
 };
 

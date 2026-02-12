@@ -13,7 +13,6 @@
 
 CImGuiManager::CImGuiManager()
 {
-
 }
 
 CImGuiManager::~CImGuiManager()
@@ -27,34 +26,23 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsLight(); // 다크 모드 설정
+    ImGui::StyleColorsLight();
 
-    // ==================================
-    // [추가] 한글 폰트 로드 (맑은 고딕 사용)
-    // ==================================
-    // 윈도우에 기본으로 있는 맑은 고딕(malgun.ttf)을 가져옵니다.
-    // 18.0f는 폰트 크기입니다.
-    // GetGlyphRangesKorean()이 핵심입니다! (한글 자모음+완성형 포함)
+    // 폰트 로드
     io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     title_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
     title_font2 = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
-    // ============================================================
-
     io.Fonts->Build();
 
-    // 2. Win32 초기화
+    // Win32 & DX12 초기화
     ImGui_ImplWin32_Init(hwnd);
 
-    // 3. DX12용 Descriptor Heap 생성 (폰트 텍스처용)
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     desc.NumDescriptors = 1;
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&srv_desc_heap));
 
-    // 4. DX12 초기화
-    // 인자: 디바이스, 버퍼 개수(보통 2 or 3), RTV 포맷, 
-    //       SRV힙, 폰트텍스처 CPU 핸들, 폰트텍스처 GPU 핸들
     ImGui_ImplDX12_Init(device, numFramesInFlight,
         rtvFormat,
         srv_desc_heap,
@@ -80,50 +68,50 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
 
 void CImGuiManager::Update()
 {
-    // 순서 중요!
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    static bool lastInputState = false; // 이전 프레임의 입력 허용 상태
+    // =========================================================
+    // [IME 및 포커스 관리 로직]
+    // =========================================================
+    static bool lastInputState = false;
     bool currentInputState = IsUIInputEnabled();
-    HWND hwnd = ghWnd; // 전역 윈도우 핸들 사용 권장
-    
-    // 상태가 변했거나, 강제 리셋이 필요한 경우에만 실행
+    HWND hwnd = ghWnd;
+
+    // 상태 변경 시에만 IME 제어
     if (currentInputState != lastInputState || need_reset_focus)
     {
-        if (currentInputState && !show_login_window && !show_sign_window)
-            EnableIME(hwnd);  // UI 모드: 한글 허용
-        else
-            DisableIME(hwnd); // 게임 모드: 한글 차단
-    
-        if (need_reset_focus)
-        {
+        if (currentInputState) {
+            EnableIME(hwnd);
+        }
+        else {
+            DisableIME(hwnd);
+        }
+
+        if (need_reset_focus) {
+            ImGuiContext& g = *GImGui;
+            g.ActiveId = 0;
             ImGui::SetWindowFocus(nullptr);
-            ImGui::CloseCurrentPopup();
+            ImGui::GetIO().InputQueueCharacters.resize(0);
+            ImGui::GetIO().ClearInputKeys();
+            ResetIMEState(hwnd);
+
             need_reset_focus = false;
         }
+
         lastInputState = currentInputState;
     }
 
+    // UI 그리기 시작
     DrawTitleUI();
-
-    // === 여기서부터 UI 코드를 작성하면 됩니다 ===
-    // 테스트용 데모 창 띄우기
-    //ImGui::ShowDemoWindow();
 }
 
 void CImGuiManager::Render(ID3D12GraphicsCommandList* cmdList)
 {
-    // 렌더링 데이터 조립
     ImGui::Render();
-
-    // DX12 커맨드 리스트에 그리기 명령 기록
-    // 주의: 팀원 코드에서 이미 SetDescriptorHeaps를 호출했을 수도 있는데,
-    // ImGui는 자신의 힙이 필요하므로 다시 설정해줍니다.
     ID3D12DescriptorHeap* ppHeaps[] = { srv_desc_heap };
     cmdList->SetDescriptorHeaps(1, ppHeaps);
-
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 }
 
@@ -133,64 +121,687 @@ void CImGuiManager::Shutdown()
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
-    if (srv_desc_heap) { 
-        srv_desc_heap->Release(); 
-        srv_desc_heap = nullptr; 
+    if (srv_desc_heap) {
+        srv_desc_heap->Release();
+        srv_desc_heap = nullptr;
     }
 }
 
+// =====================
+// [IME 제어 헬퍼 함수들]
+// =====================
 bool CImGuiManager::IsUIInputEnabled()
 {
-    bool result = true;
+    bool state = true;
 
-    // 1. 타이틀 씬이면 무조건 입력 받음
     CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-    if (scene && scene->GetSceneType() == SCENE_TYPE::TITLE)
-        result = true;
+    if (!scene)
+        return false;
+
+    // 타이틀 씬이면 무조건 입력 허용
+    if (scene->GetSceneType() == SCENE_TYPE::TITLE)
+        state = true;
     else
-        result = false;
+        state = false;
 
-    // 2. 팝업이 떠있거나 로딩 중이면 입력 받음
-    if (show_login_window || show_sign_window)
-        result = false;
+    // 로딩 중에는 입력 차단 (선택 사항)
+    if ((ui_state == TitleUIState::Login) || (ui_state == TitleUIState::SignUp))
+        state = false;
 
-    // 3. 그 외(게임 플레이 중)에는 입력 차단!
-    return result;
+    return state;
 }
 
 void CImGuiManager::ResetIMEState(HWND hwnd)
 {
     HIMC himc = ImmGetContext(hwnd);
-    if (himc)
-    {
-        // 현재 조합 중인 한글(예: '가...')을 강제로 취소시킴
+    if (himc) {
         ImmNotifyIME(himc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
-        // IME 상태를 닫음 (영어 모드 전환 효과)
         ImmSetOpenStatus(himc, FALSE);
         ImmReleaseContext(hwnd, himc);
-        printf("[System] IME State Force Reset.\n");
     }
+}
+
+void CImGuiManager::DisableIME(HWND hwnd)
+{
+    if (m_hDefaultIMC != nullptr) 
+        return;
+
+    m_hDefaultIMC = ImmAssociateContext(hwnd, NULL);
+}
+
+void CImGuiManager::EnableIME(HWND hwnd)
+{
+    if (m_hDefaultIMC == nullptr) 
+        return;
+
+    ImmAssociateContext(hwnd, m_hDefaultIMC);
+    m_hDefaultIMC = nullptr;
+}
+
+void CImGuiManager::ClearFocus(HWND hwnd)
+{
+    need_reset_focus = true;
+    DisableIME(hwnd); // 즉시 차단
+}
+
+// ===================
+// [UI 그리기 메인 로직]
+// ===================
+
+void CImGuiManager::DrawTitleUI()
+{
+    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
+    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE) 
+        return;
+
+    // 1. 타이틀 로고 배경
+    DrawTitle();
+
+    // 2. 로딩 팝업 (최우선 순위)
+    if (loading_type != LoadingType::None) {
+        DrawLoadingPopUp();
+    }
+
+    // 3. 결과 팝업
+    if (pop_up_result.is_visible) {
+        DrawLoadingPopUpResult();
+    }
+
+    // 4. 상태에 따른 UI 분기
+    switch (ui_state)
+    {
+    case TitleUIState::Main:
+    case TitleUIState::MultiSelect:
+        // 메인 메뉴
+        DrawTitleMainWindow();
+        break;
+
+    case TitleUIState::Login:
+        // 로그인 창
+        DrawSignInWindow();
+        break;
+
+    case TitleUIState::SignUp:
+        // 회원가입 창
+        DrawSignUpWindow();
+        break;
+
+    case TitleUIState::RoomList:
+        // 룸 매칭
+        DrawRoomListUI();
+        break;
+
+    case TitleUIState::None:
+        break;
+    }
+
+    // 방 생성 팝업은 RoomList 위에 뜸
+    if (ui_state == TitleUIState::RoomList && show_room_create_popup) {
+        DrawRoomCreatePopUp();
+    }
+}
+
+void CImGuiManager::DrawTitle()
+{
+    if (!is_title_draw)
+        return;
+
+    // 배경 및 UNDEAD 텍스트 그리기 (기존 코드 유지)
+    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+    ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f)));
+
+    ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(760, 210), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    ImGuiWindowFlags mainFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+    if (ImGui::Begin("Title", NULL, mainFlags)) {
+        if (title_font) ImGui::PushFont(title_font);
+
+        const char* titleText = "UNDEAD";
+        float textWidth = ImGui::CalcTextSize(titleText).x;
+        float windowWidth = ImGui::GetWindowSize().x;
+
+        ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));
+        ImGui::Text(titleText);
+        ImGui::PopStyleColor();
+
+        if (title_font) ImGui::PopFont();
+    }
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
+
+// 메인 메뉴 & 멀티 선택 메뉴 통합 관리
+void CImGuiManager::DrawTitleMainWindow()
+{
+    ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    ImGuiWindowFlags mainBtnFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+    if (ImGui::Begin("Main Menu", NULL, mainBtnFlags))
+    {
+        // 로딩 중이거나 팝업 떠있으면 버튼 비활성화
+        bool should_disable = (loading_type != LoadingType::None) || pop_up_result.is_visible;
+        ImGui::BeginDisabled(should_disable);
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));
+
+        // ======================================
+        // [State 1] 초기 화면: 싱글 / 멀티 / 나가기
+        // ======================================
+        if (ui_state == TitleUIState::Main)
+        {
+            if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
+                StartLoading(LoadingType::SinglePlay);
+                CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+            }
+            ImGui::Spacing(); 
+            ImGui::Spacing();
+
+            if (ImGui::Button((const char*)u8"멀티 플레이", ImVec2(200, 55))) {
+                SetUIState(TitleUIState::MultiSelect); // 상태 변경!
+            }
+            ImGui::Spacing(); 
+            ImGui::Spacing();
+
+            if (ImGui::Button((const char*)u8"게임 종료", ImVec2(200, 55))) {
+                g_run = false;
+            }
+        }
+        // =======================
+        // [State 2] 멀티 선택 화면
+        // =======================
+        else if (ui_state == TitleUIState::MultiSelect)
+        {
+            if (!is_online) {
+                // 오프라인 상태: 로그인 / 회원가입 / 뒤로가기
+                if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
+                    SetUIState(TitleUIState::Login);
+                }
+                ImGui::Spacing(); 
+                ImGui::Spacing();
+
+                if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 55))) {
+                    SetUIState(TitleUIState::SignUp);
+                }
+            }
+            else {
+                // 온라인 상태: 방 검색 / 로그아웃
+                if (ImGui::Button((const char*)u8"방 검색", ImVec2(200, 55))) {
+                    is_title_draw = false;
+                    SetUIState(TitleUIState::RoomList);
+                }
+                ImGui::Spacing(); 
+                ImGui::Spacing();
+
+                if (ImGui::Button((const char*)u8"로그아웃", ImVec2(200, 55))) {
+
+                    // 로그아웃 패킷 전송 로직...
+                    auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
+                    if (serverSession) {
+                        C_LOGOUT logOutPkt;
+                        auto user = serverSession->GetUser();
+                        if (user) {
+                            logOutPkt.user_id = user->GetUserID();
+                            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGOUT>(logOutPkt);
+                            serverSession->DoSend(sendBuffer);
+                        }
+                    }
+                    
+                    // (임시)
+                    // is_online = false;
+                    //ActionResult result;
+                    //result.Success("로그아웃 성공!");
+                    //SetLastResult(result);
+                }
+            }
+            ImGui::Spacing(); 
+            ImGui::Spacing();
+
+            if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
+                SetUIState(TitleUIState::Main); // 메인으로 복귀
+            }
+        }
+
+        ImGui::PopStyleColor(3);
+        ImGui::EndDisabled();
+    }
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
+
+void CImGuiManager::DrawSignInWindow()
+{
+    ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always);
+    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+
+    // 창 닫기 감지를 위한 정적 변수 (기본값 true)
+    static bool open = true;
+
+    if (ImGui::Begin((const char*)u8"로그인", &open, winFlags)) {
+        static char id[64] = "";
+        static char pw[64] = "";
+
+        ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
+        ImGui::Separator();
+
+        ImGui::PushItemWidth(230.0f);
+        ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
+        ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
+        ImGui::PopItemWidth();
+
+        ImGui::Spacing(); ImGui::Spacing();
+
+        float btnWidth = 380.0f;
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
+
+        if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50))) {
+
+            // 패킷 전송
+            C_LOGIN loginPkt;
+            COPY_STRING(loginPkt.id, id);
+            COPY_STRING(loginPkt.password, pw);
+            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+
+            auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
+            if (serverSession)
+                serverSession->DoSend(sendBuffer);
+
+            // 로딩 시작 및 창 초기화
+            StartLoading(LoadingType::Login);
+            memset(id, 0, sizeof(id));
+            memset(pw, 0, sizeof(pw));
+
+            // (임시)
+            //ActionResult result;
+            //result.Success("로그인 성공!");
+            //SetPopUpResult(result);
+            //StopLoading();
+        }
+    }
+    ImGui::End();
+
+    if (!open) {
+        SetUIState(TitleUIState::MultiSelect); // 멀티 선택 메뉴로 복귀
+        open = true; // 다음 번에 창이 정상적으로 열리도록 다시 true로 리셋
+    }
+}
+
+void CImGuiManager::DrawSignUpWindow()
+{
+    ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(390, 250), ImGuiCond_Always);
+    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+
+    static bool open = true;
+    if (ImGui::Begin((const char*)u8"회원가입", &open, winFlags)) {
+        static char id[64] = "";
+        static char pw[64] = "";
+        static char name[64] = "";
+
+        ImGui::Text((const char*)u8"정보를 입력하세요.");
+        ImGui::Separator();
+
+        ImGui::PushItemWidth(230.0f);
+        ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
+        ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
+        ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
+        ImGui::PopItemWidth();
+
+        ImGui::Spacing(); 
+        ImGui::Spacing();
+
+        float btnWidth = 380.0f;
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
+
+        if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
+
+            C_SIGNUP signUpPkt;
+            COPY_STRING(signUpPkt.id, id);
+            COPY_STRING(signUpPkt.password, pw);
+            COPY_STRING(signUpPkt.name, name);
+            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
+
+            auto session = CServerSessionManager::GetInstance().GetServerSession();
+            if (session) 
+                session->DoSend(sendBuffer);
+
+            StartLoading(LoadingType::SignUp);
+
+            memset(id, 0, sizeof(id));
+            memset(pw, 0, sizeof(pw));
+            memset(name, 0, sizeof(name));
+        }
+    }
+    ImGui::End();
+
+    if (!open) {
+        SetUIState(TitleUIState::MultiSelect); // 멀티 선택 메뉴로 복귀
+        open = true; // 다음 번에 창이 정상적으로 열리도록 다시 true로 리셋
+    }
+}
+
+void CImGuiManager::DrawLoadingPopUp()
+{
+    if (!ImGui::IsPopupOpen("LoadingPopup")) {
+        ImGui::OpenPopup("LoadingPopup");
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+        ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+        const char* txt = "로딩 중...";
+        switch (loading_type) {
+        case LoadingType::Login:      txt = (const char*)u8"로그인 중입니다..."; break;
+        case LoadingType::SignUp:     txt = (const char*)u8"가입 처리 중입니다..."; break;
+        case LoadingType::RoomCreate: txt = (const char*)u8"방 생성 중입니다..."; break;
+        case LoadingType::RoomEnter:  txt = (const char*)u8"방 입장 중입니다..."; break;
+        case LoadingType::SinglePlay: txt = (const char*)u8"싱글 플레이 입장 중..."; break;
+        }
+        ImGui::Text("%s", txt);
+
+        ImGui::Spacing();
+        if (ImGui::Button("Cancel")) {
+            StopLoading();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void CImGuiManager::ShowResultPopup(bool is_success, const std::string& msg)
+{
+    pop_up_result.is_visible = true;
+    pop_up_result.is_success = is_success;
+    pop_up_result.message = msg;
+}
+
+void CImGuiManager::CloseResultPopup()
+{
+}
+
+void CImGuiManager::DrawLoadingPopUpResult()
+{
+    if (!ImGui::IsPopupOpen("ResultPopup")) {
+        ImGui::OpenPopup("ResultPopup");
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
+        ImGui::Spacing();
+
+        if (ImGui::Button((const char*)u8"확인")) {
+
+            pop_up_result.is_visible = false; // 팝업 닫기
+            ImGui::CloseCurrentPopup();
+
+            // 성공 시 후속 처리 (예: 로그인 성공했으면 방 목록으로)
+            if (pop_up_result.is_success) {
+
+                // 어떤 작업이 성공했는지에 따라 분기 가능
+                // 현재 로직상 로그인 성공이면 RoomList로 보내는 게 자연스러움
+
+                if (ui_state == TitleUIState::SignUp) {
+                    SetUIState(TitleUIState::MultiSelect); // 가입 성공하면 로그인하러 가라
+                }
+                else if (ui_state == TitleUIState::Login) {
+                    is_online = true;
+                    is_title_draw = false;
+                    SetUIState(TitleUIState::RoomList);
+                }
+                else if (ui_state == TitleUIState::MultiSelect) {
+                    is_online = false;
+                }
+            }
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void CImGuiManager::DrawRoomListUI()
+{
+    // 전체 배경 (파란 틴트)
+    ImGui::GetBackgroundDrawList()->AddRectFilled(
+        ImVec2(0, 0), ImGui::GetIO().DisplaySize,
+        ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.4f)));
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoResize;
+
+    if (ImGui::Begin("MatchingWindow", NULL, flags)) {
+        // 타이틀 (빨간 UNDEAD)
+        ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+        if (title_font2) ImGui::PushFont(title_font2);
+
+        const char* titleText = "UNDEAD";
+        float textWidth = ImGui::CalcTextSize(titleText).x;
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - textWidth) * 0.5f);
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::Text(titleText);
+        ImGui::PopStyleColor();
+        if (title_font2) ImGui::PopFont();
+
+        ImGui::Spacing(); ImGui::Spacing();
+
+        // 테이블 및 버튼
+        DrawRoomListTable();
+        DrawRefreshButton();
+        DrawThreeButton();
+
+        // 빈 곳 클릭 시 선택 해제
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
+            selected_room_id = 0;
+        }
+    }
+    ImGui::End();
+}
+
+void CImGuiManager::DrawRoomListTable()
+{
+    float windowWidth = ImGui::GetWindowSize().x;
+    float tableWidth = 700.0f; // 비율 조정 필요 시 적용
+    float tableHeight = 300.0f;
+
+    ImGui::SetCursorPosX((windowWidth - tableWidth) * 0.5f);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.9f, 0.9f, 0.9f, 0.7f));
+
+    if (ImGui::BeginChild("TableArea", ImVec2(tableWidth, tableHeight), true)) {
+        if (ImGui::BeginTable("RoomTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+
+            ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+            ImGui::TableSetupColumn((const char*)u8"방 제목", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn((const char*)u8"인원", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+            ImGui::TableHeadersRow();
+            ImGui::PopStyleColor(2);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 내용 검정색
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // 선택 시 노란색
+
+            int rowNum = 1;
+            for (const auto& room : room_vec) {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("%d", rowNum++);
+
+                std::string utf8Name = CP949ToUTF8(room.room_name);
+                std::string uniqueLabel = utf8Name + "##" + std::to_string(room.room_id);
+
+                ImGui::TableSetColumnIndex(1);
+                bool is_selected = (selected_room_id == room.room_id);
+                if (ImGui::Selectable(uniqueLabel.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+                    selected_room_id = room.room_id;
+                }
+
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                    selected_room_id = room.room_id;
+                    StartLoading(LoadingType::RoomEnter);
+                    // SendEnterRoomPacket(selected_room_id); 
+                }
+
+                ImGui::TableSetColumnIndex(2);
+                ImGui::Text("%d / %d", room.total_player, room.max_player);
+            }
+            ImGui::PopStyleColor(2);
+            ImGui::EndTable();
+        }
+
+        // ===============================
+        // 테이블 영역 빈 곳 클릭 시 선택 해제
+        // ===============================
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
+            selected_room_id = 0;
+        }
+    }
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
+}
+
+void CImGuiManager::DrawRefreshButton()
+{
+    float windowWidth = ImGui::GetWindowSize().x;
+    float tableWidth = 700.0f;
+    float btnSize = 60.0f;
+
+    ImGui::SetCursorPosX((windowWidth + tableWidth) * 0.5f - btnSize);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+    if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(btnSize, btnSize))) {
+        // 새로고침 패킷 전송
+    }
+    ImGui::PopStyleColor(2);
+}
+
+void CImGuiManager::DrawThreeButton()
+{
+    ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+
+    float btnWidth = 200.0f;
+    float btnHeight = 60.0f;
+    float spacing = 50.0f;
+    float totalWidth = (btnWidth * 3) + (spacing * 2);
+
+    ImGui::SetCursorPosX((ImGui::GetWindowSize().x - totalWidth) * 0.5f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.55f, 0.25f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    if (ImGui::Button((const char*)u8"방 만들기", ImVec2(btnWidth, btnHeight))) {
+        show_room_create_popup = true;
+    }
+    ImGui::SameLine(0, spacing);
+
+    if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
+        if (selected_room_id != 0) {
+            StartLoading(LoadingType::RoomEnter);
+            // 입장 패킷 전송...
+        }
+    }
+    ImGui::SameLine(0, spacing);
+
+    if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
+        is_title_draw = true;
+        SetUIState(TitleUIState::MultiSelect); // 다시 메뉴 선택으로
+    }
+
+    ImGui::PopStyleColor(2);
+}
+
+void CImGuiManager::DrawRoomCreatePopUp()
+{
+    if (!ImGui::IsPopupOpen("CreateRoom")) {
+        ImGui::OpenPopup("CreateRoom");
+    }
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static char roomName[128] = "";
+
+        ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
+        ImGui::Spacing();
+        ImGui::PushItemWidth(300.0f);
+        ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
+        ImGui::PopItemWidth();
+        ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+
+        if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
+            static int roomCounter = 1;
+            if (strlen(roomName) == 0) {
+                sprintf_s(roomName, sizeof(roomName), "Unknown Room %d", roomCounter++);
+            }
+
+            // 패킷 전송
+            C_CreateRoom createPkt;
+            auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
+            if (serverSession) {
+                auto user = serverSession->GetUser();
+                if (user) {
+                    createPkt.user_id = user->GetUserID();
+                    COPY_STRING(createPkt.room_name, roomName);
+                    auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
+                    serverSession->DoSend(sendBuffer);
+                }
+            }
+
+            memset(roomName, 0, sizeof(roomName));
+            ImGui::CloseCurrentPopup();
+
+            show_room_create_popup = false;
+            StartLoading(LoadingType::RoomCreate);
+        }
+        ImGui::SameLine();
+
+        if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
+            memset(roomName, 0, sizeof(roomName));
+            ImGui::CloseCurrentPopup();
+            show_room_create_popup = false;
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::PopStyleColor();
 }
 
 void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indicator_radius, const ImVec4& main_color, const ImVec4& backdrop_color, const int circle_count, const float speed)
 {
     ImGuiWindow* window = ImGui::GetCurrentWindow();
-    if (window->SkipItems) {
-        return;
-    }
+    if (window->SkipItems) return;
 
     ImGuiContext& g = *GImGui;
     const ImGuiID id = window->GetID(label);
-
     const ImVec2 pos = window->DC.CursorPos;
     const float circle_radius = indicator_radius / 10.0f;
     const ImRect bb(pos, ImVec2(pos.x + indicator_radius * 2.0f, pos.y + indicator_radius * 2.0f));
-    ImGui::ItemSize(bb);
-    if (!ImGui::ItemAdd(bb, id)) {
-        return;
-    }
 
-    // 시간 기반으로 회전 각도 계산
+    ImGui::ItemSize(bb);
+    if (!ImGui::ItemAdd(bb, id)) return;
+
     const float t = g.Time;
     const auto degree_offset = 2.0f * IM_PI / circle_count;
 
@@ -207,1075 +818,6 @@ void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indica
 
         window->DrawList->AddCircleFilled(ImVec2(pos.x + indicator_radius + x, pos.y + indicator_radius - y), circle_radius + growth * circle_radius, ImGui::GetColorU32(color));
     }
-}
-
-void CImGuiManager::DrawLogInUI()
-{
-    // Title Scene 에서만 로그인 UI를 그린다. 아니라면 return!
-    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE)
-        return;
-
-    DrawTitle();
-
-    if (!show_login_window && !show_sign_window && !is_login_loading && !is_signup_loading) {
-        // =========================================================
-        // 1. 메인 버튼 창 (고정시키기)
-        // =========================================================
-
-        // Always로 설정하면 매 프레임 위치/크기를 강제로 덮어씌웁니다.
-        ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
-
-        ImGui::SetNextWindowBgAlpha(0.0f);
-
-        // 플래그 조합 (OR 연산자 | 사용)
-        // ImGuiWindowFlags_NoMove: 마우스로 드래그 불가
-        // ImGuiWindowFlags_NoResize: 크기 조절 불가
-        // ImGuiWindowFlags_NoCollapse: 최소화(접기) 불가
-        // ImGuiWindowFlags_NoTitleBar: (옵션) 제목 표시줄을 없애서 그냥 버튼만 둥둥 떠있게 함
-        ImGuiWindowFlags mainBtnFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
-
-        // [추가할 플래그]
-        // ImGuiWindowFlags_NoBringToFrontOnFocus : "포커스를 받아도(클릭해도) 맨 앞으로 나오지 마라"
-        mainBtnFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-        // 배경 테두리 없애기
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-        if (ImGui::Begin("Main Menu", NULL, mainBtnFlags)) {
-
-            // =========================================================
-            // [추가] 비활성화 조건 설정
-            // 로그인 창(show_login_window)이나 회원가입 창(show_sign_window) 중 
-            // 하나라도 켜져 있으면 true가 되어 버튼들이 잠깁니다.
-            // =========================================================
-            bool should_disable = show_login_window || show_sign_window || is_login_loading || is_signup_loading;
-
-            // 비활성화 시작! (여기서부터 그려지는 모든 UI는 잠김 상태가 됨)
-            ImGui::BeginDisabled(should_disable);
-
-            //===========
-            // 로그인 버튼
-            //===========
-
-            // 1. 색상 변경 시작 (Push)
-            // 인자: (바꿀 대상, 색상값(R, G, B, A)) - 0.0f ~ 1.0f 사이 값
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));        // 평소 색 
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f)); // 마우스 올렸을 때 
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));  // 눌렀을 때 
-
-            if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
-                show_login_window = true;
-                show_sign_window = false;
-            }
-
-            // 텍스처 불러오면 이 함수를 호출할 것.
-            //if (ImageButtonWithText(0, (const char*)u8"로그인", ImVec2(200, 55))) {
-            //    show_login_window = true;
-            //    show_sign_window = false;
-            //}
-
-            // 3. 색상 복구 (Pop)
-            // Push를 3번 했으니 Pop도 3번 해야 함!
-            ImGui::PopStyleColor(3);
-
-            // 버튼 사이에 간격 좀 주기
-            //ImGui::SameLine(); // 옆으로 나란히 배치하고 싶으면 이 줄 추가 (없으면 아래로 배치)
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            //============
-            // 회원가입 버튼
-            //============
-
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));        // 평소 색 
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f)); // 마우스 올렸을 때 
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));  // 눌렀을 때 
-
-            if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 55))) {
-                show_sign_window = true;
-                show_login_window = false;
-            }
-            ImGui::PopStyleColor(3);
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            //============
-            // 나가기 버튼
-            //============
-
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));        // 평소 색 
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f)); // 마우스 올렸을 때 
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));  // 눌렀을 때 
-
-            if (ImGui::Button((const char*)u8"나가기", ImVec2(200, 55))) {
-                g_run = false;
-            }
-            ImGui::PopStyleColor(3);
-
-            // =========================================================
-            // 비활성화 종료
-            // 반드시 EndDisabled를 호출해야 이후 UI(로그인 창 등)는 정상적으로 클릭됩니다.
-            // =========================================================
-            ImGui::EndDisabled();
-
-            ImGui::End();
-        }
-
-        // 이걸 하지 않으면 다른 UI들도 테두리가 없어진다.
-        ImGui::PopStyleVar();
-    }
-
-    // =========================================================
-    // 2. 로그인 창 (고정시키기)
-    // =========================================================
-    if (show_login_window) {
-
-        // 화면 중앙에 고정 (해상도에 따라 좌표는 조절하세요)
-        ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always); // 크기 고정
-
-        // 로그인 창용 플래그 (제목 표시줄은 남겨둠)
-        ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-        if (ImGui::Begin((const char*)u8"로그인", &show_login_window, loginFlags)) {
-
-            // 이미지 그리기
-            //if (m_loginImageHandle.ptr != 0) {
-            //    // 이미지 가운데 정렬을 위한 계산 (창 너비 - 이미지 너비) / 2
-            //    float windowWidth = ImGui::GetWindowSize().x;
-            //    float imageWidth = 380.0f;
-            //    ImGui::SetCursorPosX((windowWidth - imageWidth) * 0.5f);
-            //    ImGui::Image((ImTextureID)m_loginImageHandle.ptr, ImVec2(imageWidth, 100));
-            //}
-
-            //ImGui::Spacing();
-
-            static char id[64] = "";
-            static char pw[64] = "";
-
-            ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
-            ImGui::Separator();
-
-            // 가로 길이를 200픽셀로 고정
-            //ImGui::SetNextItemWidth(200.0f);
-            
-            // 만약 창 너비의 50%만큼만 쓰고 싶다면?
-            //ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
-
-            // 입력창 배경색을 회색으로 설정 (R, G, B를 0.2f로 설정하면 어두운 회색이 됩니다)
-            // 인자: (대상, ImVec4(R, G, B, A))
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));          // 평상시 배경
-            
-            // 이후에 나오는 모든 아이템의 길이를 230으로 설정
-            ImGui::PushItemWidth(230.0f);
-
-            ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
-            ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
-
-            // 설정 해제 (원래 길이로 복구)
-            ImGui::PopItemWidth();
-
-            // 스타일 복구 (3개를 Push했으니 3개를 Pop)
-            ImGui::PopStyleColor(1);
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            // 버튼도 가운데 정렬
-            float btnWidth = 380.0f;
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
-
-            if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50)))
-            {
-                printf("Login Requested! ID: %s\n", id);
-                // SendPacket(id, pw)...
-
-                C_LOGIN loginPkt;
-                COPY_STRING(loginPkt.id, id);
-                COPY_STRING(loginPkt.password, pw);
-                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
-
-                auto session = CServerSessionManager::GetInstance().GetServerSession();
-                if (session)
-                    CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
-
-                memset(id, 0, sizeof(id));
-                memset(pw, 0, sizeof(pw));
-                show_login_window = false;
-                is_login_loading = true;
-            }
-        }
-
-        ImGui::End();
-    }
-    else if (show_sign_window) {
-        // 화면 중앙에 고정 (해상도에 따라 좌표는 조절하세요)
-        ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(390, 230), ImGuiCond_Always); // 크기 고정
-
-        // 로그인 창용 플래그 (제목 표시줄은 남겨둠)
-        ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-        if (ImGui::Begin((const char*)u8"회원가입", &show_sign_window, loginFlags)) {
-            // 이미지 그리기
-            //if (m_loginImageHandle.ptr != 0) {
-            //    // 이미지 가운데 정렬을 위한 계산 (창 너비 - 이미지 너비) / 2
-            //    float windowWidth = ImGui::GetWindowSize().x;
-            //    float imageWidth = 380.0f;
-            //    ImGui::SetCursorPosX((windowWidth - imageWidth) * 0.5f);
-            //    ImGui::Image((ImTextureID)m_loginImageHandle.ptr, ImVec2(imageWidth, 100));
-            //}
-
-            //ImGui::Spacing();
-
-            static char id[64] = "";
-            static char pw[64] = "";
-            static char name[64] = "";
-
-            ImGui::Text((const char*)u8"ID / PW / Name 을 입력하세요.");
-            ImGui::Separator();
-
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));          // 평상시 배경
-
-            ImGui::PushItemWidth(230.0f);
-
-            ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
-            ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
-            ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
-
-            ImGui::PopItemWidth();
-
-            ImGui::PopStyleColor(1);
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            // 버튼도 가운데 정렬
-            float btnWidth = 380.0f;
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
-
-            if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
-
-                printf("가입 신청 ID: %s\n", id);
-                // SendPacket(id, pw)...
-
-                C_SIGNUP signUpPkt;
-                COPY_STRING(signUpPkt.id, id);
-                COPY_STRING(signUpPkt.password, pw);
-                COPY_STRING(signUpPkt.name, name);
-                auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
-
-                auto session = CServerSessionManager::GetInstance().GetServerSession();
-                if (session)
-                    CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
-
-                memset(id, 0, sizeof(id));
-                memset(pw, 0, sizeof(pw));
-                memset(name, 0, sizeof(name));
-                show_sign_window = false;
-                is_signup_loading = true;
-            }
-        }
-        ImGui::End();
-    }
-
-    // 둘 중 하나라도 true면 팝업을 열라고 명령
-    if (is_login_loading || is_signup_loading) {
-
-        ImGui::OpenPopup("LoadingPopup");
-
-        // 화면 중앙 설정
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-        // 팝업 그리기 (코드는 딱 한 번만 존재함!)
-        if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
-            // 뱅글이 그리기
-            LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
-
-            ImGui::Spacing();
-            ImGui::SameLine();
-            ImGui::Spacing();
-            ImGui::SameLine();
-
-            // 상황에 따라 텍스트를 다르게 보여줄 수도 있음 (선택 사항)
-            if (is_login_loading)
-                ImGui::Text((const char*)u8"로그인 중입니다...");
-            else
-                ImGui::Text((const char*)u8"가입 처리 중입니다...");
-
-            ImGui::Spacing();
-
-            // 취소 버튼
-            if (ImGui::Button("Cancel")) {
-
-                // 무엇이 로딩 중이었든 둘 다 꺼버림
-                is_login_loading = false;
-                is_signup_loading = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-    }
-}
-
-void CImGuiManager::DrawTitleUI()
-{
-    // Title Scene 에서만 로그인 UI를 그린다. 아니라면 return!
-    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE)
-        return;
-
-    // 배경과 타이틀 그리기
-    DrawTitle();
-
-    // =========================================
-    // 1. 메인 버튼 창 (상태에 따라 버튼 내용이 바뀜)
-    // =========================================
-    if (!show_login_window && !show_sign_window && !is_login_loading && !is_signup_loading && !show_room_list_window) {
-        DrawTitleMainWindow();
-    }
-
-    // ============
-    // 2. 로그인 창
-    // ============
-    if (show_login_window) {
-        DrawSignInWidow();
-    }
-
-    // =============
-    // 3. 회원가입 창
-    // =============
-    if (show_sign_window) {
-        DrawSignUpWindow();
-    }
-
-    // ============
-    // 4. 로딩 팝업
-    // ============
-
-    if (is_login_loading || is_signup_loading || is_room_enter_loading 
-        || is_room_create_loading || is_single_loading) {
-        DrawLoadingPopUp();
-    }
-
-    // =================
-    // 5. 로딩 팝업 결과
-    // =================
-
-    if (signup_alarm || is_signin_success) {
-        DrawLoadingPopUpResult();
-    }
-
-    // ==============
-    // 6. 룸 매칭 화면
-    // ==============
-    if (show_room_list_window) {
-        DrawRoomListUI();
-    }
-}
-
-void CImGuiManager::DrawTitleMainWindow()
-{
-    // 멀티플레이 메뉴(로그인/가입)를 보여줄지 여부
-    // false: [싱글] [멀티] [나가기]
-    // true : [로그인] [회원가입] [뒤로가기]
-    static bool show_multiplayer_select = false;
-
-    // Always로 설정하면 매 프레임 위치/크기를 강제로 덮어씌웁니다.
-    ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
-    ImGui::SetNextWindowBgAlpha(0.0f); // 배경 투명
-
-    // 플래그 설정
-    ImGuiWindowFlags mainBtnFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
-    mainBtnFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-    // 배경 테두리 없애기
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-    if (ImGui::Begin("Main Menu", NULL, mainBtnFlags))
-    {
-        // [비활성화 조건] 
-        // 로그인/회원가입 창이 떴거나 로딩 중이면 뒤에 있는 버튼 클릭 금지
-        bool should_disable = show_login_window || show_sign_window || is_login_loading || is_signup_loading;
-        ImGui::BeginDisabled(should_disable);
-
-        // 버튼 스타일 공통 적용 (회색)
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.5f, 0.5f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));
-
-        // =====================================
-        // [CASE 1] 초기 화면: 싱글 / 멀티 / 나가기
-        // =====================================
-        if (!show_multiplayer_select) {
-            DrawFirstMenuButton(show_multiplayer_select);
-        }
-        // ====================================================
-        // [CASE 2] 멀티 메뉴(오프라인): 로그인 / 회원가입 / 뒤로가기
-        // ====================================================
-        else if (!is_online) {
-            DrawSecondMenuButton(show_multiplayer_select);
-        }
-        // ===================================================
-        // [CASE 3] 멀티 메뉴(온라인): 방 검색 / 로그아웃 / 뒤로가기
-        // ===================================================
-        else {
-            DrawThirdMenuButton(show_multiplayer_select);
-        }
-
-        ImGui::PopStyleColor(3); // 스타일 복구
-        ImGui::EndDisabled(); // 비활성화 종료
-        ImGui::End();
-    }
-    ImGui::PopStyleVar(); // 테두리 스타일 복구
-}
-
-void CImGuiManager::DrawFirstMenuButton(bool& menu)
-{
-    // 1. 싱글 플레이
-    if (!is_single_loading && ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
-        printf("싱글 플레이 입장.\n");
-
-        is_single_loading = true;
-        CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
-    }
-    ImGui::Spacing(); 
-    ImGui::Spacing();
-
-    // 2. 멀티 플레이 (누르면 메뉴 변경)
-    if (ImGui::Button((const char*)u8"멀티 플레이", ImVec2(200, 55))) {
-        menu = true; // 상태 변경!
-    }
-    ImGui::Spacing(); 
-    ImGui::Spacing();
-
-    // 3. 나가기
-    if (ImGui::Button((const char*)u8"나가기", ImVec2(200, 55))) {
-        PostQuitMessage(0); // 프로그램 종료
-    }
-}
-
-void CImGuiManager::DrawSecondMenuButton(bool& menu)
-{
-    // 1. 로그인
-    if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
-        show_login_window = true;
-        show_sign_window = false;
-    }
-    ImGui::Spacing(); ImGui::Spacing();
-
-    // 2. 회원가입
-    if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 55))) {
-        show_sign_window = true;
-        show_login_window = false;
-    }
-    ImGui::Spacing(); ImGui::Spacing();
-
-    // 3. 뒤로가기 (누르면 초기 화면으로)
-    if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
-        menu = false; // 상태 원복!
-    }
-}
-
-void CImGuiManager::DrawThirdMenuButton(bool& menu)
-{
-    // 1. 방 검색
-    if (ImGui::Button((const char*)u8"방 검색", ImVec2(200, 55))) {
-        show_login_window = false;
-        show_sign_window = false;
-        show_room_list_window = true;
-    }
-    ImGui::Spacing();  ImGui::Spacing();
-
-    // 2. 로그아웃
-    if (ImGui::Button((const char*)u8"로그아웃", ImVec2(200, 55))) {
-        C_LOGOUT logOutPkt;
-        auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
-        auto user = serverSession->GetUser();
-        logOutPkt.user_id = user->GetUserID();
-        auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGOUT>(logOutPkt);
-        serverSession->DoSend(sendBuffer);
-    }
-    ImGui::Spacing();  ImGui::Spacing();
-
-    // 3. 뒤로가기 (누르면 초기 화면으로)
-    if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
-        menu = false; // 상태 원복!
-    }
-}
-
-void CImGuiManager::DrawTitle()
-{
-    if (is_title_draw && !show_room_list_window) {
-
-        // =========================================================
-        // [배경 색 덧칠하기]
-        // =========================================================
-        // 1. 전체 화면의 크기를 가져옵니다.
-        ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-
-        // 2. 배경 전용 도화지(DrawList)를 가져와서 사각형을 그립니다.
-        // 인자: (좌상단 좌표, 우하단 좌표, 색상(RGBA))
-        // 색상 예: ImGui::GetColorU32(ImVec4(0.1f, 0.1f, 0.1f, 1.0f)) -> 어두운 회색
-        ImGui::GetBackgroundDrawList()->AddRectFilled(
-            ImVec2(0, 0),
-            screenSize,
-            ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
-        );
-
-        // =========================================================
-        //  게임 타이틀 "UNDEAD" 그리기
-        // =========================================================
-
-        // [고정] 위치와 크기 강제 고정 (Always)
-        // 화면 중앙쯤에 예쁘게 배치 (좌표는 크기에 맞게 수정)
-        ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(760, 210), ImGuiCond_Always);
-
-        // [배경 제거] 배경색을 완전 투명하게 (Alpha = 0.0f)
-        ImGui::SetNextWindowBgAlpha(0.0f);
-
-        // 3. [플래그 설정] 
-        // ImGuiWindowFlags_NoDecoration: 타이틀바(Debug 글씨), 테두리, 리사이즈 그립 등을 싹 없애는 강력한 플래그
-        // ImGuiWindowFlags_NoMove: 마우스로 이동 불가
-        // ImGuiWindowFlags_NoBringToFrontOnFocus: 클릭해도 앞으로 튀어나오지 않음
-        ImGuiWindowFlags mainFlags = ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-        // 창 시작 ("Main Menu"라는 이름은 내부 식별용일 뿐, NoDecoration 때문에 화면엔 안 나옴)
-        if (ImGui::Begin("Title", NULL, mainFlags)) {
-
-            // 타이틀 폰트로 갈아 끼우기 (없으면 기본 폰트 사용)
-            if (title_font)
-                ImGui::PushFont(title_font);
-
-            const char* titleText = "UNDEAD";
-
-            // 글자 너비 계산 (가운데 정렬을 위해)
-            // 폰트를 Push한 상태에서 계산해야 정확한 크기가 나옵니다.
-            float textWidth = ImGui::CalcTextSize(titleText).x;
-            float windowWidth = ImGui::GetWindowSize().x;
-
-            // 커서를 가운데로 이동: (창 너비 - 글자 너비) / 2
-            ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-
-            // 빨간색으로 "UNDEAD" 출력! (좀비 게임이니까 빨강 추천)
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));
-            ImGui::Text(titleText);
-            ImGui::PopStyleColor(); // 색상 복구
-
-            // 폰트 복구 (이제부터 그리는 건 다시 기본 폰트로)
-            if (title_font)
-                ImGui::PopFont();
-
-            // =========================================================
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-            //ImGui::Separator(); // 타이틀과 버튼 사이에 줄 긋기 (선택사항)
-            ImGui::Spacing();
-            ImGui::Spacing();
-            ImGui::Spacing();
-        }
-        ImGui::End();
-
-        ImGui::PopStyleVar();
-    }
-}
-
-void CImGuiManager::DrawSignInWidow()
-{
-    ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always);
-    ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-    if (ImGui::Begin((const char*)u8"로그인", &show_login_window, loginFlags)) {
-        static char id[64] = "";
-        static char pw[64] = "";
-
-        ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
-        ImGui::Separator();
-
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
-        ImGui::PushItemWidth(230.0f);
-        ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
-        ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
-        ImGui::PopItemWidth();
-        ImGui::PopStyleColor(1);
-
-        ImGui::Spacing(); ImGui::Spacing();
-
-        float btnWidth = 380.0f;
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
-
-        if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50))) {
-
-            printf("Login Requested! ID: %s\n", id);
-
-            C_LOGIN loginPkt;
-            COPY_STRING(loginPkt.id, id);
-            COPY_STRING(loginPkt.password, pw);
-            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
-
-            auto session = CServerSessionManager::GetInstance().GetServerSession();
-            if (session)
-                CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
-
-            memset(id, 0, sizeof(id));
-            memset(pw, 0, sizeof(pw));
-            show_login_window = false;
-            is_login_loading = true;
-        }
-    }
-    ImGui::End();
-}
-
-void CImGuiManager::DrawSignUpWindow()
-{
-    ImGui::SetNextWindowPos(ImVec2(210 * G_RATIO_X, 260 * G_RATIO_Y), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(390, 230), ImGuiCond_Always);
-    ImGuiWindowFlags loginFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-    if (ImGui::Begin((const char*)u8"회원가입", &show_sign_window, loginFlags)) {
-        static char id[64] = "";
-        static char pw[64] = "";
-        static char name[64] = "";
-
-        ImGui::Text((const char*)u8"ID / PW / Name 을 입력하세요.");
-        ImGui::Separator();
-
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));          // 평상시 배경
-
-        ImGui::PushItemWidth(230.0f);
-
-        ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
-        ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
-        ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
-
-        ImGui::PopItemWidth();
-
-        ImGui::PopStyleColor(1);
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        // 버튼도 가운데 정렬
-        float btnWidth = 380.0f;
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
-
-        if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
-
-            printf("가입 신청 ID: %s\n", id);
-
-            C_SIGNUP signUpPkt;
-            COPY_STRING(signUpPkt.id, id);
-            COPY_STRING(signUpPkt.password, pw);
-            COPY_STRING(signUpPkt.name, name);
-            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
-
-            auto session = CServerSessionManager::GetInstance().GetServerSession();
-            if (session)
-                CServerSessionManager::GetInstance().GetServerSession()->DoSend(sendBuffer);
-
-            memset(id, 0, sizeof(id));
-            memset(pw, 0, sizeof(pw));
-            memset(name, 0, sizeof(name));
-            show_sign_window = false;
-            is_signup_loading = true;
-        }
-    }
-    ImGui::End();
-}
-
-void CImGuiManager::DrawLoadingPopUp()
-{
-    if (!ImGui::IsPopupOpen("LoadingPopup")) {
-        ImGui::OpenPopup("LoadingPopup");
-    }
-
-    // BeginPopupModal은 OpenPopup("LoadingPopup")이 호출된 적이 있어야만 true를 반환합니다.
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        // 뱅글이 그리기
-        LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
-
-        ImGui::Spacing(); ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
-
-        if (is_login_loading)
-            ImGui::Text((const char*)u8"로그인 중입니다...");
-        else if (is_signup_loading)
-            ImGui::Text((const char*)u8"가입 처리 중입니다...");
-        else if (is_room_create_loading)
-            ImGui::Text((const char*)u8"방 생성 중입니다...");
-        else if (is_room_enter_loading)
-            ImGui::Text((const char*)u8"방 입장 중입니다...");
-        else if (is_single_loading)
-            ImGui::Text((const char*)u8"싱글 플레이 입장 중입니다...");
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Cancel")) {
-            is_login_loading = false;
-            is_signup_loading = false;
-            is_room_create_loading = false;
-            is_room_enter_loading = false;
-            is_single_loading = false;
-
-            ImGui::CloseCurrentPopup();
-
-            // 이건 테스트 임시용 (무조건 지울 것!)
-            //show_room_list_window = true;
-        }
-
-        ImGui::EndPopup();
-    }
-}
-
-void CImGuiManager::DrawLoadingPopUpResult()
-{
-    if (!ImGui::IsPopupOpen("SuccessPopup")) {
-        ImGui::OpenPopup("SuccessPopup");
-    }
-
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-    if (ImGui::BeginPopupModal("SuccessPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Spacing();
-        ImGui::SameLine();
-        ImGui::Spacing();
-        ImGui::SameLine();
-
-        if (is_signup_success && !is_signin_success)
-            ImGui::Text((const char*)u8"가입 성공!");
-        else if (!is_signup_success && !is_signin_success)
-            ImGui::Text((const char*)u8"가입 실패...!");
-
-        if (is_signin_success && !is_signup_success)
-            ImGui::Text((const char*)u8"로그인 성공!");
-        else if (!is_signin_success && is_signup_success)
-            ImGui::Text((const char*)u8"로그인 실패...!");
-
-        ImGui::Spacing();
-
-        if (ImGui::Button((const char*)u8"확인")) {
-
-            // 가입을 시도했고, 가입 성공하면
-            if (is_signup_success) {
-                is_signup_success = false;
-            }
-            else {
-                signup_alarm = false;
-            }
-
-            // 로그인을 시도했고, 로그인 성공하면
-            if (is_signin_success) {
-                is_signin_success = false;
-
-                // 룸 매칭 UI 화면으로 전환
-                show_room_list_window = true;
-
-                // 온라인 상태로 바꿈
-                is_online = true;
-            }
-
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-}
-
-void CImGuiManager::DrawRoomListUI()
-{
-    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    if (currentScene->GetSceneType() != SCENE_TYPE::TITLE) 
-        return;
-
-    // =================
-    //  메인 윈도우 시작
-    // =================
-    DrawRoomListMainWindow();
-}
-
-void CImGuiManager::DrawRoomListMainWindow()
-{
-    // 1. 전체 배경색 (파란색)
-    ImGui::GetBackgroundDrawList()->AddRectFilled(
-        ImVec2(0, 0), ImGui::GetIO().DisplaySize,
-        ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.4f)));
-
-    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
-    ImGui::SetNextWindowBgAlpha(0.0f); // 투명 배경
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoResize;
-
-    if (ImGui::Begin("MatchingWindow", NULL, windowFlags)) {
-
-        // -----------------------------------------------------
-        // 1. 타이틀 "UNDEAD"
-        // -----------------------------------------------------
-        ImGui::Spacing();
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        if (title_font2)
-            ImGui::PushFont(title_font2);
-
-        const char* titleText = "UNDEAD";
-        float windowWidth = ImGui::GetWindowSize().x;
-        float textWidth = ImGui::CalcTextSize(titleText).x;
-
-        ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-
-        // 글자색 검정 (0,0,0,1)
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-        ImGui::Text(titleText);
-        ImGui::PopStyleColor();
-
-        if (title_font2)
-            ImGui::PopFont();
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        // -----------------
-        // 2. 방 목록 테이블
-        // -----------------
-        DrawRoomListTable();
-
-        // ---------------
-        // 3. 새로고침 버튼
-        // ---------------
-        DrawRefreshButton();
-
-        // ----------------
-        // 4. 하단 버튼 3개
-        // ----------------
-        DrawThreeButton();
-
-        // ----------------
-        // 5. 팝업 (방 생성)
-        // ----------------
-        DrawRoomCreatePopUp();
-
-        // =====================================
-        //  파란 배경(메인 윈도우) 클릭 시 선택 해제
-        // =====================================
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
-            selected_room_id = 0;
-        }
-    }
-    ImGui::End();
-    ImGui::PopStyleVar();
-}
-
-void CImGuiManager::DrawRoomListTable()
-{
-    float windowWidth = ImGui::GetWindowSize().x;
-    float tableWidth = 700.0f * G_RATIO_X;
-    float tableHeight = 300.0f * G_RATIO_Y;
-
-    ImGui::SetCursorPosX((windowWidth - tableWidth) * 0.5f);
-
-    // 테이블 배경 (Child)
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.9f, 0.9f, 0.9f, 0.7f));
-
-    if (ImGui::BeginChild("TableArea", ImVec2(tableWidth, tableHeight), true, ImGuiWindowFlags_None)) {
-
-        static ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-
-        if (ImGui::BeginTable("RoomTable", 3, tableFlags)) {
-
-            ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f);
-            ImGui::TableSetupColumn((const char*)u8"방 제목", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn((const char*)u8"인원", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-
-            // 헤더 글자색 검정으로 변경
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 검정
-            ImGui::TableHeadersRow();
-            ImGui::PopStyleColor(2);
-
-            // 내용물 스타일
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.9f, 0.9f, 0.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(1.0f, 1.0f, 0.0f, 0.8f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // 검정
-            
-            int rowNum = 1;
-            for (const auto& room : room_vec) {
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); 
-                ImGui::Text("%d", rowNum++);
-
-                std::string utf8Name = CP949ToUTF8(room.room_name);
-
-                // "방제목##방ID" 형태로 문자열을 만듭니다.
-                // 예: "초보환영##10" -> 화면엔 "초보환영"만 보이고, ID는 10번으로 구분됨
-                std::string uniqueLabel = utf8Name + "##" + std::to_string(room.room_id);
-
-                ImGui::TableSetColumnIndex(1);
-
-                bool is_selected = (selected_room_id == room.room_id);
-                if (ImGui::Selectable(uniqueLabel.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-                    selected_room_id = room.room_id;
-                    printf("room ID: %d\n", selected_room_id);
-                }
-
-                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                    selected_room_id = room.room_id;
-                    // SendEnterRoomPacket(selected_room_id); 
-                }
-
-                ImGui::TableSetColumnIndex(2); ImGui::Text("%d / %d", room.total_player, room.max_player);
-            }
-            ImGui::PopStyleColor(4);
-            ImGui::EndTable();
-        }
-
-        // ===============================
-        // 테이블 영역 빈 곳 클릭 시 선택 해제
-        // ===============================
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
-        {
-            selected_room_id = 0;
-        }
-
-    }
-    ImGui::EndChild();
-    ImGui::PopStyleColor(); // ChildBg 복구
-}
-
-void CImGuiManager::DrawRefreshButton()
-{
-    float windowWidth = ImGui::GetWindowSize().x;
-    float tableWidth = 700.0f * G_RATIO_X;
-    float tableHeight = 300.0f * G_RATIO_Y;
-    float refreshBtnSize = 60.0f;
-
-    ImGui::SetCursorPosX((windowWidth + tableWidth) * 0.5f - refreshBtnSize);
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
-
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
-    // 버튼 글자색 지정을 위해 스타일 추가 (검정)
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-    if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(refreshBtnSize, refreshBtnSize))) {
-        // 새로고침 로직
-        printf("새로고침\n");
-    }
-    ImGui::PopStyleColor(2); // Button, Text
-}
-
-void CImGuiManager::DrawThreeButton()
-{
-    ImGui::Spacing();
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    float windowWidth = ImGui::GetWindowSize().x;
-    float btnWidth = 200.0f * G_RATIO_X;
-    float btnHeight = 60.0f * G_RATIO_Y;
-    float spacing = 50.0f * G_RATIO_X;
-
-    float totalBtnWidth = (btnWidth * 3) + (spacing * 2);
-    ImGui::SetCursorPosX((windowWidth - totalBtnWidth) * 0.5f);
-
-    // 버튼 스타일
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.55f, 0.25f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.65f, 0.35f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.85f, 0.45f, 0.15f, 1.0f));
-    // 버튼 글자색 검정
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-    if (ImGui::Button((const char*)u8"방 만들기", ImVec2(btnWidth, btnHeight))) {
-        ImGui::OpenPopup("CreateRoom");
-    }
-    ImGui::SameLine(0, spacing);
-
-    if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
-        if (selected_room_id != 0) {
-            // 입장 로직
-            is_room_enter_loading = true;
-        }
-    }
-    ImGui::SameLine(0, spacing);
-
-    if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
-        // 뒤로가기 로직
-        show_room_list_window = false;
-    }
-
-    ImGui::PopStyleColor(4);
-}
-
-void CImGuiManager::DrawRoomCreatePopUp()
-{
-    float windowWidth = ImGui::GetWindowSize().x;
-
-    ImGui::SetNextWindowPos(ImVec2(windowWidth * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-    // 팝업 내부 글자색도 검정으로 설정하기 위해 스타일 Push
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-    if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-        static char roomName[128] = "";
-
-        ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
-        ImGui::Spacing();
-
-        ImGui::PushItemWidth(300.0f);
-        ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
-        ImGui::PopItemWidth();
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
-
-            auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
-            auto user = serverSession->GetUser();
-            int id = user->GetUserID();
-
-            // 방 이름이 비어있는지 체크
-            if (strlen(roomName) == 0) {
-                // 없다면 아래처럼 기본 이름을 세팅합니다.
-                sprintf_s(roomName, sizeof(roomName), "Unknown Room %d", id);
-            }
-
-            printf("방 생성 요청: %s\n", roomName);
-
-            C_CreateRoom createPkt;
-            createPkt.user_id = user->GetUserID();
-            COPY_STRING(createPkt.room_name, roomName);
-            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
-            serverSession->DoSend(sendBuffer);
-
-            memset(roomName, 0, sizeof(roomName));
-            ImGui::CloseCurrentPopup();
-            is_room_create_loading = true;
-        }
-        ImGui::SameLine();
-
-        if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
-            memset(roomName, 0, sizeof(roomName));
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-    ImGui::PopStyleColor(); // 팝업 텍스트 색상 복구
 }
 
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size)
@@ -1316,24 +858,18 @@ bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& 
     return clicked; // 클릭 여부 반환
 }
 
+// 헬퍼 함수 구현
 std::string CP949ToUTF8(const std::string& strCP949)
 {
     if (strCP949.empty()) return "";
-
-    // 1. CP949 -> WideChar (UTF-16)
     int nwLen = MultiByteToWideChar(949, 0, strCP949.c_str(), -1, NULL, 0);
     wchar_t* pwBuf = new wchar_t[nwLen];
     MultiByteToWideChar(949, 0, strCP949.c_str(), -1, pwBuf, nwLen);
-
-    // 2. WideChar -> UTF-8
     int nLen = WideCharToMultiByte(CP_UTF8, 0, pwBuf, -1, NULL, 0, NULL, NULL);
     char* pBuf = new char[nLen];
     WideCharToMultiByte(CP_UTF8, 0, pwBuf, -1, pBuf, nLen, NULL, NULL);
-
     std::string strUTF8(pBuf);
-
     delete[] pwBuf;
     delete[] pBuf;
-
     return strUTF8;
 }

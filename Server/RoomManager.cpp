@@ -15,29 +15,19 @@ CRoomManager::~CRoomManager()
 
 void CRoomManager::Update(const float elapsedTime)
 {
+	lock_guard<mutex> lg(rooms_lock);
 	for (auto& [id, room] : rooms)
 	{
-		for (auto& scene : room->GetScenes())
-		{
-			if (scene)
-			{
-				scene->Update(elapsedTime);
-			}
-		}
+		room->Update(elapsedTime);
 	}
 }
 
 void CRoomManager::SendResults()
 {
+	lock_guard<mutex> lg(rooms_lock);
 	for (auto& [id, room] : rooms)
 	{
-		for (auto& scene : room->GetScenes())
-		{
-			if (scene)
-			{
-				scene->SendResults();
-			}
-		}
+		room->SendResults();
 	}
 }
 
@@ -65,6 +55,7 @@ uint32 CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	room->GetScenes()[(UINT)SCENE_TYPE::LOBBY]->EnterScene(player);
 
 	// 방 map에 저장
+	lock_guard<mutex> lg(rooms_lock);
 	rooms[room->GetRoomID()] = std::move(room);
 
 	return roomId;

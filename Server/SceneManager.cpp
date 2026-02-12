@@ -57,7 +57,7 @@ void CSceneManager::SendResults()
 			scene->SendResults();
 	}
 #else
-	// TitleScene은 항상 결과전송 (뭔가있을때만)
+	// TitleScene은 항상 결과전송
 	title_scene->SendResults();
 #endif
 

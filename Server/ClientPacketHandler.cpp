@@ -66,14 +66,6 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 		, &CTitleScene::HandleLogIn
 		, pkt);
 
-	const auto& users = CSceneManager::GetInstance().GetTitleScene()->GetUsers();
-	for (auto& user : users) {
-		auto session = user.second->GetSession();
-		if (session) {
-
-		}
-	}
-
 #endif
 
 	return true;
