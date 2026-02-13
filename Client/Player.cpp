@@ -11,6 +11,7 @@
 // Player
 CPlayer::CPlayer()
 	: CCharacter()
+    , room_id(-1)
 {
 	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -46,7 +47,8 @@ void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
 void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
 {
     // 데이터가 2개 미만이면 보간 불가능
-    if (interpolation_deq.size() < 2) return;
+    if (interpolation_deq.size() < 2) 
+        return;
 
     // ---------------------------------------------------------
     // 1. 시간 동기화 및 타겟 시간 설정

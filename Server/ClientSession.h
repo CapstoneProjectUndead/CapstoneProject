@@ -2,6 +2,7 @@
 #include <ServerEngine\Session.h>
 
 class CPlayer;
+class CUser;
 
 class CClientSession :
     public Session
@@ -17,10 +18,9 @@ public:
 	virtual void			ProcessPacket(std::shared_ptr<Session>, char*, int32 pktSize) override;
 
 public:
-	shared_ptr<CPlayer> GetPlayer() { return player; }
-	void SetPlayer(shared_ptr<CPlayer> pl) { player = pl; }
+	shared_ptr<CUser> GetUser() { return user; }
+	void SetUser(shared_ptr<CUser> _user) { user = _user; }
 
 private:
-	shared_ptr<CPlayer>		player;
+	shared_ptr<CUser>		user;
 };
-

@@ -56,7 +56,7 @@ void CScene::SendPlayersResults()
 		S_Move movePkt;
 
 		movePkt.last_seq_num = player->GetLastSequence();
-		movePkt.info.id = player->GetID(); // "움직인 플레이어"의 ID
+		movePkt.info.player_id = player->GetID(); // "움직인 플레이어"의 ID
 
 		movePkt.info.x = player->GetPosition().x;
 		movePkt.info.y = player->GetPosition().y;
@@ -104,6 +104,15 @@ void CScene::SendPlayersCheckPing()
 	}
 }
 
+bool CScene::HasPlayers()
+{
+	lock_guard<mutex> lg(players_lock);
+	if (!players.empty())
+		return true;
+	else
+		return false;
+}
+
 void CScene::BroadCast(SendBufferRef sendBuffer)
 {
 	lock_guard<mutex> lg(players_lock);
@@ -140,7 +149,7 @@ void CScene::LeaveScene(uint64 playerId)
 	players.erase(playerId);
 
 	S_RemovePlayer removePkt;
-	removePkt.info.id = playerId;
+	removePkt.info.player_id = playerId;
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_RemovePlayer>(removePkt);
 	
 	for (auto& player : players)

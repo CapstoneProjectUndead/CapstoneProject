@@ -4,17 +4,17 @@
 #include <MySQL/jdbc/cppconn/exception.h>
 #include <MySQL/jdbc/cppconn/prepared_statement.h>
 
-class DBManager
+class CDBManager
 {
 private:
-    DBManager();
-    DBManager(const DBManager&) = delete;
+    CDBManager();
+    CDBManager(const CDBManager&) = delete;
 
 public:
-    ~DBManager();
+    ~CDBManager();
 
-    static DBManager& GetInstance() {
-        static DBManager instance;
+    static CDBManager& GetInstance() {
+        static CDBManager instance;
         return instance;
     }
 

@@ -5,6 +5,10 @@
 #include "SceneManager.h"
 #include "LobbyScene.h"
 #include "Player.h"
+#include "TitleScene.h"
+#include "User.h"
+#include "RoomManager.h"
+
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -30,34 +34,93 @@ bool Handle_C_PING(shared_ptr<Session> session, C_Ping& pkt)
 
 bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 {
-	auto player = CAST_CS(session)->GetPlayer();
-	if (!player) 
+	auto user = CAST_CS(session)->GetUser();
+	if (!user)
 		return true;
 
 	// 현재 시간 - 패킷에 담겨 돌아온 '보냈던 시간'
 	float rtt = g_server_total_time - pkt.server_send_time;
 
 	// 너무 튀는 값 방지를 위한 보정 (Moving Average)
-	player->UpdatePing(rtt);
+	user->GetPlayer()->UpdatePing(rtt);
 
 	return true;
 }
 
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
+#ifdef LOBBY_SCENE_TEST
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
-
+	
 	activeScene->PushPacketJob(session
 		, (CLobbyScene*)activeScene
 		, &CLobbyScene::EnterPlayer
+		, pkt);
+#else
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
+
+	titleScene->PushPacketJob(session
+		, (CTitleScene*)titleScene
+		, &CTitleScene::HandleLogIn
+		, pkt);
+
+#endif
+
+	return true;
+}
+
+bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt)
+{
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
+
+	titleScene->PushPacketJob(session
+		, (CTitleScene*)titleScene
+		, &CTitleScene::HandleLogOut
 		, pkt);
 
 	return true;
 }
 
+bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
+{
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
+
+	titleScene->PushPacketJob(session
+		, (CTitleScene*)titleScene
+		, &CTitleScene::HandleSignUp
+		, pkt);
+
+	return true;
+}
+
+bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
+{
+	auto& roomManger = CRoomManager::GetInstance();
+	roomManger.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
+	return true;
+}
+
+bool Handle_C_UPDATEROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
+{
+	CRoomManager::GetInstance().SendRoomList(session);
+	return true;
+}
+
+bool Handle_C_ENTERROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
+{
+	auto user = CAST_CS(session)->GetUser();
+	assert(user->GetUserID() == pkt.user_id);
+	CRoomManager::GetInstance().EnterRoom(user, pkt.room_id);
+	return true;
+}
+
 bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 {
+#ifdef LOBBY_SCENE_TEST
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 
@@ -67,6 +130,19 @@ bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 		&CLobbyScene::MovePlayer,
 		pkt
 	);
+#else
+	CRoom* room = CRoomManager::GetInstance().FindRoomLock(pkt.room_id);
+	CScene* activeScene = room->GetScenes()[(UINT)pkt.scene_type].get();
+	assert(activeScene);
+
+	activeScene->PushPacketJob(
+		session,
+		(CLobbyScene*)activeScene,
+		&CLobbyScene::MovePlayer,
+		pkt
+	);
+
+#endif
 
 	return true;
 }

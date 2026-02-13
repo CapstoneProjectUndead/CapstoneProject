@@ -9,3 +9,13 @@
 #define GET_CMD_LIST gGameFramework.GetCommandList().Get()
 
 #define IS_CONNECT true == CNetworkManager::GetInstance().GetClientService()->GetConnection()
+
+#define COPY_STRING(dest, src)  memset(dest, 0, sizeof(dest)); memcpy(dest, src, strlen(src));
+
+#define G_RATIO_X (ImGui::GetIO().DisplaySize.x / FRAME_BUFFER_WIDTH)
+#define G_RATIO_Y (ImGui::GetIO().DisplaySize.y / FRAME_BUFFER_HEIGHT)
+
+#define GET_SERVER_SESSION CServerSessionManager::GetInstance().GetServerSession();
+#define SERVER_SESSION CServerSessionManager::GetInstance().GetServerSession()
+
+#define MAKE_SEND_BUFFER(pkt) CServerPacketHandler::MakeSendBuffer(pkt);

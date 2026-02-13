@@ -6,6 +6,7 @@
 #include "NetworkManager.h"
 #include "Movement.h"
 #include "NetworkClockManager.h"
+#include "User.h"
 
 #undef min
 #undef max
@@ -162,7 +163,8 @@ void CMyPlayer::RecordClientFrameHistory(const ClientFrameHistory& history)
 void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 {
 	inputPkt.seq_num = ++client_seq_counter;
-	inputPkt.info.id = obj_id;
+	inputPkt.info.player_id = obj_id;
+	inputPkt.room_id = room_id;
 	inputPkt.info.w = input.w;
 	inputPkt.info.a = input.a;
 	inputPkt.info.s = input.s;
@@ -170,6 +172,7 @@ void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 	inputPkt.info.yaw = yaw;
 	inputPkt.info.pitch = pitch;
 	inputPkt.info.state = state;
+	inputPkt.scene_type = current_scene_type;
 
 	// 서버 전송
 	if (auto s = session.lock())

@@ -10,6 +10,9 @@
 #include "SceneManager.h"
 #include "LobbyScene.h"
 
+#include "ImGuiManager.h"
+#include "TitleScene.h"
+
 extern HWND ghWnd;
 
 CGameFramework::CGameFramework()
@@ -40,6 +43,11 @@ bool CGameFramework::OnCreate()
 
 	// CKeyManager 초기화
 	CKeyManager::GetInstance().Init();
+
+	// ImGuiManager 초기화
+	// bufferCount: 더블 버퍼링이면 2, 트리플이면 3 (SwapchainDesc 확인 필요)
+	// format: 보통 DXGI_FORMAT_R8G8B8A8_UNORM
+	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	return true;
 }
@@ -261,17 +269,19 @@ void CGameFramework::BuildObjects()
 {
 	command_list->Reset(command_allocator.Get(), NULL);
 
-	// 씬 객체 생성
+	// 모든 씬 객체 생성
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE] = std::make_unique<CTitleScene>();
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
 
-	// 방금 만든 Test Scene을 Active Scene으로 설정
-	CScene* lobbyScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
-	CSceneManager::GetInstance().SetActiveScene(lobbyScene);
+	// 시작 Scene은 항상 TitleScene 이지만,
+	// 해당 Scene 작업을 위해서, 여기서 유연하게 바꾸면 된다.
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
+	CSceneManager::GetInstance().SetActiveScene(activeScene);
 
 	// 서버와 연결 체크
 	// 서버와 연결되지 않았다면 Scene에서 생성할 오브젝트들 생성
-	if (lobbyScene && !IS_CONNECT)
-		lobbyScene->BuildObjects(d3d_device.Get(), command_list.Get());
+	if (activeScene && !IS_CONNECT)
+		activeScene->BuildObjects(d3d_device.Get(), command_list.Get());
 
 	// 그래픽 명령 리스트 명령 큐에 추가
 	command_list->Close();
@@ -282,8 +292,8 @@ void CGameFramework::BuildObjects()
 	waitForGpuComplete();
 
 	//그래픽 리소스들을 생성하는 과정에 생성된 업로드 버퍼들을 소멸시킨다.
-	if (lobbyScene)
-		lobbyScene->ReleaseUploadBuffers();
+	if (activeScene)
+		activeScene->ReleaseUploadBuffers();
 
 	timer.Reset();
 }
@@ -376,11 +386,19 @@ void CGameFramework::Update()
 
 	// Scene 오브젝트 Update
 	CSceneManager::GetInstance().Update();
+
+	// 씬 업데이트가 끝난 후, UI 업데이트 시작
+	// 여기서 ImGui::Button() 같은 코드들이 실행
+	CImGuiManager::GetInstance().Update();
 }
 
 void CGameFramework::Render()
 {
 	CSceneManager::GetInstance().Render(command_list.Get());
+
+	// ImGui 렌더링
+	// 반드시 Scene 렌더링 뒤, CommandEnd() 전에 호출해야 함
+	CImGuiManager::GetInstance().Render(command_list.Get());
 }
 
 void CGameFramework::CommandBegin()

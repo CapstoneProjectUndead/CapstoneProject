@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "ClientSession.h"
 #include "SceneManager.h"
+#include "User.h"
 #include "Player.h"
 #include "LobbyScene.h"
+#include "TitleScene.h"
+#include "RoomManager.h"
 
 
 CClientSession::CClientSession()
@@ -20,7 +23,10 @@ void CClientSession::OnConnected()
 
 void CClientSession::OnDisconnected()
 {
-	if (nullptr != player) {
+
+#ifdef LOBBY_SCENE_TEST
+	if (nullptr != user) {
+		auto player = user->GetPlayer();
 		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
 			CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
 			if (scene != nullptr) {
@@ -28,6 +34,27 @@ void CClientSession::OnDisconnected()
 			}
 		}
 	}
+#else
+	// User를 ClientSession에서도 관리하고 (ref 증가)
+	// Title 씬에서도 관리하고 있다. (ref 증가)
+
+	if (user != nullptr) {
+		// Title 씬에서 User 참조 끊기 (ref 감소)
+		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
+
+		auto player = user->GetPlayer();
+		if (player) {
+			auto& roomManager = CRoomManager::GetInstance();
+			roomManager.LeaveAndCleanupRoom(player);
+		}
+
+		// ClientSession에서 User 참조 끊기 (ref 감소)
+		// 여기서 User 소멸. (메모리 누수x)
+		user = nullptr;
+	}
+
+#endif
+
 }
 
 void CClientSession::ProcessPacket(std::shared_ptr<Session> session, char* buf, int32 pktSize)

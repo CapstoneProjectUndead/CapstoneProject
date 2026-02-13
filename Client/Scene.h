@@ -10,8 +10,8 @@ class CShader;
 class CScene
 {
 public:
-	CScene() = default;
-	~CScene() = default;
+	CScene(SCENE_TYPE type);
+	~CScene();
 
 	void ReleaseUploadBuffers();
 
@@ -19,29 +19,40 @@ public:
 
 	void AnimateObjects(float);
 
-	// 멤버 변수 set
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
+
+	// Scene 이 전환될 때, 호출 될 함수
+	virtual void Enter() abstract;
+	virtual void Exit() abstract;
+
+	// UI 그리기가 필요한 Scene들은 호출
+	virtual void DrawUI() {};
 
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);
 
+	// 멤버 변수 set
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }
 	void									SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }
 	void									SetCamera(std::shared_ptr<CCamera> _camera) { camera = _camera; }
 
-	auto& GetShaders() { return shaders; }
+	SCENE_TYPE								GetSceneType() const { return scene_type; }
+
+	auto&									GetShaders() { return shaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
 	std::unordered_map<uint32_t, size_t>&   GetIDIndex() { return id_To_Index; }
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 
 protected:
+	SCENE_TYPE								scene_type;
+
 	std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
 	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어
 	std::shared_ptr<CCamera>				camera;
 
-	std::vector<std::shared_ptr<CObject>>	objects;			// 다른 플레이어 or 오브젝트
+	std::vector<std::shared_ptr<CObject>>	objects;			// 다른 플레이어 or 몬스터 or 오브젝트
 	std::unordered_map<uint32_t, size_t>	id_To_Index;
 
 	std::unique_ptr<CLightManager> light;

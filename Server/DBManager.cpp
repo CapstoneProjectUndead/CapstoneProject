@@ -1,18 +1,18 @@
 #include "pch.h"
 #include "DBManager.h"
 
-DBManager::DBManager()
+CDBManager::CDBManager()
 	: driver(nullptr)
 {
 
 }
 
-DBManager::~DBManager()
+CDBManager::~CDBManager()
 {
 
 }
 
-void DBManager::Init()
+void CDBManager::Init()
 {
     //driver = get_driver_instance();
     //

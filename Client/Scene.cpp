@@ -8,6 +8,17 @@
 #include "Shader.h"
 #include "Scene.h"
 
+CScene::CScene(SCENE_TYPE type)
+	: scene_type(type)
+{
+
+}
+
+CScene::~CScene()
+{
+
+}
+
 void CScene::ReleaseUploadBuffers()
 {
 	for (const auto& obj : objects) {

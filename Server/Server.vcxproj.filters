@@ -43,6 +43,15 @@
     <Filter Include="DB">
       <UniqueIdentifier>{c9646e04-2265-42e6-93ae-9eac4a464ebc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\TitleScene">
+      <UniqueIdentifier>{dd356f9e-e8b2-4587-a82f-814865a372f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\User">
+      <UniqueIdentifier>{8bc688b8-ebfe-4fab-bb20-57339d064d5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Room">
+      <UniqueIdentifier>{fb528161-e0cd-4a54-af09-59736f3130f0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -83,6 +92,18 @@
     </ClCompile>
     <ClCompile Include="DBManager.cpp">
       <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="TitleScene.cpp">
+      <Filter>Scene\TitleScene</Filter>
+    </ClCompile>
+    <ClCompile Include="User.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomManager.cpp">
+      <Filter>Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Room.cpp">
+      <Filter>Room</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +154,18 @@
     </ClInclude>
     <ClInclude Include="DBManager.h">
       <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="TitleScene.h">
+      <Filter>Scene\TitleScene</Filter>
+    </ClInclude>
+    <ClInclude Include="User.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomManager.h">
+      <Filter>Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Room.h">
+      <Filter>Room</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
