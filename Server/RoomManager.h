@@ -24,10 +24,12 @@ public:
     void    SendResults();
 
 public:
-    uint32  CreateRoom(const string& name, shared_ptr<CUser> user);
-    CRoom*  FindRoom(uint32 roomId);
+    void  CreateRoom(const string& name, shared_ptr<CUser> user);
+    CRoom*  FindRoomLock(uint32 roomId);
+    CRoom*  FindRoomNoLock(uint32 roomId);
     void    DestroyRoomLock(uint32 roomId);
     void    DestroyRoomNoLock(uint32 roomId);
+    void    EnterRoom(shared_ptr<CUser> user, uint32 roomId);
     void    LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
     void    SendRoomList(shared_ptr<Session> session);
 

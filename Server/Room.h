@@ -24,6 +24,7 @@ public:
     uint16          GetCurrentPlayerCount() const { return room_info.current_player_count; }
     bool            GetIsGameStart() const { return room_info.is_game_start; }
 
+    bool            IsValid();
     bool            SearchPlayersAllScene();
 
 private:

@@ -36,7 +36,7 @@ void CRoomManager::SendResults()
 	}
 }
 
-uint32 CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
+void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 {
 	unique_ptr<CRoom> room = make_unique<CRoom>(name);
 
@@ -84,8 +84,6 @@ uint32 CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	createRoomPkt.room_info = info;
 	auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_CreateRoom>(createRoomPkt);
 	session->DoSend(sendBuffer);
-
-	return roomId;
 }
 
 void CRoomManager::DestroyRoomLock(uint32 roomId)
@@ -99,12 +97,32 @@ void CRoomManager::DestroyRoomNoLock(uint32 roomId)
 	rooms.erase(roomId);
 }
 
+void CRoomManager::EnterRoom(shared_ptr<CUser> user, uint32 roomId)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	CRoom* room = FindRoomNoLock(roomId);
+	if (room) {
+		if (room->IsValid()) {
+			// 유저 방ID Set
+			user->SetRoomID(roomId);
+
+			auto& scenes = room->GetScenes();
+			static_cast<CLobbyScene*>(scenes[(UINT)SCENE_TYPE::LOBBY].get())->EnterLobby(user);
+		}
+		else {
+			// fail 패킷 전송
+		}
+	}
+	else {
+		// fail 패킷 전송
+	}
+}
+
 void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 {
 	if (player->GetRoomID() != -1) {
 
-		lock_guard<mutex> lg(rooms_lock);
-		auto room = FindRoom(player->GetRoomID());
+		auto room = FindRoomLock(player->GetRoomID());
 		if (room) {
 			// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
 			room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
@@ -117,7 +135,14 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 	}
 }
 
-CRoom* CRoomManager::FindRoom(uint32 roomId)
+CRoom* CRoomManager::FindRoomLock(uint32 roomId)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	auto iter = rooms.find(roomId);
+	return iter->second.get();
+}
+
+CRoom* CRoomManager::FindRoomNoLock(uint32 roomId)
 {
 	auto iter = rooms.find(roomId);
 	return iter->second.get();
@@ -125,6 +150,7 @@ CRoom* CRoomManager::FindRoom(uint32 roomId)
 
 void CRoomManager::SendRoomList(shared_ptr<Session> session)
 {
+	lock_guard<mutex> lg(rooms_lock);
 	if (!rooms.empty()) {
 
 		int32 roomCount = rooms.size();

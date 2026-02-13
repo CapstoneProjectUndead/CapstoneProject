@@ -41,8 +41,6 @@ public:
     void StartLoading(LoadingType type) { loading_type = type; }
     void StopLoading() { loading_type = LoadingType::None; }
 
-    void SetPopUpResult(const ActionResult& result) { pop_up_result = result; }
-
     void ShowResultPopup(bool is_success, const std::string& msg);
     void CloseResultPopup();
 
@@ -55,6 +53,8 @@ public:
 
     int GetSelectedRoomID() { return selected_room_id; }
     void SetSelectedRoomID(int id) { selected_room_id = id; }
+
+    void SetIsEnter(bool result) { is_room_enter = result; }
 
 private:
     // UI 그리기 함수들
@@ -86,6 +86,7 @@ private:
 
     bool is_online = false;
     bool is_title_draw = true;
+    bool is_room_enter = false;
     bool need_reset_focus = false;
     bool show_room_create_popup = false;
     int  selected_room_id = 0;

@@ -19,15 +19,17 @@ enum : uint16
 	PKT_C_CREATE_ROOM = 10,
 	PKT_C_UPDATE_ROOM = 11,
 	PKT_C_ENTER_ROOM = 12,
-	PKT_S_CREATE_ROOM = 13,
-	PKT_S_ENTER_ROOM = 14,
-	PKT_S_ROOM_LIST = 15,
-	PKT_S_SPAWNPLAYER = 16,
-	PKT_S_ADDPLAYER = 17,
-	PKT_S_PLAYERLIST = 18,
-	PKT_S_REMOVEPLAYER = 19,
-	PKT_C_PLAYER_INPUT = 20,	// 서버 권위 방식 + 클라 예측 이동
-	PKT_S_MOVE = 21,
+	PKT_C_ENTER_SCENE = 13,
+	PKT_S_CREATE_ROOM = 14,
+	PKT_S_ENTER_ROOM = 15,
+	PKT_S_ENTER_SCENE = 16,
+	PKT_S_ROOM_LIST = 17,
+	PKT_S_SPAWNPLAYER = 18,
+	PKT_S_ADDPLAYER = 19,
+	PKT_S_PLAYERLIST = 20,
+	PKT_S_REMOVEPLAYER = 21,
+	PKT_C_PLAYER_INPUT = 22,	// 서버 권위 방식 + 클라 예측 이동
+	PKT_S_MOVE = 23,
 };
 
 // Custom Handlers
@@ -39,6 +41,7 @@ bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt);
 bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt);
 bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt);
 bool Handle_C_UPDATEROOM(shared_ptr<Session> session, C_UpdateRoom& pkt);
+bool Handle_C_ENTERROOM(shared_ptr<Session> session, C_EnterRoom& pkt);
 bool Handle_C_PLAYERINPUT(std::shared_ptr<Session> session, C_Input& pkt);
 
 class CClientPacketHandler
@@ -56,6 +59,7 @@ public:
 		GPacketHandler[PKT_C_SIGNUP] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_SIGNUP>(Handle_C_SIGNUP, session, buffer, len); };	
 		GPacketHandler[PKT_C_CREATE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_CreateRoom>(Handle_C_CREATEROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_UPDATE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_UpdateRoom>(Handle_C_UPDATEROOM, session, buffer, len); };
+		GPacketHandler[PKT_C_ENTER_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_EnterRoom>(Handle_C_ENTERROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_PLAYER_INPUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Input>(Handle_C_PLAYERINPUT, session, buffer, len); };
 	}
 

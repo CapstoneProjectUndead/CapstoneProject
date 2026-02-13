@@ -466,6 +466,8 @@ void CTitleScene::ShowResultPopup(bool is_success, const std::string& msg)
 
 void CTitleScene::CloseResultPopup()
 {
+    pop_up_result.is_visible = false;
+    pop_up_result.is_success = false;
 }
 
 void CTitleScene::DrawLoadingPopUpResult()
@@ -503,6 +505,20 @@ void CTitleScene::DrawLoadingPopUpResult()
                 else if (ui_state == TitleUIState::MultiSelect) {
                     is_online = false;
                 }
+                else if (ui_state == TitleUIState::RoomList) {
+
+                    if (is_room_enter) {
+                        is_room_enter = false;
+
+                        CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);                 
+                        auto player = CSceneManager::GetInstance().GetActiveScene()->GetMyPlayer();
+                        player->SetSession(SERVER_SESSION);
+                        player->SetUser(SERVER_SESSION->GetUser());
+                        player->SetRoomID(SERVER_SESSION->GetUser()->GetRoomID());
+                    }
+                }
+
+                CloseResultPopup();
             }
         }
         ImGui::EndPopup();
@@ -641,7 +657,9 @@ void CTitleScene::DrawRefreshButton()
 
 void CTitleScene::DrawThreeButton()
 {
-    ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+    ImGui::Spacing(); 
+    ImGui::Spacing(); 
+    ImGui::Spacing();
 
     float btnWidth = 200.0f;
     float btnHeight = 60.0f;
@@ -662,6 +680,16 @@ void CTitleScene::DrawThreeButton()
         if (selected_room_id != 0) {
             StartLoading(LoadingType::RoomEnter);
             // 입장 패킷 전송...
+            if (SERVER_SESSION) {
+                auto user = SERVER_SESSION->GetUser();
+                if (user) {
+                    C_EnterRoom enterPkt;
+                    enterPkt.room_id = selected_room_id;
+                    enterPkt.user_id = user->GetUserID();
+                    auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+                    SERVER_SESSION->DoSend(sendBuffer);
+                }
+            }
         }
     }
     ImGui::SameLine(0, spacing);

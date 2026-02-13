@@ -27,15 +27,17 @@ enum PacketType : uint16_t
 	_C_CREATE_ROOM = 10,
 	_C_UPDATE_ROOM = 11,
 	_C_ENTER_ROOM = 12,
-	_S_CREATE_ROOM = 13,
-	_S_ENTER_ROOM = 14,
-	_S_ROOM_LIST = 15,
-	_S_SPAWNPLAYER = 16,
-	_S_ADDPLAYER = 17,
-	_S_PLAYERLIST = 18,
-	_S_REMOVEPLAYER = 19,
-	_C_PLAYER_INPUT = 20,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 21,
+	_C_ENTER_SCENE = 13,
+	_S_CREATE_ROOM = 14,
+	_S_ENTER_ROOM = 15,
+	_S_ENTER_SCENE = 16,
+	_S_ROOM_LIST = 17,
+	_S_SPAWNPLAYER = 18,
+	_S_ADDPLAYER = 19,
+	_S_PLAYERLIST = 20,
+	_S_REMOVEPLAYER = 21,
+	_C_PLAYER_INPUT = 22,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 23,
 };
 
 #pragma pack (push, 1)
@@ -143,8 +145,18 @@ struct C_UpdateRoom : public PacketHeader
 {
 	C_UpdateRoom() : PacketHeader(sizeof(C_UpdateRoom), (UINT)PacketType::_C_UPDATE_ROOM) {}
 };
-static_assert(sizeof(C_UpdateRoom) == 4, "C_CreateRoom size mismatch!");
+static_assert(sizeof(C_UpdateRoom) == 4, "C_UpdateRoom size mismatch!");
 
+struct C_EnterRoom : public PacketHeader
+{
+	uint64 user_id;
+	uint32 room_id;
+
+	C_EnterRoom() : PacketHeader(sizeof(C_EnterRoom), (UINT)PacketType::_C_ENTER_ROOM) {}
+};
+static_assert(sizeof(C_EnterRoom) == 4 + 12, "C_EnterRoom size mismatch!");
+
+// S_CreateRoom 패킷은 필요가 없는 것 같다...
 struct S_CreateRoom : public PacketHeader
 {
 	NetRoomInfo room_info;
@@ -152,6 +164,16 @@ struct S_CreateRoom : public PacketHeader
 	S_CreateRoom() : PacketHeader(sizeof(S_CreateRoom), (UINT)PacketType::_S_CREATE_ROOM) {}
 };
 static_assert(sizeof(S_CreateRoom) == 4 + 57, "S_CreateRoom size mismatch!");
+
+struct S_EnterRoom : public PacketHeader
+{
+	bool success;
+	uint32 room_id;
+	SCENE_TYPE scene_type;
+
+	S_EnterRoom() : PacketHeader(sizeof(S_EnterRoom), (UINT)PacketType::_S_ENTER_ROOM) {}
+};
+static_assert(sizeof(S_EnterRoom) == 4 + 9, "S_EnterRoom size mismatch!");
 
 // 가변길이 패킷
 // 여러 방 정보를 패킷에 담아서 보낸다.
@@ -182,19 +204,21 @@ static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
 struct S_SpawnPlayer : public PacketHeader
 {
 	NetPlayerInfo info;
+	SCENE_TYPE scene_type;
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWNPLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 45, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 49, "S_SpawnPlayer size mismatch!");
 
 // 한명의 유저를 보낼 때 
 struct S_AddPlayer : public PacketHeader
 {
 	NetPlayerInfo info;
+	SCENE_TYPE scene_type;
 
 	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), (UINT)PacketType::_S_ADDPLAYER) {}
 };
-static_assert(sizeof(S_AddPlayer) == 4 + 45, "S_AddPlayer size mismatch!");
+static_assert(sizeof(S_AddPlayer) == 4 + 49, "S_AddPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -216,8 +240,9 @@ struct S_PLAYER_LIST : public PacketHeader
 		}
 	};
 
-	uint32  buff_offset;
-	uint32	player_count;
+	uint32		buff_offset;
+	uint32		player_count;
+	SCENE_TYPE	scene_type;
 
 	S_PLAYER_LIST(int32 count) : PacketHeader(sizeof(S_PLAYER_LIST), (UINT)PacketType::_S_PLAYERLIST) {}
 
@@ -230,7 +255,7 @@ struct S_PLAYER_LIST : public PacketHeader
 		return PlayerList(reinterpret_cast<Player*>(data), player_count);
 	}
 };
-static_assert(sizeof(S_PLAYER_LIST) == 4 + 8, "S_PLAYER_LIST size mismatch!");
+static_assert(sizeof(S_PLAYER_LIST) == 4 + 12, "S_PLAYER_LIST size mismatch!");
 
 struct S_RemovePlayer : public PacketHeader
 {
@@ -244,14 +269,17 @@ static_assert(sizeof(S_RemovePlayer) == 4 + 45, "S_RemovePlayer size mismatch!")
 struct C_Input : public PacketHeader
 {
 	uint64			seq_num;	// 클라이언트가 자체적으로 1씩 올리는 번호
-	float           duration;   // 클라이언트가 이 입력을 유지한 시간
 	NetPlayerInfo	info;
+	uint32			room_id;
+	SCENE_TYPE		scene_type;
+	float           duration;   // 클라이언트가 이 입력을 유지한 시간
 
 	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT)
+		, duration(0.0f)
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 57, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 65, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {

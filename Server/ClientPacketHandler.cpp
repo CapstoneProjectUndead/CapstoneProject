@@ -100,13 +100,21 @@ bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
 {
 	auto& roomManger = CRoomManager::GetInstance();
-	uint32 roomID = roomManger.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
+	roomManger.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
 	return true;
 }
 
 bool Handle_C_UPDATEROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
 {
 	CRoomManager::GetInstance().SendRoomList(session);
+	return true;
+}
+
+bool Handle_C_ENTERROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
+{
+	auto user = CAST_CS(session)->GetUser();
+	assert(user->GetUserID() == pkt.user_id);
+	CRoomManager::GetInstance().EnterRoom(user, pkt.room_id);
 	return true;
 }
 
@@ -123,6 +131,16 @@ bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 		pkt
 	);
 #else
+	CRoom* room = CRoomManager::GetInstance().FindRoomLock(pkt.room_id);
+	CScene* activeScene = room->GetScenes()[(UINT)pkt.scene_type].get();
+	assert(activeScene);
+
+	activeScene->PushPacketJob(
+		session,
+		(CLobbyScene*)activeScene,
+		&CLobbyScene::MovePlayer,
+		pkt
+	);
 
 #endif
 

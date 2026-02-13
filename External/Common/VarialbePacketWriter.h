@@ -55,6 +55,16 @@ public:
 		pkt->SetPacketType((UINT)PacketType::_S_PLAYERLIST);
 	}
 
+	S_PLAYERLIST_WRITE(SCENE_TYPE type)
+	{
+		sendBuffer = std::make_shared<SendBuffer>(4096);
+		bw = BufferWriter(sendBuffer->Buffer(), 4096);
+
+		pkt = bw.Reserve<S_PLAYER_LIST>(1);
+		pkt->SetPacketType((UINT)PacketType::_S_PLAYERLIST);
+		pkt->scene_type = type;
+	}
+
 	UserList ReserveUserList(uint16 userCount)
 	{
 		S_PLAYER_LIST::Player* firstUserList = bw.Reserve<S_PLAYER_LIST::Player>(userCount);

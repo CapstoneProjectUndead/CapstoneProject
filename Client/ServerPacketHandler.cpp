@@ -50,9 +50,7 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		printf("signup success! \n");
 
 		// 가입 성공
-		ActionResult result;
-		result.Success("가입 성공!");
-		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "가입 성공!");
 
 		// 로딩창 끄기
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
@@ -61,9 +59,7 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 		printf("signup fail...! \n");
 
 		// 가입 실패
-		ActionResult result;
-		result.Success("가입 실패!");
-		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "가입 실패..!");
 
 		// 로딩창 끄기
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
@@ -80,9 +76,7 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 
 	// 로그인 성공
 	if (pkt.success) {
-		ActionResult result;
-		result.Success("로그인 성공!");
-		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "로그인 성공!");
 
 		// 로딩창 끄기
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
@@ -99,9 +93,7 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 	}
 	// 로그인 실패
 	else {
-		ActionResult result;
-		result.Fail("로그인 실패!");
-		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
+		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "로그인 실패!");
 
 		// 로딩창 끄기
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
@@ -113,10 +105,8 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
 	if (pkt.success) {
+		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "로그아웃 성공!");
 		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
-		ActionResult result;
-		result.Success("로그아웃 성공!");
-		CSceneManager::GetInstance().GetTitleScene()->SetPopUpResult(result);
 		CAST_SS(session)->SetUser(nullptr);
 	}
 
@@ -128,13 +118,28 @@ bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 	RoomInfo info{ pkt.room_info.room_id, pkt.room_info.room_name, pkt.room_info.current_player_count, pkt.room_info.is_game_start };
 	CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
 
-	CImGuiManager::GetInstance().ReserveResetFocus();
+	CSceneManager::GetInstance().GetTitleScene()->SetIsEnter(true);
 
-	CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+	CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "방 생성 완료!");
 
-	auto player = CSceneManager::GetInstance().GetActiveScene()->GetMyPlayer();
-	player->SetSession(session);
-	player->SetUser(CAST_SS(session)->GetUser());
+	CAST_SS(session)->GetUser()->SetRoomID(info.room_id);
+
+	// 로딩창 끄기
+	CSceneManager::GetInstance().GetTitleScene()->StopLoading();
+
+	return true;
+}
+
+bool Handle_S_ENTERROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
+{
+	CSceneManager::GetInstance().GetTitleScene()->SetIsEnter(true);
+
+	CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "방 입장 완료!");
+
+	CAST_SS(session)->GetUser()->SetRoomID(pkt.room_id);
+
+	// 로딩창 끄기
+	CSceneManager::GetInstance().GetTitleScene()->StopLoading();
 
 	return true;
 }
@@ -198,6 +203,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	myPlayer->SetSession(session);
 	myPlayer->SetID(pkt.info.player_id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+	myPlayer->SetCurrentSceneType(pkt.scene_type);
 
 	Material m{};
 	m.albedo = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
@@ -248,7 +254,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->SetState(pkt.info.state);
 
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
 
 	return true;
@@ -256,7 +262,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 
 bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 {
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 
 	S_PLAYER_LIST::PlayerList userList = pkt.GetPlayerList();
 
@@ -274,6 +280,9 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 		// 다른 유저 상태 부여
 		otherPlayer->SetState(userList[i].info.state);
+
+		// 다른 유저가 속한 씬 설정
+		otherPlayer->SetCurrentSceneType(pkt.scene_type);
 
 		// Active Scene에 다른 유저 입장
 		scene->EnterScene(otherPlayer, otherPlayer->GetID());

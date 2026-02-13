@@ -19,18 +19,4 @@ struct ActionResult
     bool is_visible = false;
     bool is_success = false;
     std::string message;
-
-    void Success(const std::string& _message)
-    {
-        is_visible = true;
-        is_success = true;
-        message = _message;
-    }
-
-    void Fail(const std::string& _message)
-    {
-        is_visible = true;
-        is_success = false;
-        message = _message;
-    }
 };

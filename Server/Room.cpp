@@ -2,6 +2,7 @@
 #include "Room.h"
 #include "Scene.h"
 
+#define ROOM_MAX_PLAYER 4
 
 atomic<uint32> CRoom::s_room_id_generator = 1;
 
@@ -47,6 +48,21 @@ void CRoom::SendResults()
 			scene->SendResults();
 		}
 	}
+}
+
+bool CRoom::IsValid()
+{
+	RoomInfo info = GetRoomInfo();
+
+	// 방 인원이 꽉 찼으면 false
+	if (info.current_player_count >= ROOM_MAX_PLAYER)
+		return false;
+
+	// 게임이 시작된 방이면 false
+	if (info.is_game_start)
+		return false;
+	
+	return true;
 }
 
 bool CRoom::SearchPlayersAllScene()
