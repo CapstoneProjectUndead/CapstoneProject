@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Mesh.h"
 #include "SkinnedData.h"
 #include "GeometryLoader.h"
 
@@ -141,6 +140,79 @@ void CGeometryLoader::LoadBoneWeights(BinaryReader& br, Mesh& mesh)
         mesh.bone_weights[i].weight = br.Read<XMFLOAT4>();
     }
 }
+void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>& materials)
+{
+    // <Materials>:
+    std::string tag;
+    br.ReadTag(tag);
+    if (!br.IsTag(tag, "<Materials>:"))
+        return;
+
+    int materialCount = br.Read<int>();
+    materials.resize(materialCount);
+
+    for (int i = 0; i < materialCount; ++i) {
+        // <Material>:
+        br.ReadTag(tag);
+        int matIndex = br.Read<int>();
+        MaterialData& mat = materials[matIndex];
+
+        // 다음 태그들을 순차적으로 읽는다
+        while (true) {
+            std::streampos pos = br.Stream().tellg();
+            if (!br.ReadTag(tag))
+                break;
+
+            if (br.IsTag(tag, "</Materials>"))
+                return;
+            if (br.IsTag(tag, "<AlbedoColor>:"))
+                mat.albedoColor = br.Read<XMFLOAT4>();
+            else if (br.IsTag(tag, "<EmissiveColor>:"))
+                mat.emissiveColor = br.Read<XMFLOAT4>();
+            else if (br.IsTag(tag, "<SpecularColor>:"))
+                mat.specularColor = br.Read<XMFLOAT4>();
+            else if (br.IsTag(tag, "<Glossiness>:"))
+                mat.glossiness = br.Read<float>();
+            else if (br.IsTag(tag, "<Smoothness>:"))
+                mat.smoothness = br.Read<float>();
+            else if (br.IsTag(tag, "<Metallic>:"))
+                mat.metallic = br.Read<float>();
+            else if (br.IsTag(tag, "<SpecularHighlight>:"))
+                mat.specularHighlight = br.Read<float>();
+            else if (br.IsTag(tag, "<GlossyReflection>:"))
+                mat.glossyReflection = br.Read<float>();
+            // --- Textures ---
+            else if (br.IsTag(tag, "<AlbedoMap>:")) {
+                mat.albedoMap = br.ReadName();
+                if (mat.albedoMap == "null") mat.albedoMap.clear();
+            }
+            else if (br.IsTag(tag, "<SpecularMap>:")) {
+                mat.specularMap = br.ReadName();
+                if (mat.specularMap == "null") mat.specularMap.clear();
+            }
+            else if (br.IsTag(tag, "<MetallicMap>:")) {
+                mat.metallicMap = br.ReadName();
+                if (mat.metallicMap == "null") mat.metallicMap.clear();
+            }
+            else if (br.IsTag(tag, "<NormalMap>:")) {
+                mat.normalMap = br.ReadName();
+                if (mat.normalMap == "null") mat.normalMap.clear();
+            }
+            else if (br.IsTag(tag, "<EmissionMap>:")) {
+                mat.emissionMap = br.ReadName();
+                if (mat.emissionMap == "null") mat.emissionMap.clear();
+            }
+            else if (br.IsTag(tag, "<DetailAlbedoMap>:")) {
+                mat.detailAlbedoMap = br.ReadName();
+                if (mat.detailAlbedoMap == "null") mat.detailAlbedoMap.clear();
+            }
+            else if (br.IsTag(tag, "<DetailNormalMap>:")) {
+                mat.detailNormalMap = br.ReadName();
+                if (mat.detailNormalMap == "null") mat.detailNormalMap.clear();
+            }
+        }
+    }
+}
 
 Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
 {
@@ -153,8 +225,13 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
     bool skinned = br.Read<bool>();
 
     // mesh 정보 read
-    if (br.FindTag("<Positions>:")) br.ReadVector<XMFLOAT3>(mesh.positions);
-    if(br.FindTag("<Normals>:")) br.ReadVector<XMFLOAT3>(mesh.normals);
+    if (br.FindTag("<Bounds>:")) mesh.bounds = br.Read<BoundingBox>();
+    if (br.FindTag("<Positions>:")) br.ReadVectors<XMFLOAT3>(mesh.positions);
+    // TextureCoords read
+    if (materialCount > 0) {
+        if (br.FindTag("<TextureCoords0>:")) br.ReadVectors<XMFLOAT2>(mesh.texcoords);
+    }
+    if(br.FindTag("<Normals>:")) br.ReadVectors<XMFLOAT3>(mesh.normals);
     if (br.FindTag("<SubMeshes>:")) {
         int subMeshCount = br.Read<UINT>();
         mesh.indices.reserve(subMeshCount);
@@ -164,8 +241,12 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
             br.ReadTag(tag);
             
             int index = br.Read<int>();
-            br.ReadVector<UINT>(mesh.indices);
+            br.ReadVectors<UINT>(mesh.indices);
         }
+    }
+    // meterial 정보 read
+    if (materialCount > 0) {
+        LoadMaterials(br, mesh.materials);
     }
     if (skinned) {
         LoadBoneWeights(br, mesh);

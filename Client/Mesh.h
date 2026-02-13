@@ -13,19 +13,19 @@ public:
 	XMFLOAT3 normal{};
 };
 
-class CDiffuseVertex : public CVertex{
+class CMatVertex : public CVertex{
 public:
-	CDiffuseVertex();
-	CDiffuseVertex(XMFLOAT3 position, XMFLOAT2 tex);
-	CDiffuseVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal);
+	CMatVertex();
+	CMatVertex(XMFLOAT3 position, XMFLOAT2 tex);
+	CMatVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal);
 
 	XMFLOAT2 tex{};
 };
 
-class CMatVertex : public CVertex{
+class CSkinnedVertex : public CVertex{
 public:
-	CMatVertex() : CVertex() {}
-	CMatVertex(XMFLOAT3 position, XMFLOAT3 normal);
+	CSkinnedVertex() : CVertex() {}
+	CSkinnedVertex(XMFLOAT3 position, XMFLOAT3 normal);
 
 	XMUINT4  bone_indices{};
 	XMFLOAT4 bone_weights{};
@@ -55,9 +55,9 @@ public:
 	template<typename T>
 	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
+
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
-	
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};
@@ -83,6 +83,7 @@ protected:
 public:
 	// name
 	std::string name{};
+	friend class CObject;
 };
 
 class CTriangleMesh : public CMesh
@@ -109,6 +110,13 @@ class CCubeMesh : public CMesh
 {
 public:
 	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, float = 2.0f, float = 2.0f, float = 2.0f);
+	CCubeMesh(ID3D12Device*, ID3D12GraphicsCommandList*, const XMFLOAT3&, const XMFLOAT3& = XMFLOAT3{});
+};
+
+class CSphereMesh : public CMesh
+{
+public:
+	CSphereMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float radius, const XMFLOAT3& pivot = XMFLOAT3{}, UINT sliceCount = 16, UINT stackCount = 16);
 };
 
 template<typename T>
@@ -149,6 +157,9 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
+
+template<>
+void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
 
 template<>
 void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
