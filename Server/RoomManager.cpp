@@ -99,8 +99,56 @@ void CRoomManager::DestroyRoomNoLock(uint32 roomId)
 	rooms.erase(roomId);
 }
 
+void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
+{
+	if (player->GetRoomID() != -1) {
+
+		lock_guard<mutex> lg(rooms_lock);
+		auto room = FindRoom(player->GetRoomID());
+		if (room) {
+			// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
+			room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
+
+			// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
+			if (room->SearchPlayersAllScene()) {
+				rooms.erase(room->GetRoomID());
+			}
+		}
+	}
+}
+
 CRoom* CRoomManager::FindRoom(uint32 roomId)
 {
 	auto iter = rooms.find(roomId);
 	return iter->second.get();
+}
+
+void CRoomManager::SendRoomList(shared_ptr<Session> session)
+{
+	if (!rooms.empty()) {
+
+		int32 roomCount = rooms.size();
+		int32 pktSize = sizeof(S_Room_List) + sizeof(S_Room_List::Room) * roomCount;
+
+		S_ROOMLIST_WRITE pktWriter;
+		S_ROOMLIST_WRITE::RoomList roomList = pktWriter.ReserveRoomList(roomCount);
+
+		int idx = 0;
+		for (auto& room : rooms) {
+
+			if (room.second->GetIsGameStart() == true)
+				continue;
+
+			roomList[idx++] = S_Room_List::Room{ NetRoomInfo{room.second->GetRoomInfo()} };
+		}
+
+		SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
+		session->DoSend(sendBuffer);
+	}
+	else {
+		S_Room_List roomPkt;
+		roomPkt.room_count = 0;
+		auto sendBuffer = MAKE_SEND_BUFFER(roomPkt);
+		session->DoSend(sendBuffer);
+	}
 }

@@ -49,7 +49,7 @@ bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 
 bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 {
-#ifdef SCENE_TEST
+#ifdef LOBBY_SCENE_TEST
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 	
@@ -104,9 +104,15 @@ bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
 	return true;
 }
 
+bool Handle_C_UPDATEROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
+{
+	CRoomManager::GetInstance().SendRoomList(session);
+	return true;
+}
+
 bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 {
-#ifdef SCENE_TEST
+#ifdef LOBBY_SCENE_TEST
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
 	assert(activeScene->GetSceneType() == SCENE_TYPE::LOBBY);
 

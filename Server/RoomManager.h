@@ -2,6 +2,7 @@
 #include "Room.h"
 
 class CUser;
+class CPlayer;
 
 class CRoomManager
 {
@@ -24,9 +25,11 @@ public:
 
 public:
     uint32  CreateRoom(const string& name, shared_ptr<CUser> user);
+    CRoom*  FindRoom(uint32 roomId);
     void    DestroyRoomLock(uint32 roomId);
     void    DestroyRoomNoLock(uint32 roomId);
-    CRoom*  FindRoom(uint32 roomId);
+    void    LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
+    void    SendRoomList(shared_ptr<Session> session);
 
     const unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() const { return rooms; }
     mutex& GetMutex() { return rooms_lock; }

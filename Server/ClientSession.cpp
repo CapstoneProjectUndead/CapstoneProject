@@ -24,7 +24,7 @@ void CClientSession::OnConnected()
 void CClientSession::OnDisconnected()
 {
 
-#ifdef SCENE_TEST
+#ifdef LOBBY_SCENE_TEST
 	if (nullptr != user) {
 		auto player = user->GetPlayer();
 		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
@@ -35,31 +35,23 @@ void CClientSession::OnDisconnected()
 		}
 	}
 #else
-	if (nullptr != user) {
+	// User를 ClientSession에서도 관리하고 (ref 증가)
+	// Title 씬에서도 관리하고 있다. (ref 증가)
+
+	if (user != nullptr) {
+		// Title 씬에서 User 참조 끊기 (ref 감소)
 		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
 
 		auto player = user->GetPlayer();
 		if (player) {
-			if (player->GetRoomID() != -1) {
-				auto& roomManager = CRoomManager::GetInstance();
-
-				lock_guard<mutex> lg(roomManager.GetMutex());
-				auto room = roomManager.FindRoom(player->GetRoomID());
-				if (room) {
-					// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
-					room->GetScenes()[(UINT)player->GetCurrentSceneType()]->LeaveScene(player->GetID());
-
-					// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
-					if (room->SearchPlayersAllScene()) {
-						roomManager.DestroyRoomNoLock(room->GetRoomID());
-					}
-				}
-			}
+			auto& roomManager = CRoomManager::GetInstance();
+			roomManager.LeaveAndCleanupRoom(player);
 		}
 
+		// ClientSession에서 User 참조 끊기 (ref 감소)
+		// 여기서 User 소멸. (메모리 누수x)
+		user = nullptr;
 	}
-
-	user = nullptr;
 
 #endif
 

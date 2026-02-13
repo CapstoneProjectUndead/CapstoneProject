@@ -20,7 +20,7 @@ CSceneManager::~CSceneManager()
 
 void CSceneManager::Initialize()
 {
-#ifdef SCENE_TEST
+#ifdef LOBBY_SCENE_TEST
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>();
 #else
 	title_scene = make_unique<CTitleScene>();

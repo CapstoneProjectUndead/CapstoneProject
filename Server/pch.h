@@ -9,6 +9,7 @@
 #pragma once
 
 //#define SCENE_TEST
+//#define LOBBY_SCENE_TEST
 
 #ifndef PCH_H
 #define PCH_H
@@ -116,6 +117,7 @@ extern const double g_targetDT;
 extern double  g_server_total_time;
 
 #define CON CDBManager::GetInstance().GetCon()
+#define MAKE_SEND_BUFFER(pkt) CClientPacketHandler::MakeSendBuffer(pkt);
 
 
 #endif //PCH_H

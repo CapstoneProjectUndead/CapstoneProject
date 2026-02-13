@@ -62,9 +62,18 @@ void CImGuiManager::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    CTitleScene* pTitleScene = CSceneManager::GetInstance().GetTitleScene();
-    if (pTitleScene) {
-        pTitleScene->DrawUI();
+    CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
+    switch (activeScene->GetSceneType())
+    {
+    case SCENE_TYPE::TITLE:
+        static_cast<CTitleScene*>(activeScene)->DrawUI();
+        break;
+    case SCENE_TYPE::LOBBY:
+        break;
+    case SCENE_TYPE::GAME:
+        break;
+    default:
+        break;
     }
 }
 

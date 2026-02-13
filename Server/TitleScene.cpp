@@ -134,29 +134,7 @@ void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 
 	// 지금 로그인한 유저는 룸 매칭 화면으로 가게된다.
 	// 그러면 현재 입장 가능한 방 목록을 알려줘야한다.
-	{
-		const auto& rooms = CRoomManager::GetInstance().GetRooms();
-		if (!rooms.empty()) {
-
-			int32 roomCount = rooms.size();
-			int32 pktSize = sizeof(S_Room_List) + sizeof(S_Room_List::Room) * roomCount;
-
-			S_ROOMLIST_WRITE pktWriter;
-			S_ROOMLIST_WRITE::RoomList roomList = pktWriter.ReserveRoomList(roomCount);
-
-			int idx = 0;
-			for (auto& room : rooms) {
-
-				if (room.second->GetIsGameStart() == true)
-					continue;
-
-				roomList[idx++] = S_Room_List::Room{ NetRoomInfo{room.second->GetRoomInfo()}};
-			}
-
-			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
-			session->DoSend(sendBuffer);
-		}
-	}
+	CRoomManager::GetInstance().SendRoomList(session);
 
 	//{
 	//	// DB에 해당 유저의 ID가 있는지 확인

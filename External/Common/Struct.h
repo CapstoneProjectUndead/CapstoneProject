@@ -14,7 +14,7 @@ struct InputData
 	bool d = false;
 };
 
-struct ObjectInfo
+struct PlayerInfo
 {
 	// 서버가 처리 완료한 이 플레이어의 마지막 시퀀스 번호
 	uint64			last_seq_num;
@@ -32,8 +32,8 @@ struct ObjectInfo
 
 	PLAYER_STATE	state;
 
-	ObjectInfo() = default;
-	ObjectInfo(int _id, float _x, float _y, float _z)
+	PlayerInfo() = default;
+	PlayerInfo(int _id, float _x, float _y, float _z)
 		: id(_id)
 		, state(PLAYER_STATE::IDLE)
 		, x(_x)
@@ -45,7 +45,7 @@ struct ObjectInfo
 	{
 	}
 
-	ObjectInfo(uint64 seqNum, int _id, float _x, float _y, float _z)
+	PlayerInfo(uint64 seqNum, int _id, float _x, float _y, float _z)
 		: last_seq_num(seqNum)
 		, id(_id)
 		, state(PLAYER_STATE::IDLE)
@@ -58,7 +58,7 @@ struct ObjectInfo
 	{
 	}
 
-	ObjectInfo(const ObjectInfo& other)
+	PlayerInfo(const PlayerInfo& other)
 		: last_seq_num(other.last_seq_num)
 		, id(other.id)
 		, input(other.input)

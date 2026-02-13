@@ -58,7 +58,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// 지금 접속한 유저에게 로그인 허락 패킷 보냄
 	{
 		S_SpawnPlayer playerPkt;
-		playerPkt.info.id = player->GetID();
+		playerPkt.info.player_id = player->GetID();
 		playerPkt.info.x = player->GetPosition().x;
 		playerPkt.info.y = player->GetPosition().y;
 		playerPkt.info.z = player->GetPosition().z;
@@ -84,7 +84,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 				if (pl.second->GetID() == player->GetID())
 					continue;
 
-				userList[idx++] = { NetObjectInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
+				userList[idx++] = { NetPlayerInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
 				pl.second->GetPosition().z} };
 			}
 
@@ -99,7 +99,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
 	{
 		S_AddPlayer addPkt;
-		addPkt.info.id = player->GetID();
+		addPkt.info.player_id = player->GetID();
 		addPkt.info.x = player->GetPosition().x;
 		addPkt.info.y = player->GetPosition().y;
 		addPkt.info.z = player->GetPosition().z;
@@ -112,7 +112,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 // 서버 권위 방식
 void CLobbyScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
 {
-	auto it = players.find(pkt.info.id);
+	auto it = players.find(pkt.info.player_id);
 	if (it == players.end()) 
 		return;
 

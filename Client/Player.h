@@ -21,7 +21,7 @@ public:
 	void SetState(const PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
 
-	void SetDestInfo(const ObjectInfo& pos) { dest_info = pos; }
+	void SetDestInfo(const PlayerInfo& pos) { dest_info = pos; }
 	void RecordOpponentFrameHistory(const OpponentFrameHistory& state);
 
 	bool GetIsMyPlayer() const { return is_my_player; }
@@ -45,7 +45,7 @@ protected:
 
 	PLAYER_STATE state = PLAYER_STATE::IDLE;
 	bool is_my_player = false;	
-	ObjectInfo dest_info{};		// 서버로부터 받은 캐릭터의 위치, 회전 값
+	PlayerInfo dest_info{};		// 서버로부터 받은 캐릭터의 위치, 회전 값
 
 	float smoothed_delay = 0.1f;
 

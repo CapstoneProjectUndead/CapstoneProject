@@ -50,9 +50,9 @@ void CTitleScene::Exit()
 
 void CTitleScene::DrawUI()
 {
-    // =========================================================
+    // =======================
     // [IME 및 포커스 관리 로직]
-    // =========================================================
+    // =======================
     static bool lastInputState = false;
     bool currentInputState = IsUIInputEnabled();
     HWND hwnd = ghWnd;
@@ -261,6 +261,15 @@ void CTitleScene::DrawTitleMainWindow()
                 if (ImGui::Button((const char*)u8"방 검색", ImVec2(200, 55))) {
                     is_title_draw = false;
                     SetUIState(TitleUIState::RoomList);
+                
+                    if (SERVER_SESSION) {
+                        auto user = SERVER_SESSION->GetUser();
+                        if (user) {
+                            C_UpdateRoom updateRoomPkt;
+                            auto sendBuffer = MAKE_SEND_BUFFER(updateRoomPkt);
+                            SERVER_SESSION->DoSend(sendBuffer);
+                        }
+                    }
                 }
                 ImGui::Spacing();
                 ImGui::Spacing();
@@ -270,13 +279,13 @@ void CTitleScene::DrawTitleMainWindow()
                     StartLoading(LoadingType::Logout);
 
                     // 로그아웃 패킷 전송 로직...
-                    auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
+                    auto serverSession = GET_SERVER_SESSION
                     if (serverSession) {
                         C_LOGOUT logOutPkt;
                         auto user = serverSession->GetUser();
                         if (user) {
                             logOutPkt.user_id = user->GetUserID();
-                            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGOUT>(logOutPkt);
+                            auto sendBuffer = MAKE_SEND_BUFFER(logOutPkt);
                             serverSession->DoSend(sendBuffer);
                         }
                     }
@@ -618,6 +627,14 @@ void CTitleScene::DrawRefreshButton()
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
     if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(btnSize, btnSize))) {
         // 새로고침 패킷 전송
+        if (SERVER_SESSION) {
+            auto user = SERVER_SESSION->GetUser();
+            if (user) {
+                C_UpdateRoom updateRoomPkt;
+                auto sendBuffer = MAKE_SEND_BUFFER(updateRoomPkt);
+                SERVER_SESSION->DoSend(sendBuffer);
+            }
+        }
     }
     ImGui::PopStyleColor(2);
 }
@@ -678,9 +695,8 @@ void CTitleScene::DrawRoomCreatePopUp()
         ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
 
         if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
-            static int roomCounter = 1;
             if (strlen(roomName) == 0) {
-                sprintf_s(roomName, sizeof(roomName), "Unknown Room %d", roomCounter++);
+                sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
 
             // 패킷 전송

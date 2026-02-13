@@ -163,7 +163,7 @@ void CMyPlayer::RecordClientFrameHistory(const ClientFrameHistory& history)
 void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 {
 	inputPkt.seq_num = ++client_seq_counter;
-	inputPkt.info.id = obj_id;
+	inputPkt.info.player_id = obj_id;
 	inputPkt.info.w = input.w;
 	inputPkt.info.a = input.a;
 	inputPkt.info.s = input.s;

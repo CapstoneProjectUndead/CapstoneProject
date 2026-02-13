@@ -24,16 +24,18 @@ enum PacketType : uint16_t
 	_C_LOGOUT = 7,
 	_S_LOGIN = 8,
 	_S_LOGOUT = 9,
-	_C_ROOM_CREATE = 10,
-	_C_ROOM_ENTER = 11,
-	_S_ROOM_CREATE = 12,
-	_S_ROOM_LIST = 13,
-	_S_SPAWNPLAYER = 14,
-	_S_ADDPLAYER = 15,
-	_S_PLAYERLIST = 16,
-	_S_REMOVEPLAYER = 17,
-	_C_PLAYER_INPUT = 18,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 19,
+	_C_CREATE_ROOM = 10,
+	_C_UPDATE_ROOM = 11,
+	_C_ENTER_ROOM = 12,
+	_S_CREATE_ROOM = 13,
+	_S_ENTER_ROOM = 14,
+	_S_ROOM_LIST = 15,
+	_S_SPAWNPLAYER = 16,
+	_S_ADDPLAYER = 17,
+	_S_PLAYERLIST = 18,
+	_S_REMOVEPLAYER = 19,
+	_C_PLAYER_INPUT = 20,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 21,
 };
 
 #pragma pack (push, 1)
@@ -133,15 +135,21 @@ struct C_CreateRoom : public PacketHeader
 	uint64 user_id;
 	char   room_name[ROOM_NAME_MAX];
 
-	C_CreateRoom() : PacketHeader(sizeof(C_CreateRoom), (UINT)PacketType::_C_ROOM_CREATE) {}
+	C_CreateRoom() : PacketHeader(sizeof(C_CreateRoom), (UINT)PacketType::_C_CREATE_ROOM) {}
 };
 static_assert(sizeof(C_CreateRoom) == 4 + 58, "C_CreateRoom size mismatch!");
+
+struct C_UpdateRoom : public PacketHeader
+{
+	C_UpdateRoom() : PacketHeader(sizeof(C_UpdateRoom), (UINT)PacketType::_C_UPDATE_ROOM) {}
+};
+static_assert(sizeof(C_UpdateRoom) == 4, "C_CreateRoom size mismatch!");
 
 struct S_CreateRoom : public PacketHeader
 {
 	NetRoomInfo room_info;
 
-	S_CreateRoom() : PacketHeader(sizeof(S_CreateRoom), (UINT)PacketType::_S_ROOM_CREATE) {}
+	S_CreateRoom() : PacketHeader(sizeof(S_CreateRoom), (UINT)PacketType::_S_CREATE_ROOM) {}
 };
 static_assert(sizeof(S_CreateRoom) == 4 + 57, "S_CreateRoom size mismatch!");
 
@@ -173,7 +181,7 @@ static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
 // 내 플레이어를 보낼 때
 struct S_SpawnPlayer : public PacketHeader
 {
-	NetObjectInfo info;
+	NetPlayerInfo info;
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWNPLAYER) {}
 };
@@ -182,7 +190,7 @@ static_assert(sizeof(S_SpawnPlayer) == 4 + 45, "S_SpawnPlayer size mismatch!");
 // 한명의 유저를 보낼 때 
 struct S_AddPlayer : public PacketHeader
 {
-	NetObjectInfo info;
+	NetPlayerInfo info;
 
 	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), (UINT)PacketType::_S_ADDPLAYER) {}
 };
@@ -194,14 +202,14 @@ struct S_PLAYER_LIST : public PacketHeader
 {
 	struct Player
 	{
-		NetObjectInfo info;
+		NetPlayerInfo info;
 		//char	name[NAME_SIZE];
 
-		Player(NetObjectInfo _info)
+		Player(NetPlayerInfo _info)
 			: info(_info)
 		{ }
 
-		Player(NetObjectInfo _info, const char* _name)
+		Player(NetPlayerInfo _info, const char* _name)
 			: info(_info)
 		{
 			//COPY_STRING(name, _name);
@@ -226,7 +234,7 @@ static_assert(sizeof(S_PLAYER_LIST) == 4 + 8, "S_PLAYER_LIST size mismatch!");
 
 struct S_RemovePlayer : public PacketHeader
 {
-	NetObjectInfo info;
+	NetPlayerInfo info;
 
 	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVEPLAYER) {}
 };
@@ -237,7 +245,7 @@ struct C_Input : public PacketHeader
 {
 	uint64			seq_num;	// 클라이언트가 자체적으로 1씩 올리는 번호
 	float           duration;   // 클라이언트가 이 입력을 유지한 시간
-	NetObjectInfo	info;
+	NetPlayerInfo	info;
 
 	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT)
 	{
@@ -249,7 +257,7 @@ struct S_Move : public PacketHeader
 {
 	uint64			last_seq_num;
 	float			timestamp;
-	NetObjectInfo	info;
+	NetPlayerInfo	info;
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };

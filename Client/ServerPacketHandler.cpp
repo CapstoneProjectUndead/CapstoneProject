@@ -196,7 +196,7 @@ bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
 	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 	myPlayer->SetSession(session);
-	myPlayer->SetID(pkt.info.id);
+	myPlayer->SetID(pkt.info.player_id);
 	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
 	Material m{};
@@ -244,7 +244,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 {
 	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
 	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
-	otherPlayer->SetID(pkt.info.id);
+	otherPlayer->SetID(pkt.info.player_id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->SetState(pkt.info.state);
 
@@ -267,7 +267,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 		// 다른 유저 ID 부여
-		otherPlayer->SetID(userList[i].info.id);
+		otherPlayer->SetID(userList[i].info.player_id);
 
 		// 다른 유저 위치 부여
 		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
@@ -290,7 +290,7 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 		CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
 		if (scene != nullptr) {
 			for (auto& player : scene->GetObjects()) {
-				if (player->GetID() == pkt.info.id)
+				if (player->GetID() == pkt.info.player_id)
 					scene->LeaveScene(player->GetID());
 			}
 		}
@@ -307,7 +307,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
 
 	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
-	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.id) {
+	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
 		myPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
@@ -320,7 +320,7 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	// 다른 플레이어일 경우
 	else {
 		// 해당 ID가 존재하는 플레이어인지 확인
-		auto it = indexMap.find(pkt.info.id);
+		auto it = indexMap.find(pkt.info.player_id);
 		if (it == indexMap.end())
 			return false;
 
@@ -335,15 +335,16 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 
 		// 회전을 위해 남겨둠
 		{
-			ObjectInfo info;
+			PlayerInfo info;
 			info.yaw = pkt.info.yaw;
 			info.pitch = pkt.info.pitch;
 			info.roll = pkt.info.roll;
 			otherPlayer->SetDestInfo(info);
 		}
 
+		// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
 		OpponentFrameHistory state{};
-		state.player_id = pkt.info.id;
+		state.player_id = pkt.info.player_id;
 		state.state = pkt.info.state;
 		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
 		state.server_timestamp = pkt.timestamp;
