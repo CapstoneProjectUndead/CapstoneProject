@@ -8,7 +8,6 @@
 #include "Mesh.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
-#include "Object.inl"
 #include "GameFramework.h"
 
 CLobbyScene::CLobbyScene()
@@ -22,13 +21,9 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	Material m{};
-	m.albedo = XMFLOAT4{ 1.0f, 0.5f, 0.5f, 1.0f };
-
 	// 플레이어 생성
 	if (!my_player) {
 		my_player = std::make_shared<CMyPlayer>();
-		my_player->SetMaterial(m);
 		my_player->Initialize(device, commandList);
 	}
 	
@@ -36,7 +31,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		// static shader
 		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
 		shader->CreateShader(device);
-		shaders.emplace("static",std::move(shader));
+		shaders.emplace("static", std::move(shader));
 	}
 	{
 		// skinning
@@ -54,15 +49,15 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
 		std::ofstream txt("../Modeling/char.txt");
-	
+
 		char ch;
 		while (bin.get(ch)) {
-		    if (
-		        ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
+			if (
+				ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
 		 (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
-		    {
-		        txt << ch;
-		    }
+			{
+				txt << ch;
+			}
 		}*/
 	}
 	{

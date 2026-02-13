@@ -4,7 +4,6 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "Shader.h"
-#include "Object.inl"
 #include "ServerPacketHandler.h"
 #include "ServerSession.h"
 #include "ServerSessionManager.h"
