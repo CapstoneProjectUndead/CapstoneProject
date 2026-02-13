@@ -3,7 +3,6 @@
 #include "Object.h"
 #include "Player.h"
 
-atomic<uint64> CObject::s_idGenerator = 1;
 
 CObject::CObject()
 	: obj_id(-1)
@@ -19,8 +18,6 @@ CObject::~CObject()
 shared_ptr<CPlayer> CObject::CreatePlayer()
 {
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
-	player->SetID(s_idGenerator);
-	++s_idGenerator;
 
 	return player;
 }

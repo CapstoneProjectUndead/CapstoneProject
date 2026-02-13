@@ -2,6 +2,7 @@
 // Server쪽 Scene
 #include "Player.h"
 #include "Job.h"
+#include "User.h"
 
 class CScene
 {
@@ -24,6 +25,9 @@ public:
 	void SendResults();
 	void SendPlayersResults();
 	void SendPlayersCheckPing();
+
+	// Scene에 플레이어가 있는지 체크
+	bool HasPlayers();
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }

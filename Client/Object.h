@@ -48,8 +48,8 @@ public:
 	void     SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
 	void     SetVelocity(float vx, float vy, float vz) { velocity = { vx, vy, vz }; }
 
-	int  GetID() const { return obj_id; }
-	void SetID(const int id) { obj_id = id; }
+	uint64  GetID() const { return obj_id; }
+	void	SetID(const uint64 id) { obj_id = id; }
 	//=================================
 	// 회전 함수 (테스트)
 	void SetYaw(float _yaw);
@@ -72,7 +72,8 @@ public:
 	friend class CAnimatorComponent;
 	friend class CPhysicsManager;
 protected:
-	int obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
+	uint64 obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
+	
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
 

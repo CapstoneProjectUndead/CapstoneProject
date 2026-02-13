@@ -11,6 +11,7 @@
 // Player
 CPlayer::CPlayer()
 	: CCharacter()
+    , room_id(-1)
 {
 	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -46,7 +47,8 @@ void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
 void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
 {
     // 데이터가 2개 미만이면 보간 불가능
-    if (interpolation_deq.size() < 2) return;
+    if (interpolation_deq.size() < 2) 
+        return;
 
     // ---------------------------------------------------------
     // 1. 시간 동기화 및 타겟 시간 설정
@@ -128,11 +130,26 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
             state = PLAYER_STATE::IDLE;
         }
         else {
-            // 상태 동기화
-            state = frameB->state;
+            // [보간 이동]
+            // Frame A와 Frame B 사이의 실제 이동 거리 계산
+            // (서버가 보내준 두 점 사이의 거리가 얼마나 되는가?)
+            float intervalDist = Vector3::Length(Vector3::Subtract(frameB->position, frameA->position));
 
-            // 위치 동기화
-            // 미세하게 움직이든 멈춰있든, 보간된 좌표로 매 프레임 이동
+            // 두 패킷 사이의 거리가 1cm 미만(0.01f)이면 '사실상 멈춤'으로 간주
+            if (intervalDist < 0.01f) {
+
+                state = PLAYER_STATE::IDLE;
+
+                if (frameA->state == PLAYER_STATE::WALK)
+                    state = frameA->state;
+                if (frameB->state == PLAYER_STATE::WALK)
+                    state = frameB->state;
+            }
+            else {
+                state = PLAYER_STATE::WALK;
+            }
+
+            // 위치 이동
             SetPosition(nextPos);
         }
     }

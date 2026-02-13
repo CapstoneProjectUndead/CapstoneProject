@@ -8,6 +8,9 @@
 
 #pragma once
 
+//#define SCENE_TEST
+//#define LOBBY_SCENE_TEST
+
 #ifndef PCH_H
 #define PCH_H
 
@@ -15,6 +18,12 @@
 #pragma comment(lib, "ServerEngine\\ServerEngine_d.lib")
 #else
 #pragma comment(lib, "ServerEngine\\ServerEngine.lib")
+#endif
+
+#ifdef _DEBUG
+#pragma comment(lib, "MySQL\\Debug\\mysqlcppconn.lib")
+#else
+#pragma comment(lib, "MySQL\\Release\\mysqlcppconn.lib")
 #endif
 
 
@@ -96,6 +105,7 @@ using std::make_pair;
 
 #include "ClientPacketHandler.h"
 #include "DirectXMathHelper.h"
+#include "DBManager.h"
 
 #define RENDER_BUFFER_MAX_SIZE 60
 
@@ -105,6 +115,9 @@ extern unique_ptr<class CGameFramework> gGameFramework;
 extern const double g_server_targetTick;
 extern const double g_targetDT;
 extern double  g_server_total_time;
+
+#define CON CDBManager::GetInstance().GetCon()
+#define MAKE_SEND_BUFFER(pkt) CClientPacketHandler::MakeSendBuffer(pkt);
 
 
 #endif //PCH_H

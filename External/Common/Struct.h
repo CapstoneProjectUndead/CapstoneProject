@@ -3,6 +3,8 @@
 // **** 클라/서버 공용 헤더 파일 ****
 //==================================
 
+#define ROOM_NAME_MAX 50
+
 struct InputData 
 {
 	// 이동 관련 (서버가 검증)
@@ -12,7 +14,7 @@ struct InputData
 	bool d = false;
 };
 
-struct ObjectInfo
+struct PlayerInfo
 {
 	// 서버가 처리 완료한 이 플레이어의 마지막 시퀀스 번호
 	uint64			last_seq_num;
@@ -30,8 +32,8 @@ struct ObjectInfo
 
 	PLAYER_STATE	state;
 
-	ObjectInfo() = default;
-	ObjectInfo(int _id, float _x, float _y, float _z)
+	PlayerInfo() = default;
+	PlayerInfo(int _id, float _x, float _y, float _z)
 		: id(_id)
 		, state(PLAYER_STATE::IDLE)
 		, x(_x)
@@ -43,7 +45,7 @@ struct ObjectInfo
 	{
 	}
 
-	ObjectInfo(uint64 seqNum, int _id, float _x, float _y, float _z)
+	PlayerInfo(uint64 seqNum, int _id, float _x, float _y, float _z)
 		: last_seq_num(seqNum)
 		, id(_id)
 		, state(PLAYER_STATE::IDLE)
@@ -56,7 +58,7 @@ struct ObjectInfo
 	{
 	}
 
-	ObjectInfo(const ObjectInfo& other)
+	PlayerInfo(const PlayerInfo& other)
 		: last_seq_num(other.last_seq_num)
 		, id(other.id)
 		, input(other.input)
@@ -68,5 +70,22 @@ struct ObjectInfo
 		, pitch(other.pitch)
 		, roll(other.roll)
 	{
+	}
+};
+
+struct RoomInfo
+{
+	uint32	room_id;	// 방 ID
+	char	room_name[ROOM_NAME_MAX]; // 50자
+	uint16	current_player_count;
+	bool	is_game_start;	// 게임이 이미 시작된 방인지
+
+	RoomInfo() = default;
+	RoomInfo(uint32 id, const char* name, uint16 cnt, bool gameStart)
+		: room_id(id)
+		, current_player_count(cnt)
+		, is_game_start(gameStart)
+	{
+		strncpy_s(room_name, name, ROOM_NAME_MAX - 1);
 	}
 };

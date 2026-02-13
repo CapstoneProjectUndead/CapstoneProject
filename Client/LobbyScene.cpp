@@ -8,8 +8,11 @@
 #include "Mesh.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
+#include "Object.inl"
+#include "GameFramework.h"
 
 CLobbyScene::CLobbyScene()
+	: CScene(SCENE_TYPE::LOBBY)
 {
 }
 
@@ -19,9 +22,15 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	Material m{};
+	m.albedo = XMFLOAT4{ 1.0f, 0.5f, 0.5f, 1.0f };
+
 	// 플레이어 생성
-	my_player = std::make_shared<CMyPlayer>();
-	my_player->Initialize(device, commandList);
+	if (!my_player) {
+		my_player = std::make_shared<CMyPlayer>();
+		my_player->SetMaterial(m);
+		my_player->Initialize(device, commandList);
+	}
 	
 	{
 		// static shader
@@ -117,14 +126,17 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		}
 	}
 	
-	// camera
-	camera = std::make_shared<CCamera>();
-	camera->SetTarget(my_player.get());
-	camera->Initialize(device, commandList);
+	if (!camera) {
+		camera = std::make_shared<CCamera>();
+		camera->SetTarget(my_player.get());
+		camera->Initialize(device, commandList);
+	}
 	
 	// light 생성
-	light = std::make_unique<CLightManager>();
-	light->Initialize(device, commandList);
+	if (!light) {
+		light = std::make_unique<CLightManager>();
+		light->Initialize(device, commandList);
+	}
 }
 
 void CLobbyScene::Update(float elapsedTime)
@@ -136,4 +148,19 @@ void CLobbyScene::Update(float elapsedTime)
 void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
+}
+
+void CLobbyScene::Enter()
+{
+	BuildObjects(GET_DEVICE, GET_CMD_LIST);
+
+	if (my_player)
+		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+}
+
+void CLobbyScene::Exit()
+{
+	my_player = nullptr;
+	objects.clear();
+	shaders.clear();
 }

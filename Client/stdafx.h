@@ -72,13 +72,17 @@ using Microsoft::WRL::ComPtr;
 #include <enum.h>
 #include <struct.h>
 #include <protocol.h>
+#include <VarialbePacketWriter.h>
+#include "UICommon.h"
 
 //#define GENERATE_LAG
+//#define SCENE_TEST
 
 #define CLIENT_HISTORY_MAX_SIZE 120
 #define RENDER_BUFFER_MAX_SIZE 60
 
 extern double g_client_total_time;
+extern bool g_run;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
