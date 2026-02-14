@@ -7,6 +7,8 @@
 #include "Movement.h"
 #include "NetworkClockManager.h"
 #include "User.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 #undef min
 #undef max
@@ -73,40 +75,13 @@ void CMyPlayer::ProcessInput()
 void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 {
 	// 1. 입력 캡처
-	InputData currentInput;
-	CaptureInput(currentInput);
+	CaptureInput(current_input);
 
 	// 2. 회전
 	ProcessRotation();
 
 	// 3. 예측 이동
-	PredictMove(currentInput, elapsedTime);
-
-	// 서버 전송 타이머
-	move_packet_send_timer -= elapsedTime;
-
-	// 누적 시간 (이동 거리 누적)
-	dt_accumulator += elapsedTime;
-
-	if (move_packet_send_timer <= 0.0f && IS_CONNECT) {
-
-		move_packet_send_timer += move_packet_send_delay;
-
-		// 패킷 생성 & 서버 전송
-		C_Input inputPkt{};
-		SendInputPacket(inputPkt, currentInput);
-
-		// 4. 장부 기록
-		ClientFrameHistory history{};
-		history.seq_num = inputPkt.seq_num;
-		history.input = currentInput;
-		history.duration = dt_accumulator;
-		history.predicted_pos = position;
-		history.state = state;
-		RecordClientFrameHistory(history);
-
-		dt_accumulator = 0.0f;
-	}
+	PredictMove(current_input, elapsedTime);
 }
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
@@ -160,6 +135,35 @@ void CMyPlayer::RecordClientFrameHistory(const ClientFrameHistory& history)
 		client_history_deq.pop_front();
 }
 
+void CMyPlayer::BeginSendInputPacket(float elapsedTime)
+{
+	// 서버 전송 타이머
+	move_packet_send_timer -= elapsedTime;
+
+	// 누적 시간 (이동 거리 누적)
+	dt_accumulator += elapsedTime;
+
+	if (move_packet_send_timer <= 0.0f && IS_CONNECT) {
+
+		move_packet_send_timer += move_packet_send_delay;
+
+		// 패킷 생성 & 서버 전송
+		C_Input inputPkt{};
+		SendInputPacket(inputPkt, current_input);
+
+		// 4. 장부 기록
+		ClientFrameHistory history{};
+		history.seq_num = inputPkt.seq_num;
+		history.input = current_input;
+		history.duration = dt_accumulator;
+		history.predicted_pos = position;
+		history.state = state;
+		RecordClientFrameHistory(history);
+
+		dt_accumulator = 0.0f;
+	}
+}
+
 void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 {
 	inputPkt.seq_num = ++client_seq_counter;
@@ -205,9 +209,18 @@ void CMyPlayer::SimulateMove(const InputData& input, float dt)
 	else
 		state = PLAYER_STATE::WALK;
 
-	if (dir.x != 0 || dir.z != 0) {
-		if (auto move = GetComponent<CMovementComponent>())
-			move->Simulate(dir, dt);
+	// 움직임 시뮬레이션 (속도 계산 + 물리 이동)
+	auto move = GetComponent<CMovementComponent>();
+	auto collider = GetComponent<CColliderComponent>();
+
+	if (move) {
+		// A. 속도 계산 (Velocity 갱신)
+		move->Simulate(dir, dt);
+	}
+
+	if (collider) {
+		// B. 물리 적용 (충돌 처리 + Slide + 실제 Position 변경)
+		CPhysicsManager::GetInstance().SimulateSingleObject(collider, dt);
 	}
 }
 
@@ -219,7 +232,7 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 
 	// 2. 보정 정책
 	if (errorDist < 0.01f) {
-		position = Vector3::Add(position, diff, 0.1f);
+		//position = Vector3::Add(position, diff, 0.1f);
 		return;
 	}
 	else if (errorDist < 0.2f) {

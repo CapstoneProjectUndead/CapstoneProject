@@ -514,6 +514,7 @@ void CTitleScene::DrawLoadingPopUpResult()
                         player->SetSession(SERVER_SESSION);
                         player->SetUser(SERVER_SESSION->GetUser());
                         player->SetRoomID(SERVER_SESSION->GetUser()->GetRoomID());
+                        player->SetID(SERVER_SESSION->GetUser()->GetUserID());
                     }
                 }
 

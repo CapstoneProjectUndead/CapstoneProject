@@ -57,6 +57,7 @@ void CScene::SendPlayersResults()
 
 		movePkt.last_seq_num = player->GetLastSequence();
 		movePkt.info.player_id = player->GetID(); // "움직인 플레이어"의 ID
+		movePkt.scene_type = player->GetCurrentSceneType();
 
 		movePkt.info.x = player->GetPosition().x;
 		movePkt.info.y = player->GetPosition().y;
@@ -146,12 +147,14 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 void CScene::LeaveScene(uint64 playerId)
 {
 	lock_guard<mutex> lg(players_lock);
-	players.erase(playerId);
-
+	
 	S_RemovePlayer removePkt;
 	removePkt.info.player_id = playerId;
+	removePkt.scene_type = players[playerId]->GetCurrentSceneType();
+
+	players.erase(playerId);
+
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_RemovePlayer>(removePkt);
-	
 	for (auto& player : players)
 		player.second->GetSession()->DoSend(sendBuffer);
 }

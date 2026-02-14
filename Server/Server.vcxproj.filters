@@ -96,14 +96,14 @@
     <ClCompile Include="TitleScene.cpp">
       <Filter>Scene\TitleScene</Filter>
     </ClCompile>
-    <ClCompile Include="User.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="RoomManager.cpp">
       <Filter>Room</Filter>
     </ClCompile>
     <ClCompile Include="Room.cpp">
       <Filter>Room</Filter>
+    </ClCompile>
+    <ClCompile Include="User.cpp">
+      <Filter>Object\User</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,14 +158,14 @@
     <ClInclude Include="TitleScene.h">
       <Filter>Scene\TitleScene</Filter>
     </ClInclude>
-    <ClInclude Include="User.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="RoomManager.h">
       <Filter>Room</Filter>
     </ClInclude>
     <ClInclude Include="Room.h">
       <Filter>Room</Filter>
+    </ClInclude>
+    <ClInclude Include="User.h">
+      <Filter>Object\User</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

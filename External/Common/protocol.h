@@ -260,10 +260,11 @@ static_assert(sizeof(S_PLAYER_LIST) == 4 + 12, "S_PLAYER_LIST size mismatch!");
 struct S_RemovePlayer : public PacketHeader
 {
 	NetPlayerInfo info;
+	SCENE_TYPE scene_type;
 
 	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVEPLAYER) {}
 };
-static_assert(sizeof(S_RemovePlayer) == 4 + 45, "S_RemovePlayer size mismatch!");
+static_assert(sizeof(S_RemovePlayer) == 4 + 49, "S_RemovePlayer size mismatch!");
 
 // 서버 권한 + 클라 예측
 struct C_Input : public PacketHeader
@@ -286,9 +287,10 @@ struct S_Move : public PacketHeader
 	uint64			last_seq_num;
 	float			timestamp;
 	NetPlayerInfo	info;
+	SCENE_TYPE		scene_type;
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 57, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 61, "S_Move size mismatch!");
 
 #pragma pack (pop)

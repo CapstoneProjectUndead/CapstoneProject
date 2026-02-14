@@ -122,6 +122,8 @@ bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 
 	CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "방 생성 완료!");
 
+	CImGuiManager::GetInstance().ReserveResetFocus();
+
 	CAST_SS(session)->GetUser()->SetRoomID(info.room_id);
 
 	// 로딩창 끄기
@@ -135,6 +137,8 @@ bool Handle_S_ENTERROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
 	CSceneManager::GetInstance().GetTitleScene()->SetIsEnter(true);
 
 	CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "방 입장 완료!");
+
+	CImGuiManager::GetInstance().ReserveResetFocus();
 
 	CAST_SS(session)->GetUser()->SetRoomID(pkt.room_id);
 
@@ -196,7 +200,7 @@ bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt)
 
 bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 
 	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
 	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
@@ -248,6 +252,7 @@ bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
 	otherPlayer->SetID(pkt.info.player_id);
 	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 	otherPlayer->SetState(pkt.info.state);
+	otherPlayer->SetCurrentSceneType(pkt.scene_type);
 
 	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	scene->EnterScene(otherPlayer, otherPlayer->GetID());
@@ -288,6 +293,7 @@ bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 
 bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt)
 {
+#ifdef SCENE_TEST
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 
 	for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
@@ -299,13 +305,26 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 			}
 		}
 	}
+#else
+	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
+
+	for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
+		CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
+		if (scene != nullptr) {
+			for (auto& player : scene->GetObjects()) {
+				if (player->GetID() == pkt.info.player_id)
+					scene->LeaveScene(player->GetID());
+			}
+		}
+	}
+#endif
 
 	return true;
 }
 
 bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 {
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	auto& vec = scene->GetObjects();
 	auto& indexMap = scene->GetIDIndex();
 	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();

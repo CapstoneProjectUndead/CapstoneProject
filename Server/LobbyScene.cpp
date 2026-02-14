@@ -41,6 +41,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 
 	user->SetPlayer(player);
 	player->SetID(user->GetUserID());
+	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 
 	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
@@ -103,6 +104,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	{
 		S_AddPlayer addPkt;
 		addPkt.info.player_id = player->GetID();
+		addPkt.scene_type = SCENE_TYPE::LOBBY;
 		addPkt.info.x = player->GetPosition().x;
 		addPkt.info.y = player->GetPosition().y;
 		addPkt.info.z = player->GetPosition().z;
