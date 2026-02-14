@@ -16,6 +16,7 @@ public:
 	CMovementComponent() = default;
 	void Update(const float deltaTime) override;
 	void Move(const XMFLOAT3 direction, float deltaTime);
+	// 벽(Normal)을 따라 Slide
 	void Slide(const XMFLOAT3& normal);
 
 	// 최대 속도 제한
@@ -25,7 +26,6 @@ public:
 
 	// 서버에서 받은 결과를 바탕으로 재시뮬
 	void Simulate(const XMFLOAT3& dir, float dt);
-	XMFLOAT3 desired_move{};
 private:
 	float speed{ 10.0f };
 	float max_speed{ 30.0f };

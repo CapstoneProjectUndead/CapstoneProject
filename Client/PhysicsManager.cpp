@@ -4,134 +4,62 @@
 #include "Object.h"
 #include "Movement.h"
 
-void CPhysicsManager::Update(float dt)
+void CPhysicsManager::BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
 {
-    // 1) SAP broad-phase
-    std::vector<std::pair<CColliderComponent*, CColliderComponent*>> pairs;
-    BroadPhaseSAP(pairs);
+    BoundingBox expanded{ checkCol->aabb };
 
-    // 2) Narrow-phase 충돌 처리
-    for (auto& p : pairs) {
-        auto* a = p.first;
-        auto* b = p.second;
+    // 이동 경로의 중간 지점으로 센터 이동
+    expanded.Center = Vector3::Add(expanded.Center, Vector3::ScalarProduct(delta, 0.5f));
 
-        // Shape 기반 narrow-phase
-        if (!a->Intersects(b))
+    for (auto& col : colliders) {
+        if (col.get() == checkCol) continue;
+        if (expanded.Intersects(col->aabb))
+            candidates.push_back(col.get());
+    }
+}
+
+bool CPhysicsManager::Sweep(CObject* obj, const XMFLOAT3& delta, SweepHit& outHit)
+{
+    auto* col = obj->GetComponent<CColliderComponent>();
+    if (!col) return false;
+
+    // 1) SAP로 충돌 후보 추리기
+    std::vector<CColliderComponent*> candidates;
+    BroadPhaseSAP(col, delta, candidates);
+
+    CColliderComponent* hitCol{};
+    float earliest{ 1.0f };
+
+    for (auto* other : candidates) {
+        float t{};
+
+        if (!ComputeCollisionTime(col, other, delta, t)) {
+            continue;
+        }
+        if (!col->Intersects(other))
             continue;
 
-        ApplyCollision(a, b, dt);
-    }
-
-    // 중력
-    ApplyGravity(dt);
-
-    // 위치 업데이트
-    ApplyMovement(dt);
-}
-
-void CPhysicsManager::BroadPhaseSAP(std::vector<std::pair<CColliderComponent*, CColliderComponent*>>& outPairs)
-{
-    std::vector<EndPoint> endpoints;
-    endpoints.reserve(colliders.size() * 2);
-
-    // X Axis
-    // 왼쪽 오른쪽 끝 점
-    for (auto col : colliders) {
-        const auto& box = col->aabb;
-        endpoints.push_back(EndPoint{ box.Center.x - box.Extents.x, col.get(), true});
-        endpoints.push_back(EndPoint{ box.Center.x + box.Extents.x, col.get(), false });
-    }
-
-    // 정렬
-    std::sort(endpoints.begin(), endpoints.end(),
-        [](const EndPoint& a, const EndPoint& b) {
-            return a.value < b.value;
-        });
-
-    // 충돌 예상 시 push
-    std::vector<CColliderComponent*> active;
-
-    for (auto& ep : endpoints) {
-        if (ep.is_min) {
-            for (auto other : active)
-                outPairs.push_back({ ep.col, other });
-
-            active.push_back(ep.col);
-        }
-        else {
-            active.erase(std::remove(active.begin(), active.end(), ep.col), active.end());
+        if (t < earliest) {
+            earliest = t;
+            hitCol = other;
         }
     }
-}
 
-void CPhysicsManager::ApplyMovement(float dt)
-{
-    for (auto& col : colliders)
-    {
-        CObject* obj = col->owner;
-        CMovementComponent* move = obj->GetComponent<CMovementComponent>();
-
-        if (!move) continue;
-
-        XMFLOAT3 moveVec = move->desired_move;
-
-        moveVec = Vector3::ScalarProduct(obj->GetVelocity(), dt);
-
-        // 실제 이동 적용
-        obj->position = Vector3::Add(obj->position, moveVec);
+    if (hitCol) {
+        outHit.other = hitCol;
+        outHit.normal = ComputeCollisionNormal(col, hitCol);
+        outHit.time = earliest;
+        return true;
     }
-}
 
-void CPhysicsManager::ApplyCollision(CColliderComponent* a, CColliderComponent* b, float dt)
-{
-    CObject* objA = a->owner;
-    CObject* objB = b->owner;
-
-    // 충돌 normal 계산 (A → B 방향)
-    XMFLOAT3 normal = {
-        objA->position.x - objB->position.x,
-        objA->position.y - objB->position.y,
-        objA->position.z - objB->position.z
-    };
-    normal = Vector3::Normalize(normal);
-    //XMStoreFloat3(&normal, n);
-
-    // penetration 계산
-    float penetration = ComputePenetration(a->GetAABB(), b->GetAABB(), normal);
-
-    // correction = normal * penetration * 0.5
-    XMFLOAT3 corr = Vector3::ScalarProduct(normal, (penetration * 0.5f));
-
-    // MovementComponent 슬라이딩 처리
-    if (auto moveA = objA->GetComponent<CMovementComponent>())
-        moveA->Slide(corr);
-
-    if (auto moveB = objB->GetComponent<CMovementComponent>())
-        moveB->Slide({ Vector3::ScalarProduct(corr, -1) });
-}
-
-float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal)
-{
-    float dx = (a.Extents.x + b.Extents.x) - fabsf(a.Center.x - b.Center.x);
-    float dy = (a.Extents.y + b.Extents.y) - fabsf(a.Center.y - b.Center.y);
-    float dz = (a.Extents.z + b.Extents.z) - fabsf(a.Center.z - b.Center.z);
-
-    // normal 방향으로 가장 작은 penetration을 선택
-    float pen = 0.0f;
-
-    if (fabsf(normal.x) > 0.5f) pen = dx;
-    else if (fabsf(normal.y) > 0.5f) pen = dy;
-    else pen = dz;
-
-    return pen;
+    return false;
 }
 
 bool CPhysicsManager::CheckGround(CColliderComponent* col)
 {
     const auto& aabb = col->aabb;
 
-    for (auto& other : colliders)
-    {
+    for (auto& other : colliders) {
         if (other.get() == col) continue;
 
         const auto& b = other->aabb;
@@ -150,26 +78,101 @@ bool CPhysicsManager::CheckGround(CColliderComponent* col)
     return false;
 }
 
-void CPhysicsManager::ApplyGravity(float dt)
+void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 {
-    for (auto& col : colliders)
-    {
-        CObject* obj = col->owner;
+    // 1) 지면 체크
+    auto* col = obj->GetComponent<CColliderComponent>();
+    if (col)
+        obj->is_grounded = CheckGround(col);
+    else
+        obj->is_grounded = false;
 
-        // 1) 지면 체크
-        obj->is_grounded = CheckGround(col.get());
+    // 2) 중력 적용
+    if (!obj->is_grounded)
+        obj->velocity.y += gravity * dt;
+    else
+        obj->velocity.y = 0;
 
-        // 2) 중력 적용
-        if (!obj->is_grounded)
-            obj->velocity.y += gravity * dt;
-        else
-            obj->velocity.y = 0;
+    // 감속(마찰)
+    float speedLen = Vector3::Length(obj->velocity);
+    float decel = obj->friction * dt;
+    if (decel > speedLen) decel = speedLen;
 
-        // 감속(마찰)
-        float speedLen = Vector3::Length(obj->velocity);
-        float decel = obj->friction * dt;
-        if (decel > speedLen) decel = speedLen;
+    obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
+}
 
-        obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
-    }
+XMFLOAT3 CPhysicsManager::ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b)
+{
+    return Vector3::Normalize(ComputeCollisionDistance(a->aabb, b->aabb));
+}
+
+float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal)
+{
+    XMFLOAT3 d{ ComputeCollisionDistance(a, b) };
+
+    // normal 방향으로 가장 작은 penetration을 선택
+    float pen = 0.0f;
+
+    if (fabsf(normal.x) > 0.5f) pen = d.x;
+    else if (fabsf(normal.y) > 0.5f) pen = d.y;
+    else pen = d.z;
+
+    return pen;
+}
+
+XMFLOAT3 CPhysicsManager::ComputeCollisionDistance(const BoundingBox& a, const BoundingBox& b)
+{
+    float dx = (a.Extents.x + b.Extents.x) - fabsf(a.Center.x - b.Center.x);
+    float dy = (a.Extents.y + b.Extents.y) - fabsf(a.Center.y - b.Center.y);
+    float dz = (a.Extents.z + b.Extents.z) - fabsf(a.Center.z - b.Center.z);
+
+    return XMFLOAT3{ dx, dy, dz };
+}
+
+bool CPhysicsManager::ComputeCollisionTime(CColliderComponent* colA, CColliderComponent* colB, const XMFLOAT3& delta, float& outTime)
+{
+    // delta가 0이면 sweep 의미 없음
+    if (delta.x == 0 && delta.y == 0 && delta.z == 0)
+        return false;
+
+    BoundingBox a{ colA->aabb };
+    BoundingBox b{ colB->aabb };
+
+    // AABB min/max
+    XMFLOAT3 minA = Vector3::Subtract(a.Center, a.Extents);
+    XMFLOAT3 maxA = Vector3::Add(a.Center, a.Extents);
+
+    XMFLOAT3 minB = Vector3::Subtract(b.Center, b.Extents);
+    XMFLOAT3 maxB = Vector3::Add(b.Center, b.Extents);
+
+    // delta의 역수
+    XMFLOAT3 invDelta = {
+        delta.x != 0 ? 1.0f / delta.x : FLT_MAX,
+        delta.y != 0 ? 1.0f / delta.y : FLT_MAX,
+        delta.z != 0 ? 1.0f / delta.z : FLT_MAX
+    };
+
+    // t1(A-B), t2(B-A) 계산(닿는 순간)
+    XMFLOAT3 t1 = Vector3::Multiply(Vector3::Subtract(minB, maxA), invDelta);
+    XMFLOAT3 t2 = Vector3::Multiply(Vector3::Subtract(maxB, minA), invDelta);
+
+    XMVECTOR vt1 = XMLoadFloat3(&t1);
+    XMVECTOR vt2 = XMLoadFloat3(&t2);
+
+    // 처음 닿고 빠져나가는 시간(A, B 상관 없이 먼저)
+    XMVECTOR minVec = XMVectorMin(vt1, vt2); // 결과: (1.0f, 2.0f, 3.0f)
+    XMVECTOR maxVec = XMVectorMax(vt1, vt2);
+
+    // 각 축에서 먼저 닿고 빠져나가는 시간(충돌 시간)
+    float tEntry = max(XMVectorGetX(minVec), max(XMVectorGetY(minVec), XMVectorGetZ(minVec)));
+    float tExit = min(XMVectorGetX(maxVec), min(XMVectorGetY(maxVec), XMVectorGetZ(maxVec)));
+
+    // 충돌 조건
+    if (tEntry > tExit) return false;   // 축별 충돌 시간이 겹치지 않음
+    if (tExit < 0.0f) return false;     // 충돌이 과거에 발생
+    if (tEntry > 1.0f) return false;    // delta 범위 밖에서 충돌
+
+    outTime = tEntry;
+
+    return true;
 }

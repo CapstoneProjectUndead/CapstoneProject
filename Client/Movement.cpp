@@ -14,6 +14,8 @@ void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 	if (direction.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->right, -1));
 	if (direction.x > 0) accel = Vector3::Add(accel, owner->right);
 
+    accel = Vector3::Normalize(accel);
+
 	// 가속도 적용: velocity += accel * speed * deltaTime
 	owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
 }
@@ -51,9 +53,20 @@ void CMovementComponent::Update(const float deltaTime)
 		return;
 
 	ClampSpeed();
+    CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // movement가 아닌 phsicsManager에서 움직임 처리
-    desired_move = Vector3::ScalarProduct(owner->velocity, deltaTime);
+    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
+    // 충돌 처리
+    SweepHit hit{};
+    if (CPhysicsManager::GetInstance().Sweep(owner, delta, hit)) {
+        // 충돌 지점까지 이동
+        owner->position = Vector3::Add(owner->position, Vector3::ScalarProduct(delta, hit.time));
+        // 슬라이딩
+        Slide(hit.normal);
+    }
+    else {
+        owner->position = Vector3::Add(owner->position, delta);
+    }
 }
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
