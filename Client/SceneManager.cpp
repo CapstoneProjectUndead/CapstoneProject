@@ -22,7 +22,10 @@ void CSceneManager::Render(ID3D12GraphicsCommandList* commandList)
 void CSceneManager::ChangeScene(SCENE_TYPE type)
 {
 	// 기존 씬에 있던 내 플레이어를 찾아온다.
-	std::shared_ptr<CMyPlayer> myPlayer = active_scene->GetMyPlayer();
+	// Title Scene에서 시작하는 경우에는 없을 수 있기 때문에, 반드시 null 체크를 해야한다. 
+	std::shared_ptr<CMyPlayer> myPlayer;
+	if (active_scene->GetMyPlayer())
+		myPlayer = active_scene->GetMyPlayer();
 
 	// 기존 씬에서 정리할게 있으면 여기서 처리
 	active_scene->Exit();
@@ -31,7 +34,8 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	active_scene = scenes[(UINT)type].get();
 
 	// 해당 씬에 플레이어 셋팅
-	active_scene->SetPlayer(myPlayer);
+	if (myPlayer)
+		active_scene->SetPlayer(myPlayer);
 
 	// 해당 씬에서 할 게 있으면 여기서 처리
 	active_scene->Enter();

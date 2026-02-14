@@ -19,6 +19,13 @@ shared_ptr<CPlayer> CObject::CreatePlayer()
 {
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
 
+	// Player 위치 지정 (임시)
+	XMFLOAT3 pos{};
+	pos.x = rand() % 4 + 1;
+	pos.y = 0;
+	pos.z = rand() % 3;
+	player->SetPosition(pos);
+
 	return player;
 }
 

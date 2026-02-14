@@ -83,8 +83,12 @@ void CScene::SendPlayersResults()
 
 		// 움직인 플레이어를 제외한 나머지 유저에게 전달.
 		for (auto& pl : players) {
-			if (pl.second->GetID() == player->GetID()) continue;
-			pl.second->GetSession()->DoSend(sendBuffer);
+			if (pl.second->GetID() == player->GetID()) 
+				continue;
+
+			auto session = pl.second->GetSession();
+			if (session)
+				session->DoSend(sendBuffer);
 		}
 	}
 }
@@ -157,4 +161,26 @@ void CScene::LeaveScene(uint64 playerId)
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_RemovePlayer>(removePkt);
 	for (auto& player : players)
 		player.second->GetSession()->DoSend(sendBuffer);
+}
+
+// 서버 권위 방식
+void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt)
+{
+	auto it = players.find(pkt.info.player_id);
+	if (it == players.end())
+		return;
+
+	auto mover = it->second; // 실제 움직인 플레이어
+
+	if (pkt.seq_num <= mover->GetLastSequence())
+		return;
+
+	// 회전은 클라 권위 방식이기 때문에, 클라에서 받은 회전값을 적용한다.
+	mover->SetYaw(pkt.info.yaw);
+	mover->SetPitch(pkt.info.pitch);
+
+	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
+	PendingInput pInput{ input, pkt.seq_num };
+	mover->PushInput(pInput);
 }

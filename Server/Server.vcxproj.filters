@@ -167,5 +167,8 @@
     <ClInclude Include="User.h">
       <Filter>Object\User</Filter>
     </ClInclude>
+    <ClInclude Include="macro.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

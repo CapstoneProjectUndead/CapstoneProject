@@ -82,6 +82,4 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
     if (decel > speedLen) decel = speedLen;
 
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(owner->velocity, -decel, true));
-
-    // 중요: 위치(position) 업데이트 코드 삭제됨!
 }

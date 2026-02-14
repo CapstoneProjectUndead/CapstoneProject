@@ -32,12 +32,11 @@ enum PacketType : uint16_t
 	_S_ENTER_ROOM = 15,
 	_S_ENTER_SCENE = 16,
 	_S_ROOM_LIST = 17,
-	_S_SPAWNPLAYER = 18,
-	_S_ADDPLAYER = 19,
-	_S_PLAYERLIST = 20,
-	_S_REMOVEPLAYER = 21,
-	_C_PLAYER_INPUT = 22,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 23,
+	_S_SPAWN_PLAYER = 18,
+	_S_PLAYER_LIST = 19,
+	_S_REMOVE_PLAYER = 20,
+	_C_PLAYER_INPUT = 21,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE = 22,
 };
 
 #pragma pack (push, 1)
@@ -200,25 +199,17 @@ struct S_Room_List : public PacketHeader
 };
 static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
 
-// 내 플레이어를 보낼 때
+// 내 플레이어 또는 상대 플레이어를 보낼 때
 struct S_SpawnPlayer : public PacketHeader
 {
+	bool is_my_player;		// 아래 NetPlayerInfo 구조체에도 있지만, 까먹을까봐 여기서 처리한다. 
 	NetPlayerInfo info;
+	uint32     room_id;
 	SCENE_TYPE scene_type;
 
-	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWNPLAYER) {}
+	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 49, "S_SpawnPlayer size mismatch!");
-
-// 한명의 유저를 보낼 때 
-struct S_AddPlayer : public PacketHeader
-{
-	NetPlayerInfo info;
-	SCENE_TYPE scene_type;
-
-	S_AddPlayer() : PacketHeader(sizeof(S_AddPlayer), (UINT)PacketType::_S_ADDPLAYER) {}
-};
-static_assert(sizeof(S_AddPlayer) == 4 + 49, "S_AddPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 63, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -242,9 +233,10 @@ struct S_PLAYER_LIST : public PacketHeader
 
 	uint32		buff_offset;
 	uint32		player_count;
+	uint32		room_id;
 	SCENE_TYPE	scene_type;
 
-	S_PLAYER_LIST(int32 count) : PacketHeader(sizeof(S_PLAYER_LIST), (UINT)PacketType::_S_PLAYERLIST) {}
+	S_PLAYER_LIST(int32 count) : PacketHeader(sizeof(S_PLAYER_LIST), (UINT)PacketType::_S_PLAYER_LIST) {}
 
 	using PlayerList = PacketList<S_PLAYER_LIST::Player>;
 
@@ -255,16 +247,16 @@ struct S_PLAYER_LIST : public PacketHeader
 		return PlayerList(reinterpret_cast<Player*>(data), player_count);
 	}
 };
-static_assert(sizeof(S_PLAYER_LIST) == 4 + 12, "S_PLAYER_LIST size mismatch!");
+static_assert(sizeof(S_PLAYER_LIST) == 4 + 16, "S_PLAYER_LIST size mismatch!");
 
 struct S_RemovePlayer : public PacketHeader
 {
 	NetPlayerInfo info;
 	SCENE_TYPE scene_type;
 
-	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVEPLAYER) {}
+	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVE_PLAYER) {}
 };
-static_assert(sizeof(S_RemovePlayer) == 4 + 49, "S_RemovePlayer size mismatch!");
+static_assert(sizeof(S_RemovePlayer) == 4 + 58, "S_RemovePlayer size mismatch!");
 
 // 서버 권한 + 클라 예측
 struct C_Input : public PacketHeader
@@ -280,7 +272,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 65, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 74, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {
@@ -291,6 +283,6 @@ struct S_Move : public PacketHeader
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 61, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 70, "S_Move size mismatch!");
 
 #pragma pack (pop)

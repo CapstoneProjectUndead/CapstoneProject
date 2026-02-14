@@ -16,6 +16,7 @@
 #include "User.h"
 #include "TitleScene.h"
 
+
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
 #define CAST_SS(session) static_pointer_cast<CServerSession>(session)
@@ -46,252 +47,97 @@ bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt)
 
 bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 {
-	if (pkt.success) {
-		printf("signup success! \n");
-
-		// 가입 성공
-		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "가입 성공!");
-
-		// 로딩창 끄기
-		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
-	}
-	else {
-		printf("signup fail...! \n");
-
-		// 가입 실패
-		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "가입 실패..!");
-
-		// 로딩창 끄기
-		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
-	}
+	// 회원가입은 Title Scene에서 처리
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene);
+	titleScene->Handle_S_SignRes(session, pkt);
 
 	return true;
 }
 
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
-	// Title Scene으로 시작
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-	assert(scene->GetSceneType() == SCENE_TYPE::TITLE);
-
-	// 로그인 성공
-	if (pkt.success) {
-		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "로그인 성공!");
-
-		// 로딩창 끄기
-		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
-
-		// User 생성
-		std::shared_ptr<CUser> user = std::make_shared<CUser>();
-
-		// session, id 저장 (약한 참조)
-		user->SetSession(session);
-		user->SetUserID(pkt.user_id);
-
-		// User Refcount 증가
-		CAST_SS(session)->SetUser(user);
-	}
-	// 로그인 실패
-	else {
-		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "로그인 실패!");
-
-		// 로딩창 끄기
-		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
-	}
+	// 로그인은 Title Scene에서 처리
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene);
+	titleScene->Handle_S_Login(session, pkt);
 
 	return true;
 }
 
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
-	if (pkt.success) {
-		CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "로그아웃 성공!");
-		CSceneManager::GetInstance().GetTitleScene()->StopLoading();
-		CAST_SS(session)->SetUser(nullptr);
-	}
+	// 로그아웃은 Title Scene에서 처리
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene);
+	titleScene->Handle_S_Logout(session, pkt);
 
 	return true;
 }
 
-bool Handle_S_CREATEROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
+bool Handle_S_CREATE_ROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
 {
-	RoomInfo info{ pkt.room_info.room_id, pkt.room_info.room_name, pkt.room_info.current_player_count, pkt.room_info.is_game_start };
-	CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
-
-	CSceneManager::GetInstance().GetTitleScene()->SetIsEnter(true);
-
-	CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "방 생성 완료!");
-
-	CImGuiManager::GetInstance().ReserveResetFocus();
-
-	CAST_SS(session)->GetUser()->SetRoomID(info.room_id);
-
-	// 로딩창 끄기
-	CSceneManager::GetInstance().GetTitleScene()->StopLoading();
+	// 방 생성도 Title Scene에서 처리하는게 맞다.
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene);
+	titleScene->Handle_S_CreateRoom(session, pkt);
 
 	return true;
 }
 
-bool Handle_S_ENTERROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
+bool Handle_S_ENTER_ROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
 {
-	CSceneManager::GetInstance().GetTitleScene()->SetIsEnter(true);
+	// 서버에서 방 입장 허락이 왔는데, 입장 씬이 Title이면 안된다. 
+	// Title Scene은 Room이 아니기 때문이다.  Title -> [Room](Lobby Scene, Game Scene) 
+	if (pkt.scene_type == SCENE_TYPE::TITLE)
+		assert(nullptr);
 
-	CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "방 입장 완료!");
-
-	CImGuiManager::GetInstance().ReserveResetFocus();
-
-	CAST_SS(session)->GetUser()->SetRoomID(pkt.room_id);
-
-	// 로딩창 끄기
-	CSceneManager::GetInstance().GetTitleScene()->StopLoading();
+	// 하지만 방 입장은 Title Scene에서 처리한다.
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene);
+	titleScene->Handle_S_EnterRoom(session, pkt);
 
 	return true;
 }
 
 bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt)
 {
-	S_Room_List::RoomList userList = pkt.GetRoomList();
-
-	uint32* newRoom = nullptr;
-	if (pkt.room_count > 0)
-		newRoom = new uint32[pkt.room_count];
-
-	for (int i = 0; i < pkt.room_count; ++i) {
-		newRoom[i] = userList[i].room_info.room_id;
-
-		RoomInfo info{userList[i].room_info.room_id, userList[i].room_info.room_name
-			, userList[i].room_info.current_player_count, userList[i].room_info.is_game_start};
-
-		CSceneManager::GetInstance().GetTitleScene()->GetRooms().insert({ info.room_id, info });
-	}
-	
-	// 프로그램을 끄지않고 로그아웃하고 로그인 했을 때,
-	// 기존에는 있었는데 없어진 방 체크
-	auto& rooms = CSceneManager::GetInstance().GetTitleScene()->GetRooms();
-	if (pkt.room_count == 0) {
-		rooms.clear();
-	}
-	else {
-		for (auto it = rooms.begin(); it != rooms.end(); ) {
-			int id = it->first;
-
-			bool found = false;
-			for (int i = 0; i < pkt.room_count; ++i) {
-				if (newRoom[i] == id) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				it = rooms.erase(it); // 삭제 + 다음 iterator 반환
-			}
-			else {
-				++it;
-			}
-		}
-	}
-
-	if (newRoom != nullptr)
-		delete[] newRoom;
+	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
+	assert(titleScene);
+	titleScene->Handle_S_RoomList(session, pkt);
 
 	return true;
 }
 
-bool Handle_S_MYPLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
+bool Handle_S_SPAWN_PLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
+	// 서버에서 플레이어를 spawn 하라고 했는데, Title Scene이면 안된다.
+	// Title 씬은 플레이 씬이 아니다. 
+	if (pkt.scene_type == SCENE_TYPE::TITLE)
+		assert(nullptr);
+
+	// 서버가 통보한 Scene에 플레이어를 추가한다.
 	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-
-	std::shared_ptr<CMyPlayer> myPlayer = std::make_shared<CMyPlayer>();
-	myPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
-	myPlayer->SetSession(session);
-	myPlayer->SetID(pkt.info.player_id);
-	myPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	myPlayer->SetCurrentSceneType(pkt.scene_type);
-
-	{
-		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-		shader->CreateShader(GET_DEVICE);
-		scene->GetShaders().emplace("static", std::move(shader));
-	}
-
-	{
-		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-		shader->CreateShader(GET_DEVICE);
-		scene->GetShaders().emplace("skinning", std::move(shader));
-	}
-
-	// 카메라 객체 생성
-	RECT client_rect;
-	GetClientRect(ghWnd, &client_rect);
-	float width{ float(client_rect.right - client_rect.left) };
-	float height{ float(client_rect.bottom - client_rect.top) };
-
-	std::shared_ptr<CCamera> camera = std::make_shared<CCamera>();
-	camera->Initialize(GET_DEVICE, GET_CMD_LIST);
-	camera->SetTarget(myPlayer.get());
-
-	camera->CreateConstantBuffers(GET_DEVICE, GET_CMD_LIST);
-
-	scene->SetPlayer(myPlayer);
-	scene->SetCamera(camera);
-
-	// light 생성
-	std::unique_ptr<CLightManager>light = std::make_unique<CLightManager>();
-	light->Initialize(GET_DEVICE, GET_CMD_LIST);
-
-	scene->SetLight(std::move(light));
+	assert(scene);
+	scene->Handle_S_Spawn_Player(session, pkt);
 
 	return true;
 }
 
-bool Handle_S_ADDPLAYER(std::shared_ptr<Session> session, S_AddPlayer& pkt)
+bool Handle_S_PLAYER_LIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 {
-	std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
-	otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
-	otherPlayer->SetID(pkt.info.player_id);
-	otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-	otherPlayer->SetState(pkt.info.state);
-	otherPlayer->SetCurrentSceneType(pkt.scene_type);
+	if (pkt.scene_type == SCENE_TYPE::TITLE)
+		assert(nullptr);
 
+	// 서버가 통보한 Scene에 플레이어들을 추가한다.
 	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-	scene->EnterScene(otherPlayer, otherPlayer->GetID());
+	assert(scene);
+	scene->Handle_S_PLAYER_LIST(pkt);
 
 	return true;
 }
 
-bool Handle_S_PLAYERLIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
-{
-	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-
-	S_PLAYER_LIST::PlayerList userList = pkt.GetPlayerList();
-
-	for (int i = 0; i < pkt.player_count; ++i) {
-
-		// 다른 유저 생성
-		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
-		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
-
-		// 다른 유저 ID 부여
-		otherPlayer->SetID(userList[i].info.player_id);
-
-		// 다른 유저 위치 부여
-		otherPlayer->SetPosition(XMFLOAT3(userList[i].info.x, userList[i].info.y, userList[i].info.z));
-
-		// 다른 유저 상태 부여
-		otherPlayer->SetState(userList[i].info.state);
-
-		// 다른 유저가 속한 씬 설정
-		otherPlayer->SetCurrentSceneType(pkt.scene_type);
-
-		// Active Scene에 다른 유저 입장
-		scene->EnterScene(otherPlayer, otherPlayer->GetID());
-	}
-
-	return true;
-}
-
-bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt)
+bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt)
 {
 #ifdef SCENE_TEST
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
@@ -324,65 +170,13 @@ bool Handle_S_REMOVEPLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt
 
 bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 {
+	// Title Scene에는 플레이어가 없다.
+	if (pkt.scene_type == SCENE_TYPE::TITLE)
+		assert(nullptr);
+
 	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-	auto& vec = scene->GetObjects();
-	auto& indexMap = scene->GetIDIndex();
-	std::shared_ptr<CMyPlayer> myPlayer = scene->GetMyPlayer();
-
-	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
-	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
-		myPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
-
-		// 서버가 처리한 시퀀스 넘버를 받아야한다.
-		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
-
-		// 여기서 S_Move 패킷의 지터값 측정
-		float now = CNetworkClockManager::GetInstance().GetClientNow();
-		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
-	}
-	// 다른 플레이어일 경우
-	else {
-		// 해당 ID가 존재하는 플레이어인지 확인
-		auto it = indexMap.find(pkt.info.player_id);
-		if (it == indexMap.end())
-			return false;
-
-		uint64 idx = it->second;
-		if (idx >= vec.size())
-			return false;
-
-		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
-		otherPlayer->SetYaw(pkt.info.yaw);
-		otherPlayer->SetPitch(pkt.info.pitch);
-		otherPlayer->SetState(pkt.info.state);
-
-		// 회전을 위해 남겨둠
-		{
-			PlayerInfo info;
-			info.yaw = pkt.info.yaw;
-			info.pitch = pkt.info.pitch;
-			info.roll = pkt.info.roll;
-			otherPlayer->SetDestInfo(info);
-		}
-
-		// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
-		OpponentFrameHistory state{};
-		state.player_id = pkt.info.player_id;
-		state.state = pkt.info.state;
-		state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
-		state.server_timestamp = pkt.timestamp;
-
-#ifdef GENERATE_LAG
-		// 렉 시뮬레이터 작동
-		CNetworkManager::GetInstance().OnRecvOpponentPos(state);
-#else
-		otherPlayer->RecordOpponentFrameHistory(state);
-
-		// 여기서 S_Move 패킷의 지터값 측정
-		float now = CNetworkClockManager::GetInstance().GetClientNow();
-		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
-#endif
-	}
+	assert(scene);
+	scene->Handle_S_Move_Player(session, pkt);
 
 	return true;
 }

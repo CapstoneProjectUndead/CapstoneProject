@@ -1,14 +1,11 @@
 #include "pch.h"
 // Server쪽 LobbyScene
 #include "LobbyScene.h"
-#include "ClientSession.h"
 #include "Player.h"
 #include "User.h"
 
 #undef min
 #undef max
-
-#define CAST_CS(session) static_pointer_cast<CClientSession>(session)
 
 
 CLobbyScene::CLobbyScene()
@@ -20,11 +17,17 @@ CLobbyScene::~CLobbyScene()
 {
 }
 
+void CLobbyScene::Start()
+{
+
+}
+
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 }
 
+// 특정 Scene을 테스트할 때, 사용할 함수. 
 void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
 	// User 객체 생성
@@ -39,33 +42,33 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
 
-	user->SetPlayer(player);
+	// Player의 ID는 User ID와 동일
 	player->SetID(user->GetUserID());
 	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 
-	// Player 위치 지정 (임시)
-	XMFLOAT3 pos{};
-	pos.x = rand() % 4 + 1;
-	pos.y = 0;
-	pos.z = rand() % 3;
-	player->SetPosition(pos);
-
 	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
 	player->SetSession(session);
+
+	// User Player를 참조 (refcount 증가)
+	user->SetPlayer(player);
 
 	// Player도 CUser를 약한 참조 (refcount 증가 x)
 	player->SetUser(CAST_CS(session)->GetUser());
 
 	// 지금 접속한 유저에게 로그인 허락 패킷 보냄
 	{
-		S_SpawnPlayer playerPkt;
-		playerPkt.scene_type = SCENE_TYPE::LOBBY;
-		playerPkt.info.player_id = player->GetID();
-		playerPkt.info.x = player->GetPosition().x;
-		playerPkt.info.y = player->GetPosition().y;
-		playerPkt.info.z = player->GetPosition().z;
+		S_SpawnPlayer spawnPkt;
+		spawnPkt.room_id = player->GetRoomID();
+		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
+		spawnPkt.is_my_player = true;
+		spawnPkt.info.player_id = player->GetID();
+		spawnPkt.info.room_id = player->GetRoomID();
+		spawnPkt.info.is_my_player = true;
+		spawnPkt.info.x = player->GetPosition().x;
+		spawnPkt.info.y = player->GetPosition().y;
+		spawnPkt.info.z = player->GetPosition().z;
 
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_SpawnPlayer>(playerPkt);
+		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
 		session->DoSend(sendBuffer);
 	}
 
@@ -79,7 +82,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 			int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
 
 			// 예시, 꼭 LobbyScene일 필요는 없다.
-			S_PLAYERLIST_WRITE pktWriter(SCENE_TYPE::LOBBY);
+			S_PLAYERLIST_WRITE pktWriter(player->GetRoomID(), SCENE_TYPE::LOBBY);
 
 			S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
 
@@ -88,8 +91,10 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 				if (pl.second->GetID() == player->GetID())
 					continue;
 
-				userList[idx++] = { NetPlayerInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
-				pl.second->GetPosition().z} };
+				auto otherPlayer = pl.second;
+				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
+					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
+					, pl.second->GetPosition().z };
 			}
 
 			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
@@ -102,32 +107,29 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 
 	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
 	{
-		S_AddPlayer addPkt;
-		addPkt.info.player_id = player->GetID();
-		addPkt.scene_type = SCENE_TYPE::LOBBY;
-		addPkt.info.x = player->GetPosition().x;
-		addPkt.info.y = player->GetPosition().y;
-		addPkt.info.z = player->GetPosition().z;
+		S_SpawnPlayer spawnPkt;
+		spawnPkt.room_id = player->GetRoomID();
+		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
+		spawnPkt.is_my_player = false;
+		spawnPkt.info.player_id = player->GetID();
+		spawnPkt.info.room_id = player->GetRoomID();
+		spawnPkt.info.is_my_player = false;
+		spawnPkt.info.x = player->GetPosition().x;
+		spawnPkt.info.y = player->GetPosition().y;
+		spawnPkt.info.z = player->GetPosition().z;
 
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_AddPlayer>(addPkt);
+		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
 		BroadCast(sendBuffer, player->GetID());
 	}
 }
 
-void CLobbyScene::EnterLobby(shared_ptr<CUser> user)
+void CLobbyScene::EnterLobby(shared_ptr<CUser> user, uint32 roomId)
 {
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
 
 	player->SetID(user->GetUserID());
 	user->SetPlayer(player);
-
-	// Player 위치 지정 (임시)
-	XMFLOAT3 pos{};
-	pos.x = rand() % 4 + 1;
-	pos.y = 0;
-	pos.z = rand() % 3;
-	player->SetPosition(pos);
 
 	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
 	player->SetSession(user->GetSession());
@@ -136,7 +138,7 @@ void CLobbyScene::EnterLobby(shared_ptr<CUser> user)
 	player->SetUser(user);
 
 	// Player가 속한 방ID
-	player->SetRoomID(user->GetRoomID());
+	player->SetRoomID(roomId);
 
 	// Player가 속한 Scene 설정
 	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
@@ -152,7 +154,7 @@ void CLobbyScene::EnterLobby(shared_ptr<CUser> user)
 			int32 cnt = players.size();
 			int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
 
-			S_PLAYERLIST_WRITE pktWriter(SCENE_TYPE::LOBBY);
+			S_PLAYERLIST_WRITE pktWriter(roomId, SCENE_TYPE::LOBBY);
 
 			S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
 
@@ -161,14 +163,36 @@ void CLobbyScene::EnterLobby(shared_ptr<CUser> user)
 				if (pl.second->GetID() == player->GetID())
 					continue;
 
-				userList[idx++] = { NetPlayerInfo{pl.second->GetID(), pl.second->GetPosition().x, pl.second->GetPosition().y,
-				pl.second->GetPosition().z} };
+				auto otherPlayer = pl.second;
+				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
+					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
+					, pl.second->GetPosition().z };
+
+				userList[idx++] = { info };
 			}
 
 			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
 			if (user->GetSession())
 				user->GetSession()->DoSend(sendBuffer);
 		}
+	}
+
+	// 지금 방에 입장한 유저에게 플레이어 생성 허락
+	{
+		S_SpawnPlayer spawnPkt;
+		spawnPkt.room_id = player->GetRoomID();
+		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
+		spawnPkt.is_my_player = true;
+		spawnPkt.info.player_id = player->GetID();
+		spawnPkt.info.room_id = player->GetRoomID();
+		spawnPkt.info.is_my_player = true;
+		spawnPkt.info.x = player->GetPosition().x;
+		spawnPkt.info.y = player->GetPosition().y;
+		spawnPkt.info.z = player->GetPosition().z;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+		if (user->GetSession())
+			user->GetSession()->DoSend(sendBuffer);
 	}
 	
 	// S_Enter_Room 패킷
@@ -188,36 +212,18 @@ void CLobbyScene::EnterLobby(shared_ptr<CUser> user)
 
 	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
 	{
-		S_AddPlayer addPkt;
-		addPkt.scene_type = SCENE_TYPE::LOBBY;
-		addPkt.info.player_id = player->GetID();
-		addPkt.info.x = player->GetPosition().x;
-		addPkt.info.y = player->GetPosition().y;
-		addPkt.info.z = player->GetPosition().z;
+		S_SpawnPlayer spawnPkt;
+		spawnPkt.room_id = player->GetRoomID();
+		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
+		spawnPkt.is_my_player = false;
+		spawnPkt.info.player_id = player->GetID();
+		spawnPkt.info.room_id = player->GetRoomID();
+		spawnPkt.info.is_my_player = false;
+		spawnPkt.info.x = player->GetPosition().x;
+		spawnPkt.info.y = player->GetPosition().y;
+		spawnPkt.info.z = player->GetPosition().z;
 
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_AddPlayer>(addPkt);
+		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
 		BroadCast(sendBuffer, player->GetID());
 	}
-}
-
-// 서버 권위 방식
-void CLobbyScene::MovePlayer(shared_ptr<Session> session, const C_Input& pkt)
-{
-	auto it = players.find(pkt.info.player_id);
-	if (it == players.end()) 
-		return;
-
-	auto mover = it->second; // 실제 움직인 플레이어
-
-	if (pkt.seq_num <= mover->GetLastSequence())
-		return;
-
-	// 회전은 클라 권위 방식이기 때문에, 클라에서 받은 회전값을 적용한다.
-	mover->SetYaw(pkt.info.yaw);
-	mover->SetPitch(pkt.info.pitch);
-
-	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
-	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
-	PendingInput pInput{ input, pkt.seq_num };
-	mover->PushInput(pInput);
 }

@@ -160,7 +160,6 @@ void CLobbyScene::Enter()
 
 void CLobbyScene::Exit()
 {
-	my_player = nullptr;
 	objects.clear();
 	shaders.clear();
 }

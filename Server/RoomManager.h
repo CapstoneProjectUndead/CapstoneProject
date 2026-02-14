@@ -4,6 +4,11 @@
 class CUser;
 class CPlayer;
 
+enum ROOM_EVENT_TYPE : uint8_t
+{
+    CREATE
+};
+
 class CRoomManager
 {
 private:
@@ -24,7 +29,7 @@ public:
     void    SendResults();
 
 public:
-    void  CreateRoom(const string& name, shared_ptr<CUser> user);
+    void    CreateRoom(const string& name, shared_ptr<CUser> user);
     CRoom*  FindRoomLock(uint32 roomId);
     CRoom*  FindRoomNoLock(uint32 roomId);
     void    DestroyRoomLock(uint32 roomId);
@@ -36,8 +41,27 @@ public:
     const unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() const { return rooms; }
     mutex& GetMutex() { return rooms_lock; }
 
+public:
+    template<typename... T>
+    void ReserveEvent(ROOM_EVENT_TYPE type, T&&... args)
+    {
+        events.push(
+            [this, type, ...args = std::forward<T>(args)]() mutable
+            {
+                switch (type)
+                {
+                case ROOM_EVENT_TYPE::CREATE:
+                    CreateRoom(args...);
+                    break;
+                }
+            }
+        );
+    }
+
 private:
     mutex rooms_lock;
     unordered_map<uint32, unique_ptr<CRoom>> rooms;
+
+    std::queue<std::function<void()>> events;
 };
 

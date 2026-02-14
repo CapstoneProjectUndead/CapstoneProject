@@ -151,7 +151,7 @@ void CMyPlayer::BeginSendInputPacket(float elapsedTime)
 		C_Input inputPkt{};
 		SendInputPacket(inputPkt, current_input);
 
-		// 4. 장부 기록
+		// 장부 기록
 		ClientFrameHistory history{};
 		history.seq_num = inputPkt.seq_num;
 		history.input = current_input;

@@ -63,7 +63,7 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 
 	titleScene->PushPacketJob(session
 		, (CTitleScene*)titleScene
-		, &CTitleScene::HandleLogIn
+		, &CTitleScene::Handle_C_LogIn
 		, pkt);
 
 #endif
@@ -78,7 +78,7 @@ bool Handle_C_LOGOUT(shared_ptr<Session> session, C_LOGOUT& pkt)
 
 	titleScene->PushPacketJob(session
 		, (CTitleScene*)titleScene
-		, &CTitleScene::HandleLogOut
+		, &CTitleScene::Handle_C_LogOut
 		, pkt);
 
 	return true;
@@ -91,26 +91,25 @@ bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 
 	titleScene->PushPacketJob(session
 		, (CTitleScene*)titleScene
-		, &CTitleScene::HandleSignUp
+		, &CTitleScene::Handle_C_SignUp
 		, pkt);
 
 	return true;
 }
 
-bool Handle_C_CREATEROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
+bool Handle_C_CREATE_ROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
 {
-	auto& roomManger = CRoomManager::GetInstance();
-	roomManger.CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
+	CRoomManager::GetInstance().CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
 	return true;
 }
 
-bool Handle_C_UPDATEROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
+bool Handle_C_UPDATE_ROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
 {
 	CRoomManager::GetInstance().SendRoomList(session);
 	return true;
 }
 
-bool Handle_C_ENTERROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
+bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
 	assert(user->GetUserID() == pkt.user_id);
@@ -118,7 +117,7 @@ bool Handle_C_ENTERROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
 	return true;
 }
 
-bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
+bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 {
 #ifdef LOBBY_SCENE_TEST
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
@@ -126,8 +125,8 @@ bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 
 	activeScene->PushPacketJob(
 		session,
-		(CLobbyScene*)activeScene,
-		&CLobbyScene::MovePlayer,
+		(CScene*)activeScene,
+		&CScene::Handle_C_Player_Input,
 		pkt
 	);
 #else
@@ -137,8 +136,8 @@ bool Handle_C_PLAYERINPUT(shared_ptr<Session> session, C_Input& pkt)
 
 	activeScene->PushPacketJob(
 		session,
-		(CLobbyScene*)activeScene,
-		&CLobbyScene::MovePlayer,
+		activeScene,
+		&CScene::Handle_C_Player_Input,
 		pkt
 	);
 

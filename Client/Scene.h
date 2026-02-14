@@ -32,6 +32,13 @@ public:
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);
 
+public:
+	// 서버 패킷 관련 처리 함수들
+	void Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt);
+	void Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt);
+	void Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Move& pkt);
+
+public:
 	// 멤버 변수 set
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }
 	void									SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }

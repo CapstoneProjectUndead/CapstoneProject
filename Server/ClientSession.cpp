@@ -27,10 +27,12 @@ void CClientSession::OnDisconnected()
 #ifdef LOBBY_SCENE_TEST
 	if (nullptr != user) {
 		auto player = user->GetPlayer();
-		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
-			CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
-			if (scene != nullptr) {
-				scene->LeaveScene(player->GetID());
+		if (player) {
+			for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
+				CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
+				if (scene != nullptr) {
+					scene->LeaveScene(player->GetID());
+				}
 			}
 		}
 	}

@@ -19,7 +19,9 @@
 
 struct NetPlayerInfo
 {
-	uint32			player_id;
+	uint64			player_id;
+	uint32			room_id;
+	bool			is_my_player;
 
 	// 서버권위 방식) w,a,s,d 서버권위 방식에서 필요한 데이터이다.
 	bool			w = false;
@@ -38,8 +40,10 @@ struct NetPlayerInfo
 	PLAYER_STATE	state;
 
 	NetPlayerInfo() = default;
-	NetPlayerInfo(int _id, float _x, float _y, float _z)
+	NetPlayerInfo(uint64 _id, uint32 roomId, float _x, float _y, float _z)
 		: player_id(_id)
+		, room_id(roomId)
+		, is_my_player(false)
 		, state(PLAYER_STATE::IDLE)
 		, x(_x)
 		, y(_y)
@@ -51,6 +55,8 @@ struct NetPlayerInfo
 
 	NetPlayerInfo(const NetPlayerInfo& other)
 		: player_id(other.player_id)
+		, room_id(other.room_id)
+		, is_my_player(other.is_my_player)
 		, state(other.state)
 		, w(other.w)
 		, a(other.a)
@@ -68,7 +74,7 @@ struct NetPlayerInfo
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 45, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 54, "NetObjectInfo size mismatch!");
 
 
 struct NetRoomInfo
