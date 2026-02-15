@@ -29,6 +29,7 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
         auto meshComp = std::make_shared<CMeshComponent>();
         SetComponent(meshComp);
         meshComp->SetMeshFromFile<CSkinnedVertex>(device, commandList, child);
+        //world_matrix = child->localMatrix;
 
         // bounds merge
         if (firstBounds) {
@@ -39,18 +40,11 @@ void CCharacter::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* com
             BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
         }
     }
-
     // 4) ColliderComponent 생성
-    XMFLOAT3 pivot{ 0.0f, totalBounds.Extents.y, 0.0f };
-    std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, pivot);
-    auto boxCollider = std::make_shared<CColliderComponent>(shape);
-    SetComponent(boxCollider);
-    CPhysicsManager::GetInstance().SetCollider(boxCollider);
-
-    auto debugMesh = std::make_shared<CMeshComponent>();
-    SetComponent(debugMesh);
-    std::shared_ptr<CMesh> meshss = std::make_shared<CSphereMesh>(device, commandList, totalBounds.Extents.x, pivot);
-    debugMesh->SetMesh(meshss);
+    std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
+    auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+    SetComponent(collider);
+    CPhysicsManager::GetInstance().SetCollider(collider);
 
     // 4) Animator
     auto animator = std::make_shared<CAnimatorComponent>();

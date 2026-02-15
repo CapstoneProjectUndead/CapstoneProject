@@ -9,58 +9,56 @@ public:
 
     virtual void Update(const XMMATRIX& worldMatrix) = 0;
 
-    // broad phase용 AABB 계산
-    virtual void ComputeAABB(BoundingBox& outAABB) const = 0;
-
     virtual const BoundingOrientedBox* GetOBB() const { return nullptr; }
     virtual const BoundingSphere* GetSphere() const { return nullptr; }
 
     // 디버그 렌더링용 (선택)
-    virtual void Render() const {}
-
-    // 우선 y축만 설정
-    XMFLOAT3 pivot{};
+    virtual void Render() {}
+protected:
+    std::shared_ptr<CMesh> debug;
 };
 
 // obb 기반
 class CBoxShape : public CColliderShape {
 public:
-    CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{}) : base_extents{ extents } {
-        pivot = p;
+    CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{}) {
+        local.Center = p;
+        local.Extents = extents;
     };
 
+    void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
-    void ComputeAABB(BoundingBox& outAABB) const override;
-    const BoundingOrientedBox* GetOBB() const override { return &obb; }
+    // return world
+    const BoundingOrientedBox* GetOBB() const override { return &world; }
 private:
-    BoundingOrientedBox obb;
-    XMFLOAT3 base_extents;
+    BoundingOrientedBox local;
+    BoundingOrientedBox world;
 };
 
 class CSphereShape : public CColliderShape {
 public:
-    CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{}) : radius(r) {
-        sphere.Radius = r;
-        pivot = p;
+    CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{}) {
+        local.Radius = r;
+        local.Center = p;
     }
 
+    void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
-    void ComputeAABB(BoundingBox& outAABB) const override;
-    const BoundingSphere* GetSphere() const override { return &sphere; }
+    // return world
+    const BoundingSphere* GetSphere() const override { return &world; }
 private:
-    BoundingSphere sphere;
-    float radius;
+    BoundingSphere local;
+    BoundingSphere world;
 };
 
 class CConvexMeshShape : public CColliderShape
 {
 public:
     CConvexMeshShape(std::vector<XMFLOAT3>& vertice);
-    std::vector<XMFLOAT3> localVertices;   // 로컬 공간 정점
-    std::vector<XMFLOAT3> worldVertices;   // 월드 변환된 정점
+    std::vector<XMFLOAT3> local;
+    std::vector<XMFLOAT3> world;
 
     void Update(const XMMATRIX& worldMatrix) override;
-    void ComputeAABB(BoundingBox& outAABB) const override {};
 
     // 충돌 검사 (SAT 기반)
     bool Intersects(const CConvexMeshShape& other) const;
@@ -69,25 +67,28 @@ public:
 /*
 충돌 모양 데이터 제공자. 물리 계산X
 * ColliderComponent 생성법
-* 원하는 shape을 인자로 넘겨주면 됨
+* paramaeter: shape(unique), bounds
+* 
 std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
-auto boxCollider = std::make_shared<CColliderComponent>(shape);
+auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 obj->SetComponent(boxCollider);
 CPhysicsManager::GetInstance().SetCollider(boxCollider);
 */
 class CColliderComponent : public CComponent
 {
 public:
-    CColliderComponent(std::unique_ptr< CColliderShape>& otherShape) : shape{ std::move(otherShape) } {}
+    CColliderComponent(std::unique_ptr< CColliderShape>& otherShape, const BoundingBox& otherBox);
     void SetShape(std::unique_ptr< CColliderShape>& otherShape) { shape = std::move(otherShape); }
 
     void Update(const float deltaTime) override;
+    // 디버깅용(aabb 출력)
+    void Render(ID3D12GraphicsCommandList* commandList) override;
 
     bool Intersects(const CColliderComponent* other);
-
-    const BoundingBox& GetAABB() const { return aabb; }
 private:
     friend class CPhysicsManager;
     std::unique_ptr<CColliderShape> shape;
-    BoundingBox aabb;   // for broad phase
+    BoundingBox local_aabb;
+    BoundingBox world_aabb{};   // for broad phase
+    std::shared_ptr<CMesh> debug;
 };

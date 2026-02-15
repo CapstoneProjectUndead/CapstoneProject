@@ -6,14 +6,14 @@
 
 void CPhysicsManager::BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
 {
-    BoundingBox expanded{ checkCol->aabb };
+    BoundingBox expanded{ checkCol->world_aabb };
 
     // 이동 경로의 중간 지점으로 센터 이동
     expanded.Center = Vector3::Add(expanded.Center, Vector3::ScalarProduct(delta, 0.5f));
 
     for (auto& col : colliders) {
         if (col.get() == checkCol) continue;
-        if (expanded.Intersects(col->aabb))
+        if (expanded.Intersects(col->world_aabb))
             candidates.push_back(col.get());
     }
 }
@@ -57,12 +57,12 @@ bool CPhysicsManager::Sweep(CObject* obj, const XMFLOAT3& delta, SweepHit& outHi
 
 bool CPhysicsManager::CheckGround(CColliderComponent* col)
 {
-    const auto& aabb = col->aabb;
+    const auto& aabb = col->world_aabb;
 
     for (auto& other : colliders) {
         if (other.get() == col) continue;
 
-        const auto& b = other->aabb;
+        const auto& b = other->world_aabb;
 
         // 바닥 판정: AABB bottom이 다른 AABB top보다 아래로 내려갔는가?
         if (aabb.Center.y - aabb.Extents.y <= b.Center.y + b.Extents.y + 0.05f) {
@@ -103,7 +103,7 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 
 XMFLOAT3 CPhysicsManager::ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b)
 {
-    return Vector3::Normalize(ComputeCollisionDistance(a->aabb, b->aabb));
+    return Vector3::Normalize(ComputeCollisionDistance(a->world_aabb, b->world_aabb));
 }
 
 float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal)
@@ -135,8 +135,8 @@ bool CPhysicsManager::ComputeCollisionTime(CColliderComponent* colA, CColliderCo
     if (delta.x == 0 && delta.y == 0 && delta.z == 0)
         return false;
 
-    BoundingBox a{ colA->aabb };
-    BoundingBox b{ colB->aabb };
+    BoundingBox a{ colA->world_aabb };
+    BoundingBox b{ colB->world_aabb };
 
     // AABB min/max
     XMFLOAT3 minA = Vector3::Subtract(a.Center, a.Extents);

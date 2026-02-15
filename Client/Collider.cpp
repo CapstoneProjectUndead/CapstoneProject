@@ -1,111 +1,50 @@
 #include "stdafx.h"
 #include "Collider.h"
 #include "Object.h"
+#include "Mesh.h"
+#include "GameFramework.h"  // 디버깅 시에 필요
+#include "MeshRenderer.h"
 
-inline void DecomposeMatrix(const XMMATRIX& world, XMFLOAT3& outPos, XMFLOAT4& outRot, XMFLOAT3& outScale)
+void CBoxShape::Render()
 {
-    XMVECTOR scale;
-    XMVECTOR rot;
-    XMVECTOR trans;
+    debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
 
-    XMMatrixDecompose(&scale, &rot, &trans, world);
-
-    XMStoreFloat3(&outScale, scale);
-    XMStoreFloat4(&outRot, rot);
-    XMStoreFloat3(&outPos, trans);
+    debug->Render(GET_CMD_LIST);
 }
 
 void CBoxShape::Update(const XMMATRIX& worldMatrix)
 {
-    XMFLOAT3 pos, scale;
-    XMFLOAT4 rot;
-    DecomposeMatrix(worldMatrix, pos, rot, scale);
-
-    // pivot을 world space로 변환
-    XMVECTOR p = XMLoadFloat3(&pivot);
-    XMVECTOR q = XMLoadFloat4(&rot);
-    XMVECTOR pivotWorld = XMVector3Rotate(p, q);
-
-    XMFLOAT3 pivotOffset;
-    XMStoreFloat3(&pivotOffset, pivotWorld);
-
-    // Center = world position + pivot offset
-    obb.Center = Vector3::Add(pos, pivotOffset);
-
-    // Extents (half size) → scale 반영
-    obb.Extents = Vector3::Multiply(base_extents, scale);
-
-    // Orientation
-    obb.Orientation = rot;
+    local.Transform(world, worldMatrix);
+    XMStoreFloat4(&world.Orientation, XMQuaternionNormalize(XMLoadFloat4(&world.Orientation)));
 }
 
-void CBoxShape::ComputeAABB(BoundingBox& outAABB) const
+void CSphereShape::Render()
 {
-    XMFLOAT3 corners[8];
-    obb.GetCorners(corners);
+    debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
 
-    XMVECTOR minV = XMLoadFloat3(&corners[0]);
-    XMVECTOR maxV = minV;
-
-    for (int i = 1; i < 8; i++) {
-        XMVECTOR v = XMLoadFloat3(&corners[i]);
-        minV = XMVectorMin(minV, v);
-        maxV = XMVectorMax(maxV, v);
-    }
-
-    BoundingBox::CreateFromPoints(outAABB, minV, maxV);
+    debug->Render(GET_CMD_LIST);
 }
 
 void CSphereShape::Update(const XMMATRIX& worldMatrix)
 {
-    XMFLOAT3 pos, scale;
-    XMFLOAT4 rot;
-    DecomposeMatrix(worldMatrix, pos, rot, scale);
-
-    // pivot을 world space로 변환
-    XMVECTOR p = XMLoadFloat3(&pivot);
-    XMVECTOR q = XMLoadFloat4(&rot);
-    XMVECTOR pivotWorld = XMVector3Rotate(p, q);
-
-    XMFLOAT3 pivotOffset;
-    XMStoreFloat3(&pivotOffset, pivotWorld);
-
-    // Center = world position + pivot offset
-    sphere.Center = Vector3::Add(pos, pivotOffset);
-
-    float uniformScale = scale.x; // uniform 가정
-    sphere.Radius = radius * uniformScale;
-}
-
-void CSphereShape::ComputeAABB(BoundingBox& outAABB) const
-{
-    XMFLOAT3 c = sphere.Center;
-    float r = sphere.Radius;
-
-    XMVECTOR minV = XMVectorSet(c.x - r, c.y - r, c.z - r, 0);
-    XMVECTOR maxV = XMVectorSet(c.x + r, c.y + r, c.z + r, 0);
-
-    BoundingBox::CreateFromPoints(outAABB, minV, maxV);
+    local.Transform(world, worldMatrix);
 }
 
 CConvexMeshShape::CConvexMeshShape(std::vector<XMFLOAT3>& vertice)
 {
-    localVertices.reserve(vertice.size());
-    worldVertices.reserve(vertice.size());
-
-    localVertices = vertice;
-    worldVertices = localVertices;
+    local.reserve(vertice.size());
+    local = vertice;
 }
 
 void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
 {
-    worldVertices.resize(localVertices.size());
+    world.resize(local.size());
 
-    for (size_t i = 0; i < localVertices.size(); i++)
+    for (size_t i = 0; i < local.size(); i++)
     {
-        XMVECTOR p = XMLoadFloat3(&localVertices[i]);
+        XMVECTOR p = XMLoadFloat3(&local[i]);
         XMVECTOR wp = XMVector3Transform(p, worldMatrix);
-        XMStoreFloat3(&worldVertices[i], wp);
+        XMStoreFloat3(&world[i], wp);
     }
 }
 
@@ -114,11 +53,28 @@ bool CConvexMeshShape::Intersects(const CConvexMeshShape& other) const
     return false;
 }
 
+CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
+    : shape{ std::move(otherShape) }, local_aabb{ otherBox }
+{
+}
+
 // component
 void CColliderComponent::Update(const float deltaTime)
 {
-    shape->Update(XMLoadFloat4x4(&owner->world_matrix));
-    shape->ComputeAABB(aabb);
+    XMMATRIX worldMatrix{ XMLoadFloat4x4(&owner->world_matrix) };
+
+    local_aabb.Transform(world_aabb, worldMatrix);
+    shape->Update(worldMatrix);
+}
+
+void CColliderComponent::Render(ID3D12GraphicsCommandList* commandList)
+{
+#ifdef DEBUG
+    debug = std::make_shared<CCubeMesh>(GET_DEVICE, commandList, local_aabb.Extents, local_aabb.Center);
+
+    debug->Render(commandList);
+    if (shape) shape->Render();
+#endif // DEBUG
 }
 
 bool CColliderComponent::Intersects(const CColliderComponent* other)
