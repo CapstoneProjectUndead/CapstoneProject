@@ -126,7 +126,7 @@ void CRoomManager::EnterRoom(shared_ptr<CUser> user, uint32 roomId)
 			user->SetRoomID(roomId);
 
 			auto& scenes = room->GetScenes();
-			static_cast<CLobbyScene*>(scenes[(UINT)SCENE_TYPE::LOBBY].get())->EnterLobby(user, roomId);
+			static_cast<CLobbyScene*>(scenes[(UINT)SCENE_TYPE::LOBBY].get())->C_Enter_Lobby(user, roomId);
 		}
 		else {
 			// fail 패킷 전송
@@ -195,5 +195,14 @@ void CRoomManager::SendRoomList(shared_ptr<Session> session)
 		roomPkt.room_count = 0;
 		auto sendBuffer = MAKE_SEND_BUFFER(roomPkt);
 		session->DoSend(sendBuffer);
+	}
+}
+
+void CRoomManager::ProcessEvents()
+{
+	while (!events.empty())
+	{
+		events.front()();
+		events.pop();
 	}
 }

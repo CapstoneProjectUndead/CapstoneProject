@@ -58,6 +58,8 @@ public:
         );
     }
 
+    void ProcessEvents();
+
 private:
     mutex rooms_lock;
     unordered_map<uint32, unique_ptr<CRoom>> rooms;

@@ -55,11 +55,11 @@ bool Handle_C_LOGIN(shared_ptr<Session> session, C_LOGIN& pkt)
 	
 	activeScene->PushPacketJob(session
 		, (CLobbyScene*)activeScene
-		, &CLobbyScene::EnterPlayer
+		, &CLobbyScene::C_Enter_Player
 		, pkt);
 #else
 	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
-	assert(titleScene->GetSceneType() == SCENE_TYPE::TITLE);
+	assert(titleScene);
 
 	titleScene->PushPacketJob(session
 		, (CTitleScene*)titleScene

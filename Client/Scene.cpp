@@ -126,12 +126,15 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 			my_player->SetCurrentSceneType(pkt.scene_type);
 
 			if (SERVER_SESSION) {
-				// user는 player를 강한 참조
-				SERVER_SESSION->GetUser()->SetMyPlayer(my_player);
-				SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
+				auto user = SERVER_SESSION->GetUser();
+				if (user) {
+					// user는 player를 강한 참조
+					SERVER_SESSION->GetUser()->SetMyPlayer(my_player);
+					SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
 
-				// player는 user를 약한 참조
-				my_player->SetUser(SERVER_SESSION->GetUser());
+					// player는 user를 약한 참조
+					my_player->SetUser(SERVER_SESSION->GetUser());
+				}
 			}
 		}
 

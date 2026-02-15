@@ -50,7 +50,6 @@ void CScene::SendResults()
 void CScene::SendPlayersResults()
 {
 	// 시뮬레이션 돌린 플레이어의 결과를 모든 유저들에게 통보
-	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players)
 	{
 		S_Move movePkt;
@@ -97,7 +96,6 @@ void CScene::SendPlayersCheckPing()
 {
 	float now = g_server_total_time;
 
-	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players) {
 		if (now - player->GetLastPingSendTime() > 2.0f) {
 			auto session = player->GetSession();
@@ -111,7 +109,6 @@ void CScene::SendPlayersCheckPing()
 
 bool CScene::HasPlayers()
 {
-	lock_guard<mutex> lg(players_lock);
 	if (!players.empty())
 		return true;
 	else
@@ -120,14 +117,12 @@ bool CScene::HasPlayers()
 
 void CScene::BroadCast(SendBufferRef sendBuffer)
 {
-	lock_guard<mutex> lg(players_lock);
 	for (auto& player : players)
 		player.second->GetSession()->DoSend(sendBuffer);
 }
 
 void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 {
-	lock_guard<mutex> lg(players_lock);
 	for (auto& player : players) {
 		if (player.second->GetID() == exceptID) continue;
 		player.second->GetSession()->DoSend(sendBuffer);
@@ -136,7 +131,6 @@ void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 
 void CScene::SimulatePlayers(const float elapsedTime)
 {
-	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players) {
 		player->Update(elapsedTime);
 	}
@@ -144,14 +138,11 @@ void CScene::SimulatePlayers(const float elapsedTime)
 
 void CScene::EnterScene(shared_ptr<CPlayer> player)
 {
-	lock_guard<mutex> lg(players_lock);
 	players[player->GetID()] = player;
 }
 
 void CScene::LeaveScene(uint64 playerId)
 {
-	lock_guard<mutex> lg(players_lock);
-	
 	S_RemovePlayer removePkt;
 	removePkt.info.player_id = playerId;
 	removePkt.scene_type = players[playerId]->GetCurrentSceneType();
@@ -183,4 +174,9 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
 	PendingInput pInput{ input, pkt.seq_num };
 	mover->PushInput(pInput);
+}
+
+void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& pkt)
+{
+	LeaveScene(pkt.value);
 }

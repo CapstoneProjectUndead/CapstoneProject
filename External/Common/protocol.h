@@ -14,34 +14,43 @@ constexpr int CHAT_SIZE = 100;
 // Packet ID
 enum PacketType : uint16_t
 {
-	_S_PING = 0,
-	_C_PONG = 1,
-	_C_PING = 2,
-	_S_PONG = 3,
-	_C_SIGNUP = 4,
-	_S_SIGNRES = 5,
-	_C_LOGIN = 6,
-	_C_LOGOUT = 7,
-	_S_LOGIN = 8,
-	_S_LOGOUT = 9,
-	_C_CREATE_ROOM = 10,
-	_C_UPDATE_ROOM = 11,
-	_C_ENTER_ROOM = 12,
-	_C_ENTER_SCENE = 13,
-	_S_CREATE_ROOM = 14,
-	_S_ENTER_ROOM = 15,
-	_S_ENTER_SCENE = 16,
-	_S_ROOM_LIST = 17,
-	_S_SPAWN_PLAYER = 18,
-	_S_PLAYER_LIST = 19,
-	_S_REMOVE_PLAYER = 20,
-	_C_PLAYER_INPUT = 21,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE = 22,
+	_DUMMY = 0,
+	_S_PING,
+	_C_PONG,
+	_C_PING,
+	_S_PONG,
+	_C_SIGNUP,
+	_S_SIGNRES,
+	_C_LOGIN,
+	_C_LOGOUT,
+	_S_LOGIN,
+	_S_LOGOUT,
+	_C_CREATE_ROOM,
+	_C_UPDATE_ROOM,
+	_C_ENTER_ROOM,
+	_C_ENTER_SCENE,
+	_S_CREATE_ROOM,
+	_S_ENTER_ROOM,
+	_S_ENTER_SCENE,
+	_S_ROOM_LIST,
+	_S_SPAWN_PLAYER,
+	_S_PLAYER_LIST,
+	_S_REMOVE_PLAYER,
+	_C_PLAYER_INPUT,	// 서버 권위 방식 + 클라 예측 이동
+	_S_MOVE,
 };
 
 #pragma pack (push, 1)
 #include <packet_struct.h>
 static_assert(sizeof(PacketHeader) == 4, "PacketHeader size mismatch!");
+
+struct PktDummy : public PacketHeader
+{
+	uint64 value;
+
+	PktDummy() : PacketHeader(sizeof(PktDummy), (UINT)PacketType::_DUMMY) {}
+};
+static_assert(sizeof(PktDummy) == 4 + 8, "PktDummy size mismatch!");
 
 //=============================
 // 서버 RTT 측정

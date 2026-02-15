@@ -28,7 +28,7 @@ void CLobbyScene::Update(float elapsedTime)
 }
 
 // 특정 Scene을 테스트할 때, 사용할 함수. 
-void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
+void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
 	// User 객체 생성
 	shared_ptr<CUser> user;
@@ -55,14 +55,14 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// Player도 CUser를 약한 참조 (refcount 증가 x)
 	player->SetUser(CAST_CS(session)->GetUser());
 
-	// 지금 접속한 유저에게 로그인 허락 패킷 보냄
+	// 지금 접속한 유저에게 로그인 허락 / 플레이어 생성 패킷 보냄
 	{
 		S_SpawnPlayer spawnPkt;
-		spawnPkt.room_id = player->GetRoomID();
+		//spawnPkt.room_id = player->GetRoomID();
 		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
 		spawnPkt.is_my_player = true;
 		spawnPkt.info.player_id = player->GetID();
-		spawnPkt.info.room_id = player->GetRoomID();
+		//spawnPkt.info.room_id = player->GetRoomID();
 		spawnPkt.info.is_my_player = true;
 		spawnPkt.info.x = player->GetPosition().x;
 		spawnPkt.info.y = player->GetPosition().y;
@@ -75,7 +75,6 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// 지금 접속한 유저에게 다른 유저의 정보도 알려준다.
 	// 여기서는 가변길이 패킷을 보낸다.
 	{
-		lock_guard<mutex> lg(players_lock);
 		if (!players.empty()) {
 
 			int32 cnt = players.size();
@@ -95,6 +94,8 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
 					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
 					, pl.second->GetPosition().z };
+
+				userList[idx++] = { info };
 			}
 
 			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
@@ -108,11 +109,11 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
 	{
 		S_SpawnPlayer spawnPkt;
-		spawnPkt.room_id = player->GetRoomID();
+		//spawnPkt.room_id = player->GetRoomID();
 		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
 		spawnPkt.is_my_player = false;
 		spawnPkt.info.player_id = player->GetID();
-		spawnPkt.info.room_id = player->GetRoomID();
+		//spawnPkt.info.room_id = player->GetRoomID();
 		spawnPkt.info.is_my_player = false;
 		spawnPkt.info.x = player->GetPosition().x;
 		spawnPkt.info.y = player->GetPosition().y;
@@ -123,7 +124,7 @@ void CLobbyScene::EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt)
 	}
 }
 
-void CLobbyScene::EnterLobby(shared_ptr<CUser> user, uint32 roomId)
+void CLobbyScene::C_Enter_Lobby(shared_ptr<CUser> user, uint32 roomId)
 {
 	// Player 객체 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
@@ -148,7 +149,6 @@ void CLobbyScene::EnterLobby(shared_ptr<CUser> user, uint32 roomId)
 	// 여기서는 가변길이 패킷을 보낸다.
 	{
 		// 먼저 그 방에 LobbyScene에 있는 유저들 정보를 보내준다.
-		lock_guard<mutex> lg(players_lock);
 		if (!players.empty()) {
 
 			int32 cnt = players.size();
