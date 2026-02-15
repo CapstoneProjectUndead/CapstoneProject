@@ -2,6 +2,7 @@
 // ServerÂÊ User
 
 class CPlayer;
+class CRoom;
 
 class CUser
 {
@@ -24,6 +25,9 @@ public:
 	shared_ptr<CPlayer> GetPlayer() { return player; }
 	void SetPlayer(shared_ptr<CPlayer> _player) { player = _player; }
 
+	CRoom* GetRoom() { return room; }
+	void SetRoom(CRoom* _room) { room = _room; }
+
 private:
 	static atomic<uint64> s_userid_generator;
 
@@ -32,5 +36,6 @@ private:
 	uint32				  room_id;
 	weak_ptr<Session>	  session;
 	shared_ptr<CPlayer>	  player;
+	CRoom*				  room;
 };
 

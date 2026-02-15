@@ -44,14 +44,13 @@ void CClientSession::OnDisconnected()
 	// User를 ClientSession에서도 관리하고 (ref 증가)
 	// Title 씬에서도 관리하고 있다. (ref 증가)
 
-	if (user != nullptr) {
+	if (user) {
 		// Title 씬에서 User 참조 끊기 (ref 감소)
 		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
 
 		auto player = user->GetPlayer();
 		if (player) {
-			auto& roomManager = CRoomManager::GetInstance();
-			roomManager.LeaveAndCleanupRoom(player);
+			CRoomManager::GetInstance().LeaveAndCleanupRoom(player);
 		}
 
 		// ClientSession에서 User 참조 끊기 (ref 감소)

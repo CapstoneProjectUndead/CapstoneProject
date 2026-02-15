@@ -37,6 +37,7 @@ public:
 	void Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt);
 	void Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt);
 	void Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Move& pkt);
+	void Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt);
 
 public:
 	// 멤버 변수 set
@@ -48,7 +49,7 @@ public:
 
 	auto&									GetShaders() { return shaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
-	std::unordered_map<uint32_t, size_t>&   GetIDIndex() { return id_To_Index; }
+	std::unordered_map<uint64, size_t>&   GetIDIndex() { return id_To_Index; }
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 
@@ -60,7 +61,7 @@ protected:
 	std::shared_ptr<CCamera>				camera;
 
 	std::vector<std::shared_ptr<CObject>>	objects;			// 다른 플레이어 or 몬스터 or 오브젝트
-	std::unordered_map<uint32_t, size_t>	id_To_Index;
+	std::unordered_map<uint64, size_t>	id_To_Index;
 
 	std::unique_ptr<CLightManager> light;
 };

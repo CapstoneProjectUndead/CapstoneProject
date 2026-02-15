@@ -96,6 +96,10 @@ void CScene::EnterScene(std::shared_ptr<CObject> obj, UINT id)
 
 void CScene::LeaveScene(UINT id)
 {
+	auto iter = id_To_Index.find(id);
+	if (iter == id_To_Index.end())
+		return;
+
 	UINT idx = id_To_Index[id];
 	UINT last = objects.size() - 1;
 
@@ -329,4 +333,9 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Mov
 		CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(now);
 #endif
 	}
+}
+
+void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt)
+{
+	LeaveScene(pkt.player_id);
 }

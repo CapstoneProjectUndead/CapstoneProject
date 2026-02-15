@@ -23,7 +23,6 @@ enum : uint16
 	PKT_C_UPDATE_ROOM,
 	PKT_C_ENTER_ROOM,
 	PKT_C_ENTER_SCENE,
-	PKT_S_CREATE_ROOM,
 	PKT_S_ENTER_ROOM,
 	PKT_S_ENTER_SCENE,
 	PKT_S_ROOM_LIST,
@@ -41,7 +40,6 @@ bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt);
 bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt);
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt);
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt);
-bool Handle_S_CREATE_ROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt);
 bool Handle_S_ENTER_ROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt);
 bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt);
 bool Handle_S_SPAWN_PLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt);
@@ -62,7 +60,6 @@ public:
 		GPacketHandler[PKT_S_SIGNRES] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SIGN_RES>(Handle_S_SIGNRES, session, buffer, len); };
 		GPacketHandler[PKT_S_LOGIN] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_LOGIN>(Handle_S_LOGIN, session, buffer, len); };
 		GPacketHandler[PKT_S_LOGOUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_LOGOUT>(Handle_S_LOGOUT, session, buffer, len); };
-		GPacketHandler[PKT_S_CREATE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_CreateRoom>(Handle_S_CREATE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_S_ENTER_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_EnterRoom>(Handle_S_ENTER_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_S_ROOM_LIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Room_List>(Handle_S_ROOMLIST, session, buffer, len); };
 		GPacketHandler[PKT_S_SPAWN_PLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnPlayer>(Handle_S_SPAWN_PLAYER, session, buffer, len); };

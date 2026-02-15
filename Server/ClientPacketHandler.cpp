@@ -112,8 +112,7 @@ bool Handle_C_UPDATE_ROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
 bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
-	assert(user->GetUserID() == pkt.user_id);
-	CRoomManager::GetInstance().EnterRoom(user, pkt.room_id);
+	CRoomManager::GetInstance().EnterRoom(session, pkt.room_id);
 	return true;
 }
 
@@ -130,13 +129,14 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 		pkt
 	);
 #else
-	CRoom* room = CRoomManager::GetInstance().FindRoomLock(pkt.room_id);
-	CScene* activeScene = room->GetScenes()[(UINT)pkt.scene_type].get();
-	assert(activeScene);
+	CRoom* room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room);
+	CScene* currentScene = room->GetScenes()[(UINT)pkt.scene_type].get();
+	assert(currentScene);
 
-	activeScene->PushPacketJob(
+	currentScene->PushPacketJob(
 		session,
-		activeScene,
+		currentScene,
 		&CScene::Handle_C_Player_Input,
 		pkt
 	);

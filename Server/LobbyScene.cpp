@@ -124,26 +124,33 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 	}
 }
 
-void CLobbyScene::C_Enter_Lobby(shared_ptr<CUser> user, uint32 roomId)
+void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt)
 {
-	// Player 객체 생성
+	auto user = CAST_CS(session)->GetUser();
+	assert(user);
+
+	uint32 roomId = pkt.value;
+
+	// 플레이어 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
 
-	player->SetID(user->GetUserID());
-	user->SetPlayer(player);
-
-	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
-	player->SetSession(user->GetSession());
-
-	// Player도 CUser를 약한 참조 (refcount 증가 x)
+	// 유저를 약한 참조 (refcount 증가x)
 	player->SetUser(user);
 
-	// Player가 속한 방ID
+	// 세션도 약한 참조 (refcount 증가x)
+	player->SetSession(user->GetSession());
+
+	// 플레이어의 (플레이어 ID = 유저 ID)
+	player->SetID(user->GetUserID());
+
+	// 지금 플레이어가 속한 방ID
 	player->SetRoomID(roomId);
 
 	// Player가 속한 Scene 설정
 	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 
+	// 유저가 자신의 플레이어를 참조 (refcount 증가)
+	user->SetPlayer(player);
 
 	// 유저에게 입장 허락 패킷과 방에 있는 다른 유저의 정보를 알려준다..
 	// 여기서는 가변길이 패킷을 보낸다.

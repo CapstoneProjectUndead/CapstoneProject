@@ -34,7 +34,6 @@ public:
     void Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGIN& pkt);
     void Handle_S_Logout(std::shared_ptr<Session>& session, const S_LOGOUT& pkt);
     void Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SIGN_RES& pkt);
-    void Handle_S_CreateRoom(std::shared_ptr<Session>& session, const S_CreateRoom& pkt);
     void Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_EnterRoom& pkt);
     void Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_List& pkt);
 

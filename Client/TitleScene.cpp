@@ -816,23 +816,6 @@ void CTitleScene::Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SI
     }
 }
 
-void CTitleScene::Handle_S_CreateRoom(std::shared_ptr<Session>& session, const S_CreateRoom& pkt)
-{
-    RoomInfo info{ pkt.room_info.room_id, pkt.room_info.room_name, pkt.room_info.current_player_count, pkt.room_info.is_game_start };
-    rooms.insert({ info.room_id, info });
-
-    SetIsEnter(true);
-
-    ShowResultPopup(true, "방 생성 완료!");
-
-    CImGuiManager::GetInstance().ReserveResetFocus();
-
-    SERVER_SESSION->GetUser()->SetRoomID(info.room_id);
-
-    // 로딩창 끄기
-    StopLoading();
-}
-
 void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_EnterRoom& pkt)
 {
     SetIsEnter(true);

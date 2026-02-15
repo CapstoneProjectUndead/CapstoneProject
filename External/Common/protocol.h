@@ -29,7 +29,6 @@ enum PacketType : uint16_t
 	_C_UPDATE_ROOM,
 	_C_ENTER_ROOM,
 	_C_ENTER_SCENE,
-	_S_CREATE_ROOM,
 	_S_ENTER_ROOM,
 	_S_ENTER_SCENE,
 	_S_ROOM_LIST,
@@ -164,15 +163,6 @@ struct C_EnterRoom : public PacketHeader
 };
 static_assert(sizeof(C_EnterRoom) == 4 + 12, "C_EnterRoom size mismatch!");
 
-// S_CreateRoom 패킷은 필요가 없는 것 같다...
-struct S_CreateRoom : public PacketHeader
-{
-	NetRoomInfo room_info;
-
-	S_CreateRoom() : PacketHeader(sizeof(S_CreateRoom), (UINT)PacketType::_S_CREATE_ROOM) {}
-};
-static_assert(sizeof(S_CreateRoom) == 4 + 57, "S_CreateRoom size mismatch!");
-
 struct S_EnterRoom : public PacketHeader
 {
 	bool success;
@@ -260,12 +250,12 @@ static_assert(sizeof(S_PLAYER_LIST) == 4 + 16, "S_PLAYER_LIST size mismatch!");
 
 struct S_RemovePlayer : public PacketHeader
 {
-	NetPlayerInfo info;
+	uint64	   player_id;
 	SCENE_TYPE scene_type;
 
 	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVE_PLAYER) {}
 };
-static_assert(sizeof(S_RemovePlayer) == 4 + 58, "S_RemovePlayer size mismatch!");
+static_assert(sizeof(S_RemovePlayer) == 4 + 12, "S_RemovePlayer size mismatch!");
 
 // 서버 권한 + 클라 예측
 struct C_Input : public PacketHeader

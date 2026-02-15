@@ -144,14 +144,13 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 void CScene::LeaveScene(uint64 playerId)
 {
 	S_RemovePlayer removePkt;
-	removePkt.info.player_id = playerId;
-	removePkt.scene_type = players[playerId]->GetCurrentSceneType();
+	removePkt.player_id = playerId;
+	removePkt.scene_type = scene_type;
 
 	players.erase(playerId);
 
-	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_RemovePlayer>(removePkt);
-	for (auto& player : players)
-		player.second->GetSession()->DoSend(sendBuffer);
+	SendBufferRef sendBuffer = MAKE_SEND_BUFFER(removePkt);
+	BroadCast(sendBuffer);
 }
 
 // 서버 권위 방식

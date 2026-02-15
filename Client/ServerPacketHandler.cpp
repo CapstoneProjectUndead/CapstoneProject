@@ -75,16 +75,6 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 	return true;
 }
 
-bool Handle_S_CREATE_ROOM(std::shared_ptr<Session> session, S_CreateRoom& pkt)
-{
-	// 방 생성도 Title Scene에서 처리하는게 맞다.
-	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
-	assert(titleScene);
-	titleScene->Handle_S_CreateRoom(session, pkt);
-
-	return true;
-}
-
 bool Handle_S_ENTER_ROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
 {
 	// 서버에서 방 입장 허락이 왔는데, 입장 씬이 Title이면 안된다. 
@@ -141,28 +131,12 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 {
 #ifdef SCENE_TEST
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-
-	for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
-		CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
-		if (scene != nullptr) {
-			for (auto& player : scene->GetObjects()) {
-				if (player->GetID() == pkt.info.player_id)
-					scene->LeaveScene(player->GetID());
-			}
-		}
-	}
+	assert(scene);
+	scene->Handle_S_Remove_Player(session, pkt);
 #else
-	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-
-	for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
-		CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
-		if (scene != nullptr) {
-			for (auto& player : scene->GetObjects()) {
-				if (player->GetID() == pkt.info.player_id)
-					scene->LeaveScene(player->GetID());
-			}
-		}
-	}
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	assert(scene);
+	scene->Handle_S_Remove_Player(session, pkt);
 #endif
 
 	return true;

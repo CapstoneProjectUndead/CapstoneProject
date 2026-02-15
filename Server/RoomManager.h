@@ -6,7 +6,9 @@ class CPlayer;
 
 enum ROOM_EVENT_TYPE : uint8_t
 {
-    CREATE
+    Create,
+    Destroy,
+    Enter
 };
 
 class CRoomManager
@@ -34,12 +36,12 @@ public:
     CRoom*  FindRoomNoLock(uint32 roomId);
     void    DestroyRoomLock(uint32 roomId);
     void    DestroyRoomNoLock(uint32 roomId);
-    void    EnterRoom(shared_ptr<CUser> user, uint32 roomId);
+    void    EnterRoom(shared_ptr<Session> session, uint32 roomId);
     void    LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
     void    SendRoomList(shared_ptr<Session> session);
 
     const unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() const { return rooms; }
-    mutex& GetMutex() { return rooms_lock; }
+    unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() { return rooms; }
 
 public:
     template<typename... T>
@@ -50,7 +52,7 @@ public:
             {
                 switch (type)
                 {
-                case ROOM_EVENT_TYPE::CREATE:
+                case ROOM_EVENT_TYPE::Create:
                     CreateRoom(args...);
                     break;
                 }

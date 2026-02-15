@@ -20,6 +20,6 @@ public:
     void C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt);
     //=================
 
-    void C_Enter_Lobby(shared_ptr<CUser> user, uint32 roomId);
+    void C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt);
 };
 
