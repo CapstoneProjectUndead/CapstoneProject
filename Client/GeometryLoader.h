@@ -34,6 +34,13 @@ struct MaterialData
     std::string detailNormalMap;
 };
 
+struct MeshCollider
+{
+    std::vector<XMFLOAT3> positions;
+    std::vector<XMFLOAT3> normals;
+    std::vector<UINT> indices;
+};
+
 // Load 용 Mesh, 사용X
 struct Mesh
 {
@@ -45,7 +52,6 @@ struct Mesh
     std::vector<UINT> indices;
     std::vector<BoneWeightData> bone_weights;
     BoundingBox bounds;
-
 };
 
 // 메쉬가 여러 개면 childrens 사용
@@ -54,6 +60,7 @@ struct FrameNode
     std::string name;
     XMFLOAT4X4 localMatrix;
     Mesh mesh;
+    MeshCollider collider;
     std::vector<std::unique_ptr<FrameNode>> childrens;
 };
 
@@ -200,6 +207,7 @@ namespace CGeometryLoader {
     // load model
 	std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename);
     Mesh LoadMesh(BinaryReader& br);
+    MeshCollider LoadMeshCollider(BinaryReader& br);
     void LoadMaterials(BinaryReader& br, std::vector<MaterialData>& materials);
     std::unique_ptr<FrameNode> LoadFrame(BinaryReader& br);
 

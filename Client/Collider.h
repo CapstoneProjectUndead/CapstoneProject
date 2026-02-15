@@ -52,6 +52,20 @@ private:
     float radius;
 };
 
+class CConvexMeshShape : public CColliderShape
+{
+public:
+    CConvexMeshShape(std::vector<XMFLOAT3>& vertice);
+    std::vector<XMFLOAT3> localVertices;   // 로컬 공간 정점
+    std::vector<XMFLOAT3> worldVertices;   // 월드 변환된 정점
+
+    void Update(const XMMATRIX& worldMatrix) override;
+    void ComputeAABB(BoundingBox& outAABB) const override {};
+
+    // 충돌 검사 (SAT 기반)
+    bool Intersects(const CConvexMeshShape& other) const;
+};
+
 /*
 충돌 모양 데이터 제공자. 물리 계산X
 * ColliderComponent 생성법

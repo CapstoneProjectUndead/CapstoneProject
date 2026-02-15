@@ -12,3 +12,13 @@ inline void CMeshComponent::SetMeshFromFile(ID3D12Device* device, ID3D12Graphics
 	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
 	SetMesh(mesh);
 }
+
+template<typename T>
+inline void CMeshComponent::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const MeshCollider& meshData)
+{
+	auto mesh = std::make_shared<CMesh>();
+
+	mesh->BuildVertices<T>(device, commandList, meshData);
+	mesh->SetIndices(device, commandList, (UINT)meshData.indices.size(), meshData.indices);
+	SetMesh(mesh);
+}

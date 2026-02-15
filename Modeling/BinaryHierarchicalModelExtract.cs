@@ -432,7 +432,6 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         int materialCount = renderer.sharedMaterials.Length;
 
         WriteInteger(mesh.vertexCount);
-        WriteInteger(mesh.subMeshCount);
         WriteInteger(materialCount);
         WriteBool(isSkinning);
 
@@ -476,6 +475,25 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         }
 
         WriteString("</Mesh>");
+    }
+
+    void WriteColliderMeshInfo(Mesh colliderMesh)
+    {
+        WriteString("<ColliderMesh>:");
+
+        WriteInteger(colliderMesh.vertexCount);
+
+        if ((colliderMesh.vertices != null) && (colliderMesh.vertices.Length > 0)) WriteVectors("<Positions>:", colliderMesh.vertices);
+        if ((colliderMesh.normals != null) && (colliderMesh.normals.Length > 0)) WriteVectors("<Normals>:", colliderMesh.normals);
+
+        WriteInteger("<SubMeshes>:", colliderMesh.subMeshCount);
+        for (int i = 0; i < colliderMesh.subMeshCount; i++)
+        {
+            int[] indices = colliderMesh.GetTriangles(i);
+            WriteIntegers("<SubMesh>:", i, indices);
+        }
+
+        WriteString("</ColliderMesh>");
     }
 
     void WriteMaterials(Material[] materials)
@@ -598,6 +616,11 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         if (TryGetMesh(t, out Mesh mesh, out Renderer renderer))
         {
             WriteMeshInfo(mesh, renderer);
+        }
+        MeshCollider collider = t.GetComponent<MeshCollider>();
+        if (collider != null && collider.sharedMesh != null)
+        {
+            WriteColliderMeshInfo(collider.sharedMesh);
         }
 
         WriteInteger("<Children>:", t.childCount);

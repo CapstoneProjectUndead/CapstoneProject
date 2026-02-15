@@ -88,6 +88,32 @@ void CSphereShape::ComputeAABB(BoundingBox& outAABB) const
     BoundingBox::CreateFromPoints(outAABB, minV, maxV);
 }
 
+CConvexMeshShape::CConvexMeshShape(std::vector<XMFLOAT3>& vertice)
+{
+    localVertices.reserve(vertice.size());
+    worldVertices.reserve(vertice.size());
+
+    localVertices = vertice;
+    worldVertices = localVertices;
+}
+
+void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
+{
+    worldVertices.resize(localVertices.size());
+
+    for (size_t i = 0; i < localVertices.size(); i++)
+    {
+        XMVECTOR p = XMLoadFloat3(&localVertices[i]);
+        XMVECTOR wp = XMVector3Transform(p, worldMatrix);
+        XMStoreFloat3(&worldVertices[i], wp);
+    }
+}
+
+bool CConvexMeshShape::Intersects(const CConvexMeshShape& other) const
+{
+    return false;
+}
+
 // component
 void CColliderComponent::Update(const float deltaTime)
 {

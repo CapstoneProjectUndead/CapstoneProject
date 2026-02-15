@@ -104,15 +104,14 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 			if (children->name == "Table") {
 				// 4) ColliderComponent 생성
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
-				auto boxCollider = std::make_shared<CColliderComponent>(shape);
-				obj->SetComponent(boxCollider);
-				CPhysicsManager::GetInstance().SetCollider(boxCollider);
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+				auto collider = std::make_shared<CColliderComponent>(shape);
+				obj->SetComponent(collider);
+				CPhysicsManager::GetInstance().SetCollider(collider);
 
 				auto debugMesh = std::make_shared<CMeshComponent>();
 				obj->SetComponent(debugMesh);
-				std::shared_ptr<CMesh> meshss = std::make_shared<CCubeMesh>(device, commandList, children->mesh.bounds.Extents);
-				debugMesh->SetMesh(meshss);
+				debugMesh->SetMeshFromFile<CVertex>(device, commandList, children->collider);
 			}
 
 			obj->Initialize(device, commandList);

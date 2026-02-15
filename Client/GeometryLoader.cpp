@@ -214,13 +214,38 @@ void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>&
     }
 }
 
+MeshCollider CGeometryLoader::LoadMeshCollider(BinaryReader& br)
+{
+    MeshCollider collider;
+    int size{ br.Read<int>() };
+    collider.positions.reserve(size);
+    collider.normals.reserve(size);
+
+    if (br.FindTag("<Positions>:")) br.ReadVectors<XMFLOAT3>(collider.positions);
+    if (br.FindTag("<Normals>:")) br.ReadVectors<XMFLOAT3>(collider.normals);
+    if (br.FindTag("<SubMeshes>:")) {
+        int subMeshCount = br.Read<UINT>();
+        collider.indices.reserve(subMeshCount);
+        for (int i = 0; i < subMeshCount; ++i)
+        {
+            std::string tag;
+            br.ReadTag(tag);
+
+            int index = br.Read<int>();
+            br.ReadVectors<UINT>(collider.indices);
+        }
+    }
+
+    return collider;
+}
+
 Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
 {
     Mesh mesh;
-    std::string tag;
 
-    mesh.positions.reserve(br.Read<int>());
-    mesh.normals.reserve(br.Read<int>());
+    int size{ br.Read<int>() };
+    mesh.positions.reserve(size);
+    mesh.normals.reserve(size);
     int materialCount = br.Read<int>();
     bool skinned = br.Read<bool>();
 
@@ -257,38 +282,45 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
 
 std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br)
 {
-    std::string tag;
-    //br.ReadTag(tag);
-    if (!br.FindTag("<Frame>:")) {
+    if (!br.FindTag("<Frame>:"))
         return nullptr;
-    }
 
     auto node = std::make_unique<FrameNode>();
-    // Name
+
     node->name = br.ReadName();
 
-    // Transform
-    if (br.FindTag("<Transform>:")) {
-        node->localMatrix = br.Read<XMFLOAT4X4>();
-    }
+    std::string tag;
 
-    br.ReadTag(tag);
-    if (br.IsTag(tag, "<Mesh>:"))
-    {
-        node->mesh = LoadMesh(br);
-    }
-    else if (br.IsTag(tag, "<Children>:")) {
-        int childCount = br.Read<int>();
+    while (br.ReadTag(tag)) {
+        if (br.IsTag(tag, "<Transform>:")) {
+            node->localMatrix = br.Read<XMFLOAT4X4>();
+        }
+        else if (br.IsTag(tag, "<Mesh>:")) {
+            node->mesh = LoadMesh(br);
+        }
+        else if (br.IsTag(tag, "<ColliderMesh>:")) {
+            node->collider = LoadMeshCollider(br);
+        }
+        else if (br.IsTag(tag, "<Children>:")) {
+            int childCount = br.Read<int>();
 
-        node->childrens.reserve(childCount);
-        for (int i = 0; i < childCount; ++i)
-        {
-            node->childrens.push_back(LoadFrame(br));
+            node->childrens.reserve(childCount);
+
+            for (int i = 0; i < childCount; ++i)
+                node->childrens.push_back(LoadFrame(br));
+
+            break; // Children 끝나면 Frame 끝일 확률 높음
+        }
+        else if (br.IsTag(tag, "<Frame>:")) {
+            // 다음 Frame 시작 → rewind
+            br.Stream().seekg(-(std::streamoff)tag.size(), std::ios::cur);
+            break;
         }
     }
 
     return node;
 }
+
 
 std::unique_ptr<FrameNode> CGeometryLoader::LoadGeometry(const std::string& filename)
 {

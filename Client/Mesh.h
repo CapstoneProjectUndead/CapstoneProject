@@ -2,6 +2,7 @@
 
 struct Mesh;	// GeometryLoader에 정의
 struct FrameNode;	// GeometryLoader에 정의
+struct MeshCollider;	// GeometryLoader에 정의
 
 class CVertex {
 public:
@@ -58,6 +59,8 @@ public:
 
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+	template<typename T>
+	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const MeshCollider& collider);
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};
@@ -156,6 +159,26 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 	}
 
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+}
+
+template<typename T>
+inline void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const MeshCollider& collider)
+{
+	std::vector<T> vertices;
+	size_t count = collider.positions.size();
+	vertices.reserve(count);
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		T v{};
+		v.position = collider.positions[i];
+		v.normal = (i < collider.normals.size()) ? collider.normals[i] : XMFLOAT3(0, 1, 0);
+
+		vertices.push_back(v);
+	}
+
+	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
 }
 
 template<>
