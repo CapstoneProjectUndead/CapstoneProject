@@ -321,7 +321,6 @@ std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br)
     return node;
 }
 
-
 std::unique_ptr<FrameNode> CGeometryLoader::LoadGeometry(const std::string& filename)
 {
     BinaryReader br(filename);

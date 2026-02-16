@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "Object.h"
 #include "MeshRenderer.h"
+#include "Material.h"
 
 CObject::CObject()
 {

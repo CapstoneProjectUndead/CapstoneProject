@@ -48,8 +48,8 @@
     </Filter>
     <Filter Include="Scene\Lobby Scene">
       <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
-	</Filter>
-	<Filter Include="Component\Collider/Physics">
+    </Filter>
+    <Filter Include="Component\Collider/Physics">
       <UniqueIdentifier>{f71884ed-a63a-483e-97b8-9dc96901df53}</UniqueIdentifier>
     </Filter>
     <Filter Include="ImGUI">
@@ -63,6 +63,9 @@
     </Filter>
     <Filter Include="Object\User">
       <UniqueIdentifier>{9c79dc36-4810-45ed-b0fa-be35ef16547a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Factory">
+      <UniqueIdentifier>{ca82464f-16b0-4854-841c-3d2bd01e61ea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -185,8 +188,8 @@
     </ClInclude>
     <ClInclude Include="LagSimulator.h">
       <Filter>Network\NetworkManager</Filter>
-	</ClInclude>
-	<ClInclude Include="MeshRenderer.h">
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Collider.h">
@@ -233,6 +236,12 @@
     </ClInclude>
     <ClInclude Include="UICommon.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectFactory.h">
+      <Filter>Object\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -322,8 +331,8 @@
     </ClCompile>
     <ClCompile Include="LagSimulator.cpp">
       <Filter>Network\NetworkManager</Filter>
-	</ClCompile>
-	<ClCompile Include="MeshRenderer.cpp">
+    </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Collider.cpp">
@@ -364,6 +373,12 @@
     </ClCompile>
     <ClCompile Include="ImGuiManager.cpp">
       <Filter>ImGUI\ImGuiManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectFactory.cpp">
+      <Filter>Object\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

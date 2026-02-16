@@ -93,7 +93,6 @@ class CSkinningShader : public CShader
 {
 public:
 	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
-	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 };

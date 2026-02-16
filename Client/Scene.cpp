@@ -69,8 +69,7 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 
 		if (my_player) {
 			if (shader.first == my_player->GetShader()) {
-				my_player->UpdateShaderVariables(commandList);
-				my_player->Render(commandList);
+				shader.second->Render(commandList, my_player.get());
 			}
 		}
 

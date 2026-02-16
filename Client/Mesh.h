@@ -23,10 +23,10 @@ public:
 	XMFLOAT2 tex{};
 };
 
-class CSkinnedVertex : public CVertex{
+class CSkinnedVertex : public CMatVertex {
 public:
-	CSkinnedVertex() : CVertex() {}
-	CSkinnedVertex(XMFLOAT3 position, XMFLOAT3 normal);
+	CSkinnedVertex() : CMatVertex() {}
+	CSkinnedVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal);
 
 	XMUINT4  bone_indices{};
 	XMFLOAT4 bone_weights{};

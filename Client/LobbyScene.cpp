@@ -3,12 +3,9 @@
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Shader.h"
-#include "MeshComponent.inl"
-#include "Texture.h"
-#include "Mesh.h"
-#include "Collider.h"
 #include "PhysicsManager.h"
 #include "GameFramework.h"
+#include "ObjectFactory.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -21,12 +18,6 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	// 플레이어 생성
-	if (!my_player) {
-		my_player = std::make_shared<CMyPlayer>();
-		my_player->Initialize(device, commandList);
-	}
-	
 	{
 		// static shader
 		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
@@ -39,14 +30,22 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		shader->CreateShader(device);
 		shaders.emplace("skinning", std::move(shader));
 	}
+
+	// factory
+	CObjectFactory factory;
 	
+	// 플레이어 생성
+	if (!my_player) {
+		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		my_player = factory.CreateMyPlayer(skinningHeapManager);
+	}
+	
+	{
+		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		objects = factory.CreateLobby(staticHeapManager);
+	}
 	// test 용 삭제X
 	{
-		/*auto obj = std::make_shared<CCharacter>();
-		obj->Initialize(device, commandList);
-		objects.push_back(std::move(obj));
-		*/
-
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
 		std::ofstream txt("../Modeling/char.txt");
 
@@ -60,61 +59,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 			}
 		}*/
 	}
-	{
-		std::string fileName{ "../Modeling/lobby_uv.bin" };
-		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-		CDescriptorHeapManager* heapManager{ shaders["static"]->GetHeapManager() };
-		CMaterialManager matManager{};
-		CTextureManager texManager{};
-
-		for (const auto& children : frameRoot->childrens) {
-			if (children->mesh.positions.empty()) break;
-			auto obj = std::make_shared<CObject>();
-			// 1) MeshComponent 생성
-			auto meshComp = std::make_shared<CMeshComponent>();
-			obj->SetComponent(meshComp);
-			meshComp->SetMeshFromFile<CMatVertex>(device, commandList, children);
-			obj->world_matrix = children->localMatrix;
-
-			// 2) MaterialComponent 생성
-			auto matComp = std::make_shared<CMaterialComponent>();
-			obj->SetComponent(matComp);
-
-			std::string name{ children->mesh.materials[0].albedoMap };
-			auto tex = texManager.GetTexture(device, commandList, heapManager, name);
-			auto mat = matManager.GetMeterial(name, tex);
-			matComp->SetMaterial(mat);
-
-			// 3) MeshRendererComponent 생성
-			obj->SetComponent(std::make_shared<CMeshRendererComponent>());
-
-			if (children->name == "Floor") {
-				// 4) ColliderComponent 생성
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-				auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				obj->SetComponent(boxCollider);
-				CPhysicsManager::GetInstance().SetCollider(boxCollider);
-			}
-
-			if (children->name == "Table") {
-				// 4) ColliderComponent 생성
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				obj->SetComponent(collider);
-				CPhysicsManager::GetInstance().SetCollider(collider);
-
-				auto debugMesh = std::make_shared<CMeshComponent>();
-				obj->SetComponent(debugMesh);
-				debugMesh->SetMeshFromFile<CVertex>(device, commandList, children->collider);
-			}
-
-			obj->Initialize(device, commandList);
-
-			objects.push_back(std::move(obj));
-		}
-	}
-	
 	if (!camera) {
 		camera = std::make_shared<CCamera>();
 		camera->SetTarget(my_player.get());

@@ -49,6 +49,7 @@ struct VS_INPUT
 {
     float3 position : POSITION;
     float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
 #ifdef SKINNED
     uint4 bone_indices : BLENDINDICES;
     float4 bone_weights : BLENDWEIGHT;
@@ -60,7 +61,11 @@ struct VS_OUTPUT
     float4 position_clip : SV_POSITION;
     float3 position_world : POSITION;
     float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
 };
+
+Texture2D texDiffuse : register(t0);
+SamplerState sample : register(s0);
 
 VS_OUTPUT VSMain(VS_INPUT input)
 {
@@ -93,25 +98,30 @@ VS_OUTPUT VSMain(VS_INPUT input)
     output.normal = mul(input.normal, (float3x3) worldMatrix);
     
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
+    output.tex = input.tex;
+    
     return output;
 }
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET
 {
+    // texture
+    float4 diffuseAlbedo = texDiffuse.Sample(sample, input.tex) * albedo;
+
+    // light
     input.normal = normalize(input.normal);
 
     float3 toEyeW = normalize(eyePosWorld - input.position_world);
 
-    float4 ambient = ambientLight * albedo;
+    float4 ambient = ambientLight * diffuseAlbedo;
 
-    Material mat = { albedo, fresnel, glossiness };
+    Material mat = { diffuseAlbedo, fresnel, glossiness };
     float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, input.position_world, input.normal, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;
-
-    // 분산 재질 알파 사용
-    litColor.a = albedo.a;
+    
+    litColor.a = diffuseAlbedo.a;
 
     return litColor;
 }

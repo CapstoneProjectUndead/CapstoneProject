@@ -7,6 +7,4 @@ class CCharacter : public CObject
 {
 public:
     CCharacter();
-    
-    void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };

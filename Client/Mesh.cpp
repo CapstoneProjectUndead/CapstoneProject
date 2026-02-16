@@ -19,8 +19,8 @@ CMatVertex::CMatVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal)
 }
 
 // CSkinnedVertex
-CSkinnedVertex::CSkinnedVertex(XMFLOAT3 position, XMFLOAT3 normal)
-	:CVertex(position, normal)
+CSkinnedVertex::CSkinnedVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal)
+	:CMatVertex(position, tex, normal)
 {
 }
 
@@ -88,6 +88,7 @@ void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCo
 		CSkinnedVertex v{};
 		v.position = mesh.positions[i];
 		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
+		v.tex = (i < mesh.texcoords.size()) ? mesh.texcoords[i] : XMFLOAT2(0, 0);
 
 		if (i < mesh.bone_weights.size())
 		{

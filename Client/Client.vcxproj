@@ -197,6 +197,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="LagSimulator.h" />
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="macro.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="Movement.h" />
@@ -204,6 +205,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="NetworkClockManager.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjectFactory.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Scene.h" />
@@ -249,6 +251,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="LagSimulator.cpp" />
     <ClCompile Include="LightManager.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshRenderer.cpp" />
     <ClCompile Include="Movement.cpp" />
@@ -256,6 +259,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="NetworkClockManager.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="ObjectFactory.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />
