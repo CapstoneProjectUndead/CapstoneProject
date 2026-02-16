@@ -13,6 +13,11 @@ CLobbyScene::CLobbyScene()
 {
 }
 
+CLobbyScene::CLobbyScene(uint32 roomId)
+	: CScene(SCENE_TYPE::LOBBY, roomId)
+{
+}
+
 CLobbyScene::~CLobbyScene()
 {
 }
@@ -145,6 +150,9 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 
 	// 지금 플레이어가 속한 방ID
 	player->SetRoomID(roomId);
+
+	// 지금 플레이어가 속한 방
+	player->SetRoom(user->GetRoom());
 
 	// Player가 속한 Scene 설정
 	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);

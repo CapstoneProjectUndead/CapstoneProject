@@ -41,6 +41,10 @@ void CRoom::Initialize()
 void CRoom::Update(const float elapsedTime)
 {
 	lock_guard<mutex> lg(room_lock);
+
+	if (!is_active)
+		return;
+
 	for (auto& scene : scenes)
 	{
 		if (scene)
@@ -53,6 +57,10 @@ void CRoom::Update(const float elapsedTime)
 void CRoom::SendResults()
 {
 	lock_guard<mutex> lg(room_lock);
+
+	if (!is_active)
+		return;
+
 	for (auto& scene : scenes)
 	{
 		if (scene)

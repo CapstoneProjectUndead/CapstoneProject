@@ -11,6 +11,7 @@ class CScene
 
 public:
 	CScene(SCENE_TYPE type);
+	CScene(SCENE_TYPE type, uint32 roomId);
 	~CScene();
 
 	virtual void Start() {};
@@ -28,7 +29,13 @@ public:
 	void SendPlayersCheckPing();
 
 	// Scene에 플레이어가 있는지 체크
-	bool HasPlayers();
+	bool HasPlayers()
+	{
+		if (!players.empty())
+			return true;
+		else
+			return false;
+	}
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
@@ -63,6 +70,7 @@ protected:
 
 private:
 	SCENE_TYPE							scene_type;
+	uint32								room_id;
 	float								dt_ping_accumulator;
 };
 

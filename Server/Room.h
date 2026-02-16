@@ -26,10 +26,13 @@ public:
     bool            GetIsGameStart() const { return room_info.is_game_start; }
 
     bool            IsValid();
+    bool            IsActive() const { return is_active; }
+    void            SetActive(bool active) { is_active = active; }
 
 private:
     static atomic<uint32> s_room_id_generator;
 
+    bool        is_active;
     RoomInfo    room_info;
     SceneArray  scenes;
     mutex       room_lock;

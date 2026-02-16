@@ -818,13 +818,22 @@ void CTitleScene::Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SI
 
 void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_EnterRoom& pkt)
 {
-    SetIsEnter(true);
+    if (pkt.success) {
+        SetIsEnter(true);
 
-    ShowResultPopup(true, "방 입장 완료!");
+        ShowResultPopup(true, "방 입장 완료!");
 
-    CImGuiManager::GetInstance().ReserveResetFocus();
+        CImGuiManager::GetInstance().ReserveResetFocus();
 
-    SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
+        SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
+    }
+    else {
+        SetIsEnter(false);
+
+        ShowResultPopup(true, "방 입장 불가!");
+
+        CImGuiManager::GetInstance().ReserveResetFocus();
+    }
 
     // 로딩창 끄기
     StopLoading();

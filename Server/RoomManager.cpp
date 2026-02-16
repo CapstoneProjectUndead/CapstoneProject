@@ -21,11 +21,11 @@ void CRoomManager::Initialize()
 void CRoomManager::Update(const float elapsedTime)
 {
 	// 락은 '방 목록'을 복사하거나 순회할 때만 짧게 건다
-	vector<CRoom*> activeRooms;
+	vector<shared_ptr<CRoom>> activeRooms;
 	{
 		lock_guard<mutex> lg(rooms_lock);
-		for (auto& pair : rooms) 
-			activeRooms.push_back(pair.second.get());
+		for (auto& [id, room] : rooms)
+			activeRooms.push_back(room);
 	}
 	
 	// 각 방의 업데이트를 스레드 풀에 던진다
@@ -39,11 +39,11 @@ void CRoomManager::Update(const float elapsedTime)
 
 void CRoomManager::SendResults()
 {
-	vector<CRoom*> activeRooms;
+	vector<shared_ptr<CRoom>> activeRooms;
 	{
 		lock_guard<mutex> lg(rooms_lock);
-		for (auto& pair : rooms)
-			activeRooms.push_back(pair.second.get());
+		for (auto& [id, room] : rooms)
+			activeRooms.push_back(room);
 	}
 	
 	for (auto& room : activeRooms)
@@ -54,23 +54,40 @@ void CRoomManager::SendResults()
 	}
 }
 
-CRoom* CRoomManager::FindRoomLock(uint32 roomId)
+void CRoomManager::CheckEmptyRoom()
 {
 	lock_guard<mutex> lg(rooms_lock);
-	auto iter = rooms.find(roomId);
-	if (!iter->second)
-		assert(nullptr);
+	for (auto it = rooms.begin(); it != rooms.end(); ) {
+		auto& room = it->second;
 
-	return iter->second.get();
+		if (!room->IsActive()) {
+			it = rooms.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
 }
 
-CRoom* CRoomManager::FindRoomNoLock(uint32 roomId)
+shared_ptr<CRoom>CRoomManager::FindRoomLock(uint32 roomId)
 {
-	auto iter = rooms.find(roomId);
-	if (!iter->second)
-		assert(nullptr);
+	lock_guard<mutex> lg(rooms_lock);
+	if (rooms.empty())
+		return nullptr;
 
-	return iter->second.get();
+	auto iter = rooms.find(roomId);
+	if (iter != rooms.end())
+		return iter->second;
+}
+
+shared_ptr<CRoom> CRoomManager::FindRoomNoLock(uint32 roomId)
+{
+	if (rooms.empty())
+		return nullptr;
+
+	auto iter = rooms.find(roomId);
+	if (iter != rooms.end())
+		return iter->second;
 }
 
 void CRoomManager::DestroyRoomLock(uint32 roomId)
@@ -86,7 +103,7 @@ void CRoomManager::DestroyRoomNoLock(uint32 roomId)
 
 void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 {
-	unique_ptr<CRoom> room = make_unique<CRoom>(name);
+	shared_ptr<CRoom> room = make_shared<CRoom>(name);
 
 	// 방에 존재해야 하는 모든 Scene들을 생성하고 초기화
 	room->Initialize();
@@ -100,7 +117,7 @@ void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	user->SetRoomID(roomId);
 
 	// 유저는 자신의 Room 포인터를 들고 있는다.
-	user->SetRoom(room.get());
+	user->SetRoom(room);
 
 	// 플레이어 Lobby Scene에 입장
 	{
@@ -119,7 +136,7 @@ void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 
 	// 방 map에 저장
 	lock_guard<mutex> lg(rooms_lock);
-	rooms[room->GetRoomID()] = std::move(room);
+	rooms[room->GetRoomID()] = room;
 }
 
 void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
@@ -127,7 +144,7 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 	auto user = CAST_CS(session)->GetUser();
 	assert(user);
 
-	CRoom* room = FindRoomLock(roomId);
+	auto room = FindRoomLock(roomId);
 	if (room) {
 		if (room->IsValid()) {
 			// 유저 방ID와 방 Set
@@ -178,8 +195,8 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 
 	if (roomId != -1) {
 
-		lock_guard<mutex> lg(rooms_lock);
-		auto room = FindRoomNoLock(roomId);
+		//lock_guard<mutex> lg(rooms_lock);
+		auto room = FindRoomLock(roomId);
 		if (room) {
 
 			// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
@@ -194,11 +211,6 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 				, (CScene*)scene
 				, &CScene::Handle_C_Player_Leave
 				, dummyPkt);
-
-			//// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
-			//if (room->SearchPlayersAllScene()) {
-			//	DestroyRoomNoLock(roomId);
-			//}
 		}
 	}
 }
