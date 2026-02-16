@@ -32,15 +32,15 @@ CRoom::~CRoom()
 void CRoom::Initialize()
 {
 	// LobbyScene 생성
-	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>();
+	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 
 	// 나중에 여기서 GameScene도 같이 생성
-	
 }
 
 void CRoom::Update(const float elapsedTime)
 {
+	lock_guard<mutex> lg(room_lock);
 	for (auto& scene : scenes)
 	{
 		if (scene)
@@ -52,6 +52,7 @@ void CRoom::Update(const float elapsedTime)
 
 void CRoom::SendResults()
 {
+	lock_guard<mutex> lg(room_lock);
 	for (auto& scene : scenes)
 	{
 		if (scene)
@@ -73,19 +74,5 @@ bool CRoom::IsValid()
 	if (info.is_game_start)
 		return false;
 	
-	return true;
-}
-
-bool CRoom::SearchPlayersAllScene()
-{
-	for (auto& scene : scenes)
-	{
-		if (scene)
-		{
-			if (scene->HasPlayers())
-				return false;
-		}
-	}
-
 	return true;
 }

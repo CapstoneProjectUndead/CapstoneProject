@@ -20,20 +20,68 @@ void CRoomManager::Initialize()
 
 void CRoomManager::Update(const float elapsedTime)
 {
-	lock_guard<mutex> lg(rooms_lock);
-	for (auto& [id, room] : rooms)
+	// 락은 '방 목록'을 복사하거나 순회할 때만 짧게 건다
+	vector<CRoom*> activeRooms;
 	{
-		room->Update(elapsedTime);
+		lock_guard<mutex> lg(rooms_lock);
+		for (auto& pair : rooms) 
+			activeRooms.push_back(pair.second.get());
+	}
+	
+	// 각 방의 업데이트를 스레드 풀에 던진다
+	for (auto& room : activeRooms)
+	{
+		GThreadManager->PushTask([room, elapsedTime]() {
+			room->Update(elapsedTime);
+			});
 	}
 }
 
 void CRoomManager::SendResults()
 {
-	lock_guard<mutex> lg(rooms_lock);
-	for (auto& [id, room] : rooms)
+	vector<CRoom*> activeRooms;
 	{
-		room->SendResults();
+		lock_guard<mutex> lg(rooms_lock);
+		for (auto& pair : rooms)
+			activeRooms.push_back(pair.second.get());
 	}
+	
+	for (auto& room : activeRooms)
+	{
+		GThreadManager->PushTask([room]() {
+			room->SendResults();
+			});
+	}
+}
+
+CRoom* CRoomManager::FindRoomLock(uint32 roomId)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	auto iter = rooms.find(roomId);
+	if (!iter->second)
+		assert(nullptr);
+
+	return iter->second.get();
+}
+
+CRoom* CRoomManager::FindRoomNoLock(uint32 roomId)
+{
+	auto iter = rooms.find(roomId);
+	if (!iter->second)
+		assert(nullptr);
+
+	return iter->second.get();
+}
+
+void CRoomManager::DestroyRoomLock(uint32 roomId)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	rooms.erase(roomId);
+}
+
+void CRoomManager::DestroyRoomNoLock(uint32 roomId)
+{
+	rooms.erase(roomId);
 }
 
 void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
@@ -74,17 +122,6 @@ void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	rooms[room->GetRoomID()] = std::move(room);
 }
 
-void CRoomManager::DestroyRoomLock(uint32 roomId)
-{
-	lock_guard<mutex> lg(rooms_lock);
-	rooms.erase(roomId);
-}
-
-void CRoomManager::DestroyRoomNoLock(uint32 roomId)
-{
-	rooms.erase(roomId);
-}
-
 void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 {
 	auto user = CAST_CS(session)->GetUser();
@@ -111,11 +148,27 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 				, dummypkt);
 		}
 		else {
+			// 정원 초과 또는 이미 게임 시작한 방
 			// fail 패킷 전송
+			S_EnterRoom enterPkt;
+			enterPkt.success = false;
+			enterPkt.room_id = roomId;
+			enterPkt.scene_type = SCENE_TYPE::LOBBY;
+			auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+			if (user->GetSession())
+				user->GetSession()->DoSend(sendBuffer);
 		}
 	}
 	else {
+		// 유효하지 않은 방
 		// fail 패킷 전송
+		S_EnterRoom enterPkt;
+		enterPkt.success = false;
+		enterPkt.room_id = roomId;
+		enterPkt.scene_type = SCENE_TYPE::LOBBY;
+		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+		if (user->GetSession())
+			user->GetSession()->DoSend(sendBuffer);
 	}
 }
 
@@ -142,31 +195,12 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 				, &CScene::Handle_C_Player_Leave
 				, dummyPkt);
 
-			// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
-			if (room->SearchPlayersAllScene()) {
-				DestroyRoomNoLock(roomId);
-			}
+			//// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
+			//if (room->SearchPlayersAllScene()) {
+			//	DestroyRoomNoLock(roomId);
+			//}
 		}
 	}
-}
-
-CRoom* CRoomManager::FindRoomLock(uint32 roomId)
-{
-	lock_guard<mutex> lg(rooms_lock);
-	auto iter = rooms.find(roomId);
-	if (!iter->second)
-		assert(nullptr);
-
-	return iter->second.get();
-}
-
-CRoom* CRoomManager::FindRoomNoLock(uint32 roomId)
-{
-	auto iter = rooms.find(roomId);
-	if (!iter->second)
-		assert(nullptr);
-
-	return iter->second.get();
 }
 
 void CRoomManager::SendRoomList(shared_ptr<Session> session)
