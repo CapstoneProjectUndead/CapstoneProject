@@ -40,7 +40,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		matComp->SetMaterial(mat);
 
 		// 3) MeshRendererComponent 생성
-		obj->SetComponent(std::make_shared<CMeshRendererComponent>());
+		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+		obj->SetComponent(meshRenderer);
+		meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
 
 		if (children->name == "Floor") {
 			// 4) ColliderComponent 생성
@@ -80,12 +82,18 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 	BoundingBox totalBounds;
 	bool firstBounds = true;
 
+	// MeshRendererComponent 생성
+	auto renderer = std::make_shared<CMeshRendererComponent>();
+	character->SetComponent(renderer);
+
 	for (const auto& child : frameRoot->childrens) {
 		if (child->mesh.positions.empty())
 			continue;
 
+		RenderUnit renderUnit{};
 		// mesh component
 		auto meshComp = std::make_shared<CMeshComponent>();
+		renderUnit.mesh = meshComp.get();
 		character->SetComponent(meshComp);
 		meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
 		// bounds merge
@@ -106,7 +114,11 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
 			std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
 			matComp->SetMaterial(mat);
+			renderUnit.material = matComp.get();
 		}
+
+		// renderUnit set
+		renderer->SetRenderUnit(renderUnit);
 	}
 	// 4) ColliderComponent 생성
 	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
@@ -121,7 +133,7 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 	character->SetComponent(animator);
 	character->SetShdaer("skinning");
 
-	// 5) Movement
+	// Movement
 	character->SetComponent(std::make_shared<CMovementComponent>());
 }
 

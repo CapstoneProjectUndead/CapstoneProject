@@ -28,6 +28,8 @@ public:
 	//get
 	template<typename T>
 	T* GetComponent() const;
+	template<typename T>
+	std::vector<T*> GetComponents() const;
 	UINT GetSRVIndex() const;
 
 	virtual void Animate(float, CCamera*);
@@ -102,4 +104,18 @@ T* CObject::GetComponent() const
 			return casted;
 	}
 	return nullptr;
+}
+
+template<typename T>
+std::vector<T*> CObject::GetComponents() const
+{
+	std::vector<T*> result;
+
+	for (auto& comp : components)
+	{
+		if (T* casted = dynamic_cast<T*>(comp.get()))
+			result.push_back(casted);
+	}
+
+	return result;
 }

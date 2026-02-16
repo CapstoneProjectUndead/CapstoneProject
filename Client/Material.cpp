@@ -44,7 +44,7 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name
 }
 
 // Component
-void CMaterialComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
+void CMaterialComponent::UpdateMeshShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
 	if (!material) return;
 

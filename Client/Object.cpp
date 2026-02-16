@@ -71,8 +71,11 @@ void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 
 void CObject::Render(ID3D12GraphicsCommandList* commandList)
 {
-	for (auto& component : components)
-		component->Render(commandList);
+	auto meshRenderer = GetComponents<CMeshRendererComponent>();
+
+	// mesh, collider(for debugging), material render
+	for (auto& renderer : meshRenderer)
+		renderer->Render(commandList);
 }
 
 void CObject::SetYaw(float _yaw)

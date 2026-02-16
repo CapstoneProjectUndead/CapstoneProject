@@ -2,6 +2,7 @@
 #include "Component.h"
 
 class CMesh;
+class CMaterialComponent;
 struct FrameNode;
 struct MeshCollider;
 
@@ -23,9 +24,25 @@ private:
     std::shared_ptr<CMesh> mesh;
 };
 
+struct RenderUnit
+{
+    CMeshComponent* mesh{};
+    CMaterialComponent* material{};
+};
+
 class CMeshRendererComponent : public CComponent
 {
 public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
+    void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat)
+    {
+        render_units.push_back({ mesh, mat });
+    }
+    void SetRenderUnit(RenderUnit renderUnit)
+    {
+        render_units.push_back(renderUnit);
+    }
+private:
+    std::vector<RenderUnit> render_units;
 };

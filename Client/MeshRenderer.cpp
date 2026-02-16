@@ -3,7 +3,7 @@
 #include "Mesh.h"
 #include "Object.h"
 #include "Collider.h"
-
+#include "Material.h"
 
 void CMeshComponent::SetMesh(std::shared_ptr<CMesh>& m)
 {
@@ -28,7 +28,15 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 {
 	if (!owner) return;
 
-	auto meshComp = owner->GetComponent<CMeshComponent>();
-	if (meshComp)
-		meshComp->Render(commandList);
+	for (auto& unit : render_units) {
+		if (unit.material)
+			unit.material->UpdateMeshShaderVariables(commandList);
+		if (unit.mesh)
+			unit.mesh->Render(commandList);
+	}
+#ifdef DEBUG
+	auto collider = owner->GetComponents<CColliderComponent>();
+	for (auto c : collider)
+		c->Render(commandList);
+#endif
 }

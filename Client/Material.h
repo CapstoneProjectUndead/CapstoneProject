@@ -43,7 +43,7 @@ public:
     CMaterial* GetMaterial() const { return material.get(); }
 
     void Update(const float deltaTime) override {};
-    void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList) override;
+    void UpdateMeshShaderVariables(ID3D12GraphicsCommandList* commandList) override;
     void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 private:
     std::shared_ptr<CMaterial> material;

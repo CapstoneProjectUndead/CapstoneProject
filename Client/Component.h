@@ -9,7 +9,10 @@ public:
 
 	virtual void Render(ID3D12GraphicsCommandList* commandList) {};
 	virtual void ReleaseUploadBuffer() {}
+	// Object 단위
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList) {}
+	// Mesh 단위
+	virtual void UpdateMeshShaderVariables(ID3D12GraphicsCommandList* commandList) {}
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) {}
 
 	CObject* owner{};	// 참조용
