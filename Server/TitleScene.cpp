@@ -55,8 +55,7 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 		return;
 	}
 
-	try
-	{
+	try {
 		std::unique_ptr<sql::PreparedStatement> pstmt(CON->prepareStatement(
 			"INSERT INTO users (id, password, name) VALUES (?, ?, ?)"
 		));
@@ -68,8 +67,7 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 		// INSERT는 executeUpdate() 사용
 		int affected = pstmt->executeUpdate();
 
-		if (affected == 0)
-		{
+		if (affected == 0) {
 			// INSERT 됐어야 하는데, 0행 영향 → 비정상
 			cout << "[DB] INSERT 실패: 0행 영향\n";
 
@@ -91,8 +89,7 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 		}
 
 	}
-	catch (sql::SQLException& e)
-	{
+	catch (sql::SQLException& e) {
 		cout << "[DB] SQL 예외 발생\n";
 		cout << "  Error: " << e.what() << "\n";
 		cout << "  Code:  " << e.getErrorCode() << "\n";
