@@ -12,5 +12,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList) {}
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) {}
 
+	CObject* GetOwner() const { return owner; }
+
 	CObject* owner{};	// 참조용
 };

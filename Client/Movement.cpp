@@ -60,29 +60,25 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
 {
     // 1. 입력 → 가속도
     XMFLOAT3 accel{};
-
     if (dir.z > 0) accel = Vector3::Add(accel, owner->look);
     if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->look, -1));
     if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->right, -1));
     if (dir.x > 0) accel = Vector3::Add(accel, owner->right);
 
-    // 2. 가속 적용
+    // 2. 가속 적용 (Velocity 갱신)
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(accel, speed * dt));
 
     // 3. 최대 속도 제한
-	float lenXZ = sqrtf(owner->velocity.x * owner->velocity.x + owner->velocity.z * owner->velocity.z);
-	if (lenXZ > max_speed) {
-		float ratio = max_speed / lenXZ;
-		owner->velocity.x *= ratio;
-		owner->velocity.z *= ratio;
-	}
+    float lenXZ = sqrtf(owner->velocity.x * owner->velocity.x + owner->velocity.z * owner->velocity.z);
+    if (lenXZ > max_speed) {
+        float ratio = max_speed / lenXZ;
+        owner->velocity.x *= ratio;
+        owner->velocity.z *= ratio;
+    }
 
-    // 4. 이동
-    owner->position = Vector3::Add(owner->position, Vector3::ScalarProduct(owner->velocity, dt));
-
-    // 5. 감속 (마찰)
+    // 4. 마찰 (Friction) - 속도를 줄이는 건 여기서 해도 됨
     float speedLen = Vector3::Length(owner->velocity);
-    float decel = owner->friction * dt;
+    float decel = owner->friction * dt; // owner->friction 확인 필요
     if (decel > speedLen) decel = speedLen;
 
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(owner->velocity, -decel, true));

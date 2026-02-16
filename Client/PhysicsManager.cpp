@@ -173,3 +173,41 @@ void CPhysicsManager::ApplyGravity(float dt)
         obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
     }
 }
+
+void CPhysicsManager::SimulateSingleObject(CColliderComponent* col, float dt)
+{
+    if (!col || !col->GetOwner())
+        return;
+
+    auto owner = col->GetOwner();
+
+    // ---------------------------------------------------
+     // 1. 중력 및 지면 판정 (ApplyGravity 로직 가져옴)
+     // ---------------------------------------------------
+     // 재시뮬레이션 때도 중력은 적용받아야 함
+    bool isGrounded = CheckGround(col);
+
+    if (!isGrounded)
+        owner->velocity.y += gravity * dt;
+    else
+        owner->velocity.y = 0.0f; // 땅에 있으면 y속도 리셋
+
+    // ---------------------------------------------------
+    // 2. 주변 충돌체와 충돌 해결 (Slide 적용)
+    // ---------------------------------------------------
+    for (auto& other : colliders) {
+        if (other.get() == col)
+            continue; // 나 자신 제외
+
+        // 충돌 검사
+        if (col->Intersects(other.get())) {
+            ApplyCollision(col, other.get(), dt); // 여기서 Slide 등이 호출됨
+        }
+    }
+
+    // ---------------------------------------------------
+    // 3. 최종 이동 (ApplyMovement 로직)
+    // ---------------------------------------------------
+    // 속도(Velocity)에 맞춰서 실제 좌표(Position) 이동
+    owner->position = Vector3::Add(owner->position, Vector3::ScalarProduct(owner->velocity, dt));
+}

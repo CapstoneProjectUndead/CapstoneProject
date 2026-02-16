@@ -11,6 +11,7 @@ public:
     CRoom(string name);
     ~CRoom();
 
+    void Initialize();
     void Update(const float elapsedTime);
     void SendResults();
 

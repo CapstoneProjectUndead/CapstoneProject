@@ -34,6 +34,7 @@
 #include <locale>
 #include <assert.h>
 #include <functional>
+#include <condition_variable>
 
 using std::cout;
 using std::endl;
@@ -56,6 +57,8 @@ using std::thread;
 using std::function;
 using std::lock_guard;
 using std::enable_shared_from_this;
+using std::condition_variable;
+using std::unique_lock;
 
 using std::shared_ptr;
 using std::weak_ptr;

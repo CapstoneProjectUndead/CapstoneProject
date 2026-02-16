@@ -18,7 +18,7 @@ public:
 
     void                                Rotate(float pitch, float yaw, float roll);
 
-    int                                 GetID() const { return obj_id; }
+    uint64                              GetID() const { return obj_id; }
     void                                SetID(int id) { obj_id = id; }
 
     weak_ptr<Session>                   GetSessionWeak() const { return session; }

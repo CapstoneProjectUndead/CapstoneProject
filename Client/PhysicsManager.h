@@ -33,6 +33,10 @@ public:
 
     void Update(float deltaTime);
     void ApplyMovement(float dt);
+
+    // 특정 충돌체 하나만 물리 연산(충돌 해결 -> 이동)을 수행하는 함수
+    void SimulateSingleObject(CColliderComponent* col, float dt);
+
 private:
     void BroadPhaseSAP(std::vector<std::pair<CColliderComponent*, CColliderComponent*>>& outPairs);
 

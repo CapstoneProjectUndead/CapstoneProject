@@ -56,7 +56,6 @@ public:
 	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
 
 	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return server_history_deq; }
-	deque<PendingInput>& GetInputQueue() { return input_queue; }
 	void PushInput(const PendingInput& input) { input_queue.push_back(input); }
 
 	float GetLastSimulatedTime() const { return last_simulated_time; }

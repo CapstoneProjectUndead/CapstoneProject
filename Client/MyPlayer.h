@@ -34,6 +34,8 @@ public:
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
     void SimulateMove(const InputData& input, float dt);
 
+    void BeginSendInputPacket(float elapsedTime);
+
 private:
     void ProcessRotation();
     void ProcessInput();
@@ -61,5 +63,6 @@ private:
     // 클라 예측 이동을 위한 시퀀스 넘버
     uint64                            client_seq_counter = 0;
     std::deque<ClientFrameHistory>    client_history_deq; // 시퀀스 장부
+    InputData                         current_input;
 };
 

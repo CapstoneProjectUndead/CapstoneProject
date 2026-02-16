@@ -137,7 +137,12 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	CPhysicsManager::GetInstance().Update(elapsedTime);
+	//CPhysicsManager::GetInstance().Update(elapsedTime);
+
+	// CPhysicsManager에서 이동이 일어나기 때문에 여기서 서버에 좌표패킷을 보낸다.
+	if (my_player) {
+		my_player->BeginSendInputPacket(elapsedTime);
+	}
 }
 
 void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
@@ -155,7 +160,6 @@ void CLobbyScene::Enter()
 
 void CLobbyScene::Exit()
 {
-	my_player = nullptr;
 	objects.clear();
 	shaders.clear();
 }

@@ -10,6 +10,7 @@ public:
     CTitleScene();
     ~CTitleScene();
 
+    virtual void Start() override;
     virtual void Update(float elapsedTime) override;
 
     void EnterUser(shared_ptr<CUser> user);
@@ -18,9 +19,9 @@ public:
     const map<uint64, shared_ptr<CUser>>& GetUsers() const { return users; }
 
 public:
-    void HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt);
-    void HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt);
-    void HandleLogOut(shared_ptr<Session> session, const C_LOGOUT& pkt);
+    void Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& pkt);
+    void Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt);
+    void Handle_C_LogOut(shared_ptr<Session> session, const C_LOGOUT& pkt);
 
 private:
     mutex								users_lock;

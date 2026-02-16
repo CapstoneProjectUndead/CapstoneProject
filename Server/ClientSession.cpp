@@ -25,12 +25,18 @@ void CClientSession::OnDisconnected()
 {
 
 #ifdef LOBBY_SCENE_TEST
-	if (nullptr != user) {
+	if (user) {
 		auto player = user->GetPlayer();
-		for (int i = 0; i < (UINT)SCENE_TYPE::END; ++i) {
-			CScene* scene = CSceneManager::GetInstance().GetScenes()[i].get();
-			if (scene != nullptr) {
-				scene->LeaveScene(player->GetID());
+		if (player) {
+			CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+			if (scene) {
+				PktDummy dummyPkt;
+				dummyPkt.value = player->GetID();
+
+				scene->PushPacketJob(GetSessionRef()
+					, (CScene*)scene
+					, &CScene::Handle_C_Player_Leave
+					, dummyPkt);
 			}
 		}
 	}
@@ -38,14 +44,13 @@ void CClientSession::OnDisconnected()
 	// User를 ClientSession에서도 관리하고 (ref 증가)
 	// Title 씬에서도 관리하고 있다. (ref 증가)
 
-	if (user != nullptr) {
+	if (user) {
 		// Title 씬에서 User 참조 끊기 (ref 감소)
 		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
 
 		auto player = user->GetPlayer();
 		if (player) {
-			auto& roomManager = CRoomManager::GetInstance();
-			roomManager.LeaveAndCleanupRoom(player);
+			CRoomManager::GetInstance().LeaveAndCleanupRoom(player);
 		}
 
 		// ClientSession에서 User 참조 끊기 (ref 감소)

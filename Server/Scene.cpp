@@ -50,13 +50,13 @@ void CScene::SendResults()
 void CScene::SendPlayersResults()
 {
 	// 시뮬레이션 돌린 플레이어의 결과를 모든 유저들에게 통보
-	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players)
 	{
 		S_Move movePkt;
 
 		movePkt.last_seq_num = player->GetLastSequence();
 		movePkt.info.player_id = player->GetID(); // "움직인 플레이어"의 ID
+		movePkt.scene_type = player->GetCurrentSceneType();
 
 		movePkt.info.x = player->GetPosition().x;
 		movePkt.info.y = player->GetPosition().y;
@@ -82,8 +82,12 @@ void CScene::SendPlayersResults()
 
 		// 움직인 플레이어를 제외한 나머지 유저에게 전달.
 		for (auto& pl : players) {
-			if (pl.second->GetID() == player->GetID()) continue;
-			pl.second->GetSession()->DoSend(sendBuffer);
+			if (pl.second->GetID() == player->GetID()) 
+				continue;
+
+			auto session = pl.second->GetSession();
+			if (session)
+				session->DoSend(sendBuffer);
 		}
 	}
 }
@@ -92,7 +96,6 @@ void CScene::SendPlayersCheckPing()
 {
 	float now = g_server_total_time;
 
-	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players) {
 		if (now - player->GetLastPingSendTime() > 2.0f) {
 			auto session = player->GetSession();
@@ -106,7 +109,6 @@ void CScene::SendPlayersCheckPing()
 
 bool CScene::HasPlayers()
 {
-	lock_guard<mutex> lg(players_lock);
 	if (!players.empty())
 		return true;
 	else
@@ -115,14 +117,12 @@ bool CScene::HasPlayers()
 
 void CScene::BroadCast(SendBufferRef sendBuffer)
 {
-	lock_guard<mutex> lg(players_lock);
 	for (auto& player : players)
 		player.second->GetSession()->DoSend(sendBuffer);
 }
 
 void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 {
-	lock_guard<mutex> lg(players_lock);
 	for (auto& player : players) {
 		if (player.second->GetID() == exceptID) continue;
 		player.second->GetSession()->DoSend(sendBuffer);
@@ -131,7 +131,6 @@ void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 
 void CScene::SimulatePlayers(const float elapsedTime)
 {
-	lock_guard<mutex> lg(players_lock);
 	for (auto& [id, player] : players) {
 		player->Update(elapsedTime);
 	}
@@ -139,19 +138,44 @@ void CScene::SimulatePlayers(const float elapsedTime)
 
 void CScene::EnterScene(shared_ptr<CPlayer> player)
 {
-	lock_guard<mutex> lg(players_lock);
 	players[player->GetID()] = player;
 }
 
 void CScene::LeaveScene(uint64 playerId)
 {
-	lock_guard<mutex> lg(players_lock);
+	S_RemovePlayer removePkt;
+	removePkt.player_id = playerId;
+	removePkt.scene_type = scene_type;
+
 	players.erase(playerId);
 
-	S_RemovePlayer removePkt;
-	removePkt.info.player_id = playerId;
-	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_RemovePlayer>(removePkt);
-	
-	for (auto& player : players)
-		player.second->GetSession()->DoSend(sendBuffer);
+	SendBufferRef sendBuffer = MAKE_SEND_BUFFER(removePkt);
+	BroadCast(sendBuffer);
+}
+
+// 서버 권위 방식
+void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt)
+{
+	auto it = players.find(pkt.info.player_id);
+	if (it == players.end())
+		return;
+
+	auto mover = it->second; // 실제 움직인 플레이어
+
+	if (pkt.seq_num <= mover->GetLastSequence())
+		return;
+
+	// 회전은 클라 권위 방식이기 때문에, 클라에서 받은 회전값을 적용한다.
+	mover->SetYaw(pkt.info.yaw);
+	mover->SetPitch(pkt.info.pitch);
+
+	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
+	PendingInput pInput{ input, pkt.seq_num };
+	mover->PushInput(pInput);
+}
+
+void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& pkt)
+{
+	LeaveScene(pkt.value);
 }

@@ -13,6 +13,7 @@ public:
 	CScene(SCENE_TYPE type);
 	~CScene();
 
+	virtual void Start() {};
 	virtual void Update(const float elapsedTime);
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
@@ -49,8 +50,12 @@ public:
 	// IOCP 워커 스레드가 받아둔 패킷들을 여기서 로직에 반영
 	void HandlePackets();
 
+public:
+	// 서버 권한 + 클라 예측 기반 Move
+	void Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt);
+	void Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& pkt);
+
 protected:
-	mutex								players_lock;
 	map<uint64, shared_ptr<CPlayer>>	players;
 
 	mutex								job_queue_lock;

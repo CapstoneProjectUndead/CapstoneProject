@@ -74,6 +74,7 @@ using Microsoft::WRL::ComPtr;
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
 #include "UICommon.h"
+#include "ServerSessionManager.h"
 
 //#define GENERATE_LAG
 //#define SCENE_TEST
