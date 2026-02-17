@@ -9,6 +9,7 @@ class CLobbyScene :
 {
 public:
     CLobbyScene();
+    CLobbyScene(uint32 roomId);
     ~CLobbyScene();
 
     virtual void Start() override;

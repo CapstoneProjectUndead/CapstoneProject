@@ -129,7 +129,7 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 		pkt
 	);
 #else
-	CRoom* room = CAST_CS(session)->GetUser()->GetRoom();
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
 	assert(room);
 	CScene* currentScene = room->GetScenes()[(UINT)pkt.scene_type].get();
 	assert(currentScene);

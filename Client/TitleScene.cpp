@@ -48,37 +48,6 @@ void CTitleScene::Exit()
 
 void CTitleScene::DrawUI()
 {
-    // =======================
-    // [IME 및 포커스 관리 로직]
-    // =======================
-    static bool lastInputState = false;
-    bool currentInputState = IsUIInputEnabled();
-    HWND hwnd = ghWnd;
-
-    // 상태 변경 시에만 IME 제어
-    if (currentInputState != lastInputState || need_reset_focus) {
-
-        if (currentInputState) {
-            CImGuiManager::EnableIME(hwnd);
-        }
-        else {
-            CImGuiManager::DisableIME(hwnd);
-        }
-
-        if (need_reset_focus) {
-            ImGuiContext& g = *GImGui;
-            g.ActiveId = 0;
-            ImGui::SetWindowFocus(nullptr);
-            ImGui::GetIO().InputQueueCharacters.resize(0);
-            ImGui::GetIO().ClearInputKeys();
-            CImGuiManager::ResetIMEState(hwnd);
-
-            need_reset_focus = false;
-        }
-
-        lastInputState = currentInputState;
-    }
-
     // UI 그리기 시작
     DrawTitleUI();
 }
@@ -91,8 +60,7 @@ bool CTitleScene::IsUIInputEnabled()
     bool state = true;
 
     CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-    if (!scene)
-        return false;
+    assert(scene);
 
     // 타이틀 씬이면 무조건 입력 허용
     if (scene->GetSceneType() == SCENE_TYPE::TITLE)
@@ -722,6 +690,8 @@ void CTitleScene::DrawRoomCreatePopUp()
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
 
+            std::string cp949Name = UTF8ToCP949(roomName);
+
             // 패킷 전송
             C_CreateRoom createPkt;
             auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
@@ -729,7 +699,7 @@ void CTitleScene::DrawRoomCreatePopUp()
                 auto user = serverSession->GetUser();
                 if (user) {
                     createPkt.user_id = user->GetUserID();
-                    COPY_STRING(createPkt.room_name, roomName);
+                    COPY_STRING(createPkt.room_name, cp949Name.c_str());
                     auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
                     serverSession->DoSend(sendBuffer);
                 }
@@ -818,13 +788,22 @@ void CTitleScene::Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SI
 
 void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_EnterRoom& pkt)
 {
-    SetIsEnter(true);
+    if (pkt.success) {
+        SetIsEnter(true);
 
-    ShowResultPopup(true, "방 입장 완료!");
+        ShowResultPopup(true, "방 입장 완료!");
 
-    CImGuiManager::GetInstance().ReserveResetFocus();
+        CImGuiManager::GetInstance().ReserveResetFocus();
 
-    SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
+        SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
+    }
+    else {
+        SetIsEnter(false);
+
+        ShowResultPopup(true, "방 입장 불가!");
+
+        CImGuiManager::GetInstance().ReserveResetFocus();
+    }
 
     // 로딩창 끄기
     StopLoading();
@@ -844,10 +823,13 @@ void CTitleScene::Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_Lis
         RoomInfo info{ userList[i].room_info.room_id, userList[i].room_info.room_name
             , userList[i].room_info.current_player_count, userList[i].room_info.is_game_start };
 
-        rooms.insert({ info.room_id, info });
+        auto iter = rooms.find(info.room_id);
+        if (iter == rooms.end())
+            rooms.insert({ info.room_id, info });
+        else
+            rooms[info.room_id] = info;
     }
 
-    // 로그아웃하고 로그인 했을 때,
     // 기존에는 있었는데 없어진 방 체크
     if (pkt.room_count == 0) {
         rooms.clear();

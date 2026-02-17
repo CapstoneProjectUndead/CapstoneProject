@@ -30,18 +30,22 @@ public:
     void    Update(const float elapsedTime);
     void    SendResults();
 
-public:
-    void    CreateRoom(const string& name, shared_ptr<CUser> user);
-    CRoom*  FindRoomLock(uint32 roomId);
-    CRoom*  FindRoomNoLock(uint32 roomId);
-    void    DestroyRoomLock(uint32 roomId);
-    void    DestroyRoomNoLock(uint32 roomId);
-    void    EnterRoom(shared_ptr<Session> session, uint32 roomId);
-    void    LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
-    void    SendRoomList(shared_ptr<Session> session);
+    void    CheckEmptyRoom();
+    void    DeActiveRoom(uint32 roomId);
+    void    DeActiveRoom(shared_ptr<CRoom> room);
 
-    const unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() const { return rooms; }
-    unordered_map<uint32, unique_ptr<CRoom>>& GetRooms() { return rooms; }
+public:
+    void                CreateRoom(const string& name, shared_ptr<CUser> user);
+    shared_ptr<CRoom>   FindRoomLock(uint32 roomId);
+    shared_ptr<CRoom>   FindRoomNoLock(uint32 roomId);
+    void                DestroyRoomLock(uint32 roomId);
+    void                DestroyRoomNoLock(uint32 roomId);
+    void                EnterRoom(shared_ptr<Session> session, uint32 roomId);
+    void                LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
+    void                SendRoomList(shared_ptr<Session> session);
+
+    const unordered_map<uint32, shared_ptr<CRoom>>& GetRooms() const { return rooms; }
+    unordered_map<uint32, shared_ptr<CRoom>>& GetRooms() { return rooms; }
 
 public:
     template<typename... T>
@@ -64,7 +68,7 @@ public:
 
 private:
     mutex rooms_lock;
-    unordered_map<uint32, unique_ptr<CRoom>> rooms;
+    unordered_map<uint32, shared_ptr<CRoom>> rooms;
 
     std::queue<std::function<void()>> events;
 };

@@ -25,6 +25,7 @@ struct PendingInput
 };
 
 class CUser;
+class CRoom;
 
 class CPlayer : public CObject
 {
@@ -52,6 +53,9 @@ public:
 	uint32 GetRoomID() const { return room_id; }
 	void SetRoomID(const uint32 id) { room_id = id; }
 
+	shared_ptr<CRoom> GetRoom() const { return room; }
+	void SetRoom(shared_ptr<CRoom> _room) { room = _room; }
+
 	void RecordServerFrameHistory(const ServerFrameHistory& history);
 	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
 
@@ -74,6 +78,7 @@ private:
 	uint32						room_id; // 이 플레이어가 참여하고 있는 방 ID
 	SCENE_TYPE					current_scene_type; // 현재 플레이어가 속한 씬 (방이 씬을 포함하고 있는 구조)
 	weak_ptr<CUser>				user;
+	shared_ptr<CRoom>			room;
 	uint64						last_processed_seq;
 	float						last_simulated_time;
 	float						ping;

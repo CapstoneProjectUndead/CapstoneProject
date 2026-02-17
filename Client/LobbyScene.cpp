@@ -9,6 +9,8 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "GameFramework.h"
+#include "SceneManager.h"
+
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -148,6 +150,25 @@ void CLobbyScene::Update(float elapsedTime)
 void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
+}
+
+void CLobbyScene::DrawUI()
+{
+
+}
+
+bool CLobbyScene::IsUIInputEnabled()
+{
+	bool state = true;
+
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	assert(scene);
+
+	// 타이틀 씬이면 무조건 입력 허용
+	if (scene->GetSceneType() == SCENE_TYPE::LOBBY)
+		state = false;
+		
+	return state;
 }
 
 void CLobbyScene::Enter()

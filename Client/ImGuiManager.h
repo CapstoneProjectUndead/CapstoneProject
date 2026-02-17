@@ -11,6 +11,7 @@
 // 인자: (텍스처 핸들(ptr), 버튼 텍스트, 버튼 크기)
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
 std::string CP949ToUTF8(const std::string& strCP949);
+std::string UTF8ToCP949(const std::string& utf8Str);
 
 
 class CImGuiManager
@@ -30,6 +31,7 @@ public:
 public:
     static ImFont* title_font;
     static ImFont* title_font2;
+    static bool need_reset_focus;
 
 public:
     void Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat);
@@ -48,8 +50,7 @@ public:
         , const int circle_count, const float speed);
 
 private:
-    ID3D12DescriptorHeap* srv_desc_heap = nullptr;
-
-    static HIMC m_hDefaultIMC; // IME 핸들 저장
-    static bool need_reset_focus;
+    ID3D12DescriptorHeap*   srv_desc_heap = nullptr;
+    static HIMC             default_IMC; // IME 핸들 저장
+    
 };

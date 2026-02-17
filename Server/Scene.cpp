@@ -3,12 +3,21 @@
 #include "Scene.h"
 #include "ClientSession.h"
 #include "Player.h"
+#include "Room.h"
+#include "RoomManager.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
 	, dt_ping_accumulator(0.0f)
 {
 
+}
+
+CScene::CScene(SCENE_TYPE type, uint32 roomId)
+	: scene_type(type)
+	, room_id(roomId)
+	, dt_ping_accumulator(0.0f)
+{
 }
 
 CScene::~CScene()
@@ -50,44 +59,31 @@ void CScene::SendResults()
 void CScene::SendPlayersResults()
 {
 	// 시뮬레이션 돌린 플레이어의 결과를 모든 유저들에게 통보
-	for (auto& [id, player] : players)
-	{
-		S_Move movePkt;
+	for (auto& [id, player] : players) {
 
-		movePkt.last_seq_num = player->GetLastSequence();
-		movePkt.info.player_id = player->GetID(); // "움직인 플레이어"의 ID
-		movePkt.scene_type = player->GetCurrentSceneType();
+		if (player) {
+			S_Move movePkt;
 
-		movePkt.info.x = player->GetPosition().x;
-		movePkt.info.y = player->GetPosition().y;
-		movePkt.info.z = player->GetPosition().z;
+			movePkt.last_seq_num = player->GetLastSequence();
+			movePkt.info.player_id = player->GetID(); // "움직인 플레이어"의 ID
+			movePkt.scene_type = player->GetCurrentSceneType();
 
-		movePkt.info.vx = player->GetVelocity().x;
-		movePkt.info.vy = player->GetVelocity().y;
-		movePkt.info.vz = player->GetVelocity().z;
+			movePkt.info.x = player->GetPosition().x;
+			movePkt.info.y = player->GetPosition().y;
+			movePkt.info.z = player->GetPosition().z;
 
-		movePkt.info.yaw = player->GetYaw();
-		movePkt.info.pitch = player->GetPitch();
+			movePkt.info.vx = player->GetVelocity().x;
+			movePkt.info.vy = player->GetVelocity().y;
+			movePkt.info.vz = player->GetVelocity().z;
 
-		movePkt.info.state = player->GetState();
-		movePkt.timestamp = player->GetLastSimulatedTime();
+			movePkt.info.yaw = player->GetYaw();
+			movePkt.info.pitch = player->GetPitch();
 
-		SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
-		if (player->GetSession())
-			player->GetSession()->DoSend(sendBuffer);
+			movePkt.info.state = player->GetState();
+			movePkt.timestamp = player->GetLastSimulatedTime();
 
-		// [중요] 시퀀스 번호는 오직 '움직인 본인'에게만 의미가 있음
-		// 받는 사람이 mover일 때만 시퀀스를 넣어주고, 나머지에겐 0을 보냅니다.
-		movePkt.last_seq_num = 0;
-
-		// 움직인 플레이어를 제외한 나머지 유저에게 전달.
-		for (auto& pl : players) {
-			if (pl.second->GetID() == player->GetID()) 
-				continue;
-
-			auto session = pl.second->GetSession();
-			if (session)
-				session->DoSend(sendBuffer);
+			SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
+			BroadCast(sendBuffer);
 		}
 	}
 }
@@ -97,42 +93,52 @@ void CScene::SendPlayersCheckPing()
 	float now = g_server_total_time;
 
 	for (auto& [id, player] : players) {
-		if (now - player->GetLastPingSendTime() > 2.0f) {
-			auto session = player->GetSession();
-			if (session) {
-				player->SendPing();
-				player->SetLastPingSendTime(now);
+		if (player) {
+			if (now - player->GetLastPingSendTime() > 2.0f) {
+				auto session = player->GetSession();
+				if (session) {
+					player->SendPing();
+					player->SetLastPingSendTime(now);
+				}
 			}
 		}
 	}
 }
 
-bool CScene::HasPlayers()
-{
-	if (!players.empty())
-		return true;
-	else
-		return false;
-}
-
 void CScene::BroadCast(SendBufferRef sendBuffer)
 {
-	for (auto& player : players)
-		player.second->GetSession()->DoSend(sendBuffer);
+	for (auto& [id, player] : players) {
+		if (player) {
+			auto session = player->GetSession();
+			if (session) {
+				session->DoSend(sendBuffer);
+			}
+		}
+	}
 }
 
 void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 {
-	for (auto& player : players) {
-		if (player.second->GetID() == exceptID) continue;
-		player.second->GetSession()->DoSend(sendBuffer);
+	for (auto& [id, player] : players) {
+		if (player) {
+
+			if (player->GetID() == exceptID) 
+				continue;
+
+			auto session = player->GetSession();
+			if (session) {
+				session->DoSend(sendBuffer);
+			}
+		}
 	}
 }
 
 void CScene::SimulatePlayers(const float elapsedTime)
 {
 	for (auto& [id, player] : players) {
-		player->Update(elapsedTime);
+		if (player) {
+			player->Update(elapsedTime);
+		}
 	}
 }
 
@@ -178,4 +184,14 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& pkt)
 {
 	LeaveScene(pkt.value);
+
+	if (auto r = room.lock()) {
+		r->PlayerLeave();
+	}
+
+	// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
+	if (!HasPlayers()) {
+		CRoomManager::GetInstance().DeActiveRoom(room_id);
+		CRoomManager::GetInstance().DestroyRoomLock(room_id);
+	}
 }
