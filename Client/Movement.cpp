@@ -42,6 +42,17 @@ void CMovementComponent::Slide(const XMFLOAT3& normal)
     XMStoreFloat3(&owner->velocity, result);
 }
 
+void CMovementComponent::Slide(const XMVECTOR& normal)
+{
+    XMVECTOR v = XMLoadFloat3(&owner->velocity);
+
+    XMVECTOR dot = XMVector3Dot(v, normal);
+
+    XMVECTOR result = v - normal * dot;
+
+    XMStoreFloat3(&owner->velocity, result);
+}
+
 void CMovementComponent::Update(const float deltaTime)
 {
 	if (owner == nullptr)
@@ -53,20 +64,17 @@ void CMovementComponent::Update(const float deltaTime)
 		return;
 
 	ClampSpeed();
-    CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     // 충돌 처리
-    SweepHit hit{};
-    if (CPhysicsManager::GetInstance().Sweep(owner, delta, hit)) {
-        // 충돌 지점까지 이동
-        owner->position = Vector3::Add(owner->position, Vector3::ScalarProduct(delta, hit.time));
-        // 슬라이딩
-        Slide(hit.normal);
+    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
+    GJKAlgorithm::CollisionInfo info{};
+    if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
+        Slide(info.normal);
     }
     else {
-        owner->position = Vector3::Add(owner->position, delta);
+        CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
     }
+    owner->position = Vector3::Add(owner->position, delta);
 }
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)

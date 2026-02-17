@@ -1,4 +1,4 @@
-//#define SKINNED
+#define SKINNED
 
 #ifndef NUM_DIR_LIGHTS
     #define NUM_DIR_LIGHTS 3

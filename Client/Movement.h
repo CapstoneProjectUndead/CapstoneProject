@@ -18,6 +18,7 @@ public:
 	void Move(const XMFLOAT3 direction, float deltaTime);
 	// 벽(Normal)을 따라 Slide
 	void Slide(const XMFLOAT3& normal);
+	void Slide(const XMVECTOR& normal);
 
 	// 최대 속도 제한
 	void ClampSpeed();

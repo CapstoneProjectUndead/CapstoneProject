@@ -35,7 +35,7 @@ class CMeshRendererComponent : public CComponent
 public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
-    void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat)
+    void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat = nullptr)
     {
         render_units.push_back({ mesh, mat });
     }

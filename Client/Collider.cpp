@@ -7,9 +7,11 @@
 
 void CBoxShape::Render()
 {
+#ifdef DEBUG
     debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
 
     debug->Render(GET_CMD_LIST);
+#endif
 }
 
 void CBoxShape::Update(const XMMATRIX& worldMatrix)
@@ -20,9 +22,11 @@ void CBoxShape::Update(const XMMATRIX& worldMatrix)
 
 void CSphereShape::Render()
 {
+#ifdef DEBUG
     debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
 
     debug->Render(GET_CMD_LIST);
+#endif
 }
 
 void CSphereShape::Update(const XMMATRIX& worldMatrix)
@@ -48,11 +52,6 @@ void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
     }
 }
 
-bool CConvexMeshShape::Intersects(const CConvexMeshShape& other) const
-{
-    return false;
-}
-
 CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
     : shape{ std::move(otherShape) }, local_aabb{ otherBox }
 {
@@ -70,32 +69,18 @@ void CColliderComponent::Update(const float deltaTime)
 void CColliderComponent::Render(ID3D12GraphicsCommandList* commandList)
 {
 #ifdef DEBUG
-    debug = std::make_shared<CCubeMesh>(GET_DEVICE, commandList, local_aabb.Extents, local_aabb.Center);
+ /*   debug = std::make_shared<CCubeMesh>(GET_DEVICE, commandList, local_aabb.Extents, local_aabb.Center);
 
-    debug->Render(commandList);
+    debug->Render(commandList);*/
     if (shape) shape->Render();
-#endif // DEBUG
+#endif
 }
 
-bool CColliderComponent::Intersects(const CColliderComponent* other)
-{
-    // OBB
-    if (auto obb = shape->GetOBB()) {
-        if (auto otherShape = other->shape->GetOBB())
-            return obb->Intersects(*otherShape);
+bool CColliderComponent::Intersects(const CColliderComponent* other) {
+    // 상대방이 Box든 Sphere든 Convex든 상관없이 작동
+    auto supportA = [&](XMVECTOR d) { return this->shape->GetSupport(d); };
+    auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
 
-        if (auto otherShape = other->shape->GetSphere())
-            return obb->Intersects(*otherShape);
-    }
-
-    // Sphere
-    if (auto obb = shape->GetSphere()) {
-        if (auto otherShape = other->shape->GetOBB())
-            return obb->Intersects(*otherShape);
-
-        if (auto otherShape = other->shape->GetSphere())
-            return obb->Intersects(*otherShape);
-    }
-
-    return false;
+    GJKAlgorithm::Simplex simplex;
+    return GJKAlgorithm::GenericIntersects(supportA, supportB, simplex);
 }

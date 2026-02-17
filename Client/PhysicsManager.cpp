@@ -4,6 +4,11 @@
 #include "Object.h"
 #include "Movement.h"
 
+void CPhysicsManager::Update(float deltaTime)
+{
+    colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end() );
+}
+
 void CPhysicsManager::BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
 {
     BoundingBox expanded{ checkCol->world_aabb };
@@ -18,7 +23,7 @@ void CPhysicsManager::BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3
     }
 }
 
-bool CPhysicsManager::Sweep(CObject* obj, const XMFLOAT3& delta, SweepHit& outHit)
+bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
     if (!col) return false;
@@ -27,29 +32,17 @@ bool CPhysicsManager::Sweep(CObject* obj, const XMFLOAT3& delta, SweepHit& outHi
     std::vector<CColliderComponent*> candidates;
     BroadPhaseSAP(col, delta, candidates);
 
-    CColliderComponent* hitCol{};
-    float earliest{ 1.0f };
-
     for (auto* other : candidates) {
-        float t{};
+        auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
+        auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
 
-        if (!ComputeCollisionTime(col, other, delta, t)) {
-            continue;
+        // GJK 실행 및 Simplex 획득
+        GJKAlgorithm::Simplex simplex;
+        if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
+            // EPA 실행
+            collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
+            if (collisionInfo.collided) return true;
         }
-        if (!col->Intersects(other))
-            continue;
-
-        if (t < earliest) {
-            earliest = t;
-            hitCol = other;
-        }
-    }
-
-    if (hitCol) {
-        outHit.other = hitCol;
-        outHit.normal = ComputeCollisionNormal(col, hitCol);
-        outHit.time = earliest;
-        return true;
     }
 
     return false;

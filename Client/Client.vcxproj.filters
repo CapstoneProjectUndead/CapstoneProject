@@ -243,6 +243,9 @@
     <ClInclude Include="Material.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="GJKAlgorithm.h">
+      <Filter>Component\Collider/Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -379,6 +382,9 @@
     </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="GJKAlgorithm.cpp">
+      <Filter>Component\Collider/Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

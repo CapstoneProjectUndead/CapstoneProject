@@ -1,5 +1,6 @@
 #pragma once
 #include "Component.h"
+#include "GJKAlgorithm.h"
 
 class CMesh;
 
@@ -9,8 +10,8 @@ public:
 
     virtual void Update(const XMMATRIX& worldMatrix) = 0;
 
-    virtual const BoundingOrientedBox* GetOBB() const { return nullptr; }
-    virtual const BoundingSphere* GetSphere() const { return nullptr; }
+    // GJK 특정 방향으로 가장 먼 월드 좌표 점 반환
+    virtual XMVECTOR GetSupport(XMVECTOR direction) const = 0;
 
     // 디버그 렌더링용 (선택)
     virtual void Render() {}
@@ -28,8 +29,9 @@ public:
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
-    // return world
-    const BoundingOrientedBox* GetOBB() const override { return &world; }
+    XMVECTOR GetSupport(XMVECTOR direction) const override {
+        return GJKAlgorithm::GetSupportOBB(world, direction);
+    }
 private:
     BoundingOrientedBox local;
     BoundingOrientedBox world;
@@ -44,8 +46,9 @@ public:
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
-    // return world
-    const BoundingSphere* GetSphere() const override { return &world; }
+    XMVECTOR GetSupport(XMVECTOR direction) const override {
+        return GJKAlgorithm::GetSupportSphere(world, direction);
+    }
 private:
     BoundingSphere local;
     BoundingSphere world;
@@ -55,13 +58,15 @@ class CConvexMeshShape : public CColliderShape
 {
 public:
     CConvexMeshShape(std::vector<XMFLOAT3>& vertice);
-    std::vector<XMFLOAT3> local;
-    std::vector<XMFLOAT3> world;
 
     void Update(const XMMATRIX& worldMatrix) override;
 
-    // 충돌 검사 (SAT 기반)
-    bool Intersects(const CConvexMeshShape& other) const;
+    XMVECTOR GetSupport(XMVECTOR direction) const override {
+        return GJKAlgorithm::GetSupport(world, direction);
+    }
+private:
+    std::vector<XMFLOAT3> local;
+    std::vector<XMFLOAT3> world;
 };
 
 /*

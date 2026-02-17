@@ -4,12 +4,7 @@ class CColliderComponent;
 class CObject;
 class CMovementComponent;
 
-struct SweepHit
-{
-    CColliderComponent* other;
-    XMFLOAT3 normal;
-    float time{ 1.0f };
-};
+#include "GJKAlgorithm.h"
 
 /*
 충돌 감지 및 계산(캐릭터는 별도로 처리)
@@ -36,9 +31,9 @@ public:
     void ApplyGravity(CObject* obj, float dt);
 
     // query
-    bool Sweep(CObject* obj, const XMFLOAT3& delta, SweepHit& outHit);
+    bool Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo);
 
-    void Update(float deltaTime) {};
+    void Update(float deltaTime);
 private:
     // 자기 자신 제외
     void BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);
