@@ -206,8 +206,8 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		}
 	}
 	else {
-		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
-		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
+		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer(skinningHeapManager);
 		otherPlayer->SetID(pkt.info.player_id);
 		otherPlayer->SetRoomID(pkt.room_id);
 		otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
@@ -225,8 +225,8 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
-		std::shared_ptr<CPlayer> otherPlayer = std::make_shared<CPlayer>();
-		otherPlayer->Initialize(GET_DEVICE, GET_CMD_LIST);
+		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer(skinningHeapManager);
 
 		// 다른 유저의 Player ID 부여
 		otherPlayer->SetID(userList[i].info.player_id);

@@ -166,6 +166,24 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 	// 방 인원 수 증가
 	room->PlayerEnter();
 
+	// 지금 방에 입장한 유저에게 플레이어 생성 허락
+	{
+		S_SpawnPlayer spawnPkt;
+		spawnPkt.room_id = player->GetRoomID();
+		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
+		spawnPkt.is_my_player = true;
+		spawnPkt.info.player_id = player->GetID();
+		spawnPkt.info.room_id = player->GetRoomID();
+		spawnPkt.info.is_my_player = true;
+		spawnPkt.info.x = player->GetPosition().x;
+		spawnPkt.info.y = player->GetPosition().y;
+		spawnPkt.info.z = player->GetPosition().z;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+		if (user->GetSession())
+			user->GetSession()->DoSend(sendBuffer);
+	}
+
 	// 유저에게 입장 허락 패킷과 방에 있는 다른 유저의 정보를 알려준다..
 	// 여기서는 가변길이 패킷을 보낸다.
 	{
@@ -196,24 +214,6 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 			if (user->GetSession())
 				user->GetSession()->DoSend(sendBuffer);
 		}
-	}
-
-	// 지금 방에 입장한 유저에게 플레이어 생성 허락
-	{
-		S_SpawnPlayer spawnPkt;
-		spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = true;
-		spawnPkt.info.player_id = player->GetID();
-		spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = true;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		if (user->GetSession())
-			user->GetSession()->DoSend(sendBuffer);
 	}
 	
 	// S_Enter_Room 패킷
