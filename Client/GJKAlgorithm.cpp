@@ -110,17 +110,30 @@ bool GJKAlgorithm::GenericIntersects(std::function<XMVECTOR(XMVECTOR)> supportA,
     // 원점을 향해 방향 설정
     direction = -support;
 
-    while (true) {
+    // GJK 무한 루프 방지를 위한 카운터
+    int iterations = 0;
+    const int MAX_GJK_ITERATIONS = 32;
+    while (iterations < MAX_GJK_ITERATIONS) {
+        iterations++;
+
+        // 1. 방향 벡터가 너무 작으면(0이면) 더 이상 계산 불가
+        if (XMVectorGetX(XMVector3LengthSq(direction)) < 1e-6f) break;
+
         support = getMinkowski(direction);
 
-        // 새로 찾은 점이 원점 방향으로 전진하지 못하면 충돌 안 함
+        // 2. 이미 심플렉스에 있는 점이 또 나오면 루프 종료 (발전이 없음)
+        for (int i = 0; i < outSimplex.size; ++i) {
+            if (XMVector4Equal(support, outSimplex.points[i])) return false;
+        }
+
         if (XMVectorGetX(XMVector3Dot(support, direction)) <= 0) return false;
 
         outSimplex.push_front(support);
 
-        // 심플렉스 내부 검사 및 다음 방향 설정
         if (NextSimplex(outSimplex, direction)) return true;
     }
+
+    return false; // 32번 넘게 돌면 그냥 충돌 안 한 걸로 처리 (안전)
 }
 
 bool GJKAlgorithm::LineCase(Simplex& s, XMVECTOR& d)
@@ -203,25 +216,21 @@ GJKAlgorithm::EPAFace GJKAlgorithm::CreateFace(const std::vector<XMVECTOR>& poly
     return { normal, distance, {i, j, k} };
 }
 
-
 GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB)
 {
-    // 1. 초기 폴리토프 설정 (GJK의 최종 4개 점)
     std::vector<XMVECTOR> polytope;
     for (int i = 0; i < simplex.size; ++i) polytope.push_back(simplex.points[i]);
 
-    // 2. 초기 면(Face) 구성 (사면체이므로 4개의 삼각형)
     std::list<EPAFace> faces;
     faces.push_back(CreateFace(polytope, 0, 1, 2));
     faces.push_back(CreateFace(polytope, 0, 2, 3));
     faces.push_back(CreateFace(polytope, 0, 3, 1));
     faces.push_back(CreateFace(polytope, 1, 3, 2));
 
-    const int MAX_ITERATIONS = 32; // 무한 루프 방지
+    const int MAX_ITERATIONS = 10;
     for (int iter = 0; iter < MAX_ITERATIONS; ++iter) {
         if (faces.empty()) break;
 
-        // 3. 원점과 가장 가까운 면 찾기
         auto closestFaceIt = faces.begin();
         float minDistance = FLT_MAX;
 
@@ -231,26 +240,26 @@ GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& 
                 closestFaceIt = it;
             }
         }
-        // 만약 면이 하나도 남지 않는 예외 상황이 오면 즉시 중단
 
-        // 4. 가장 가까운 면의 법선 방향으로 새로운 Support 포인트 탐색
         XMVECTOR searchDir = closestFaceIt->normal;
         XMVECTOR p = shapeA->GetSupport(searchDir) - shapeB->GetSupport(-searchDir);
 
-        // 5. 종료 조건: 새로 찾은 점이 현재 면보다 더 바깥에 있지 않으면 종료
+        // 수렴 조건 강화
         float d = XMVectorGetX(XMVector3Dot(p, searchDir));
-        if (d - minDistance < 0.0001f) {
-            CollisionInfo info;
-            info.collided = true;
-            info.normal = searchDir;
-            info.depth = d;
-            return info;
+        if (d - minDistance < 0.001f) { // 이 차이가 너무 작으면 더 이상 확장 무의미
+            return { searchDir, d, true };
         }
 
-        // 6. 지평선(Horizon) 추출: 새 점 p를 바라보는 면들을 제거하고 경계 모서리를 찾음
+        // 중복 점 체크
+        for (const auto& v : polytope) {
+            if (XMVectorGetX(XMVector3LengthSq(p - v)) < 0.00001f) {
+                return { searchDir, minDistance, true };
+            }
+        }
+
         std::vector<EPAEdge> edges;
         for (auto it = faces.begin(); it != faces.end(); ) {
-            // 점 p가 면의 바깥쪽에 있는지 확인 (dot > 0)
+            // p가 면 바깥에 있는 경우만 제거
             if (XMVectorGetX(XMVector3Dot(it->normal, p - polytope[it->v[0]])) > 0.0001f) {
                 EPAEdge faceEdges[3] = { {it->v[0], it->v[1]}, {it->v[1], it->v[2]}, {it->v[2], it->v[0]} };
                 for (auto& e : faceEdges) {
@@ -263,23 +272,16 @@ GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& 
             else ++it;
         }
 
-        // 지평선(Edge)이 하나도 안 나오면 더 이상 확장 불가
+        // 지평선이 없으면 중단
         if (edges.empty()) break;
 
-        // 7. 폴리토프 확장: 지평선의 각 모서리와 새 점 p를 연결하여 새 면 생성
         uint32_t newIdx = (uint32_t)polytope.size();
         polytope.push_back(p);
-        bool addedNewFace = false;
         for (auto& edge : edges) {
-            EPAFace newFace = CreateFace(polytope, edge.a, edge.b, newIdx);
-            // [수정 3] 생성된 면의 거리가 유효한지 체크 (0이면 생성 실패)
-            if (newFace.distance >= 0) {
-                faces.push_back(newFace);
-                addedNewFace = true;
-            }
+            faces.push_back(CreateFace(polytope, edge.a, edge.b, newIdx));
         }
-        if (!addedNewFace) break; // 새 면이 안 만들어지면 루프 탈출
     }
 
-    return {}; // 최대 반복 횟수 초과 시
+    // 루프가 끝까지 돌아도 결과를 못찾으면 그냥 가장 가까웠던 면 정보라도 반환
+    return { XMVectorSet(0, 1, 0, 0), 0.0f, true };
 }

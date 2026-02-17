@@ -65,14 +65,28 @@ void CMovementComponent::Update(const float deltaTime)
 
 	ClampSpeed();
 
+    CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+
     // 충돌 처리
     XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     GJKAlgorithm::CollisionInfo info{};
     if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
-        Slide(info.normal);
-    }
-    else {
-        CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+        XMVECTOR n = info.normal;
+        float d = info.depth;
+
+        // 바닥 아래로 밀리는 현상 방지
+        if (XMVectorGetY(n) < 0) {
+            n = -n;
+        }
+        // Overlap된 깊이만큼 
+        XMVECTOR separation = n * (d);
+        XMVECTOR curPos = XMLoadFloat3(&owner->position);
+        XMStoreFloat3(&owner->position, curPos + separation);
+
+        Slide(n);
+
+        // 보정된 속도로 delta 재계산
+        delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     }
     owner->position = Vector3::Add(owner->position, delta);
 }
