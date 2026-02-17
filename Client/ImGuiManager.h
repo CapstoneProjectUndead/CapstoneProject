@@ -11,6 +11,7 @@
 // 인자: (텍스처 핸들(ptr), 버튼 텍스트, 버튼 크기)
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
 std::string CP949ToUTF8(const std::string& strCP949);
+std::string UTF8ToCP949(const std::string& utf8Str);
 
 
 class CImGuiManager

@@ -205,3 +205,23 @@ std::string CP949ToUTF8(const std::string& strCP949)
     delete[] pBuf;
     return strUTF8;
 }
+
+std::string UTF8ToCP949(const std::string& utf8Str) 
+{
+    if (utf8Str.empty()) 
+        return "";
+
+    // 1. UTF-8 -> Unicode (WideChar) 변환
+    // 필요한 버퍼 크기 계산
+    int nLen = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), NULL, 0);
+    std::wstring wstr(nLen, 0);
+    MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), &wstr[0], nLen);
+
+    // 2. Unicode -> CP949 (ANSI) 변환
+    // 949는 한국어 코드 페이지입니다.
+    int nLen2 = WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
+    std::string strCP949(nLen2, 0);
+    WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), &strCP949[0], nLen2, NULL, NULL);
+
+    return strCP949;
+}

@@ -690,6 +690,8 @@ void CTitleScene::DrawRoomCreatePopUp()
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
 
+            std::string cp949Name = UTF8ToCP949(roomName);
+
             // 패킷 전송
             C_CreateRoom createPkt;
             auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
@@ -697,7 +699,7 @@ void CTitleScene::DrawRoomCreatePopUp()
                 auto user = serverSession->GetUser();
                 if (user) {
                     createPkt.user_id = user->GetUserID();
-                    COPY_STRING(createPkt.room_name, roomName);
+                    COPY_STRING(createPkt.room_name, cp949Name.c_str());
                     auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
                     serverSession->DoSend(sendBuffer);
                 }
