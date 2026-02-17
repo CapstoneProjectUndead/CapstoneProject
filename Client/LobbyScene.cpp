@@ -6,6 +6,7 @@
 #include "PhysicsManager.h"
 #include "GameFramework.h"
 #include "ObjectFactory.h"
+#include "SceneManager.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -76,12 +77,36 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	CPhysicsManager::GetInstance().Update(elapsedTime);
+	//CPhysicsManager::GetInstance().Update(elapsedTime);
+
+	// CPhysicsManager에서 이동이 일어나기 때문에 여기서 서버에 좌표패킷을 보낸다.
+	if (my_player) {
+		my_player->BeginSendInputPacket(elapsedTime);
+	}
 }
 
 void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	CScene::Render(commandList);
+}
+
+void CLobbyScene::DrawUI()
+{
+
+}
+
+bool CLobbyScene::IsUIInputEnabled()
+{
+	bool state = true;
+
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	assert(scene);
+
+	// 타이틀 씬이면 무조건 입력 허용
+	if (scene->GetSceneType() == SCENE_TYPE::LOBBY)
+		state = false;
+		
+	return state;
 }
 
 void CLobbyScene::Enter()
@@ -94,7 +119,6 @@ void CLobbyScene::Enter()
 
 void CLobbyScene::Exit()
 {
-	my_player = nullptr;
 	objects.clear();
 	shaders.clear();
 }

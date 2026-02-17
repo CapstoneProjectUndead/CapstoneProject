@@ -28,10 +28,17 @@ public:
     virtual void Exit();
 
     virtual void DrawUI() override;
+    virtual bool IsUIInputEnabled() override;
 
 public:
-    bool IsUIInputEnabled();
+    // 서버 패킷 관련 처리 함수들
+    void Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGIN& pkt);
+    void Handle_S_Logout(std::shared_ptr<Session>& session, const S_LOGOUT& pkt);
+    void Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SIGN_RES& pkt);
+    void Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_EnterRoom& pkt);
+    void Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_List& pkt);
 
+public:
     // -----------------------------------------------------
     // 상태 변경 함수들 (외부에서 호출)
     // -----------------------------------------------------
@@ -87,7 +94,6 @@ private:
     bool is_online = false;
     bool is_title_draw = true;
     bool is_room_enter = false;
-    bool need_reset_focus = false;
     bool show_room_create_popup = false;
     int  selected_room_id = 0;
 };

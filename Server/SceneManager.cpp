@@ -22,9 +22,10 @@ void CSceneManager::Initialize()
 {
 #ifdef LOBBY_SCENE_TEST
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>();
+	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 #else
 	title_scene = make_unique<CTitleScene>();
-
+	title_scene->Start();
 #endif
 }
 

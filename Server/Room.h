@@ -3,7 +3,7 @@
 class CScene;
 class CUser;
 
-class CRoom
+class CRoom : public enable_shared_from_this<CRoom>
 {
     using SceneArray = array<unique_ptr<CScene>, (UINT)SCENE_TYPE::END>;
 public:
@@ -11,8 +11,13 @@ public:
     CRoom(string name);
     ~CRoom();
 
+    void Initialize();
     void Update(const float elapsedTime);
     void SendResults();
+
+public:
+    void PlayerEnter() { ++room_info.current_player_count; }
+    void PlayerLeave() { --room_info.current_player_count; }
 
 public:
     SceneArray&     GetScenes() { return scenes; }
@@ -25,13 +30,16 @@ public:
     bool            GetIsGameStart() const { return room_info.is_game_start; }
 
     bool            IsValid();
-    bool            SearchPlayersAllScene();
+    bool            IsActive() const { return is_active; }
+    void            SetActive(bool active) { is_active = active; }
 
 private:
     static atomic<uint32> s_room_id_generator;
 
+    bool        is_active;
     RoomInfo    room_info;
     SceneArray  scenes;
+    mutex       room_lock;
 };
 
 /*

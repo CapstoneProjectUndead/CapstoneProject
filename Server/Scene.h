@@ -4,6 +4,8 @@
 #include "Job.h"
 #include "User.h"
 
+class CRoom;
+
 class CScene
 {
 	template<typename T, typename PacketType>
@@ -11,8 +13,10 @@ class CScene
 
 public:
 	CScene(SCENE_TYPE type);
+	CScene(SCENE_TYPE type, uint32 roomId);
 	~CScene();
 
+	virtual void Start() {};
 	virtual void Update(const float elapsedTime);
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
@@ -26,11 +30,22 @@ public:
 	void SendPlayersResults();
 	void SendPlayersCheckPing();
 
+public:
 	// Scene에 플레이어가 있는지 체크
-	bool HasPlayers();
+	bool HasPlayers()
+	{
+		if (!players.empty())
+			return true;
+		else
+			return false;
+	}
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
+
+	std::weak_ptr<CRoom>      GetRoomWeak() const { return room; }
+	std::shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
+	void					  SetRoom(std::shared_ptr<CRoom> _room) { room = _room; }
 
 public:
 	// IOCP 스레드들이 호출 (패킷 받자마자 실행)
@@ -49,8 +64,12 @@ public:
 	// IOCP 워커 스레드가 받아둔 패킷들을 여기서 로직에 반영
 	void HandlePackets();
 
+public:
+	// 서버 권한 + 클라 예측 기반 Move
+	void Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt);
+	void Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& pkt);
+
 protected:
-	mutex								players_lock;
 	map<uint64, shared_ptr<CPlayer>>	players;
 
 	mutex								job_queue_lock;
@@ -58,6 +77,8 @@ protected:
 
 private:
 	SCENE_TYPE							scene_type;
+	uint32								room_id;
+	weak_ptr<CRoom>						room;
 	float								dt_ping_accumulator;
 };
 

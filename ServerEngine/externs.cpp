@@ -12,6 +12,7 @@ public:
 	{
 		SocketHelper::Init();
 		GThreadManager = new ThreadManager();
+		GThreadManager->InitThreadPool(4);
 	}
 
 	~CoreGlobal()

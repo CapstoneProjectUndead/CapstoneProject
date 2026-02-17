@@ -9,15 +9,18 @@ class CLobbyScene :
 {
 public:
     CLobbyScene();
+    CLobbyScene(uint32 roomId);
     ~CLobbyScene();
 
+    virtual void Start() override;
     virtual void Update(float elapsedTime) override;
 
 public:
-    void EnterPlayer(shared_ptr<Session> session, const C_LOGIN& pkt);
-    void EnterLobby(shared_ptr<CUser> user);
+    //=================
+    // 테스트용 함수
+    void C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt);
+    //=================
 
-    // 서버 권한 + 클라 예측 기반 Move
-    void MovePlayer(shared_ptr<Session> session, const C_Input& pkt);
+    void C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt);
 };
 

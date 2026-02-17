@@ -52,16 +52,17 @@ public:
 
 		pkt = bw.Reserve<S_PLAYER_LIST>(1);
 		//pkt->SetPacketSize(4096);
-		pkt->SetPacketType((UINT)PacketType::_S_PLAYERLIST);
+		pkt->SetPacketType((UINT)PacketType::_S_PLAYER_LIST);
 	}
 
-	S_PLAYERLIST_WRITE(SCENE_TYPE type)
+	S_PLAYERLIST_WRITE(uint32 roomId, SCENE_TYPE type)
 	{
 		sendBuffer = std::make_shared<SendBuffer>(4096);
 		bw = BufferWriter(sendBuffer->Buffer(), 4096);
 
 		pkt = bw.Reserve<S_PLAYER_LIST>(1);
-		pkt->SetPacketType((UINT)PacketType::_S_PLAYERLIST);
+		pkt->SetPacketType((UINT)PacketType::_S_PLAYER_LIST);
+		pkt->room_id = roomId;
 		pkt->scene_type = type;
 	}
 

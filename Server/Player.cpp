@@ -122,7 +122,8 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     // 5. 감속(마찰) 적용
     float speedLen = Vector3::Length(velocity);
     float decel = friction * deltaTime;
-    if (decel > speedLen) decel = speedLen;
+    if (decel > speedLen) 
+        decel = speedLen;
 
     velocity = Vector3::Add(velocity, Vector3::ScalarProduct(velocity, -decel, true));
 }

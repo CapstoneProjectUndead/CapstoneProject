@@ -103,9 +103,11 @@ using std::make_pair;
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
 
+#include "ClientSession.h"
 #include "ClientPacketHandler.h"
 #include "DirectXMathHelper.h"
 #include "DBManager.h"
+#include "macro.h"
 
 #define RENDER_BUFFER_MAX_SIZE 60
 
@@ -115,9 +117,6 @@ extern unique_ptr<class CGameFramework> gGameFramework;
 extern const double g_server_targetTick;
 extern const double g_targetDT;
 extern double  g_server_total_time;
-
-#define CON CDBManager::GetInstance().GetCon()
-#define MAKE_SEND_BUFFER(pkt) CClientPacketHandler::MakeSendBuffer(pkt);
 
 
 #endif //PCH_H

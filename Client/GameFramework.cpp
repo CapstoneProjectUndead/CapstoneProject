@@ -274,7 +274,7 @@ void CGameFramework::BuildObjects()
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
 
 	// 시작 Scene은 항상 TitleScene 이지만,
-	// 해당 Scene 작업을 위해서, 여기서 유연하게 바꾸면 된다.
+	// 해당 Scene 작업을 위해서, 여기서 바꾸면 된다.
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
 	CSceneManager::GetInstance().SetActiveScene(activeScene);
 

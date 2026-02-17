@@ -6,7 +6,6 @@
 #include "Shader.h"
 #include "ServerPacketHandler.h"
 #include "ServerSession.h"
-#include "ServerSessionManager.h"
 #include "SceneManager.h"
 #include "User.h"
 #include "ImGuiManager.h"
@@ -49,37 +48,6 @@ void CTitleScene::Exit()
 
 void CTitleScene::DrawUI()
 {
-    // =======================
-    // [IME 및 포커스 관리 로직]
-    // =======================
-    static bool lastInputState = false;
-    bool currentInputState = IsUIInputEnabled();
-    HWND hwnd = ghWnd;
-
-    // 상태 변경 시에만 IME 제어
-    if (currentInputState != lastInputState || need_reset_focus) {
-
-        if (currentInputState) {
-            CImGuiManager::EnableIME(hwnd);
-        }
-        else {
-            CImGuiManager::DisableIME(hwnd);
-        }
-
-        if (need_reset_focus) {
-            ImGuiContext& g = *GImGui;
-            g.ActiveId = 0;
-            ImGui::SetWindowFocus(nullptr);
-            ImGui::GetIO().InputQueueCharacters.resize(0);
-            ImGui::GetIO().ClearInputKeys();
-            CImGuiManager::ResetIMEState(hwnd);
-
-            need_reset_focus = false;
-        }
-
-        lastInputState = currentInputState;
-    }
-
     // UI 그리기 시작
     DrawTitleUI();
 }
@@ -92,8 +60,7 @@ bool CTitleScene::IsUIInputEnabled()
     bool state = true;
 
     CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-    if (!scene)
-        return false;
+    assert(scene);
 
     // 타이틀 씬이면 무조건 입력 허용
     if (scene->GetSceneType() == SCENE_TYPE::TITLE)
@@ -509,11 +476,8 @@ void CTitleScene::DrawLoadingPopUpResult()
                     if (is_room_enter) {
                         is_room_enter = false;
 
+                        // 여기서 씬 전환!
                         CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);                 
-                        auto player = CSceneManager::GetInstance().GetActiveScene()->GetMyPlayer();
-                        player->SetSession(SERVER_SESSION);
-                        player->SetUser(SERVER_SESSION->GetUser());
-                        player->SetRoomID(SERVER_SESSION->GetUser()->GetRoomID());
                     }
                 }
 
@@ -726,6 +690,8 @@ void CTitleScene::DrawRoomCreatePopUp()
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
 
+            std::string cp949Name = UTF8ToCP949(roomName);
+
             // 패킷 전송
             C_CreateRoom createPkt;
             auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
@@ -733,7 +699,7 @@ void CTitleScene::DrawRoomCreatePopUp()
                 auto user = serverSession->GetUser();
                 if (user) {
                     createPkt.user_id = user->GetUserID();
-                    COPY_STRING(createPkt.room_name, roomName);
+                    COPY_STRING(createPkt.room_name, cp949Name.c_str());
                     auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_CreateRoom>(createPkt);
                     serverSession->DoSend(sendBuffer);
                 }
@@ -755,4 +721,140 @@ void CTitleScene::DrawRoomCreatePopUp()
         ImGui::EndPopup();
     }
     ImGui::PopStyleColor();
+}
+
+//========================
+// 서버 패킷 관련 처리 함수들
+//========================
+void CTitleScene::Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGIN& pkt)
+{
+    // 로그인 성공
+    if (pkt.success) {
+
+        ShowResultPopup(true, "로그인 성공!");
+
+        // 로딩창 끄기
+        StopLoading();
+
+        // User 생성
+        std::shared_ptr<CUser> user = std::make_shared<CUser>();
+
+        // session, id 저장 (약한 참조)
+        user->SetSession(session);
+        user->SetUserID(pkt.user_id);
+
+        // User Refcount 증가
+        SERVER_SESSION->SetUser(user);
+    }
+    // 로그인 실패
+    else {
+        CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "로그인 실패!");
+
+        // 로딩창 끄기
+        CSceneManager::GetInstance().GetTitleScene()->StopLoading();
+    }
+}
+
+void CTitleScene::Handle_S_Logout(std::shared_ptr<Session>& session, const S_LOGOUT& pkt)
+{
+    if (pkt.success) {
+        CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "로그아웃 성공!");
+        CSceneManager::GetInstance().GetTitleScene()->StopLoading();
+        SERVER_SESSION->SetUser(nullptr);
+    }
+}
+
+void CTitleScene::Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SIGN_RES& pkt)
+{
+    if (pkt.success) {
+        printf("signup success! \n");
+
+        // 가입 성공
+        ShowResultPopup(true, "가입 성공!");
+
+        // 로딩창 끄기
+        StopLoading();
+    }
+    else {
+        printf("signup fail...! \n");
+
+        // 가입 실패
+        ShowResultPopup(false, "가입 실패..!");
+
+        // 로딩창 끄기
+        StopLoading();
+    }
+}
+
+void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_EnterRoom& pkt)
+{
+    if (pkt.success) {
+        SetIsEnter(true);
+
+        ShowResultPopup(true, "방 입장 완료!");
+
+        CImGuiManager::GetInstance().ReserveResetFocus();
+
+        SERVER_SESSION->GetUser()->SetRoomID(pkt.room_id);
+    }
+    else {
+        SetIsEnter(false);
+
+        ShowResultPopup(true, "방 입장 불가!");
+
+        CImGuiManager::GetInstance().ReserveResetFocus();
+    }
+
+    // 로딩창 끄기
+    StopLoading();
+}
+
+void CTitleScene::Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_List& pkt)
+{
+    S_Room_List::RoomList userList = pkt.GetRoomList();
+
+    uint32* newRoom = nullptr;
+    if (pkt.room_count > 0)
+        newRoom = new uint32[pkt.room_count];
+
+    for (int i = 0; i < pkt.room_count; ++i) {
+        newRoom[i] = userList[i].room_info.room_id;
+
+        RoomInfo info{ userList[i].room_info.room_id, userList[i].room_info.room_name
+            , userList[i].room_info.current_player_count, userList[i].room_info.is_game_start };
+
+        auto iter = rooms.find(info.room_id);
+        if (iter == rooms.end())
+            rooms.insert({ info.room_id, info });
+        else
+            rooms[info.room_id] = info;
+    }
+
+    // 기존에는 있었는데 없어진 방 체크
+    if (pkt.room_count == 0) {
+        rooms.clear();
+    }
+    else {
+        for (auto it = rooms.begin(); it != rooms.end(); ) {
+            int id = it->first;
+
+            bool found = false;
+            for (int i = 0; i < pkt.room_count; ++i) {
+                if (newRoom[i] == id) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                it = rooms.erase(it); // 삭제 + 다음 iterator 반환
+            }
+            else {
+                ++it;
+            }
+        }
+    }
+
+    if (newRoom != nullptr)
+        delete[] newRoom;
 }

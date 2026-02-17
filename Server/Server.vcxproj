@@ -184,6 +184,7 @@
     <ClInclude Include="DirectXMathHelper.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="Job.h" />
+    <ClInclude Include="macro.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Player.h" />

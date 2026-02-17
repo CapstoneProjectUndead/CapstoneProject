@@ -2,7 +2,6 @@
 #include "ImGuiManager.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
-#include "ServerSessionManager.h"
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
@@ -12,7 +11,7 @@
 
 #define ROOM_MAX_PLAYER 4
 
-HIMC CImGuiManager::m_hDefaultIMC = nullptr;
+HIMC CImGuiManager::default_IMC = nullptr;
 bool CImGuiManager::need_reset_focus = false;
 ImFont* CImGuiManager::title_font = nullptr;
 ImFont* CImGuiManager::title_font2 = nullptr;
@@ -63,17 +62,8 @@ void CImGuiManager::Update()
     ImGui::NewFrame();
 
     CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
-    switch (activeScene->GetSceneType())
-    {
-    case SCENE_TYPE::TITLE:
-        static_cast<CTitleScene*>(activeScene)->DrawUI();
-        break;
-    case SCENE_TYPE::LOBBY:
-        break;
-    case SCENE_TYPE::GAME:
-        break;
-    default:
-        break;
+    if (activeScene) {
+        activeScene->DrawUI_Final();
     }
 }
 
@@ -109,19 +99,19 @@ void CImGuiManager::ResetIMEState(HWND hwnd)
 
 void CImGuiManager::DisableIME(HWND hwnd)
 {
-    if (m_hDefaultIMC != nullptr) 
+    if (default_IMC != nullptr) 
         return;
 
-    m_hDefaultIMC = ImmAssociateContext(hwnd, NULL);
+    default_IMC = ImmAssociateContext(hwnd, NULL);
 }
 
 void CImGuiManager::EnableIME(HWND hwnd)
 {
-    if (m_hDefaultIMC == nullptr) 
+    if (default_IMC == nullptr) 
         return;
 
-    ImmAssociateContext(hwnd, m_hDefaultIMC);
-    m_hDefaultIMC = nullptr;
+    ImmAssociateContext(hwnd, default_IMC);
+    default_IMC = nullptr;
 }
 
 void CImGuiManager::ClearFocus(HWND hwnd)
@@ -214,4 +204,24 @@ std::string CP949ToUTF8(const std::string& strCP949)
     delete[] pwBuf;
     delete[] pBuf;
     return strUTF8;
+}
+
+std::string UTF8ToCP949(const std::string& utf8Str) 
+{
+    if (utf8Str.empty()) 
+        return "";
+
+    // 1. UTF-8 -> Unicode (WideChar) 변환
+    // 필요한 버퍼 크기 계산
+    int nLen = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), NULL, 0);
+    std::wstring wstr(nLen, 0);
+    MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), &wstr[0], nLen);
+
+    // 2. Unicode -> CP949 (ANSI) 변환
+    // 949는 한국어 코드 페이지입니다.
+    int nLen2 = WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
+    std::string strCP949(nLen2, 0);
+    WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), &strCP949[0], nLen2, NULL, NULL);
+
+    return strCP949;
 }

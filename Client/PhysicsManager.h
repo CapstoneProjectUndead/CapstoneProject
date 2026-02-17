@@ -34,6 +34,10 @@ public:
     bool Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo);
 
     void Update(float deltaTime);
+
+    // 특정 충돌체 하나만 물리 연산(충돌 해결 -> 이동)을 수행하는 함수
+    void SimulateSingleObject(CColliderComponent* col, float dt);
+
 private:
     // 자기 자신 제외
     void BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);

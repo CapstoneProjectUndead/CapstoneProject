@@ -1,14 +1,11 @@
 #include "pch.h"
 // 서버쪽 TitleScene
 #include "TitleScene.h"
-#include "ClientSession.h"
 #include "Player.h"
 #include "RoomManager.h"
 
 #undef min
 #undef max
-
-#define CAST_CS(session) static_pointer_cast<CClientSession>(session)
 
 
 CTitleScene::CTitleScene()
@@ -20,6 +17,10 @@ CTitleScene::CTitleScene()
 CTitleScene::~CTitleScene()
 {
 
+}
+
+void CTitleScene::Start()
+{
 }
 
 void CTitleScene::Update(float elapsedTime)
@@ -39,7 +40,7 @@ void CTitleScene::LeaveUser(uint64 id)
 	users.erase(id);
 }
 
-void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
+void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 {
 	string id = to_utf8(pkt.id);
 	string pw = to_utf8(pkt.password);
@@ -54,8 +55,7 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 		return;
 	}
 
-	try
-	{
+	try {
 		std::unique_ptr<sql::PreparedStatement> pstmt(CON->prepareStatement(
 			"INSERT INTO users (id, password, name) VALUES (?, ?, ?)"
 		));
@@ -67,8 +67,7 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 		// INSERT는 executeUpdate() 사용
 		int affected = pstmt->executeUpdate();
 
-		if (affected == 0)
-		{
+		if (affected == 0) {
 			// INSERT 됐어야 하는데, 0행 영향 → 비정상
 			cout << "[DB] INSERT 실패: 0행 영향\n";
 
@@ -90,8 +89,7 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 		}
 
 	}
-	catch (sql::SQLException& e)
-	{
+	catch (sql::SQLException& e) {
 		cout << "[DB] SQL 예외 발생\n";
 		cout << "  Error: " << e.what() << "\n";
 		cout << "  Code:  " << e.getErrorCode() << "\n";
@@ -108,7 +106,7 @@ void CTitleScene::HandleSignUp(shared_ptr<Session> session, const C_SIGNUP& pkt)
 	}
 }
 
-void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
+void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
 	// 유저 로그인 처리
 	{
@@ -219,9 +217,10 @@ void CTitleScene::HandleLogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 	//}
 }
 
-void CTitleScene::HandleLogOut(shared_ptr<Session> session, const C_LOGOUT& pkt)
+void CTitleScene::Handle_C_LogOut(shared_ptr<Session> session, const C_LOGOUT& pkt)
 {
 	LeaveUser(pkt.user_id);
+	CAST_CS(session)->SetUser(nullptr);
 
 	S_LOGOUT logOutPkt;
 	logOutPkt.success = true;
