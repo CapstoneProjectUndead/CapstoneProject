@@ -11,7 +11,7 @@
 
 #define ROOM_MAX_PLAYER 4
 
-HIMC CImGuiManager::m_hDefaultIMC = nullptr;
+HIMC CImGuiManager::default_IMC = nullptr;
 bool CImGuiManager::need_reset_focus = false;
 ImFont* CImGuiManager::title_font = nullptr;
 ImFont* CImGuiManager::title_font2 = nullptr;
@@ -63,7 +63,7 @@ void CImGuiManager::Update()
 
     CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
     if (activeScene) {
-        activeScene->DrawUI();
+        activeScene->DrawUI_Final();
     }
 }
 
@@ -99,19 +99,19 @@ void CImGuiManager::ResetIMEState(HWND hwnd)
 
 void CImGuiManager::DisableIME(HWND hwnd)
 {
-    if (m_hDefaultIMC != nullptr) 
+    if (default_IMC != nullptr) 
         return;
 
-    m_hDefaultIMC = ImmAssociateContext(hwnd, NULL);
+    default_IMC = ImmAssociateContext(hwnd, NULL);
 }
 
 void CImGuiManager::EnableIME(HWND hwnd)
 {
-    if (m_hDefaultIMC == nullptr) 
+    if (default_IMC == nullptr) 
         return;
 
-    ImmAssociateContext(hwnd, m_hDefaultIMC);
-    m_hDefaultIMC = nullptr;
+    ImmAssociateContext(hwnd, default_IMC);
+    default_IMC = nullptr;
 }
 
 void CImGuiManager::ClearFocus(HWND hwnd)

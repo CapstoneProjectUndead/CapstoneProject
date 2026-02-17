@@ -30,6 +30,7 @@ public:
 public:
     static ImFont* title_font;
     static ImFont* title_font2;
+    static bool need_reset_focus;
 
 public:
     void Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat);
@@ -48,8 +49,7 @@ public:
         , const int circle_count, const float speed);
 
 private:
-    ID3D12DescriptorHeap* srv_desc_heap = nullptr;
-
-    static HIMC m_hDefaultIMC; // IME 핸들 저장
-    static bool need_reset_focus;
+    ID3D12DescriptorHeap*   srv_desc_heap = nullptr;
+    static HIMC             default_IMC; // IME 핸들 저장
+    
 };

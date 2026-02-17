@@ -26,11 +26,22 @@ public:
 	virtual void Enter() abstract;
 	virtual void Exit() abstract;
 
-	// UI 그리기가 필요한 Scene들은 호출
-	virtual void DrawUI() {};
-
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);
+
+	// UI 관련 
+	void DrawUI_Final();
+
+protected:
+	// UI 관련 
+	// 자식들이 각자 그릴 UI를 구현하는 순수 가상 함수
+	virtual void DrawUI() = 0;
+	virtual bool IsUIInputEnabled() = 0;
+
+private:
+	// UI 관련 
+	void ManageIME(); 
+	bool last_input_state = true; 
 
 public:
 	// 서버 패킷 관련 처리 함수들

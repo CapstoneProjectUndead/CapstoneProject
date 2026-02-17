@@ -48,37 +48,6 @@ void CTitleScene::Exit()
 
 void CTitleScene::DrawUI()
 {
-    // =======================
-    // [IME 및 포커스 관리 로직]
-    // =======================
-    static bool lastInputState = false;
-    bool currentInputState = IsUIInputEnabled();
-    HWND hwnd = ghWnd;
-
-    // 상태 변경 시에만 IME 제어
-    if (currentInputState != lastInputState || need_reset_focus) {
-
-        if (currentInputState) {
-            CImGuiManager::EnableIME(hwnd);
-        }
-        else {
-            CImGuiManager::DisableIME(hwnd);
-        }
-
-        if (need_reset_focus) {
-            ImGuiContext& g = *GImGui;
-            g.ActiveId = 0;
-            ImGui::SetWindowFocus(nullptr);
-            ImGui::GetIO().InputQueueCharacters.resize(0);
-            ImGui::GetIO().ClearInputKeys();
-            CImGuiManager::ResetIMEState(hwnd);
-
-            need_reset_focus = false;
-        }
-
-        lastInputState = currentInputState;
-    }
-
     // UI 그리기 시작
     DrawTitleUI();
 }
@@ -91,8 +60,7 @@ bool CTitleScene::IsUIInputEnabled()
     bool state = true;
 
     CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-    if (!scene)
-        return false;
+    assert(scene);
 
     // 타이틀 씬이면 무조건 입력 허용
     if (scene->GetSceneType() == SCENE_TYPE::TITLE)
@@ -853,10 +821,13 @@ void CTitleScene::Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_Lis
         RoomInfo info{ userList[i].room_info.room_id, userList[i].room_info.room_name
             , userList[i].room_info.current_player_count, userList[i].room_info.is_game_start };
 
-        rooms.insert({ info.room_id, info });
+        auto iter = rooms.find(info.room_id);
+        if (iter == rooms.end())
+            rooms.insert({ info.room_id, info });
+        else
+            rooms[info.room_id] = info;
     }
 
-    // 로그아웃하고 로그인 했을 때,
     // 기존에는 있었는데 없어진 방 체크
     if (pkt.room_count == 0) {
         rooms.clear();

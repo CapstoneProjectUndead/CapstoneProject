@@ -16,6 +16,7 @@
 #include "PhysicsManager.h"
 #include "User.h"
 #include "NetworkClockManager.h"
+#include "ImGuiManager.h"
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -85,6 +86,45 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 		}
 
 		shader.second->RenderEnd(commandList);
+	}
+}
+
+void CScene::DrawUI_Final()
+{
+	ManageIME();  // 공통 로직 (IME/포커스)
+	DrawUI();     // 자식이 구현할 구체적인 UI 로직
+}
+
+void CScene::ManageIME()
+{
+	// =======================
+	// [IME 및 포커스 관리 로직]
+	// =======================
+	bool currentInputState = IsUIInputEnabled();
+	HWND hwnd = ghWnd;
+
+	// 상태 변경 시에만 IME 제어
+	if (currentInputState != last_input_state || CImGuiManager::need_reset_focus) {
+
+		if (currentInputState) {
+			CImGuiManager::EnableIME(hwnd);
+		}
+		else {
+			CImGuiManager::DisableIME(hwnd);
+		}
+
+		if (CImGuiManager::need_reset_focus) {
+			ImGuiContext& g = *GImGui;
+			g.ActiveId = 0;
+			ImGui::SetWindowFocus(nullptr);
+			ImGui::GetIO().InputQueueCharacters.resize(0);
+			ImGui::GetIO().ClearInputKeys();
+			CImGuiManager::ResetIMEState(hwnd);
+
+			CImGuiManager::need_reset_focus = false;
+		}
+
+		last_input_state = currentInputState;
 	}
 }
 
