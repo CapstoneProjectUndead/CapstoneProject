@@ -3,7 +3,7 @@
 class CScene;
 class CUser;
 
-class CRoom
+class CRoom : public enable_shared_from_this<CRoom>
 {
     using SceneArray = array<unique_ptr<CScene>, (UINT)SCENE_TYPE::END>;
 public:
@@ -14,6 +14,10 @@ public:
     void Initialize();
     void Update(const float elapsedTime);
     void SendResults();
+
+public:
+    void PlayerEnter() { ++room_info.current_player_count; }
+    void PlayerLeave() { --room_info.current_player_count; }
 
 public:
     SceneArray&     GetScenes() { return scenes; }

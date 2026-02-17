@@ -69,6 +69,18 @@ void CRoomManager::CheckEmptyRoom()
 	}
 }
 
+void CRoomManager::DeActiveRoom(uint32 roomId)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	rooms[roomId]->SetActive(false);
+}
+
+void CRoomManager::DeActiveRoom(shared_ptr<CRoom> room)
+{
+	lock_guard<mutex> lg(rooms_lock);
+	room->SetActive(false);
+}
+
 shared_ptr<CRoom>CRoomManager::FindRoomLock(uint32 roomId)
 {
 	lock_guard<mutex> lg(rooms_lock);
@@ -191,28 +203,21 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 
 void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 {
-	uint32 roomId = player->GetRoomID();
+	auto room = player->GetRoom();
+	assert(room);
 
-	if (roomId != -1) {
+	// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
+	auto& scenes = room->GetScenes();
+	CScene* scene = scenes[(UINT)player->GetCurrentSceneType()].get();
+	assert(scene);
 
-		//lock_guard<mutex> lg(rooms_lock);
-		auto room = FindRoomLock(roomId);
-		if (room) {
+	PktDummy dummyPkt;
+	dummyPkt.value = player->GetID();
 
-			// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
-			auto& scenes = room->GetScenes();
-			CScene* scene = scenes[(UINT)player->GetCurrentSceneType()].get();
-			assert(scene);
-
-			PktDummy dummyPkt;
-			dummyPkt.value = player->GetID();
-
-			scene->PushPacketJob(player->GetSession()
-				, (CScene*)scene
-				, &CScene::Handle_C_Player_Leave
-				, dummyPkt);
-		}
-	}
+	scene->PushPacketJob(player->GetSession()
+		, (CScene*)scene
+		, &CScene::Handle_C_Player_Leave
+		, dummyPkt);
 }
 
 void CRoomManager::SendRoomList(shared_ptr<Session> session)

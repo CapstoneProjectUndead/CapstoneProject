@@ -4,6 +4,8 @@
 #include "Job.h"
 #include "User.h"
 
+class CRoom;
+
 class CScene
 {
 	template<typename T, typename PacketType>
@@ -28,6 +30,7 @@ public:
 	void SendPlayersResults();
 	void SendPlayersCheckPing();
 
+public:
 	// Scene에 플레이어가 있는지 체크
 	bool HasPlayers()
 	{
@@ -39,6 +42,10 @@ public:
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
+
+	std::weak_ptr<CRoom>      GetRoomWeak() const { return room; }
+	std::shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
+	void					  SetRoom(std::shared_ptr<CRoom> _room) { room = _room; }
 
 public:
 	// IOCP 스레드들이 호출 (패킷 받자마자 실행)
@@ -71,6 +78,7 @@ protected:
 private:
 	SCENE_TYPE							scene_type;
 	uint32								room_id;
+	weak_ptr<CRoom>						room;
 	float								dt_ping_accumulator;
 };
 

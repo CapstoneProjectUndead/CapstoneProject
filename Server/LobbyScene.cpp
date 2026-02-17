@@ -3,6 +3,7 @@
 #include "LobbyScene.h"
 #include "Player.h"
 #include "User.h"
+#include "Room.h"
 
 #undef min
 #undef max
@@ -135,6 +136,8 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 	assert(user);
 
 	uint32 roomId = pkt.value;
+	auto room = user->GetRoom();
+	assert(room);
 
 	// 플레이어 생성
 	shared_ptr<CPlayer> player = CObject::CreatePlayer();
@@ -152,13 +155,16 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 	player->SetRoomID(roomId);
 
 	// 지금 플레이어가 속한 방
-	player->SetRoom(user->GetRoom());
+	player->SetRoom(room);
 
 	// Player가 속한 Scene 설정
 	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 
 	// 유저가 자신의 플레이어를 참조 (refcount 증가)
 	user->SetPlayer(player);
+
+	// 방 인원 수 증가
+	room->PlayerEnter();
 
 	// 유저에게 입장 허락 패킷과 방에 있는 다른 유저의 정보를 알려준다..
 	// 여기서는 가변길이 패킷을 보낸다.

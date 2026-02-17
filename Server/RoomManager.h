@@ -31,8 +31,8 @@ public:
     void    SendResults();
 
     void    CheckEmptyRoom();
-    void    DeActiveRoom(uint32 roomId) { rooms[roomId]->SetActive(false); }
-    void    DeActiveRoom(shared_ptr<CRoom> room) {room->SetActive(false); }
+    void    DeActiveRoom(uint32 roomId);
+    void    DeActiveRoom(shared_ptr<CRoom> room);
 
 public:
     void                CreateRoom(const string& name, shared_ptr<CUser> user);
