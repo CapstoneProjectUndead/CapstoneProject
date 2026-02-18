@@ -9,7 +9,7 @@ void CPhysicsManager::Update(float deltaTime)
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end() );
 }
 
-void CPhysicsManager::BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
+void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
 {
     BoundingBox expanded{ checkCol->world_aabb };
 
@@ -28,9 +28,8 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm:
     auto* col = obj->GetComponent<CColliderComponent>();
     if (!col) return false;
 
-    // 1) SAP로 충돌 후보 추리기
     std::vector<CColliderComponent*> candidates;
-    BroadPhaseSAP(col, delta, candidates);
+    BroadPhase(col, delta, candidates);
 
     for (auto* other : candidates) {
         auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
@@ -46,6 +45,45 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm:
     }
 
     return false;
+}
+
+bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, GJKAlgorithm::CollisionInfo& outInfo)
+{
+    XMVECTOR rayOrigin = XMLoadFloat3(&origin);
+    XMVECTOR rayDir = XMVector3Normalize(XMLoadFloat3(&direction));
+
+    bool bHit = false;
+    float closestDist = maxDistance; // maxDistance 내의 가장 가까운 거리 찾기
+
+    for (auto& other : colliders) {
+        // Broad-phase: 레이와 콜라이더의 전체 AABB가 만나는지 먼저 체크
+        float aabbDist = 0.0f;
+        if (!other->world_aabb.Intersects(rayOrigin, rayDir, aabbDist)) continue;
+        if (aabbDist > closestDist) continue;
+
+        // Narrow-phase: 메쉬 콜라이더일 경우
+        if (auto* meshShape = dynamic_cast<CTriangleMeshShape*>(other->shape.get())) {
+            for (const auto& tri : meshShape->GetWorldTriangles()) {
+                float hitDist = 0.0f;
+                if (Triangle::Intersect(origin, direction, tri.v[0], tri.v[1], tri.v[2], hitDist)) {
+                    // 지금까지 찾은 것보다 가깝다면
+                    if (hitDist > 0 && hitDist <= closestDist) {
+                        closestDist = hitDist;
+
+                        // 법선 계산
+                        XMFLOAT3 edge1 = Vector3::Subtract(tri.v[1], tri.v[0]);
+                        XMFLOAT3 edge2 = Vector3::Subtract(tri.v[2], tri.v[0]);
+                        outInfo.normal = XMLoadFloat3(&Vector3::CrossProduct(edge1, edge2));
+
+                        outInfo.depth = maxDistance - hitDist;
+                        bHit = true;
+                    }
+                }
+            }
+        }
+    }
+
+    return bHit;
 }
 
 bool CPhysicsManager::CheckGround(CColliderComponent* col)

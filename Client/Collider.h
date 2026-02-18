@@ -69,6 +69,26 @@ private:
     std::vector<XMFLOAT3> world;
 };
 
+class CTriangleMeshShape : public CColliderShape {
+public:
+    struct Triangle {
+        std::array<XMFLOAT3, 3> v;
+        BoundingBox aabb;
+    };
+    CTriangleMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices);
+    BoundingBox ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2);
+
+    // GJK용 GetSupport 사용X
+    const std::vector<Triangle>& GetCandidateTriangles(const BoundingBox& other) const;
+    const std::vector<Triangle>& GetWorldTriangles() const;
+    void Update(const XMMATRIX& worldMatrix) override;
+
+    XMVECTOR GetSupport(XMVECTOR direction) const override { return XMVectorZero(); }
+private:
+    std::vector<Triangle> local;
+    std::vector<Triangle> world;
+};
+
 /*
 충돌 모양 데이터 제공자. 물리 계산X
 * ColliderComponent 생성법

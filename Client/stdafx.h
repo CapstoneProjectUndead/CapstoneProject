@@ -234,7 +234,7 @@ namespace Vector3
 		return(m_xmf3Normal);
 	}
 
-	inline float Length(XMFLOAT3& xmf3Vector)
+	inline float Length(const XMFLOAT3& xmf3Vector)
 	{
 		XMFLOAT3 xmf3Result;
 		XMStoreFloat3(&xmf3Result, XMVector3Length(XMLoadFloat3(&xmf3Vector)));
@@ -283,7 +283,7 @@ namespace Vector3
 		return(TransformCoord(xmf3Vector, XMLoadFloat4x4(&xmmtx4x4Matrix)));
 	}
 
-	inline bool IsZero(XMFLOAT3& xmf3Vector)
+	inline bool IsZero(const XMFLOAT3& xmf3Vector)
 	{
 		if (::IsZero(xmf3Vector.x) && ::IsZero(xmf3Vector.y) && ::IsZero(xmf3Vector.z))
 			return(true);
@@ -434,5 +434,13 @@ namespace Matrix4x4
 		XMFLOAT4X4 xmmtx4x4Result;
 		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixLookToLH(XMLoadFloat3(&xmf3EyePosition), XMLoadFloat3(&xmf3LookTo), XMLoadFloat3(&xmf3UpDirection)));
 		return(xmmtx4x4Result);
+	}
+}
+
+namespace Triangle
+{
+	inline bool Intersect(const XMFLOAT3& xmf3RayPosition, const XMFLOAT3& xmf3RayDirection, const XMFLOAT3& v0, const  XMFLOAT3& v1, const XMFLOAT3& v2, float& fHitDistance)
+	{
+		return(TriangleTests::Intersects(XMLoadFloat3(&xmf3RayPosition), XMLoadFloat3(&xmf3RayDirection), XMLoadFloat3(&v0), XMLoadFloat3(&v1), XMLoadFloat3(&v2), fHitDistance));
 	}
 }

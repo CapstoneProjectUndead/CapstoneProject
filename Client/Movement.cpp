@@ -64,12 +64,29 @@ void CMovementComponent::Update(const float deltaTime)
 		return;
 
 	ClampSpeed();
-
     CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // 충돌 처리
     XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
+    float moveDist = Vector3::Length(delta);
+    if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
+
     GJKAlgorithm::CollisionInfo info{};
+
+    // 지형 충돌(벽)
+    XMFLOAT3 moveDir = Vector3::Normalize(delta);
+    if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
+        XMVECTOR n = info.normal;
+        float d = info.depth;
+        // Overlap된 깊이만큼 반대로 이동
+        XMVECTOR separation = n * (d);
+        XMVECTOR curPos = XMLoadFloat3(&owner->position);
+        XMStoreFloat3(&owner->position, curPos + separation);
+
+        Slide(info.normal);
+    }
+
+    // 오브젝트 충돌(Table 등)
+    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
         XMVECTOR n = info.normal;
         float d = info.depth;
@@ -78,7 +95,7 @@ void CMovementComponent::Update(const float deltaTime)
         if (XMVectorGetY(n) < 0) {
             n = -n;
         }
-        // Overlap된 깊이만큼 
+        // Overlap된 깊이만큼 반대로 이동
         XMVECTOR separation = n * (d);
         XMVECTOR curPos = XMLoadFloat3(&owner->position);
         XMStoreFloat3(&owner->position, curPos + separation);
