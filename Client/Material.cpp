@@ -11,23 +11,16 @@ void CMaterial::SetTexture(const std::shared_ptr<CTexture>& tex)
 void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
 	if (!material_cb) return;
-	MaterialCB cb{};
-	cb.albedo = albedo;
-	cb.fresnel = fresnel;
-	cb.glossiness = glossiness;
 
-	UINT8* mapped = nullptr;
-	material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-	memcpy(mapped, &cb, sizeof(cb));
-	material_cb->Unmap(0, nullptr);
+	memcpy(mapped, &material, sizeof(material));
 
 	commandList->SetGraphicsRootConstantBufferView(2, material_cb->GetGPUVirtualAddress());
 }
 
 void CMaterial::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	MaterialCB cb{};
-	material_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<MaterialCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	material_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<MaterialCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	material_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 }
 
 std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
@@ -41,6 +34,17 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name
 
 	materials.emplace(name, mat);
 	return mat;
+}
+
+void CMaterialManager::LoadMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
+{
+	auto it = materials.find(name);
+	if (it != materials.end()) return;
+
+	auto mat = std::make_shared<CMaterial>();
+	mat->SetTexture(tex);
+
+	materials.emplace(name, mat);
 }
 
 // Component

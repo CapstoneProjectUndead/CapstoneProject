@@ -76,7 +76,7 @@ public:
 	friend class CPhysicsManager;
 protected:
 	uint64 obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
-	
+	ObjectCB* mapped{};
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
 

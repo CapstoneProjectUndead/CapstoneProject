@@ -31,19 +31,16 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		shader->CreateShader(device);
 		shaders.emplace("skinning", std::move(shader));
 	}
-
-	// factory
-	CObjectFactory factory;
 	
 	// 플레이어 생성
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		my_player = factory.CreateMyPlayer(skinningHeapManager);
+		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
 	
 	{
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-		objects = factory.CreateLobby(staticHeapManager);
+		objects = factory->CreateLobby(staticHeapManager);
 	}
 	// test 용 삭제X
 	{
@@ -77,7 +74,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	//CPhysicsManager::GetInstance().Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 
 	// CPhysicsManager에서 이동이 일어나기 때문에 여기서 서버에 좌표패킷을 보낸다.
 	if (my_player) {

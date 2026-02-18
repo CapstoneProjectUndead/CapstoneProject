@@ -29,21 +29,15 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 void CCamera::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	{
-		CameraCB cb{};
-		camera_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<CameraCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		camera_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<CameraCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		camera_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 	}
 }
 
 void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
-	CameraCB cb{};
-	XMStoreFloat4x4(&cb.view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
-	XMStoreFloat4x4(&cb.projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
-
-	UINT8* mapped = nullptr;
-	camera_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-	memcpy(mapped, &cb, sizeof(cb));
-	camera_cb->Unmap(0, nullptr);
+	XMStoreFloat4x4(&mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
+	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
 
 	commandList->SetGraphicsRootConstantBufferView(1, camera_cb->GetGPUVirtualAddress());
 }

@@ -31,6 +31,7 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 	for (auto& unit : render_units) {
 		if (unit.material)
 			unit.material->UpdateMeshShaderVariables(commandList);
+
 		if (unit.mesh)
 			unit.mesh->Render(commandList);
 	}

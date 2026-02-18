@@ -40,6 +40,7 @@ protected:
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
 	ComPtr<ID3D12Resource> camera_cb;
+	CameraCB* mapped{};
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;

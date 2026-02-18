@@ -18,6 +18,7 @@ public:
 	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 private:
 	CSkinnedData skinned;
+	SkinnedDataCB* mapped{};
 	std::string current_animation{ "Ganga_idle" };
 	float current_time{};
 	std::vector<XMFLOAT4X4> final_transforms;

@@ -84,13 +84,25 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	return objects;
 }
 
-
 void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	// 1) Mesh 로드 + totalBounds 계산
+	// material 미리 Load
+	std::vector<std::string> resourceNames = {
+		"body_ganga", "body_nyao", "body_toto",
+		"eartail",
+		"eyes_ganga", "eyes_nyao", "eyes_toto",
+		"mouse_ganga", "mouse_nyao",
+	};
+
+	for (const std::string& name : resourceNames) {
+		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
+		matManager.LoadMeterial(name, tex);
+	}
+
+	// Mesh 로드 + totalBounds 계산
 	BoundingBox totalBounds;
 	bool firstBounds = true;
 
@@ -132,13 +144,13 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 		// renderUnit set
 		renderer->SetRenderUnit(renderUnit);
 	}
-	// 4) ColliderComponent 생성
+	// ColliderComponent 생성
 	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
 	character->SetComponent(collider);
 	CPhysicsManager::GetInstance().SetCollider(collider);
 
-	// 4) Animator
+	// Animator
 	auto animator = std::make_shared<CAnimatorComponent>();
 	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
 	animator->Play("Ganga_walk");

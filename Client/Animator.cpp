@@ -74,23 +74,15 @@ void CAnimatorComponent::Update(float deltaTime)
 
 void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
-	SkinnedDataCB cb{};
 	if (!final_transforms.empty()) {
-		UINT boneSize = skinned.BoneCount();
-		for (UINT i = 0; i < boneSize; ++i)
-			cb.bone_transforms[i] = final_transforms[i];
+		memcpy(mapped, final_transforms.data(), sizeof(XMFLOAT4X4) * final_transforms.size());
 	}
-
-	UINT8* mapped = nullptr;
-	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-	memcpy(mapped, &cb, sizeof(cb));
-	skinned_cb->Unmap(0, nullptr);
 
 	commandList->SetGraphicsRootConstantBufferView(4, skinned_cb->GetGPUVirtualAddress());
 }
 
 void CAnimatorComponent::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	SkinnedDataCB cb{};
-	skinned_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	skinned_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 }

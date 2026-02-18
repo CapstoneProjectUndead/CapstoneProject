@@ -67,6 +67,9 @@
     <Filter Include="Object\Factory">
       <UniqueIdentifier>{ca82464f-16b0-4854-841c-3d2bd01e61ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\CustomScene">
+      <UniqueIdentifier>{4b07fed5-088a-4c45-a77a-cdc1605c2b4b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -94,9 +97,6 @@
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="GameFramework.h">
@@ -246,6 +246,12 @@
     <ClInclude Include="GJKAlgorithm.h">
       <Filter>Component\Collider/Physics</Filter>
     </ClInclude>
+    <ClInclude Include="CustomScene.h">
+      <Filter>Scene\CustomScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -267,9 +273,6 @@
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GameFramework.cpp">
@@ -385,6 +388,12 @@
     </ClCompile>
     <ClCompile Include="GJKAlgorithm.cpp">
       <Filter>Component\Collider/Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomScene.cpp">
+      <Filter>Scene\CustomScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
