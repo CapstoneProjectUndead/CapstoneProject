@@ -36,9 +36,6 @@ public:
 
     void Update(float deltaTime);
 
-    // 특정 충돌체 하나만 물리 연산(충돌 해결 -> 이동)을 수행하는 함수
-    void SimulateSingleObject(CColliderComponent* col, float dt);
-
 private:
     // 충돌 후보 추리기(자기 자신 제외)
     void BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);
