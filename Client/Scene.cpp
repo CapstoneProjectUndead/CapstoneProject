@@ -23,6 +23,11 @@ CScene::~CScene()
 
 }
 
+void CScene::Initialize()
+{
+
+}
+
 void CScene::ReleaseUploadBuffers()
 {
 	for (const auto& obj : objects) {
@@ -146,20 +151,6 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 {
 	if (pkt.is_my_player) {
 		{
-			// static shader
-			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("static", std::move(shader));
-		}
-
-		{
-			// skinning
-			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("skinning", std::move(shader));
-		}
-
-		{
 			CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 			my_player = factory->CreateMyPlayer(skinningHeapManager);
 
@@ -185,24 +176,6 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 					my_player->SetUser(SERVER_SESSION->GetUser());
 				}
 			}
-		}
-
-		{
-			CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-			objects = factory->CreateLobby(staticHeapManager);
-		}
-
-		// 카메라 객체 생성
-		if (!camera) {
-			camera = std::make_shared<CCamera>();
-			camera->SetTarget(my_player.get());
-			camera->Initialize(GET_DEVICE, GET_CMD_LIST);
-		}
-
-		// light 생성
-		if (!light) {
-			light = std::make_unique<CLightManager>();
-			light->Initialize(GET_DEVICE, GET_CMD_LIST);
 		}
 	}
 	else {

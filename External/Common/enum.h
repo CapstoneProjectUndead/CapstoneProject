@@ -3,6 +3,12 @@
 // **** 클라/서버 공동 참조 헤더 파일 ****
 //======================================
 
+enum class OBJECT_TYPE : uint8_t
+{
+	PLAYER,
+	MONSTER,
+};
+
 enum class PLAYER_STATE : uint8_t
 {
 	IDLE,

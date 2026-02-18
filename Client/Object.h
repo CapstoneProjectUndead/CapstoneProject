@@ -53,6 +53,10 @@ public:
 
 	uint64  GetID() const { return obj_id; }
 	void	SetID(const uint64 id) { obj_id = id; }
+
+	OBJECT_TYPE GetType() const { return obj_type; }
+	void        SetType(OBJECT_TYPE type) { obj_type = type; }
+
 	//=================================
 	// 회전 함수 (테스트)
 	void SetYaw(float _yaw);
@@ -76,7 +80,7 @@ public:
 	friend class CPhysicsManager;
 protected:
 	uint64 obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
-	
+	OBJECT_TYPE obj_type;
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
 
