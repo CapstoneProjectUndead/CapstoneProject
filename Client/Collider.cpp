@@ -42,9 +42,11 @@ CConvexMeshShape::CConvexMeshShape(std::vector<XMFLOAT3>& vertice)
 
 void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
 {
-    world.resize(local.size());
+    if (world.size() != local.size()) {
+        world.resize(local.size());
+    }
 
-    for (size_t i = 0; i < local.size(); i++)
+    for (size_t i = 0; i < local.size(); ++i)
     {
         XMVECTOR p = XMLoadFloat3(&local[i]);
         XMVECTOR wp = XMVector3Transform(p, worldMatrix);
@@ -52,12 +54,90 @@ void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
     }
 }
 
+BoundingBox CTriangleMeshShape::ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2)
+{
+    // 1. 각 축의 최솟값과 최댓값 초기화
+    XMVECTOR p0 = XMLoadFloat3(&v0);
+    XMVECTOR p1 = XMLoadFloat3(&v1);
+    XMVECTOR p2 = XMLoadFloat3(&v2);
+
+    XMVECTOR minVec = XMVectorMin(p0, XMVectorMin(p1, p2));
+    XMVECTOR maxVec = XMVectorMax(p0, XMVectorMax(p1, p2));
+
+    // 2. Center(중심)와 Extents(반지름 크기) 계산
+    // Center = (Max + Min) / 2
+    // Extents = (Max - Min) / 2
+    XMVECTOR centerVec = (maxVec + minVec) * 0.5f;
+    XMVECTOR extentsVec = (maxVec - minVec) * 0.5f;
+
+    BoundingBox aabb;
+    XMStoreFloat3(&aabb.Center, centerVec);
+    XMStoreFloat3(&aabb.Extents, extentsVec);
+
+    return aabb;
+}
+
+CTriangleMeshShape::CTriangleMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices)
+{
+    // 1. 모든 삼각형 데이터를 미리 생성
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        Triangle tri;
+        tri.v[0] = vertices[indices[i]];
+        tri.v[1] = vertices[indices[i + 1]];
+        tri.v[2] = vertices[indices[i + 2]];
+
+        // 각 삼각형의 개별 AABB를 미리 계산 (최적화용)
+        tri.aabb = ComputeTriangleAABB(tri.v[0], tri.v[1], tri.v[2]);
+        local.push_back(tri);
+    }
+}
+
+const std::vector<CTriangleMeshShape::Triangle>& CTriangleMeshShape::GetCandidateTriangles(const BoundingBox& other) const
+{
+    static std::vector<Triangle> candidates;
+    candidates.clear();
+    for (const auto& tri : world) {
+        if (other.Intersects(tri.aabb)) {
+            candidates.push_back(tri);
+        }
+    }
+    return candidates;
+}
+
+const std::vector<CTriangleMeshShape::Triangle>& CTriangleMeshShape::GetWorldTriangles() const
+{
+    return world;
+}
+
+void CTriangleMeshShape::Update(const XMMATRIX& worldMatrix)
+{
+    if (world.size() != local.size()) {
+        world.resize(local.size());
+    }
+
+    for (size_t i = 0; i < local.size(); ++i) {
+        const auto& localTri = local[i];
+        auto& worldTri = world[i];
+
+        // 세 정점을 월드 좌표로 변환
+        for (int j = 0; j < 3; ++j) {
+            XMVECTOR localPos = XMLoadFloat3(&localTri.v[j]);
+            // w성분에 1.0을 넣어 좌표 변환 (Translation 포함) 적용
+            XMVECTOR worldPos = XMVector3TransformCoord(localPos, worldMatrix);
+            XMStoreFloat3(&worldTri.v[j], worldPos);
+        }
+
+        // 월드 AABB 업데이트
+        worldTri.aabb = ComputeTriangleAABB(worldTri.v[0], worldTri.v[1], worldTri.v[2]);
+    }
+}
+
+// component
 CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
     : shape{ std::move(otherShape) }, local_aabb{ otherBox }
 {
 }
 
-// component
 void CColliderComponent::Update(const float deltaTime)
 {
     XMMATRIX worldMatrix{ XMLoadFloat4x4(&owner->world_matrix) };

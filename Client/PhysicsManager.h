@@ -32,6 +32,7 @@ public:
 
     // query
     bool Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo);
+    bool Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, GJKAlgorithm::CollisionInfo& outInfo);
 
     void Update(float deltaTime);
 
@@ -39,8 +40,8 @@ public:
     void SimulateSingleObject(CColliderComponent* col, float dt);
 
 private:
-    // 자기 자신 제외
-    void BroadPhaseSAP(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);
+    // 충돌 후보 추리기(자기 자신 제외)
+    void BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);
 
     // Compute
     XMFLOAT3 ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b);

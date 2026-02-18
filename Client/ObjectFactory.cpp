@@ -44,22 +44,31 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		obj->SetComponent(meshRenderer);
 		meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
 
-		
-		if (children->name == "Floor") {
-			// 4) ColliderComponent 생성
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-			obj->SetComponent(boxCollider);
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
-		}
-		else if(children->name != "Wall"){
-			// 4) ColliderComponent 생성
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+		// ColliderComponent 생성
+		if (children->name == "Wall") {
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
 
-			if (!children->collider.positions.empty()) {
+			auto debugMesh = std::make_shared<CMeshComponent>();
+			obj->SetComponent(debugMesh);
+			debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
+			meshRenderer->SetRenderUnit(debugMesh.get());
+		}
+		else {
+			if (children->name == "Floor") {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+				auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+				obj->SetComponent(boxCollider);
+				CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			}
+			else if(!children->collider.positions.empty()){
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+				obj->SetComponent(collider);
+				CPhysicsManager::GetInstance().SetCollider(collider);
+
 				auto debugMesh = std::make_shared<CMeshComponent>();
 				obj->SetComponent(debugMesh);
 				debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
