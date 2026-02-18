@@ -94,7 +94,7 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 		"body_ganga", "body_nyao", "body_toto",
 		"eartail",
 		"eyes_ganga", "eyes_nyao", "eyes_toto",
-		"mouse_ganga", "mouse_nyao",
+		"mouse_ganga", "mouse_nyao", "mouse_toto"
 	};
 
 	for (const std::string& name : resourceNames) {
