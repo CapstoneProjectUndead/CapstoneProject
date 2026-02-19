@@ -20,8 +20,8 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
-	GenerateProjectionMatrix(1.0f, 500.0f, (float)width / (float)height, 90.0f);
-	SetCameraOffset(XMFLOAT3(0.0f, 2.0f, -2.0f));
+	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
+	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, 0.0f));
 
 	CreateConstantBuffers(device, commandList);
 }
@@ -75,8 +75,23 @@ void CCamera::SetLookAt(XMFLOAT3 ohterPosition, XMFLOAT3 lookAt, XMFLOAT3 ohterU
 {
 	position = ohterPosition;
 	look_at = lookAt;
-	XMStoreFloat4x4(&view_matrix, XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&lookAt), XMLoadFloat3(&ohterUp)));
+	view_matrix = Matrix4x4::LookAtLH(position, lookAt, ohterUp);
 
+	UpdateCameraVectors();
+}
+
+void CCamera::SetLookTo(XMFLOAT3 ohterPosition, XMFLOAT3 lookTo, XMFLOAT3 ohterUp)
+{
+	position = ohterPosition;
+	// LookTo는 방향을 받으므로 look_at 지점을 역산해서 저장 (디버깅용)
+	look_at = Vector3::Add(position, lookTo);
+
+	view_matrix = Matrix4x4::LookToLH(position, lookTo, ohterUp);
+	UpdateCameraVectors();
+}
+
+void CCamera::UpdateCameraVectors()
+{
 	XMVECTORF32 xm32vRight = { view_matrix._11, view_matrix._21, view_matrix._31, 0.0f };
 	XMVECTORF32 xm32vUp = { view_matrix._12, view_matrix._22, view_matrix._32, 0.0f };
 	XMVECTORF32 xm32vLook = { view_matrix._13, view_matrix._23, view_matrix._33, 0.0f };
@@ -89,16 +104,34 @@ void CCamera::SetLookAt(XMFLOAT3 ohterPosition, XMFLOAT3 lookAt, XMFLOAT3 ohterU
 void CCamera::SetCameraOffset(XMFLOAT3& cameraOffset)
 {
 	offset = cameraOffset;
-	XMFLOAT3 xmf3CameraPosition;
-	XMStoreFloat3(&xmf3CameraPosition, XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&offset)));
-	SetLookAt(xmf3CameraPosition, position, up);
+	XMVECTOR vOffset = XMLoadFloat3(&offset);
+	XMVECTOR vPlayerPos = XMLoadFloat3(&target_object->position); // 플레이어 위치 기준
 
-	GenerateViewMatrix();
+	XMFLOAT3 xmf3CameraPosition;
+	XMStoreFloat3(&xmf3CameraPosition, XMVectorAdd(vPlayerPos, vOffset));
+
+	if (fabsf(offset.z) < 0.0001f) {
+		// 1인칭: 플레이어가 바라보는 방향(target_object->look)을 그대로 사용
+		SetLookTo(xmf3CameraPosition, target_object->look, target_object->up);
+		mode = ECameraMode::FIRST_PERSON;
+	}
+	else {
+		// 3인칭: 플레이어 위치를 바라봄
+		SetLookAt(xmf3CameraPosition, target_object->position, target_object->up);
+		mode = ECameraMode::THIRD_PERSON;
+	}
 }
 
 void CCamera::GenerateViewMatrix()
 {
-	view_matrix = Matrix4x4::LookAtLH(position, look_at, up);
+	if (mode == ECameraMode::FIRST_PERSON) {
+		// 위치, 바라보는 방향(look), 하늘 방향(up)을 이용
+		view_matrix = Matrix4x4::LookToLH(position, look, up);
+	}
+	else {
+		// 3인칭 LookAt 사용
+		view_matrix = Matrix4x4::LookAtLH(position, look_at, up);
+	}
 }
 
 void CCamera::Rotate(float pitch, float yaw, float roll)
@@ -142,31 +175,41 @@ void CCamera::Move(const XMFLOAT3 shift)
 
 void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 {
-	XMMATRIX rotate;
-	rotate.r[0] = XMVectorSet(target_object->right.x, target_object->right.y, target_object->right.z, 0.0f);
-	rotate.r[1] = XMVectorSet(target_object->up.x, target_object->up.y, target_object->up.z, 0.0f);
-	rotate.r[2] = XMVectorSet(target_object->look.x, target_object->look.y, target_object->look.z, 0.0f);
-	rotate.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	if (mode == ECameraMode::FIRST_PERSON) {
+		XMVECTOR newPosition = XMLoadFloat3(&target_object->position) + XMLoadFloat3(&offset);
+		XMStoreFloat3(&position, newPosition);
 
-	XMVECTOR xmvPosition = XMLoadFloat3(&position);
-	XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), rotate);
-	XMVECTOR xmvNewPosition = XMVectorAdd(XMLoadFloat3(&target_object->position), xmvOffset);
-	XMVECTOR xmvDirection = XMVectorSubtract(xmvNewPosition, xmvPosition);
-
-	float length = XMVectorGetX(XMVector3Length(xmvDirection));
-	xmvDirection = XMVector3Normalize(xmvDirection);
-
-	float timeLagScale = elapsedTime * 4.0f;
-	float distance = length * timeLagScale;
-	if (distance > length) distance = length;
-	if (length < 0.01f) distance = length;
-	if (distance > 0)
-	{
-		XMStoreFloat3(&position, XMVectorAdd(xmvPosition, XMVectorScale(xmvDirection, distance)));
-		//SetLookAt(target_object->position, target_object->up);
+		// target 그대로 따라감
+		look = target_object->look;
+		up = target_object->up;
+		right = target_object->right;
 	}
+	else {
+		XMMATRIX rotate;
+		rotate.r[0] = XMVectorSet(target_object->right.x, target_object->right.y, target_object->right.z, 0.0f);
+		rotate.r[1] = XMVectorSet(target_object->up.x, target_object->up.y, target_object->up.z, 0.0f);
+		rotate.r[2] = XMVectorSet(target_object->look.x, target_object->look.y, target_object->look.z, 0.0f);
+		rotate.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 
-	look_at = lookAt;
+		XMVECTOR xmvPosition = XMLoadFloat3(&position);
+		XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), rotate);
+		XMVECTOR xmvNewPosition = XMVectorAdd(XMLoadFloat3(&target_object->position), xmvOffset);
+		XMVECTOR xmvDirection = XMVectorSubtract(xmvNewPosition, xmvPosition);
+
+		float length = XMVectorGetX(XMVector3Length(xmvDirection));
+		xmvDirection = XMVector3Normalize(xmvDirection);
+
+		float timeLagScale = elapsedTime * 4.0f;
+		float distance = length * timeLagScale;
+		if (distance > length) distance = length;
+		if (length < 0.01f) distance = length;
+		if (distance > 0) {
+			XMStoreFloat3(&position, XMVectorAdd(xmvPosition, XMVectorScale(xmvDirection, distance)));
+			//SetLookAt(target_object->position, target_object->up);
+		}
+
+		look_at = lookAt;
+	}
 
 	GenerateViewMatrix();
 }
