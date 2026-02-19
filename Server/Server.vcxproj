@@ -156,6 +156,7 @@
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="GameFramework.cpp" />
+    <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="GJKAlgorithm.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="LobbyScene.cpp" />
+    <ClCompile Include="SkinnedData.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="User.cpp" />
@@ -193,6 +195,7 @@
     <ClInclude Include="DBManager.h" />
     <ClInclude Include="DirectXMathHelper.h" />
     <ClInclude Include="GameFramework.h" />
+    <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="GJKAlgorithm.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="macro.h" />
@@ -210,6 +213,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="LobbyScene.h" />
+    <ClInclude Include="SkinnedData.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="TitleScene.h" />
     <ClInclude Include="User.h" />

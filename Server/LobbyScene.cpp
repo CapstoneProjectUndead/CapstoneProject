@@ -6,6 +6,7 @@
 #include "Room.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
+#include "GeometryLoader.h"
 
 #undef min
 #undef max
@@ -27,32 +28,54 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Start()
 {
-	// ---------------------
-	// 거대한 바닥(Floor) 생성
-	// ---------------------
-	shared_ptr<CObject> floorObj = make_shared<CObject>();
+	// 1. 맵 파일 로드
+	std::string fileName{ "../Modeling/lobby_uv.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	// 바닥의 위치는 Y = 0
-	floorObj->SetPosition(0.0f, 0.0f, 0.0f);
+	if (!frameRoot) {
+		printf("Map Load Failed!\n");
+		return;
+	}
 
-	// 바닥용 바운딩 박스 (매우 넓고 얇은 판자)
-	BoundingBox floorBounds;
-	floorBounds.Center = XMFLOAT3(0.0f, -0.5f, 0.0f); // 살짝 아래로 내려서 발바닥이 Y=0에 닿게 함
-	floorBounds.Extents = XMFLOAT3(100.0f, 0.5f, 100.0f); // 가로세로 200m짜리 거대한 운동장
+	// 2. 맵 데이터를 순회하며 충돌체만 쏙쏙 뽑아내기
+	for (const auto& children : frameRoot->childrens) {
+		// 위치 정보가 아예 없는 빈 노드는 스킵
+		if (children->mesh.positions.empty() && children->collider.positions.empty())
+			continue;
 
-	// 박스 형태의 Shape 생성
-	std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(floorBounds);
+		auto obj = std::make_shared<CObject>();
 
-	// 콜라이더 생성 및 등록
-	auto floorCollider = std::make_shared<CColliderComponent>(shape, floorBounds);
-	floorCollider->owner = floorObj.get();
+		// 핵심: 이동/회전/크기(Matrix)를 그대로 서버 객체에 적용
+		obj->world_matrix = children->localMatrix;
 
-	// 바닥은 움직이지 않으므로 한 번만 월드 매트릭스와 콜라이더를 업데이트해 둠
-	floorObj->UpdateWorldMatrix();
-	floorCollider->Update(0.0f);
+		if (children->name == "Floor") {
 
-	// 물리 매니저에 바닥 등록
-	CPhysicsManager::GetInstance().SetCollider(floorCollider);
+			// [바닥 생성]
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			obj->SetComponent(boxCollider);
+			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
+			boxCollider->Update(0.0f);
+
+			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			static_objects.push_back(obj);
+		}
+		else if (children->name != "Wall") {
+
+			// [일반 오브젝트(테이블 등) 생성] - Convex (다각형) 충돌체
+			if (!children->collider.positions.empty()) {
+				std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+				collider->owner = obj.get();
+
+				collider->Update(0.0f);
+
+				CPhysicsManager::GetInstance().SetCollider(collider);
+				static_objects.push_back(obj);
+			}
+		}
+	}
 }
 
 void CLobbyScene::Update(float elapsedTime)

@@ -11,6 +11,7 @@ class CObject
     friend class CMovementComponent;
     friend class CColliderComponent;
     friend class CPhysicsManager;
+    friend class CLobbyScene;
 
 public:
 	CObject();
