@@ -102,6 +102,7 @@ using std::make_pair;
 #include <struct.h>
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
+#include <DirectXCollision.h>
 
 #include "ClientSession.h"
 #include "ClientPacketHandler.h"

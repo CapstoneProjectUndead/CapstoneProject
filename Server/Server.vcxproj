@@ -153,8 +153,10 @@
   <ItemGroup>
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="Collider.cpp" />
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="GameFramework.cpp" />
+    <ClCompile Include="GJKAlgorithm.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="pch.cpp">
@@ -162,6 +164,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PhysicsManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Room.cpp" />
@@ -180,13 +188,22 @@
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="Collider.h" />
+    <ClInclude Include="Component.h" />
     <ClInclude Include="DBManager.h" />
     <ClInclude Include="DirectXMathHelper.h" />
     <ClInclude Include="GameFramework.h" />
+    <ClInclude Include="GJKAlgorithm.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PhysicsManager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Player.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="RoomManager.h" />

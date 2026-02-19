@@ -37,6 +37,11 @@ public:
 	void ProcessInputQueue(const float elapsedTime);
 	void SimulateMove(const InputData& input, float deltaTime);
 
+	// 최대 속도 제한
+	void ClampSpeed();
+	void Slide(const XMFLOAT3& normal);
+	void Slide(const XMVECTOR& normal);
+
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
 

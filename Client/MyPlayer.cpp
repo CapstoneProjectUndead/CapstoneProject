@@ -211,7 +211,6 @@ void CMyPlayer::SimulateMove(const InputData& input, float dt)
 
 	// 움직임 시뮬레이션 (속도 계산 + 물리 이동)
 	auto move = GetComponent<CMovementComponent>();
-	auto collider = GetComponent<CColliderComponent>();
 
 	if (move) {
 		// A. 속도 계산 (Velocity 갱신)
@@ -234,7 +233,7 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	float errorDist = Vector3::Length(diff);
 
 	// 오차가 작으면? 서버랑 내 계산이 맞았다는 뜻
-	if (errorDist < 0.05f) { // 5cm 미만 오차는 합격
+	if (errorDist < 0.01f) { 
 		while (!client_history_deq.empty() && client_history_deq.front().seq_num <= last_seq)
 			client_history_deq.pop_front();
 		return;

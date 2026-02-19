@@ -285,3 +285,11 @@ namespace Matrix4x4
 		return(xmmtx4x4Result);
 	}
 }
+
+namespace Triangle
+{
+	inline bool Intersect(const XMFLOAT3& xmf3RayPosition, const XMFLOAT3& xmf3RayDirection, const XMFLOAT3& v0, const  XMFLOAT3& v1, const XMFLOAT3& v2, float& fHitDistance)
+	{
+		return(TriangleTests::Intersects(XMLoadFloat3(&xmf3RayPosition), XMLoadFloat3(&xmf3RayDirection), XMLoadFloat3(&v0), XMLoadFloat3(&v1), XMLoadFloat3(&v2), fHitDistance));
+	}
+}

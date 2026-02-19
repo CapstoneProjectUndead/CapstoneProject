@@ -110,9 +110,9 @@ void CMovementComponent::Update(const float deltaTime)
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
 {
-    // ------------------------------------------
-     // 1. 입력에 따른 가속 & 속도 계산
-     // ------------------------------------------
+    // ----------------------------
+    // 1. 입력에 따른 가속 & 속도 계산
+    // ----------------------------
     XMFLOAT3 accel{};
     if (dir.z > 0) accel = Vector3::Add(accel, owner->look);
     if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->look, -1));
@@ -126,16 +126,8 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
     // ------------------------------------------
     // 2. 중력 적용 (PhysicsManager에서 가져온 로직)
     // ------------------------------------------
-    auto collider = owner->GetComponent<CColliderComponent>();
-    if (collider) {
 
-        bool isGrounded = CPhysicsManager::GetInstance().CheckGround(collider);
-
-        if (!isGrounded)
-            owner->velocity.y += -9.8f * dt; // gravity 직접 적용 또는 매니저 변수 사용
-        else
-            owner->velocity.y = 0.0f;
-    }
+    CPhysicsManager::GetInstance().ApplyGravity(owner, dt);
 
     // ------------------------------------------
     // 3. 이동 시뮬레이션 (Raycast + Overlap)
@@ -147,6 +139,8 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
     // 움직임이 거의 없으면 종료 (불필요한 연산 방지)
     if (moveDist < 0.0001f) 
         return;
+
+    auto collider = owner->GetComponent<CColliderComponent>();
 
     if (collider) {
         GJKAlgorithm::CollisionInfo info{};
@@ -194,8 +188,8 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
         }
     }
 
-    // ------------------------------------------
+    // ----------------
     // 4. 최종 위치 적용 
-    // ------------------------------------------
+    // ----------------
     owner->position = Vector3::Add(owner->position, delta);
 }

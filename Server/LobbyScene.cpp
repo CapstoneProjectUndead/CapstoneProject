@@ -4,6 +4,8 @@
 #include "Player.h"
 #include "User.h"
 #include "Room.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 #undef min
 #undef max
@@ -25,7 +27,32 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Start()
 {
+	// ---------------------
+	// 거대한 바닥(Floor) 생성
+	// ---------------------
+	shared_ptr<CObject> floorObj = make_shared<CObject>();
 
+	// 바닥의 위치는 Y = 0
+	floorObj->SetPosition(0.0f, 0.0f, 0.0f);
+
+	// 바닥용 바운딩 박스 (매우 넓고 얇은 판자)
+	BoundingBox floorBounds;
+	floorBounds.Center = XMFLOAT3(0.0f, -0.5f, 0.0f); // 살짝 아래로 내려서 발바닥이 Y=0에 닿게 함
+	floorBounds.Extents = XMFLOAT3(100.0f, 0.5f, 100.0f); // 가로세로 200m짜리 거대한 운동장
+
+	// 박스 형태의 Shape 생성
+	std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(floorBounds);
+
+	// 콜라이더 생성 및 등록
+	auto floorCollider = std::make_shared<CColliderComponent>(shape, floorBounds);
+	floorCollider->owner = floorObj.get();
+
+	// 바닥은 움직이지 않으므로 한 번만 월드 매트릭스와 콜라이더를 업데이트해 둠
+	floorObj->UpdateWorldMatrix();
+	floorCollider->Update(0.0f);
+
+	// 물리 매니저에 바닥 등록
+	CPhysicsManager::GetInstance().SetCollider(floorCollider);
 }
 
 void CLobbyScene::Update(float elapsedTime)
