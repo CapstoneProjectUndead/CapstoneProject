@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
+#include "GeometryLoader.h"
 
 
 CObject::CObject()
@@ -35,31 +36,50 @@ shared_ptr<CPlayer> CObject::CreatePlayer()
 
 	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
-	pos.x = rand() % 5 - 2;
-	pos.y = 1;
-	pos.z = rand() % 5 - 2;
+	pos.x = rand() % 3 - 2;
+	pos.y = 0.1;
+	pos.z = rand() % 3 - 2;
 	player->SetPosition(pos);
 
 	// ---------------------------------------------------
 	// 서버 플레이어에게 충돌체(Collider) 달아주기
 	// ---------------------------------------------------
-	// 1. 바운딩 박스(혹은 구)의 크기 설정 (클라이언트 캐릭터 크기와 비슷하게 세팅)
-	BoundingBox playerBounds;
-	playerBounds.Center = XMFLOAT3(0.0f, 0.5f, 0.0f); // 발밑이 0이라면 센터는 0.5 높이
-	playerBounds.Extents = XMFLOAT3(0.5f, 0.5f, 0.5f); // 반지름 혹은 절반 크기
+	std::string fileName{ "../Modeling/undead_char.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	// 2. Shape 생성 (클라이언트가 CSphereShape를 쓰므로 동일하게)
-	// 인자: (반지름, 중심점)
-	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(0.5f, playerBounds.Center);
+	BoundingBox totalBounds;
+	bool firstBounds = true;
 
-	// 3. 콜라이더 컴포넌트 생성 및 장착
-	auto collider = std::make_shared<CColliderComponent>(shape, playerBounds);
-	collider->owner = player.get(); //
+	if (frameRoot) {
+		for (const auto& child : frameRoot->childrens) {
+			if (child->mesh.positions.empty()) continue;
+
+			if (firstBounds) {
+				totalBounds = child->mesh.bounds;
+				firstBounds = false;
+			}
+			else {
+				BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
+			}
+		}
+	}
+	else {
+		// 파일 로드 실패 시 디버그용 임시값
+		totalBounds.Center = XMFLOAT3(0.0f, 0.5f, 0.0f);
+		totalBounds.Extents = XMFLOAT3(0.5f, 0.5f, 0.5f);
+	}
+
+	// 클라이언트와 완벽하게 일치: 반지름은 totalBounds.Extents.x 사용
+	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
+	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+
+	collider->owner = player.get();
 	player->SetComponent(collider);
 
-	// 4. 물리 매니저에 등록
 	CPhysicsManager::GetInstance().SetCollider(collider);
-	// ---------------------------------------------------
+	
+	player->UpdateWorldMatrix();
+	collider->Update(0.0f);
 
 	return player;
 }

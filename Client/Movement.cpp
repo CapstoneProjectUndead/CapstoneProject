@@ -181,7 +181,7 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
             XMStoreFloat3(&owner->position, curPos + separation);
 
             // 미끄러짐
-            Slide(info.normal); // Slide 함수 인자가 XMFLOAT3면 변환 필요
+            Slide(n); // Slide 함수 인자가 XMFLOAT3면 변환 필요
 
             // delta 재계산
             delta = Vector3::ScalarProduct(owner->velocity, dt);

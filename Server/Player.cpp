@@ -187,11 +187,11 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     // ----------------
     position = Vector3::Add(position, delta);
 
-    // [중요] 콜라이더 위치 동기화
+    // 콜라이더 위치 동기화
     // 위치가 변했으니, 콜라이더 박스도 내 몸(position) 위치로 따라오게 해야 함.
     if (collider) {
         // world_matrix를 갱신하거나, 콜라이더에 직접 position을 넣어주는 방식
-        // 방법 A: 행렬 전체 갱신 (가장 확실)
+        // 행렬 전체 갱신
         UpdateWorldMatrix();
         collider->Update(deltaTime);
     }

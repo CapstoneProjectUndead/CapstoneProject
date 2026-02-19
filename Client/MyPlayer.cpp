@@ -233,7 +233,7 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	float errorDist = Vector3::Length(diff);
 
 	// 오차가 작으면? 서버랑 내 계산이 맞았다는 뜻
-	if (errorDist < 0.01f) { 
+	if (errorDist < 0.0001f) { 
 		while (!client_history_deq.empty() && client_history_deq.front().seq_num <= last_seq)
 			client_history_deq.pop_front();
 		return;

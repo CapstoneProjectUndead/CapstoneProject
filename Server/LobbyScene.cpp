@@ -81,6 +81,7 @@ void CLobbyScene::Start()
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 }
 
 // 특정 Scene을 테스트할 때, 사용할 함수. 
