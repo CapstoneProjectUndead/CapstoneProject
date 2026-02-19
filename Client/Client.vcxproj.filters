@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="헤더 파일\Shaders">
-      <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Object">
       <UniqueIdentifier>{0d938997-fdb2-460d-a02d-416afe3a6eab}</UniqueIdentifier>
     </Filter>
@@ -69,6 +66,9 @@
     </Filter>
     <Filter Include="Scene\CustomScene">
       <UniqueIdentifier>{4b07fed5-088a-4c45-a77a-cdc1605c2b4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Shaders">
+      <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -411,16 +411,16 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="TexShader.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Light.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SkinningShader.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

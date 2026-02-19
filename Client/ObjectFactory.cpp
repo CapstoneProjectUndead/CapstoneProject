@@ -37,6 +37,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		std::string name{ children->mesh.materials[0].albedoMap };
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
 		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		mat->material.albedo = children->mesh.materials[0].albedoColor;
+		mat->material.glossiness = children->mesh.materials[0].glossiness;
 		matComp->SetMaterial(mat);
 
 		// 3) MeshRendererComponent 생성
@@ -96,7 +98,6 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 		"eyes_ganga", "eyes_nyao", "eyes_toto",
 		"mouse_ganga", "mouse_nyao", "mouse_toto"
 	};
-
 	for (const std::string& name : resourceNames) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
 		matManager.LoadMeterial(name, tex);

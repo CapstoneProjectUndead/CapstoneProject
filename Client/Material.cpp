@@ -36,6 +36,14 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name
 	return mat;
 }
 
+std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name)
+{
+	auto it = materials.find(name);
+	if (it != materials.end()) return nullptr;
+
+	return it->second;
+}
+
 void CMaterialManager::LoadMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
 {
 	auto it = materials.find(name);

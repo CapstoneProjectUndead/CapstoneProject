@@ -30,6 +30,7 @@ class CMaterialManager
 public:
     // 없으면 생성
     std::shared_ptr<CMaterial> GetMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex);
+    std::shared_ptr<CMaterial> GetMeterial(const std::string& name);
     // 미리 Load
     void LoadMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex);
 private:
