@@ -17,21 +17,38 @@ CLobbyScene::~CLobbyScene()
 {
 }
 
-void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+void CLobbyScene::Initialize()
 {
+	// 렌더링할 때 필요한 쉐이더 객체 생성
 	{
 		// static shader
 		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-		shader->CreateShader(device);
+		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("static", std::move(shader));
 	}
 	{
 		// skinning
 		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-		shader->CreateShader(device);
+		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("skinning", std::move(shader));
 	}
+	
+	// 로비씬 관련 오브젝트들 생성
+	CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+	objects = factory->CreateLobby(staticHeapManager);
 
+	// 카메라 생성
+	camera = std::make_shared<CCamera>();
+	camera->SetTarget(my_player.get());
+	camera->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	// light 생성
+	light = std::make_unique<CLightManager>();
+	light->Initialize(GET_DEVICE, GET_CMD_LIST);
+}
+
+void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
 	// factory
 	CObjectFactory factory;
 	
@@ -41,10 +58,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		my_player = factory.CreateMyPlayer(skinningHeapManager);
 	}
 	
-	{
-		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-		objects = factory.CreateLobby(staticHeapManager);
-	}
 	// test 용 삭제X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
@@ -77,9 +90,8 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	//CPhysicsManager::GetInstance().Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 
-	// CPhysicsManager에서 이동이 일어나기 때문에 여기서 서버에 좌표패킷을 보낸다.
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	}
@@ -102,7 +114,6 @@ bool CLobbyScene::IsUIInputEnabled()
 	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
 	assert(scene);
 
-	// 타이틀 씬이면 무조건 입력 허용
 	if (scene->GetSceneType() == SCENE_TYPE::LOBBY)
 		state = false;
 		
@@ -113,12 +124,13 @@ void CLobbyScene::Enter()
 {
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
-	if (my_player)
+	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+		camera->SetTarget(my_player.get());
+	}
 }
 
 void CLobbyScene::Exit()
 {
-	objects.clear();
-	shaders.clear();
+	
 }

@@ -63,7 +63,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 				obj->SetComponent(boxCollider);
 				CPhysicsManager::GetInstance().SetCollider(boxCollider);
 			}
-			else if(!children->collider.positions.empty()){
+			else if (!children->collider.positions.empty()) {
 				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 				obj->SetComponent(collider);

@@ -110,28 +110,86 @@ void CMovementComponent::Update(const float deltaTime)
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
 {
-    // 1. 입력 → 가속도
+    // ----------------------------
+    // 1. 입력에 따른 가속 & 속도 계산
+    // ----------------------------
     XMFLOAT3 accel{};
     if (dir.z > 0) accel = Vector3::Add(accel, owner->look);
     if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->look, -1));
     if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->right, -1));
     if (dir.x > 0) accel = Vector3::Add(accel, owner->right);
 
-    // 2. 가속 적용 (Velocity 갱신)
+    // 속도 갱신
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(accel, speed * dt));
+    ClampSpeed(); // 최대 속도 제한
 
-    // 3. 최대 속도 제한
-    float lenXZ = sqrtf(owner->velocity.x * owner->velocity.x + owner->velocity.z * owner->velocity.z);
-    if (lenXZ > max_speed) {
-        float ratio = max_speed / lenXZ;
-        owner->velocity.x *= ratio;
-        owner->velocity.z *= ratio;
+    // ------------------------------------------
+    // 2. 중력 적용 (PhysicsManager에서 가져온 로직)
+    // ------------------------------------------
+
+    CPhysicsManager::GetInstance().ApplyGravity(owner, dt);
+
+    // ------------------------------------------
+    // 3. 이동 시뮬레이션 (Raycast + Overlap)
+    // ------------------------------------------
+    // 예상 이동량
+    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, dt);
+    float moveDist = Vector3::Length(delta);
+
+    // 움직임이 거의 없으면 종료 (불필요한 연산 방지)
+    if (moveDist < 0.0001f) 
+        return;
+
+    auto collider = owner->GetComponent<CColliderComponent>();
+
+    if (collider) {
+        GJKAlgorithm::CollisionInfo info{};
+
+        // 지형 충돌 (Raycast) - 벽/경사로 체크
+        XMFLOAT3 moveDir = Vector3::Normalize(delta);
+        if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
+
+            // 충돌 깊이만큼 밀어내기 (Separation)
+            XMVECTOR n = info.normal;
+            float d = info.depth;
+            XMVECTOR separation = n * d;
+
+            // 위치를 즉시 보정해야 다음 Overlap 계산이 정확해짐
+            XMVECTOR curPos = XMLoadFloat3(&owner->position);
+            XMStoreFloat3(&owner->position, curPos + separation);
+
+            // 미끄러짐 처리 (속도 변경)
+            Slide(info.normal);
+
+            // 변경된 속도로 delta 재계산 (남은 시간만큼만 이동하거나 해야 하지만, 보통 전체 dt로 다시 구함)
+            delta = Vector3::ScalarProduct(owner->velocity, dt);
+        }
+
+        // 오브젝트 충돌 (Overlap) - 테이블, 다른 플레이어 등
+        if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
+            XMVECTOR n = info.normal;
+            float d = info.depth;
+
+            // 바닥 아래로 밀리는 현상 방지 (Update에 있던 로직)
+            if (XMVectorGetY(n) < 0) {
+                n = -n;
+            }
+
+            // 밀어내기
+            XMVECTOR separation = n * d;
+            XMVECTOR curPos = XMLoadFloat3(&owner->position);
+            XMStoreFloat3(&owner->position, curPos + separation);
+
+            // 미끄러짐
+            Slide(n); // Slide 함수 인자가 XMFLOAT3면 변환 필요
+
+            // delta 재계산
+            delta = Vector3::ScalarProduct(owner->velocity, dt);
+        }
     }
 
-    // 4. 마찰 (Friction) - 속도를 줄이는 건 여기서 해도 됨
-    float speedLen = Vector3::Length(owner->velocity);
-    float decel = owner->friction * dt; // owner->friction 확인 필요
-    if (decel > speedLen) decel = speedLen;
-
-    owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(owner->velocity, -decel, true));
+    // ----------------
+    // 4. 최종 위치 적용 
+    // ----------------
+    owner->position = Vector3::Add(owner->position, delta);
 }

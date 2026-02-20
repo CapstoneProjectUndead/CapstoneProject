@@ -1,15 +1,16 @@
-#include "stdafx.h"
+#include "pch.h"
+// Server쪽 PhysicsManager
 #include "PhysicsManager.h"
 #include "Collider.h"
 #include "Object.h"
-#include "Movement.h"
+
 
 void CPhysicsManager::Update(float deltaTime)
 {
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end() );
 }
 
-void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
+void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
 {
     BoundingBox expanded{ checkCol->world_aabb };
 
@@ -23,7 +24,7 @@ void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& d
     }
 }
 
-bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo)
+bool CPhysicsManager::Overlap(CObject* obj, XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
     if (!col) return false;
@@ -71,9 +72,15 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
                         closestDist = hitDist;
 
                         // 법선 계산
-                        XMFLOAT3 edge1 = Vector3::Subtract(tri.v[1], tri.v[0]);
-                        XMFLOAT3 edge2 = Vector3::Subtract(tri.v[2], tri.v[0]);
-                        outInfo.normal = XMLoadFloat3(&Vector3::CrossProduct(edge1, edge2));
+                        XMFLOAT3 tmp = tri.v[0];
+                        XMFLOAT3 tmp1 = tri.v[1];
+                        XMFLOAT3 tmp2 = tri.v[2];
+
+                        XMFLOAT3 edge1 = Vector3::Subtract(tmp1, tmp);
+                        XMFLOAT3 edge2 = Vector3::Subtract(tmp2, tmp);
+
+                        XMFLOAT3 result = Vector3::CrossProduct(edge1, edge2);
+                        outInfo.normal = XMLoadFloat3(&result);
 
                         outInfo.depth = maxDistance - hitDist;
                         bHit = true;
@@ -134,7 +141,8 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 
 XMFLOAT3 CPhysicsManager::ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b)
 {
-    return Vector3::Normalize(ComputeCollisionDistance(a->world_aabb, b->world_aabb));
+    XMFLOAT3 result = ComputeCollisionDistance(a->world_aabb, b->world_aabb);
+    return Vector3::Normalize(result);
 }
 
 float CPhysicsManager::ComputePenetration(const BoundingBox& a, const BoundingBox& b, const XMFLOAT3& normal)
@@ -184,8 +192,10 @@ bool CPhysicsManager::ComputeCollisionTime(CColliderComponent* colA, CColliderCo
     };
 
     // t1(A-B), t2(B-A) 계산(닿는 순간)
-    XMFLOAT3 t1 = Vector3::Multiply(Vector3::Subtract(minB, maxA), invDelta);
-    XMFLOAT3 t2 = Vector3::Multiply(Vector3::Subtract(maxB, minA), invDelta);
+    XMFLOAT3 tmp = Vector3::Subtract(minB, maxA);
+    XMFLOAT3 tmp2 = Vector3::Subtract(maxB, minA);
+    XMFLOAT3 t1 = Vector3::Multiply(tmp, invDelta);
+    XMFLOAT3 t2 = Vector3::Multiply(tmp2, invDelta);
 
     XMVECTOR vt1 = XMLoadFloat3(&t1);
     XMVECTOR vt2 = XMLoadFloat3(&t2);

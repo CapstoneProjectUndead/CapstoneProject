@@ -10,6 +10,33 @@ inline bool IsEqual(float fA, float fB) { return(::IsZero(fA - fB)); }
 inline float InverseSqrt(float fValue) { return 1.0f / sqrtf(fValue); }
 inline void Swap(float* pfS, float* pfT) { float fTemp = *pfS; *pfS = *pfT; *pfT = fTemp; }
 
+namespace Math
+{
+	template<typename T>
+	inline T Min(const T& a, const T& b)
+	{
+		return a < b ? a : b;
+	}
+
+	template<typename T>
+	inline T Max(const T& a, const T& b)
+	{
+		return a > b ? a : b;
+	}
+
+	template<typename T>
+	inline T Lerp(const T& a, const T& b, float t)
+	{
+		return a + (b - a) * t;
+	}
+
+	template<typename T>
+	inline T Clamp(const T& x, const T& low, const T& high)
+	{
+		return x < low ? low : (x > high ? high : x);
+	}
+}
+
 namespace Vector3
 {
 	inline XMFLOAT3 XMVectorToFloat3(XMVECTOR& xmvVector)
@@ -283,5 +310,13 @@ namespace Matrix4x4
 		XMFLOAT4X4 xmmtx4x4Result;
 		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixLookToLH(XMLoadFloat3(&xmf3EyePosition), XMLoadFloat3(&xmf3LookTo), XMLoadFloat3(&xmf3UpDirection)));
 		return(xmmtx4x4Result);
+	}
+}
+
+namespace Triangle
+{
+	inline bool Intersect(const XMFLOAT3& xmf3RayPosition, const XMFLOAT3& xmf3RayDirection, const XMFLOAT3& v0, const  XMFLOAT3& v1, const XMFLOAT3& v2, float& fHitDistance)
+	{
+		return(TriangleTests::Intersects(XMLoadFloat3(&xmf3RayPosition), XMLoadFloat3(&xmf3RayDirection), XMLoadFloat3(&v0), XMLoadFloat3(&v1), XMLoadFloat3(&v2), fHitDistance));
 	}
 }

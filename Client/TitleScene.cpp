@@ -22,6 +22,11 @@ CTitleScene::~CTitleScene()
 {
 }
 
+void CTitleScene::Initialize()
+{
+
+}
+
 void CTitleScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 

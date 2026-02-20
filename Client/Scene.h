@@ -20,6 +20,7 @@ public:
 
 	void AnimateObjects(float);
 
+	virtual void Initialize();
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
@@ -61,7 +62,7 @@ public:
 
 	auto&									GetShaders() { return shaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
-	std::unordered_map<uint64, size_t>&   GetIDIndex() { return id_To_Index; }
+	std::unordered_map<uint64, size_t>&     GetIDIndex() { return id_To_Index; }
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 

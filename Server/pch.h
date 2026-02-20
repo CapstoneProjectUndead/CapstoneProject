@@ -33,6 +33,7 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
+#include <fstream>
 #include <array>
 #include <vector>
 #include <list>
@@ -102,6 +103,7 @@ using std::make_pair;
 #include <struct.h>
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
+#include <DirectXCollision.h>
 
 #include "ClientSession.h"
 #include "ClientPacketHandler.h"
