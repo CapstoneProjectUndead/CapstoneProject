@@ -5,6 +5,11 @@
 #include "Movement.h"
 #include "Player.h"
 
+CAnimatorComponent::CAnimatorComponent()
+	: head_position{&skinned.head_position }
+{
+}
+
 // animator
 void CAnimatorComponent::Initialize(const std::string& charName, const std::string& AniName)
 {

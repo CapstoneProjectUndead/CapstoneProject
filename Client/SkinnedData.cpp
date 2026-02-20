@@ -128,7 +128,7 @@ void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<
 	animations = otherAnimations;
 }
 
-void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch) const
+void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch)
 {
 	UINT numBones = bone_offsets.size();
 
@@ -192,4 +192,9 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 
 		XMStoreFloat4x4(&finalTransforms[i], XMMatrixTranspose(inversefinalTransform));
 	}
+
+	int headIdx = 5;
+	XMMATRIX headToRoot = XMLoadFloat4x4(&toRootTransforms[headIdx]); 
+	XMMATRIX localEyeMatrix = headToRoot * rotate;
+	XMStoreFloat3(&head_position, localEyeMatrix.r[3]);
 }

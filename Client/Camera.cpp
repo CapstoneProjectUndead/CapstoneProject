@@ -21,7 +21,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
 	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
-	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, -1.0f));
+	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, 0.0f));
 
 	CreateConstantBuffers(device, commandList);
 }
@@ -175,45 +175,42 @@ void CCamera::Move(const XMFLOAT3 shift)
 
 void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 {
-	float targetPitch = XMConvertToRadians(target_object->GetPitch());
-	float targetYaw = XMConvertToRadians(target_object->GetYaw());
+	// 캐릭터의 머리 위치를 기준
+	XMVECTOR localEye = XMLoadFloat3(&target_object->GetHeadPosition());
+	XMMATRIX world = XMLoadFloat4x4(&target_object->world_matrix);
+	XMVECTOR worldHeadPos = XMVector3TransformCoord(localEye, world);
+
+	// target 행렬 적용
+	XMMATRIX baseRotate;
+	baseRotate.r[0] = XMLoadFloat3(&target_object->right);
+	baseRotate.r[1] = XMLoadFloat3(&target_object->up);
+	baseRotate.r[2] = XMLoadFloat3(&target_object->look);
+	baseRotate.r[3] = XMVectorSet(0, 0, 0, 1);
+
+	// 마우스 Pitch 회전 적용
+	float pitch = XMConvertToRadians(target_object->GetPitch());
+	XMMATRIX pitchRotate = XMMatrixRotationAxis(XMLoadFloat3(&target_object->right), pitch);
+	XMMATRIX finalRotate = baseRotate * pitchRotate;
 
 	if (mode == ECameraMode::FIRST_PERSON) {
-		XMVECTOR newPosition = XMLoadFloat3(&target_object->position) + XMLoadFloat3(&offset);
-		XMStoreFloat3(&position, newPosition);
+		// 위치를 head로 고정
+		XMStoreFloat3(&position, worldHeadPos);
 
-		XMMATRIX bowRotationMatrix = XMMatrixRotationRollPitchYaw(targetPitch, targetYaw, 0.0f);
-		XMStoreFloat3(&look, bowRotationMatrix.r[2]);
-		XMStoreFloat3(&up, bowRotationMatrix.r[1]);
-		XMStoreFloat3(&right, bowRotationMatrix.r[0]);
+		// 시선 방향 업데이트
+		XMStoreFloat3(&look, finalRotate.r[2]);
+		XMStoreFloat3(&up, finalRotate.r[1]);
+		XMStoreFloat3(&right, finalRotate.r[0]);
 	}
 	else {
-		XMMATRIX baseRotate;
-		baseRotate.r[0] = XMLoadFloat3(&target_object->right);
-		baseRotate.r[1] = XMLoadFloat3(&target_object->up);
-		baseRotate.r[2] = XMLoadFloat3(&target_object->look);
-		baseRotate.r[3] = XMVectorSet(0, 0, 0, 1);
-		XMMATRIX pitchRotate = XMMatrixRotationAxis(XMLoadFloat3(&target_object->right), targetPitch);
-		XMMATRIX finalRotate = baseRotate * pitchRotate;
-
-		XMVECTOR xmvPosition = XMLoadFloat3(&position);
+		// 3인칭
+		// 머리 위치를 기준으로 오프셋만큼 뒤로 보냄
 		XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), finalRotate);
-		XMVECTOR xmvNewPosition = XMVectorAdd(XMLoadFloat3(&target_object->position), xmvOffset);
-		XMVECTOR xmvDirection = XMVectorSubtract(xmvNewPosition, xmvPosition);
+		XMStoreFloat3(&position, worldHeadPos + xmvOffset);
 
-		float length = XMVectorGetX(XMVector3Length(xmvDirection));
-		xmvDirection = XMVector3Normalize(xmvDirection);
-
-		float timeLagScale = elapsedTime * 4.0f;
-		float distance = length * timeLagScale;
-		if (distance > length) distance = length;
-		if (length < 0.01f) distance = length;
-		if (distance > 0) {
-			XMStoreFloat3(&position, XMVectorAdd(xmvPosition, XMVectorScale(xmvDirection, distance)));
-			//SetLookAt(target_object->position, target_object->up);
-		}
-
-		look_at = lookAt;
+		// 시선 처리 (눈 위치를 바라봄)
+		XMFLOAT3 p;
+		XMStoreFloat3(&p, worldHeadPos);
+		SetLookAt(position, p, target_object->up);
 	}
 
 	GenerateViewMatrix();

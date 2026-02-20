@@ -41,6 +41,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* );
 
 	//
+	virtual XMFLOAT3 GetHeadPosition() const { return position; };
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }

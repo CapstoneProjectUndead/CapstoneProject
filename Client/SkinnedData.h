@@ -43,8 +43,11 @@ public:
 
 	void Set(const std::vector<int>& boneHierarchy, const std::vector<DirectX::XMFLOAT4X4>& boneOffsets, const std::unordered_map<std::string, AnimationClip>& animations);
 
-	void GetFinalTransforms(const std::string& clipName, float timePos, std::vector<DirectX::XMFLOAT4X4>& finalTransforms, const float pitch) const;
+	void GetFinalTransforms(const std::string& clipName, float timePos, std::vector<DirectX::XMFLOAT4X4>& finalTransforms, const float pitch);
 	AnimationClip& GetAnimation(const std::string& name) { return animations.at(name); }
+public:
+	// cached
+	XMFLOAT3 head_position{};
 private:
 	// 뼈대들의 부모 색인
 	std::vector<int> bone_hierarchy;

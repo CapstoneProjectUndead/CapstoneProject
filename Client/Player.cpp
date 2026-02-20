@@ -4,6 +4,7 @@
 #include "Movement.h"
 #include "NetworkClockManager.h"
 #include "JitterMeasurer.h"
+#include "Animator.h"
 
 #undef min
 #undef max
@@ -42,6 +43,14 @@ void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
 
     if (interpolation_deq.size() > RENDER_BUFFER_MAX_SIZE)
         interpolation_deq.pop_front();
+}
+
+XMFLOAT3 CPlayer::GetHeadPosition() const
+{
+    auto* animator = GetComponent<CAnimatorComponent>();
+    if (!animator) return position;
+
+    return animator->GetHeadPosition();
 }
 
 void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)

@@ -31,7 +31,7 @@ public:
 
 	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
 	void SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
-
+	XMFLOAT3 GetHeadPosition() const override;
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);

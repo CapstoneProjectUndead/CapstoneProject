@@ -5,7 +5,7 @@
 class CAnimatorComponent : public CComponent
 {
 public:
-	CAnimatorComponent() = default;
+	CAnimatorComponent();
 	void Initialize(const std::string& charName, const std::string& AniName);
 
 	void Play(const std::string& name);
@@ -16,8 +16,10 @@ public:
 
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	XMFLOAT3 GetHeadPosition() const { return *head_position; }
 private:
 	CSkinnedData skinned;
+	const XMFLOAT3*const head_position;
 	SkinnedDataCB* mapped{};
 	std::string current_animation{ "Ganga_idle" };
 	float current_time{};
