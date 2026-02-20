@@ -56,7 +56,9 @@ public:
 	//=================================
 	// 회전 함수 (테스트)
 	void SetYaw(float _yaw);
+	float GetYaw() const { return yaw; }
 	void SetPitch(float _pitch) { pitch = _pitch; }
+	float GetPitch() const { return pitch; }
 	void SetYawPitch(float yawDeg, float pitchDeg);
 	void UpdateWorldMatrix();
 	void UpdateLookRightFromYaw();

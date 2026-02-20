@@ -69,7 +69,7 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	// 본 행렬 계산
 	final_transforms.resize(skinned.BoneCount());
-	skinned.GetFinalTransforms(current_animation, current_time, final_transforms);
+	skinned.GetFinalTransforms(current_animation, current_time, final_transforms, owner->pitch);
 }
 
 void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)

@@ -21,7 +21,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
 	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
-	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, 0.0f));
+	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, -1.0f));
 
 	CreateConstantBuffers(device, commandList);
 }
@@ -175,24 +175,29 @@ void CCamera::Move(const XMFLOAT3 shift)
 
 void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 {
+	float targetPitch = XMConvertToRadians(target_object->GetPitch());
+	float targetYaw = XMConvertToRadians(target_object->GetYaw());
+
 	if (mode == ECameraMode::FIRST_PERSON) {
 		XMVECTOR newPosition = XMLoadFloat3(&target_object->position) + XMLoadFloat3(&offset);
 		XMStoreFloat3(&position, newPosition);
 
-		// target 그대로 따라감
-		look = target_object->look;
-		up = target_object->up;
-		right = target_object->right;
+		XMMATRIX bowRotationMatrix = XMMatrixRotationRollPitchYaw(targetPitch, targetYaw, 0.0f);
+		XMStoreFloat3(&look, bowRotationMatrix.r[2]);
+		XMStoreFloat3(&up, bowRotationMatrix.r[1]);
+		XMStoreFloat3(&right, bowRotationMatrix.r[0]);
 	}
 	else {
-		XMMATRIX rotate;
-		rotate.r[0] = XMVectorSet(target_object->right.x, target_object->right.y, target_object->right.z, 0.0f);
-		rotate.r[1] = XMVectorSet(target_object->up.x, target_object->up.y, target_object->up.z, 0.0f);
-		rotate.r[2] = XMVectorSet(target_object->look.x, target_object->look.y, target_object->look.z, 0.0f);
-		rotate.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+		XMMATRIX baseRotate;
+		baseRotate.r[0] = XMLoadFloat3(&target_object->right);
+		baseRotate.r[1] = XMLoadFloat3(&target_object->up);
+		baseRotate.r[2] = XMLoadFloat3(&target_object->look);
+		baseRotate.r[3] = XMVectorSet(0, 0, 0, 1);
+		XMMATRIX pitchRotate = XMMatrixRotationAxis(XMLoadFloat3(&target_object->right), targetPitch);
+		XMMATRIX finalRotate = baseRotate * pitchRotate;
 
 		XMVECTOR xmvPosition = XMLoadFloat3(&position);
-		XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), rotate);
+		XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), finalRotate);
 		XMVECTOR xmvNewPosition = XMVectorAdd(XMLoadFloat3(&target_object->position), xmvOffset);
 		XMVECTOR xmvDirection = XMVectorSubtract(xmvNewPosition, xmvPosition);
 

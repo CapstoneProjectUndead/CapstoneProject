@@ -78,7 +78,7 @@ float AnimationClip::GetClipStartTime()const
 	float t = FLT_MAX;
 	for (UINT i = 0; i < bone_animations.size(); ++i)
 	{
-		t = Math::Min(t, bone_animations[i].GetStartTime());
+		t = min(t, bone_animations[i].GetStartTime());
 	}
 
 	return t;
@@ -90,7 +90,7 @@ float AnimationClip::GetClipEndTime()const
 	float t = 0.0f;
 	for (UINT i = 0; i < bone_animations.size(); ++i)
 	{
-		t = Math::Max(t, bone_animations[i].GetEndTime());
+		t = max(t, bone_animations[i].GetEndTime());
 	}
 
 	return t;
@@ -128,7 +128,7 @@ void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<
 	animations = otherAnimations;
 }
 
-void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms)const
+void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch) const
 {
 	UINT numBones = bone_offsets.size();
 
@@ -137,6 +137,27 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	// Interpolate all the bones of this clip at the given time instance.
 	auto clip = animations.find(clipName);
 	clip->second.Interpolate(timePos, toParentTransforms);
+
+	// 고개 움직임 적용
+	int spineIdx = 2;  // 허리
+	int chestIdx = 3;  // 가슴
+	int neckIdx = 4;  // 목
+
+	float pitchRad = XMConvertToRadians(std::clamp(pitch, -30.0f, 70.0f));
+	float weights[] = { 0.2f, 0.3f, 0.5f };	// 합 1.0
+	int targetIndices[] = { spineIdx, chestIdx, neckIdx };
+
+	for (int i = 0; i < 3; ++i) {
+		int idx = targetIndices[i];
+
+		XMMATRIX localM = XMLoadFloat4x4(&toParentTransforms[idx]);
+
+		// 가중치 적용
+		XMMATRIX rotation = XMMatrixRotationZ(pitchRad * weights[i]);
+
+		// 기존 애니메이션 행렬에 마우스 회전 결합
+		XMStoreFloat4x4(&toParentTransforms[idx], XMMatrixMultiply(rotation, localM));
+	}
 
 	//
 	// Traverse the hierarchy and transform all the bones to the root space.
@@ -149,8 +170,7 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	toRootTransforms[0] = toParentTransforms[0];
 
 	// Now find the toRootTransform of the children.
-	for (UINT i = 1; i < numBones; ++i)
-	{
+	for (UINT i = 1; i < numBones; ++i) {
 		XMMATRIX toParent = XMLoadFloat4x4(&toParentTransforms[i]);
 
 		int parentIndex = bone_hierarchy[i];
@@ -162,11 +182,14 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	}
 
 	// Premultiply by the bone offset transform to get the final transform.
-	for (UINT i = 0; i < numBones; ++i)
-	{
+	XMMATRIX rotate = XMMatrixRotationY(XM_PI);	// 180도 회전
+	for (UINT i = 0; i < numBones; ++i) {
 		XMMATRIX offset = XMLoadFloat4x4(&bone_offsets[i]);
 		XMMATRIX toRoot = XMLoadFloat4x4(&toRootTransforms[i]);
+
 		XMMATRIX finalTransform = XMMatrixMultiply(offset, toRoot);
-		XMStoreFloat4x4(&finalTransforms[i], XMMatrixTranspose(finalTransform));
+		XMMATRIX inversefinalTransform = XMMatrixMultiply(finalTransform, rotate);
+
+		XMStoreFloat4x4(&finalTransforms[i], XMMatrixTranspose(inversefinalTransform));
 	}
 }

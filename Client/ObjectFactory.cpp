@@ -153,8 +153,8 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 
 	// Animator
 	auto animator = std::make_shared<CAnimatorComponent>();
+
 	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
-	animator->Play("Ganga_walk");
 	character->SetComponent(animator);
 	character->SetShdaer("skinning");
 
