@@ -191,7 +191,9 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& 
 
 	// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
 	if (!HasPlayers()) {
-		CRoomManager::GetInstance().DeActiveRoom(room_id);
-		CRoomManager::GetInstance().DestroyRoomLock(room_id);
+		if (auto r = room.lock()) {
+			CRoomManager::GetInstance().DeActiveRoom(r);
+		}
+		//CRoomManager::GetInstance().DestroyRoomLock(room_id);
 	}
 }

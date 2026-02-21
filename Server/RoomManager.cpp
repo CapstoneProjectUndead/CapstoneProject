@@ -20,37 +20,21 @@ void CRoomManager::Initialize()
 
 void CRoomManager::Update(const float elapsedTime)
 {
-	// 락은 '방 목록'을 복사하거나 순회할 때만 짧게 건다
-	vector<shared_ptr<CRoom>> activeRooms;
+	CheckEmptyRoom();
+
+	lock_guard<mutex> lg(rooms_lock);
+	for (auto& [id, room] : rooms)
 	{
-		lock_guard<mutex> lg(rooms_lock);
-		for (auto& [id, room] : rooms)
-			activeRooms.push_back(room);
-	}
-	
-	// 각 방의 업데이트를 스레드 풀에 던진다
-	for (auto& room : activeRooms)
-	{
-		GThreadManager->PushTask([room, elapsedTime]() {
-			room->Update(elapsedTime);
-			});
+		room->Update(elapsedTime);
 	}
 }
 
 void CRoomManager::SendResults()
 {
-	vector<shared_ptr<CRoom>> activeRooms;
+	lock_guard<mutex> lg(rooms_lock);
+	for (auto& [id, room] : rooms)
 	{
-		lock_guard<mutex> lg(rooms_lock);
-		for (auto& [id, room] : rooms)
-			activeRooms.push_back(room);
-	}
-	
-	for (auto& room : activeRooms)
-	{
-		GThreadManager->PushTask([room]() {
-			room->SendResults();
-			});
+		room->SendResults();
 	}
 }
 
@@ -71,13 +55,12 @@ void CRoomManager::CheckEmptyRoom()
 
 void CRoomManager::DeActiveRoom(uint32 roomId)
 {
-	lock_guard<mutex> lg(rooms_lock);
+	//lock_guard<mutex> lg(rooms_lock);
 	rooms[roomId]->SetActive(false);
 }
 
 void CRoomManager::DeActiveRoom(shared_ptr<CRoom> room)
 {
-	lock_guard<mutex> lg(rooms_lock);
 	room->SetActive(false);
 }
 

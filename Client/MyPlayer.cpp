@@ -220,40 +220,35 @@ void CMyPlayer::SimulateMove(const InputData& input, float dt)
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
-	// 1. 장부(History)에서 서버가 말한 그 당시의 내 기록을 찾습니다.
-	auto it = std::find_if(client_history_deq.begin(), client_history_deq.end(),
-		[last_seq](const ClientFrameHistory& h) { return h.seq_num == last_seq; });
-
-	// 기록이 없으면 너무 옛날 거니 무시
-	if (it == client_history_deq.end()) 
-		return;
-
-	// 현재 내 위치(position)가 아니라, "그 패킷을 보낼 때 내가 예측했던 위치"와 비교합니다.
-	XMFLOAT3 diff = Vector3::Subtract(serverPos, it->predicted_pos);
+	// 1. 서버 좌표와 현재 내 좌표의 거리 계산
+	XMFLOAT3 diff = Vector3::Subtract(serverPos, position);
 	float errorDist = Vector3::Length(diff);
 
-	// 오차가 작으면? 서버랑 내 계산이 맞았다는 뜻
-	if (errorDist < 0.0001f) { 
-		while (!client_history_deq.empty() && client_history_deq.front().seq_num <= last_seq)
-			client_history_deq.pop_front();
+	// 2. 보정 정책
+	if (errorDist < 0.01f) {
+		position = Vector3::Add(position, diff, 0.1f);
+		return;
+	}
+	else if (errorDist < 0.2f) {
+		position = Vector3::Add(position, diff, 0.5f);
 		return;
 	}
 
-	// 오차가 크면? 서버가 진실. 이때만 "재시뮬레이션"을 돌린다
-	// 일단 서버가 준 "과거의 진실"로 위치를 강제 이동
+	// 3. 서버 좌표로 스냅
 	SetPosition(serverPos);
 
-	// 사용된 기록은 삭제
-	while (!client_history_deq.empty() && client_history_deq.front().seq_num <= last_seq) {
+	// 4. 서버가 확인한 입력까지 제거 
+	while (!client_history_deq.empty() &&
+		client_history_deq.front().seq_num <= last_seq) {
 		client_history_deq.pop_front();
 	}
 
-	// 서버 위치(과거)에서부터 아직 확인 안 된 내 미래 입력들을 다시 다 적용
+	// 5. 남은 미래 입력 재시뮬
 	for (auto& frame : client_history_deq) {
 
 		SimulateMove(frame.input, frame.duration);
 
-		// 다시 계산했으니 내 장부의 예측 좌표도 갱신
+		// 장부 위치 갱신
 		frame.predicted_pos = position;
 	}
 }
