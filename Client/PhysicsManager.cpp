@@ -86,44 +86,34 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
     return bHit;
 }
 
-bool CPhysicsManager::CheckGround(CColliderComponent* col)
-{
-    const auto& aabb = col->world_aabb;
-
-    for (auto& other : colliders) {
-        if (other.get() == col) continue;
-
-        const auto& b = other->world_aabb;
-
-        // 바닥 판정: AABB bottom이 다른 AABB top보다 아래로 내려갔는가?
-        if (aabb.Center.y - aabb.Extents.y <= b.Center.y + b.Extents.y + 0.05f) {
-            // XZ가 겹쳐야 진짜 바닥
-            bool overlapX = fabs(aabb.Center.x - b.Center.x) <= (aabb.Extents.x + b.Extents.x);
-            bool overlapZ = fabs(aabb.Center.z - b.Center.z) <= (aabb.Extents.z + b.Extents.z);
-
-            if (overlapX && overlapZ)
-                return true;
-        }
-    }
-
-    return false;
-}
-
 void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 {
-    // 1) 지면 체크
     auto* col = obj->GetComponent<CColliderComponent>();
-    obj->is_grounded = col ? CheckGround(col) : false;
+    if (!col) return;
 
-    // 2) 중력 적용
-    obj->velocity.y += gravity * dt;
+    // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
+    XMFLOAT3 groundCheckDelta = { 0, -0.05f, 0 };
+    GJKAlgorithm::CollisionInfo groundInfo{};
+    Overlap(obj, groundCheckDelta, groundInfo);
 
-    // 감속(마찰)
-    float speedLen = Vector3::Length(obj->velocity);
-    float decel = obj->friction * dt;
-    if (decel > speedLen) decel = speedLen;
+    obj->is_grounded = groundInfo.collided;
 
-    obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
+    if (obj->is_grounded) {
+        // 지면 마찰력 적용
+        if (obj->velocity.y < 0) obj->velocity.y = 0;
+
+        float speedLen = Vector3::Length(obj->velocity);
+        float decel = obj->friction * dt;
+        if (decel > speedLen) decel = speedLen;
+
+        if (speedLen > 0) {
+            obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel / speedLen));
+        }
+    }
+    else {
+        // 공중일 때: 중력 가속
+        obj->velocity.y += gravity * dt;
+    }
 }
 
 XMFLOAT3 CPhysicsManager::ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b)
@@ -213,7 +203,7 @@ void CPhysicsManager::SimulateSingleObject(CColliderComponent* col, float dt)
      // 1. 중력 및 지면 판정 (ApplyGravity 로직 가져옴)
      // ---------------------------------------------------
      // 재시뮬레이션 때도 중력은 적용받아야 함
-    bool isGrounded = CheckGround(col);
+    bool isGrounded = true;
 
     if (!isGrounded)
         owner->velocity.y += gravity * dt;

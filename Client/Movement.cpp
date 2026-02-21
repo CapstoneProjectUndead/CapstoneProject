@@ -64,51 +64,46 @@ void CMovementComponent::Update(const float deltaTime)
 {
 	if (owner == nullptr)
 		return;
-
 	// 상대 플레이어이라면 return
 	auto p = dynamic_cast<CPlayer*>(owner);
 	if (p != nullptr && !p->GetIsMyPlayer())
 		return;
 
 	ClampSpeed();
+
+    // 중력/마찰/땅 확인
     CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
+    // 이동량 계산
     XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     float moveDist = Vector3::Length(delta);
     if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
 
     GJKAlgorithm::CollisionInfo info{};
-
-    // 지형 충돌(벽)
-    XMFLOAT3 moveDir = Vector3::Normalize(delta);
-    if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
-        XMVECTOR n = info.normal;
-        float d = info.depth;
-        // Overlap된 깊이만큼 반대로 이동
-        XMVECTOR separation = n * (d);
+    // 중복 코드 람다로 처리
+    auto ResolveCollision = [&]() {
+        // overlap된 만큼 밀어내기
+        XMVECTOR separation = info.normal * info.depth;
         XMVECTOR curPos = XMLoadFloat3(&owner->position);
         XMStoreFloat3(&owner->position, curPos + separation);
 
         Slide(info.normal);
+        };
+
+    // 지형 충돌(벽)
+    XMFLOAT3 moveDir = Vector3::Normalize(delta);
+    if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
+        ResolveCollision();
     }
 
     // 오브젝트 충돌(Table 등)
+    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
-        XMVECTOR n = info.normal;
-        float d = info.depth;
-
-        // 바닥 아래로 밀리는 현상 방지
-        if (XMVectorGetY(n) < 0) {
-            n = -n;
-        }
-        // Overlap된 깊이만큼 반대로 이동
-        XMVECTOR separation = n * (d);
-        XMVECTOR curPos = XMLoadFloat3(&owner->position);
-        XMStoreFloat3(&owner->position, curPos + separation);
-
-        Slide(n);
+        if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
+        ResolveCollision();
     }
-    // 보정된 속도로 delta 재계산
+
+    // 최종 이동
     delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     owner->position = Vector3::Add(owner->position, delta);
 }
