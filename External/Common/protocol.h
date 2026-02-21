@@ -208,7 +208,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 63, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 64, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -271,7 +271,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 74, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 75, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {
@@ -282,6 +282,6 @@ struct S_Move : public PacketHeader
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 70, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 71, "S_Move size mismatch!");
 
 #pragma pack (pop)
