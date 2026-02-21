@@ -32,6 +32,11 @@ void CLobbyScene::Initialize()
 		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("skinning", std::move(shader));
 	}
+
+	{
+		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		objects = factory->CreateLobby(staticHeapManager);
+	}
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -42,10 +47,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
 	
-	{
-		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-		objects = factory->CreateLobby(staticHeapManager);
-	}
 	// test 용 삭제X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
