@@ -113,16 +113,10 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 {
     // 1) 지면 체크
     auto* col = obj->GetComponent<CColliderComponent>();
-    if (col)
-        obj->is_grounded = CheckGround(col);
-    else
-        obj->is_grounded = false;
+    obj->is_grounded = col ? CheckGround(col) : false;
 
     // 2) 중력 적용
-    if (!obj->is_grounded)
-        obj->velocity.y += gravity * dt;
-    else
-        obj->velocity.y = 0;
+    obj->velocity.y += gravity * dt;
 
     // 감속(마찰)
     float speedLen = Vector3::Length(obj->velocity);

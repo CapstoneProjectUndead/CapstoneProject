@@ -22,7 +22,7 @@ void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 
 void CMovementComponent::ClampSpeed()
 {
-	float lenXZ = sqrtf(owner->velocity.x * owner->velocity.x + owner->velocity.z * owner->velocity.z);
+    float lenXZ = sqrtf(owner->velocity.x * owner->velocity.x + owner->velocity.z * owner->velocity.z);
 	if (lenXZ > max_speed) {
 		float ratio = max_speed / lenXZ;
 		owner->velocity.x *= ratio;
@@ -51,6 +51,13 @@ void CMovementComponent::Slide(const XMVECTOR& normal)
     XMVECTOR result = v - normal * dot;
 
     XMStoreFloat3(&owner->velocity, result);
+}
+
+void CMovementComponent::Jump()
+{
+    if (owner->is_grounded) {
+        owner->velocity.y = owner->jump_power; // 예: 10.0f 처럼 즉시 대입
+    }
 }
 
 void CMovementComponent::Update(const float deltaTime)
@@ -86,7 +93,6 @@ void CMovementComponent::Update(const float deltaTime)
     }
 
     // 오브젝트 충돌(Table 등)
-    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
         XMVECTOR n = info.normal;
         float d = info.depth;
@@ -101,10 +107,9 @@ void CMovementComponent::Update(const float deltaTime)
         XMStoreFloat3(&owner->position, curPos + separation);
 
         Slide(n);
-
-        // 보정된 속도로 delta 재계산
-        delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     }
+    // 보정된 속도로 delta 재계산
+    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     owner->position = Vector3::Add(owner->position, delta);
 }
 

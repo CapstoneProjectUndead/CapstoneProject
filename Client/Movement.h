@@ -19,6 +19,7 @@ public:
 	// 벽(Normal)을 따라 Slide
 	void Slide(const XMFLOAT3& normal);
 	void Slide(const XMVECTOR& normal);
+	void Jump();
 
 	// 최대 속도 제한
 	void ClampSpeed();

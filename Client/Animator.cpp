@@ -46,12 +46,10 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	// 내 플레이어
 	if (p->GetIsMyPlayer()) {
-
 		if (speed < 0.01f)
 			Play("Ganga_idle");
 		else
 			Play("Ganga_walk");
-
 	}
 	// 상대 플레이어
 	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
@@ -61,7 +59,6 @@ void CAnimatorComponent::Update(float deltaTime)
 		else if (p->GetState() == PLAYER_STATE::WALK)
 			Play("Ganga_walk");
 	}
-
 
 	current_time += deltaTime;
 
