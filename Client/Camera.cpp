@@ -21,7 +21,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
 	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
-	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, -1.0f));
+	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, .0f));
 
 	CreateConstantBuffers(device, commandList);
 }
@@ -192,9 +192,14 @@ void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 	XMMATRIX pitchRotate = XMMatrixRotationAxis(XMLoadFloat3(&target_object->right), pitch);
 	XMMATRIX finalRotate = baseRotate * pitchRotate;
 
+	// 1인칭 카메라 위치 변경
+	XMVECTOR vUp = finalRotate.r[1];
+	XMVECTOR vLook = finalRotate.r[2];
+	XMVECTOR eyePos = worldHeadPos + (vUp * 0.1f) + (vLook * 0.05f);
+
 	if (mode == ECameraMode::FIRST_PERSON) {
 		// 위치를 head로 고정
-		XMStoreFloat3(&position, worldHeadPos);
+		XMStoreFloat3(&position, eyePos);
 
 		// 시선 방향 업데이트
 		XMStoreFloat3(&look, finalRotate.r[2]);
