@@ -236,6 +236,7 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 
 	// 3. 서버 좌표로 스냅
 	SetPosition(serverPos);
+	velocity = server_velocity;
 
 	// 4. 서버가 확인한 입력까지 제거 
 	while (!client_history_deq.empty() &&
