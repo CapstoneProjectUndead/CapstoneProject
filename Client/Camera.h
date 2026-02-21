@@ -24,8 +24,12 @@ public:
 	virtual void SetViewportsAndScissorRects(ID3D12GraphicsCommandList*);
 
 	void SetLookAt(XMFLOAT3 ohterPosition, XMFLOAT3 lookAt, XMFLOAT3 ohterUp);
+	void SetLookTo(XMFLOAT3 ohterPosition, XMFLOAT3 lookTo, XMFLOAT3 ohterUp);
+	// offset에 따라 카메라 mode가 달라짐
 	void SetCameraOffset(XMFLOAT3& cameraOffset);
 	void GenerateViewMatrix();
+	// normalize 수행 후 vector update
+	void UpdateCameraVectors();
 
 	void Rotate(float pitch, float yaw, float roll);
 	void Move(const XMFLOAT3 shift);
@@ -37,9 +41,13 @@ public:
 
 	void SetTarget(CObject* object) { target_object = object; }
 protected:
+	enum class ECameraMode { FIRST_PERSON, THIRD_PERSON };
+	ECameraMode mode{ ECameraMode::THIRD_PERSON };
+
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
 	ComPtr<ID3D12Resource> camera_cb;
+	CameraCB* mapped{};
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;

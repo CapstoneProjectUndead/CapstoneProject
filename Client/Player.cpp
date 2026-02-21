@@ -4,6 +4,9 @@
 #include "Movement.h"
 #include "NetworkClockManager.h"
 #include "JitterMeasurer.h"
+#include "Animator.h"
+#include "Material.h"
+#include "MeshRenderer.h"
 
 #undef min
 #undef max
@@ -13,7 +16,6 @@ CPlayer::CPlayer()
 	: CCharacter()
     , room_id(-1)
 {
-	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 }
 
@@ -42,6 +44,14 @@ void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
 
     if (interpolation_deq.size() > RENDER_BUFFER_MAX_SIZE)
         interpolation_deq.pop_front();
+}
+
+XMFLOAT3 CPlayer::GetHeadPosition() const
+{
+    auto* animator = GetComponent<CAnimatorComponent>();
+    if (!animator) return position;
+
+    return animator->GetHeadPosition();
 }
 
 void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
@@ -193,4 +203,31 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     // 회전 적용
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
+}
+
+void CPlayer::ChangeModelSet(int setIndex)
+{
+    for (int i = 0; i < eartail_parts.size(); ++i) {
+        bool active = (i == setIndex);
+        
+        body_materials[i]->SetEnable(active);
+
+        for (auto& mesh : eartail_parts[i]) {
+            mesh->SetEnable(active);
+        }
+    }
+}
+
+void CPlayer::ChangeEyes(int index)
+{
+    for (int i = 0; i < eyes_material.size(); ++i) {
+        eyes_material[i]->SetEnable(i == index);
+    }
+}
+
+void CPlayer::ChangeMouth(int index)
+{
+    for (int i = 0; i < mouth_material.size(); ++i) {
+        mouth_material[i]->SetEnable(i == index);
+    }
 }

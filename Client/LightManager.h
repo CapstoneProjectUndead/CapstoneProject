@@ -30,8 +30,10 @@ public:
 	void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void Update(const CCamera* camera);
 	void Render(ID3D12GraphicsCommandList* commandList);
+	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 private:
 	LightCB light{};
 	ComPtr<ID3D12Resource> light_cb;
+	LightCB* mapped{};
 };
 

@@ -37,6 +37,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		std::string name{ children->mesh.materials[0].albedoMap };
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
 		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		mat->material.albedo = children->mesh.materials[0].albedoColor;
+		mat->material.glossiness = children->mesh.materials[0].glossiness;
 		matComp->SetMaterial(mat);
 
 		// 3) MeshRendererComponent 생성
@@ -84,13 +86,24 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	return objects;
 }
 
-
-void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	// 1) Mesh 로드 + totalBounds 계산
+	// material 미리 Load
+	std::vector<std::string> resourceNames = {
+		"body_ganga", "body_nyao", "body_toto",
+		"eartail",
+		"eyes_ganga", "eyes_nyao", "eyes_toto",
+		"mouse_ganga", "mouse_nyao", "mouse_toto"
+	};
+	for (const std::string& name : resourceNames) {
+		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
+		matManager.LoadMeterial(name, tex);
+	}
+
+	// Mesh 로드 + totalBounds 계산
 	BoundingBox totalBounds;
 	bool firstBounds = true;
 
@@ -101,13 +114,6 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 	for (const auto& child : frameRoot->childrens) {
 		if (child->mesh.positions.empty())
 			continue;
-
-		RenderUnit renderUnit{};
-		// mesh component
-		auto meshComp = std::make_shared<CMeshComponent>();
-		renderUnit.mesh = meshComp.get();
-		character->SetComponent(meshComp);
-		meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
 		// bounds merge
 		if (firstBounds) {
 			totalBounds = child->mesh.bounds;
@@ -117,31 +123,80 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
 		}
 
-		// MaterialComponent 생성
-		std::string name{ child->mesh.materials[0].albedoMap };
-		if (!name.empty()) {
+		// mesh component
+		auto meshComp = std::make_shared<CMeshComponent>();
+		character->SetComponent(meshComp);
+		meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
+
+		// material 생성 후 renderer->SetRenderUnit 수행
+		auto CreateUnit = [&](std::string texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
+			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
+			auto mat = matManager.GetMeterial(texName, tex);
+			matComp->SetMaterial(mat);
 			character->SetComponent(matComp);
 
-			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-			std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
-			matComp->SetMaterial(mat);
-			renderUnit.material = matComp.get();
-		}
+			RenderUnit unit;
+			unit.mesh = meshComp.get();
+			unit.material = matComp.get();
+			renderer->SetRenderUnit(unit);
 
-		// renderUnit set
-		renderer->SetRenderUnit(renderUnit);
+			return matComp; // 나중에 껐다 켜기 위해 반환
+		};
+
+		// 0: dog, 1: cat, 2: buddy
+		// 처음에 강아지만 enable true
+		switch (stringToMeshName(child->name)) {
+		case MeshName::body:
+			character->body_materials[0] = CreateUnit(resourceNames[0]);
+			character->body_materials[1] = CreateUnit(resourceNames[1]);
+			character->body_materials[1]->SetEnable(false);
+			character->body_materials[2] = CreateUnit(resourceNames[2]);
+			character->body_materials[2]->SetEnable(false);
+			break;
+		case MeshName::Bunny_ear:
+		case MeshName::Bunny_tail:
+			CreateUnit(resourceNames[3]);
+			character->eartail_parts[2].push_back(meshComp);
+			meshComp->SetEnable(false);
+			break;
+		case MeshName::Cat_ear:
+		case MeshName::Cat_tail:
+			CreateUnit(resourceNames[3]);
+			character->eartail_parts[1].push_back(meshComp);
+			meshComp->SetEnable(false);
+			break;
+		case MeshName::Dog_ear:
+		case MeshName::Dog_tail:
+			CreateUnit(resourceNames[3]);
+			character->eartail_parts[0].push_back(meshComp);
+			break;
+		case MeshName::eyes:
+			character->eyes_material[0] = CreateUnit(resourceNames[4]);
+			character->eyes_material[1] = CreateUnit(resourceNames[5]);
+			character->eyes_material[1]->SetEnable(false);
+			character->eyes_material[2] = CreateUnit(resourceNames[6]);
+			character->eyes_material[2]->SetEnable(false);
+			break;
+		case MeshName::mouse:
+			character->mouth_material[0] = CreateUnit(resourceNames[7]);
+			character->mouth_material[1] = CreateUnit(resourceNames[8]);
+			character->mouth_material[1]->SetEnable(false);
+			character->mouth_material[2] = CreateUnit(resourceNames[9]);
+			character->mouth_material[2]->SetEnable(false);
+			break;
+		}
 	}
-	// 4) ColliderComponent 생성
+	// ColliderComponent 생성
 	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
 	character->SetComponent(collider);
 	CPhysicsManager::GetInstance().SetCollider(collider);
 
-	// 4) Animator
+	// Animator
 	auto animator = std::make_shared<CAnimatorComponent>();
+
 	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
-	animator->Play("Ganga_walk");
 	character->SetComponent(animator);
 	character->SetShdaer("skinning");
 
@@ -152,7 +207,7 @@ void CObjectFactory::CreateCharacter(std::shared_ptr<CCharacter> character, CDes
 std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager* heapManager)
 {
 	auto player = std::make_shared<CMyPlayer>();
-	CreateCharacter(player, heapManager);
+	CreateUndeadCharacter(player, heapManager);
 	player->Initialize(GET_DEVICE, GET_CMD_LIST);
 	return player;
 }
@@ -160,7 +215,25 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* heapManager)
 {
 	auto player = std::make_shared<CPlayer>();
-	CreateCharacter(player, heapManager);
+	CreateUndeadCharacter(player, heapManager);
 	player->Initialize(GET_DEVICE, GET_CMD_LIST);
 	return player;
+}
+
+CObjectFactory::MeshName CObjectFactory::stringToMeshName(const std::string& str)
+{
+	static const std::unordered_map<std::string, MeshName> table = {
+	{"body", MeshName::body},
+	{"Bunny_ear", MeshName::Bunny_ear},
+	{"Bunny_tail", MeshName::Bunny_tail},
+	{"Cat_ear", MeshName::Cat_ear},
+	{"Cat_tail", MeshName::Cat_tail},
+	{"Dog_ear", MeshName::Dog_ear},
+	{"Dog_tail", MeshName::Dog_tail},
+	{"eyes", MeshName::eyes},
+	{"mouse", MeshName::mouse},
+	};
+
+	auto it = table.find(str);
+	return (it != table.end()) ? it->second : MeshName::Unknown;
 }

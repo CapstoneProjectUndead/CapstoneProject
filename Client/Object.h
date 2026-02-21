@@ -30,7 +30,6 @@ public:
 	T* GetComponent() const;
 	template<typename T>
 	std::vector<T*> GetComponents() const;
-	UINT GetSRVIndex() const;
 
 	virtual void Animate(float, CCamera*);
 	virtual void Update(const float);
@@ -41,6 +40,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* );
 
 	//
+	virtual XMFLOAT3 GetHeadPosition() const { return position; };
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }
@@ -60,7 +60,9 @@ public:
 	//=================================
 	// 회전 함수 (테스트)
 	void SetYaw(float _yaw);
+	float GetYaw() const { return yaw; }
 	void SetPitch(float _pitch) { pitch = _pitch; }
+	float GetPitch() const { return pitch; }
 	void SetYawPitch(float yawDeg, float pitchDeg);
 	void UpdateWorldMatrix();
 	void UpdateLookRightFromYaw();
@@ -81,6 +83,7 @@ public:
 protected:
 	uint64 obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
+	ObjectCB* mapped{};
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
 
@@ -89,8 +92,7 @@ protected:
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;
 
-	bool is_visible{ true };
-	float jump_power{ 12.0f };
+	float jump_power{ 5.0f };
 	bool is_grounded{};
 	float friction{ 9.0f };
 

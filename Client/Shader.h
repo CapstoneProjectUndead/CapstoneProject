@@ -82,6 +82,9 @@ public:
 	virtual void RenderBegin(ID3D12GraphicsCommandList*);
 	virtual void Render(ID3D12GraphicsCommandList*, CObject*);
 	virtual void RenderEnd(ID3D12GraphicsCommandList*) {};
+
+	// 임시 통로 역할
+	static CDescriptorHeapManager* current_heap_manager;
 protected:
 	ComPtr<ID3D12PipelineState> pipeline_states{};
 	ComPtr<ID3D12RootSignature> graphics_root_signature{};

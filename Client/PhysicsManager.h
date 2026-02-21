@@ -27,7 +27,6 @@ public:
         colliders.push_back(c);
     }
 
-    bool CheckGround(CColliderComponent* col);
     void ApplyGravity(CObject* obj, float dt);
 
     // query
