@@ -14,7 +14,6 @@ CPlayer::CPlayer()
 	: CCharacter()
     , room_id(-1)
 {
-	is_visible = true;
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 }
 

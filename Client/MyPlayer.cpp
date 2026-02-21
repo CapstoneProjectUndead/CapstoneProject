@@ -100,7 +100,7 @@ void CMyPlayer::ProcessRotation()
 		if (mouseDelta.x || mouseDelta.y) {
 			yaw += mouseDelta.x;
 			pitch += mouseDelta.y;
-			pitch = std::clamp(pitch, -89.9f, 60.0f);
+			pitch = std::clamp(pitch, -89.9f, 89.9f);
 			SetYawPitch(yaw, 0.0f);
 			UpdateWorldMatrix();
 		}

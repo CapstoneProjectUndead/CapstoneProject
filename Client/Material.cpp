@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Material.h"
 #include "Texture.h"
+#include "Shader.h"
 
 // Material
 void CMaterial::SetTexture(const std::shared_ptr<CTexture>& tex)
@@ -60,6 +61,13 @@ void CMaterialComponent::UpdateMeshShaderVariables(ID3D12GraphicsCommandList* co
 {
 	if (!material) return;
 
+	CDescriptorHeapManager* hm = CShader::current_heap_manager;
+	if (hm) {
+		UINT srvIndex = material->texture->GetDescriptorIndex();
+		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = hm->GetGPUHandle(srvIndex);
+
+		commandList->SetGraphicsRootDescriptorTable(5, gpuHandle);
+	}
 	material->UpdateShaderVariables(commandList);
 }
 

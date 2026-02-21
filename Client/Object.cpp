@@ -21,7 +21,8 @@ void CObject::ReleaseUploadBuffer()
 {
 	// 정점 버퍼를 위한 업로드 버퍼를 소멸시킨다.
 	for (auto& component : components)
-		component->ReleaseUploadBuffer();
+		if(component->is_enable)
+			component->ReleaseUploadBuffer();
 }
 
 void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
@@ -34,7 +35,8 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 	}
 
 	for (auto& component : components) {
-		component->UpdateShaderVariables(commandList);
+		if (component->is_enable)
+			component->UpdateShaderVariables(commandList);
 	}
 }
 
@@ -56,7 +58,8 @@ void CObject::Render(ID3D12GraphicsCommandList* commandList)
 
 	// mesh, collider(for debugging), material render
 	for (auto& renderer : meshRenderer)
-		renderer->Render(commandList);
+		if (renderer->is_enable)
+			renderer->Render(commandList);
 }
 
 void CObject::SetComponent(std::shared_ptr<CComponent> component)
@@ -120,19 +123,9 @@ void CObject::UpdateLookRightFromYaw()
 void CObject::Update(const float elapsedTime)
 {
 	for (auto& component : components) {
-		component->Update(elapsedTime);
+		if (component->is_enable)
+			component->Update(elapsedTime);
 	}
-}
-
-UINT CObject::GetSRVIndex() const
-{
-	auto matComp = GetComponent<CMaterialComponent>();
-	if (!matComp) return 0;
-
-	auto mat = matComp->GetMaterial();
-	if (!mat || !mat->texture) return 0;
-
-	return mat->texture->GetDescriptorIndex();
 }
 
 void CObject::Animate(float elapsedTime, CCamera* camera)

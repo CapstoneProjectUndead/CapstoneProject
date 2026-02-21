@@ -117,9 +117,6 @@
     <ClInclude Include="macro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryLoader.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="ServerPacketHandler.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
@@ -252,6 +249,9 @@
     <ClInclude Include="Shader.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="GeometryLoader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -285,9 +285,6 @@
       <Filter>Network\Session</Filter>
     </ClCompile>
     <ClCompile Include="KeyManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="ServerPacketHandler.cpp">
@@ -393,6 +390,9 @@
       <Filter>Scene\CustomScene</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryLoader.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>

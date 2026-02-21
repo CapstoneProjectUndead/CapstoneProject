@@ -30,7 +30,6 @@ public:
 	T* GetComponent() const;
 	template<typename T>
 	std::vector<T*> GetComponents() const;
-	UINT GetSRVIndex() const;
 
 	virtual void Animate(float, CCamera*);
 	virtual void Update(const float);
@@ -88,7 +87,6 @@ protected:
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;
 
-	bool is_visible{ true };
 	float jump_power{ 12.0f };
 	bool is_grounded{};
 	float friction{ 9.0f };

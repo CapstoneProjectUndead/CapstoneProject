@@ -29,6 +29,8 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 	if (!owner) return;
 
 	for (auto& unit : render_units) {
+		if (!unit.mesh->is_enable) continue;
+
 		if (unit.material)
 			unit.material->UpdateMeshShaderVariables(commandList);
 
