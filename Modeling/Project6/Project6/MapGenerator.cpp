@@ -4,16 +4,19 @@
 #include <ctime>
 #include <algorithm>
 #include <stack>
+#include <iostream>
 
 using namespace std;
 using namespace DirectX;
 
 // ====================================================================
-// 🛠️ [도우미 구역] 익명 네임스페이스
+// 🛠️ [설정 구역] 여기서 맵 크기를 마음대로 바꿔보세요!
 // ====================================================================
 namespace {
-    const int WIDTH = 101;  // 1칸 = 1m (가로 100m)
-    const int HEIGHT = 201; // 1칸 = 1m (세로 200m)
+    // 🔥 [자동화의 핵심!] 여기 숫자만 바꾸면 맵 전체가 알아서 맞춰집니다. (홀수 추천)
+    const int WIDTH = 51;   // 가로 크기
+    const int HEIGHT = 101; // 세로 크기
+
     char mapGrid[HEIGHT][WIDTH];
 
     int dx[] = { 0, 0, -2, 2 };
@@ -57,35 +60,29 @@ namespace {
         }
     }
 
-    // 🌟 [새로 추가된 마법!] 공터의 영역(네모)을 기억할 수첩(구조체)
     struct Rect {
         int x, y, w, h;
-        // 다른 네모랑 겹치는지 확인하는 똑똑한 함수 (1칸씩 여유를 둬서 딱 붙지도 않게 해!)
         bool Intersects(const Rect& other) const {
             return !(x + w + 1 <= other.x || x - 1 >= other.x + other.w ||
                 y + h + 1 <= other.y || y - 1 >= other.y + other.h);
         }
     };
 
-    // 🔥 [업그레이드된 마법!] 안 겹치게 파내는 똑똑한 포크레인!
     void CreateOpenSpaces(int numSpaces) {
-        std::vector<Rect> builtSpaces; // 여기가 바로 '수첩'이야!
-        int attempts = 0; // 자리를 너무 못 찾아서 무한루프에 빠지지 않게 횟수 제한을 둠
+        std::vector<Rect> builtSpaces;
+        int attempts = 0;
 
-        // 20개를 다 짓거나, 자리를 1000번 넘게 찾아봤는데도 없으면 그만두기
         for (int i = 0; i < numSpaces && attempts < 1000; ) {
             int w, h;
             int sizeType = rand() % 3;
 
-            if (sizeType == 0) {
-                w = 4 + rand() % 4; h = 4 + rand() % 4; // 소형
-            }
-            else if (sizeType == 1) {
-                w = 8 + rand() % 5; h = 8 + rand() % 5; // 중형
-            }
-            else {
-                w = 13 + rand() % 6; h = 13 + rand() % 6; // 대형
-            }
+            // 공터 크기도 맵 크기에 맞춰서 최대치가 넘지 않게 안전장치 추가!
+            if (sizeType == 0) { w = 3 + rand() % 4; h = 3 + rand() % 4; }
+            else if (sizeType == 1) { w = 7 + rand() % 5; h = 7 + rand() % 5; }
+            else { w = 12 + rand() % 5; h = 12 + rand() % 5; }
+
+            w = min(w, WIDTH - 6); // 맵보다 큰 공터가 생기지 않게 방어
+            h = min(h, HEIGHT - 6);
 
             int startX = 2 + rand() % (WIDTH - w - 2);
             int startY = 2 + rand() % (HEIGHT - h - 2);
@@ -93,25 +90,23 @@ namespace {
             Rect newSpace = { startX, startY, w, h };
             bool overlap = false;
 
-            // 수첩을 펼쳐서 겹치는 곳이 있는지 하나씩 확인!
             for (const auto& existing : builtSpaces) {
                 if (newSpace.Intersects(existing)) {
-                    overlap = true; // 앗! 겹친다!
+                    overlap = true;
                     break;
                 }
             }
 
-            // 안 겹치면(overlap이 false면) 진짜로 땅을 팝니다!
             if (!overlap) {
                 for (int y = startY; y < startY + h; y++) {
                     for (int x = startX; x < startX + w; x++) {
                         mapGrid[y][x] = ' ';
                     }
                 }
-                builtSpaces.push_back(newSpace); // 수첩에 방금 판 곳을 기록!
-                i++; // 성공적으로 1개 지었으니 숫자 증가!
+                builtSpaces.push_back(newSpace);
+                i++;
             }
-            attempts++; // 자리 찾기 시도 횟수 증가
+            attempts++;
         }
     }
 
@@ -168,13 +163,16 @@ namespace {
 
 
 // ====================================================================
-// 🚀 [메인 구역] 외부에서 호출하는 진짜 맵 생성기 함수
+// 🚀 [메인 구역] 맵 데이터 생성
 // ====================================================================
 std::vector<InstanceData> MapGenerator::Generate3DMap() {
     std::vector<InstanceData> instanceList;
     srand((unsigned int)time(NULL));
 
-    // [1단계 ~ 4단계] 2D 미로 생성 및 구역(Zone) 나누기
+    // 🔥 [자동 계산 로직] 맵 넓이에 맞춰서 생성될 개수 계산하기!
+    float areaRatio = (WIDTH * HEIGHT) / 5000.0f; // 50x100 맵을 기준(1.0)으로 잡음
+    int halfHeight = HEIGHT / 2; // 맵의 절반 (아래는 공원, 위는 상점가)
+
     for (int y = 0; y < HEIGHT; y++)
         for (int x = 0; x < WIDTH; x++) mapGrid[y][x] = '#';
 
@@ -184,36 +182,50 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
         mapGrid[1 + rand() % (HEIGHT - 2)][1 + rand() % (WIDTH - 2)] = ' ';
     }
 
-    // 🔥 [스마트 포크레인 출동!] 겹치지 않게 예쁜 공터 20개 생성!
-    CreateOpenSpaces(50);
+    // 면적에 비례해서 공터 개수 조절
+    CreateOpenSpaces(max(5, (int)(20 * areaRatio)));
 
-    // Y < 100 은 공원(T), 그 위는 상점가(#)
+    // 절반(halfHeight) 이하는 공원(T), 그 위는 상점가(#)
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             if (mapGrid[y][x] == '#') {
-                if (y < 100) mapGrid[y][x] = 'T';
+                if (y < halfHeight) mapGrid[y][x] = 'T';
             }
         }
     }
 
-    // [5단계] 맵 크기(100x200)에 맞춰 건물과 광장 스폰
-    int numWarehouse = 2 + rand() % 3;
-    for (int i = 0; i < numWarehouse; i++)
-        PlaceLargeWarehouse(4 + rand() % (WIDTH - 8), 130 + rand() % 60);
+    // ====================================================================
+    // 🏢 건물 자동 스폰 (위치도 맵 크기에 비례해서 자동 계산!)
+    // ====================================================================
+    int numWarehouse = max(1, (int)(3 * areaRatio));
+    for (int i = 0; i < numWarehouse; i++) {
+        int rX = 4 + rand() % (WIDTH - 8);
+        int rY = halfHeight + rand() % (halfHeight - 10); // 무조건 상점가 구역(위쪽)
+        PlaceLargeWarehouse(rX, rY);
+    }
 
-    int numStore = 8 + rand() % 5;
-    for (int i = 0; i < numStore; i++)
-        PlaceMediumStore(4 + rand() % (WIDTH - 8), 100 + rand() % 90);
+    int numStore = max(2, (int)(10 * areaRatio));
+    for (int i = 0; i < numStore; i++) {
+        int rX = 4 + rand() % (WIDTH - 8);
+        int rY = halfHeight + rand() % (halfHeight - 5);
+        PlaceMediumStore(rX, rY);
+    }
 
-    int numKiosk = 20 + rand() % 10;
-    for (int i = 0; i < numKiosk; i++)
-        PlaceSmallKiosk(4 + rand() % (WIDTH - 8), 100 + rand() % 90);
+    int numKiosk = max(5, (int)(25 * areaRatio));
+    for (int i = 0; i < numKiosk; i++) {
+        int rX = 4 + rand() % (WIDTH - 8);
+        int rY = halfHeight + rand() % (halfHeight - 5);
+        PlaceSmallKiosk(rX, rY);
+    }
 
-    int numPark = 20 + rand() % 5;
-    for (int i = 0; i < numPark; i++)
-        PlaceParkPlaza(3 + rand() % (WIDTH - 6), 5 + rand() % 90);
+    int numPark = max(5, (int)(20 * areaRatio));
+    for (int i = 0; i < numPark; i++) {
+        int rX = 3 + rand() % (WIDTH - 6);
+        int rY = 5 + rand() % (halfHeight - 10); // 무조건 공원 구역(아래쪽)
+        PlaceParkPlaza(rX, rY);
+    }
 
-    // [6단계] 보물($) 배치
+    // 보물($) 배치
     const int BLOCK_SIZE = 10;
     for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
         for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
@@ -236,7 +248,20 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
     }
 
     // ====================================================================
-    // 🌟 [7단계] 완성된 2D 배열을 3D 큐브(InstanceData) 리스트로 변환!
+    // 콘솔창 2D 맵 출력
+    // ====================================================================
+    cout << "\n================ 🗺️ 완성된 2D 텍스트 미니맵 (" << WIDTH << "x" << HEIGHT << ") =================\n";
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            if (mapGrid[y][x] == ' ') cout << ' ';
+            else cout << mapGrid[y][x];
+        }
+        cout << "\n";
+    }
+    cout << "=================================================================\n\n";
+
+    // ====================================================================
+    // 🌟 [7단계] 3D 디테일 업그레이드! (벤치, 문, 나무 등등 귀여운 사이즈 적용)
     // ====================================================================
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
@@ -248,37 +273,47 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
             float posX = (float)x * 1.0f;
             float posZ = (float)y * 1.0f;
 
-            if (c == '#') {
+            if (c == '#') { // 골목길 벽
                 inst.color = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
                 inst.scale = XMFLOAT3(1.0f, 3.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 1.5f, posZ);
             }
-            else if (c == 'W') {
+            else if (c == 'W') { // 대형 창고
                 inst.color = XMFLOAT4(0.8f, 0.1f, 0.1f, 1.0f);
                 inst.scale = XMFLOAT3(1.0f, 6.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 3.0f, posZ);
             }
-            else if (c == 'M') {
+            else if (c == 'M') { // 중형 상점
                 inst.color = XMFLOAT4(0.2f, 0.6f, 0.8f, 1.0f);
                 inst.scale = XMFLOAT3(1.0f, 3.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 1.5f, posZ);
             }
-            else if (c == 'S') {
+            else if (c == 'S') { // 소형 가판대
                 inst.color = XMFLOAT4(0.2f, 0.2f, 0.8f, 1.0f);
                 inst.scale = XMFLOAT3(1.0f, 2.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 1.0f, posZ);
             }
-            else if (c == 'T') {
-                inst.color = XMFLOAT4(0.1f, 0.5f, 0.1f, 1.0f);
-                inst.scale = XMFLOAT3(1.0f, 1.5f, 1.0f);
+            else if (c == 'T' || c == 't') { // 덤불 및 공원 나무
+                inst.color = XMFLOAT4(0.1f, 0.6f, 0.2f, 1.0f);
+                inst.scale = XMFLOAT3(0.8f, 1.5f, 0.8f); // 약간 슬림한 나무!       
                 inst.position = XMFLOAT3(posX, 0.75f, posZ);
             }
-            else if (c == '$') {
+            else if (c == '$') { // 보물 상자
                 inst.color = XMFLOAT4(1.0f, 0.8f, 0.0f, 1.0f);
-                inst.scale = XMFLOAT3(0.5f, 0.5f, 0.5f);
+                inst.scale = XMFLOAT3(0.5f, 0.5f, 0.5f); // 50cm 귀요미!       
                 inst.position = XMFLOAT3(posX, 0.25f, posZ);
             }
-            else {
+            else if (c == 'n') { // 공원 벤치
+                inst.color = XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f); // 나무 색
+                inst.scale = XMFLOAT3(0.8f, 0.4f, 0.4f);       // 가로로 길고 낮은 벤치
+                inst.position = XMFLOAT3(posX, 0.2f, posZ);
+            }
+            else if (c == 'd') { // 상점 문
+                inst.color = XMFLOAT4(0.3f, 0.15f, 0.05f, 1.0f); // 진한 나무 문
+                inst.scale = XMFLOAT3(0.8f, 2.0f, 0.2f);       // 얇고 긴 문!
+                inst.position = XMFLOAT3(posX, 1.0f, posZ);
+            }
+            else { // 혹시 모를 나머지 기본
                 inst.color = XMFLOAT4(0.6f, 0.3f, 0.1f, 1.0f);
                 inst.scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 0.5f, posZ);
