@@ -46,6 +46,19 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
 	}
+
+	if (!camera) {
+		camera = std::make_shared<CCamera>();
+		camera->SetTarget(my_player.get());
+		camera->Initialize(device, commandList);
+	}
+	
+	// light 생성
+	if (!light) {
+		light = std::make_unique<CLightManager>();
+		light->Initialize(device, commandList);
+	}
+
 	// test 용 삭제X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
@@ -61,18 +74,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 			}
 		}*/
 	}
-
-	if (!camera) {
-		camera = std::make_shared<CCamera>();
-		camera->SetTarget(my_player.get());
-		camera->Initialize(device, commandList);
-	}
-	
-	// light 생성
-	if (!light) {
-		light = std::make_unique<CLightManager>();
-		light->Initialize(device, commandList);
-	}
 }
 
 void CLobbyScene::Update(float elapsedTime)
@@ -83,11 +84,6 @@ void CLobbyScene::Update(float elapsedTime)
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	}
-}
-
-void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
-{
-	CScene::Render(commandList);
 }
 
 void CLobbyScene::DrawUI()

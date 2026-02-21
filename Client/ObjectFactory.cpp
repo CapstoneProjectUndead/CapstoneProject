@@ -200,15 +200,14 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 	character->SetComponent(animator);
 	character->SetShdaer("skinning");
 
-	// Movement
-	character->SetComponent(std::make_shared<CMovementComponent>());
+	character->Initialize(GET_DEVICE, GET_CMD_LIST);
 }
 
 std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager* heapManager)
 {
 	auto player = std::make_shared<CMyPlayer>();
 	CreateUndeadCharacter(player, heapManager);
-	player->Initialize(GET_DEVICE, GET_CMD_LIST);
+	player->SetComponent(std::make_shared<CMovementComponent>());
 	return player;
 }
 
@@ -216,7 +215,7 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 {
 	auto player = std::make_shared<CPlayer>();
 	CreateUndeadCharacter(player, heapManager);
-	player->Initialize(GET_DEVICE, GET_CMD_LIST);
+	player->SetComponent(std::make_shared<CMovementComponent>());
 	return player;
 }
 

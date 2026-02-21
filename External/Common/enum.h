@@ -1,6 +1,6 @@
 #pragma once
 //======================================
-// **** Å¬¶ó/¼­¹ö °øµ¿ ÂüÁ¶ Çì´õ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µë™ ì°¸ì¡° í—¤ë” íŒŒì¼ ****
 //======================================
 
 enum class OBJECT_TYPE : uint8_t
@@ -19,6 +19,7 @@ enum class PLAYER_STATE : uint8_t
 enum class SCENE_TYPE
 {
 	TITLE,
+	CUSTOMS,
 	LOBBY,
 	GAME,
 
