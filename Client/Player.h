@@ -2,6 +2,8 @@
 #include "Character.h"
 
 class CCamera;
+class CMaterialComponent;
+class CMeshComponent;
 
 struct OpponentFrameHistory 
 {
@@ -10,7 +12,6 @@ struct OpponentFrameHistory
 	XMFLOAT3 position;
 	PLAYER_STATE state;
 };
-
 
 class CPlayer : public CCharacter {
 public:
@@ -31,11 +32,21 @@ public:
 
 	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
 	void SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
+	XMFLOAT3 GetHeadPosition() const override;
+public:
+	// 커스터마이징용
+	// 0: dog, 1: cat, 2: buddy
+	void ChangeModelSet(int setIndex);
+	void ChangeEyes(int index);
+	void ChangeMouth(int index);
 
+	std::array<std::shared_ptr<CMaterialComponent>, 3> body_materials;
+	std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
+	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
+	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
-
 protected:
 	uint32 room_id; // 이 플레이어가 참여하고 있는 방 ID
 	SCENE_TYPE current_scene_type; // 현재 플레이어가 속한 씬 (방이 씬을 포함하고 있는 구조)

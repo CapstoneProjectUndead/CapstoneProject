@@ -5,6 +5,11 @@
 #include "Movement.h"
 #include "Player.h"
 
+CAnimatorComponent::CAnimatorComponent()
+	: head_position{&skinned.head_position }
+{
+}
+
 // animator
 void CAnimatorComponent::Initialize(const std::string& charName, const std::string& AniName)
 {
@@ -41,12 +46,10 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	// 내 플레이어
 	if (p->GetIsMyPlayer()) {
-
 		if (speed < 0.01f)
 			Play("Ganga_idle");
 		else
 			Play("Ganga_walk");
-
 	}
 	// 상대 플레이어
 	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
@@ -56,7 +59,6 @@ void CAnimatorComponent::Update(float deltaTime)
 		else if (p->GetState() == PLAYER_STATE::WALK)
 			Play("Ganga_walk");
 	}
-
 
 	current_time += deltaTime;
 
@@ -69,28 +71,20 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	// 본 행렬 계산
 	final_transforms.resize(skinned.BoneCount());
-	skinned.GetFinalTransforms(current_animation, current_time, final_transforms);
+	skinned.GetFinalTransforms(current_animation, current_time, final_transforms, owner->pitch);
 }
 
 void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
-	SkinnedDataCB cb{};
 	if (!final_transforms.empty()) {
-		UINT boneSize = skinned.BoneCount();
-		for (UINT i = 0; i < boneSize; ++i)
-			cb.bone_transforms[i] = final_transforms[i];
+		memcpy(mapped, final_transforms.data(), sizeof(XMFLOAT4X4) * final_transforms.size());
 	}
-
-	UINT8* mapped = nullptr;
-	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-	memcpy(mapped, &cb, sizeof(cb));
-	skinned_cb->Unmap(0, nullptr);
 
 	commandList->SetGraphicsRootConstantBufferView(4, skinned_cb->GetGPUVirtualAddress());
 }
 
 void CAnimatorComponent::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	SkinnedDataCB cb{};
-	skinned_cb = CreateBufferResource(device, commandList, &cb, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	skinned_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 }

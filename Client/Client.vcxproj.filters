@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="헤더 파일\Shaders">
-      <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Object">
       <UniqueIdentifier>{0d938997-fdb2-460d-a02d-416afe3a6eab}</UniqueIdentifier>
     </Filter>
@@ -67,6 +64,12 @@
     <Filter Include="Object\Factory">
       <UniqueIdentifier>{ca82464f-16b0-4854-841c-3d2bd01e61ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\CustomScene">
+      <UniqueIdentifier>{4b07fed5-088a-4c45-a77a-cdc1605c2b4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Shaders">
+      <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -96,9 +99,6 @@
     <ClInclude Include="Timer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="GameFramework.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -115,9 +115,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="macro.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="GeometryLoader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="ServerPacketHandler.h">
@@ -246,6 +243,15 @@
     <ClInclude Include="GJKAlgorithm.h">
       <Filter>Component\Collider/Physics</Filter>
     </ClInclude>
+    <ClInclude Include="CustomScene.h">
+      <Filter>Scene\CustomScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryLoader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -269,9 +275,6 @@
     <ClCompile Include="Timer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="GameFramework.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -282,9 +285,6 @@
       <Filter>Network\Session</Filter>
     </ClCompile>
     <ClCompile Include="KeyManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="ServerPacketHandler.cpp">
@@ -386,6 +386,15 @@
     <ClCompile Include="GJKAlgorithm.cpp">
       <Filter>Component\Collider/Physics</Filter>
     </ClCompile>
+    <ClCompile Include="CustomScene.cpp">
+      <Filter>Scene\CustomScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryLoader.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -402,16 +411,16 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="TexShader.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Light.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SkinningShader.hlsl">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>D3D12\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

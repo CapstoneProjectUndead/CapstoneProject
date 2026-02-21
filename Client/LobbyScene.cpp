@@ -32,32 +32,20 @@ void CLobbyScene::Initialize()
 		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("skinning", std::move(shader));
 	}
-	
-	// 로비씬 관련 오브젝트들 생성
-	CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-	objects = factory->CreateLobby(staticHeapManager);
-
-	// 카메라 생성
-	camera = std::make_shared<CCamera>();
-	camera->SetTarget(my_player.get());
-	camera->Initialize(GET_DEVICE, GET_CMD_LIST);
-
-	// light 생성
-	light = std::make_unique<CLightManager>();
-	light->Initialize(GET_DEVICE, GET_CMD_LIST);
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	// factory
-	CObjectFactory factory;
-	
 	// 플레이어 생성
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		my_player = factory.CreateMyPlayer(skinningHeapManager);
+		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
 	
+	{
+		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		objects = factory->CreateLobby(staticHeapManager);
+	}
 	// test 용 삭제X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);

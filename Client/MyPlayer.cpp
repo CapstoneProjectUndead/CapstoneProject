@@ -90,6 +90,7 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 	currentInput.a = KEY_PRESSED(KEY::A);
 	currentInput.s = KEY_PRESSED(KEY::S);
 	currentInput.d = KEY_PRESSED(KEY::D);
+	currentInput.space = KEY_PRESSED(KEY::SPACE);
 }
 
 void CMyPlayer::ProcessRotation()
@@ -101,7 +102,7 @@ void CMyPlayer::ProcessRotation()
 			yaw += mouseDelta.x;
 			pitch += mouseDelta.y;
 			pitch = std::clamp(pitch, -89.9f, 89.9f);
-			SetYawPitch(yaw, pitch);
+			SetYawPitch(yaw, 0.0f);
 			UpdateWorldMatrix();
 		}
 	}
@@ -114,6 +115,10 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 	if (input.s) dir.z--;
 	if (input.a) dir.x--;
 	if (input.d) dir.x++;
+	if (input.space) {
+		if (auto move = GetComponent<CMovementComponent>())
+			move->Jump();
+	}
 
 	// 상태 update
 	if (dir.x == 0 && dir.z == 0)

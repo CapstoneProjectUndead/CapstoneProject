@@ -16,6 +16,8 @@ public:
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) {}
 
 	CObject* GetOwner() const { return owner; }
+	void SetEnable(const bool e) { is_enable = e; }
 
 	CObject* owner{};	// 참조용
+	bool is_enable{ true };
 };

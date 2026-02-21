@@ -1,29 +1,30 @@
 #pragma once
 //==================================
-// **** Å¬¶ó/¼­¹ö °ø¿ë Çì´õ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µìš© í—¤ë” íŒŒì¼ ****
 //==================================
 
 #define ROOM_NAME_MAX 50
 
 struct InputData 
 {
-	// ÀÌµ¿ °ü·Ã (¼­¹ö°¡ °ËÁõ)
+	// ì´ë™ ê´€ë ¨ (ì„œë²„ê°€ ê²€ì¦)
 	bool w = false;
 	bool a = false;
 	bool s = false;
 	bool d = false;
+	bool space = false;
 };
 
 struct PlayerInfo
 {
-	// ¼­¹ö°¡ Ã³¸® ¿Ï·áÇÑ ÀÌ ÇÃ·¹ÀÌ¾îÀÇ ¸¶Áö¸· ½ÃÄö½º ¹øÈ£
+	// ì„œë²„ê°€ ì²˜ë¦¬ ì™„ë£Œí•œ ì´ í”Œë ˆì´ì–´ì˜ ë§ˆì§€ë§‰ ì‹œí€€ìŠ¤ ë²ˆí˜¸
 	uint64			last_seq_num;
 	uint32			id;
 
-	// ¼­¹ö±ÇÀ§ ¹æ½Ä) InputData´Â ¼­¹ö±ÇÀ§ ¹æ½Ä¿¡¼­ ÇÊ¿äÇÑ µ¥ÀÌÅÍÀÌ´Ù.
+	// ì„œë²„ê¶Œìœ„ ë°©ì‹) InputDataëŠ” ì„œë²„ê¶Œìœ„ ë°©ì‹ì—ì„œ í•„ìš”í•œ ë°ì´í„°ì´ë‹¤.
 	InputData		input;
 
-	float			x, y, z;	// ÁÂÇ¥
+	float			x, y, z;	// ì¢Œí‘œ
 	float			vx, vy, vz; // velocity
 
 	float			pitch = 0.0f;
@@ -75,10 +76,10 @@ struct PlayerInfo
 
 struct RoomInfo
 {
-	uint32	room_id;	// ¹æ ID
-	char	room_name[ROOM_NAME_MAX]; // 50ÀÚ
+	uint32	room_id;	// ë°© ID
+	char	room_name[ROOM_NAME_MAX]; // 50ì
 	uint16	current_player_count;
-	bool	is_game_start;	// °ÔÀÓÀÌ ÀÌ¹Ì ½ÃÀÛµÈ ¹æÀÎÁö
+	bool	is_game_start;	// ê²Œì„ì´ ì´ë¯¸ ì‹œì‘ëœ ë°©ì¸ì§€
 
 	RoomInfo() = default;
 	RoomInfo(uint32 id, const char* name, uint16 cnt, bool gameStart)

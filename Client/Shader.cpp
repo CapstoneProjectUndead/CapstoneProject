@@ -3,6 +3,8 @@
 #include "Object.h"
 #include "GeometryLoader.h"
 
+CDescriptorHeapManager* CShader::current_heap_manager = nullptr;
+
 void CDescriptorHeapManager::Initialize(ID3D12Device* device, UINT numDescriptors)
 {
 	num_desc = numDescriptors;
@@ -269,15 +271,13 @@ void CShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
 
 void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
 {
-	// object별로 srv 하나만 적용됨(수정 필요)
-	if (heap_manager) {
-		UINT srvIndex = object->GetSRVIndex();
-		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = heap_manager->GetGPUHandle(srvIndex);
+	current_heap_manager = heap_manager.get();
 
-		commandList->SetGraphicsRootDescriptorTable(5, gpuHandle);
-	}
 	object->UpdateShaderVariables(commandList);
 	object->Render(commandList);
+
+	// 사용 후 초기화
+	current_heap_manager = nullptr;
 }
 
 // CSkinningShader
