@@ -106,9 +106,7 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
         float decel = obj->friction * dt;
         if (decel > speedLen) decel = speedLen;
 
-        if (speedLen > 0) {
-            obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel / speedLen));
-        }
+        obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
     }
     else {
         // 공중일 때: 중력 가속

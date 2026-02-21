@@ -92,29 +92,31 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     if (input.a) dir.x--;
     if (input.d) dir.x++;
 
+    // 점프 로직 활성화
+    if (input.space && is_grounded) {
+        velocity.y = jump_power;
+    }
+
     // 상태 갱신
-    if (dir.x == 0 && dir.z == 0) 
+    if (dir.x == 0 && dir.z == 0)
         state = PLAYER_STATE::IDLE;
-    else 
+    else
         state = PLAYER_STATE::WALK;
 
     // ----------------------------
     // 2. 가속도 적용 (Velocity 갱신)
     // ----------------------------
-
-    // 입력이 있을 때만 가속
     if (dir.x != 0 || dir.z != 0) {
-
         XMFLOAT3 accel{};
         if (dir.z > 0) accel = Vector3::Add(accel, look);
         if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
         if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
         if (dir.x > 0) accel = Vector3::Add(accel, right);
 
-        // 정규화 (대각선 이동 속도 일정하게)
+        // 정규화
         accel = Vector3::Normalize(accel);
 
-        // 속도 증가: velocity += accel * speed * dt
+        // 클라이언트와 100% 완벽하게 동일한 가속도 공식 적용
         velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
     }
 
@@ -124,7 +126,6 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     // ---------------------
     // 3. 중력 적용 (Gravity)
     // ---------------------
-
     CPhysicsManager::GetInstance().ApplyGravity(this, deltaTime);
 
     // ----------------------------------------------
@@ -133,7 +134,6 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     XMFLOAT3 delta = Vector3::ScalarProduct(velocity, deltaTime);
     float moveDist = Vector3::Length(delta);
 
-    // 움직임이 거의 없으면 이동 로직 스킵 (마찰만 적용하러 감)
     if (moveDist < 0.0001f)
         return;
 
@@ -149,15 +149,13 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
             XMVECTOR n = info.normal;
             float d = info.depth;
 
-            // 위치 보정 (충돌 깊이만큼 밀어내기)
+            // 위치 보정
             XMVECTOR separation = n * d;
             XMVECTOR curPos = XMLoadFloat3(&position);
             XMStoreFloat3(&position, curPos + separation);
 
-            // 미끄러짐 (가져온 멤버 함수 사용)
+            // 미끄러짐
             Slide(n);
-
-            // 남은 시간만큼 delta 재계산 (변경된 속도 반영)
             delta = Vector3::ScalarProduct(velocity, deltaTime);
         }
 
@@ -166,7 +164,7 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
             XMVECTOR n = info.normal;
             float d = info.depth;
 
-            // 바닥 아래로 밀리는 현상 방지 (클라 로직 유지)
+            // 바닥 아래로 밀리는 현상 방지
             if (XMVectorGetY(n) < 0) n = -n;
 
             // 위치 보정
@@ -174,10 +172,8 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
             XMVECTOR curPos = XMLoadFloat3(&position);
             XMStoreFloat3(&position, curPos + separation);
 
-            // 미끄러짐 (가져온 멤버 함수 사용)
+            // 미끄러짐
             Slide(n);
-
-            // delta 재계산
             delta = Vector3::ScalarProduct(velocity, deltaTime);
         }
     }
@@ -187,11 +183,7 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     // ----------------
     position = Vector3::Add(position, delta);
 
-    // 콜라이더 위치 동기화
-    // 위치가 변했으니, 콜라이더 박스도 내 몸(position) 위치로 따라오게 해야 함.
     if (collider) {
-        // world_matrix를 갱신하거나, 콜라이더에 직접 position을 넣어주는 방식
-        // 행렬 전체 갱신
         UpdateWorldMatrix();
         collider->Update(deltaTime);
     }

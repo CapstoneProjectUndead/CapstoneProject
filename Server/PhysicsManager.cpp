@@ -93,50 +93,32 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
     return bHit;
 }
 
-bool CPhysicsManager::CheckGround(CColliderComponent* col)
-{
-    const auto& aabb = col->world_aabb;
-
-    for (auto& other : colliders) {
-        if (other.get() == col) continue;
-
-        const auto& b = other->world_aabb;
-
-        // 바닥 판정: AABB bottom이 다른 AABB top보다 아래로 내려갔는가?
-        if (aabb.Center.y - aabb.Extents.y <= b.Center.y + b.Extents.y + 0.05f) {
-            // XZ가 겹쳐야 진짜 바닥
-            bool overlapX = fabs(aabb.Center.x - b.Center.x) <= (aabb.Extents.x + b.Extents.x);
-            bool overlapZ = fabs(aabb.Center.z - b.Center.z) <= (aabb.Extents.z + b.Extents.z);
-
-            if (overlapX && overlapZ)
-                return true;
-        }
-    }
-
-    return false;
-}
-
 void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 {
-    // 1) 지면 체크
     auto* col = obj->GetComponent<CColliderComponent>();
-    if (col)
-        obj->is_grounded = CheckGround(col);
-    else
-        obj->is_grounded = false;
+    if (!col) return;
 
-    // 2) 중력 적용
-    if (!obj->is_grounded)
+    // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
+    XMFLOAT3 groundCheckDelta = { 0, -0.05f, 0 };
+    GJKAlgorithm::CollisionInfo groundInfo{};
+    Overlap(obj, groundCheckDelta, groundInfo);
+
+    obj->is_grounded = groundInfo.collided;
+
+    if (obj->is_grounded) {
+        // 지면 마찰력 적용
+        if (obj->velocity.y < 0) obj->velocity.y = 0;
+
+        float speedLen = Vector3::Length(obj->velocity);
+        float decel = obj->friction * dt;
+        if (decel > speedLen) decel = speedLen;
+
+        obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
+    }
+    else {
+        // 공중일 때: 중력 가속
         obj->velocity.y += gravity * dt;
-    else
-        obj->velocity.y = 0;
-
-    // 감속(마찰)
-    float speedLen = Vector3::Length(obj->velocity);
-    float decel = obj->friction * dt;
-    if (decel > speedLen) decel = speedLen;
-
-    obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
+    }
 }
 
 XMFLOAT3 CPhysicsManager::ComputeCollisionNormal(CColliderComponent* a, CColliderComponent* b)
