@@ -197,15 +197,20 @@ void InitPipeline() {
 }
 
 void CreateBuffers() {
-    // 1. 카메라 세팅 (드론 조종하기!)
-    // 🔥 [수정 1] 드론 위치: 높이(Y)를 살짝 낮추고, 앞으로(Z) 당겼어!
-    XMVECTOR cameraPos = XMVectorSet(50.0f, 200.0f, -0.0f, 0.0f);
+    // 1. 카메라 세팅 (완벽한 수직 탑뷰!)
 
-    // 🔥 [수정 2] 카메라 렌즈 방향: 맵의 살짝 뒤쪽(Z를 70으로)을 쳐다보게 해서 맵을 화면 아래로 내림!
-    XMVECTOR cameraTarget = XMVectorSet(50.0f, 0.0f, 90.0f, 0.0f);
+    // 🔥 [수정 1] 카메라 위치: 맵의 정중앙(25, 50) 바로 위 하늘(Y: 100)에 띄웁니다!
+    XMVECTOR cameraPos = XMVectorSet(25.0f, 150.0f, 50.0f, 0.0f);
 
-    XMVECTOR cameraUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    // 🔥 [수정 2] 바라보는 곳: 맵의 정중앙 땅바닥(25, 50)
+    XMVECTOR cameraTarget = XMVectorSet(25.0f, 0.0f, 50.0f, 0.0f);
+
+    // 🔥 [수정 3 - 완전 중요!] 수직으로 내려다볼 땐 '위쪽'이 Y가 아니라 Z축(1.0f)이 되어야 해!
+    XMVECTOR cameraUp = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+
     XMMATRIX view = XMMatrixLookAtLH(cameraPos, cameraTarget, cameraUp);
+
+    // ... (이 아래는 그대로!)
     XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1280.0f / 720.0f, 0.1f, 1000.0f);
     g_viewProjMatrix = XMMatrixMultiply(view, proj);
 
