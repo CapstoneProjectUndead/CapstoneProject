@@ -21,22 +21,32 @@ void CSceneManager::Render(ID3D12GraphicsCommandList* commandList)
 
 void CSceneManager::ChangeScene(SCENE_TYPE type)
 {
-	// ±âÁ¸ ¾À¿¡ ÀÖ´ø ³» ÇÃ·¹ÀÌ¾î¸¦ Ã£¾Æ¿Â´Ù.
-	// Title Scene¿¡¼­ ½ÃÀÛÇÏ´Â °æ¿ì¿¡´Â ¾øÀ» ¼ö ÀÖ±â ¶§¹®¿¡, ¹İµå½Ã null Ã¼Å©¸¦ ÇØ¾ßÇÑ´Ù. 
+	// ê¸°ì¡´ ì”¬ì— ìˆë˜ ë‚´ í”Œë ˆì´ì–´ë¥¼ ì°¾ì•„ì˜¨ë‹¤.
+	// Title Sceneì—ì„œ ì‹œì‘í•˜ëŠ” ê²½ìš°ì—ëŠ” ì—†ì„ ìˆ˜ ìˆê¸° ë•Œë¬¸ì—, ë°˜ë“œì‹œ null ì²´í¬ë¥¼ í•´ì•¼í•œë‹¤. 
 	std::shared_ptr<CMyPlayer> myPlayer;
 	if (active_scene->GetMyPlayer())
 		myPlayer = active_scene->GetMyPlayer();
 
-	// ±âÁ¸ ¾À¿¡¼­ Á¤¸®ÇÒ°Ô ÀÖÀ¸¸é ¿©±â¼­ Ã³¸®
+	// ê¸°ì¡´ ì”¬ì˜ shader Set
+	std::unordered_map<std::string, std::shared_ptr<CShader>> newShader;
+	auto& shaders = active_scene->GetShaders();
+	if (!shaders.empty()) {
+		newShader = shaders;
+	}
+
+	// ê¸°ì¡´ ì”¬ì—ì„œ ì •ë¦¬í• ê²Œ ìˆìœ¼ë©´ ì—¬ê¸°ì„œ ì²˜ë¦¬
 	active_scene->Exit();
 	
-	// ¹Ù²Ù°íÀÚÇÏ´Â ¾ÀÀ¸·Î active_sceneÀ» º¯°æ
+	// ë°”ê¾¸ê³ ìí•˜ëŠ” ì”¬ìœ¼ë¡œ active_sceneì„ ë³€ê²½
 	active_scene = scenes[(UINT)type].get();
 
-	// ÇØ´ç ¾À¿¡ ÇÃ·¹ÀÌ¾î ¼ÂÆÃ
+	// í•´ë‹¹ ì”¬ì— í”Œë ˆì´ì–´ ì…‹íŒ…
 	if (myPlayer)
 		active_scene->SetPlayer(myPlayer);
 
-	// ÇØ´ç ¾À¿¡¼­ ÇÒ °Ô ÀÖÀ¸¸é ¿©±â¼­ Ã³¸®
+	if (!newShader.empty())
+		active_scene->SetShaders(newShader);
+
+	// í•´ë‹¹ ì”¬ì—ì„œ í•  ê²Œ ìˆìœ¼ë©´ ì—¬ê¸°ì„œ ì²˜ë¦¬
 	active_scene->Enter();
 }

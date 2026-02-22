@@ -219,6 +219,11 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 	return player;
 }
 
+void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
+{
+	player->SetComponent(std::make_shared<CMovementComponent>());
+}
+
 CObjectFactory::MeshName CObjectFactory::stringToMeshName(const std::string& str)
 {
 	static const std::unordered_map<std::string, MeshName> table = {

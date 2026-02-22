@@ -11,20 +11,20 @@
 void CCustomScene::Initialize()
 {
 	// 렌더링할 때 필요한 쉐이더 객체 생성
-	{
-		// static shader
-		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("static", std::move(shader));
+    if (shaders.empty()) {
+        {
+            // static shader
+            std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+            shader->CreateShader(GET_DEVICE);
+            shaders.emplace("static", std::move(shader));
+        }
+        {
+            // skinning
+            std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+            shader->CreateShader(GET_DEVICE);
+            shaders.emplace("skinning", std::move(shader));
+        }
 	}
-	{
-		// skinning
-		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("skinning", std::move(shader));
-	}
-
-    BuildObjects(GET_DEVICE, GET_CMD_LIST);
 }
 
 void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -35,8 +35,9 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
         my_player = std::make_shared<CMyPlayer>();
         factory->CreateUndeadCharacter(my_player, skinningHeapManager);
     }
+    my_player->SetPitch(-10);   // 얼굴이 잘보이도록 수치 조정
 
-    {
+    if(objects.empty()) {
         CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
         objects = factory->CreateLobby(staticHeapManager);
     }
@@ -46,6 +47,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
         camera->SetTarget(my_player.get());
         camera->Initialize(device, commandList);
         camera->SetCameraOffset(XMFLOAT3{ 0.0f, 1.0f, 1.0f });
+        camera->SetMode(CCamera::EMode::FIXED);
     }
 
     // light 생성
@@ -57,16 +59,32 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
 
 void CCustomScene::Enter()
 {
+    BuildObjects(GET_DEVICE, GET_CMD_LIST);
+
+    if (my_player) {
+        my_player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
+        camera->SetTarget(my_player.get());
+    }
 }
 
 void CCustomScene::Exit()
 {
+
 }
 
 bool CCustomScene::IsUIInputEnabled()
 {
-    return false;
+    bool state = true;
+
+    CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+    assert(scene);
+
+    if (scene->GetSceneType() == SCENE_TYPE::CUSTOMS)
+        state = false;
+
+    return state;
 }
+
 
 void CCustomScene::DrawUI()
 {
@@ -140,8 +158,6 @@ void CCustomScene::DrawCustomizingWindow()
         // 완료 버튼도 적당한 크기로 수정
         if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150, 40))) {
             CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
-            CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
-            activeScene->SetPlayer(my_player);
         }
     }
 

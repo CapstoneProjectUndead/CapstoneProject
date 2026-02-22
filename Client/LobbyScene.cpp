@@ -20,17 +20,19 @@ CLobbyScene::~CLobbyScene()
 void CLobbyScene::Initialize()
 {
 	// 렌더링할 때 필요한 쉐이더 객체 생성
-	{
-		// static shader
-		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("static", std::move(shader));
-	}
-	{
-		// skinning
-		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("skinning", std::move(shader));
+	if(shaders.empty()) {
+		{
+			// static shader
+			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+			shader->CreateShader(GET_DEVICE);
+			shaders.emplace("static", std::move(shader));
+		}
+		{
+			// skinning
+			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+			shader->CreateShader(GET_DEVICE);
+			shaders.emplace("skinning", std::move(shader));
+		}
 	}
 }
 
@@ -41,8 +43,11 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
+	else {
+		factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));
+	}
 	
-	{
+	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
 	}

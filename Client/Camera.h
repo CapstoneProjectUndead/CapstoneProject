@@ -12,6 +12,7 @@ struct CameraCB
 class CCamera
 {
 public:
+	enum class EMode { FIRST_PERSON, THIRD_PERSON, FIXED };
 	CCamera();
 
 	void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -40,9 +41,9 @@ public:
 	XMFLOAT3 GetOffset() const { return offset; }
 
 	void SetTarget(CObject* object) { target_object = object; }
+	void SetMode(EMode m) { mode = m; }
 protected:
-	enum class ECameraMode { FIRST_PERSON, THIRD_PERSON };
-	ECameraMode mode{ ECameraMode::THIRD_PERSON };
+	EMode mode{ EMode::THIRD_PERSON };
 
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;

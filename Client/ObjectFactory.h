@@ -18,6 +18,7 @@ public:
 	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
+	void SetComponent(std::shared_ptr<CPlayer>& player);
 private:
 	enum class MeshName {
 		body,

@@ -113,18 +113,18 @@ void CCamera::SetCameraOffset(XMFLOAT3& cameraOffset)
 	if (fabsf(offset.z) < 0.0001f) {
 		// 1인칭: 플레이어가 바라보는 방향(target_object->look)을 그대로 사용
 		SetLookTo(xmf3CameraPosition, target_object->look, target_object->up);
-		mode = ECameraMode::FIRST_PERSON;
+		mode = EMode::FIRST_PERSON;
 	}
 	else {
 		// 3인칭: 플레이어 위치를 바라봄
 		SetLookAt(xmf3CameraPosition, target_object->position, target_object->up);
-		mode = ECameraMode::THIRD_PERSON;
+		mode = EMode::THIRD_PERSON;
 	}
 }
 
 void CCamera::GenerateViewMatrix()
 {
-	if (mode == ECameraMode::FIRST_PERSON) {
+	if (mode == EMode::FIRST_PERSON) {
 		// 위치, 바라보는 방향(look), 하늘 방향(up)을 이용
 		view_matrix = Matrix4x4::LookToLH(position, look, up);
 	}
@@ -197,7 +197,8 @@ void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 	XMVECTOR vLook = finalRotate.r[2];
 	XMVECTOR eyePos = worldHeadPos + (vUp * 0.1f) + (vLook * 0.05f);
 
-	if (mode == ECameraMode::FIRST_PERSON) {
+	switch (mode) {
+	case CCamera::EMode::FIRST_PERSON:
 		// 위치를 head로 고정
 		XMStoreFloat3(&position, eyePos);
 
@@ -205,9 +206,8 @@ void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 		XMStoreFloat3(&look, finalRotate.r[2]);
 		XMStoreFloat3(&up, finalRotate.r[1]);
 		XMStoreFloat3(&right, finalRotate.r[0]);
-	}
-	else {
-		// 3인칭
+		break;
+	case CCamera::EMode::THIRD_PERSON:
 		// 머리 위치를 기준으로 오프셋만큼 뒤로 보냄
 		XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), finalRotate);
 		XMStoreFloat3(&position, worldHeadPos + xmvOffset);
@@ -216,6 +216,11 @@ void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 		XMFLOAT3 p;
 		XMStoreFloat3(&p, worldHeadPos);
 		SetLookAt(position, p, target_object->up);
+		break;
+	case CCamera::EMode::FIXED:
+		break;
+	default:
+		break;
 	}
 
 	GenerateViewMatrix();
