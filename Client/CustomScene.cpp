@@ -25,6 +25,11 @@ void CCustomScene::Initialize()
             shaders.emplace("skinning", std::move(shader));
         }
 	}
+
+    if (objects.empty()) {
+        CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+        objects = factory->CreateLobby(staticHeapManager);
+    }
 }
 
 void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -36,11 +41,6 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
         factory->CreateUndeadCharacter(my_player, skinningHeapManager);
     }
     my_player->SetPitch(-10);   // 얼굴이 잘보이도록 수치 조정
-
-    if(objects.empty()) {
-        CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-        objects = factory->CreateLobby(staticHeapManager);
-    }
 
     if (!camera) {
         camera = std::make_shared<CCamera>();
