@@ -108,71 +108,46 @@ void CMovementComponent::Update(const float deltaTime)
     owner->position = Vector3::Add(owner->position, delta);
 }
 
-void CMovementComponent::Simulate(const XMFLOAT3& dir, float dt)
+void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)
 {
-    // 입력이 있을 때만 가속
-    XMFLOAT3 accel{};
-    if (dir.z > 0) accel = Vector3::Add(accel, owner->look);
-    if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->look, -1));
-    if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->right, -1));
-    if (dir.x > 0) accel = Vector3::Add(accel, owner->right);
+    Move(dir, deltaTime);
 
-    ClampSpeed(); // 최대 속도 제한
+    // 최대 속도 제한
+    ClampSpeed();
 
-    // ------------------------------------------
-    // 2. 중력 적용 (PhysicsManager에서 가져온 로직)
-    // ------------------------------------------
-    CPhysicsManager::GetInstance().ApplyGravity(owner, dt);
+    // 중력/마찰/땅 확인
+    CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // ------------------------------------------
-    // 3. 이동 시뮬레이션 (Raycast + Overlap)
-    // ------------------------------------------
-    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, dt);
+    // 이동량 계산
+    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     float moveDist = Vector3::Length(delta);
+    if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
 
-    if (moveDist < 0.0001f)
-        return;
+    GJKAlgorithm::CollisionInfo info{};
+    // 중복 코드 람다로 처리
+    auto ResolveCollision = [&]() {
+        // overlap된 만큼 밀어내기
+        XMVECTOR separation = info.normal * info.depth;
+        XMVECTOR curPos = XMLoadFloat3(&owner->position);
+        XMStoreFloat3(&owner->position, curPos + separation);
 
-    auto collider = owner->GetComponent<CColliderComponent>();
+        Slide(info.normal);
+        };
 
-    if (collider) {
-        GJKAlgorithm::CollisionInfo info{};
-
-        // 지형 충돌 (Raycast)
-        XMFLOAT3 moveDir = Vector3::Normalize(delta);
-        if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
-            XMVECTOR n = info.normal;
-            float d = info.depth;
-            XMVECTOR separation = n * d;
-
-            XMVECTOR curPos = XMLoadFloat3(&owner->position);
-            XMStoreFloat3(&owner->position, curPos + separation);
-
-            Slide(info.normal);
-            delta = Vector3::ScalarProduct(owner->velocity, dt);
-        }
-
-        // 오브젝트 충돌 (Overlap)
-        if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
-            XMVECTOR n = info.normal;
-            float d = info.depth;
-
-            // 바닥 아래로 밀리는 현상 방지
-            if (XMVectorGetY(n) < 0) {
-                n = -n;
-            }
-
-            XMVECTOR separation = n * d;
-            XMVECTOR curPos = XMLoadFloat3(&owner->position);
-            XMStoreFloat3(&owner->position, curPos + separation);
-
-            Slide(n);
-            delta = Vector3::ScalarProduct(owner->velocity, dt);
-        }
+    // 지형 충돌(벽)
+    XMFLOAT3 moveDir = Vector3::Normalize(delta);
+    if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
+        ResolveCollision();
     }
 
-    // ----------------
-    // 4. 최종 위치 적용 
-    // ----------------
+    // 오브젝트 충돌(Table 등)
+    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
+    if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
+        if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
+        ResolveCollision();
+    }
+
+    // 최종 이동
+    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
     owner->position = Vector3::Add(owner->position, delta);
 }
