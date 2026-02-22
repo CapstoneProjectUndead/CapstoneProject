@@ -53,44 +53,31 @@ void CLobbyScene::Start()
 		// [충돌체 생성 및 물리 엔진 등록]
 		// ============================
 
-		if (children->name == "Floor") {
-			// [바닥 생성] - Box 형태
-			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+		if (children->name == "Wall") {
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
+			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			collider->owner = obj.get();
+			collider->Update(0.0f);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
 
-			boxCollider->owner = obj.get(); // 필수 (이게 없으면 허공에 뜨는 버그 발생)
-			boxCollider->Update(0.0f);
-
-			obj->SetComponent(boxCollider);
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
-
-			static_objects.push_back(obj);
 		}
-		else if (children->name == "Wall") {
-			// [벽 생성] - Triangle Mesh 형태 (정밀한 벽 충돌을 위함)
-			// 클라에서 Wall을 어떻게 처리했는지에 따라 CBoxShape로 바꿔도 무방합니다.
-			if (!children->collider.positions.empty()) {
-				std::unique_ptr<CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
-				auto wallCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-
-				wallCollider->owner = obj.get();
-				wallCollider->Update(0.0f);
-
-				obj->SetComponent(wallCollider);
-				CPhysicsManager::GetInstance().SetCollider(wallCollider);
+		else {
+			if (children->name == "Floor") {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);				
+				collider->owner = obj.get(); // 필수 (이게 없으면 허공에 뜨는 버그 발생)
+				collider->Update(0.0f);
+				obj->SetComponent(collider);
+				CPhysicsManager::GetInstance().SetCollider(collider);
 
 				static_objects.push_back(obj);
 			}
-		}
-		else {
-			// [일반 오브젝트(테이블, 소품 등) 생성] - Convex (다각형) 형태
-			if (!children->collider.positions.empty()) {
-				std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+			else if (!children->collider.positions.empty()) {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-
-				collider->owner = obj.get(); // 필수
+				collider->owner = obj.get();
 				collider->Update(0.0f);
-
 				obj->SetComponent(collider);
 				CPhysicsManager::GetInstance().SetCollider(collider);
 
