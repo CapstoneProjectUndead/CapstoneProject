@@ -63,6 +63,7 @@ struct NetPlayerInfo
 		, a(other.a)
 		, s(other.s)
 		, d(other.d)
+		, space(other.space)
 		, x(other.x)
 		, y(other.y)
 		, z(other.z)

@@ -92,7 +92,7 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     if (input.a) dir.x--;
     if (input.d) dir.x++;
 
-    // 점프 로직 활성화
+    // 점프
     if (input.space && is_grounded) {
         velocity.y = jump_power;
     }

@@ -37,8 +37,10 @@ int main()
 
     ASSERT_CRASH(serverService->StartServer());
 
-    // 네트워크 패킷을 받는 워커 스레드 5개 배치
-    for (int i = 0; i < 5; ++i) {
+    // 사용자 pc에 맞게 최적의 스레드 개수를 배치
+    int num_threads = std::thread::hardware_concurrency();
+
+    for (int i = 0; i < num_threads; ++i) {
         GThreadManager->Launch([&serverService]() {
             serverService->GetIocpCore().WorkerThreadLoop();
             });
@@ -73,12 +75,6 @@ int main()
         // 결과를 클라들에게 브로드캐스트
         if (ticked) {
             gGameFramework->SendResults();
-        }
-
-        // CPU 점유율 최적화: 아주 짧게 쉬어줌
-        // 남은 시간이 아주 많을 때만 제한적으로 사용하거나 생략 가능
-        if (accumulator < g_targetDT) {
-            std::this_thread::yield();
         }
     }
 

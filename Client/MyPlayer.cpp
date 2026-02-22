@@ -178,6 +178,8 @@ void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 	inputPkt.info.a = input.a;
 	inputPkt.info.s = input.s;
 	inputPkt.info.d = input.d;
+	inputPkt.info.space = input.space;
+		
 	inputPkt.info.yaw = yaw;
 	inputPkt.info.pitch = pitch;
 	inputPkt.info.state = state;
