@@ -53,10 +53,10 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
 
-			auto debugMesh = std::make_shared<CMeshComponent>();
-			obj->SetComponent(debugMesh);
-			debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
-			meshRenderer->SetRenderUnit(debugMesh.get());
+			//auto debugMesh = std::make_shared<CMeshComponent>();
+			//obj->SetComponent(debugMesh);
+			//debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
+			//meshRenderer->SetRenderUnit(debugMesh.get());
 		}
 		else {
 			if (children->name == "Floor") {
@@ -71,10 +71,10 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 				obj->SetComponent(collider);
 				CPhysicsManager::GetInstance().SetCollider(collider);
 
-				auto debugMesh = std::make_shared<CMeshComponent>();
-				obj->SetComponent(debugMesh);
-				debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
-				meshRenderer->SetRenderUnit(debugMesh.get());
+				//auto debugMesh = std::make_shared<CMeshComponent>();
+				//obj->SetComponent(debugMesh);
+				//debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
+				//meshRenderer->SetRenderUnit(debugMesh.get());
 			}
 		}
 
