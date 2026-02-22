@@ -27,6 +27,12 @@ void CMyPlayer::Update(float elapsedTime)
 
 	PreUpdate(elapsedTime);
 
+	if (!is_single) {
+		float lerpSpeed = 45.0f * elapsedTime;
+
+		position = Vector3::Lerp(position, { dest_info.x, dest_info.y, dest_info.z }, lerpSpeed);
+	}
+
 	CPlayer::Update(elapsedTime);
 }
 
@@ -81,7 +87,9 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	ProcessRotation();
 
 	// 3. 예측 이동
-	PredictMove(current_input, elapsedTime);
+	if (is_single) {
+		PredictMove(current_input, elapsedTime);
+	}
 }
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
@@ -231,19 +239,19 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	// 1. 장부(History)에서 서버가 말한 그 당시의 내 기록 찾기
 	auto it = std::find_if(client_history_deq.begin(), client_history_deq.end(),
 		[last_seq](const ClientFrameHistory& h) { return h.seq_num == last_seq; });
-
+	
 	if (it == client_history_deq.end())
 		return;
-
+	
 	// 2. 과거의 예측 위치와 서버의 진짜 위치 비교
 	XMFLOAT3 error = Vector3::Subtract(serverPos, it->predicted_pos);
 	float errorDist = Vector3::Length(error);
-
+	
 	// 3. 사용된 과거 기록은 삭제 (메모리 누수 방지)
 	while (!client_history_deq.empty() && client_history_deq.front().seq_num <= last_seq) {
 		client_history_deq.pop_front();
 	}
-
+	
 	// Case A: 오차가 5cm(0.05f) 이하면 완벽! 무시.
 	if (errorDist < 0.05f) {
 		return;
@@ -251,17 +259,17 @@ void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 	else if (errorDist < 0.5f) {
 		// 한 번에 팍 이동하지 않고 30%씩 부드럽게 스르륵 이동 (과거 코드의 부드러움)
 		position = Vector3::Add(position, error, 0.3f);
-
+	
 		// 장부(미래 예측 위치)들도 똑같이 밀어주기!
 		for (auto& frame : client_history_deq) {
 			frame.predicted_pos = Vector3::Add(frame.predicted_pos, error, 0.3f);
 		}
 		return;
 	}
-
+	
 	SetPosition(serverPos);
 	velocity = server_velocity;
-
+	
 	for (auto& frame : client_history_deq) {
 		SimulateMove(frame.input, frame.duration);
 		frame.predicted_pos = position; // 장부 갱신

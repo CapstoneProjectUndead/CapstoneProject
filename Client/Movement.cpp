@@ -4,6 +4,7 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "Player.h"
+#include "MyPlayer.h"
 
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
@@ -65,8 +66,13 @@ void CMovementComponent::Update(const float deltaTime)
     if (owner == nullptr)
         return;
     // 상대 플레이어이라면 return
-    auto p = dynamic_cast<CPlayer*>(owner);
-    if (p != nullptr && !p->GetIsMyPlayer())
+    auto player = dynamic_cast<CPlayer*>(owner);
+    if (player != nullptr && !player->GetIsMyPlayer())
+        return;
+    
+    // 싱글 플레이일 경우에만, CMovementComponent::Update를 실행한다. 
+    auto myPlayer = static_cast<CMyPlayer*>(player);
+    if (!myPlayer->GetSingle())
         return;
 
     ClampSpeed();
@@ -111,6 +117,12 @@ void CMovementComponent::Update(const float deltaTime)
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)
 {
     Move(dir, deltaTime);
+
+    if (dir.y > 0) {
+        if (owner->is_grounded) {
+            owner->velocity.y = owner->jump_power;
+        }
+    }
 
     // 최대 속도 제한
     ClampSpeed();

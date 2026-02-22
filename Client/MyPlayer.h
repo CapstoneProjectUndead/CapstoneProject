@@ -34,6 +34,9 @@ public:
     XMFLOAT3 GetServerVelocity() const { return server_velocity; }
     void SetServerVelocity(const XMFLOAT3 vel) { server_velocity = vel; }
 
+    void SetSingle(bool res) { is_single = res; }
+    bool GetSingle() const { return is_single; }
+
     // 클라이언트 예측을 서버 기준에 맞게 다시 보정하는 코드
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
     void SimulateMove(const InputData& input, float elapsedTime);
@@ -70,5 +73,7 @@ private:
     InputData                         current_input;
 
     XMFLOAT3                          server_velocity{};
+
+    bool                              is_single = true;
 };
 
