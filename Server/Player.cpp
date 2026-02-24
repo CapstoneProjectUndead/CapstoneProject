@@ -98,10 +98,15 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     }
 
     // 상태 갱신
-    if (dir.x == 0 && dir.z == 0)
+    if (dir.x == 0 && dir.z == 0) {
         state = PLAYER_STATE::IDLE;
-    else
+
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+    }
+    else {
         state = PLAYER_STATE::WALK;
+    }
 
     XMFLOAT3 accel{};
 

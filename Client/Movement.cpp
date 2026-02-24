@@ -65,6 +65,7 @@ void CMovementComponent::Update(const float deltaTime)
 {
     if (owner == nullptr)
         return;
+
     // 상대 플레이어이라면 return
     auto player = dynamic_cast<CPlayer*>(owner);
     if (player != nullptr && !player->GetIsMyPlayer())
