@@ -28,6 +28,7 @@ struct NetPlayerInfo
 	bool			a = false;
 	bool			s = false;
 	bool			d = false;
+	bool			space = false;
 
 	float			x, y, z;
 	float			vx		= 0.0f;
@@ -62,6 +63,7 @@ struct NetPlayerInfo
 		, a(other.a)
 		, s(other.s)
 		, d(other.d)
+		, space(other.space)
 		, x(other.x)
 		, y(other.y)
 		, z(other.z)
@@ -74,7 +76,7 @@ struct NetPlayerInfo
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 54, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 55, "NetObjectInfo size mismatch!");
 
 
 struct NetRoomInfo

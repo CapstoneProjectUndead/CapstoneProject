@@ -92,106 +92,75 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     if (input.a) dir.x--;
     if (input.d) dir.x++;
 
-    // 상태 갱신
-    if (dir.x == 0 && dir.z == 0) 
-        state = PLAYER_STATE::IDLE;
-    else 
-        state = PLAYER_STATE::WALK;
-
-    // ----------------------------
-    // 2. 가속도 적용 (Velocity 갱신)
-    // ----------------------------
-
-    // 입력이 있을 때만 가속
-    if (dir.x != 0 || dir.z != 0) {
-
-        XMFLOAT3 accel{};
-        if (dir.z > 0) accel = Vector3::Add(accel, look);
-        if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
-        if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
-        if (dir.x > 0) accel = Vector3::Add(accel, right);
-
-        // 정규화 (대각선 이동 속도 일정하게)
-        accel = Vector3::Normalize(accel);
-
-        // 속도 증가: velocity += accel * speed * dt
-        velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
+    // 점프
+    if (input.space && is_grounded) {
+        velocity.y = jump_power;
     }
+
+    // 상태 갱신
+    if (dir.x == 0 && dir.z == 0) {
+        state = PLAYER_STATE::IDLE;
+
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+    }
+    else {
+        state = PLAYER_STATE::WALK;
+    }
+
+    XMFLOAT3 accel{};
+
+    if (dir.z > 0) accel = Vector3::Add(accel, look);
+    if (dir.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(look, -1));
+    if (dir.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(right, -1));
+    if (dir.x > 0) accel = Vector3::Add(accel, right);
+
+    accel = Vector3::Normalize(accel);
+
+    // 가속도 적용: velocity += accel * speed * deltaTime
+    velocity = Vector3::Add(velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
 
     // 최대 속도 제한
     ClampSpeed();
 
-    // ---------------------
-    // 3. 중력 적용 (Gravity)
-    // ---------------------
-
+    // 중력/마찰/땅 확인
     CPhysicsManager::GetInstance().ApplyGravity(this, deltaTime);
 
-    // ----------------------------------------------
-    // 4. 이동 시뮬레이션 (충돌 해결: Raycast + Overlap)
-    // ----------------------------------------------
+    // 이동량 계산
     XMFLOAT3 delta = Vector3::ScalarProduct(velocity, deltaTime);
     float moveDist = Vector3::Length(delta);
+    if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
 
-    // 움직임이 거의 없으면 이동 로직 스킵 (마찰만 적용하러 감)
-    if (moveDist < 0.0001f)
-        return;
+    GJKAlgorithm::CollisionInfo info{};
+    // 중복 코드 람다로 처리
+    auto ResolveCollision = [&]() {
+        // overlap된 만큼 밀어내기
+        XMVECTOR separation = info.normal * info.depth;
+        XMVECTOR curPos = XMLoadFloat3(&position);
+        XMStoreFloat3(&position, curPos + separation);
 
-    auto collider = GetComponent<CColliderComponent>();
+        Slide(info.normal);
+        };
 
-    if (collider) {
-        GJKAlgorithm::CollisionInfo info{};
-
-        // 지형(벽) 충돌 체크 (Raycast)
-        XMFLOAT3 moveDir = Vector3::Normalize(delta);
-        if (CPhysicsManager::GetInstance().Raycast(position, moveDir, moveDist, info)) {
-
-            XMVECTOR n = info.normal;
-            float d = info.depth;
-
-            // 위치 보정 (충돌 깊이만큼 밀어내기)
-            XMVECTOR separation = n * d;
-            XMVECTOR curPos = XMLoadFloat3(&position);
-            XMStoreFloat3(&position, curPos + separation);
-
-            // 미끄러짐 (가져온 멤버 함수 사용)
-            Slide(n);
-
-            // 남은 시간만큼 delta 재계산 (변경된 속도 반영)
-            delta = Vector3::ScalarProduct(velocity, deltaTime);
-        }
-
-        // 오브젝트 충돌 체크 (Overlap)
-        if (CPhysicsManager::GetInstance().Overlap(this, delta, info)) {
-            XMVECTOR n = info.normal;
-            float d = info.depth;
-
-            // 바닥 아래로 밀리는 현상 방지 (클라 로직 유지)
-            if (XMVectorGetY(n) < 0) n = -n;
-
-            // 위치 보정
-            XMVECTOR separation = n * d;
-            XMVECTOR curPos = XMLoadFloat3(&position);
-            XMStoreFloat3(&position, curPos + separation);
-
-            // 미끄러짐 (가져온 멤버 함수 사용)
-            Slide(n);
-
-            // delta 재계산
-            delta = Vector3::ScalarProduct(velocity, deltaTime);
-        }
+    // 지형 충돌(벽)
+    XMFLOAT3 moveDir = Vector3::Normalize(delta);
+    if (CPhysicsManager::GetInstance().Raycast(position, moveDir, moveDist, info)) {
+        ResolveCollision();
     }
 
-    // ----------------
-    // 5. 최종 위치 적용
-    // ----------------
+    // 오브젝트 충돌(Table 등)
+    delta = Vector3::ScalarProduct(velocity, deltaTime);
+    if (CPhysicsManager::GetInstance().Overlap(this, delta, info)) {
+        if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
+        ResolveCollision();
+    }
+
+    // 최종 이동
+    delta = Vector3::ScalarProduct(velocity, deltaTime);
     position = Vector3::Add(position, delta);
 
-    // 콜라이더 위치 동기화
-    // 위치가 변했으니, 콜라이더 박스도 내 몸(position) 위치로 따라오게 해야 함.
+    auto collider = GetComponent<CColliderComponent>();
     if (collider) {
-        // world_matrix를 갱신하거나, 콜라이더에 직접 position을 넣어주는 방식
-        // 행렬 전체 갱신
         UpdateWorldMatrix();
         collider->Update(deltaTime);
     }

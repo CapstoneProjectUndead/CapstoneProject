@@ -37,8 +37,9 @@ void CLobbyScene::Start()
 		return;
 	}
 
-	// 2. 맵 데이터를 순회하며 충돌체만 쏙쏙 뽑아내기
+	// 2. 맵 데이터를 순회하며 충돌체만 뽑아내기
 	for (const auto& children : frameRoot->childrens) {
+
 		// 위치 정보가 아예 없는 빈 노드는 스킵
 		if (children->mesh.positions.empty() && children->collider.positions.empty())
 			continue;
@@ -48,30 +49,38 @@ void CLobbyScene::Start()
 		// 핵심: 이동/회전/크기(Matrix)를 그대로 서버 객체에 적용
 		obj->world_matrix = children->localMatrix;
 
-		if (children->name == "Floor") {
+		// ============================
+		// [충돌체 생성 및 물리 엔진 등록]
+		// ============================
 
-			// [바닥 생성]
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-			obj->SetComponent(boxCollider);
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+		if (children->name == "Wall") {
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
+			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			collider->owner = obj.get();
+			collider->Update(0.0f);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
 
-			boxCollider->Update(0.0f);
-
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
-			static_objects.push_back(obj);
 		}
-		else if (children->name != "Wall") {
+		else {
+			if (children->name == "Floor") {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);				
+				collider->owner = obj.get(); // 필수 (이게 없으면 허공에 뜨는 버그 발생)
+				collider->Update(0.0f);
+				obj->SetComponent(collider);
+				CPhysicsManager::GetInstance().SetCollider(collider);
 
-			// [일반 오브젝트(테이블 등) 생성] - Convex (다각형) 충돌체
-			if (!children->collider.positions.empty()) {
-				std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+				static_objects.push_back(obj);
+			}
+			else if (!children->collider.positions.empty()) {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 				collider->owner = obj.get();
-
 				collider->Update(0.0f);
-
+				obj->SetComponent(collider);
 				CPhysicsManager::GetInstance().SetCollider(collider);
+
 				static_objects.push_back(obj);
 			}
 		}

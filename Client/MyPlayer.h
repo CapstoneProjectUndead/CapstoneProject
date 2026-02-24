@@ -7,6 +7,7 @@ struct ClientFrameHistory
     float        duration;
     InputData    input;
     XMFLOAT3     predicted_pos; // 내가 예측했던 결과 좌표
+    XMFLOAT3     predicted_velocity;
     PLAYER_STATE state;
 };
 
@@ -30,9 +31,15 @@ public:
     std::shared_ptr<CUser>    GetUser() const { return user.lock(); }
     void SetUser(std::shared_ptr<CUser> _user) { user = _user; }
 
+    XMFLOAT3 GetServerVelocity() const { return server_velocity; }
+    void SetServerVelocity(const XMFLOAT3 vel) { server_velocity = vel; }
+
+    void SetSingle(bool res) { is_single = res; }
+    bool GetSingle() const { return is_single; }
+
     // 클라이언트 예측을 서버 기준에 맞게 다시 보정하는 코드
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
-    void SimulateMove(const InputData& input, float dt);
+    void SimulateMove(const InputData& input, float elapsedTime);
 
     void BeginSendInputPacket(float elapsedTime);
 
@@ -64,5 +71,9 @@ private:
     uint64                            client_seq_counter = 0;
     std::deque<ClientFrameHistory>    client_history_deq; // 시퀀스 장부
     InputData                         current_input;
+
+    XMFLOAT3                          server_velocity{};
+
+    bool                              is_single = true;
 };
 

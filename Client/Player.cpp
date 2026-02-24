@@ -201,7 +201,7 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     pitch = std::clamp(pitch, -89.9f, 89.9f);
 
     // 회전 적용
-    SetYawPitch(yaw, pitch);
+    SetYawPitch(yaw, 0.0f);
     UpdateWorldMatrix();
 }
 

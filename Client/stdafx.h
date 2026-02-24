@@ -87,7 +87,7 @@ extern bool g_run;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
-#define DEBUG
+//#define DEBUG
 
 //#define _WITH_SWAPCHAIN_FULLSCREEN_STATE
 

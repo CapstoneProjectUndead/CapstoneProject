@@ -34,6 +34,11 @@ void CLobbyScene::Initialize()
 			shaders.emplace("skinning", std::move(shader));
 		}
 	}
+
+	{
+		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		objects = factory->CreateLobby(staticHeapManager);
+	}
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -45,11 +50,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	}
 	else {
 		factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));
-	}
-	
-	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-		objects = factory->CreateLobby(staticHeapManager);
 	}
 
 	if (!camera) {

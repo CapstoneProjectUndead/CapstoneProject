@@ -176,7 +176,7 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->SetPitch(pkt.info.pitch);
 
 	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
-	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space };
 	PendingInput pInput{ input, pkt.seq_num };
 	mover->PushInput(pInput);
 }

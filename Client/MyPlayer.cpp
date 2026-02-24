@@ -27,6 +27,13 @@ void CMyPlayer::Update(float elapsedTime)
 
 	PreUpdate(elapsedTime);
 
+	// 멀티 플레이일 경우에만, 아래 로직이 실행
+	if (!is_single) {
+		float lerpSpeed = 8.0f * elapsedTime;
+
+		position = Vector3::Lerp(position, { dest_info.x, dest_info.y, dest_info.z }, lerpSpeed);
+	}
+
 	CPlayer::Update(elapsedTime);
 }
 
@@ -81,7 +88,9 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	ProcessRotation();
 
 	// 3. 예측 이동
-	PredictMove(current_input, elapsedTime);
+	if (is_single) {
+		PredictMove(current_input, elapsedTime);
+	}
 }
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
@@ -162,6 +171,7 @@ void CMyPlayer::BeginSendInputPacket(float elapsedTime)
 		history.input = current_input;
 		history.duration = dt_accumulator;
 		history.predicted_pos = position;
+		history.predicted_velocity = velocity;
 		history.state = state;
 		RecordClientFrameHistory(history);
 
@@ -178,6 +188,8 @@ void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 	inputPkt.info.a = input.a;
 	inputPkt.info.s = input.s;
 	inputPkt.info.d = input.d;
+	inputPkt.info.space = input.space;
+		
 	inputPkt.info.yaw = yaw;
 	inputPkt.info.pitch = pitch;
 	inputPkt.info.state = state;
@@ -200,7 +212,7 @@ void CMyPlayer::SendPingToServer(const float elapsedTime)
 	}
 }
 
-void CMyPlayer::SimulateMove(const InputData& input, float dt)
+void CMyPlayer::SimulateMove(const InputData& input, float elapsedTime)
 {
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
 	if (input.w) dir.z++;
@@ -219,41 +231,48 @@ void CMyPlayer::SimulateMove(const InputData& input, float dt)
 
 	if (move) {
 		// A. 속도 계산 (Velocity 갱신)
-		move->Simulate(dir, dt);
+		move->Simulate(dir, elapsedTime);
 	}
 }
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
 {
-	// 1. 서버 좌표와 현재 내 좌표의 거리 계산
-	XMFLOAT3 diff = Vector3::Subtract(serverPos, position);
-	float errorDist = Vector3::Length(diff);
-
-	// 2. 보정 정책
-	if (errorDist < 0.01f) {
-		position = Vector3::Add(position, diff, 0.1f);
+	// 1. 장부(History)에서 서버가 말한 그 당시의 내 기록 찾기
+	auto it = std::find_if(client_history_deq.begin(), client_history_deq.end(),
+		[last_seq](const ClientFrameHistory& h) { return h.seq_num == last_seq; });
+	
+	if (it == client_history_deq.end())
 		return;
-	}
-	else if (errorDist < 0.2f) {
-		position = Vector3::Add(position, diff, 0.5f);
-		return;
-	}
-
-	// 3. 서버 좌표로 스냅
-	SetPosition(serverPos);
-
-	// 4. 서버가 확인한 입력까지 제거 
-	while (!client_history_deq.empty() &&
-		client_history_deq.front().seq_num <= last_seq) {
+	
+	// 2. 과거의 예측 위치와 서버의 진짜 위치 비교
+	XMFLOAT3 error = Vector3::Subtract(serverPos, it->predicted_pos);
+	float errorDist = Vector3::Length(error);
+	
+	// 3. 사용된 과거 기록은 삭제 (메모리 누수 방지)
+	while (!client_history_deq.empty() && client_history_deq.front().seq_num <= last_seq) {
 		client_history_deq.pop_front();
 	}
-
-	// 5. 남은 미래 입력 재시뮬
+	
+	// Case A: 오차가 5cm(0.05f) 이하면 완벽! 무시.
+	if (errorDist < 0.05f) {
+		return;
+	}
+	else if (errorDist < 0.5f) {
+		// 한 번에 팍 이동하지 않고 30%씩 부드럽게 스르륵 이동 (과거 코드의 부드러움)
+		position = Vector3::Add(position, error, 0.3f);
+	
+		// 장부(미래 예측 위치)들도 똑같이 밀어주기!
+		for (auto& frame : client_history_deq) {
+			frame.predicted_pos = Vector3::Add(frame.predicted_pos, error, 0.3f);
+		}
+		return;
+	}
+	
+	SetPosition(serverPos);
+	velocity = server_velocity;
+	
 	for (auto& frame : client_history_deq) {
-
 		SimulateMove(frame.input, frame.duration);
-
-		// 장부 위치 갱신
-		frame.predicted_pos = position;
+		frame.predicted_pos = position; // 장부 갱신
 	}
 }

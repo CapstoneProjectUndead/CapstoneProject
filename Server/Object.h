@@ -91,7 +91,7 @@ protected:
     float                               speed{ 10.0f };
     float                               max_speed{ 30.0f };
     float                               friction{ 9.0f };
-    float                               jump_power{ 12.0f };
+    float                               jump_power{ 6.0f };
 
 
     // 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
