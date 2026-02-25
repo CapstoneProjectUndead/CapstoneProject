@@ -218,11 +218,8 @@ void CScene::BroadcastUserEnter(shared_ptr<CPlayer> player)
 // 서버 권위 방식
 void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt)
 {
-	auto it = players.find(pkt.info.player_id);
-	if (it == players.end())
-		return;
-
-	auto mover = it->second; // 실제 움직인 플레이어
+	auto mover = CAST_CS(session)->GetUser()->GetPlayer();
+	assert(mover && mover->GetID() == pkt.info.player_id);
 
 	if (pkt.seq_num <= mover->GetLastSequence())
 		return;
