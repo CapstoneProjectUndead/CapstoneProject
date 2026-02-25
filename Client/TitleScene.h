@@ -46,12 +46,6 @@ public:
     void SetUIState(TitleUIState state) { ui_state = state; }
     TitleUIState GetUIState() const { return ui_state; }
 
-    void StartLoading(LoadingType type) { loading_type = type; }
-    void StopLoading() { loading_type = LoadingType::None; }
-
-    void ShowResultPopup(bool is_success, const std::string& msg);
-    void CloseResultPopup();
-
     void SetOnline(bool online) { is_online = online; }
     void SetRoomCreatePopup(bool show) { show_room_create_popup = show; }
 
@@ -81,6 +75,12 @@ private:
 
     void DrawRefreshButton();
     void DrawThreeButton();
+
+    void ShowResultPopup(bool is_success, const std::string& msg);
+    void CloseResultPopup();
+
+    void StartLoading(LoadingType type) { loading_type = type; }
+    void StopLoading() { loading_type = LoadingType::None; }
 
 private:
     std::unordered_map<uint32, RoomInfo> rooms;

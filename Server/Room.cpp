@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Room.h"
 #include "Scene.h"
+#include "CustomScene.h"
 #include "LobbyScene.h"
 
 #define ROOM_MAX_PLAYER 4
@@ -33,6 +34,11 @@ CRoom::~CRoom()
 
 void CRoom::Initialize()
 {
+	// CCustomScene 持失
+	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CLobbyScene>(room_info.room_id);
+	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Start();
+	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetRoom(shared_from_this());
+
 	// LobbyScene 持失
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();

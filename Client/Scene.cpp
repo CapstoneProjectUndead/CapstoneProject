@@ -165,7 +165,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 			// 플레이어가 속한 Scene
 			my_player->SetCurrentSceneType(pkt.scene_type);
 
-			my_player->SetSingle(false);
+			my_player->SetIsSingle(false);
 
 			if (SERVER_SESSION) {
 				auto user = SERVER_SESSION->GetUser();

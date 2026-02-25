@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "RoomManager.h"
 #include "Scene.h"
-#include "LobbyScene.h"
 #include "User.h"
+#include "CustomScene.h"
+#include "LobbyScene.h"
 
 
 CRoomManager::CRoomManager()
@@ -114,18 +115,18 @@ void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	// 유저는 자신의 Room 포인터를 들고 있는다.
 	user->SetRoom(room);
 
-	// 플레이어 Lobby Scene에 입장
+	// 플레이어 Custom Scene에 입장
 	{
 		auto& scenes = room->GetScenes();
-		CScene* scene = scenes[(UINT)SCENE_TYPE::LOBBY].get();
+		CScene* scene = scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
 		assert(scene);
 
 		PktDummy dummypkt;
 		dummypkt.value = roomId;
 
 		scene->PushPacketJob(user->GetSession()
-			, (CLobbyScene*)scene
-			, &CLobbyScene::C_Enter_Lobby
+			, (CCustomScene*)scene
+			, &CCustomScene::C_Enter_CustomScene
 			, dummypkt);
 	}
 

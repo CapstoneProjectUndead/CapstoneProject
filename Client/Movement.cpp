@@ -73,7 +73,7 @@ void CMovementComponent::Update(const float deltaTime)
     
     // 싱글 플레이일 경우에만, CMovementComponent::Update를 실행한다. 
     auto myPlayer = static_cast<CMyPlayer*>(player);
-    if (!myPlayer->GetSingle())
+    if (!myPlayer->GetIsSingle())
         return;
 
     ClampSpeed();

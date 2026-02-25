@@ -35,7 +35,7 @@ void CLobbyScene::Initialize()
 		}
 	}
 
-	{
+	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
 	}

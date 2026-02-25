@@ -198,11 +198,11 @@ void CTitleScene::DrawTitleMainWindow()
 
     float scale = G_RATIO_Y;
 
-    // 2. [핵심 수정] 버튼의 가로/세로 크기 모두에 scale을 곱한다.
+    // 2. 버튼의 가로/세로 크기 모두에 scale을 곱한다.
     ImVec2 btnSize = ImVec2(200.0f * scale, 55.0f * scale);
 
     // 위치는 화면 비율(%) 기반이므로 그대로 둡니다. 
-    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.7f);
+    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.75f);
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
@@ -555,7 +555,7 @@ void CTitleScene::DrawLoadingPopUpResult()
                         is_room_enter = false;
 
                         // 여기서 씬 전환!
-                        CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+                        CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
                     }
                 }
 
