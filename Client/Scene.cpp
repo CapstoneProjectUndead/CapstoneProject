@@ -189,6 +189,10 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->SetState(pkt.info.state);
 		otherPlayer->SetCurrentSceneType(pkt.scene_type);
 
+		otherPlayer->ChangeModelSet(pkt.info.body_type);
+		otherPlayer->ChangeEyes(pkt.info.eyes_type);
+		otherPlayer->ChangeMouth(pkt.info.mouth_type);
+
 		EnterScene(otherPlayer, otherPlayer->GetID());
 	}
 }
@@ -217,6 +221,11 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 
 		// 굳이이긴 하나, 그래도 그냥 set 한다.
 		otherPlayer->SetRoomID(pkt.room_id);
+
+		// 다른 플레이어의 캐릭터 커스터마이즈
+		otherPlayer->ChangeModelSet(userList[i].info.body_type);
+		otherPlayer->ChangeEyes(userList[i].info.eyes_type);
+		otherPlayer->ChangeMouth(userList[i].info.mouth_type);
 
 		// Active Scene에 다른 유저 입장
 		EnterScene(otherPlayer, otherPlayer->GetID());

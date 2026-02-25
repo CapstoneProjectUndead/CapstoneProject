@@ -106,8 +106,8 @@ void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_C
 	assert(player);
 	
 	player->SetBodyType(pkt.body_type);
-	player->SetBodyType(pkt.eye_type);
-	player->SetBodyType(pkt.mouth_type);
+	player->SetEyesType(pkt.eye_type);
+	player->SetMouthType(pkt.mouth_type);
 
 	if (auto r = room.lock()) {
 		CLobbyScene* lobbyScene = (CLobbyScene*)r->GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();

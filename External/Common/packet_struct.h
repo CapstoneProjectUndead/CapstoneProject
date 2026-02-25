@@ -51,7 +51,7 @@ struct NetPlayerInfo
 		: player_id(_id)
 		, room_id(roomId)
 		, is_my_player(false)
-		, body_type(body_type)
+		, body_type(bodyType)
 		, eyes_type(eyeType)
 		, mouth_type(mouthType)
 		, state(PLAYER_STATE::IDLE)
