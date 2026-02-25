@@ -37,8 +37,9 @@ void CLobbyScene::Start()
 		return;
 	}
 
-	// 2. 맵 데이터를 순회하며 충돌체만 쏙쏙 뽑아내기
+	// 2. 맵 데이터를 순회하며 충돌체만 뽑아내기
 	for (const auto& children : frameRoot->childrens) {
+
 		// 위치 정보가 아예 없는 빈 노드는 스킵
 		if (children->mesh.positions.empty() && children->collider.positions.empty())
 			continue;
@@ -48,30 +49,38 @@ void CLobbyScene::Start()
 		// 핵심: 이동/회전/크기(Matrix)를 그대로 서버 객체에 적용
 		obj->world_matrix = children->localMatrix;
 
-		if (children->name == "Floor") {
+		// ============================
+		// [충돌체 생성 및 물리 엔진 등록]
+		// ============================
 
-			// [바닥 생성]
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-			obj->SetComponent(boxCollider);
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+		if (children->name == "Wall") {
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
+			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			collider->owner = obj.get();
+			collider->Update(0.0f);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
 
-			boxCollider->Update(0.0f);
-
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
-			static_objects.push_back(obj);
 		}
-		else if (children->name != "Wall") {
+		else {
+			if (children->name == "Floor") {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);				
+				collider->owner = obj.get(); // 필수 (이게 없으면 허공에 뜨는 버그 발생)
+				collider->Update(0.0f);
+				obj->SetComponent(collider);
+				CPhysicsManager::GetInstance().SetCollider(collider);
 
-			// [일반 오브젝트(테이블 등) 생성] - Convex (다각형) 충돌체
-			if (!children->collider.positions.empty()) {
-				std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+				static_objects.push_back(obj);
+			}
+			else if (!children->collider.positions.empty()) {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 				collider->owner = obj.get();
-
 				collider->Update(0.0f);
-
+				obj->SetComponent(collider);
 				CPhysicsManager::GetInstance().SetCollider(collider);
+
 				static_objects.push_back(obj);
 			}
 		}
@@ -129,56 +138,8 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 		session->DoSend(sendBuffer);
 	}
 
-	// 지금 접속한 유저에게 다른 유저의 정보도 알려준다.
-	// 여기서는 가변길이 패킷을 보낸다.
-	{
-		if (!players.empty()) {
-
-			int32 cnt = players.size();
-			int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
-
-			// 예시, 꼭 LobbyScene일 필요는 없다.
-			S_PLAYERLIST_WRITE pktWriter(player->GetRoomID(), SCENE_TYPE::LOBBY);
-
-			S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
-
-			int idx = 0;
-			for (auto& pl : players) {
-				if (pl.second->GetID() == player->GetID())
-					continue;
-
-				auto otherPlayer = pl.second;
-				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
-					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
-					, pl.second->GetPosition().z };
-
-				userList[idx++] = { info };
-			}
-
-			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
-			session->DoSend(sendBuffer);
-		}
-	}
-
 	// 유저 Scene에 입장
 	EnterScene(player);
-
-	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
-	{
-		S_SpawnPlayer spawnPkt;
-		//spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = false;
-		spawnPkt.info.player_id = player->GetID();
-		//spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = false;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		BroadCast(sendBuffer, player->GetID());
-	}
 }
 
 void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt)
@@ -235,37 +196,9 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 			user->GetSession()->DoSend(sendBuffer);
 	}
 
-	// 유저에게 입장 허락 패킷과 방에 있는 다른 유저의 정보를 알려준다..
-	// 여기서는 가변길이 패킷을 보낸다.
-	{
-		// 먼저 그 방에 LobbyScene에 있는 유저들 정보를 보내준다.
-		if (!players.empty()) {
-
-			int32 cnt = players.size();
-			int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
-
-			S_PLAYERLIST_WRITE pktWriter(roomId, SCENE_TYPE::LOBBY);
-
-			S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
-
-			int idx = 0;
-			for (auto& pl : players) {
-				if (pl.second->GetID() == player->GetID())
-					continue;
-
-				auto otherPlayer = pl.second;
-				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
-					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
-					, pl.second->GetPosition().z };
-
-				userList[idx++] = { info };
-			}
-
-			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
-			if (user->GetSession())
-				user->GetSession()->DoSend(sendBuffer);
-		}
-	}
+	// 유저 Scene에 입장
+	// EnterScene 에서 유저들의 입장 정보들을 다 처리하도록 수정. (26. 2. 25)
+	EnterScene(player);
 	
 	// S_Enter_Room 패킷
 	// 입장 허락.
@@ -277,25 +210,5 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
 		if (user->GetSession())
 			user->GetSession()->DoSend(sendBuffer);
-	}
-
-	// 유저 Scene에 입장
-	EnterScene(player);
-
-	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
-	{
-		S_SpawnPlayer spawnPkt;
-		spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = false;
-		spawnPkt.info.player_id = player->GetID();
-		spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = false;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		BroadCast(sendBuffer, player->GetID());
 	}
 }

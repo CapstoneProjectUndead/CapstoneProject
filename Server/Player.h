@@ -79,6 +79,15 @@ public:
 		ping = (ping * 0.9f) + (newRtt * 0.1f);
 	}
 
+	uint8 GetBodyType() const { return body_type; }
+	void SetBodyType(uint8 type) { body_type = type; }
+
+	uint8 GetEyesType() const { return eyes_type; }
+	void SetEyesType(uint8 type) { eyes_type = type; }
+
+	uint8 GetMouthType() const { return mouth_type; }
+	void SetMouthType(uint8 type) { mouth_type = type; }
+
 private:
 	uint32						room_id; // 이 플레이어가 참여하고 있는 방 ID
 	SCENE_TYPE					current_scene_type; // 현재 플레이어가 속한 씬 (방이 씬을 포함하고 있는 구조)
@@ -91,5 +100,10 @@ private:
 	PLAYER_STATE				state;
 	deque<PendingInput>			input_queue;
 	deque<ServerFrameHistory>	server_history_deq;
+
+	// 커스터마이징
+	uint8 body_type{};
+	uint8 eyes_type{};
+	uint8 mouth_type{};
 };
 

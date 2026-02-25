@@ -144,7 +144,11 @@ void CScene::SimulatePlayers(const float elapsedTime)
 
 void CScene::EnterScene(shared_ptr<CPlayer> player)
 {
+	SendExistingUsers(player);
+
 	players[player->GetID()] = player;
+
+	BroadcastUserEnter(player);
 }
 
 void CScene::LeaveScene(uint64 playerId)
@@ -157,6 +161,58 @@ void CScene::LeaveScene(uint64 playerId)
 
 	SendBufferRef sendBuffer = MAKE_SEND_BUFFER(removePkt);
 	BroadCast(sendBuffer);
+}
+
+void CScene::SendExistingUsers(shared_ptr<CPlayer> player)
+{
+	// 여기서는 가변길이 패킷을 보낸다.
+	if (!players.empty()) {
+
+		int32 cnt = players.size();
+		int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
+
+		S_PLAYERLIST_WRITE pktWriter(player->GetRoomID(), scene_type);
+
+		S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
+
+		int idx = 0;
+		for (auto& pl : players) {
+			if (pl.second->GetID() == player->GetID())
+				continue;
+
+			auto otherPlayer = pl.second;
+			NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
+				, otherPlayer->GetBodyType(), otherPlayer->GetEyesType(), otherPlayer->GetMouthType()
+				, otherPlayer->GetPosition().x, pl.second->GetPosition().y
+				, pl.second->GetPosition().z };
+
+			userList[idx++] = { info };
+		}
+
+		SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
+		if (player->GetUser()->GetSession())
+			player->GetUser()->GetSession()->DoSend(sendBuffer);
+	}
+}
+
+void CScene::BroadcastUserEnter(shared_ptr<CPlayer> player)
+{
+	S_SpawnPlayer spawnPkt;
+	spawnPkt.room_id = player->GetRoomID();
+	spawnPkt.info.player_id = player->GetID();
+	spawnPkt.scene_type = scene_type;
+	spawnPkt.is_my_player = false;
+	spawnPkt.info.is_my_player = false;
+	spawnPkt.info.room_id = player->GetRoomID();
+	spawnPkt.info.body_type = player->GetBodyType(); 
+	spawnPkt.info.eyes_type = player->GetEyesType(); 
+	spawnPkt.info.mouth_type = player->GetMouthType();
+	spawnPkt.info.x = player->GetPosition().x;
+	spawnPkt.info.y = player->GetPosition().y;
+	spawnPkt.info.z = player->GetPosition().z;
+
+	auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+	BroadCast(sendBuffer, player->GetID());
 }
 
 // 서버 권위 방식
@@ -176,7 +232,7 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->SetPitch(pkt.info.pitch);
 
 	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
-	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d };
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space };
 	PendingInput pInput{ input, pkt.seq_num };
 	mover->PushInput(pInput);
 }

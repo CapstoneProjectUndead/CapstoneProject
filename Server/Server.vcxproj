@@ -154,6 +154,7 @@
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="Collider.cpp" />
+    <ClCompile Include="CustomScene.cpp" />
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="CustomScene.h" />
     <ClInclude Include="DBManager.h" />
     <ClInclude Include="DirectXMathHelper.h" />
     <ClInclude Include="GameFramework.h" />

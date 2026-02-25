@@ -12,8 +12,11 @@
 
 #define COPY_STRING(dest, src)  memset(dest, 0, sizeof(dest)); memcpy(dest, src, strlen(src));
 
-#define G_RATIO_X (ImGui::GetIO().DisplaySize.x / FRAME_BUFFER_WIDTH)
-#define G_RATIO_Y (ImGui::GetIO().DisplaySize.y / FRAME_BUFFER_HEIGHT)
+#define BASE_UI_WIDTH  800.f
+#define BASE_UI_HEIGHT 600.f
+
+#define G_RATIO_X (ImGui::GetIO().DisplaySize.x / BASE_UI_WIDTH)
+#define G_RATIO_Y (ImGui::GetIO().DisplaySize.y / BASE_UI_HEIGHT)
 
 #define GET_SERVER_SESSION CServerSessionManager::GetInstance().GetServerSession();
 #define SERVER_SESSION CServerSessionManager::GetInstance().GetServerSession()

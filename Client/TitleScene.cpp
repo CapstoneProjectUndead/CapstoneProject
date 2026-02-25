@@ -14,7 +14,7 @@
 
 
 CTitleScene::CTitleScene()
-	: CScene(SCENE_TYPE::TITLE)
+    : CScene(SCENE_TYPE::TITLE)
 {
 }
 
@@ -34,7 +34,7 @@ void CTitleScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void CTitleScene::Update(float elapsedTime)
 {
-    
+
 }
 
 void CTitleScene::Render(ID3D12GraphicsCommandList*)
@@ -43,8 +43,8 @@ void CTitleScene::Render(ID3D12GraphicsCommandList*)
 
 void CTitleScene::Enter()
 {
-	if (my_player)
-		my_player->SetCurrentSceneType(SCENE_TYPE::TITLE);
+    if (my_player)
+        my_player->SetCurrentSceneType(SCENE_TYPE::TITLE);
 }
 
 void CTitleScene::Exit()
@@ -141,38 +141,69 @@ void CTitleScene::DrawTitle()
     if (!is_title_draw)
         return;
 
-    // 배경 및 UNDEAD 텍스트 그리기 (기존 코드 유지)
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-    ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f)));
 
-    ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(760, 210), ImGuiCond_Always);
+    // 배경 채우기 
+    ImGui::GetBackgroundDrawList()->AddRectFilled(
+        ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
+    );
+
+    // 화면 중앙 상단 좌표 계산
+    // X는 정확히 화면 절반, Y는 화면 위에서 30% 내려온 지점
+    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.3f);
+
+    // Pivot(0.5f, 0.5f)을 주면, 윈도우의 '정중앙'이 centerPos에 딱 맞춰진다.
+    ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
     ImGui::SetNextWindowBgAlpha(0.0f);
 
-    ImGuiWindowFlags mainFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus;
+    // ImGuiWindowFlags_AlwaysAutoResize 추가
+    // 윈도우 크기를 고정하지 않고, 글자 크기(270px)에 맞춰서 그릇이 자동으로 늘어난다! (짤림 방지)
+    ImGuiWindowFlags mainFlags = ImGuiWindowFlags_NoDecoration |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoInputs |
+        ImGuiWindowFlags_AlwaysAutoResize;
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
     if (ImGui::Begin("Title", NULL, mainFlags)) {
-        if (CImGuiManager::title_font) ImGui::PushFont(CImGuiManager::title_font);
-        const char* titleText = "UNDEAD";
-        float textWidth = ImGui::CalcTextSize(titleText).x;
-        float windowWidth = ImGui::GetWindowSize().x;
 
-        ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+        if (CImGuiManager::title_font) {
+
+            float fontScale = G_RATIO_Y;
+            //fontScale = std::clamp(fontScale, 1.0f, 2.0f);
+
+            ImGui::PushFont(CImGuiManager::title_font);
+            ImGui::SetWindowFontScale(fontScale);
+        }
+
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));
-        ImGui::Text(titleText);
+        ImGui::Text("UNDEAD");
         ImGui::PopStyleColor();
 
-        if (CImGuiManager::title_font) ImGui::PopFont();
+        if (CImGuiManager::title_font)
+            ImGui::PopFont();
     }
     ImGui::End();
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
 }
 
 // 메인 메뉴 & 멀티 선택 메뉴 통합 관리
 void CTitleScene::DrawTitleMainWindow()
 {
-    ImGui::SetNextWindowPos(ImVec2(300, 350), ImGuiCond_Always);
+    // 1. 현재 화면 해상도 가져오기
+    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+
+    float scale = G_RATIO_Y;
+
+    // 2. 버튼의 가로/세로 크기 모두에 scale을 곱한다.
+    ImVec2 btnSize = ImVec2(200.0f * scale, 55.0f * scale);
+
+    // 위치는 화면 비율(%) 기반이므로 그대로 둡니다. 
+    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.75f);
+    ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
     ImGuiWindowFlags mainBtnFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -180,6 +211,9 @@ void CTitleScene::DrawTitleMainWindow()
 
     if (ImGui::Begin("Main Menu", NULL, mainBtnFlags))
     {
+        // 폰트 크기에도 똑같이 scale을 적용. (버튼과 글씨가 일체감 있게 커짐)
+        ImGui::SetWindowFontScale(scale);
+
         // 로딩 중이거나 팝업 떠있으면 버튼 비활성화
         bool should_disable = (loading_type != LoadingType::None) || pop_up_result.is_visible;
         ImGui::BeginDisabled(should_disable);
@@ -193,20 +227,20 @@ void CTitleScene::DrawTitleMainWindow()
         // ======================================
         if (ui_state == TitleUIState::Main)
         {
-            if (ImGui::Button((const char*)u8"싱글 플레이", ImVec2(200, 55))) {
+            if (ImGui::Button((const char*)u8"싱글 플레이", btnSize)) {
                 StartLoading(LoadingType::SinglePlay);
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"멀티 플레이", ImVec2(200, 55))) {
+            if (ImGui::Button((const char*)u8"멀티 플레이", btnSize)) {
                 SetUIState(TitleUIState::MultiSelect); // 상태 변경!
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"게임 종료", ImVec2(200, 55))) {
+            if (ImGui::Button((const char*)u8"게임 종료", btnSize)) {
                 g_run = false;
             }
         }
@@ -217,22 +251,22 @@ void CTitleScene::DrawTitleMainWindow()
         {
             if (!is_online) {
                 // 오프라인 상태: 로그인 / 회원가입 / 뒤로가기
-                if (ImGui::Button((const char*)u8"로그인", ImVec2(200, 55))) {
+                if (ImGui::Button((const char*)u8"로그인", btnSize)) {
                     SetUIState(TitleUIState::Login);
                 }
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                if (ImGui::Button((const char*)u8"회원가입", ImVec2(200, 55))) {
+                if (ImGui::Button((const char*)u8"회원가입", btnSize)) {
                     SetUIState(TitleUIState::SignUp);
                 }
             }
             else {
                 // 온라인 상태: 방 검색 / 로그아웃
-                if (ImGui::Button((const char*)u8"방 검색", ImVec2(200, 55))) {
+                if (ImGui::Button((const char*)u8"방 검색", btnSize)) {
                     is_title_draw = false;
                     SetUIState(TitleUIState::RoomList);
-                
+
                     if (SERVER_SESSION) {
                         auto user = SERVER_SESSION->GetUser();
                         if (user) {
@@ -245,21 +279,21 @@ void CTitleScene::DrawTitleMainWindow()
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                if (ImGui::Button((const char*)u8"로그아웃", ImVec2(200, 55))) {
+                if (ImGui::Button((const char*)u8"로그아웃", btnSize)) {
 
                     StartLoading(LoadingType::Logout);
 
                     // 로그아웃 패킷 전송 로직...
                     auto serverSession = GET_SERVER_SESSION
-                    if (serverSession) {
-                        C_LOGOUT logOutPkt;
-                        auto user = serverSession->GetUser();
-                        if (user) {
-                            logOutPkt.user_id = user->GetUserID();
-                            auto sendBuffer = MAKE_SEND_BUFFER(logOutPkt);
-                            serverSession->DoSend(sendBuffer);
+                        if (serverSession) {
+                            C_LOGOUT logOutPkt;
+                            auto user = serverSession->GetUser();
+                            if (user) {
+                                logOutPkt.user_id = user->GetUserID();
+                                auto sendBuffer = MAKE_SEND_BUFFER(logOutPkt);
+                                serverSession->DoSend(sendBuffer);
+                            }
                         }
-                    }
 
                     // (임시)
                     // is_online = false;
@@ -271,13 +305,16 @@ void CTitleScene::DrawTitleMainWindow()
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"뒤로가기", ImVec2(200, 55))) {
+            if (ImGui::Button((const char*)u8"뒤로가기", btnSize)) {
                 SetUIState(TitleUIState::Main); // 메인으로 복귀
             }
         }
 
         ImGui::PopStyleColor(3);
         ImGui::EndDisabled();
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
     }
     ImGui::End();
     ImGui::PopStyleVar();
@@ -285,31 +322,46 @@ void CTitleScene::DrawTitleMainWindow()
 
 void CTitleScene::DrawLogInWindow()
 {
-    ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(390, 220), ImGuiCond_Always);
+    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+
+    float scale = G_RATIO_Y;
+
+    ImVec2 winSize = ImVec2(400.0f * scale, 200.0f * scale);
+    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
+
+    ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(winSize, ImGuiCond_Always);
+
     ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
     // 창 닫기 감지를 위한 정적 변수 (기본값 true)
     static bool open = true;
 
     if (ImGui::Begin((const char*)u8"로그인", &open, winFlags)) {
+
+        ImGui::SetWindowFontScale(scale);
+
         static char id[64] = "";
         static char pw[64] = "";
 
         ImGui::Text((const char*)u8"ID / PW 를 입력하세요.");
         ImGui::Separator();
 
-        ImGui::PushItemWidth(230.0f);
+        ImGui::PushItemWidth(230.0f * scale);
         ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
         ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
         ImGui::PopItemWidth();
 
         ImGui::Spacing(); ImGui::Spacing();
 
-        float btnWidth = 380.0f;
+        // 버튼 크기 및 중앙 정렬 스케일링
+        float btnWidth = 360.0f * scale;
+        float btnHeight = 50.0f * scale;
+
+        // 동적 중앙 정렬: (현재 창의 실제 너비 - 스케일 적용된 버튼 너비) / 2
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
-        if (ImGui::Button("Connect & Login", ImVec2(btnWidth, 50))) {
+        if (ImGui::Button("Connect & Login", ImVec2(btnWidth, btnHeight))) {
 
             // 패킷 전송
             C_LOGIN loginPkt;
@@ -331,6 +383,9 @@ void CTitleScene::DrawLogInWindow()
             //result.Success("로그인 성공!");
             //SetPopUpResult(result);
             //StopLoading();
+
+            // 폰트 스케일 원상 복구
+            ImGui::SetWindowFontScale(1.0f);
         }
     }
     ImGui::End();
@@ -343,12 +398,23 @@ void CTitleScene::DrawLogInWindow()
 
 void CTitleScene::DrawSignUpWindow()
 {
-    ImGui::SetNextWindowPos(ImVec2(210, 260), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(390, 250), ImGuiCond_Always);
+    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+
+    float scale = G_RATIO_Y;
+
+    ImVec2 winSize = ImVec2(400.0f * scale, 230.0f * scale);
+    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
+
+    ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(winSize, ImGuiCond_Always);
+
     ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
     static bool open = true;
     if (ImGui::Begin((const char*)u8"회원가입", &open, winFlags)) {
+
+        ImGui::SetWindowFontScale(scale);
+
         static char id[64] = "";
         static char pw[64] = "";
         static char name[64] = "";
@@ -356,7 +422,7 @@ void CTitleScene::DrawSignUpWindow()
         ImGui::Text((const char*)u8"정보를 입력하세요.");
         ImGui::Separator();
 
-        ImGui::PushItemWidth(230.0f);
+        ImGui::PushItemWidth(230.0f * scale);
         ImGui::InputText("ID", id, IM_ARRAYSIZE(id));
         ImGui::InputText("PW", pw, IM_ARRAYSIZE(pw), ImGuiInputTextFlags_Password);
         ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
@@ -365,10 +431,14 @@ void CTitleScene::DrawSignUpWindow()
         ImGui::Spacing();
         ImGui::Spacing();
 
-        float btnWidth = 380.0f;
+        // 버튼 크기 및 중앙 정렬 스케일링
+        float btnWidth = 360.0f * scale;
+        float btnHeight = 50.0f * scale;
+
+        // 동적 중앙 정렬: (현재 창의 실제 너비 - 스케일 적용된 버튼 너비) / 2
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
-        if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, 50))) {
+        if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, btnHeight))) {
 
             C_SIGNUP signUpPkt;
             COPY_STRING(signUpPkt.id, id);
@@ -386,6 +456,9 @@ void CTitleScene::DrawSignUpWindow()
             memset(pw, 0, sizeof(pw));
             memset(name, 0, sizeof(name));
         }
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
     }
     ImGui::End();
 
@@ -403,10 +476,14 @@ void CTitleScene::DrawLoadingPopUp()
 
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f * scale, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
         ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+        ImGui::SetWindowFontScale(scale);
 
         const char* txt = "로딩 중...";
         switch (loading_type) {
@@ -424,6 +501,10 @@ void CTitleScene::DrawLoadingPopUp()
             StopLoading();
             ImGui::CloseCurrentPopup();
         }
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
+
         ImGui::EndPopup();
     }
 }
@@ -449,8 +530,12 @@ void CTitleScene::DrawLoadingPopUpResult()
 
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
+    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        ImGui::SetWindowFontScale(scale);
+
         ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
         ImGui::Spacing();
 
@@ -488,6 +573,9 @@ void CTitleScene::DrawLoadingPopUpResult()
 
                 CloseResultPopup();
             }
+
+            // 폰트 스케일 원상 복구
+            ImGui::SetWindowFontScale(1.0f);
         }
         ImGui::EndPopup();
     }
@@ -507,6 +595,10 @@ void CTitleScene::DrawRoomListUI()
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoResize;
 
     if (ImGui::Begin("MatchingWindow", NULL, flags)) {
+
+        float scale = G_RATIO_Y;
+        ImGui::SetWindowFontScale(scale);
+
         // 타이틀 (빨간 UNDEAD)
         ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
         if (CImGuiManager::title_font2) ImGui::PushFont(CImGuiManager::title_font2);
@@ -518,7 +610,9 @@ void CTitleScene::DrawRoomListUI()
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         ImGui::Text(titleText);
         ImGui::PopStyleColor();
-        if (CImGuiManager::title_font2) ImGui::PopFont();
+
+        if (CImGuiManager::title_font2)
+            ImGui::PopFont();
 
         ImGui::Spacing(); ImGui::Spacing();
 
@@ -531,25 +625,35 @@ void CTitleScene::DrawRoomListUI()
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
             selected_room_id = 0;
         }
+
+        ImGui::SetWindowFontScale(1.0f);
     }
     ImGui::End();
 }
 
 void CTitleScene::DrawRoomListTable()
 {
+    float scale = G_RATIO_Y;
+
     float windowWidth = ImGui::GetWindowSize().x;
-    float tableWidth = 700.0f; // 비율 조정 필요 시 적용
-    float tableHeight = 300.0f;
+    float tableWidth = 700.0f * scale; // 비율 조정
+    float tableHeight = 300.0f * scale;
 
     ImGui::SetCursorPosX((windowWidth - tableWidth) * 0.5f);
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.9f, 0.9f, 0.9f, 0.7f));
 
     if (ImGui::BeginChild("TableArea", ImVec2(tableWidth, tableHeight), true)) {
+
+        // 테이블 영역 안의 모든 텍스트(헤더, 내용) 크기를 scale만큼 키웁니다.
+        ImGui::SetWindowFontScale(scale);
+
         if (ImGui::BeginTable("RoomTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
 
-            ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+            // 고정 너비(WidthFixed)로 잡힌 컬럼들도 글자가 커진 만큼 넓혀줍니다.
+            // 50.0f, 100.0f 같은 고정 수치에 scale을 곱해야 글자가 밖으로 삐져나가지 않습니다.
+            ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f * scale);
             ImGui::TableSetupColumn((const char*)u8"방 제목", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn((const char*)u8"인원", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn((const char*)u8"인원", ImGuiTableColumnFlags_WidthFixed, 100.0f * scale);
 
             ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -593,6 +697,10 @@ void CTitleScene::DrawRoomListTable()
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
             selected_room_id = 0;
         }
+
+        // 폰트 스케일을 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
+
     }
     ImGui::EndChild();
     ImGui::PopStyleColor();
@@ -600,9 +708,11 @@ void CTitleScene::DrawRoomListTable()
 
 void CTitleScene::DrawRefreshButton()
 {
+    float scale = G_RATIO_Y;
+
     float windowWidth = ImGui::GetWindowSize().x;
-    float tableWidth = 700.0f;
-    float btnSize = 60.0f;
+    float tableWidth = 700.0f * scale;
+    float btnSize = 60.0f * scale;
 
     ImGui::SetCursorPosX((windowWidth + tableWidth) * 0.5f - btnSize);
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
@@ -625,13 +735,15 @@ void CTitleScene::DrawRefreshButton()
 
 void CTitleScene::DrawThreeButton()
 {
-    ImGui::Spacing(); 
-    ImGui::Spacing(); 
+    ImGui::Spacing();
+    ImGui::Spacing();
     ImGui::Spacing();
 
-    float btnWidth = 200.0f;
-    float btnHeight = 60.0f;
-    float spacing = 50.0f;
+    float scale = G_RATIO_Y;
+
+    float btnWidth = 200.0f * scale;
+    float btnHeight = 60.0f * scale;
+    float spacing = 50.0f * scale;
     float totalWidth = (btnWidth * 3) + (spacing * 2);
 
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x - totalWidth) * 0.5f);
@@ -681,16 +793,23 @@ void CTitleScene::DrawRoomCreatePopUp()
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
     if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        ImGui::SetWindowFontScale(scale);
+
         static char roomName[128] = "";
 
         ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
         ImGui::Spacing();
-        ImGui::PushItemWidth(300.0f);
+        ImGui::PushItemWidth(300.0f * scale);
         ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
         ImGui::PopItemWidth();
         ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
 
-        if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
+        ImVec2 btnSize = ImVec2(120.0f * scale, 40.0f * scale);
+
+        if (ImGui::Button((const char*)u8"생성", btnSize)) {
             if (strlen(roomName) == 0) {
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
@@ -718,11 +837,14 @@ void CTitleScene::DrawRoomCreatePopUp()
         }
         ImGui::SameLine();
 
-        if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
+        if (ImGui::Button((const char*)u8"취소", btnSize)) {
             memset(roomName, 0, sizeof(roomName));
             ImGui::CloseCurrentPopup();
             show_room_create_popup = false;
         }
+
+        ImGui::SetWindowFontScale(1.0f);
+
         ImGui::EndPopup();
     }
     ImGui::PopStyleColor();

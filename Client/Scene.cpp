@@ -165,6 +165,8 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 			// 플레이어가 속한 Scene
 			my_player->SetCurrentSceneType(pkt.scene_type);
 
+			my_player->SetIsSingle(false);
+
 			if (SERVER_SESSION) {
 				auto user = SERVER_SESSION->GetUser();
 				if (user) {
@@ -186,6 +188,10 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 		otherPlayer->SetState(pkt.info.state);
 		otherPlayer->SetCurrentSceneType(pkt.scene_type);
+
+		otherPlayer->ChangeModelSet(pkt.info.body_type);
+		otherPlayer->ChangeEyes(pkt.info.eyes_type);
+		otherPlayer->ChangeMouth(pkt.info.mouth_type);
 
 		EnterScene(otherPlayer, otherPlayer->GetID());
 	}
@@ -216,6 +222,11 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 		// 굳이이긴 하나, 그래도 그냥 set 한다.
 		otherPlayer->SetRoomID(pkt.room_id);
 
+		// 다른 플레이어의 캐릭터 커스터마이즈
+		otherPlayer->ChangeModelSet(userList[i].info.body_type);
+		otherPlayer->ChangeEyes(userList[i].info.eyes_type);
+		otherPlayer->ChangeMouth(userList[i].info.mouth_type);
+
 		// Active Scene에 다른 유저 입장
 		EnterScene(otherPlayer, otherPlayer->GetID());
 	}
@@ -229,10 +240,20 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Mov
 
 	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
-		myPlayer->SetVelocity(pkt.info.vx, pkt.info.vy, pkt.info.vz);
+		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
+
+		// 예측 이동을 없애고
+		// 아래의 코드가 추가되었다.
+		{
+			PlayerInfo info;
+			info.x = pkt.info.x;
+			info.y = pkt.info.y;
+			info.z = pkt.info.z;
+			myPlayer->SetDestInfo(info);
+		}
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
-		myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
+		//myPlayer->ReconcileFromServer(pkt.last_seq_num, XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 
 		// 여기서 S_Move 패킷의 지터값 측정
 		float now = CNetworkClockManager::GetInstance().GetClientNow();

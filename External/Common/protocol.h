@@ -35,8 +35,12 @@ enum PacketType : uint16_t
 	_S_SPAWN_PLAYER,
 	_S_PLAYER_LIST,
 	_S_REMOVE_PLAYER,
+
 	_C_PLAYER_INPUT,	// 서버 권위 방식 + 클라 예측 이동
 	_S_MOVE,
+
+	_C_CUSTOM_SELECT,
+	_S_CUSTOM_SELECT,
 };
 
 #pragma pack (push, 1)
@@ -208,7 +212,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 63, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 67, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -271,7 +275,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 74, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 78, "C_PlayerInput size mismatch!");
 
 struct S_Move : public PacketHeader
 {
@@ -282,6 +286,23 @@ struct S_Move : public PacketHeader
 
 	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 70, "S_Move size mismatch!");
+static_assert(sizeof(S_Move) == 4 + 74, "S_Move size mismatch!");
+
+struct C_CustomSelect : public PacketHeader
+{
+	uint64 player_id;
+	uint8  body_type;
+	uint8  eye_type;
+	uint8  mouth_type;
+
+	C_CustomSelect() : PacketHeader(sizeof(C_CustomSelect), (UINT)PacketType::_C_CUSTOM_SELECT) {}
+};
+static_assert(sizeof(C_CustomSelect) == 4 + 11, "C_CustomSelect size mismatch!");
+
+struct S_CustomSelect : public PacketHeader
+{
+	S_CustomSelect() : PacketHeader(sizeof(S_CustomSelect), (UINT)PacketType::_S_CUSTOM_SELECT) {}
+};
+static_assert(sizeof(S_CustomSelect) == 4, "S_CustomSelect size mismatch!");
 
 #pragma pack (pop)

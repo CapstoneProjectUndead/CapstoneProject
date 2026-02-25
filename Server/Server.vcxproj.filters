@@ -58,6 +58,9 @@
     <Filter Include="Component\Collier/Physics">
       <UniqueIdentifier>{2173369e-6afb-4663-b37c-1cd10c10b186}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\CustomScene">
+      <UniqueIdentifier>{08e2b17c-6bb7-480e-9783-fd8f86ed53b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -123,8 +126,11 @@
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="CustomScene.cpp">
+      <Filter>Scene\CustomScene</Filter>
+    </ClCompile>
     <ClCompile Include="SkinnedData.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -206,8 +212,11 @@
     <ClInclude Include="GeometryLoader.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CustomScene.h">
+      <Filter>Scene\CustomScene</Filter>
+    </ClInclude>
     <ClInclude Include="SkinnedData.h">
-      <Filter>소스 파일</Filter>
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

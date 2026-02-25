@@ -31,6 +31,8 @@ enum : uint16
 	PKT_S_REMOVE_PLAYER,
 	PKT_C_PLAYER_INPUT,	// 서버 권위 방식 + 클라 예측 이동
 	PKT_S_MOVE,
+	PKT_C_CUSTOM_SELECT,
+	PKT_S_CUSTOM_SELECT,
 };
 
 // Custom Handlers
@@ -46,6 +48,7 @@ bool Handle_S_SPAWN_PLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 bool Handle_S_PLAYER_LIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt);
 bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pkt);
 bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt);
+bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pkt);
 
 class CServerPacketHandler
 {
@@ -66,6 +69,7 @@ public:
 		GPacketHandler[PKT_S_PLAYER_LIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PLAYER_LIST>(Handle_S_PLAYER_LIST, session, buffer, len); };
 		GPacketHandler[PKT_S_REMOVE_PLAYER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RemovePlayer>(Handle_S_REMOVE_PLAYER, session, buffer, len); };
 		GPacketHandler[PKT_S_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Move>(Handle_S_MOVE, session, buffer, len); };
+		GPacketHandler[PKT_S_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_CustomSelect>(Handle_S_CUSTOM_SELECT, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)
