@@ -227,7 +227,6 @@ void CGameFramework::CreateRenderTargetViews()
 		d3d_device->CreateRenderTargetView(render_target_buffers[i].Get(), NULL, rtvCPUDescriptorHandle);
 		rtvCPUDescriptorHandle.ptr += rtv_increment_size;
 	}
-
 }
 
 void CGameFramework::CreateDepthStencilView()
@@ -334,8 +333,8 @@ void CGameFramework::ChangeSwapChainState()
 	targetParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	targetParameters.Width = client_width;
 	targetParameters.Height = client_height;
-	targetParameters.RefreshRate.Numerator = 60;
-	targetParameters.RefreshRate.Denominator = 1;
+	targetParameters.RefreshRate.Numerator = 0;	// 시스템 기본값 사용(프레임 고정 시 tearing 발생)
+	targetParameters.RefreshRate.Denominator = 0;
 	targetParameters.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	targetParameters.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	swap_chain->ResizeTarget(&targetParameters);
@@ -347,11 +346,23 @@ void CGameFramework::ChangeSwapChainState()
 
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
 	swap_chain->GetDesc(&swapChainDesc);
-	swap_chain->ResizeBuffers(swap_chain_buffer_num, client_width, client_height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags);
+	swap_chain->ResizeBuffers(swap_chain_buffer_num, 0, 0, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags);
 
 	swap_chain_buffer_index = swap_chain->GetCurrentBackBufferIndex();
 
 	CreateRenderTargetViews();
+
+	// 화면 변수 변경
+	DXGI_SWAP_CHAIN_DESC sd;
+	swap_chain->GetDesc(&sd);
+	client_width = sd.BufferDesc.Width;
+	client_height = sd.BufferDesc.Height;
+
+	viewport = { 0.0f, 0.0f, (float)client_width, (float)client_height, 0.0f, 1.0f };
+	scissor_rect = { 0, 0, (long)client_width, (long)client_height };
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.DisplaySize = ImVec2((float)client_width, (float)client_height);
 }
 
 void CGameFramework::MoveToNextFrame()
@@ -477,80 +488,3 @@ void CGameFramework::CommandEnd()
 	timer.GetFrameRate(frame_rate_str + 8, 37);
 	::SetWindowText(ghWnd, frame_rate_str);
 }
-
-void CGameFramework::ProcessMouseMessage(HWND hWnd, UINT MessageID, WPARAM wParam, LPARAM lParam)
-{
-	switch (MessageID) {
-	case WM_LBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-		break;
-	case WM_LBUTTONUP:
-	case WM_RBUTTONUP:
-		break;
-	case WM_MOUSEMOVE:
-		break;
-	default:
-		break;
-	}
-}
-
-void CGameFramework::ProcessKeyboardMessage(HWND hWnd, UINT MessageID, WPARAM wParam, LPARAM lParam)
-{
-	switch (MessageID) {
-	case WM_KEYUP:
-		 switch (wParam) {
-		 case VK_ESCAPE:
-			 ::PostQuitMessage(0);
-			 break;
-		 case VK_RETURN:
-			 break;
-		 case VK_F8:
-			 break;
-		 case VK_F9:
-			 ChangeSwapChainState();
-			 break;
-		 default:
-			 break;
-		 }
-		 break;
-	default:
-		 break;
-	}
-}
-
-void CGameFramework::ProcessWindowMessage(HWND hWnd, UINT MessageID, WPARAM wParam, LPARAM lParam)
-{
-	switch (MessageID) {
-	case WM_SIZE:
-	{
-		client_width = LOWORD(lParam);
-		client_height = HIWORD(lParam);
-		break;
-	}
-	case WM_RBUTTONDOWN:
-	case WM_LBUTTONDOWN:
-	{
-		::SetCapture(hWnd);
-		POINT oldCursorPos;
-		::GetCursorPos(&oldCursorPos);
-		CKeyManager::GetInstance().SetOldMousePos(oldCursorPos);
-	}
-		break;
-	case WM_LBUTTONUP:
-	case WM_RBUTTONUP:
-	{
-		::ReleaseCapture();
-		Vec2 oldPos{ CKeyManager::GetInstance().GetOldMousePos() };
-		SetCursorPos(oldPos.x, oldPos.y);
-	}
-		break;
-	case WM_MOUSEMOVE:
-		ProcessMouseMessage(hWnd, MessageID, wParam, lParam);
-		break;
-	case WM_KEYDOWN:
-	case WM_KEYUP:
-		ProcessKeyboardMessage(hWnd, MessageID, wParam, lParam);
-		break;
-	}
-}
-
