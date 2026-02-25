@@ -476,10 +476,14 @@ void CTitleScene::DrawLoadingPopUp()
 
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f * scale, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
         ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+        ImGui::SetWindowFontScale(scale);
 
         const char* txt = "로딩 중...";
         switch (loading_type) {
@@ -497,6 +501,10 @@ void CTitleScene::DrawLoadingPopUp()
             StopLoading();
             ImGui::CloseCurrentPopup();
         }
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
+
         ImGui::EndPopup();
     }
 }
@@ -522,8 +530,12 @@ void CTitleScene::DrawLoadingPopUpResult()
 
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
+    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        ImGui::SetWindowFontScale(scale);
+
         ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
         ImGui::Spacing();
 
@@ -561,6 +573,9 @@ void CTitleScene::DrawLoadingPopUpResult()
 
                 CloseResultPopup();
             }
+
+            // 폰트 스케일 원상 복구
+            ImGui::SetWindowFontScale(1.0f);
         }
         ImGui::EndPopup();
     }
@@ -778,16 +793,23 @@ void CTitleScene::DrawRoomCreatePopUp()
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
     if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        ImGui::SetWindowFontScale(scale);
+
         static char roomName[128] = "";
 
         ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
         ImGui::Spacing();
-        ImGui::PushItemWidth(300.0f);
+        ImGui::PushItemWidth(300.0f * scale);
         ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
         ImGui::PopItemWidth();
         ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
 
-        if (ImGui::Button((const char*)u8"생성", ImVec2(120, 40))) {
+        ImVec2 btnSize = ImVec2(120.0f * scale, 40.0f * scale);
+
+        if (ImGui::Button((const char*)u8"생성", btnSize)) {
             if (strlen(roomName) == 0) {
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
@@ -815,11 +837,14 @@ void CTitleScene::DrawRoomCreatePopUp()
         }
         ImGui::SameLine();
 
-        if (ImGui::Button((const char*)u8"취소", ImVec2(120, 40))) {
+        if (ImGui::Button((const char*)u8"취소", btnSize)) {
             memset(roomName, 0, sizeof(roomName));
             ImGui::CloseCurrentPopup();
             show_room_create_popup = false;
         }
+
+        ImGui::SetWindowFontScale(1.0f);
+
         ImGui::EndPopup();
     }
     ImGui::PopStyleColor();

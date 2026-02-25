@@ -109,11 +109,16 @@ void CCustomScene::DrawUI()
 void CCustomScene::DrawCustomizingWindow()
 {
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+
+    // 화면 크기에 맞게 스케일링
+    float scale = G_RATIO_Y;
+
     // 창 크기를 조금 더 줄였습니다.
-    ImVec2 winSize = ImVec2(300, 250);
+    ImVec2 winSize = ImVec2(300.0f * scale, 250.0f * scale);
+    float margin = 30.0f * scale;
 
     // 오른쪽 하단 여백 조정
-    ImGui::SetNextWindowPos(ImVec2(screenSize.x - winSize.x - 30, screenSize.y - winSize.y - 30));
+    ImGui::SetNextWindowPos(ImVec2(screenSize.x - winSize.x - margin, screenSize.y - winSize.y - margin));
     ImGui::SetNextWindowSize(winSize);
 
     ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoTitleBar |
@@ -124,23 +129,30 @@ void CCustomScene::DrawCustomizingWindow()
 
     if (ImGui::Begin("CustomUI", nullptr, winFlags))
     {
+        // 글씨 크기도 스케일링
+        ImGui::SetWindowFontScale(scale);
+
         auto DrawSimpleSelector = [&](const char* partName, int& currentIdx, int maxCount, const char* names[], std::function<void(int)> onChange) {
             ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), partName);
 
+            // 람다 내부의 작은 좌우 화살표 버튼 크기와 높이 오프셋도 스케일링
+            ImVec2 smallBtnSize = ImVec2(30.0f * scale, 30.0f * scale);
+            float yOffset = 5.0f * scale;
+
             // 왼쪽 버튼
-            if (ImGui::Button((std::string("<##") + partName).c_str(), ImVec2(30, 30))) {
+            if (ImGui::Button((std::string("<##") + partName).c_str(), smallBtnSize)) {
                 currentIdx = (currentIdx - 1 + maxCount) % maxCount;
                 if (onChange) onChange(currentIdx); // 변경 시 콜백 호출
             }
             ImGui::SameLine();
 
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + yOffset);
             ImGui::Text(" %s ", names[currentIdx]);
             ImGui::SameLine();
 
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - yOffset);
             // 오른쪽 버튼
-            if (ImGui::Button((std::string(">##") + partName).c_str(), ImVec2(30, 30))) {
+            if (ImGui::Button((std::string(">##") + partName).c_str(), smallBtnSize)) {
                 currentIdx = (currentIdx + 1) % maxCount;
                 if (onChange) onChange(currentIdx); // 변경 시 콜백 호출
             }
@@ -167,7 +179,7 @@ void CCustomScene::DrawCustomizingWindow()
         ImGui::Spacing();
 
         // 완료 버튼도 적당한 크기로 수정
-        if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150, 40))) {
+        if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150 * scale, 40 * scale))) {
 
             if (my_player->GetIsSingle()) {
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
@@ -188,6 +200,9 @@ void CCustomScene::DrawCustomizingWindow()
                 StartLoading(LoadingType::SelectResult);
             }
         }
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
     }
 
     ImGui::End();
@@ -201,8 +216,12 @@ void CCustomScene::DrawLoadingPopUp()
 
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        ImGui::SetWindowFontScale(scale);
+
         CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
         ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
 
@@ -217,6 +236,10 @@ void CCustomScene::DrawLoadingPopUp()
             StopLoading();
             ImGui::CloseCurrentPopup();
         }
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
+
         ImGui::EndPopup();
     }
 }
@@ -242,8 +265,12 @@ void CCustomScene::DrawLoadingPopUpResult()
 
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
-    {
+    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        float scale = G_RATIO_Y;
+
+        ImGui::SetWindowFontScale(scale);
+
         ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
         ImGui::Spacing();
 
@@ -257,6 +284,10 @@ void CCustomScene::DrawLoadingPopUpResult()
                 CloseResultPopup();
             }
         }
+
+        // 폰트 스케일 원상 복구
+        ImGui::SetWindowFontScale(1.0f);
+
         ImGui::EndPopup();
     }
 }
