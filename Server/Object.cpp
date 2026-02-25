@@ -47,35 +47,29 @@ shared_ptr<CPlayer> CObject::CreatePlayer()
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
+	// Mesh 로드 + totalBounds 계산
 	BoundingBox totalBounds;
 	bool firstBounds = true;
 
-	if (frameRoot) {
-		for (const auto& child : frameRoot->childrens) {
-			if (child->mesh.positions.empty()) continue;
+	for (const auto& child : frameRoot->childrens) {
 
-			if (firstBounds) {
-				totalBounds = child->mesh.bounds;
-				firstBounds = false;
-			}
-			else {
-				BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
-			}
+		if (child->mesh.positions.empty())
+			continue;
+
+		// bounds merge
+		if (firstBounds) {
+			totalBounds = child->mesh.bounds;
+			firstBounds = false;
+		}
+		else {
+			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
 		}
 	}
-	else {
-		// 파일 로드 실패 시 디버그용 임시값
-		totalBounds.Center = XMFLOAT3(0.0f, 0.5f, 0.0f);
-		totalBounds.Extents = XMFLOAT3(0.5f, 0.5f, 0.5f);
-	}
 
-	// 클라이언트와 완벽하게 일치: 반지름은 totalBounds.Extents.x 사용
-	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
+	// ColliderComponent 생성
+	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-
-	collider->owner = player.get();
 	player->SetComponent(collider);
-
 	CPhysicsManager::GetInstance().SetCollider(collider);
 	
 	player->UpdateWorldMatrix();
