@@ -326,7 +326,7 @@ void CTitleScene::DrawLogInWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(290.0f * scale, 195.0f * scale);
+    ImVec2 winSize = ImVec2(290.0f * scale, 175.0f * scale);
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -402,7 +402,7 @@ void CTitleScene::DrawSignUpWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(305.0f * scale, 225.0f * scale);
+    ImVec2 winSize = ImVec2(295.0f * scale, 195.0f * scale);
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));

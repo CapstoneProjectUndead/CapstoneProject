@@ -101,8 +101,8 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     if (dir.x == 0 && dir.z == 0) {
         state = PLAYER_STATE::IDLE;
 
-        velocity.x = 0.0f;
-        velocity.z = 0.0f;
+        //velocity.x = 0.0f;
+        //velocity.z = 0.0f;
     }
     else {
         state = PLAYER_STATE::WALK;
