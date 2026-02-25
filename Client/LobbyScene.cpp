@@ -63,7 +63,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
 	}
-
 	// test 용 삭제X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);

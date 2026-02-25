@@ -53,8 +53,8 @@ using Microsoft::WRL::ComPtr;
 
 #pragma comment(lib, "winmm.lib")
 
-#define FRAME_BUFFER_WIDTH	800
-#define FRAME_BUFFER_HEIGHT 600
+#define FRAME_BUFFER_WIDTH	1920
+#define FRAME_BUFFER_HEIGHT 1080
 
 // 창우
 #include "Core.h"

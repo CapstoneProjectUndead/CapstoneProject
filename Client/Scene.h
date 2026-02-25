@@ -57,6 +57,7 @@ public:
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }
 	void									SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }
 	void									SetCamera(std::shared_ptr<CCamera> _camera) { camera = _camera; }
+	std::shared_ptr<CCamera>&				GetCamera() { return camera; }
 
 	SCENE_TYPE								GetSceneType() const { return scene_type; }
 

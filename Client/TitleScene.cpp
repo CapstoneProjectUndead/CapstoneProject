@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "TitleScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
@@ -53,12 +53,12 @@ void CTitleScene::Exit()
 
 void CTitleScene::DrawUI()
 {
-    // UI ±×¸®±â ½ÃÀÛ
+    // UI ê·¸ë¦¬ê¸° ì‹œì‘
     DrawTitleUI();
 }
 
 // =====================
-// [IME Á¦¾î ÇïÆÛ ÇÔ¼öµé]
+// [IME ì œì–´ í—¬í¼ í•¨ìˆ˜ë“¤]
 // =====================
 bool CTitleScene::IsUIInputEnabled()
 {
@@ -67,13 +67,13 @@ bool CTitleScene::IsUIInputEnabled()
     CScene* scene = CSceneManager::GetInstance().GetActiveScene();
     assert(scene);
 
-    // Å¸ÀÌÆ² ¾ÀÀÌ¸é ¹«Á¶°Ç ÀÔ·Â Çã¿ë
+    // íƒ€ì´í‹€ ì”¬ì´ë©´ ë¬´ì¡°ê±´ ì…ë ¥ í—ˆìš©
     if (scene->GetSceneType() == SCENE_TYPE::TITLE)
         state = true;
     else
         state = false;
 
-    // ·Îµù Áß¿¡´Â ÀÔ·Â Â÷´Ü (¼±ÅÃ »çÇ×)
+    // ë¡œë”© ì¤‘ì—ëŠ” ì…ë ¥ ì°¨ë‹¨ (ì„ íƒ ì‚¬í•­)
     if ((ui_state == TitleUIState::Login))
         state = false;
 
@@ -81,7 +81,7 @@ bool CTitleScene::IsUIInputEnabled()
 }
 
 // ===================
-// [UI ±×¸®±â ¸ŞÀÎ ·ÎÁ÷]
+// [UI ê·¸ë¦¬ê¸° ë©”ì¸ ë¡œì§]
 // ===================
 void CTitleScene::DrawTitleUI()
 {
@@ -89,40 +89,40 @@ void CTitleScene::DrawTitleUI()
     if (currentScene->GetSceneType() != SCENE_TYPE::TITLE)
         return;
 
-    // 1. Å¸ÀÌÆ² ·Î°í ¹è°æ
+    // 1. íƒ€ì´í‹€ ë¡œê³  ë°°ê²½
     DrawTitle();
 
-    // 2. ·Îµù ÆË¾÷ (ÃÖ¿ì¼± ¼øÀ§)
+    // 2. ë¡œë”© íŒì—… (ìµœìš°ì„  ìˆœìœ„)
     if (loading_type != LoadingType::None) {
         DrawLoadingPopUp();
     }
 
-    // 3. °á°ú ÆË¾÷
+    // 3. ê²°ê³¼ íŒì—…
     if (pop_up_result.is_visible) {
         DrawLoadingPopUpResult();
     }
 
-    // 4. »óÅÂ¿¡ µû¸¥ UI ºĞ±â
+    // 4. ìƒíƒœì— ë”°ë¥¸ UI ë¶„ê¸°
     switch (ui_state)
     {
     case TitleUIState::Main:
     case TitleUIState::MultiSelect:
-        // ¸ŞÀÎ ¸Ş´º
+        // ë©”ì¸ ë©”ë‰´
         DrawTitleMainWindow();
         break;
 
     case TitleUIState::Login:
-        // ·Î±×ÀÎ Ã¢
+        // ë¡œê·¸ì¸ ì°½
         DrawLogInWindow();
         break;
 
     case TitleUIState::SignUp:
-        // È¸¿ø°¡ÀÔ Ã¢
+        // íšŒì›ê°€ì… ì°½
         DrawSignUpWindow();
         break;
 
     case TitleUIState::RoomList:
-        // ·ë ¸ÅÄª
+        // ë£¸ ë§¤ì¹­
         DrawRoomListUI();
         break;
 
@@ -130,7 +130,7 @@ void CTitleScene::DrawTitleUI()
         break;
     }
 
-    // ¹æ »ı¼º ÆË¾÷Àº RoomList À§¿¡ ¶ä
+    // ë°© ìƒì„± íŒì—…ì€ RoomList ìœ„ì— ëœ¸
     if (ui_state == TitleUIState::RoomList && show_room_create_popup) {
         DrawRoomCreatePopUp();
     }
@@ -143,22 +143,22 @@ void CTitleScene::DrawTitle()
 
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 
-    // ¹è°æ Ã¤¿ì±â 
+    // ë°°ê²½ ì±„ìš°ê¸° 
     ImGui::GetBackgroundDrawList()->AddRectFilled(
         ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
     );
 
-    // È­¸é Áß¾Ó »ó´Ü ÁÂÇ¥ °è»ê
-    // X´Â Á¤È®È÷ È­¸é Àı¹İ, Y´Â È­¸é À§¿¡¼­ 30% ³»·Á¿Â ÁöÁ¡
+    // í™”ë©´ ì¤‘ì•™ ìƒë‹¨ ì¢Œí‘œ ê³„ì‚°
+    // XëŠ” ì •í™•íˆ í™”ë©´ ì ˆë°˜, YëŠ” í™”ë©´ ìœ„ì—ì„œ 30% ë‚´ë ¤ì˜¨ ì§€ì 
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.3f);
 
-    // Pivot(0.5f, 0.5f)À» ÁÖ¸é, À©µµ¿ìÀÇ 'Á¤Áß¾Ó'ÀÌ centerPos¿¡ µü ¸ÂÃçÁø´Ù.
+    // Pivot(0.5f, 0.5f)ì„ ì£¼ë©´, ìœˆë„ìš°ì˜ 'ì •ì¤‘ì•™'ì´ centerPosì— ë”± ë§ì¶°ì§„ë‹¤.
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
     ImGui::SetNextWindowBgAlpha(0.0f);
 
-    // ImGuiWindowFlags_AlwaysAutoResize Ãß°¡
-    // À©µµ¿ì Å©±â¸¦ °íÁ¤ÇÏÁö ¾Ê°í, ±ÛÀÚ Å©±â(270px)¿¡ ¸ÂÃç¼­ ±×¸©ÀÌ ÀÚµ¿À¸·Î ´Ã¾î³­´Ù! (Â©¸² ¹æÁö)
+    // ImGuiWindowFlags_AlwaysAutoResize ì¶”ê°€
+    // ìœˆë„ìš° í¬ê¸°ë¥¼ ê³ ì •í•˜ì§€ ì•Šê³ , ê¸€ì í¬ê¸°(270px)ì— ë§ì¶°ì„œ ê·¸ë¦‡ì´ ìë™ìœ¼ë¡œ ëŠ˜ì–´ë‚œë‹¤! (ì§¤ë¦¼ ë°©ì§€)
     ImGuiWindowFlags mainFlags = ImGuiWindowFlags_NoDecoration |
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoBringToFrontOnFocus |
@@ -190,18 +190,18 @@ void CTitleScene::DrawTitle()
     ImGui::PopStyleVar(2);
 }
 
-// ¸ŞÀÎ ¸Ş´º & ¸ÖÆ¼ ¼±ÅÃ ¸Ş´º ÅëÇÕ °ü¸®
+// ë©”ì¸ ë©”ë‰´ & ë©€í‹° ì„ íƒ ë©”ë‰´ í†µí•© ê´€ë¦¬
 void CTitleScene::DrawTitleMainWindow()
 {
-    // 1. ÇöÀç È­¸é ÇØ»óµµ °¡Á®¿À±â
+    // 1. í˜„ì¬ í™”ë©´ í•´ìƒë„ ê°€ì ¸ì˜¤ê¸°
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 
     float scale = G_RATIO_Y;
 
-    // 2. ¹öÆ°ÀÇ °¡·Î/¼¼·Î Å©±â ¸ğµÎ¿¡ scaleÀ» °öÇÑ´Ù.
+    // 2. ë²„íŠ¼ì˜ ê°€ë¡œ/ì„¸ë¡œ í¬ê¸° ëª¨ë‘ì— scaleì„ ê³±í•œë‹¤.
     ImVec2 btnSize = ImVec2(200.0f * scale, 55.0f * scale);
 
-    // À§Ä¡´Â È­¸é ºñÀ²(%) ±â¹İÀÌ¹Ç·Î ±×´ë·Î µÓ´Ï´Ù. 
+    // ìœ„ì¹˜ëŠ” í™”ë©´ ë¹„ìœ¨(%) ê¸°ë°˜ì´ë¯€ë¡œ ê·¸ëŒ€ë¡œ ë‘¡ë‹ˆë‹¤. 
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.75f);
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowBgAlpha(0.0f);
@@ -211,10 +211,10 @@ void CTitleScene::DrawTitleMainWindow()
 
     if (ImGui::Begin("Main Menu", NULL, mainBtnFlags))
     {
-        // ÆùÆ® Å©±â¿¡µµ ¶È°°ÀÌ scaleÀ» Àû¿ë. (¹öÆ°°ú ±Û¾¾°¡ ÀÏÃ¼°¨ ÀÖ°Ô Ä¿Áü)
+        // í°íŠ¸ í¬ê¸°ì—ë„ ë˜‘ê°™ì´ scaleì„ ì ìš©. (ë²„íŠ¼ê³¼ ê¸€ì”¨ê°€ ì¼ì²´ê° ìˆê²Œ ì»¤ì§)
         ImGui::SetWindowFontScale(scale);
 
-        // ·Îµù ÁßÀÌ°Å³ª ÆË¾÷ ¶°ÀÖÀ¸¸é ¹öÆ° ºñÈ°¼ºÈ­
+        // ë¡œë”© ì¤‘ì´ê±°ë‚˜ íŒì—… ë– ìˆìœ¼ë©´ ë²„íŠ¼ ë¹„í™œì„±í™”
         bool should_disable = (loading_type != LoadingType::None) || pop_up_result.is_visible;
         ImGui::BeginDisabled(should_disable);
 
@@ -223,47 +223,47 @@ void CTitleScene::DrawTitleMainWindow()
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));
 
         // ======================================
-        // [State 1] ÃÊ±â È­¸é: ½Ì±Û / ¸ÖÆ¼ / ³ª°¡±â
+        // [State 1] ì´ˆê¸° í™”ë©´: ì‹±ê¸€ / ë©€í‹° / ë‚˜ê°€ê¸°
         // ======================================
         if (ui_state == TitleUIState::Main)
         {
-            if (ImGui::Button((const char*)u8"½Ì±Û ÇÃ·¹ÀÌ", btnSize)) {
+            if (ImGui::Button((const char*)u8"ì‹±ê¸€ í”Œë ˆì´", btnSize)) {
                 StartLoading(LoadingType::SinglePlay);
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"¸ÖÆ¼ ÇÃ·¹ÀÌ", btnSize)) {
-                SetUIState(TitleUIState::MultiSelect); // »óÅÂ º¯°æ!
+            if (ImGui::Button((const char*)u8"ë©€í‹° í”Œë ˆì´", btnSize)) {
+                SetUIState(TitleUIState::MultiSelect); // ìƒíƒœ ë³€ê²½!
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"°ÔÀÓ Á¾·á", btnSize)) {
+            if (ImGui::Button((const char*)u8"ê²Œì„ ì¢…ë£Œ", btnSize)) {
                 g_run = false;
             }
         }
         // =======================
-        // [State 2] ¸ÖÆ¼ ¼±ÅÃ È­¸é
+        // [State 2] ë©€í‹° ì„ íƒ í™”ë©´
         // =======================
         else if (ui_state == TitleUIState::MultiSelect)
         {
             if (!is_online) {
-                // ¿ÀÇÁ¶óÀÎ »óÅÂ: ·Î±×ÀÎ / È¸¿ø°¡ÀÔ / µÚ·Î°¡±â
-                if (ImGui::Button((const char*)u8"·Î±×ÀÎ", btnSize)) {
+                // ì˜¤í”„ë¼ì¸ ìƒíƒœ: ë¡œê·¸ì¸ / íšŒì›ê°€ì… / ë’¤ë¡œê°€ê¸°
+                if (ImGui::Button((const char*)u8"ë¡œê·¸ì¸", btnSize)) {
                     SetUIState(TitleUIState::Login);
                 }
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                if (ImGui::Button((const char*)u8"È¸¿ø°¡ÀÔ", btnSize)) {
+                if (ImGui::Button((const char*)u8"íšŒì›ê°€ì…", btnSize)) {
                     SetUIState(TitleUIState::SignUp);
                 }
             }
             else {
-                // ¿Â¶óÀÎ »óÅÂ: ¹æ °Ë»ö / ·Î±×¾Æ¿ô
-                if (ImGui::Button((const char*)u8"¹æ °Ë»ö", btnSize)) {
+                // ì˜¨ë¼ì¸ ìƒíƒœ: ë°© ê²€ìƒ‰ / ë¡œê·¸ì•„ì›ƒ
+                if (ImGui::Button((const char*)u8"ë°© ê²€ìƒ‰", btnSize)) {
                     is_title_draw = false;
                     SetUIState(TitleUIState::RoomList);
 
@@ -279,11 +279,11 @@ void CTitleScene::DrawTitleMainWindow()
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                if (ImGui::Button((const char*)u8"·Î±×¾Æ¿ô", btnSize)) {
+                if (ImGui::Button((const char*)u8"ë¡œê·¸ì•„ì›ƒ", btnSize)) {
 
                     StartLoading(LoadingType::Logout);
 
-                    // ·Î±×¾Æ¿ô ÆĞÅ¶ Àü¼Û ·ÎÁ÷...
+                    // ë¡œê·¸ì•„ì›ƒ íŒ¨í‚· ì „ì†¡ ë¡œì§...
                     auto serverSession = GET_SERVER_SESSION
                         if (serverSession) {
                             C_LOGOUT logOutPkt;
@@ -295,25 +295,25 @@ void CTitleScene::DrawTitleMainWindow()
                             }
                         }
 
-                    // (ÀÓ½Ã)
+                    // (ì„ì‹œ)
                     // is_online = false;
                     //ActionResult result;
-                    //result.Success("·Î±×¾Æ¿ô ¼º°ø!");
+                    //result.Success("ë¡œê·¸ì•„ì›ƒ ì„±ê³µ!");
                     //SetLastResult(result);
                 }
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"µÚ·Î°¡±â", btnSize)) {
-                SetUIState(TitleUIState::Main); // ¸ŞÀÎÀ¸·Î º¹±Í
+            if (ImGui::Button((const char*)u8"ë’¤ë¡œê°€ê¸°", btnSize)) {
+                SetUIState(TitleUIState::Main); // ë©”ì¸ìœ¼ë¡œ ë³µê·€
             }
         }
 
         ImGui::PopStyleColor(3);
         ImGui::EndDisabled();
 
-        // ÆùÆ® ½ºÄÉÀÏ ¿ø»ó º¹±¸
+        // í°íŠ¸ ìŠ¤ì¼€ì¼ ì›ìƒ ë³µêµ¬
         ImGui::SetWindowFontScale(1.0f);
     }
     ImGui::End();
@@ -334,17 +334,17 @@ void CTitleScene::DrawLogInWindow()
 
     ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
-    // Ã¢ ´İ±â °¨Áö¸¦ À§ÇÑ Á¤Àû º¯¼ö (±âº»°ª true)
+    // ì°½ ë‹«ê¸° ê°ì§€ë¥¼ ìœ„í•œ ì •ì  ë³€ìˆ˜ (ê¸°ë³¸ê°’ true)
     static bool open = true;
 
-    if (ImGui::Begin((const char*)u8"·Î±×ÀÎ", &open, winFlags)) {
+    if (ImGui::Begin((const char*)u8"ë¡œê·¸ì¸", &open, winFlags)) {
 
         ImGui::SetWindowFontScale(scale);
 
         static char id[64] = "";
         static char pw[64] = "";
 
-        ImGui::Text((const char*)u8"ID / PW ¸¦ ÀÔ·ÂÇÏ¼¼¿ä.");
+        ImGui::Text((const char*)u8"ID / PW ë¥¼ ì…ë ¥í•˜ì„¸ìš”.");
         ImGui::Separator();
 
         ImGui::PushItemWidth(230.0f * scale);
@@ -354,16 +354,16 @@ void CTitleScene::DrawLogInWindow()
 
         ImGui::Spacing(); ImGui::Spacing();
 
-        // ¹öÆ° Å©±â ¹× Áß¾Ó Á¤·Ä ½ºÄÉÀÏ¸µ
+        // ë²„íŠ¼ í¬ê¸° ë° ì¤‘ì•™ ì •ë ¬ ìŠ¤ì¼€ì¼ë§
         float btnWidth = 360.0f * scale;
         float btnHeight = 50.0f * scale;
 
-        // µ¿Àû Áß¾Ó Á¤·Ä: (ÇöÀç Ã¢ÀÇ ½ÇÁ¦ ³Êºñ - ½ºÄÉÀÏ Àû¿ëµÈ ¹öÆ° ³Êºñ) / 2
+        // ë™ì  ì¤‘ì•™ ì •ë ¬: (í˜„ì¬ ì°½ì˜ ì‹¤ì œ ë„ˆë¹„ - ìŠ¤ì¼€ì¼ ì ìš©ëœ ë²„íŠ¼ ë„ˆë¹„) / 2
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
         if (ImGui::Button("Connect & Login", ImVec2(btnWidth, btnHeight))) {
 
-            // ÆĞÅ¶ Àü¼Û
+            // íŒ¨í‚· ì „ì†¡
             C_LOGIN loginPkt;
             COPY_STRING(loginPkt.id, id);
             COPY_STRING(loginPkt.password, pw);
@@ -373,26 +373,26 @@ void CTitleScene::DrawLogInWindow()
             if (serverSession)
                 serverSession->DoSend(sendBuffer);
 
-            // ·Îµù ½ÃÀÛ ¹× Ã¢ ÃÊ±âÈ­
+            // ë¡œë”© ì‹œì‘ ë° ì°½ ì´ˆê¸°í™”
             StartLoading(LoadingType::Login);
             memset(id, 0, sizeof(id));
             memset(pw, 0, sizeof(pw));
 
-            // (ÀÓ½Ã)
+            // (ì„ì‹œ)
             //ActionResult result;
-            //result.Success("·Î±×ÀÎ ¼º°ø!");
+            //result.Success("ë¡œê·¸ì¸ ì„±ê³µ!");
             //SetPopUpResult(result);
             //StopLoading();
 
-            // ÆùÆ® ½ºÄÉÀÏ ¿ø»ó º¹±¸
+            // í°íŠ¸ ìŠ¤ì¼€ì¼ ì›ìƒ ë³µêµ¬
             ImGui::SetWindowFontScale(1.0f);
         }
     }
     ImGui::End();
 
     if (!open) {
-        SetUIState(TitleUIState::MultiSelect); // ¸ÖÆ¼ ¼±ÅÃ ¸Ş´º·Î º¹±Í
-        open = true; // ´ÙÀ½ ¹ø¿¡ Ã¢ÀÌ Á¤»óÀûÀ¸·Î ¿­¸®µµ·Ï ´Ù½Ã true·Î ¸®¼Â
+        SetUIState(TitleUIState::MultiSelect); // ë©€í‹° ì„ íƒ ë©”ë‰´ë¡œ ë³µê·€
+        open = true; // ë‹¤ìŒ ë²ˆì— ì°½ì´ ì •ìƒì ìœ¼ë¡œ ì—´ë¦¬ë„ë¡ ë‹¤ì‹œ trueë¡œ ë¦¬ì…‹
     }
 }
 
@@ -411,7 +411,7 @@ void CTitleScene::DrawSignUpWindow()
     ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
     static bool open = true;
-    if (ImGui::Begin((const char*)u8"È¸¿ø°¡ÀÔ", &open, winFlags)) {
+    if (ImGui::Begin((const char*)u8"íšŒì›ê°€ì…", &open, winFlags)) {
 
         ImGui::SetWindowFontScale(scale);
 
@@ -419,7 +419,7 @@ void CTitleScene::DrawSignUpWindow()
         static char pw[64] = "";
         static char name[64] = "";
 
-        ImGui::Text((const char*)u8"Á¤º¸¸¦ ÀÔ·ÂÇÏ¼¼¿ä.");
+        ImGui::Text((const char*)u8"ì •ë³´ë¥¼ ì…ë ¥í•˜ì„¸ìš”.");
         ImGui::Separator();
 
         ImGui::PushItemWidth(230.0f * scale);
@@ -431,14 +431,14 @@ void CTitleScene::DrawSignUpWindow()
         ImGui::Spacing();
         ImGui::Spacing();
 
-        // ¹öÆ° Å©±â ¹× Áß¾Ó Á¤·Ä ½ºÄÉÀÏ¸µ
+        // ë²„íŠ¼ í¬ê¸° ë° ì¤‘ì•™ ì •ë ¬ ìŠ¤ì¼€ì¼ë§
         float btnWidth = 360.0f * scale;
         float btnHeight = 50.0f * scale;
 
-        // µ¿Àû Áß¾Ó Á¤·Ä: (ÇöÀç Ã¢ÀÇ ½ÇÁ¦ ³Êºñ - ½ºÄÉÀÏ Àû¿ëµÈ ¹öÆ° ³Êºñ) / 2
+        // ë™ì  ì¤‘ì•™ ì •ë ¬: (í˜„ì¬ ì°½ì˜ ì‹¤ì œ ë„ˆë¹„ - ìŠ¤ì¼€ì¼ ì ìš©ëœ ë²„íŠ¼ ë„ˆë¹„) / 2
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
-        if (ImGui::Button((const char*)u8"°¡ÀÔ ½ÅÃ»", ImVec2(btnWidth, btnHeight))) {
+        if (ImGui::Button((const char*)u8"ê°€ì… ì‹ ì²­", ImVec2(btnWidth, btnHeight))) {
 
             C_SIGNUP signUpPkt;
             COPY_STRING(signUpPkt.id, id);
@@ -457,14 +457,14 @@ void CTitleScene::DrawSignUpWindow()
             memset(name, 0, sizeof(name));
         }
 
-        // ÆùÆ® ½ºÄÉÀÏ ¿ø»ó º¹±¸
+        // í°íŠ¸ ìŠ¤ì¼€ì¼ ì›ìƒ ë³µêµ¬
         ImGui::SetWindowFontScale(1.0f);
     }
     ImGui::End();
 
     if (!open) {
-        SetUIState(TitleUIState::MultiSelect); // ¸ÖÆ¼ ¼±ÅÃ ¸Ş´º·Î º¹±Í
-        open = true; // ´ÙÀ½ ¹ø¿¡ Ã¢ÀÌ Á¤»óÀûÀ¸·Î ¿­¸®µµ·Ï ´Ù½Ã true·Î ¸®¼Â
+        SetUIState(TitleUIState::MultiSelect); // ë©€í‹° ì„ íƒ ë©”ë‰´ë¡œ ë³µê·€
+        open = true; // ë‹¤ìŒ ë²ˆì— ì°½ì´ ì •ìƒì ìœ¼ë¡œ ì—´ë¦¬ë„ë¡ ë‹¤ì‹œ trueë¡œ ë¦¬ì…‹
     }
 }
 
@@ -481,14 +481,14 @@ void CTitleScene::DrawLoadingPopUp()
         CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
         ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
 
-        const char* txt = "·Îµù Áß...";
+        const char* txt = "ë¡œë”© ì¤‘...";
         switch (loading_type) {
-        case LoadingType::Login:      txt = (const char*)u8"·Î±×ÀÎ ÁßÀÔ´Ï´Ù..."; break;
-        case LoadingType::Logout:      txt = (const char*)u8"·Î±×¾Æ¿ô ÁßÀÔ´Ï´Ù..."; break;
-        case LoadingType::SignUp:     txt = (const char*)u8"°¡ÀÔ Ã³¸® ÁßÀÔ´Ï´Ù..."; break;
-        case LoadingType::RoomCreate: txt = (const char*)u8"¹æ »ı¼º ÁßÀÔ´Ï´Ù..."; break;
-        case LoadingType::RoomEnter:  txt = (const char*)u8"¹æ ÀÔÀå ÁßÀÔ´Ï´Ù..."; break;
-        case LoadingType::SinglePlay: txt = (const char*)u8"½Ì±Û ÇÃ·¹ÀÌ ÀÔÀå Áß..."; break;
+        case LoadingType::Login:      txt = (const char*)u8"ë¡œê·¸ì¸ ì¤‘ì…ë‹ˆë‹¤..."; break;
+        case LoadingType::Logout:      txt = (const char*)u8"ë¡œê·¸ì•„ì›ƒ ì¤‘ì…ë‹ˆë‹¤..."; break;
+        case LoadingType::SignUp:     txt = (const char*)u8"ê°€ì… ì²˜ë¦¬ ì¤‘ì…ë‹ˆë‹¤..."; break;
+        case LoadingType::RoomCreate: txt = (const char*)u8"ë°© ìƒì„± ì¤‘ì…ë‹ˆë‹¤..."; break;
+        case LoadingType::RoomEnter:  txt = (const char*)u8"ë°© ì…ì¥ ì¤‘ì…ë‹ˆë‹¤..."; break;
+        case LoadingType::SinglePlay: txt = (const char*)u8"ì‹±ê¸€ í”Œë ˆì´ ì…ì¥ ì¤‘..."; break;
         }
         ImGui::Text("%s", txt);
 
@@ -527,19 +527,19 @@ void CTitleScene::DrawLoadingPopUpResult()
         ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
         ImGui::Spacing();
 
-        if (ImGui::Button((const char*)u8"È®ÀÎ")) {
+        if (ImGui::Button((const char*)u8"í™•ì¸")) {
 
-            pop_up_result.is_visible = false; // ÆË¾÷ ´İ±â
+            pop_up_result.is_visible = false; // íŒì—… ë‹«ê¸°
             ImGui::CloseCurrentPopup();
 
-            // ¼º°ø ½Ã ÈÄ¼Ó Ã³¸® (¿¹: ·Î±×ÀÎ ¼º°øÇßÀ¸¸é ¹æ ¸ñ·ÏÀ¸·Î)
+            // ì„±ê³µ ì‹œ í›„ì† ì²˜ë¦¬ (ì˜ˆ: ë¡œê·¸ì¸ ì„±ê³µí–ˆìœ¼ë©´ ë°© ëª©ë¡ìœ¼ë¡œ)
             if (pop_up_result.is_success) {
 
-                // ¾î¶² ÀÛ¾÷ÀÌ ¼º°øÇß´ÂÁö¿¡ µû¶ó ºĞ±â °¡´É
-                // ÇöÀç ·ÎÁ÷»ó ·Î±×ÀÎ ¼º°øÀÌ¸é RoomList·Î º¸³»´Â °Ô ÀÚ¿¬½º·¯¿ò
+                // ì–´ë–¤ ì‘ì—…ì´ ì„±ê³µí–ˆëŠ”ì§€ì— ë”°ë¼ ë¶„ê¸° ê°€ëŠ¥
+                // í˜„ì¬ ë¡œì§ìƒ ë¡œê·¸ì¸ ì„±ê³µì´ë©´ RoomListë¡œ ë³´ë‚´ëŠ” ê²Œ ìì—°ìŠ¤ëŸ¬ì›€
 
                 if (ui_state == TitleUIState::SignUp) {
-                    SetUIState(TitleUIState::MultiSelect); // °¡ÀÔ ¼º°øÇÏ¸é ·Î±×ÀÎÇÏ·¯ °¡¶ó
+                    SetUIState(TitleUIState::MultiSelect); // ê°€ì… ì„±ê³µí•˜ë©´ ë¡œê·¸ì¸í•˜ëŸ¬ ê°€ë¼
                 }
                 else if (ui_state == TitleUIState::Login) {
                     is_online = true;
@@ -554,7 +554,7 @@ void CTitleScene::DrawLoadingPopUpResult()
                     if (is_room_enter) {
                         is_room_enter = false;
 
-                        // ¿©±â¼­ ¾À ÀüÈ¯!
+                        // ì—¬ê¸°ì„œ ì”¬ ì „í™˜!
                         CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
                     }
                 }
@@ -568,7 +568,7 @@ void CTitleScene::DrawLoadingPopUpResult()
 
 void CTitleScene::DrawRoomListUI()
 {
-    // ÀüÃ¼ ¹è°æ (ÆÄ¶õ Æ¾Æ®)
+    // ì „ì²´ ë°°ê²½ (íŒŒë€ í‹´íŠ¸)
     ImGui::GetBackgroundDrawList()->AddRectFilled(
         ImVec2(0, 0), ImGui::GetIO().DisplaySize,
         ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.4f)));
@@ -584,7 +584,7 @@ void CTitleScene::DrawRoomListUI()
         float scale = G_RATIO_Y;
         ImGui::SetWindowFontScale(scale);
 
-        // Å¸ÀÌÆ² (»¡°£ UNDEAD)
+        // íƒ€ì´í‹€ (ë¹¨ê°„ UNDEAD)
         ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
         if (CImGuiManager::title_font2) ImGui::PushFont(CImGuiManager::title_font2);
 
@@ -601,12 +601,12 @@ void CTitleScene::DrawRoomListUI()
 
         ImGui::Spacing(); ImGui::Spacing();
 
-        // Å×ÀÌºí ¹× ¹öÆ°
+        // í…Œì´ë¸” ë° ë²„íŠ¼
         DrawRoomListTable();
         DrawRefreshButton();
         DrawThreeButton();
 
-        // ºó °÷ Å¬¸¯ ½Ã ¼±ÅÃ ÇØÁ¦
+        // ë¹ˆ ê³³ í´ë¦­ ì‹œ ì„ íƒ í•´ì œ
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
             selected_room_id = 0;
         }
@@ -621,7 +621,7 @@ void CTitleScene::DrawRoomListTable()
     float scale = G_RATIO_Y;
 
     float windowWidth = ImGui::GetWindowSize().x;
-    float tableWidth = 700.0f * scale; // ºñÀ² Á¶Á¤
+    float tableWidth = 700.0f * scale; // ë¹„ìœ¨ ì¡°ì •
     float tableHeight = 300.0f * scale;
 
     ImGui::SetCursorPosX((windowWidth - tableWidth) * 0.5f);
@@ -629,24 +629,24 @@ void CTitleScene::DrawRoomListTable()
 
     if (ImGui::BeginChild("TableArea", ImVec2(tableWidth, tableHeight), true)) {
 
-        // Å×ÀÌºí ¿µ¿ª ¾ÈÀÇ ¸ğµç ÅØ½ºÆ®(Çì´õ, ³»¿ë) Å©±â¸¦ scale¸¸Å­ Å°¿ó´Ï´Ù.
+        // í…Œì´ë¸” ì˜ì—­ ì•ˆì˜ ëª¨ë“  í…ìŠ¤íŠ¸(í—¤ë”, ë‚´ìš©) í¬ê¸°ë¥¼ scaleë§Œí¼ í‚¤ì›ë‹ˆë‹¤.
         ImGui::SetWindowFontScale(scale);
 
         if (ImGui::BeginTable("RoomTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
 
-            // °íÁ¤ ³Êºñ(WidthFixed)·Î ÀâÈù ÄÃ·³µéµµ ±ÛÀÚ°¡ Ä¿Áø ¸¸Å­ ³ĞÇôÁİ´Ï´Ù.
-            // 50.0f, 100.0f °°Àº °íÁ¤ ¼öÄ¡¿¡ scaleÀ» °öÇØ¾ß ±ÛÀÚ°¡ ¹ÛÀ¸·Î »ßÁ®³ª°¡Áö ¾Ê½À´Ï´Ù.
+            // ê³ ì • ë„ˆë¹„(WidthFixed)ë¡œ ì¡íŒ ì»¬ëŸ¼ë“¤ë„ ê¸€ìê°€ ì»¤ì§„ ë§Œí¼ ë„“í˜€ì¤ë‹ˆë‹¤.
+            // 50.0f, 100.0f ê°™ì€ ê³ ì • ìˆ˜ì¹˜ì— scaleì„ ê³±í•´ì•¼ ê¸€ìê°€ ë°–ìœ¼ë¡œ ì‚ì ¸ë‚˜ê°€ì§€ ì•ŠìŠµë‹ˆë‹¤.
             ImGui::TableSetupColumn("No.", ImGuiTableColumnFlags_WidthFixed, 50.0f * scale);
-            ImGui::TableSetupColumn((const char*)u8"¹æ Á¦¸ñ", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn((const char*)u8"ÀÎ¿ø", ImGuiTableColumnFlags_WidthFixed, 100.0f * scale);
+            ImGui::TableSetupColumn((const char*)u8"ë°© ì œëª©", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn((const char*)u8"ì¸ì›", ImGuiTableColumnFlags_WidthFixed, 100.0f * scale);
 
             ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
             ImGui::TableHeadersRow();
             ImGui::PopStyleColor(2);
 
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // ³»¿ë °ËÁ¤»ö
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // ¼±ÅÃ ½Ã ³ë¶õ»ö
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // ë‚´ìš© ê²€ì •ìƒ‰
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // ì„ íƒ ì‹œ ë…¸ë€ìƒ‰
 
             int rowNum = 1;
             for (const auto& [id, room] : rooms) {
@@ -677,13 +677,13 @@ void CTitleScene::DrawRoomListTable()
         }
 
         // ===============================
-        // Å×ÀÌºí ¿µ¿ª ºó °÷ Å¬¸¯ ½Ã ¼±ÅÃ ÇØÁ¦
+        // í…Œì´ë¸” ì˜ì—­ ë¹ˆ ê³³ í´ë¦­ ì‹œ ì„ íƒ í•´ì œ
         // ===============================
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) {
             selected_room_id = 0;
         }
 
-        // ÆùÆ® ½ºÄÉÀÏÀ» ¿ø»ó º¹±¸
+        // í°íŠ¸ ìŠ¤ì¼€ì¼ì„ ì›ìƒ ë³µêµ¬
         ImGui::SetWindowFontScale(1.0f);
 
     }
@@ -704,8 +704,8 @@ void CTitleScene::DrawRefreshButton()
 
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-    if (ImGui::Button((const char*)u8"»õ·Î\n°íÄ§", ImVec2(btnSize, btnSize))) {
-        // »õ·Î°íÄ§ ÆĞÅ¶ Àü¼Û
+    if (ImGui::Button((const char*)u8"ìƒˆë¡œ\nê³ ì¹¨", ImVec2(btnSize, btnSize))) {
+        // ìƒˆë¡œê³ ì¹¨ íŒ¨í‚· ì „ì†¡
         if (SERVER_SESSION) {
             auto user = SERVER_SESSION->GetUser();
             if (user) {
@@ -736,15 +736,15 @@ void CTitleScene::DrawThreeButton()
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.55f, 0.25f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-    if (ImGui::Button((const char*)u8"¹æ ¸¸µé±â", ImVec2(btnWidth, btnHeight))) {
+    if (ImGui::Button((const char*)u8"ë°© ë§Œë“¤ê¸°", ImVec2(btnWidth, btnHeight))) {
         show_room_create_popup = true;
     }
     ImGui::SameLine(0, spacing);
 
-    if (ImGui::Button((const char*)u8"¹æ ÀÔÀå", ImVec2(btnWidth, btnHeight))) {
+    if (ImGui::Button((const char*)u8"ë°© ì…ì¥", ImVec2(btnWidth, btnHeight))) {
         if (selected_room_id != 0) {
             StartLoading(LoadingType::RoomEnter);
-            // ÀÔÀå ÆĞÅ¶ Àü¼Û...
+            // ì…ì¥ íŒ¨í‚· ì „ì†¡...
             if (SERVER_SESSION) {
                 auto user = SERVER_SESSION->GetUser();
                 if (user) {
@@ -759,9 +759,9 @@ void CTitleScene::DrawThreeButton()
     }
     ImGui::SameLine(0, spacing);
 
-    if (ImGui::Button((const char*)u8"µÚ·Î °¡±â", ImVec2(btnWidth, btnHeight))) {
+    if (ImGui::Button((const char*)u8"ë’¤ë¡œ ê°€ê¸°", ImVec2(btnWidth, btnHeight))) {
         is_title_draw = true;
-        SetUIState(TitleUIState::MultiSelect); // ´Ù½Ã ¸Ş´º ¼±ÅÃÀ¸·Î
+        SetUIState(TitleUIState::MultiSelect); // ë‹¤ì‹œ ë©”ë‰´ ì„ íƒìœ¼ë¡œ
     }
 
     ImGui::PopStyleColor(2);
@@ -780,21 +780,21 @@ void CTitleScene::DrawRoomCreatePopUp()
     if (ImGui::BeginPopupModal("CreateRoom", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
         static char roomName[128] = "";
 
-        ImGui::Text((const char*)u8"»ı¼ºÇÒ ¹æ Á¦¸ñÀ» ÀÔ·ÂÇÏ¼¼¿ä.");
+        ImGui::Text((const char*)u8"ìƒì„±í•  ë°© ì œëª©ì„ ì…ë ¥í•˜ì„¸ìš”.");
         ImGui::Spacing();
         ImGui::PushItemWidth(300.0f);
         ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
         ImGui::PopItemWidth();
         ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
 
-        if (ImGui::Button((const char*)u8"»ı¼º", ImVec2(120, 40))) {
+        if (ImGui::Button((const char*)u8"ìƒì„±", ImVec2(120, 40))) {
             if (strlen(roomName) == 0) {
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
 
             std::string cp949Name = UTF8ToCP949(roomName);
 
-            // ÆĞÅ¶ Àü¼Û
+            // íŒ¨í‚· ì „ì†¡
             C_CreateRoom createPkt;
             auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
             if (serverSession) {
@@ -815,7 +815,7 @@ void CTitleScene::DrawRoomCreatePopUp()
         }
         ImGui::SameLine();
 
-        if (ImGui::Button((const char*)u8"Ãë¼Ò", ImVec2(120, 40))) {
+        if (ImGui::Button((const char*)u8"ì·¨ì†Œ", ImVec2(120, 40))) {
             memset(roomName, 0, sizeof(roomName));
             ImGui::CloseCurrentPopup();
             show_room_create_popup = false;
@@ -826,33 +826,33 @@ void CTitleScene::DrawRoomCreatePopUp()
 }
 
 //========================
-// ¼­¹ö ÆĞÅ¶ °ü·Ã Ã³¸® ÇÔ¼öµé
+// ì„œë²„ íŒ¨í‚· ê´€ë ¨ ì²˜ë¦¬ í•¨ìˆ˜ë“¤
 //========================
 void CTitleScene::Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGIN& pkt)
 {
-    // ·Î±×ÀÎ ¼º°ø
+    // ë¡œê·¸ì¸ ì„±ê³µ
     if (pkt.success) {
 
-        ShowResultPopup(true, "·Î±×ÀÎ ¼º°ø!");
+        ShowResultPopup(true, "ë¡œê·¸ì¸ ì„±ê³µ!");
 
-        // ·ÎµùÃ¢ ²ô±â
+        // ë¡œë”©ì°½ ë„ê¸°
         StopLoading();
 
-        // User »ı¼º
+        // User ìƒì„±
         std::shared_ptr<CUser> user = std::make_shared<CUser>();
 
-        // session, id ÀúÀå (¾àÇÑ ÂüÁ¶)
+        // session, id ì €ì¥ (ì•½í•œ ì°¸ì¡°)
         user->SetSession(session);
         user->SetUserID(pkt.user_id);
 
-        // User Refcount Áõ°¡
+        // User Refcount ì¦ê°€
         SERVER_SESSION->SetUser(user);
     }
-    // ·Î±×ÀÎ ½ÇÆĞ
+    // ë¡œê·¸ì¸ ì‹¤íŒ¨
     else {
-        CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "·Î±×ÀÎ ½ÇÆĞ!");
+        CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(false, "ë¡œê·¸ì¸ ì‹¤íŒ¨!");
 
-        // ·ÎµùÃ¢ ²ô±â
+        // ë¡œë”©ì°½ ë„ê¸°
         CSceneManager::GetInstance().GetTitleScene()->StopLoading();
     }
 }
@@ -860,7 +860,7 @@ void CTitleScene::Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGI
 void CTitleScene::Handle_S_Logout(std::shared_ptr<Session>& session, const S_LOGOUT& pkt)
 {
     if (pkt.success) {
-        CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "·Î±×¾Æ¿ô ¼º°ø!");
+        CSceneManager::GetInstance().GetTitleScene()->ShowResultPopup(true, "ë¡œê·¸ì•„ì›ƒ ì„±ê³µ!");
         CSceneManager::GetInstance().GetTitleScene()->StopLoading();
         SERVER_SESSION->SetUser(nullptr);
     }
@@ -871,19 +871,19 @@ void CTitleScene::Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SI
     if (pkt.success) {
         printf("signup success! \n");
 
-        // °¡ÀÔ ¼º°ø
-        ShowResultPopup(true, "°¡ÀÔ ¼º°ø!");
+        // ê°€ì… ì„±ê³µ
+        ShowResultPopup(true, "ê°€ì… ì„±ê³µ!");
 
-        // ·ÎµùÃ¢ ²ô±â
+        // ë¡œë”©ì°½ ë„ê¸°
         StopLoading();
     }
     else {
         printf("signup fail...! \n");
 
-        // °¡ÀÔ ½ÇÆĞ
-        ShowResultPopup(false, "°¡ÀÔ ½ÇÆĞ..!");
+        // ê°€ì… ì‹¤íŒ¨
+        ShowResultPopup(false, "ê°€ì… ì‹¤íŒ¨..!");
 
-        // ·ÎµùÃ¢ ²ô±â
+        // ë¡œë”©ì°½ ë„ê¸°
         StopLoading();
     }
 }
@@ -893,7 +893,7 @@ void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_
     if (pkt.success) {
         SetIsEnter(true);
 
-        ShowResultPopup(true, "¹æ ÀÔÀå ¿Ï·á!");
+        ShowResultPopup(true, "ë°© ì…ì¥ ì™„ë£Œ!");
 
         CImGuiManager::GetInstance().ReserveResetFocus();
 
@@ -902,12 +902,12 @@ void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_
     else {
         SetIsEnter(false);
 
-        ShowResultPopup(true, "¹æ ÀÔÀå ºÒ°¡!");
+        ShowResultPopup(true, "ë°© ì…ì¥ ë¶ˆê°€!");
 
         CImGuiManager::GetInstance().ReserveResetFocus();
     }
 
-    // ·ÎµùÃ¢ ²ô±â
+    // ë¡œë”©ì°½ ë„ê¸°
     StopLoading();
 }
 
@@ -932,7 +932,7 @@ void CTitleScene::Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_Lis
             rooms[info.room_id] = info;
     }
 
-    // ±âÁ¸¿¡´Â ÀÖ¾ú´Âµ¥ ¾ø¾îÁø ¹æ Ã¼Å©
+    // ê¸°ì¡´ì—ëŠ” ìˆì—ˆëŠ”ë° ì—†ì–´ì§„ ë°© ì²´í¬
     if (pkt.room_count == 0) {
         rooms.clear();
     }
@@ -949,7 +949,7 @@ void CTitleScene::Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_Lis
             }
 
             if (!found) {
-                it = rooms.erase(it); // »èÁ¦ + ´ÙÀ½ iterator ¹İÈ¯
+                it = rooms.erase(it); // ì‚­ì œ + ë‹¤ìŒ iterator ë°˜í™˜
             }
             else {
                 ++it;
