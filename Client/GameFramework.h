@@ -38,9 +38,6 @@ public:
 	void FrameAdvance();
 
 	//CPU, GPU 동기화 함수
-	void ProcessMouseMessage(HWND , UINT , WPARAM , LPARAM );
-	void ProcessKeyboardMessage(HWND , UINT , WPARAM , LPARAM );
-	void ProcessWindowMessage(HWND, UINT, WPARAM, LPARAM);
 	
 	void Update();
 	void Render();
@@ -57,8 +54,8 @@ private:
 
 	// directX 관련
 	ComPtr<IDXGIFactory4> dxgi_factory{};
-	ComPtr<IDXGISwapChain3> swap_chain{};
 	ComPtr<ID3D12Device> d3d_device{};
+	ComPtr<IDXGISwapChain3> swap_chain{};
 
 	// MSAA 다중 샘플링 활성화 및 다중 샘플링 레벨 설정
 	bool msaa4x_enabled{};

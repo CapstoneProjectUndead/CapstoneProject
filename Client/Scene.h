@@ -57,16 +57,18 @@ public:
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }
 	void									SetPlayer(std::shared_ptr<CMyPlayer> _player) { my_player = _player; }
 	void									SetCamera(std::shared_ptr<CCamera> _camera) { camera = _camera; }
+	std::shared_ptr<CCamera>&				GetCamera() { return camera; }
 
 	SCENE_TYPE								GetSceneType() const { return scene_type; }
 
 	auto&									GetShaders() { return shaders; }
+	void									SetShaders(auto& otherShaders) { shaders = otherShaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
 	std::unordered_map<uint64, size_t>&     GetIDIndex() { return id_To_Index; }
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 
-	std::shared_ptr<CObjectFactory> GetFactory() const { return factory; };
+	std::shared_ptr<CObjectFactory>& GetFactory() { return factory; };
 protected:
 	SCENE_TYPE								scene_type;
 

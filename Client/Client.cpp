@@ -123,7 +123,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-    DWORD dwstyle = WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_BORDER; // 창 스타일 정의
+    DWORD dwstyle = WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_BORDER | WS_OVERLAPPEDWINDOW; // 창 스타일 정의
     RECT rc = { 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
     AdjustWindowRect(&rc, dwstyle, FALSE);
 
@@ -173,18 +173,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return true;
     // =========================================================================
 
-
     switch (message)
     {
     case WM_SIZE:
+        if (wParam == SIZE_MAXIMIZED) {
+            gGameFramework.ChangeSwapChainState();
+        }
+        break;
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
     case WM_MOUSEMOVE:
+        break;
     case WM_KEYDOWN:
+        if (wParam == VK_F11) {
+            gGameFramework.ChangeSwapChainState();
+        }
+        break;
     case WM_KEYUP:
-        //gGameFramework.ProcessWindowMessage(hWnd, message, wParam, lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

@@ -53,28 +53,29 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
 
-			auto debugMesh = std::make_shared<CMeshComponent>();
+			/*auto debugMesh = std::make_shared<CMeshComponent>();
 			obj->SetComponent(debugMesh);
 			debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
-			meshRenderer->SetRenderUnit(debugMesh.get());
+			meshRenderer->SetRenderUnit(debugMesh.get());*/
 		}
 		else {
-			if (children->name == "Floor") {
+			if (children->name == "Floor" || children->name == "GroundPipe") {
 				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
 				auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 				obj->SetComponent(boxCollider);
 				CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			}
+			else if (children->name == "Stone.012") {
+				std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(children->mesh.bounds.Extents.x, children->mesh.bounds.Center);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+				obj->SetComponent(collider);
+				CPhysicsManager::GetInstance().SetCollider(collider);
 			}
 			else if (!children->collider.positions.empty()) {
 				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 				obj->SetComponent(collider);
 				CPhysicsManager::GetInstance().SetCollider(collider);
-
-				auto debugMesh = std::make_shared<CMeshComponent>();
-				obj->SetComponent(debugMesh);
-				debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
-				meshRenderer->SetRenderUnit(debugMesh.get());
 			}
 		}
 
@@ -200,15 +201,14 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 	character->SetComponent(animator);
 	character->SetShdaer("skinning");
 
-	// Movement
-	character->SetComponent(std::make_shared<CMovementComponent>());
+	character->Initialize(GET_DEVICE, GET_CMD_LIST);
 }
 
 std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager* heapManager)
 {
 	auto player = std::make_shared<CMyPlayer>();
 	CreateUndeadCharacter(player, heapManager);
-	player->Initialize(GET_DEVICE, GET_CMD_LIST);
+	player->SetComponent(std::make_shared<CMovementComponent>());
 	return player;
 }
 
@@ -216,8 +216,13 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 {
 	auto player = std::make_shared<CPlayer>();
 	CreateUndeadCharacter(player, heapManager);
-	player->Initialize(GET_DEVICE, GET_CMD_LIST);
+	player->SetComponent(std::make_shared<CMovementComponent>());
 	return player;
+}
+
+void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
+{
+	player->SetComponent(std::make_shared<CMovementComponent>());
 }
 
 CObjectFactory::MeshName CObjectFactory::stringToMeshName(const std::string& str)

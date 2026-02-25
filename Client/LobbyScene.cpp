@@ -20,17 +20,19 @@ CLobbyScene::~CLobbyScene()
 void CLobbyScene::Initialize()
 {
 	// 렌더링할 때 필요한 쉐이더 객체 생성
-	{
-		// static shader
-		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("static", std::move(shader));
-	}
-	{
-		// skinning
-		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("skinning", std::move(shader));
+	if(shaders.empty()) {
+		{
+			// static shader
+			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+			shader->CreateShader(GET_DEVICE);
+			shaders.emplace("static", std::move(shader));
+		}
+		{
+			// skinning
+			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+			shader->CreateShader(GET_DEVICE);
+			shaders.emplace("skinning", std::move(shader));
+		}
 	}
 
 	{
@@ -46,7 +48,21 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
+	else {
+		factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));
+	}
+
+	if (!camera) {
+		camera = std::make_shared<CCamera>();
+		camera->SetTarget(my_player.get());
+		camera->Initialize(device, commandList);
+	}
 	
+	// light 생성
+	if (!light) {
+		light = std::make_unique<CLightManager>();
+		light->Initialize(device, commandList);
+	}
 	// test 용 삭제X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
@@ -62,18 +78,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 			}
 		}*/
 	}
-
-	if (!camera) {
-		camera = std::make_shared<CCamera>();
-		camera->SetTarget(my_player.get());
-		camera->Initialize(device, commandList);
-	}
-	
-	// light 생성
-	if (!light) {
-		light = std::make_unique<CLightManager>();
-		light->Initialize(device, commandList);
-	}
 }
 
 void CLobbyScene::Update(float elapsedTime)
@@ -84,11 +88,6 @@ void CLobbyScene::Update(float elapsedTime)
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	}
-}
-
-void CLobbyScene::Render(ID3D12GraphicsCommandList* commandList)
-{
-	CScene::Render(commandList);
 }
 
 void CLobbyScene::DrawUI()
