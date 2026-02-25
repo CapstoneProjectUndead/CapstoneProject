@@ -92,11 +92,10 @@ void CObject::SetYaw(float _yaw)
 
 void CObject::SetYawPitch(float yawDeg, float pitchDeg)
 {
-	// pitch 제한 (이거 중요)
-	pitchDeg = std::clamp(pitchDeg, -89.9f, 89.9f);
+	pitch = std::clamp(pitchDeg, -89.9f, 89.9f);
 
 	XMVECTOR q = XMQuaternionRotationRollPitchYaw(
-		XMConvertToRadians(pitchDeg),
+		0.0f,
 		XMConvertToRadians(yawDeg),
 		0.0f
 	);
