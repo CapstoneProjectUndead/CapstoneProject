@@ -8,6 +8,7 @@
 #include "TitleScene.h"
 #include "User.h"
 #include "RoomManager.h"
+#include "CustomScene.h"
 
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
@@ -142,6 +143,23 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 	);
 
 #endif
+
+	return true;
+}
+
+bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room);
+	CScene* customScene = room->GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
+	assert(customScene);
+
+	customScene->PushPacketJob(
+		session,
+		(CCustomScene*)customScene,
+		&CCustomScene::C_Handle_Custom_Select,
+		pkt
+	);
 
 	return true;
 }

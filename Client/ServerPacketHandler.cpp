@@ -15,6 +15,7 @@
 #include "ImGuiManager.h"
 #include "User.h"
 #include "TitleScene.h"
+#include "CustomScene.h"
 
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
@@ -78,7 +79,7 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 bool Handle_S_ENTER_ROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
 {
 	// 서버에서 방 입장 허락이 왔는데, 입장 씬이 Title이면 안된다. 
-	// Title Scene은 Room이 아니기 때문이다.  Title -> [Room](Lobby Scene, Game Scene) 
+	// Title Scene은 Room이 아니기 때문이다.  Title -> [Room](Custom Scene, Lobby Scene, Game Scene) 
 	if (pkt.scene_type == SCENE_TYPE::TITLE)
 		assert(nullptr);
 
@@ -151,6 +152,15 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	assert(scene);
 	scene->Handle_S_Move_Player(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pkt)
+{
+	CCustomScene* customScene = (CCustomScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
+	assert(customScene && customScene->GetSceneType() == SCENE_TYPE::CUSTOMS);
+	customScene->Handle_S_Custom_Select(session, pkt);
 
 	return true;
 }

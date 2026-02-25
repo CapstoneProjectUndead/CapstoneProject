@@ -23,6 +23,11 @@ struct NetPlayerInfo
 	uint32			room_id;
 	bool			is_my_player;
 
+	// 커스터마이징 추가 (26. 2. 25)
+	uint8           body_type = 0;
+	uint8           eye_type = 0;
+	uint8           mouth_type = 0;
+
 	// 서버권위 방식) w,a,s,d 서버권위 방식에서 필요한 데이터이다.
 	bool			w = false;
 	bool			a = false;
@@ -58,6 +63,9 @@ struct NetPlayerInfo
 		: player_id(other.player_id)
 		, room_id(other.room_id)
 		, is_my_player(other.is_my_player)
+		, body_type(other.body_type)
+		, eye_type(other.eye_type)
+		, mouth_type(other.mouth_type)
 		, state(other.state)
 		, w(other.w)
 		, a(other.a)
@@ -76,7 +84,7 @@ struct NetPlayerInfo
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 55, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 58, "NetObjectInfo size mismatch!");
 
 
 struct NetRoomInfo
