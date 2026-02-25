@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "CustomScene.h"
 #include "Shader.h"
 #include "GameFramework.h"
@@ -7,6 +7,7 @@
 #include "ImGuiManager.h"
 #include "ObjectFactory.h"
 #include "Camera.h"
+#include "ServerPacketHandler.h"
 
 void CCustomScene::Initialize()
 {
@@ -92,6 +93,16 @@ void CCustomScene::DrawUI()
 	if (currentScene->GetSceneType() != SCENE_TYPE::CUSTOMS)
 		return;
 
+    // 로딩 팝업 (최우선 순위)
+    if (loading_type != LoadingType::None) {
+        DrawLoadingPopUp();
+    }
+
+    // 결과 팝업
+    if (pop_up_result.is_visible) {
+        DrawLoadingPopUpResult();
+    }
+
     DrawCustomizingWindow();
 }
 
@@ -157,9 +168,105 @@ void CCustomScene::DrawCustomizingWindow()
 
         // 완료 버튼도 적당한 크기로 수정
         if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150, 40))) {
-            CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+
+            if (my_player->GetIsSingle()) {
+                CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+            }
+            else {
+                auto session = my_player->GetSession();
+                if (session) {
+                    C_CustomSelect selectPkt;
+                    selectPkt.player_id = my_player->GetID();
+                    selectPkt.body_type = body_idx;
+                    selectPkt.eye_type = eyes_idx;
+                    selectPkt.mouth_type = mouth_idx;
+
+                    auto sendBuffer = MAKE_SEND_BUFFER(selectPkt);
+                    session->DoSend(sendBuffer);
+                }
+
+                StartLoading(LoadingType::SelectResult);
+            }
         }
     }
 
     ImGui::End();
+}
+
+void CCustomScene::DrawLoadingPopUp()
+{
+    if (!ImGui::IsPopupOpen("LoadingPopup")) {
+        ImGui::OpenPopup("LoadingPopup");
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+        ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+        const char* txt = (const char*)u8"로딩 중...";
+        switch (loading_type) {
+        case LoadingType::SelectResult:      txt = (const char*)u8"로딩 중..."; break;
+        }
+        ImGui::Text("%s", txt);
+
+        ImGui::Spacing();
+        if (ImGui::Button("Cancel")) {
+            StopLoading();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void CCustomScene::ShowResultPopup(bool is_success, const std::string& msg)
+{
+    pop_up_result.is_visible = true;
+    pop_up_result.is_success = is_success;
+    pop_up_result.message = msg;
+}
+
+void CCustomScene::CloseResultPopup()
+{
+    pop_up_result.is_visible = false;
+    pop_up_result.is_success = false;
+}
+
+void CCustomScene::DrawLoadingPopUpResult()
+{
+    if (!ImGui::IsPopupOpen("ResultPopup")) {
+        ImGui::OpenPopup("ResultPopup");
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("ResultPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
+        ImGui::Spacing();
+
+        if (ImGui::Button((const char*)u8"확인")) {
+
+            pop_up_result.is_visible = false; // 팝업 닫기
+            ImGui::CloseCurrentPopup();
+
+            if (pop_up_result.is_success) {    
+                CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+                CloseResultPopup();
+            }
+        }
+        ImGui::EndPopup();
+    }
+}
+
+// 서버 패킷 관련 처리 함수들
+void CCustomScene::Handle_S_Custom_Select(std::shared_ptr<Session> session, S_CustomSelect& pkt)
+{
+    ShowResultPopup(true, "설정 완료!");
+
+    CImGuiManager::GetInstance().ReserveResetFocus();
+
+    StopLoading();
 }
