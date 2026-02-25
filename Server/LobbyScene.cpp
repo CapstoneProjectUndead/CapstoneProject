@@ -138,56 +138,8 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 		session->DoSend(sendBuffer);
 	}
 
-	// 지금 접속한 유저에게 다른 유저의 정보도 알려준다.
-	// 여기서는 가변길이 패킷을 보낸다.
-	{
-		if (!players.empty()) {
-
-			int32 cnt = players.size();
-			int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
-
-			// 예시, 꼭 LobbyScene일 필요는 없다.
-			S_PLAYERLIST_WRITE pktWriter(player->GetRoomID(), SCENE_TYPE::LOBBY);
-
-			S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
-
-			int idx = 0;
-			for (auto& pl : players) {
-				if (pl.second->GetID() == player->GetID())
-					continue;
-
-				auto otherPlayer = pl.second;
-				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
-					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
-					, pl.second->GetPosition().z };
-
-				userList[idx++] = { info };
-			}
-
-			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
-			session->DoSend(sendBuffer);
-		}
-	}
-
 	// 유저 Scene에 입장
 	EnterScene(player);
-
-	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
-	{
-		S_SpawnPlayer spawnPkt;
-		//spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = false;
-		spawnPkt.info.player_id = player->GetID();
-		//spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = false;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		BroadCast(sendBuffer, player->GetID());
-	}
 }
 
 void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt)
@@ -244,37 +196,9 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 			user->GetSession()->DoSend(sendBuffer);
 	}
 
-	// 유저에게 입장 허락 패킷과 방에 있는 다른 유저의 정보를 알려준다..
-	// 여기서는 가변길이 패킷을 보낸다.
-	{
-		// 먼저 그 방에 LobbyScene에 있는 유저들 정보를 보내준다.
-		if (!players.empty()) {
-
-			int32 cnt = players.size();
-			int32 pktSize = sizeof(S_PLAYER_LIST) + sizeof(S_PLAYER_LIST::Player) * cnt;
-
-			S_PLAYERLIST_WRITE pktWriter(roomId, SCENE_TYPE::LOBBY);
-
-			S_PLAYERLIST_WRITE::UserList userList = pktWriter.ReserveUserList(players.size());
-
-			int idx = 0;
-			for (auto& pl : players) {
-				if (pl.second->GetID() == player->GetID())
-					continue;
-
-				auto otherPlayer = pl.second;
-				NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
-					, otherPlayer->GetPosition().x, pl.second->GetPosition().y
-					, pl.second->GetPosition().z };
-
-				userList[idx++] = { info };
-			}
-
-			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
-			if (user->GetSession())
-				user->GetSession()->DoSend(sendBuffer);
-		}
-	}
+	// 유저 Scene에 입장
+	// EnterScene 에서 유저들의 입장 정보들을 다 처리하도록 수정. (26. 2. 25)
+	EnterScene(player);
 	
 	// S_Enter_Room 패킷
 	// 입장 허락.
@@ -286,25 +210,5 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
 		if (user->GetSession())
 			user->GetSession()->DoSend(sendBuffer);
-	}
-
-	// 유저 Scene에 입장
-	EnterScene(player);
-
-	// 다른 유저에게 지금 접속한 유저의 정보를 알려준다.
-	{
-		S_SpawnPlayer spawnPkt;
-		spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = false;
-		spawnPkt.info.player_id = player->GetID();
-		spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = false;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		BroadCast(sendBuffer, player->GetID());
 	}
 }

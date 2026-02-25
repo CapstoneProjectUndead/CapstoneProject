@@ -21,14 +21,21 @@ public:
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
 
-	void BroadCast(SendBufferRef sendBuffer);
-	void BroadCast(SendBufferRef sendBuffer, uint64 exceptID);
-
-	void SimulatePlayers(const float elapsedTime);
-
 	void SendResults();
 	void SendPlayersResults();
 	void SendPlayersCheckPing();
+
+	void BroadCast(SendBufferRef sendBuffer);
+	void BroadCast(SendBufferRef sendBuffer, uint64 exceptID);
+
+private:
+	void SimulatePlayers(const float elapsedTime);
+
+	// 입장 유저에게 기존 유저들의 정보를 알려준다.
+	void SendExistingUsers(shared_ptr<CPlayer> player);
+
+	// 기존 유저에게 지금 접속한 유저의 정보를 알려준다.
+	void BroadcastUserEnter(shared_ptr<CPlayer> player);
 
 public:
 	// Scene에 플레이어가 있는지 체크
@@ -75,10 +82,11 @@ protected:
 	mutex								job_queue_lock;
 	queue<Job>							job_queue;
 
+	weak_ptr<CRoom>						room;
+	uint32								room_id;
+
 private:
 	SCENE_TYPE							scene_type;
-	uint32								room_id;
-	weak_ptr<CRoom>						room;
 	float								dt_ping_accumulator;
 };
 
