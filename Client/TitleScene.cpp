@@ -326,7 +326,7 @@ void CTitleScene::DrawLogInWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(400.0f * scale, 200.0f * scale);
+    ImVec2 winSize = ImVec2(290.0f * scale, 195.0f * scale);
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -355,7 +355,7 @@ void CTitleScene::DrawLogInWindow()
         ImGui::Spacing(); ImGui::Spacing();
 
         // 버튼 크기 및 중앙 정렬 스케일링
-        float btnWidth = 360.0f * scale;
+        float btnWidth = 250.0f * scale;
         float btnHeight = 50.0f * scale;
 
         // 동적 중앙 정렬: (현재 창의 실제 너비 - 스케일 적용된 버튼 너비) / 2
@@ -402,7 +402,7 @@ void CTitleScene::DrawSignUpWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(400.0f * scale, 230.0f * scale);
+    ImVec2 winSize = ImVec2(305.0f * scale, 225.0f * scale);
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -432,7 +432,7 @@ void CTitleScene::DrawSignUpWindow()
         ImGui::Spacing();
 
         // 버튼 크기 및 중앙 정렬 스케일링
-        float btnWidth = 360.0f * scale;
+        float btnWidth = 250.0f * scale;
         float btnHeight = 50.0f * scale;
 
         // 동적 중앙 정렬: (현재 창의 실제 너비 - 스케일 적용된 버튼 너비) / 2
@@ -802,7 +802,7 @@ void CTitleScene::DrawRoomCreatePopUp()
 
         ImGui::Text((const char*)u8"생성할 방 제목을 입력하세요.");
         ImGui::Spacing();
-        ImGui::PushItemWidth(300.0f * scale);
+        ImGui::PushItemWidth(250.0f * scale);
         ImGui::InputText("##RoomName", roomName, IM_ARRAYSIZE(roomName));
         ImGui::PopItemWidth();
         ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
