@@ -147,17 +147,17 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 			user->SetRoomID(roomId);
 			user->SetRoom(room);
 
-			// 플레이어 Lobby Scene에 입장
+			// 플레이어 Custom Scene에 입장
 			auto& scenes = room->GetScenes();
-			CScene* scene = scenes[(UINT)SCENE_TYPE::LOBBY].get();
+			CScene* scene = scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
 			assert(scene);
 
 			PktDummy dummypkt;
 			dummypkt.value = roomId;
 
 			scene->PushPacketJob(user->GetSession()
-				, (CLobbyScene*)scene
-				, &CLobbyScene::C_Enter_Lobby
+				, (CCustomScene*)scene
+				, &CCustomScene::C_Enter_CustomScene
 				, dummypkt);
 		}
 		else {

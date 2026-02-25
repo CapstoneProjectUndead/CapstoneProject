@@ -79,8 +79,13 @@ public:
 		ping = (ping * 0.9f) + (newRtt * 0.1f);
 	}
 
+	uint8 GetBodyType() const { return body_type; }
 	void SetBodyType(uint8 type) { body_type = type; }
+
+	uint8 GetEyesType() const { return eyes_type; }
 	void SetEyesType(uint8 type) { eyes_type = type; }
+
+	uint8 GetMouthType() const { return mouth_type; }
 	void SetMouthType(uint8 type) { mouth_type = type; }
 
 private:

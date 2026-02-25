@@ -66,8 +66,7 @@ void CCustomScene::C_Enter_CustomScene(shared_ptr<Session> session, const PktDum
 	// 방 인원 수 증가
 	room->PlayerEnter();
 
-	// 유저 Custom Scene에 입장
-	EnterScene(player);
+	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정.
 
 	// S_SpawnPlayer 패킷
 	// 지금 방에 입장한 유저에게 플레이어 생성 허락
@@ -103,7 +102,8 @@ void CCustomScene::C_Enter_CustomScene(shared_ptr<Session> session, const PktDum
 
 void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_CustomSelect& pkt)
 {
-	auto player = players[pkt.player_id];
+	auto player = CAST_CS(session)->GetUser()->GetPlayer();
+	assert(player);
 	
 	player->SetBodyType(pkt.body_type);
 	player->SetBodyType(pkt.eye_type);
@@ -122,7 +122,4 @@ void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_C
 		auto sendBuffer = MAKE_SEND_BUFFER(pkt);
 		session->DoSend(sendBuffer);
 	}
-
-	// Custom Scene에서는 퇴장
-	LeaveScene(pkt.player_id);
 }

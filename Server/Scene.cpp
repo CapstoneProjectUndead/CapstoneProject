@@ -182,6 +182,7 @@ void CScene::SendExistingUsers(shared_ptr<CPlayer> player)
 
 			auto otherPlayer = pl.second;
 			NetPlayerInfo info{ otherPlayer->GetID(), otherPlayer->GetRoomID()
+				, otherPlayer->GetBodyType(), otherPlayer->GetEyesType(), otherPlayer->GetMouthType()
 				, otherPlayer->GetPosition().x, pl.second->GetPosition().y
 				, pl.second->GetPosition().z };
 
@@ -198,11 +199,14 @@ void CScene::BroadcastUserEnter(shared_ptr<CPlayer> player)
 {
 	S_SpawnPlayer spawnPkt;
 	spawnPkt.room_id = player->GetRoomID();
+	spawnPkt.info.player_id = player->GetID();
 	spawnPkt.scene_type = scene_type;
 	spawnPkt.is_my_player = false;
-	spawnPkt.info.player_id = player->GetID();
-	spawnPkt.info.room_id = player->GetRoomID();
 	spawnPkt.info.is_my_player = false;
+	spawnPkt.info.room_id = player->GetRoomID();
+	spawnPkt.info.body_type = player->GetBodyType(); 
+	spawnPkt.info.eyes_type = player->GetEyesType(); 
+	spawnPkt.info.mouth_type = player->GetMouthType();
 	spawnPkt.info.x = player->GetPosition().x;
 	spawnPkt.info.y = player->GetPosition().y;
 	spawnPkt.info.z = player->GetPosition().z;

@@ -25,7 +25,7 @@ struct NetPlayerInfo
 
 	// 커스터마이징 추가 (26. 2. 25)
 	uint8           body_type = 0;
-	uint8           eye_type = 0;
+	uint8           eyes_type = 0;
 	uint8           mouth_type = 0;
 
 	// 서버권위 방식) w,a,s,d 서버권위 방식에서 필요한 데이터이다.
@@ -46,10 +46,14 @@ struct NetPlayerInfo
 	PLAYER_STATE	state;
 
 	NetPlayerInfo() = default;
-	NetPlayerInfo(uint64 _id, uint32 roomId, float _x, float _y, float _z)
+	NetPlayerInfo(uint64 _id, uint32 roomId, uint8 bodyType, uint8 eyeType, uint8 mouthType 
+		, float _x, float _y, float _z)
 		: player_id(_id)
 		, room_id(roomId)
 		, is_my_player(false)
+		, body_type(body_type)
+		, eyes_type(eyeType)
+		, mouth_type(mouthType)
 		, state(PLAYER_STATE::IDLE)
 		, x(_x)
 		, y(_y)
@@ -64,7 +68,7 @@ struct NetPlayerInfo
 		, room_id(other.room_id)
 		, is_my_player(other.is_my_player)
 		, body_type(other.body_type)
-		, eye_type(other.eye_type)
+		, eyes_type(other.eyes_type)
 		, mouth_type(other.mouth_type)
 		, state(other.state)
 		, w(other.w)
