@@ -23,7 +23,7 @@ void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& d
     }
 }
 
-bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo)
+bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
     if (!col) return false;
@@ -47,7 +47,7 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm:
     return false;
 }
 
-bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, GJKAlgorithm::CollisionInfo& outInfo)
+bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, CollisionInfo& outInfo)
 {
     XMVECTOR rayOrigin = XMLoadFloat3(&origin);
     XMVECTOR rayDir = XMVector3Normalize(XMLoadFloat3(&direction));
@@ -62,7 +62,7 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
         if (aabbDist > closestDist) continue;
 
         // Narrow-phase: 메쉬 콜라이더일 경우
-        if (auto* meshShape = dynamic_cast<CTriangleMeshShape*>(other->shape.get())) {
+        if (auto* meshShape = dynamic_cast<CConcaveMeshShape*>(other->shape.get())) {
             for (const auto& tri : meshShape->GetWorldTriangles()) {
                 float hitDist = 0.0f;
                 if (Triangle::Intersect(origin, direction, tri.v[0], tri.v[1], tri.v[2], hitDist)) {
@@ -93,7 +93,7 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 
     // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
     XMFLOAT3 groundCheckDelta = { 0, -0.05f, 0 };
-    GJKAlgorithm::CollisionInfo groundInfo{};
+    CollisionInfo groundInfo{};
     Overlap(obj, groundCheckDelta, groundInfo);
 
     obj->is_grounded = groundInfo.collided;

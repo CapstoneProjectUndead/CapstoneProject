@@ -47,31 +47,48 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
 
 		// ColliderComponent 생성
-		if (children->name == "Wall") {
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
+		switch (stringToLobbyMeshName(children->name)) {
+		/*case LobbyMeshName::Wall:
+		{
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
+			break;
+		}*/
+		case LobbyMeshName::Floor:
+		{
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			obj->SetComponent(boxCollider);
+			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			break;
 		}
-		else {
-			if (children->name == "Floor" || children->name == "GroundPipe") {
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-				auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				obj->SetComponent(boxCollider);
-				CPhysicsManager::GetInstance().SetCollider(boxCollider);
-			}
-			else if (children->name == "Stone012") {	// 카운터
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(children->mesh.bounds.Extents.x, children->mesh.bounds.Center);
-				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				obj->SetComponent(collider);
-				CPhysicsManager::GetInstance().SetCollider(collider);
-			}
-			else if (!children->collider.positions.empty()) {
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				obj->SetComponent(collider);
-				CPhysicsManager::GetInstance().SetCollider(collider);
-			}
+		case LobbyMeshName::GroundPipe:
+		{
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			obj->SetComponent(boxCollider);
+			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			break;
+		}
+		case LobbyMeshName::Counter:
+		{
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(children->mesh.bounds.Extents.z, children->mesh.bounds.Center);
+			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
+			break;
+		}
+		case LobbyMeshName::Unknown:
+		{
+			if (children->collider.positions.empty()) break;
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
+			break;
+		}
 		}
 
 		obj->Initialize(GET_DEVICE, GET_CMD_LIST);
@@ -143,39 +160,39 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 
 		// 0: dog, 1: cat, 2: buddy
 		// 처음에 강아지만 enable true
-		switch (stringToMeshName(child->name)) {
-		case MeshName::body:
+		switch (stringToUndeadMeshName(child->name)) {
+		case UndeadMeshName::body:
 			character->body_materials[0] = CreateUnit(resourceNames[0]);
 			character->body_materials[1] = CreateUnit(resourceNames[1]);
 			character->body_materials[1]->SetEnable(false);
 			character->body_materials[2] = CreateUnit(resourceNames[2]);
 			character->body_materials[2]->SetEnable(false);
 			break;
-		case MeshName::Bunny_ear:
-		case MeshName::Bunny_tail:
+		case UndeadMeshName::Bunny_ear:
+		case UndeadMeshName::Bunny_tail:
 			CreateUnit(resourceNames[3]);
 			character->eartail_parts[2].push_back(meshComp);
 			meshComp->SetEnable(false);
 			break;
-		case MeshName::Cat_ear:
-		case MeshName::Cat_tail:
+		case UndeadMeshName::Cat_ear:
+		case UndeadMeshName::Cat_tail:
 			CreateUnit(resourceNames[3]);
 			character->eartail_parts[1].push_back(meshComp);
 			meshComp->SetEnable(false);
 			break;
-		case MeshName::Dog_ear:
-		case MeshName::Dog_tail:
+		case UndeadMeshName::Dog_ear:
+		case UndeadMeshName::Dog_tail:
 			CreateUnit(resourceNames[3]);
 			character->eartail_parts[0].push_back(meshComp);
 			break;
-		case MeshName::eyes:
+		case UndeadMeshName::eyes:
 			character->eyes_material[0] = CreateUnit(resourceNames[4]);
 			character->eyes_material[1] = CreateUnit(resourceNames[5]);
 			character->eyes_material[1]->SetEnable(false);
 			character->eyes_material[2] = CreateUnit(resourceNames[6]);
 			character->eyes_material[2]->SetEnable(false);
 			break;
-		case MeshName::mouse:
+		case UndeadMeshName::mouse:
 			character->mouth_material[0] = CreateUnit(resourceNames[7]);
 			character->mouth_material[1] = CreateUnit(resourceNames[8]);
 			character->mouth_material[1]->SetEnable(false);
@@ -185,7 +202,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		}
 	}
 	// ColliderComponent 생성
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
+	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
 	character->SetComponent(collider);
 	CPhysicsManager::GetInstance().SetCollider(collider);
@@ -221,20 +238,33 @@ void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
 	player->SetComponent(std::make_shared<CMovementComponent>());
 }
 
-CObjectFactory::MeshName CObjectFactory::stringToMeshName(const std::string& str)
+CObjectFactory::UndeadMeshName CObjectFactory::stringToUndeadMeshName(const std::string& str)
 {
-	static const std::unordered_map<std::string, MeshName> table = {
-	{"body", MeshName::body},
-	{"Bunny_ear", MeshName::Bunny_ear},
-	{"Bunny_tail", MeshName::Bunny_tail},
-	{"Cat_ear", MeshName::Cat_ear},
-	{"Cat_tail", MeshName::Cat_tail},
-	{"Dog_ear", MeshName::Dog_ear},
-	{"Dog_tail", MeshName::Dog_tail},
-	{"eyes", MeshName::eyes},
-	{"mouse", MeshName::mouse},
+	static const std::unordered_map<std::string, UndeadMeshName> table = {
+		{"body", UndeadMeshName::body},
+		{"Bunny_ear", UndeadMeshName::Bunny_ear},
+		{"Bunny_tail", UndeadMeshName::Bunny_tail},
+		{"Cat_ear", UndeadMeshName::Cat_ear},
+		{"Cat_tail", UndeadMeshName::Cat_tail},
+		{"Dog_ear", UndeadMeshName::Dog_ear},
+		{"Dog_tail", UndeadMeshName::Dog_tail},
+		{"eyes", UndeadMeshName::eyes},
+		{"mouse", UndeadMeshName::mouse},
 	};
 
 	auto it = table.find(str);
-	return (it != table.end()) ? it->second : MeshName::Unknown;
+	return (it != table.end()) ? it->second : UndeadMeshName::Unknown;
+}
+
+CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::string& str)
+{
+	static const std::unordered_map<std::string, LobbyMeshName> table = {
+		{"Wall", LobbyMeshName::Wall},
+		{"Floor", LobbyMeshName::Floor},
+		{"GroundPipe", LobbyMeshName::GroundPipe},
+		{"Stone012", LobbyMeshName::Counter}
+	};
+
+	auto it = table.find(str);
+	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
 }

@@ -4,7 +4,7 @@ class CColliderComponent;
 class CObject;
 class CMovementComponent;
 
-#include "GJKAlgorithm.h"
+#include "CollisionAlgorithm.h"
 
 /*
 충돌 감지 및 계산(캐릭터는 별도로 처리)
@@ -30,8 +30,8 @@ public:
     void ApplyGravity(CObject* obj, float dt);
 
     // query
-    bool Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo);
-    bool Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, GJKAlgorithm::CollisionInfo& outInfo);
+    bool Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo);
+    bool Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, CollisionInfo& outInfo);
 
     void Update(float deltaTime);
 

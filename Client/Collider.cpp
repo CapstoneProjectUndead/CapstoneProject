@@ -74,7 +74,7 @@ void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
     }
 }
 
-BoundingBox CTriangleMeshShape::ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2)
+BoundingBox CConcaveMeshShape::ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2)
 {
     // 1. 각 축의 최솟값과 최댓값 초기화
     XMVECTOR p0 = XMLoadFloat3(&v0);
@@ -97,7 +97,7 @@ BoundingBox CTriangleMeshShape::ComputeTriangleAABB(const XMFLOAT3& v0, const XM
     return aabb;
 }
 
-CTriangleMeshShape::CTriangleMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices)
+CConcaveMeshShape::CConcaveMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices)
 {
     // 1. 모든 삼각형 데이터를 미리 생성
     for (size_t i = 0; i < indices.size(); i += 3) {
@@ -112,7 +112,7 @@ CTriangleMeshShape::CTriangleMeshShape(const std::vector<XMFLOAT3>& vertices, co
     }
 }
 
-const std::vector<CTriangleMeshShape::Triangle>& CTriangleMeshShape::GetCandidateTriangles(const BoundingBox& other) const
+const std::vector<CConcaveMeshShape::Triangle>& CConcaveMeshShape::GetCandidateTriangles(const BoundingBox& other) const
 {
     static std::vector<Triangle> candidates;
     candidates.clear();
@@ -124,12 +124,12 @@ const std::vector<CTriangleMeshShape::Triangle>& CTriangleMeshShape::GetCandidat
     return candidates;
 }
 
-const std::vector<CTriangleMeshShape::Triangle>& CTriangleMeshShape::GetWorldTriangles() const
+const std::vector<CConcaveMeshShape::Triangle>& CConcaveMeshShape::GetWorldTriangles() const
 {
     return world;
 }
 
-void CTriangleMeshShape::Update(const XMMATRIX& worldMatrix)
+void CConcaveMeshShape::Update(const XMMATRIX& worldMatrix)
 {
     if (world.size() != local.size()) {
         world.resize(local.size());

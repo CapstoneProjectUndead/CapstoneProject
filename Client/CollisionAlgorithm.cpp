@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "GJKAlgorithm.h"
+#include "CollisionAlgorithm.h"
 #include "Collider.h"
 
 XMVECTOR GJKAlgorithm::GetSupport(const std::vector<XMFLOAT3>& vertices, XMVECTOR direction)
@@ -216,7 +216,7 @@ GJKAlgorithm::EPAFace GJKAlgorithm::CreateFace(const std::vector<XMVECTOR>& poly
     return { normal, distance, {i, j, k} };
 }
 
-GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB)
+CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB)
 {
     std::vector<XMVECTOR> polytope;
     for (int i = 0; i < simplex.size; ++i) polytope.push_back(simplex.points[i]);

@@ -1,8 +1,10 @@
 #pragma once
 #include "Component.h"
-#include "GJKAlgorithm.h"
+#include "CollisionAlgorithm.h"
 
 class CMesh;
+class CBoxShape;
+class CSphereShape;
 
 class CColliderShape {
 public:
@@ -12,7 +14,6 @@ public:
 
     // GJK 특정 방향으로 가장 먼 월드 좌표 점 반환
     virtual XMVECTOR GetSupport(XMVECTOR direction) const = 0;
-
     // 디버그 렌더링용 (선택)
     virtual void Render() {}
 protected:
@@ -26,9 +27,11 @@ public:
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
+    // getter
     XMVECTOR GetSupport(XMVECTOR direction) const override {
         return GJKAlgorithm::GetSupportOBB(world, direction);
     }
+    BoundingOrientedBox& GetWorld() { return world; }
 private:
     BoundingOrientedBox local{};
     BoundingOrientedBox world{};
@@ -41,14 +44,20 @@ public:
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
+    // getter
     XMVECTOR GetSupport(XMVECTOR direction) const override {
         return GJKAlgorithm::GetSupportSphere(world, direction);
     }
+    BoundingSphere& GetWorld() { return world; }
 private:
     BoundingSphere local{};
     BoundingSphere world{};
 };
 
+/*
+* 속이 찬 오브젝트(볼록)에 사용(오목한 물체 불가)
+* GJK algorithm을 사용하여 TriangleShape보다 빠름
+*/
 class CConvexMeshShape : public CColliderShape
 {
 public:
@@ -59,18 +68,23 @@ public:
     XMVECTOR GetSupport(XMVECTOR direction) const override {
         return GJKAlgorithm::GetSupport(world, direction);
     }
+    std::vector<XMFLOAT3>& GetWorld() { return world; }
 private:
     std::vector<XMFLOAT3> local{};
     std::vector<XMFLOAT3> world{};
 };
 
-class CTriangleMeshShape : public CColliderShape {
+/*
+* 오목한 물체에 사용(특히 지형)
+* 모든 삼각형 체크하여 ConvexShape보다 느림
+*/
+class CConcaveMeshShape : public CColliderShape {
 public:
     struct Triangle {
         std::array<XMFLOAT3, 3> v;
         BoundingBox aabb;
     };
-    CTriangleMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices);
+    CConcaveMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices);
     BoundingBox ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2);
 
     // GJK용 GetSupport 사용X
@@ -88,11 +102,7 @@ private:
 충돌 모양 데이터 제공자. 물리 계산X
 * ColliderComponent 생성법
 * paramaeter: shape(unique), bounds
-* 
-std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents);
-auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-obj->SetComponent(boxCollider);
-CPhysicsManager::GetInstance().SetCollider(boxCollider);
+* 사용법: ObjectFactory 참고
 */
 class CColliderComponent : public CComponent
 {

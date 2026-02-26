@@ -2,6 +2,12 @@
 
 class CColliderShape;
 
+struct CollisionInfo {
+    XMVECTOR normal;
+    float depth;
+    bool collided = false;
+};
+
 // 충돌 체크 알고리즘
 namespace GJKAlgorithm {
     struct Simplex {
@@ -47,12 +53,6 @@ namespace GJKAlgorithm {
         bool operator==(const EPAEdge& other) const {
             return (a == other.a && b == other.b) || (a == other.b && b == other.a);
         }
-    };
-
-    struct CollisionInfo {
-        XMVECTOR normal;
-        float depth;
-        bool collided = false;
     };
 
     // 면의 법선과 원점으로부터의 거리를 계산하는 헬퍼 함수

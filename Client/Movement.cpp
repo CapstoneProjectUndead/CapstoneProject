@@ -86,7 +86,7 @@ void CMovementComponent::Update(const float deltaTime)
     float moveDist = Vector3::Length(delta);
     if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
 
-    GJKAlgorithm::CollisionInfo info{};
+    CollisionInfo info{};
     // 중복 코드 람다로 처리
     auto ResolveCollision = [&]() {
         // overlap된 만큼 밀어내기
@@ -97,11 +97,11 @@ void CMovementComponent::Update(const float deltaTime)
         Slide(info.normal);
         };
 
-    // 지형 충돌(벽)
-    XMFLOAT3 moveDir = Vector3::Normalize(delta);
-    if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
-        ResolveCollision();
-    }
+    //// 지형 충돌(벽)
+    //XMFLOAT3 moveDir = Vector3::Normalize(delta);
+    //if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
+    //    ResolveCollision();
+    //}
 
     // 오브젝트 충돌(Table 등)
     delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
@@ -136,7 +136,7 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)
     float moveDist = Vector3::Length(delta);
     if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
 
-    GJKAlgorithm::CollisionInfo info{};
+    CollisionInfo info{};
     // 중복 코드 람다로 처리
     auto ResolveCollision = [&]() {
         // overlap된 만큼 밀어내기
