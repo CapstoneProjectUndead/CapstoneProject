@@ -52,11 +52,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
-
-			/*auto debugMesh = std::make_shared<CMeshComponent>();
-			obj->SetComponent(debugMesh);
-			debugMesh->SetMeshFromFile<CVertex>(GET_DEVICE, GET_CMD_LIST, children->collider);
-			meshRenderer->SetRenderUnit(debugMesh.get());*/
 		}
 		else {
 			if (children->name == "Floor" || children->name == "GroundPipe") {
@@ -65,7 +60,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 				obj->SetComponent(boxCollider);
 				CPhysicsManager::GetInstance().SetCollider(boxCollider);
 			}
-			else if (children->name == "Stone.012") {
+			else if (children->name == "Stone012") {	// 카운터
 				std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(children->mesh.bounds.Extents.x, children->mesh.bounds.Center);
 				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 				obj->SetComponent(collider);
@@ -83,6 +78,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 		objects.push_back(std::move(obj));
 	}
+
 
 	return objects;
 }

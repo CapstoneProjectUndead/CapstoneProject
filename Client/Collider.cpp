@@ -5,11 +5,16 @@
 #include "GameFramework.h"  // 디버깅 시에 필요
 #include "MeshRenderer.h"
 
+CBoxShape::CBoxShape(XMFLOAT3 extents, XMFLOAT3& p)
+{
+    local.Center = p;
+    local.Extents = extents;
+    debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
+};
+
 void CBoxShape::Render()
 {
 #ifdef DEBUG
-    debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
-
     debug->Render(GET_CMD_LIST);
 #endif
 }
@@ -20,11 +25,26 @@ void CBoxShape::Update(const XMMATRIX& worldMatrix)
     XMStoreFloat4(&world.Orientation, XMQuaternionNormalize(XMLoadFloat4(&world.Orientation)));
 }
 
+// sphere
+CSphereShape::CSphereShape(float r, XMFLOAT3& p)
+{
+    local.Radius = r;
+    local.Center = p;
+    debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
+}
+
+CSphereShape::CSphereShape(XMFLOAT3& extents, XMFLOAT3& p)
+{
+    local.Center = p;
+
+    XMVECTOR vExtents = XMLoadFloat3(&extents);
+    local.Radius = XMVectorGetX(XMVector3Length(vExtents));
+    debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
+}
+
 void CSphereShape::Render()
 {
 #ifdef DEBUG
-    debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
-
     debug->Render(GET_CMD_LIST);
 #endif
 }
@@ -136,6 +156,7 @@ void CTriangleMeshShape::Update(const XMMATRIX& worldMatrix)
 CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
     : shape{ std::move(otherShape) }, local_aabb{ otherBox }
 {
+    debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local_aabb.Extents, local_aabb.Center);
 }
 
 void CColliderComponent::Update(const float deltaTime)
@@ -149,9 +170,7 @@ void CColliderComponent::Update(const float deltaTime)
 void CColliderComponent::Render(ID3D12GraphicsCommandList* commandList)
 {
 #ifdef DEBUG
- /*   debug = std::make_shared<CCubeMesh>(GET_DEVICE, commandList, local_aabb.Extents, local_aabb.Center);
-
-    debug->Render(commandList);*/
+    if (debug) debug->Render(commandList);
     if (shape) shape->Render();
 #endif
 }

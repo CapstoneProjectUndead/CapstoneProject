@@ -22,10 +22,7 @@ protected:
 // obb 기반
 class CBoxShape : public CColliderShape {
 public:
-    CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{}) {
-        local.Center = p;
-        local.Extents = extents;
-    };
+    CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{});
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
@@ -33,16 +30,14 @@ public:
         return GJKAlgorithm::GetSupportOBB(world, direction);
     }
 private:
-    BoundingOrientedBox local;
-    BoundingOrientedBox world;
+    BoundingOrientedBox local{};
+    BoundingOrientedBox world{};
 };
 
 class CSphereShape : public CColliderShape {
 public:
-    CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{}) {
-        local.Radius = r;
-        local.Center = p;
-    }
+    CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{});
+    CSphereShape(XMFLOAT3& extents, XMFLOAT3& p = XMFLOAT3{});
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
@@ -50,8 +45,8 @@ public:
         return GJKAlgorithm::GetSupportSphere(world, direction);
     }
 private:
-    BoundingSphere local;
-    BoundingSphere world;
+    BoundingSphere local{};
+    BoundingSphere world{};
 };
 
 class CConvexMeshShape : public CColliderShape
@@ -65,8 +60,8 @@ public:
         return GJKAlgorithm::GetSupport(world, direction);
     }
 private:
-    std::vector<XMFLOAT3> local;
-    std::vector<XMFLOAT3> world;
+    std::vector<XMFLOAT3> local{};
+    std::vector<XMFLOAT3> world{};
 };
 
 class CTriangleMeshShape : public CColliderShape {
@@ -113,7 +108,7 @@ public:
 private:
     friend class CPhysicsManager;
     std::unique_ptr<CColliderShape> shape;
-    BoundingBox local_aabb;
+    BoundingBox local_aabb{};
     BoundingBox world_aabb{};   // for broad phase
     std::shared_ptr<CMesh> debug;
 };
