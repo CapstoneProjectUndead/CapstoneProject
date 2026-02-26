@@ -61,6 +61,10 @@ void CImGuiManager::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
+    // 해상도가 0일 때는 ImGui Update를 하지 않는다.
+    if (ImGui::GetIO().DisplaySize.x <= 0.0f || ImGui::GetIO().DisplaySize.y <= 0.0f)
+        return;
+
     CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
     if (activeScene) {
         activeScene->DrawUI_Final();
