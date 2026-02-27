@@ -80,25 +80,43 @@ void CMovementComponent::Update(const float deltaTime)
     // 중력/마찰/땅 확인
     CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // 이동량 계산
-    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
-    if (Vector3::Length(delta) < 0.0001f) return;   // 움직임이 없으면 스킵
+    // 반복 슬라이딩 이동 (Iterative Slide)
+    XMVECTOR currentPosition = XMLoadFloat3(&owner->position);
+    XMVECTOR velocity = XMLoadFloat3(&owner->velocity);
+    XMVECTOR remainingMotion = velocity * deltaTime; // 이번 프레임에 가야 할 총 거리
 
     // 벽/오브젝트 충돌 처리
-    CollisionInfo info{};
     uint32_t wallMask = EColLayer::WALL | EColLayer::OBJECT;
-    if (CPhysicsManager::GetInstance().Overlap(owner, delta, wallMask, info)) {
-        // Skin Width 추가=>다음 프레임에 끼는 걸 방지
-        XMVECTOR separation = -info.normal * (info.depth + 0.01f);
-        XMVECTOR curPos = XMLoadFloat3(&owner->position);
-        XMStoreFloat3(&owner->position, curPos + separation);
+    for (int i = 0; i < 3; ++i) {
+        float moveLen = XMVectorGetX(XMVector3Length(remainingMotion));
+        if (moveLen < 0.0001f) break; // 더 이상 갈 거리가 없으면 종료
 
-        Slide(info.normal);
+        CollisionInfo info{};
+        XMFLOAT3 fRemaining;
+        XMStoreFloat3(&fRemaining, remainingMotion);
+        // 이동하려는 예상치(remainingMotion)만큼 미리 체크
+        if (CPhysicsManager::GetInstance().Overlap(owner, fRemaining, wallMask, info)) {
+            // 밀어내기
+            XMVECTOR separation = -info.normal * (info.depth + 0.001f);
+            currentPosition += separation;
 
-        delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
+            // 속도 슬라이딩 (남은 이동 방향을 벽을 따라 깎음)
+            Slide(info.normal);
+
+            // 남은 이동량(remainingMotion) 재계산
+            // 이미 부딪혔으므로, 부딪힌 면 방향의 에너지를 제거하고 남은 벡터를 구함
+            XMVECTOR slideNormal = info.normal;
+            XMVECTOR dot = XMVector3Dot(remainingMotion, slideNormal);
+            remainingMotion = remainingMotion - (slideNormal * dot);
+        }
+        else {
+            currentPosition += remainingMotion;
+            break;
+        }
     }
-
-    owner->position = Vector3::Add(owner->position, delta);
+    
+    // 최종 위치 적용
+    XMStoreFloat3(&owner->position, currentPosition);
 }
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)
