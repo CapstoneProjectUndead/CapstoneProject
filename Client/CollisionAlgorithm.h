@@ -1,21 +1,23 @@
 #pragma once
 
 class CColliderShape;
+class CObject;
 
 struct CollisionInfo {
     XMVECTOR normal;
     float depth;
     bool collided = false;
+    CObject* other_object{};    // 충돌한 상대방
 };
 
 // 충돌 layer
 enum EColLayer : uint32_t {
     NONE = 0,
-    GROUND = 1 << 0, // 바닥, 지형
-    WALL = 1 << 1, // 고정된 벽
-    OBJECT = 1 << 2, // 상자 등 동적 오브젝트
-    PLAYER = 1 << 3, // 플레이어
-    TRIGGER = 1 << 4, // 이벤트 구역 (물리 충돌 X, 겹침만 O)
+    GROUND = 1 << 0,    // 바닥, 지형
+    WALL = 1 << 1,      // 고정된 벽
+    OBJECT = 1 << 2,    // 상자 등 동적 오브젝트
+    PLAYER = 1 << 3,    // 플레이어
+    TRIGGER = 1 << 4,   // 이벤트 구역 (물리 충돌 X, 겹침만 O)
 
     // 미리 정의된 조합 (편의용)
     ENVIRONMENT = GROUND | WALL,

@@ -80,6 +80,24 @@ void CMovementComponent::Update(const float deltaTime)
     // 중력/마찰/땅 확인
     CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
+    // 중력 및 지면 체크
+    CollisionInfo groundInfo{};
+    XMFLOAT3 downDelta = { 0, -0.1f, 0 };
+    // [중요] Overlap 시 충돌한 상대방(other) 정보를 받아올 수 있도록 수정되었다고 가정
+    if (CPhysicsManager::GetInstance().Overlap(owner, downDelta, EColLayer::GROUND | EColLayer::OBJECT, groundInfo)) {
+
+        // --- 물체 위에 서 있기 로직 ---
+        // 만약 딛고 있는 물체가 움직이는 물체(속도가 있음)라면
+        if (groundInfo.other_object) { // CollisionInfo에 CObject* 추가 필요
+            XMFLOAT3 otherVel = groundInfo.other_object->velocity;
+            XMVECTOR platformMovement = XMLoadFloat3(&otherVel) * deltaTime;
+
+            // 발판의 이동량을 플레이어 위치에 강제 적용
+            XMVECTOR curPos = XMLoadFloat3(&owner->position);
+            XMStoreFloat3(&owner->position, curPos + platformMovement);
+        }
+    }
+
     // 반복 슬라이딩 이동 (Iterative Slide)
     XMVECTOR currentPosition = XMLoadFloat3(&owner->position);
     XMVECTOR velocity = XMLoadFloat3(&owner->velocity);

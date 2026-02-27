@@ -51,6 +51,7 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo
             collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
             if (collisionInfo.collided) {
                 bHit = true;
+                collisionInfo.other_object = other->owner;
                 break;
             }
         }
@@ -81,6 +82,7 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, uint32_t mask
             collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
             if (collisionInfo.collided) {
                 bHit = true;
+                collisionInfo.other_object = other->owner;
                 break;
             }
         }
@@ -136,16 +138,40 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
     if (!col) return;
 
     // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
-    XMFLOAT3 downDelta = { 0, -0.05f, 0 };
+    XMFLOAT3 downDelta = { 0, -0.1f, 0 };
     CollisionInfo info{};
-    obj->is_grounded = Overlap(obj, downDelta, EColLayer::GROUND, info);
+    obj->is_grounded = Overlap(obj, downDelta, EColLayer::GROUND | EColLayer::OBJECT, info);
 
     if (obj->is_grounded) {
         // 바닥 위로 밀어올리기 (Y축 보정)
         if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
-        XMVECTOR separation = info.normal * info.depth;
-        XMVECTOR curPos = XMLoadFloat3(&obj->position);
-        XMStoreFloat3(&obj->position, curPos + separation);
+        XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+        // 법선과 하늘 방향의 내적으로 각도 계산 (cos theta)
+        float cosTheta = XMVectorGetX(XMVector3Dot(info.normal, up));
+        float slopeAngle = XMVectorGetX(XMVector3AngleBetweenVectors(info.normal, up));
+        float maxSlopeAngle = XMConvertToRadians(45.0f); // 45도까지는 안 미끄러짐
+
+        if (slopeAngle < maxSlopeAngle) {
+            // 경사가 완만하면 Y축 속도를 완전히 죽이고 위치를 바닥에 고정
+            if (obj->velocity.y <= 0) {
+                obj->velocity.y = 0;
+
+                // 바닥에 딱 붙이기 (Y축 보정)
+                XMVECTOR separation = info.normal * info.depth;
+                XMVECTOR curPos = XMLoadFloat3(&obj->position);
+                XMStoreFloat3(&obj->position, curPos + separation);
+            }
+        }
+        else {
+            // 경사가 너무 가파르면 미끄러짐 처리 (Slide 적용)
+            XMVECTOR v = XMLoadFloat3(&obj->velocity);
+            XMVECTOR dot = XMVector3Dot(v, info.normal);
+            XMVECTOR slideVel = v - info.normal * dot;
+            XMStoreFloat3(&obj->velocity, slideVel);
+
+            // 중력의 일부를 경사면 아래 방향으로 가함
+            obj->velocity.y += gravity * dt * 0.5f;
+        }
 
         // 지면 마찰력 적용
         if (obj->velocity.y < 0) obj->velocity.y = 0;
