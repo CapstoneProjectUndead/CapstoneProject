@@ -74,90 +74,97 @@ void CMovementComponent::Update(const float deltaTime)
     if (!myPlayer->GetIsSingle())
         return;
 
-    // Update
     ClampSpeed();
 
     // 중력/마찰/땅 확인
     CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // 중력 및 지면 체크
-    CollisionInfo groundInfo{};
+    // 외부 이동량 계산
+    XMVECTOR externalMotion = CalculatePlatform(deltaTime);
+
+    // 플레이어 이동량 계산
+    XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
+
+    // 충돌 해결 및 최종 위치 결정 (보정값 누적 방식)
+    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + externalMotion;
+
+    // 반복 슬라이딩 + 턱 오르기 수행
+    ResolveCollisions(finalPos, internalMotion, deltaTime);
+
+    // 최종 위치 적용
+    XMStoreFloat3(&owner->position, finalPos);
+}
+
+XMVECTOR CMovementComponent::CalculatePlatform(float dt)
+{
+    CollisionInfo info{};
     XMFLOAT3 downDelta = { 0, -0.1f, 0 };
-    // [중요] Overlap 시 충돌한 상대방(other) 정보를 받아올 수 있도록 수정되었다고 가정
-    if (CPhysicsManager::GetInstance().Overlap(owner, downDelta, EColLayer::GROUND | EColLayer::OBJECT, groundInfo)) {
-
-        // --- 물체 위에 서 있기 로직 ---
-        // 만약 딛고 있는 물체가 움직이는 물체(속도가 있음)라면
-        if (groundInfo.other_object) { // CollisionInfo에 CObject* 추가 필요
-            XMFLOAT3 otherVel = groundInfo.other_object->velocity;
-            XMVECTOR platformMovement = XMLoadFloat3(&otherVel) * deltaTime;
-
-            // 발판의 이동량을 플레이어 위치에 강제 적용
-            XMVECTOR curPos = XMLoadFloat3(&owner->position);
-            XMStoreFloat3(&owner->position, curPos + platformMovement);
+    if (CPhysicsManager::GetInstance().Overlap(owner, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT)) {
+        if (info.other_object && Vector3::Length(info.other_object->velocity) > 0.001f) {
+            return XMLoadFloat3(&info.other_object->velocity) * dt;
         }
     }
+    return XMVectorZero();
+}
 
-    // 반복 슬라이딩 이동 (Iterative Slide)
-    XMVECTOR currentPosition = XMLoadFloat3(&owner->position);
-    XMVECTOR velocity = XMLoadFloat3(&owner->velocity);
-    XMVECTOR remainingMotion = velocity * deltaTime; // 이번 프레임에 가야 할 총 거리
-
+void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingMotion, float dt)
+{
     // 벽/오브젝트 충돌 처리
     uint32_t wallMask = EColLayer::WALL | EColLayer::OBJECT;
     const float stepHeight = 0.2; // 오를 수 있는 최대 높이
+    const float slop{ 0.001f };
 
     // Iterative Slide
-    const float slop{ 0.001f };
     for (int i = 0; i < 3; ++i) {
         float moveLen = XMVectorGetX(XMVector3Length(remainingMotion));
         if (moveLen < 0.0001f) break; // 더 이상 갈 거리가 없으면 종료
 
         CollisionInfo info{};
-        if (CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), wallMask, info)) {
-            bool stepSucceeded = false;
-            if (owner->is_grounded && std::abs(XMVectorGetY(info.normal)) < 0.2f) {
-                // 캐릭터를 stepHeight만큼 위로 올린 임시 위치 계산
-                XMVECTOR stepUpOffset = XMVectorSet(0, stepHeight, 0, 0);
-                XMVECTOR testPos = currentPosition + stepUpOffset;
-
-                // 위로 올린 위치에서 원래 가려던 방향(remainingMotion)으로 Overlap 체크
-                // (이때는 살짝 띄운 상태이므로 벽 상단을 통과할 수 있음)
-                owner->position = Vector3::XMVectorToFloat3(testPos); // 잠시 위치 이동
-                CollisionInfo stepInfo{};
-                if (!CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), wallMask, stepInfo))
-                {
-                    // 앞 공간이 비어있다면, 이제 다시 아래로 내려서 바닥이 있는지 확인
-                    // 실제 엔진은 여기서 아래로 Sweep을 쏘지만, 일단은 위치 확정 후 중력이 해결하게 함
-                    currentPosition = testPos + remainingMotion;
-                    stepSucceeded = true;
-                }
-                // 위치 복구 (검사 끝)
-                owner->position = Vector3::XMVectorToFloat3(currentPosition);
+        if (CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), info, wallMask)) {
+            // 1. step up
+            if (TryStepUp(outPos, remainingMotion, info, stepHeight, wallMask)) {
+                break;
             }
+            // 2. slide
+            float safeMargin = (info.depth > slop) ? 0.005f : 0.0f;
+            XMVECTOR separation = -info.normal * (info.depth + safeMargin);
+            outPos += separation; // 보정 위치 누적
 
-            // 턱 오르기 성공 시, 이번 루프의 이동은 끝난 것으로 간주하거나 남은 거리 조절
-            if (stepSucceeded) break;
-            else {
-                // 기존 슬라이딩 로직 수행
-                XMVECTOR separation = -info.normal * (info.depth + slop);
-                currentPosition += separation;
+            Slide(info.normal);   // 속도 꺾기
 
-                Slide(info.normal);
-
-                XMVECTOR slideNormal = info.normal;
-                XMVECTOR dot = XMVector3Dot(remainingMotion, slideNormal);
-                remainingMotion = remainingMotion - (slideNormal * dot);
-            }
+            // 남은 이동량 갱신
+            remainingMotion -= info.normal * XMVector3Dot(remainingMotion, info.normal);
         }
         else {
-            currentPosition += remainingMotion;
+            outPos += remainingMotion;
             break;
         }
     }
-    
-    // 최종 위치 적용
-    XMStoreFloat3(&owner->position, currentPosition);
+}
+
+bool CMovementComponent::TryStepUp(XMVECTOR& outPos, XMVECTOR motion, const CollisionInfo& hit, float height, uint32_t mask)
+{
+    if (!owner->is_grounded || std::abs(XMVectorGetY(hit.normal)) >= 0.2f) return false;
+
+    // 캐릭터를 stepHeight만큼 위로 올린 임시 위치 계산
+    XMVECTOR stepUpOffset = XMVectorSet(0, height, 0, 0);
+    XMVECTOR testPos = outPos + stepUpOffset;
+
+    XMFLOAT3 originalPos = owner->position;
+    owner->position = Vector3::XMVectorToFloat3(testPos);   // 잠시 위치 이동
+
+    CollisionInfo stepInfo{};
+    bool obstructed = CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(motion), stepInfo, mask);
+
+    owner->position = originalPos; // 복구
+
+    if (!obstructed) {
+        // 앞 공간이 비어있다면, 이제 다시 아래로 내려서 바닥이 있는지 확인
+        // 실제 엔진은 여기서 아래로 Sweep을 쏘지만, 일단은 위치 확정 후 중력이 해결하게 함
+        outPos = testPos + motion;
+        return true;
+    }
+    return false;
 }
 
 void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)

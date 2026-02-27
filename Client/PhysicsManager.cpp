@@ -31,43 +31,14 @@ void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& d
     }
 }
 
-bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo)
+bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo, uint32_t mask)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
     if (!col) return false;
 
-    std::vector<CColliderComponent*> candidates;
-    BroadPhase(col, delta, candidates);
-
-    bool bHit = false;
-    for (auto* other : candidates) {
-        auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
-        auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
-
-        // GJK 실행 및 Simplex 획득
-        GJKAlgorithm::Simplex simplex;
-        if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
-            // EPA 실행
-            collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
-            if (collisionInfo.collided) {
-                bHit = true;
-                collisionInfo.other_object = other->owner;
-                break;
-            }
-        }
-    }
-
-    return bHit;
-}
-
-bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, uint32_t mask, CollisionInfo& collisionInfo)
-{
-    auto* col = obj->GetComponent<CColliderComponent>();
-    if (!col) return false;
-
-    // 잠시 마스크를 교체
+    // 마스크가 0이면 컴포넌트 기본 마스크 사용, 아니면 지정 마스크 사용
     uint32_t originalMask = col->filter.mask;
-    col->filter.mask = mask;
+    if (mask != 0) col->filter.mask = mask;
 
     std::vector<CColliderComponent*> candidates;
     BroadPhase(col, delta, candidates);
@@ -140,7 +111,7 @@ void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
     // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
     XMFLOAT3 downDelta = { 0, -0.1f, 0 };
     CollisionInfo info{};
-    obj->is_grounded = Overlap(obj, downDelta, EColLayer::GROUND | EColLayer::OBJECT, info);
+    obj->is_grounded = Overlap(obj, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT);
 
     if (obj->is_grounded) {
         // 바닥 위로 밀어올리기 (Y축 보정)

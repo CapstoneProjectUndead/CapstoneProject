@@ -277,7 +277,7 @@ CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const
         OutputDebugStringA(logBuf);
 
         // 4. 수렴 조건 확인
-        if (d - minDistance < 0.001f) {
+        if (d - minDistance < 0.0001f) {
             sprintf_s(logBuf, "[EPA Success] Final Depth: %.4f, Final Normal: (%.2f, %.2f, %.2f)\n", d, n.x, n.y, n.z);
             OutputDebugStringA(logBuf);
             return { searchDir, d, true };

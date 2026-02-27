@@ -31,8 +31,7 @@ public:
     bool CheckFilter(const CollisionFilter& a, const CollisionFilter& b);
 
     // query
-    bool Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo);
-    bool Overlap(CObject* obj, const XMFLOAT3& delta, uint32_t mask, CollisionInfo& collisionInfo);
+    bool Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo, uint32_t mask = 0);
     bool Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, CollisionInfo& outInfo);
 
     void Update(float deltaTime);
