@@ -231,7 +231,6 @@ CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const
     if (simplex.size < 4) {
         sprintf_s(logBuf, "[EPA] Warning: Simplex size is %d (Not a Tetrahedron!)\n", simplex.size);
         OutputDebugStringA(logBuf);
-        // 여기서 통과될 확률이 높습니다. 3D EPA는 사면체가 필수입니다.
     }
 
     for (int i = 0; i < simplex.size; ++i) {

@@ -122,14 +122,19 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
                 break;
             }
             // 2. slide
-            float safeMargin = (info.depth > 0.001f) ? 0.005f : 0.0f;
-            XMVECTOR separation = -info.normal * (info.depth + safeMargin);
-            outPos += separation; // 보정 위치 누적
+            float safeMargin = (info.depth > moveLen) ? moveLen : info.depth;   // depth 값이 비정상적일 때, 순간이동 방지
+            safeMargin = max(safeMargin, 0.001f); // 최소한의 밀어내기 확보
 
-            Slide(info.normal);   // 속도 꺾기
+            float normalLen = XMVectorGetX(XMVector3Length(info.normal));
+            if (normalLen > 0.0001f) {
+                XMVECTOR separation = -info.normal * safeMargin;
+                outPos += separation;
 
-            // 남은 이동량 갱신
-            remainingMotion -= info.normal * XMVector3Dot(remainingMotion, info.normal);
+                Slide(info.normal);
+
+                // 남은 이동량 투영
+                remainingMotion -= info.normal * XMVector3Dot(remainingMotion, info.normal);
+            }
         }
         else {
             outPos += remainingMotion;
