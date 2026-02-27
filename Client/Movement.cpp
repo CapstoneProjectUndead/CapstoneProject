@@ -77,16 +77,13 @@ void CMovementComponent::Update(const float deltaTime)
     ClampSpeed();
 
     // 중력/마찰/땅 확인
-    CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // 외부 이동량 계산
-    XMVECTOR externalMotion = CalculatePlatform(deltaTime);
+    // 이동량 계산 = 기존 위치 + 바닥 보정 + 외부 발판
+    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
 
     // 플레이어 이동량 계산
     XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
-
-    // 충돌 해결 및 최종 위치 결정 (보정값 누적 방식)
-    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + externalMotion;
 
     // 반복 슬라이딩 + 턱 오르기 수행
     ResolveCollisions(finalPos, internalMotion, deltaTime);
@@ -112,7 +109,6 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
     // 벽/오브젝트 충돌 처리
     uint32_t wallMask = EColLayer::WALL | EColLayer::OBJECT;
     const float stepHeight = 0.2; // 오를 수 있는 최대 높이
-    const float slop{ 0.001f };
 
     // Iterative Slide
     for (int i = 0; i < 3; ++i) {
@@ -126,7 +122,7 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
                 break;
             }
             // 2. slide
-            float safeMargin = (info.depth > slop) ? 0.005f : 0.0f;
+            float safeMargin = (info.depth > 0.001f) ? 0.005f : 0.0f;
             XMVECTOR separation = -info.normal * (info.depth + safeMargin);
             outPos += separation; // 보정 위치 누적
 

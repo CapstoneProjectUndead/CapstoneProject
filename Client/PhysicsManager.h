@@ -27,7 +27,8 @@ public:
         colliders.push_back(c);
     }
 
-    void ApplyGravity(CObject* obj, float dt);
+    XMVECTOR ApplyGravity(CObject* obj, float dt);
+    void ApplyFriction(CObject* obj, float dt);
     bool CheckFilter(const CollisionFilter& a, const CollisionFilter& b);
 
     // query
