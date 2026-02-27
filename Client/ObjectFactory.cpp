@@ -47,6 +47,10 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
 
 		// ColliderComponent 생성
+		// filter(지형만 별도처리)
+		CollisionFilter filter;
+		filter.category = EColLayer::OBJECT;
+		filter.mask = EColLayer::PLAYER;
 		switch (stringToLobbyMeshName(children->name)) {
 		/*case LobbyMeshName::Wall:
 		{
@@ -60,6 +64,10 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		{
 			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			CollisionFilter filter;
+			filter.category = EColLayer::GROUND;
+			filter.mask = EColLayer::PLAYER;
+			boxCollider->SetFillter(filter);
 			obj->SetComponent(boxCollider);
 			CPhysicsManager::GetInstance().SetCollider(boxCollider);
 			break;
@@ -68,14 +76,16 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		{
 			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			boxCollider->SetFillter(filter);
 			obj->SetComponent(boxCollider);
 			CPhysicsManager::GetInstance().SetCollider(boxCollider);
 			break;
 		}
 		case LobbyMeshName::Counter:
 		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(children->mesh.bounds.Extents.z, children->mesh.bounds.Center);
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			collider->SetFillter(filter);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
 			break;
@@ -85,6 +95,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			if (children->collider.positions.empty()) break;
 			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			collider->SetFillter(filter);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
 			break;
@@ -201,9 +212,13 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 			break;
 		}
 	}
-	// ColliderComponent 생성
+	// ColliderComponent 생성/ filter 설정
 	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+	CollisionFilter filter;
+	filter.category = EColLayer::PLAYER;
+	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+	collider->SetFillter(filter);
 	character->SetComponent(collider);
 	CPhysicsManager::GetInstance().SetCollider(collider);
 

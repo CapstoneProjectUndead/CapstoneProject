@@ -98,6 +98,11 @@ private:
     std::vector<Triangle> world;
 };
 
+struct CollisionFilter {
+    uint32_t category{};    // 나의 정체성
+    uint32_t mask{};        // 내가 부딪힐 대상들
+};
+
 /*
 충돌 모양 데이터 제공자. 물리 계산X
 * ColliderComponent 생성법
@@ -109,6 +114,7 @@ class CColliderComponent : public CComponent
 public:
     CColliderComponent(std::unique_ptr< CColliderShape>& otherShape, const BoundingBox& otherBox);
     void SetShape(std::unique_ptr< CColliderShape>& otherShape) { shape = std::move(otherShape); }
+    void SetFillter(const CollisionFilter& f) { filter = f; }
 
     void Update(const float deltaTime) override;
     // 디버깅용(aabb 출력)
@@ -120,5 +126,6 @@ private:
     std::unique_ptr<CColliderShape> shape;
     BoundingBox local_aabb{};
     BoundingBox world_aabb{};   // for broad phase
+    CollisionFilter filter;
     std::shared_ptr<CMesh> debug;
 };

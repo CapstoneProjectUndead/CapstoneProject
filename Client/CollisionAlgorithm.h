@@ -8,6 +8,20 @@ struct CollisionInfo {
     bool collided = false;
 };
 
+// 충돌 layer
+enum EColLayer : uint32_t {
+    NONE = 0,
+    GROUND = 1 << 0, // 바닥, 지형
+    WALL = 1 << 1, // 고정된 벽
+    OBJECT = 1 << 2, // 상자 등 동적 오브젝트
+    PLAYER = 1 << 3, // 플레이어
+    TRIGGER = 1 << 4, // 이벤트 구역 (물리 충돌 X, 겹침만 O)
+
+    // 미리 정의된 조합 (편의용)
+    ENVIRONMENT = GROUND | WALL,
+    ALL_SOLID = GROUND | WALL | OBJECT
+};
+
 // 충돌 체크 알고리즘
 namespace GJKAlgorithm {
     struct Simplex {
@@ -56,7 +70,7 @@ namespace GJKAlgorithm {
     };
 
     // 면의 법선과 원점으로부터의 거리를 계산하는 헬퍼 함수
-    EPAFace CreateFace(const std::vector<XMVECTOR>& polytope, uint32_t i, uint32_t j, uint32_t k);
+    EPAFace CreateFace(const std::vector<XMVECTOR>& polytope, uint32_t i, uint32_t j, uint32_t k, XMVECTOR center);
 
     CollisionInfo SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB);
 }

@@ -3,8 +3,8 @@
 class CColliderComponent;
 class CObject;
 class CMovementComponent;
-
-#include "CollisionAlgorithm.h"
+struct CollisionInfo;
+struct CollisionFilter;
 
 /*
 충돌 감지 및 계산(캐릭터는 별도로 처리)
@@ -28,9 +28,11 @@ public:
     }
 
     void ApplyGravity(CObject* obj, float dt);
+    bool CheckFilter(const CollisionFilter& a, const CollisionFilter& b);
 
     // query
     bool Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo);
+    bool Overlap(CObject* obj, const XMFLOAT3& delta, uint32_t mask, CollisionInfo& collisionInfo);
     bool Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, CollisionInfo& outInfo);
 
     void Update(float deltaTime);
