@@ -78,6 +78,16 @@ private:
 * 오목한 물체에 사용(특히 지형)
 * 모든 삼각형 체크하여 ConvexShape보다 느림
 */
+class CTriangleShape : public CColliderShape {
+public:
+    XMVECTOR v[3];
+
+    XMVECTOR GetSupport(XMVECTOR direction) const override;
+
+    // 삼각형은 단순 점들의 집합이므로 별도의 업데이트 불필요 (이미 월드 좌표임)
+    virtual void Update(const XMMATRIX& worldMatrix) override {}
+};
+
 class CConcaveMeshShape : public CColliderShape {
 public:
     struct Triangle {
@@ -114,7 +124,9 @@ class CColliderComponent : public CComponent
 public:
     CColliderComponent(std::unique_ptr< CColliderShape>& otherShape, const BoundingBox& otherBox);
     void SetShape(std::unique_ptr< CColliderShape>& otherShape) { shape = std::move(otherShape); }
+    CColliderShape* GetShape() const { return shape.get(); }
     void SetFillter(const CollisionFilter& f) { filter = f; }
+    BoundingBox GetWorldAABB() const { return world_aabb; }
 
     void Update(const float deltaTime) override;
     // 디버깅용(aabb 출력)

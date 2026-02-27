@@ -133,7 +133,15 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
                 Slide(info.normal);
 
                 // 남은 이동량 투영
-                remainingMotion -= info.normal * XMVector3Dot(remainingMotion, info.normal);
+                XMVECTOR newMotion = remainingMotion - info.normal * XMVector3Dot(remainingMotion, info.normal);
+
+                // [추가 고려] 투영된 벡터가 원래 운동 방향과 너무 동떨어지거나 뒤로 가려고 하면 0으로 처리
+                if (XMVectorGetX(XMVector3Dot(newMotion, remainingMotion)) <= 0) {
+                    remainingMotion = XMVectorZero();
+                }
+                else {
+                    remainingMotion = newMotion;
+                }
             }
         }
         else {

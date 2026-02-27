@@ -74,6 +74,22 @@ void CConvexMeshShape::Update(const XMMATRIX& worldMatrix)
     }
 }
 
+// Concave
+XMVECTOR CTriangleShape::GetSupport(XMVECTOR direction) const
+{
+    float maxDot = -FLT_MAX;
+    XMVECTOR bestVertex = v[0];
+
+    for (int i = 0; i < 3; ++i) {
+        float dot = XMVectorGetX(XMVector3Dot(v[i], direction));
+        if (dot > maxDot) {
+            maxDot = dot;
+            bestVertex = v[i];
+        }
+    }
+    return bestVertex;
+}
+
 BoundingBox CConcaveMeshShape::ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2)
 {
     // 1. 각 축의 최솟값과 최댓값 초기화

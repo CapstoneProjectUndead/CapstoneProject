@@ -42,25 +42,70 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo
 
     std::vector<CColliderComponent*> candidates;
     BroadPhase(col, delta, candidates);
+    
+    // 마스크 복구
+    col->filter.mask = originalMask;
 
-    bool bHit = false;
     for (auto* other : candidates) {
-        auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
-        auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
+        if (auto* mesh = dynamic_cast<CConcaveMeshShape*>(other->shape.get())) {
+            // 메쉬 내부에서 충돌하는 삼각형들을 찾아 EPA까지 돌려온다.
+            CollisionInfo meshInfo;
+            if (OverlapConcave(mesh, col, meshInfo)) {
+                meshInfo.other_object = other->owner;
+                collisionInfo = meshInfo;
+                return true;
+            }
+        }
+        else {
+            GJKAlgorithm::Simplex simplex;
+            auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
+            auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
+            if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
+                collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
+                if (collisionInfo.collided) {
+                    collisionInfo.other_object = other->owner;
+                    return true;
+                }
+            }
+        }
+
+    }
+
+    return false;
+}
+
+bool CPhysicsManager::OverlapConcave(CConcaveMeshShape* concaveShape, CColliderComponent* convexCol, CollisionInfo& outInfo)
+{
+    // broadPhase: convex의 aabb로 충돌 체크
+    BoundingBox convexAABB = convexCol->GetWorldAABB();
+    CColliderShape* convexShape = convexCol->GetShape();
+    const auto& candidates = concaveShape->GetCandidateTriangles(convexAABB);
+
+    float maxDepth = -FLT_MAX;
+    bool bHit = false;
+
+    for (const auto& tri : candidates) {
+        // 삼각형 전용 임시 셰이프 생성
+        CTriangleShape triShape;
+        triShape.v[0] = XMLoadFloat3(&tri.v[0]);
+        triShape.v[1] = XMLoadFloat3(&tri.v[1]);
+        triShape.v[2] = XMLoadFloat3(&tri.v[2]);
 
         GJKAlgorithm::Simplex simplex;
+        auto supportA = [&](XMVECTOR d) { return convexShape->GetSupport(d); };
+        auto supportB = [&](XMVECTOR d) { return triShape.GetSupport(d); };
+
         if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
-            collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
-            if (collisionInfo.collided) {
+            CollisionInfo info = GJKAlgorithm::SolveEPA(simplex, convexShape, &triShape);
+
+            // 여러 삼각형 중 가장 깊게 박힌 놈을 고른다 (벽 뚫림 방지)
+            if (info.collided && info.depth > maxDepth) {
+                maxDepth = info.depth;
+                outInfo = info;
                 bHit = true;
-                collisionInfo.other_object = other->owner;
-                break;
             }
         }
     }
-
-    // 마스크 복구
-    col->filter.mask = originalMask;
     return bHit;
 }
 

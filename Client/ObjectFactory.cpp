@@ -52,14 +52,18 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		filter.category = EColLayer::OBJECT;
 		filter.mask = EColLayer::PLAYER;
 		switch (stringToLobbyMeshName(children->name)) {
-		/*case LobbyMeshName::Wall:
+		case LobbyMeshName::Wall:
 		{
 			std::unique_ptr< CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+			CollisionFilter filter;
+			filter.category = EColLayer::WALL;
+			filter.mask = EColLayer::PLAYER;
+			collider->SetFillter(filter);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
 			break;
-		}*/
+		}
 		case LobbyMeshName::Floor:
 		{
 			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
