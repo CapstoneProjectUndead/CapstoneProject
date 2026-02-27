@@ -87,27 +87,50 @@ void CMovementComponent::Update(const float deltaTime)
 
     // 벽/오브젝트 충돌 처리
     uint32_t wallMask = EColLayer::WALL | EColLayer::OBJECT;
+    const float stepHeight = 0.2; // 오를 수 있는 최대 높이
+
+    // Iterative Slide
+    const float slop{ 0.001f };
     for (int i = 0; i < 3; ++i) {
         float moveLen = XMVectorGetX(XMVector3Length(remainingMotion));
         if (moveLen < 0.0001f) break; // 더 이상 갈 거리가 없으면 종료
 
         CollisionInfo info{};
-        XMFLOAT3 fRemaining;
-        XMStoreFloat3(&fRemaining, remainingMotion);
-        // 이동하려는 예상치(remainingMotion)만큼 미리 체크
-        if (CPhysicsManager::GetInstance().Overlap(owner, fRemaining, wallMask, info)) {
-            // 밀어내기
-            XMVECTOR separation = -info.normal * (info.depth + 0.001f);
-            currentPosition += separation;
+        if (CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), wallMask, info)) {
+            bool stepSucceeded = false;
+            if (owner->is_grounded && std::abs(XMVectorGetY(info.normal)) < 0.2f) {
+                // 캐릭터를 stepHeight만큼 위로 올린 임시 위치 계산
+                XMVECTOR stepUpOffset = XMVectorSet(0, stepHeight, 0, 0);
+                XMVECTOR testPos = currentPosition + stepUpOffset;
 
-            // 속도 슬라이딩 (남은 이동 방향을 벽을 따라 깎음)
-            Slide(info.normal);
+                // 위로 올린 위치에서 원래 가려던 방향(remainingMotion)으로 Overlap 체크
+                // (이때는 살짝 띄운 상태이므로 벽 상단을 통과할 수 있음)
+                owner->position = Vector3::XMVectorToFloat3(testPos); // 잠시 위치 이동
+                CollisionInfo stepInfo{};
+                if (!CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), wallMask, stepInfo))
+                {
+                    // 앞 공간이 비어있다면, 이제 다시 아래로 내려서 바닥이 있는지 확인
+                    // 실제 엔진은 여기서 아래로 Sweep을 쏘지만, 일단은 위치 확정 후 중력이 해결하게 함
+                    currentPosition = testPos + remainingMotion;
+                    stepSucceeded = true;
+                }
+                // 위치 복구 (검사 끝)
+                owner->position = Vector3::XMVectorToFloat3(currentPosition);
+            }
 
-            // 남은 이동량(remainingMotion) 재계산
-            // 이미 부딪혔으므로, 부딪힌 면 방향의 에너지를 제거하고 남은 벡터를 구함
-            XMVECTOR slideNormal = info.normal;
-            XMVECTOR dot = XMVector3Dot(remainingMotion, slideNormal);
-            remainingMotion = remainingMotion - (slideNormal * dot);
+            // 턱 오르기 성공 시, 이번 루프의 이동은 끝난 것으로 간주하거나 남은 거리 조절
+            if (stepSucceeded) break;
+            else {
+                // 기존 슬라이딩 로직 수행
+                XMVECTOR separation = -info.normal * (info.depth + slop);
+                currentPosition += separation;
+
+                Slide(info.normal);
+
+                XMVECTOR slideNormal = info.normal;
+                XMVECTOR dot = XMVector3Dot(remainingMotion, slideNormal);
+                remainingMotion = remainingMotion - (slideNormal * dot);
+            }
         }
         else {
             currentPosition += remainingMotion;
