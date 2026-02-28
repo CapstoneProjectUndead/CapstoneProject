@@ -154,6 +154,8 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
                     state = frameA->state;
                 if (frameB->state == PLAYER_STATE::WALK)
                     state = frameB->state;
+
+                nextPos = position;
             }
             else {
                 state = PLAYER_STATE::WALK;
