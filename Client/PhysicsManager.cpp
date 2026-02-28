@@ -76,16 +76,22 @@ bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo
 
 bool CPhysicsManager::OverlapConcave(CConcaveMeshShape* concaveShape, CColliderComponent* convexCol, CollisionInfo& outInfo)
 {
-    // broadPhase: convex의 aabb로 충돌 체크
     BoundingBox convexAABB = convexCol->GetWorldAABB();
     CColliderShape* convexShape = convexCol->GetShape();
-    const auto& candidates = concaveShape->GetCandidateTriangles(convexAABB);
+
+    // BroadPhase
+    // BVH를 통해 충돌 가능성이 있는 삼각형 인덱스만 빠르게 수집
+    static std::vector<int> candidateIndices;
+    candidateIndices.clear();
+    concaveShape->GetCandidateTrianglesBVH(convexAABB, candidateIndices);
 
     float maxDepth = -FLT_MAX;
     bool bHit = false;
 
-    for (const auto& tri : candidates) {
-        // 삼각형 전용 임시 셰이프 생성
+    // index에 대해서만 GJK/EPA 수행
+    for (int idx : candidateIndices) {
+        const auto& tri = concaveShape->GetWorldTriangles()[idx];
+
         CTriangleShape triShape;
         triShape.v[0] = XMLoadFloat3(&tri.v[0]);
         triShape.v[1] = XMLoadFloat3(&tri.v[1]);
@@ -97,8 +103,6 @@ bool CPhysicsManager::OverlapConcave(CConcaveMeshShape* concaveShape, CColliderC
 
         if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
             CollisionInfo info = GJKAlgorithm::SolveEPA(simplex, convexShape, &triShape);
-
-            // 여러 삼각형 중 가장 깊게 박힌 놈을 고른다 (벽 뚫림 방지)
             if (info.collided && info.depth > maxDepth) {
                 maxDepth = info.depth;
                 outInfo = info;

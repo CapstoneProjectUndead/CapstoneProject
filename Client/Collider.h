@@ -55,8 +55,7 @@ private:
 };
 
 /*
-* 속이 찬 오브젝트(볼록)에 사용(오목한 물체 불가)
-* GJK algorithm을 사용하여 TriangleShape보다 빠름
+* 속이 찬 오브젝트(볼록)에 사용
 */
 class CConvexMeshShape : public CColliderShape
 {
@@ -74,10 +73,7 @@ private:
     std::vector<XMFLOAT3> world{};
 };
 
-/*
-* 오목한 물체에 사용(특히 지형)
-* 모든 삼각형 체크하여 ConvexShape보다 느림
-*/
+// concave를 GJK로 연산하기 위한 class
 class CTriangleShape : public CColliderShape {
 public:
     XMVECTOR v[3];
@@ -88,8 +84,21 @@ public:
     virtual void Update(const XMMATRIX& worldMatrix) override {}
 };
 
+/*
+* 오목한 물체에 사용(특히 지형)
+* BVH 기법으로 빠르게 연산
+*/
 class CConcaveMeshShape : public CColliderShape {
 public:
+    struct BVHNode {
+        BoundingBox aabb;
+        int left = -1;      // 왼쪽 자식 인덱스
+        int right = -1;     // 오른쪽 자식 인덱스
+        int triangle_idx = -1; // -1이 아니면 이 노드는 '잎(Leaf)'이며 실제 삼각형을 가리킴
+
+        bool IsLeaf() const { return triangle_idx != -1; }
+    };
+
     struct Triangle {
         std::array<XMFLOAT3, 3> v;
         BoundingBox aabb;
@@ -103,9 +112,15 @@ public:
     void Update(const XMMATRIX& worldMatrix) override;
 
     XMVECTOR GetSupport(XMVECTOR direction) const override { return XMVectorZero(); }
+    // 겹치는 삼각형 인덱스만 반환(convexAABB, output index)
+    void GetCandidateTrianglesBVH(const BoundingBox& queryAABB, std::vector<int>& outIndices) const;
 private:
+    int BuildBVHRecursive(std::vector<int>& indices, int start, int end);
     std::vector<Triangle> local;
     std::vector<Triangle> world;
+    std::vector<BVHNode> nodes;      // BVH 트리 노드들
+    int root_idx = -1;
+    XMMATRIX inv_world_matrix;
 };
 
 struct CollisionFilter {
