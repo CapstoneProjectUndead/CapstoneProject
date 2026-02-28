@@ -70,6 +70,12 @@
     <Filter Include="D3D12\Shaders">
       <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\GameScene">
+      <UniqueIdentifier>{07a27db7-6ff8-41d7-ae71-eb3db1c0198b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MapGenerator">
+      <UniqueIdentifier>{71994315-a5ce-429c-bb73-7c0e44c4b1f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -252,6 +258,12 @@
     <ClInclude Include="GeometryLoader.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="GameScene.h">
+      <Filter>Scene\GameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="MapGenerator\MapGenerator.h">
+      <Filter>MapGenerator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -394,6 +406,12 @@
     </ClCompile>
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene.cpp">
+      <Filter>Scene\GameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="MapGenerator\MapGenerator.cpp">
+      <Filter>MapGenerator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
