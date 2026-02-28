@@ -38,9 +38,9 @@ void CGameScene::Initialize()
 		}
 	}
 
-	if (objects.empty()) {
+	if (prototypes.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
-		objects = factory->CreateGameScene(staticHeapManager);
+		prototypes = factory->CreateGameScene(staticHeapManager);
 	}
 }
 

@@ -14,7 +14,7 @@ public:
 	CObjectFactory() = default;
 	~CObjectFactory() = default;
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
-	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
+	std::map<std::string, std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	// Initialize 호출 X
 	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);

@@ -76,8 +76,6 @@ void CMovementComponent::Update(const float deltaTime)
     if (!myPlayer->GetIsSingle())
         return;
 
-    ClampSpeed();
-
     // 중력/마찰/땅 확인
     XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
@@ -89,6 +87,8 @@ void CMovementComponent::Update(const float deltaTime)
 
     // 반복 슬라이딩 + 턱 오르기 수행
     ResolveCollisions(finalPos, internalMotion, deltaTime);
+
+    ClampSpeed();
 
     // 최종 위치 적용
     XMStoreFloat3(&owner->position, finalPos);

@@ -115,11 +115,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	return objects;
 }
 
-std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)
+std::map<std::string, std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)
 {
-	std::vector<std::shared_ptr<CObject>> objects;
+	std::map<std::string, std::shared_ptr<CObject>> objects;
 
-	std::string fileName{ "../Modeling/Ground/park_12.bin" };
+	std::string fileName{ "../Modeling/park_12.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	for (const auto& children : frameRoot->childrens) {
@@ -161,7 +161,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 
 		obj->Initialize(GET_DEVICE, GET_CMD_LIST);
 
-		objects.push_back(std::move(obj));
+		objects.emplace(children->name, std::move(obj));
 	}
 
 	return objects;
