@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "GJKAlgorithm.h"
+#include "CollisionAlgorithm.h"
 #include "Collider.h"
 
 XMVECTOR GJKAlgorithm::GetSupport(const std::vector<XMFLOAT3>& vertices, XMVECTOR direction)
@@ -126,7 +126,7 @@ bool GJKAlgorithm::GenericIntersects(std::function<XMVECTOR(XMVECTOR)> supportA,
             if (XMVector4Equal(support, outSimplex.points[i])) return false;
         }
 
-        if (XMVectorGetX(XMVector3Dot(support, direction)) <= 0) return false;
+        if (XMVectorGetX(XMVector3Dot(support, direction)) < -0.0001f) return false;
 
         outSimplex.push_front(support);
 
@@ -195,7 +195,8 @@ bool GJKAlgorithm::NextSimplex(Simplex& s, XMVECTOR& d)
     return false;
 }
 
-GJKAlgorithm::EPAFace GJKAlgorithm::CreateFace(const std::vector<XMVECTOR>& polytope, uint32_t i, uint32_t j, uint32_t k)
+// --- EPAFace 생성 함수 (법선 방향 보정 포함) ---
+GJKAlgorithm::EPAFace GJKAlgorithm::CreateFace(const std::vector<XMVECTOR>& polytope, uint32_t i, uint32_t j, uint32_t k, XMVECTOR center)
 {
     XMVECTOR a = polytope[i];
     XMVECTOR b = polytope[j];
@@ -203,34 +204,57 @@ GJKAlgorithm::EPAFace GJKAlgorithm::CreateFace(const std::vector<XMVECTOR>& poly
 
     XMVECTOR ab = b - a;
     XMVECTOR ac = c - a;
-    // 외적을 통해 법선 계산 (CW/CCW 순서 주의)
     XMVECTOR normal = XMVector3Normalize(XMVector3Cross(ab, ac));
 
-    // 법선이 원점 반대 방향을 향하도록 보정 (Convex 내부에서 밖을 향하게)
-    float distance = XMVectorGetX(XMVector3Dot(normal, a));
-    if (distance < 0) {
+    // 법선이 사면체 중심에서 바깥을 향하도록 보정
+    float directionCheck = XMVectorGetX(XMVector3Dot(normal, a - center));
+    if (directionCheck < 0) {
         normal = -normal;
-        distance = -distance;
     }
+
+    // 원점으로부터의 거리 계산
+    float distance = std::abs(XMVectorGetX(XMVector3Dot(normal, a)));
 
     return { normal, distance, {i, j, k} };
 }
 
-GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB)
+// --- EPA 메인 알고리즘 (디버그 로그 포함) ---
+CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB)
 {
+    char logBuf[512];
+    OutputDebugStringA("\n[EPA] --- Collision Detected, Starting EPA ---\n");
+
     std::vector<XMVECTOR> polytope;
-    for (int i = 0; i < simplex.size; ++i) polytope.push_back(simplex.points[i]);
+    XMVECTOR center = XMVectorSet(0, 0, 0, 0);
 
+    // 1. 심플렉스 크기 체크 및 폴리토프 초기화
+    if (simplex.size < 4) {
+        sprintf_s(logBuf, "[EPA] Warning: Simplex size is %d (Not a Tetrahedron!)\n", simplex.size);
+        OutputDebugStringA(logBuf);
+    }
+
+    for (int i = 0; i < simplex.size; ++i) {
+        polytope.push_back(simplex.points[i]);
+        center += simplex.points[i];
+    }
+    center /= (float)simplex.size;
+
+    // 2. 초기 면 구성
     std::list<EPAFace> faces;
-    faces.push_back(CreateFace(polytope, 0, 1, 2));
-    faces.push_back(CreateFace(polytope, 0, 2, 3));
-    faces.push_back(CreateFace(polytope, 0, 3, 1));
-    faces.push_back(CreateFace(polytope, 1, 3, 2));
+    if (simplex.size == 4) {
+        faces.push_back(CreateFace(polytope, 0, 1, 2, center));
+        faces.push_back(CreateFace(polytope, 0, 2, 3, center));
+        faces.push_back(CreateFace(polytope, 0, 3, 1, center));
+        faces.push_back(CreateFace(polytope, 1, 3, 2, center));
+    }
 
-    const int MAX_ITERATIONS = 10;
+    const int MAX_ITERATIONS = 32;
     for (int iter = 0; iter < MAX_ITERATIONS; ++iter) {
-        if (faces.empty()) break;
+        if (faces.empty()) {
+            break;
+        }
 
+        // 3. 원점에서 가장 가까운 면 찾기
         auto closestFaceIt = faces.begin();
         float minDistance = FLT_MAX;
 
@@ -244,23 +268,32 @@ GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& 
         XMVECTOR searchDir = closestFaceIt->normal;
         XMVECTOR p = shapeA->GetSupport(searchDir) - shapeB->GetSupport(-searchDir);
 
-        // 수렴 조건 강화
         float d = XMVectorGetX(XMVector3Dot(p, searchDir));
-        if (d - minDistance < 0.001f) { // 이 차이가 너무 작으면 더 이상 확장 무의미
+
+        // --- 실시간 데이터 로그 ---
+        XMFLOAT3 n; XMStoreFloat3(&n, searchDir);
+        sprintf_s(logBuf, "[EPA Iter %d] Normal: (%.2f, %.2f, %.2f), Depth: %.4f\n", iter, n.x, n.y, n.z, d);
+        OutputDebugStringA(logBuf);
+
+        // 4. 수렴 조건 확인
+        if (d - minDistance < 0.0001f) {
+            sprintf_s(logBuf, "[EPA Success] Final Depth: %.4f, Final Normal: (%.2f, %.2f, %.2f)\n", d, n.x, n.y, n.z);
+            OutputDebugStringA(logBuf);
             return { searchDir, d, true };
         }
 
-        // 중복 점 체크
+        // 5. 중복 점 체크
         for (const auto& v : polytope) {
-            if (XMVectorGetX(XMVector3LengthSq(p - v)) < 0.00001f) {
+            if (XMVectorGetX(XMVector3LengthSq(p - v)) < 1e-6f) {
+                OutputDebugStringA("[EPA Done] Duplicate point found, stopping expansion.\n");
                 return { searchDir, minDistance, true };
             }
         }
 
+        // 6. 폴리토프 확장 (Edge 제거 로직)
         std::vector<EPAEdge> edges;
         for (auto it = faces.begin(); it != faces.end(); ) {
-            // p가 면 바깥에 있는 경우만 제거
-            if (XMVectorGetX(XMVector3Dot(it->normal, p - polytope[it->v[0]])) > 0.0001f) {
+            if (XMVectorGetX(XMVector3Dot(it->normal, p - polytope[it->v[0]])) > 0.0f) {
                 EPAEdge faceEdges[3] = { {it->v[0], it->v[1]}, {it->v[1], it->v[2]}, {it->v[2], it->v[0]} };
                 for (auto& e : faceEdges) {
                     auto found = std::find(edges.begin(), edges.end(), e);
@@ -272,16 +305,15 @@ GJKAlgorithm::CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& 
             else ++it;
         }
 
-        // 지평선이 없으면 중단
         if (edges.empty()) break;
 
         uint32_t newIdx = (uint32_t)polytope.size();
         polytope.push_back(p);
         for (auto& edge : edges) {
-            faces.push_back(CreateFace(polytope, edge.a, edge.b, newIdx));
+            faces.push_back(CreateFace(polytope, edge.a, edge.b, newIdx, center));
         }
     }
 
-    // 루프가 끝까지 돌아도 결과를 못찾으면 그냥 가장 가까웠던 면 정보라도 반환
+    OutputDebugStringA("[EPA] Failed to converge within max iterations.\n");
     return { XMVectorSet(0, 1, 0, 0), 0.0f, true };
 }

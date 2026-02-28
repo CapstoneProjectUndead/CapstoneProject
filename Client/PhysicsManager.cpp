@@ -9,45 +9,111 @@ void CPhysicsManager::Update(float deltaTime)
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end() );
 }
 
+bool CPhysicsManager::CheckFilter(const CollisionFilter& a, const CollisionFilter& b)
+{
+    // 서로의 마스크가 상대방의 카테고리를 포함하고 있는지 확인 (AND 연산)
+    return (a.mask & b.category) && (b.mask & a.category);
+}
+
 void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates)
 {
     BoundingBox expanded{ checkCol->world_aabb };
-
     // 이동 경로의 중간 지점으로 센터 이동
     expanded.Center = Vector3::Add(expanded.Center, Vector3::ScalarProduct(delta, 0.5f));
 
     for (auto& col : colliders) {
         if (col.get() == checkCol) continue;
+        // filtering. 물리적으로 충돌 설정이 되어 있는지 확인
+        if (!CheckFilter(checkCol->filter, col->filter)) continue;
+
         if (expanded.Intersects(col->world_aabb))
             candidates.push_back(col.get());
     }
 }
 
-bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, GJKAlgorithm::CollisionInfo& collisionInfo)
+bool CPhysicsManager::Overlap(CObject* obj, const XMFLOAT3& delta, CollisionInfo& collisionInfo, uint32_t mask)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
     if (!col) return false;
 
+    // 마스크가 0이면 컴포넌트 기본 마스크 사용, 아니면 지정 마스크 사용
+    uint32_t originalMask = col->filter.mask;
+    if (mask != 0) col->filter.mask = mask;
+
     std::vector<CColliderComponent*> candidates;
     BroadPhase(col, delta, candidates);
+    
+    // 마스크 복구
+    col->filter.mask = originalMask;
 
     for (auto* other : candidates) {
-        auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
-        auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
-
-        // GJK 실행 및 Simplex 획득
-        GJKAlgorithm::Simplex simplex;
-        if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
-            // EPA 실행
-            collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
-            if (collisionInfo.collided) return true;
+        if (auto* mesh = dynamic_cast<CConcaveMeshShape*>(other->shape.get())) {
+            // 메쉬 내부에서 충돌하는 삼각형들을 찾아 EPA까지 돌려온다.
+            CollisionInfo meshInfo;
+            if (OverlapConcave(mesh, col, meshInfo)) {
+                meshInfo.other_object = other->owner;
+                collisionInfo = meshInfo;
+                return true;
+            }
         }
+        else {
+            GJKAlgorithm::Simplex simplex;
+            auto supportA = [&](XMVECTOR d) { return col->shape->GetSupport(d); };
+            auto supportB = [&](XMVECTOR d) { return other->shape->GetSupport(d); };
+            if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
+                collisionInfo = GJKAlgorithm::SolveEPA(simplex, col->shape.get(), other->shape.get());
+                if (collisionInfo.collided) {
+                    collisionInfo.other_object = other->owner;
+                    return true;
+                }
+            }
+        }
+
     }
 
     return false;
 }
 
-bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, GJKAlgorithm::CollisionInfo& outInfo)
+bool CPhysicsManager::OverlapConcave(CConcaveMeshShape* concaveShape, CColliderComponent* convexCol, CollisionInfo& outInfo)
+{
+    BoundingBox convexAABB = convexCol->GetWorldAABB();
+    CColliderShape* convexShape = convexCol->GetShape();
+
+    // BroadPhase
+    // BVH를 통해 충돌 가능성이 있는 삼각형 인덱스만 빠르게 수집
+    static std::vector<int> candidateIndices;
+    candidateIndices.clear();
+    concaveShape->GetCandidateTrianglesBVH(convexAABB, candidateIndices);
+
+    float maxDepth = -FLT_MAX;
+    bool bHit = false;
+
+    // index에 대해서만 GJK/EPA 수행
+    for (int idx : candidateIndices) {
+        const auto& tri = concaveShape->GetWorldTriangles()[idx];
+
+        CTriangleShape triShape;
+        triShape.v[0] = XMLoadFloat3(&tri.v[0]);
+        triShape.v[1] = XMLoadFloat3(&tri.v[1]);
+        triShape.v[2] = XMLoadFloat3(&tri.v[2]);
+
+        GJKAlgorithm::Simplex simplex;
+        auto supportA = [&](XMVECTOR d) { return convexShape->GetSupport(d); };
+        auto supportB = [&](XMVECTOR d) { return triShape.GetSupport(d); };
+
+        if (GJKAlgorithm::GenericIntersects(supportA, supportB, simplex)) {
+            CollisionInfo info = GJKAlgorithm::SolveEPA(simplex, convexShape, &triShape);
+            if (info.collided && info.depth > maxDepth) {
+                maxDepth = info.depth;
+                outInfo = info;
+                bHit = true;
+            }
+        }
+    }
+    return bHit;
+}
+
+bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, CollisionInfo& outInfo)
 {
     XMVECTOR rayOrigin = XMLoadFloat3(&origin);
     XMVECTOR rayDir = XMVector3Normalize(XMLoadFloat3(&direction));
@@ -62,7 +128,7 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
         if (aabbDist > closestDist) continue;
 
         // Narrow-phase: 메쉬 콜라이더일 경우
-        if (auto* meshShape = dynamic_cast<CTriangleMeshShape*>(other->shape.get())) {
+        if (auto* meshShape = dynamic_cast<CConcaveMeshShape*>(other->shape.get())) {
             for (const auto& tri : meshShape->GetWorldTriangles()) {
                 float hitDist = 0.0f;
                 if (Triangle::Intersect(origin, direction, tri.v[0], tri.v[1], tri.v[2], hitDist)) {
@@ -86,31 +152,61 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
     return bHit;
 }
 
-void CPhysicsManager::ApplyGravity(CObject* obj, float dt)
+XMVECTOR CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
-    if (!col) return;
+    if (!col) return XMVectorZero();;
 
     // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
-    XMFLOAT3 groundCheckDelta = { 0, -0.05f, 0 };
-    GJKAlgorithm::CollisionInfo groundInfo{};
-    Overlap(obj, groundCheckDelta, groundInfo);
+    XMFLOAT3 downDelta = { 0, -0.1f, 0 };
+    CollisionInfo info{};
+    obj->is_grounded = Overlap(obj, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT);
 
-    obj->is_grounded = groundInfo.collided;
+    XMVECTOR verticalSeparation = XMVectorZero();
 
     if (obj->is_grounded) {
-        // 지면 마찰력 적용
+        // 수직 속도 초기화 (땅에 박히는 것 방지)
         if (obj->velocity.y < 0) obj->velocity.y = 0;
 
-        float speedLen = Vector3::Length(obj->velocity);
-        float decel = obj->friction * dt;
-        if (decel > speedLen) decel = speedLen;
+        // 경사각 계산
+        if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
+        XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+        // 법선과 하늘 방향의 내적으로 각도 계산 (cos theta)
+        float slopeAngle = XMVectorGetX(XMVector3AngleBetweenVectors(info.normal, up));
+        float maxSlopeAngle = XMConvertToRadians(45.0f); // 45도까지는 안 미끄러짐
 
-        obj->velocity = Vector3::Add(obj->velocity, Vector3::ScalarProduct(obj->velocity, -decel, true));
+        if (slopeAngle < maxSlopeAngle) {
+            // 완만한 경사
+            verticalSeparation = info.normal * info.depth;
+        }
+        else {
+            // 가파른 경사 -> 미끄러짐 속도 적용
+            XMVECTOR v = XMLoadFloat3(&obj->velocity);
+            XMVECTOR slideVel = v - info.normal * XMVector3Dot(v, info.normal);
+            XMStoreFloat3(&obj->velocity, slideVel);
+            obj->velocity.y += gravity * dt * 0.5f;
+        }
+
+        // 지면 마찰력 적용
+        ApplyFriction(obj, dt);
     }
     else {
         // 공중일 때: 중력 가속
         obj->velocity.y += gravity * dt;
+    }
+    return verticalSeparation;
+}
+
+void CPhysicsManager::ApplyFriction(CObject* obj, float dt)
+{
+    float speedLen = Vector3::Length(obj->velocity);
+    if (speedLen > 0.0001f) {
+        float decel = obj->friction * dt;
+        if (decel > speedLen) decel = speedLen;
+
+        XMVECTOR v = XMLoadFloat3(&obj->velocity);
+        XMVECTOR frictionImpulse = XMVector3Normalize(v) * -decel;
+        XMStoreFloat3(&obj->velocity, v + frictionImpulse);
     }
 }
 

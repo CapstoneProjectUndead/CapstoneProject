@@ -20,7 +20,7 @@ public:
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 private:
-	enum class MeshName {
+	enum class UndeadMeshName {
 		body,
 		Bunny_ear,
 		Bunny_tail,
@@ -30,10 +30,20 @@ private:
 		Dog_tail,
 		eyes,
 		mouse,
-		Unknown,
+		Unknown
 	};
 
-	MeshName stringToMeshName(const std::string& str);
+	enum class LobbyMeshName {
+		Wall,
+		Floor,
+		GroundPipe,
+		Counter,	// 카운터
+		Unknown
+	};
+
+
+	UndeadMeshName stringToUndeadMeshName(const std::string& str);
+	LobbyMeshName stringToLobbyMeshName(const std::string& str);
 
 	CMaterialManager matManager;
 	CTextureManager texManager;
