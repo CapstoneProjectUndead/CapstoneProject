@@ -2,6 +2,7 @@
 #include "Component.h"
 
 class CObject;
+struct CollisionInfo;
 
 /*
 * 사용 예시
@@ -15,6 +16,13 @@ class CMovementComponent : public CComponent
 public:
 	CMovementComponent() = default;
 	void Update(const float deltaTime) override;
+	// 플레이어가 위에 있는 움직이는 물체의 속도 return
+	XMVECTOR CalculatePlatform(float dt);
+	// 충돌 처리
+	void ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingMotion, float dt);
+	// 턱 오르기
+	bool TryStepUp(XMVECTOR& outPos, XMVECTOR motion, const CollisionInfo& hit, float height, uint32_t mask);
+
 	void Move(const XMFLOAT3 direction, float deltaTime);
 	// 벽(Normal)을 따라 Slide
 	void Slide(const XMFLOAT3& normal);

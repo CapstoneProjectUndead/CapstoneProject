@@ -175,7 +175,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Component.h" />
     <ClInclude Include="CustomScene.h" />
     <ClInclude Include="GeometryLoader.h" />
-    <ClInclude Include="GJKAlgorithm.h" />
+    <ClInclude Include="CollisionAlgorithm.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
@@ -234,7 +234,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CustomScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
-    <ClCompile Include="GJKAlgorithm.cpp" />
+    <ClCompile Include="CollisionAlgorithm.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />

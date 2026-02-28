@@ -1,4 +1,5 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
+#include "d3dx12.h"
 #include <comdef.h>
 
 CDxException::CDxException(HRESULT hr, const std::wstring& functionName, const std::wstring& fileName, int lineNumber)
@@ -39,7 +40,7 @@ ID3D12Resource* CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommand
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-	D3D12_RESOURCE_STATES resourceInitialState = D3D12_RESOURCE_STATE_COPY_DEST;
+	D3D12_RESOURCE_STATES resourceInitialState = D3D12_RESOURCE_STATE_COMMON;
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD) {
 		resourceInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
@@ -73,6 +74,7 @@ ID3D12Resource* CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommand
 				(void**)uploadBuffer
 			);
 
+#ifdef _WITH_MAPPING
 			// 업로드 버퍼를 매핑하여 초기화 데이터를 버퍼에 복사
 			D3D12_RANGE readRange{ 0, 0 };
 			UINT8* bufferDataBegin{};
@@ -82,12 +84,17 @@ ID3D12Resource* CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommand
 
 			// 업로드 버퍼 내용을 디폴트 버퍼에 복사
 			commandList->CopyResource(buffer, *uploadBuffer);
-
+#else
+			D3D12_SUBRESOURCE_DATA subResourceData{};
+			subResourceData.pData = data;
+			subResourceData.SlicePitch = subResourceData.RowPitch = bytes;
+			UpdateSubresources<1>(commandList, buffer, *uploadBuffer, 0, 0, 1, &subResourceData);
+#endif
 			D3D12_RESOURCE_BARRIER resourceBarrier{};
 			resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			resourceBarrier.Transition.pResource = buffer;
-			resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+			resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
 			resourceBarrier.Transition.StateAfter = resourceStates;
 			resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 			commandList->ResourceBarrier(1, &resourceBarrier);

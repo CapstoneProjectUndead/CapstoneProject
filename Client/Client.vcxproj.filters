@@ -240,7 +240,7 @@
     <ClInclude Include="Material.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="GJKAlgorithm.h">
+    <ClInclude Include="CollisionAlgorithm.h">
       <Filter>Component\Collider/Physics</Filter>
     </ClInclude>
     <ClInclude Include="CustomScene.h">
@@ -383,7 +383,7 @@
     <ClCompile Include="Material.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="GJKAlgorithm.cpp">
+    <ClCompile Include="CollisionAlgorithm.cpp">
       <Filter>Component\Collider/Physics</Filter>
     </ClCompile>
     <ClCompile Include="CustomScene.cpp">

@@ -36,10 +36,12 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 			unit.material->UpdateMeshShaderVariables(commandList);
 
 		unit.mesh->Render(commandList);
-	}
+
 #ifdef DEBUG
-	auto collider = owner->GetComponents<CColliderComponent>();
-	for (auto c : collider)
-		c->Render(commandList);
+		auto collider = owner->GetComponents<CColliderComponent>();
+		for (auto c : collider)
+			c->Render(commandList);
 #endif
+	}
+
 }

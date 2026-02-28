@@ -46,7 +46,7 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	// 내 플레이어
 	if (p->GetIsMyPlayer()) {
-		if (speed < 0.01f)
+		if (speed < 0.1f)
 			Play("Ganga_idle");
 		else
 			Play("Ganga_walk");
