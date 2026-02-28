@@ -124,40 +124,19 @@ void CPlayer::SimulateMove(const InputData& input, float deltaTime)
     ClampSpeed();
 
     // 중력/마찰/땅 확인
-    CPhysicsManager::GetInstance().ApplyGravity(this, deltaTime);
+    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(this, deltaTime);
 
-    // 이동량 계산
-    XMFLOAT3 delta = Vector3::ScalarProduct(velocity, deltaTime);
-    float moveDist = Vector3::Length(delta);
-    if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
+    // 이동량 계산 = 기존 위치 + 바닥 보정 + 외부 발판
+    XMVECTOR finalPos = XMLoadFloat3(&position) + groundSeparation + CalculatePlatform(deltaTime);
 
-    GJKAlgorithm::CollisionInfo info{};
-    // 중복 코드 람다로 처리
-    auto ResolveCollision = [&]() {
-        // overlap된 만큼 밀어내기
-        XMVECTOR separation = info.normal * info.depth;
-        XMVECTOR curPos = XMLoadFloat3(&position);
-        XMStoreFloat3(&position, curPos + separation);
+    // 플레이어 이동량 계산
+    XMVECTOR internalMotion = XMLoadFloat3(&velocity) * deltaTime;
 
-        Slide(info.normal);
-        };
+    // 반복 슬라이딩 + 턱 오르기 수행
+    ResolveCollisions(finalPos, internalMotion, deltaTime);
 
-    // 지형 충돌(벽)
-    XMFLOAT3 moveDir = Vector3::Normalize(delta);
-    if (CPhysicsManager::GetInstance().Raycast(position, moveDir, moveDist, info)) {
-        ResolveCollision();
-    }
-
-    // 오브젝트 충돌(Table 등)
-    delta = Vector3::ScalarProduct(velocity, deltaTime);
-    if (CPhysicsManager::GetInstance().Overlap(this, delta, info)) {
-        if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
-        ResolveCollision();
-    }
-
-    // 최종 이동
-    delta = Vector3::ScalarProduct(velocity, deltaTime);
-    position = Vector3::Add(position, delta);
+    // 최종 위치 적용
+    XMStoreFloat3(&position, finalPos);
 
     auto collider = GetComponent<CColliderComponent>();
     if (collider) {
@@ -266,4 +245,88 @@ void CPlayer::Slide(const XMVECTOR& normal)
     XMVECTOR result = v - normal * dot;
 
     XMStoreFloat3(&velocity, result);
+}
+
+XMVECTOR CPlayer::CalculatePlatform(float dt)
+{
+    CollisionInfo info{};
+    XMFLOAT3 downDelta = { 0, -0.1f, 0 };
+    if (CPhysicsManager::GetInstance().Overlap(this, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT)) {
+        if (info.other_object && Vector3::Length(velocity) > 0.001f) {
+            return XMLoadFloat3(&velocity) * dt;
+        }
+    }
+    return XMVectorZero();
+}
+
+void CPlayer::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingMotion, float dt)
+{
+    // 벽/오브젝트 충돌 처리
+    uint32_t wallMask = EColLayer::WALL | EColLayer::OBJECT;
+    const float stepHeight = 0.2; // 오를 수 있는 최대 높이
+
+    // Iterative Slide
+    for (int i = 0; i < 3; ++i) {
+        float moveLen = XMVectorGetX(XMVector3Length(remainingMotion));
+        if (moveLen < 0.0001f) break; // 더 이상 갈 거리가 없으면 종료
+
+        CollisionInfo info{};
+        if (CPhysicsManager::GetInstance().Overlap(this, Vector3::XMVectorToFloat3(remainingMotion), info, wallMask)) {
+            // 1. step up
+            if (TryStepUp(outPos, remainingMotion, info, stepHeight, wallMask)) {
+                break;
+            }
+            // 2. slide
+            float safeMargin = (info.depth > moveLen) ? moveLen : info.depth;   // depth 값이 비정상적일 때, 순간이동 방지
+            safeMargin = max(safeMargin, 0.001f); // 최소한의 밀어내기 확보
+
+            float normalLen = XMVectorGetX(XMVector3Length(info.normal));
+            if (normalLen > 0.0001f) {
+                XMVECTOR separation = -info.normal * safeMargin;
+                outPos += separation;
+
+                Slide(info.normal);
+
+                // 남은 이동량 투영
+                XMVECTOR newMotion = remainingMotion - info.normal * XMVector3Dot(remainingMotion, info.normal);
+
+                // [추가 고려] 투영된 벡터가 원래 운동 방향과 너무 동떨어지거나 뒤로 가려고 하면 0으로 처리
+                if (XMVectorGetX(XMVector3Dot(newMotion, remainingMotion)) <= 0) {
+                    remainingMotion = XMVectorZero();
+                }
+                else {
+                    remainingMotion = newMotion;
+                }
+            }
+        }
+        else {
+            outPos += remainingMotion;
+            break;
+        }
+    }
+}
+
+bool CPlayer::TryStepUp(XMVECTOR& outPos, XMVECTOR motion, const CollisionInfo& hit, float height, uint32_t mask)
+{
+    if (!is_grounded || std::abs(XMVectorGetY(hit.normal)) >= 0.2f) return false;
+
+    // 캐릭터를 stepHeight만큼 위로 올린 임시 위치 계산
+    XMVECTOR stepUpOffset = XMVectorSet(0, height, 0, 0);
+    XMVECTOR testPos = outPos + stepUpOffset;
+
+    XMFLOAT3 originalPos = position;
+    position = Vector3::XMVectorToFloat3(testPos);   // 잠시 위치 이동
+
+    CollisionInfo stepInfo{};
+    bool obstructed = CPhysicsManager::GetInstance().Overlap(this, Vector3::XMVectorToFloat3(motion), stepInfo, mask);
+
+    position = originalPos; // 복구
+
+    if (!obstructed) {
+        // 앞 공간이 비어있다면, 이제 다시 아래로 내려서 바닥이 있는지 확인
+        // 실제 엔진은 여기서 아래로 Sweep을 쏘지만, 일단은 위치 확정 후 중력이 해결하게 함
+        outPos = testPos + motion;
+        return true;
+    }
+    return false;
 }

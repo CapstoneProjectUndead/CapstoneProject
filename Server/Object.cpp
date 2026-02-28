@@ -52,10 +52,8 @@ shared_ptr<CPlayer> CObject::CreatePlayer()
 	bool firstBounds = true;
 
 	for (const auto& child : frameRoot->childrens) {
-
 		if (child->mesh.positions.empty())
 			continue;
-
 		// bounds merge
 		if (firstBounds) {
 			totalBounds = child->mesh.bounds;
@@ -66,12 +64,16 @@ shared_ptr<CPlayer> CObject::CreatePlayer()
 		}
 	}
 
-	// ColliderComponent 积己
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.x, totalBounds.Center);
+	// ColliderComponent 积己/ filter 汲沥
+	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+	CollisionFilter filter;
+	filter.category = EColLayer::PLAYER;
+	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+	collider->SetFillter(filter);
 	player->SetComponent(collider);
 	CPhysicsManager::GetInstance().SetCollider(collider);
-	
+
 	player->UpdateWorldMatrix();
 	collider->Update(0.0f);
 

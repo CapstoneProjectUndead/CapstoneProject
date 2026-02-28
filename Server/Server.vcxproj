@@ -158,7 +158,7 @@
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
-    <ClCompile Include="GJKAlgorithm.cpp" />
+    <ClCompile Include="CollisionAlgorithm.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="pch.cpp">
@@ -198,7 +198,7 @@
     <ClInclude Include="DirectXMathHelper.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="GeometryLoader.h" />
-    <ClInclude Include="GJKAlgorithm.h" />
+    <ClInclude Include="CollisionAlgorithm.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Object.h" />

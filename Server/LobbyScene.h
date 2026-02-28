@@ -24,6 +24,17 @@ public:
     void C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt);
 
 private:
+    enum class LobbyMeshName {
+        Wall,
+        Floor,
+        GroundPipe,
+        Counter,	// 카운터
+        Unknown
+    };
+
+    LobbyMeshName stringToLobbyMeshName(const std::string& str);
+
+private:
     // 맵의 바닥, 장애물 등 움직이지 않는 정적 충돌체들을 보관하는 곳
     std::vector<std::shared_ptr<CObject>> static_objects;
 };

@@ -45,45 +45,106 @@ void CLobbyScene::Start()
 			continue;
 
 		auto obj = std::make_shared<CObject>();
-
-		// 핵심: 이동/회전/크기(Matrix)를 그대로 서버 객체에 적용
 		obj->world_matrix = children->localMatrix;
 
-		// ============================
-		// [충돌체 생성 및 물리 엔진 등록]
-		// ============================
+		// =========================================================
+		// [핵심 해결책] mesh.bounds가 비정상일 경우를 대비해 직접 Bounds 계산
+		// =========================================================
+		BoundingBox realBounds = children->mesh.bounds;
 
-		if (children->name == "Wall") {
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CTriangleMeshShape>(children->collider.positions, children->collider.indices);
-			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+		// 1. 시각적 메쉬가 없고 충돌체만 있는 노드라면 collider 데이터로 Bounds 재계산
+		if (children->mesh.positions.empty() && !children->collider.positions.empty()) {
+			BoundingBox::CreateFromPoints(realBounds, children->collider.positions.size(), children->collider.positions.data(), sizeof(XMFLOAT3));
+		}
+
+		// 2. 바닥이 완전 평면(두께 0)이면 EPA 연산이 실패하므로 강제로 최소 두께(0.1f) 부여
+		if (realBounds.Extents.y < 0.1f) {
+			realBounds.Extents.y = 0.1f;
+		}
+		// =========================================================
+
+		CollisionFilter filter;
+		filter.category = EColLayer::OBJECT;
+		filter.mask = EColLayer::PLAYER;
+
+		switch (stringToLobbyMeshName(children->name)) {
+		case LobbyMeshName::Wall:
+		{
+			std::unique_ptr< CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
+			// children->mesh.bounds 대신 realBounds 사용!
+			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
+			CollisionFilter filter;
+			filter.category = EColLayer::WALL;
+			filter.mask = EColLayer::PLAYER;
+			collider->SetFillter(filter);
+
 			collider->owner = obj.get();
 			collider->Update(0.0f);
 			obj->SetComponent(collider);
 			CPhysicsManager::GetInstance().SetCollider(collider);
-
+			break;
 		}
-		else {
-			if (children->name == "Floor") {
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
-				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);				
-				collider->owner = obj.get(); // 필수 (이게 없으면 허공에 뜨는 버그 발생)
-				collider->Update(0.0f);
-				obj->SetComponent(collider);
-				CPhysicsManager::GetInstance().SetCollider(collider);
+		case LobbyMeshName::Floor:
+		{
+			// children->mesh.bounds 대신 realBounds 사용!
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
+			CollisionFilter filter;
+			filter.category = EColLayer::GROUND;
+			filter.mask = EColLayer::PLAYER;
+			boxCollider->SetFillter(filter);
 
-				static_objects.push_back(obj);
-			}
-			else if (!children->collider.positions.empty()) {
-				std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				collider->owner = obj.get();
-				collider->Update(0.0f);
-				obj->SetComponent(collider);
-				CPhysicsManager::GetInstance().SetCollider(collider);
-
-				static_objects.push_back(obj);
-			}
+			boxCollider->owner = obj.get();
+			boxCollider->Update(0.0f);
+			obj->SetComponent(boxCollider);
+			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			break;
 		}
+		case LobbyMeshName::GroundPipe:
+		{
+			// children->mesh.bounds 대신 realBounds 사용!
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
+			boxCollider->SetFillter(filter);
+
+			boxCollider->owner = obj.get();
+			boxCollider->Update(0.0f);
+			obj->SetComponent(boxCollider);
+			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			break;
+		}
+		case LobbyMeshName::Counter:
+		{
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+			// children->mesh.bounds 대신 realBounds 사용!
+			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
+			collider->SetFillter(filter);
+
+			collider->owner = obj.get();
+			collider->Update(0.0f);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
+			break;
+		}
+		case LobbyMeshName::Unknown:
+		{
+			if (children->collider.positions.empty()) break;
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+			// children->mesh.bounds 대신 realBounds 사용!
+			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
+			collider->SetFillter(filter);
+
+			collider->owner = obj.get();
+			collider->Update(0.0f);
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
+			break;
+		}
+
+		} // <-- switch문 닫는 괄호
+
+		// 오브젝트 보관 (이전처럼 switch문 밖, for문 안에 위치!)
+		static_objects.push_back(obj);
 	}
 }
 
@@ -211,4 +272,17 @@ void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt
 		if (user->GetSession())
 			user->GetSession()->DoSend(sendBuffer);
 	}
+}
+
+CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)
+{
+	static const std::unordered_map<std::string, LobbyMeshName> table = {
+		{"Wall", LobbyMeshName::Wall},
+		{"Floor", LobbyMeshName::Floor},
+		{"GroundPipe", LobbyMeshName::GroundPipe},
+		{"Stone012", LobbyMeshName::Counter}
+	};
+
+	auto it = table.find(str);
+	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
 }

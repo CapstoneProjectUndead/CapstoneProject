@@ -187,42 +187,20 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)
         }
     }
 
-    // 최대 속도 제한
     ClampSpeed();
 
     // 중력/마찰/땅 확인
-    CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
 
-    // 이동량 계산
-    XMFLOAT3 delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
-    float moveDist = Vector3::Length(delta);
-    if (moveDist < 0.0001f) return; // 움직임이 없으면 스킵
+    // 이동량 계산 = 기존 위치 + 바닥 보정 + 외부 발판
+    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
 
-    CollisionInfo info{};
-    // 중복 코드 람다로 처리
-    auto ResolveCollision = [&]() {
-        // overlap된 만큼 밀어내기
-        XMVECTOR separation = info.normal * info.depth;
-        XMVECTOR curPos = XMLoadFloat3(&owner->position);
-        XMStoreFloat3(&owner->position, curPos + separation);
+    // 플레이어 이동량 계산
+    XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
 
-        Slide(info.normal);
-        };
+    // 반복 슬라이딩 + 턱 오르기 수행
+    ResolveCollisions(finalPos, internalMotion, deltaTime);
 
-    // 지형 충돌(벽)
-    XMFLOAT3 moveDir = Vector3::Normalize(delta);
-    if (CPhysicsManager::GetInstance().Raycast(owner->position, moveDir, moveDist, info)) {
-        ResolveCollision();
-    }
-
-    // 오브젝트 충돌(Table 등)
-    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
-    if (CPhysicsManager::GetInstance().Overlap(owner, delta, info)) {
-        if (XMVectorGetY(info.normal) < 0) info.normal = -info.normal;
-        ResolveCollision();
-    }
-
-    // 최종 이동
-    delta = Vector3::ScalarProduct(owner->velocity, deltaTime);
-    owner->position = Vector3::Add(owner->position, delta);
+    // 최종 위치 적용
+    XMStoreFloat3(&owner->position, finalPos);
 }
