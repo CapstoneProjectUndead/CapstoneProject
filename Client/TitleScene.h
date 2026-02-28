@@ -85,9 +85,9 @@ private:
 private:
     std::unordered_map<uint32, RoomInfo> rooms;
 
-    // -----------------------------------------------------
+    // --------------------------
     // [핵심] 리팩토링된 상태 변수들
-    // -----------------------------------------------------
+    // --------------------------
     TitleUIState ui_state = TitleUIState::Main;
     LoadingType loading_type = LoadingType::None;
     ActionResult pop_up_result;

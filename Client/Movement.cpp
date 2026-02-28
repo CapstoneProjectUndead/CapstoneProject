@@ -71,7 +71,7 @@ void CMovementComponent::Update(const float deltaTime)
     if (player != nullptr && !player->GetIsMyPlayer())
         return;
     
-    // 멀티 플레이일 경우, Update를 실행하지 않는다.
+    // 멀티 플레이일 경우, Update를 실행하지 않는다. (클라 예측 적용 시, 삭제할 것!)
     auto myPlayer = static_cast<CMyPlayer*>(player);
     if (!myPlayer->GetIsSingle())
         return;

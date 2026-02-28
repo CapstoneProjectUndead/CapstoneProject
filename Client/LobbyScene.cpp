@@ -7,6 +7,8 @@
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
+#include "KeyManager.h"
+#include "ImGuiManager.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -19,7 +21,7 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Initialize()
 {
-	// ë Œë”ë§í•  ë•Œ í•„ìš”í•œ ì‰ì´ë” ê°ì²´ ìƒì„±
+	// ·»´õ¸µÇÒ ¶§ ÇÊ¿äÇÑ ½¦ÀÌ´õ °´Ã¼ »ı¼º
 	if(shaders.empty()) {
 		{
 			// static shader
@@ -43,7 +45,7 @@ void CLobbyScene::Initialize()
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	// í”Œë ˆì´ì–´ ìƒì„±
+	// ÇÃ·¹ÀÌ¾î »ı¼º
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
@@ -58,12 +60,12 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		camera->Initialize(device, commandList);
 	}
 	
-	// light ìƒì„±
+	// light »ı¼º
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
 	}
-	// test ìš© ì‚­ì œX
+	// test ¿ë »èÁ¦X
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
 		std::ofstream txt("../Modeling/char.txt");
@@ -82,6 +84,9 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void CLobbyScene::Update(float elapsedTime)
 {
+	if (paused)
+		return;
+
 	CScene::Update(elapsedTime);
 	CPhysicsManager::GetInstance().Update(elapsedTime);
 
@@ -92,7 +97,29 @@ void CLobbyScene::Update(float elapsedTime)
 
 void CLobbyScene::DrawUI()
 {
+	// ·Îµù ÆË¾÷ (ÃÖ¿ì¼± ¼øÀ§)
+	if (loading_type != LoadingType::None) {
+		
+	}
 
+	// °á°ú ÆË¾÷
+	if (pop_up_result.is_visible) {
+		
+	}
+
+	// »óÅÂ¿¡ µû¸¥ UI ºĞ±â
+	switch (ui_state)
+	{
+	case LobbyUIState::Menu:
+		DrawMenu();
+		break;
+	case LobbyUIState::None:
+		if (KEY_TAP(KEY::ESC)) {
+			SetUIState(LobbyUIState::Menu);
+			paused = true;
+		}
+		break;
+	}
 }
 
 bool CLobbyScene::IsUIInputEnabled()
@@ -106,6 +133,60 @@ bool CLobbyScene::IsUIInputEnabled()
 		state = false;
 		
 	return state;
+}
+
+void CLobbyScene::DrawMenu()
+{
+	if (KEY_TAP(KEY::ESC)) {
+		SetUIState(LobbyUIState::None);
+		paused = false;
+	}
+
+	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+
+	float scale = G_RATIO_Y;
+
+	// 2. Ã¢À» È­¸é Á¤Áß¾Ó¿¡ ¹èÄ¡
+	ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+	ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	// (¼±ÅÃ) ¸Ş´º ¹è°æ Åõ¸íµµ ¼³Á¤ (0.8f´Â »ìÂ¦ ¾îµÎ¿î ¹İÅõ¸í, 0.0f´Â ¿ÏÀü Åõ¸í)
+	ImGui::SetNextWindowBgAlpha(0.8f);
+
+	// À©µµ¿ì Å¸ÀÌÆ²¹Ù, ¸®»çÀÌÁî, ÀÌµ¿ ±â´É ¸ğµÎ Á¦°Å
+	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize;
+
+	// ¹è°æ Ã¤¿ì±â 
+	ImGui::GetBackgroundDrawList()->AddRectFilled(
+		ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.75f))
+	);
+
+	if (ImGui::Begin("Lobby Menu", nullptr, menuFlags))
+	{
+		// ÆùÆ® ½ºÄÉÀÏ¸µ Àû¿ë
+		ImGui::SetWindowFontScale(scale);
+		
+		// ¹öÆ° Å©±âµµ ½ºÄÉÀÏ¸µ Àû¿ë
+		ImVec2 btnSize = ImVec2(200.0f * scale, 60.0f * scale);
+		
+		// ¿©¹é »ìÂ¦ ÁÖ±â
+		ImGui::Spacing(); ImGui::Spacing();
+
+		// ¹æ ³ª°¡±â ¹öÆ° ·»´õ¸µ
+		if (ImGui::Button((const char*)u8"¹æ ³ª°¡±â", btnSize)) {
+		
+			// CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+		
+			SetUIState(LobbyUIState::None); // ¹öÆ° ´©¸£¸é ÀÏ´Ü ¸Ş´º ´İ±â
+			paused = false;
+		}
+		
+		ImGui::Spacing(); ImGui::Spacing();
+
+		// 6. ½ºÄÉÀÏ ¿ø»ó º¹±¸ (ÇÊ¼ö)
+		ImGui::SetWindowFontScale(1.0f);
+	}
+	ImGui::End();
 }
 
 void CLobbyScene::Enter()
