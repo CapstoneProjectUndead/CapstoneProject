@@ -169,13 +169,13 @@ struct C_EnterRoom : public PacketHeader
 };
 static_assert(sizeof(C_EnterRoom) == 4 + 12, "C_EnterRoom size mismatch!");
 
-struct CLeaveRoom : public PacketHeader
+struct C_LeaveRoom : public PacketHeader
 {
 	uint64 user_id;
 
-	CLeaveRoom() : PacketHeader(sizeof(CLeaveRoom), (UINT)PacketType::_C_LEAVE_ROOM) {}
+	C_LeaveRoom() : PacketHeader(sizeof(C_LeaveRoom), (UINT)PacketType::_C_LEAVE_ROOM) {}
 };
-static_assert(sizeof(CLeaveRoom) == 4 + 8, "CLeaveRoom size mismatch!");
+static_assert(sizeof(C_LeaveRoom) == 4 + 8, "C_LeaveRoom size mismatch!");
 
 struct S_EnterRoom : public PacketHeader
 {

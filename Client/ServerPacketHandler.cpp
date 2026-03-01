@@ -108,9 +108,9 @@ bool Handle_S_SPAWN_PLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 		assert(nullptr);
 
 	// 서버가 통보한 Scene에 플레이어를 추가한다.
-	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-	assert(scene);
-	scene->Handle_S_Spawn_Player(session, pkt);
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
+	assert(targetScene);
+	targetScene->Handle_S_Spawn_Player(session, pkt);
 
 	return true;
 }
@@ -121,9 +121,9 @@ bool Handle_S_PLAYER_LIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 		assert(nullptr);
 
 	// 서버가 통보한 Scene에 플레이어들을 추가한다.
-	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-	assert(scene);
-	scene->Handle_S_PLAYER_LIST(pkt);
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
+	assert(targetScene);
+	targetScene->Handle_S_PLAYER_LIST(pkt);
 
 	return true;
 }
@@ -135,9 +135,9 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 	assert(scene);
 	scene->Handle_S_Remove_Player(session, pkt);
 #else
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-	assert(scene);
-	scene->Handle_S_Remove_Player(session, pkt);
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
+	assert(targetScene);
+	targetScene->Handle_S_Remove_Player(session, pkt);
 #endif
 
 	return true;
@@ -149,9 +149,9 @@ bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
 	if (pkt.scene_type == SCENE_TYPE::TITLE)
 		assert(nullptr);
 
-	CScene* scene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
-	assert(scene);
-	scene->Handle_S_Move_Player(session, pkt);
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
+	assert(targetScene);
+	targetScene->Handle_S_Move_Player(session, pkt);
 
 	return true;
 }

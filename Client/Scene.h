@@ -77,7 +77,7 @@ protected:
 	std::shared_ptr<CCamera>				camera;
 
 	std::vector<std::shared_ptr<CObject>>	objects;			// 다른 플레이어 or 몬스터 or 오브젝트
-	std::unordered_map<uint64, size_t>	id_To_Index;
+	std::unordered_map<uint64, size_t>	    id_To_Index;
 
 	std::unique_ptr<CLightManager> light;
 	std::shared_ptr<CObjectFactory> factory;

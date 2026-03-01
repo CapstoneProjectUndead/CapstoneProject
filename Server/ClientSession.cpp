@@ -50,7 +50,9 @@ void CClientSession::OnDisconnected()
 
 		auto player = user->GetPlayer();
 		if (player) {
-			CRoomManager::GetInstance().LeaveAndCleanupRoom(player);
+			C_LeaveRoom leavePkt;
+			leavePkt.user_id = user->GetUserID();
+			CRoomManager::GetInstance().LeaveAndCleanupRoom(GetSessionRef(), leavePkt);
 		}
 
 		// ClientSession에서 User 참조 끊기 (ref 감소)

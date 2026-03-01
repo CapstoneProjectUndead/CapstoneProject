@@ -110,6 +110,12 @@ bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
 	return true;
 }
 
+bool Handle_C_LEAVE_ROOM(shared_ptr<Session> session, C_LeaveRoom& pkt)
+{
+	CRoomManager::GetInstance().LeaveAndCleanupRoom(session, pkt);
+	return true;
+}
+
 bool Handle_C_UPDATE_ROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
 {
 	CRoomManager::GetInstance().SendRoomList(session);

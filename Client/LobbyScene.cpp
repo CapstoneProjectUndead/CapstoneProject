@@ -9,6 +9,8 @@
 #include "SceneManager.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
+#include "ServerSession.h"
+#include "ServerPacketHandler.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -146,7 +148,7 @@ void CLobbyScene::DrawMenu()
 
 	float scale = G_RATIO_Y;
 
-	// 2. 창을 화면 정중앙에 배치
+	// 창을 화면 정중앙에 배치
 	ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
 	ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
@@ -181,7 +183,16 @@ void CLobbyScene::DrawMenu()
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
 			}
 			else {
+				C_LeaveRoom leavePkt;
+				leavePkt.user_id = my_player->GetID();
 
+				auto session = GET_SERVER_SESSION;
+				assert(session);
+
+				auto sendBuffer = MAKE_SEND_BUFFER(leavePkt);
+				session->DoSend(sendBuffer);
+
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
 			}
 		
 			SetUIState(LobbyUIState::None);

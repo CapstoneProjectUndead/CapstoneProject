@@ -234,9 +234,17 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->PushInput(pInput);
 }
 
-void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const CLeaveRoom& pkt)
+void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt)
 {
 	LeaveScene(pkt.user_id);
+
+	for (auto it : players) {
+		S_RemovePlayer removePkt;
+		removePkt.player_id = it.first;
+		removePkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(removePkt);
+		session->DoSend(sendBuffer);
+	}
 
 	if (auto r = room.lock()) {
 		r->PlayerLeave();

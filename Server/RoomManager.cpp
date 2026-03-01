@@ -186,8 +186,13 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 	}
 }
 
-void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
+void CRoomManager::LeaveAndCleanupRoom(shared_ptr<Session> session, const C_LeaveRoom& pkt)
 {
+	auto user = CAST_CS(session)->GetUser();
+	assert(user);
+	auto player = user->GetPlayer();
+	assert(player);
+
 	auto room = player->GetRoom();
 	assert(room);
 
@@ -196,13 +201,10 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 	CScene* scene = scenes[(UINT)player->GetCurrentSceneType()].get();
 	assert(scene);
 
-	CLeaveRoom leavePkt;
-	leavePkt.user_id = player->GetID();
-
-	scene->PushPacketJob(player->GetSession()
+	scene->PushPacketJob(session
 		, (CScene*)scene
 		, &CScene::Handle_C_Player_Leave
-		, leavePkt);
+		, pkt);
 }
 
 void CRoomManager::SendRoomList(shared_ptr<Session> session)

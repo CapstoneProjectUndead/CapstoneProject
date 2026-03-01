@@ -42,7 +42,7 @@ private:
     void                DestroyRoomNoLock(uint32 roomId);
 
 public:
-    void                LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
+    void                LeaveAndCleanupRoom(shared_ptr<Session> session, const C_LeaveRoom& pkt);
     void                CreateRoom(shared_ptr<Session> session, const C_CreateRoom& pkt);
     void                EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt);
     void                SendRoomList(shared_ptr<Session> session);

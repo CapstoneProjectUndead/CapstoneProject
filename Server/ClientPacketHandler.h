@@ -47,6 +47,7 @@ bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt);
 bool Handle_C_CREATE_ROOM(shared_ptr<Session> session, C_CreateRoom& pkt);
 bool Handle_C_UPDATE_ROOM(shared_ptr<Session> session, C_UpdateRoom& pkt);
 bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt);
+bool Handle_C_LEAVE_ROOM(shared_ptr<Session> session, C_LeaveRoom& pkt);
 bool Handle_C_PLAYER_INPUT(std::shared_ptr<Session> session, C_Input& pkt);
 bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pkt);
 
@@ -66,6 +67,7 @@ public:
 		GPacketHandler[PKT_C_CREATE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_CreateRoom>(Handle_C_CREATE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_UPDATE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_UpdateRoom>(Handle_C_UPDATE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_ENTER_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_EnterRoom>(Handle_C_ENTER_ROOM, session, buffer, len); };
+		GPacketHandler[PKT_C_LEAVE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_LeaveRoom>(Handle_C_LEAVE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_PLAYER_INPUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Input>(Handle_C_PLAYER_INPUT, session, buffer, len); };
 		GPacketHandler[PKT_C_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_CustomSelect>(Handle_C_CUSTOM_SELECT, session, buffer, len); };
 	}
