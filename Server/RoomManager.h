@@ -34,14 +34,17 @@ public:
     void    DeActiveRoom(uint32 roomId);
     void    DeActiveRoom(shared_ptr<CRoom> room);
 
-public:
-    void                CreateRoom(const string& name, shared_ptr<CUser> user);
+private:
     shared_ptr<CRoom>   FindRoomLock(uint32 roomId);
     shared_ptr<CRoom>   FindRoomNoLock(uint32 roomId);
+
     void                DestroyRoomLock(uint32 roomId);
     void                DestroyRoomNoLock(uint32 roomId);
-    void                EnterRoom(shared_ptr<Session> session, uint32 roomId);
+
+public:
     void                LeaveAndCleanupRoom(shared_ptr<CPlayer> player);
+    void                CreateRoom(shared_ptr<Session> session, const C_CreateRoom& pkt);
+    void                EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt);
     void                SendRoomList(shared_ptr<Session> session);
 
     const unordered_map<uint32, shared_ptr<CRoom>>& GetRooms() const { return rooms; }

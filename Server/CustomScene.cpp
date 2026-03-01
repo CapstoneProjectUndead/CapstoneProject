@@ -30,12 +30,12 @@ void CCustomScene::Update(float elapsedTime)
 {
 }
 
-void CCustomScene::C_Enter_CustomScene(shared_ptr<Session> session, const PktDummy& pkt)
+void CCustomScene::C_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
 	assert(user);
 
-	uint32 roomId = pkt.value;
+	uint32 roomId = pkt.room_id;
 	auto room = user->GetRoom();
 	assert(room);
 

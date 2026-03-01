@@ -97,17 +97,17 @@ void CRoomManager::DestroyRoomNoLock(uint32 roomId)
 	rooms.erase(roomId);
 }
 
-void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
+void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& pkt)
 {
-	shared_ptr<CRoom> room = make_shared<CRoom>(name);
+	auto user = CAST_CS(session)->GetUser();
+	assert(user);
+
+	shared_ptr<CRoom> room = make_shared<CRoom>(pkt.room_name);
 
 	// 방에 존재해야 하는 모든 Scene들을 생성하고 초기화
 	room->Initialize();
 
 	uint32 roomId = room->GetRoomID();
-	NetRoomInfo info{ room->GetRoomInfo() };
-	auto session = user->GetSession();
-	assert(session);
 
 	// 유저에도 자신이 속한 방ID를 가지고 있는다.
 	user->SetRoomID(roomId);
@@ -115,19 +115,20 @@ void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	// 유저는 자신의 Room 포인터를 들고 있는다.
 	user->SetRoom(room);
 
-	// 플레이어 Custom Scene에 입장
+	// 플레이어 Custom Scene에 입장 (일감 push만)
 	{
 		auto& scenes = room->GetScenes();
 		CScene* scene = scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
 		assert(scene);
 
-		PktDummy dummypkt;
-		dummypkt.value = roomId;
+		C_EnterRoom enterPkt;
+		enterPkt.user_id = user->GetUserID();
+		enterPkt.room_id = room->GetRoomID();
 
-		scene->PushPacketJob(user->GetSession()
+		scene->PushPacketJob(session
 			, (CCustomScene*)scene
 			, &CCustomScene::C_Enter_CustomScene
-			, dummypkt);
+			, enterPkt);
 	}
 
 	// 방 map에 저장
@@ -135,16 +136,16 @@ void CRoomManager::CreateRoom(const string& name, shared_ptr<CUser> user)
 	rooms[room->GetRoomID()] = room;
 }
 
-void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
+void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
 	assert(user);
 
-	auto room = FindRoomLock(roomId);
+	auto room = FindRoomLock(pkt.room_id);
 	if (room) {
 		if (room->IsValid()) {
 			// 유저 방ID와 방 Set
-			user->SetRoomID(roomId);
+			user->SetRoomID(pkt.room_id);
 			user->SetRoom(room);
 
 			// 플레이어 Custom Scene에 입장
@@ -152,20 +153,20 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 			CScene* scene = scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
 			assert(scene);
 
-			PktDummy dummypkt;
-			dummypkt.value = roomId;
+			C_EnterRoom enterPkt;
+			enterPkt.room_id = pkt.room_id;
 
 			scene->PushPacketJob(user->GetSession()
 				, (CCustomScene*)scene
 				, &CCustomScene::C_Enter_CustomScene
-				, dummypkt);
+				, enterPkt);
 		}
 		else {
 			// 정원 초과 또는 이미 게임 시작한 방
 			// fail 패킷 전송
 			S_EnterRoom enterPkt;
 			enterPkt.success = false;
-			enterPkt.room_id = roomId;
+			enterPkt.room_id = pkt.room_id;
 			enterPkt.scene_type = SCENE_TYPE::LOBBY;
 			auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
 			if (user->GetSession())
@@ -177,7 +178,7 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, uint32 roomId)
 		// fail 패킷 전송
 		S_EnterRoom enterPkt;
 		enterPkt.success = false;
-		enterPkt.room_id = roomId;
+		enterPkt.room_id = pkt.room_id;
 		enterPkt.scene_type = SCENE_TYPE::LOBBY;
 		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
 		if (user->GetSession())
@@ -195,13 +196,13 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<CPlayer> player)
 	CScene* scene = scenes[(UINT)player->GetCurrentSceneType()].get();
 	assert(scene);
 
-	PktDummy dummyPkt;
-	dummyPkt.value = player->GetID();
+	CLeaveRoom leavePkt;
+	leavePkt.user_id = player->GetID();
 
 	scene->PushPacketJob(player->GetSession()
 		, (CScene*)scene
 		, &CScene::Handle_C_Player_Leave
-		, dummyPkt);
+		, leavePkt);
 }
 
 void CRoomManager::SendRoomList(shared_ptr<Session> session)

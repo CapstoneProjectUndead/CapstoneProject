@@ -28,8 +28,10 @@ enum PacketType : uint16_t
 	_C_CREATE_ROOM,
 	_C_UPDATE_ROOM,
 	_C_ENTER_ROOM,
+	_C_LEAVE_ROOM,
 	_C_ENTER_SCENE,
 	_S_ENTER_ROOM,
+	_S_LEAVE_ROOM,
 	_S_ENTER_SCENE,
 	_S_ROOM_LIST,
 	_S_SPAWN_PLAYER,
@@ -166,6 +168,14 @@ struct C_EnterRoom : public PacketHeader
 	C_EnterRoom() : PacketHeader(sizeof(C_EnterRoom), (UINT)PacketType::_C_ENTER_ROOM) {}
 };
 static_assert(sizeof(C_EnterRoom) == 4 + 12, "C_EnterRoom size mismatch!");
+
+struct CLeaveRoom : public PacketHeader
+{
+	uint64 user_id;
+
+	CLeaveRoom() : PacketHeader(sizeof(CLeaveRoom), (UINT)PacketType::_C_LEAVE_ROOM) {}
+};
+static_assert(sizeof(CLeaveRoom) == 4 + 8, "CLeaveRoom size mismatch!");
 
 struct S_EnterRoom : public PacketHeader
 {

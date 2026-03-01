@@ -31,7 +31,7 @@ void CPlayer::Update(const float elapsedTime)
     ProcessInputQueue(elapsedTime);
 }
 
-void CPlayer::ProcessInputQueue(const float elapsedTime)
+void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_targetDT(16.6ms)
 {
     if (!input_queue.empty())
     {

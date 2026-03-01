@@ -53,7 +53,7 @@ void CScene::HandlePackets()
 void CScene::SendResults()
 {
 	SendPlayersResults();
-	SendPlayersCheckPing();
+	//SendPlayersCheckPing();
 }
 
 void CScene::SendPlayersResults()
@@ -234,9 +234,9 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->PushInput(pInput);
 }
 
-void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const PktDummy& pkt)
+void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const CLeaveRoom& pkt)
 {
-	LeaveScene(pkt.value);
+	LeaveScene(pkt.user_id);
 
 	if (auto r = room.lock()) {
 		r->PlayerLeave();

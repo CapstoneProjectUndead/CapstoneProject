@@ -100,20 +100,19 @@ bool Handle_C_SIGNUP(shared_ptr<Session> session, C_SIGNUP& pkt)
 
 bool Handle_C_CREATE_ROOM(shared_ptr<Session> session, C_CreateRoom& pkt)
 {
-	CRoomManager::GetInstance().CreateRoom(pkt.room_name, CAST_CS(session)->GetUser());
+	CRoomManager::GetInstance().CreateRoom(session, pkt);
+	return true;
+}
+
+bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
+{
+	CRoomManager::GetInstance().EnterRoom(session, pkt);
 	return true;
 }
 
 bool Handle_C_UPDATE_ROOM(shared_ptr<Session> session, C_UpdateRoom& pkt)
 {
 	CRoomManager::GetInstance().SendRoomList(session);
-	return true;
-}
-
-bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt)
-{
-	auto user = CAST_CS(session)->GetUser();
-	CRoomManager::GetInstance().EnterRoom(session, pkt.room_id);
 	return true;
 }
 
