@@ -150,11 +150,9 @@ void CLobbyScene::DrawMenu()
 	ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
 	ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-	// (선택) 메뉴 배경 투명도 설정 (0.8f는 살짝 어두운 반투명, 0.0f는 완전 투명)
-	ImGui::SetNextWindowBgAlpha(0.8f);
-
 	// 윈도우 타이틀바, 리사이즈, 이동 기능 모두 제거
-	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize;
+	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove 
+		| ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
 
 	// 배경 채우기 
 	ImGui::GetBackgroundDrawList()->AddRectFilled(
@@ -172,18 +170,29 @@ void CLobbyScene::DrawMenu()
 		// 여백 살짝 주기
 		ImGui::Spacing(); ImGui::Spacing();
 
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));        // 평소 색상
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // 마우스 올렸을 때
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.1f, 0.1f, 1.0f));  // 클릭했을 때
+
 		// 방 나가기 버튼 렌더링
 		if (ImGui::Button((const char*)u8"방 나가기", btnSize)) {
 		
-			// CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+			if (my_player->GetIsSingle()) {
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+			}
+			else {
+
+			}
 		
-			SetUIState(LobbyUIState::None); // 버튼 누르면 일단 메뉴 닫기
+			SetUIState(LobbyUIState::None);
 			paused = false;
 		}
 		
 		ImGui::Spacing(); ImGui::Spacing();
 
-		// 6. 스케일 원상 복구 (필수)
+		ImGui::PopStyleColor(3);
+
+		// 스케일 원상 복구 (필수)
 		ImGui::SetWindowFontScale(1.0f);
 	}
 	ImGui::End();
@@ -201,5 +210,5 @@ void CLobbyScene::Enter()
 
 void CLobbyScene::Exit()
 {
-	
+	my_player = nullptr;
 }

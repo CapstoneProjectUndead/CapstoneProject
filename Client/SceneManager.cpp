@@ -41,7 +41,7 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	active_scene = scenes[(UINT)type].get();
 
 	// 해당 씬에 플레이어 셋팅
-	if (myPlayer)
+	if (myPlayer && active_scene->GetSceneType() != SCENE_TYPE::TITLE)
 		active_scene->SetPlayer(myPlayer);
 
 	if (!newShader.empty())

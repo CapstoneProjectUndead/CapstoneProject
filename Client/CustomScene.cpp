@@ -70,7 +70,7 @@ void CCustomScene::Enter()
 
 void CCustomScene::Exit()
 {
-
+    my_player = nullptr;
 }
 
 bool CCustomScene::IsUIInputEnabled()
@@ -199,6 +199,10 @@ void CCustomScene::DrawCustomizingWindow()
 
                 StartLoading(LoadingType::SelectResult);
             }
+
+            body_idx = 0;
+            eyes_idx = 0;
+            mouth_idx = 0;
         }
 
         // 폰트 스케일 원상 복구

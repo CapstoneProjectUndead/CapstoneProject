@@ -228,7 +228,6 @@ void CTitleScene::DrawTitleMainWindow()
         if (ui_state == TitleUIState::Main)
         {
             if (ImGui::Button((const char*)u8"싱글 플레이", btnSize)) {
-                StartLoading(LoadingType::SinglePlay);
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
             }
             ImGui::Spacing();
