@@ -37,6 +37,8 @@ enum : uint16
 
 	PKT_C_CUSTOM_SELECT,
 	PKT_S_CUSTOM_SELECT,
+	PKT_C_SCENE_CHANGE,
+	PKT_S_SCENE_CHANGE,
 };
 
 // Custom Handlers

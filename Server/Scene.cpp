@@ -6,6 +6,7 @@
 #include "Room.h"
 #include "RoomManager.h"
 
+
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
 	, dt_ping_accumulator(0.0f)
@@ -153,11 +154,12 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 
 void CScene::LeaveScene(uint64 playerId)
 {
+	players.erase(playerId);
+
+	// 다른 유저들에게 유저가 나간다는 것을 알려준다.
 	S_RemovePlayer removePkt;
 	removePkt.player_id = playerId;
 	removePkt.scene_type = scene_type;
-
-	players.erase(playerId);
 
 	SendBufferRef sendBuffer = MAKE_SEND_BUFFER(removePkt);
 	BroadCast(sendBuffer);
@@ -238,6 +240,7 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 {
 	LeaveScene(pkt.user_id);
 
+	// 지금 나간 유저에게도 해당 씬에 있는 유저들을 삭제하라고 알려줘야함.
 	for (auto it : players) {
 		S_RemovePlayer removePkt;
 		removePkt.player_id = it.first;
@@ -256,5 +259,31 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 			CRoomManager::GetInstance().DeActiveRoom(r);
 		}
 		//CRoomManager::GetInstance().DestroyRoomLock(room_id);
+	}
+}
+
+void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt)
+{
+	auto player = players[pkt.player_id];
+	auto room = player->GetRoom();
+	CScene* targetScene = room->GetScenes()[(UINT)pkt.target_scene].get();
+
+	if(pkt.target_scene == SCENE_TYPE::CUSTOMS) { 
+		player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
+	}
+	else {
+		targetScene->EnterScene(player);
+		player->SetCurrentSceneType(pkt.target_scene);
+	}
+
+	LeaveScene(pkt.player_id);
+
+	// 지금 나간 유저에게도 해당 씬에 있는 유저들을 삭제하라고 알려줘야함.
+	for (auto it : players) {
+		S_RemovePlayer removePkt;
+		removePkt.player_id = it.first;
+		removePkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(removePkt);
+		session->DoSend(sendBuffer);
 	}
 }

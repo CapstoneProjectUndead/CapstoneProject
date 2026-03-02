@@ -75,6 +75,7 @@ public:
 	// 서버 권한 + 클라 예측 기반 Move
 	void Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt);
 	void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
+	void Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt);
 
 protected:
 	map<uint64, shared_ptr<CPlayer>>	players;

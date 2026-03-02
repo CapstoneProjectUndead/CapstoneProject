@@ -142,7 +142,7 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 
 	currentScene->PushPacketJob(
 		session,
-		currentScene,
+		(CScene*)currentScene,
 		&CScene::Handle_C_Player_Input,
 		pkt
 	);
@@ -165,6 +165,25 @@ bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pk
 		&CCustomScene::C_Handle_Custom_Select,
 		pkt
 	);
+
+	return true;
+}
+
+bool Handle_C_SCENE_CHANGE(std::shared_ptr<Session> session, C_SceneChange& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room);
+	CScene* currentScene = room->GetScenes()[(UINT)pkt.current_scene].get();
+	assert(currentScene);
+
+	// 유저가 현재 속한 Scene이 서버쪽 기록과 다르면 assert!
+	auto player = CAST_CS(session)->GetUser()->GetPlayer();
+	assert(player->GetCurrentSceneType() == pkt.current_scene);
+
+	currentScene->PushPacketJob(session,
+		(CScene*)currentScene,
+		&CScene::Handle_C_Scene_Change,
+		pkt);
 
 	return true;
 }

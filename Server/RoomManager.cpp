@@ -127,7 +127,7 @@ void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& p
 
 		scene->PushPacketJob(session
 			, (CCustomScene*)scene
-			, &CCustomScene::C_Enter_CustomScene
+			, &CCustomScene::C_Handle_Enter_CustomScene
 			, enterPkt);
 	}
 
@@ -150,16 +150,13 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 
 			// 플레이어 Custom Scene에 입장
 			auto& scenes = room->GetScenes();
-			CScene* scene = scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
-			assert(scene);
+			CCustomScene* customScene = (CCustomScene*)scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
+			assert(customScene);
 
-			C_EnterRoom enterPkt;
-			enterPkt.room_id = pkt.room_id;
-
-			scene->PushPacketJob(user->GetSession()
-				, (CCustomScene*)scene
-				, &CCustomScene::C_Enter_CustomScene
-				, enterPkt);
+			customScene->PushPacketJob(session
+				, (CCustomScene*)customScene
+				, &CCustomScene::C_Handle_Enter_CustomScene
+				, pkt);
 		}
 		else {
 			// 정원 초과 또는 이미 게임 시작한 방
