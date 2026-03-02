@@ -34,7 +34,7 @@ void CTitleScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void CTitleScene::Update(float elapsedTime)
 {
-
+    CScene::Update(elapsedTime);
 }
 
 void CTitleScene::Render(ID3D12GraphicsCommandList*)

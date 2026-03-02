@@ -58,13 +58,21 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
     }
 }
 
+void CCustomScene::Update(float elapsedTime)
+{
+    CScene::Update(elapsedTime);
+}
+
 void CCustomScene::Enter()
 {
     BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
     if (my_player) {
         my_player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
+        my_player->SetPosition(XMFLOAT3{ 0.f, 0.f, 0.f });
         camera->SetTarget(my_player.get());
+        camera->SetCameraOffset(XMFLOAT3{ 0.0f, 1.0f, 1.0f });
+        camera->SetMode(CCamera::EMode::FIXED);
     }
 }
 
@@ -199,10 +207,6 @@ void CCustomScene::DrawCustomizingWindow()
 
                 StartLoading(LoadingType::SelectResult);
             }
-
-            body_idx = 0;
-            eyes_idx = 0;
-            mouth_idx = 0;
         }
 
         // 폰트 스케일 원상 복구

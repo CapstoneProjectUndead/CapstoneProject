@@ -8,6 +8,11 @@
 
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
+    // 플레이어가 Custom Scene에 있으면 return
+    auto player = dynamic_cast<CPlayer*>(owner);
+    if (player->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
+        return;
+
     XMFLOAT3 accel{};
 
     if (direction.z > 0) accel = Vector3::Add(accel, owner->look);
@@ -65,9 +70,14 @@ void CMovementComponent::Update(const float deltaTime)
 {
     if (owner == nullptr)
         return;
+
     // 상대 플레이어이라면 return
     auto player = dynamic_cast<CPlayer*>(owner);
     if (player != nullptr && !player->GetIsMyPlayer())
+        return;
+
+    // 플레이어가 Custom Scene에 있으면 return
+    if (player->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
         return;
     
     // 멀티 플레이일 경우, Update를 실행하지 않는다. (클라 예측 적용 시, 삭제할 것!)
