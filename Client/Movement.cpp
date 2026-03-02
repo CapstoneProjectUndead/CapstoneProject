@@ -6,6 +6,8 @@
 #include "Player.h"
 #include "MyPlayer.h"
 
+bool is_fly{ true };
+
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
     XMFLOAT3 accel{};
@@ -75,6 +77,12 @@ void CMovementComponent::Update(const float deltaTime)
     auto myPlayer = static_cast<CMyPlayer*>(player);
     if (!myPlayer->GetIsSingle())
         return;
+
+    if (is_fly) {
+        CPhysicsManager::GetInstance().ApplyFriction(owner, deltaTime);
+        owner->position = Vector3::Add(owner->position, owner->velocity);
+        return;
+    }
 
     // 중력/마찰/땅 확인
     XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);

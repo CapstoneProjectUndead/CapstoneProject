@@ -50,6 +50,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
+		my_player->SetPosition(0.0f, -2.0f, -2.0f);
 	}
 	else {
 		factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));
@@ -75,6 +76,42 @@ void CGameScene::Update(float elapsedTime)
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
+	}
+}
+
+void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
+{
+	if (camera)
+		camera->SetViewportsAndScissorRects(commandList);
+
+	for (const auto& shader : shaders) {
+		shader.second->RenderBegin(commandList);
+
+		if (camera)
+			camera->UpdateShaderVariables(commandList);
+
+		if (light)
+			light->Render(commandList);
+
+		for (const auto& obj : prototypes) {
+			if (shader.first == obj.second->GetShader()) {
+				shader.second->Render(commandList, obj.second.get());
+			}
+		}
+
+		for (const auto& obj : objects) {
+			if (shader.first == obj->GetShader()) {
+				shader.second->Render(commandList, obj.get());
+			}
+		}
+
+		if (my_player) {
+			if (shader.first == my_player->GetShader()) {
+				shader.second->Render(commandList, my_player.get());
+			}
+		}
+
+		shader.second->RenderEnd(commandList);
 	}
 }
 

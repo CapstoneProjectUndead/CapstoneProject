@@ -86,7 +86,6 @@ protected:
 public:
 	// name
 	std::string name{};
-	friend class CObject;
 };
 
 class CTriangleMesh : public CMesh
