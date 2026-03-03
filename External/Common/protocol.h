@@ -43,6 +43,8 @@ enum PacketType : uint16_t
 
 	_C_CUSTOM_SELECT,
 	_S_CUSTOM_SELECT,
+	_C_SCENE_CHANGE,
+	_S_SCENE_CHANGE,
 };
 
 #pragma pack (push, 1)
@@ -314,5 +316,15 @@ struct S_CustomSelect : public PacketHeader
 	S_CustomSelect() : PacketHeader(sizeof(S_CustomSelect), (UINT)PacketType::_S_CUSTOM_SELECT) {}
 };
 static_assert(sizeof(S_CustomSelect) == 4, "S_CustomSelect size mismatch!");
+
+struct C_SceneChange : public PacketHeader
+{
+	uint64     player_id;
+	SCENE_TYPE current_scene;
+	SCENE_TYPE target_scene;
+
+	C_SceneChange() : PacketHeader(sizeof(C_SceneChange), (UINT)PacketType::_C_SCENE_CHANGE) {}
+};
+static_assert(sizeof(C_SceneChange) == 4 + 16, "C_SceneChange size mismatch!");
 
 #pragma pack (pop)

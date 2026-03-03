@@ -132,6 +132,9 @@
     <ClCompile Include="SkinnedData.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="Movement.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -216,6 +219,9 @@
       <Filter>Scene\CustomScene</Filter>
     </ClInclude>
     <ClInclude Include="SkinnedData.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Movement.h">
       <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>

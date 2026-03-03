@@ -11,4 +11,5 @@ public:
 	CObject* GetOwner() const { return owner; }
 
 	CObject* owner{};	// 참조용
+	bool is_enable{ true };
 };

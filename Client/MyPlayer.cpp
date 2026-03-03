@@ -28,9 +28,8 @@ void CMyPlayer::Update(float elapsedTime)
 	PreUpdate(elapsedTime);
 
 	// 멀티 플레이일 경우에만, 아래 로직이 실행
-	if (!is_single) {
+	if (!is_single && current_scene_type != SCENE_TYPE::CUSTOMS) {
 		float lerpSpeed = 8.0f * elapsedTime;
-
 		position = Vector3::Lerp(position, { dest_info.x, dest_info.y, dest_info.z }, lerpSpeed);
 	}
 

@@ -31,6 +31,7 @@ public:
 
 private:
     void DrawMenu();
+    void DrawRoomLeavePopUp();
 
 private:
     LobbyUIState ui_state = LobbyUIState::None;

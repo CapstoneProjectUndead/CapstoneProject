@@ -36,19 +36,7 @@ public:
 
 	void Update(const float elapsedTime) override;
 	void ProcessInputQueue(const float elapsedTime);
-	void SimulateMove(const InputData& input, float deltaTime);
-
-	// 플레이어가 위에 있는 움직이는 물체의 속도 return
-	XMVECTOR CalculatePlatform(float dt);
-	// 충돌 처리
-	void ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingMotion, float dt);
-	// 턱 오르기
-	bool TryStepUp(XMVECTOR& outPos, XMVECTOR motion, const CollisionInfo& hit, float height, uint32_t mask);
-
-	// 최대 속도 제한
-	void ClampSpeed();
-	void Slide(const XMFLOAT3& normal);
-	void Slide(const XMVECTOR& normal);
+	void SimulateMove(const InputData& input, float elapsedTime);
 
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }

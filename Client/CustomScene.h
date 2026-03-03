@@ -6,14 +6,15 @@ class CCustomScene : public CScene
 public:
 	CCustomScene() : CScene(SCENE_TYPE::CUSTOMS) {};
 
-	void Initialize() override;
-	void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) override;
+	virtual void Initialize() override;
+	virtual void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) override;
+	virtual void Update(float elapsedTime) override;
 
-	void Enter() override;
-	void Exit() override;
-	bool IsUIInputEnabled() override;
+	virtual void Enter() override;
+	virtual void Exit() override;
 
-	void DrawUI() override;
+	virtual void DrawUI() override;
+	virtual bool IsUIInputEnabled() override;
 
 private:
 	void DrawCustomizingWindow();

@@ -28,9 +28,10 @@ void CCustomScene::Start()
 
 void CCustomScene::Update(float elapsedTime)
 {
+
 }
 
-void CCustomScene::C_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)
+void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
 	assert(user);

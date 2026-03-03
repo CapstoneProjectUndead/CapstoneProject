@@ -86,6 +86,11 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	}
 }
 
+void CScene::Exit()
+{
+	last_input_state = !last_input_state;
+}
+
 void CScene::DrawUI_Final()
 {
 	ManageIME();  // 공통 로직 (IME/포커스)

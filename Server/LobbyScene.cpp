@@ -47,9 +47,9 @@ void CLobbyScene::Start()
 		auto obj = std::make_shared<CObject>();
 		obj->world_matrix = children->localMatrix;
 
-		// =========================================================
-		// [핵심 해결책] mesh.bounds가 비정상일 경우를 대비해 직접 Bounds 계산
-		// =========================================================
+		// =================================================
+		// mesh.bounds가 비정상일 경우를 대비해 직접 Bounds 계산
+		// =================================================
 		BoundingBox realBounds = children->mesh.bounds;
 
 		// 1. 시각적 메쉬가 없고 충돌체만 있는 노드라면 collider 데이터로 Bounds 재계산
@@ -141,7 +141,7 @@ void CLobbyScene::Start()
 			break;
 		}
 
-		} // <-- switch문 닫는 괄호
+		}
 
 		// 오브젝트 보관 (이전처럼 switch문 밖, for문 안에 위치!)
 		static_objects.push_back(obj);

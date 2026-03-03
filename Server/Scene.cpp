@@ -6,6 +6,7 @@
 #include "Room.h"
 #include "RoomManager.h"
 
+
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
 	, dt_ping_accumulator(0.0f)
@@ -147,17 +148,19 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 	SendExistingUsers(player);
 
 	players[player->GetID()] = player;
+	player->SetCurrentSceneType(scene_type);
 
 	BroadcastUserEnter(player);
 }
 
 void CScene::LeaveScene(uint64 playerId)
 {
+	players.erase(playerId);
+
+	// 다른 유저들에게 유저가 나간다는 것을 알려준다.
 	S_RemovePlayer removePkt;
 	removePkt.player_id = playerId;
 	removePkt.scene_type = scene_type;
-
-	players.erase(playerId);
 
 	SendBufferRef sendBuffer = MAKE_SEND_BUFFER(removePkt);
 	BroadCast(sendBuffer);
@@ -238,6 +241,7 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 {
 	LeaveScene(pkt.user_id);
 
+	// 지금 나간 유저에게도 해당 씬에 있는 유저들을 삭제하라고 알려줘야함.
 	for (auto it : players) {
 		S_RemovePlayer removePkt;
 		removePkt.player_id = it.first;
@@ -247,14 +251,42 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 	}
 
 	if (auto r = room.lock()) {
-		r->PlayerLeave();
-	}
 
-	// 해당 방의 씬들에 유저들이 하나도 없다면 방 삭제!
-	if (!HasPlayers()) {
-		if (auto r = room.lock()) {
+		// 유저가 방에서 나간다.
+		r->PlayerLeave();
+
+		// 해당 방에 유저가 한명도 없다면 방 삭제!
+		if (r->GetCurrentPlayerCount() == 0) {
 			CRoomManager::GetInstance().DeActiveRoom(r);
 		}
+
+		// 아래 함수는 Room Update를 멀티스레드로 돌렸을 때 사용한 함수.
+		// 지금은 싱글 스레드로 Room Update를 하기 때문에 아래 함수는 사용해서는 안된다.
 		//CRoomManager::GetInstance().DestroyRoomLock(room_id);
+	}
+}
+
+void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt)
+{
+	auto player = players[pkt.player_id];
+	auto room = player->GetRoom();
+	CScene* targetScene = room->GetScenes()[(UINT)pkt.target_scene].get();
+
+	if(pkt.target_scene == SCENE_TYPE::CUSTOMS) { 
+		player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
+	}
+	else {
+		targetScene->EnterScene(player);
+	}
+
+	LeaveScene(pkt.player_id);
+
+	// 지금 나간 유저에게도 해당 씬에 있는 유저들을 삭제하라고 알려줘야함.
+	for (auto it : players) {
+		S_RemovePlayer removePkt;
+		removePkt.player_id = it.first;
+		removePkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(removePkt);
+		session->DoSend(sendBuffer);
 	}
 }

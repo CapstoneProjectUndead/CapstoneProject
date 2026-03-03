@@ -35,6 +35,8 @@ enum : uint16
 
 	PKT_C_CUSTOM_SELECT,
 	PKT_S_CUSTOM_SELECT,
+	PKT_C_SCENE_CHANGE,
+	PKT_S_SCENE_CHANGE,
 };
 
 // Custom Handlers
@@ -50,6 +52,7 @@ bool Handle_C_ENTER_ROOM(shared_ptr<Session> session, C_EnterRoom& pkt);
 bool Handle_C_LEAVE_ROOM(shared_ptr<Session> session, C_LeaveRoom& pkt);
 bool Handle_C_PLAYER_INPUT(std::shared_ptr<Session> session, C_Input& pkt);
 bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pkt);
+bool Handle_C_SCENE_CHANGE(std::shared_ptr<Session> session, C_SceneChange& pkt);
 
 class CClientPacketHandler
 {
@@ -70,6 +73,7 @@ public:
 		GPacketHandler[PKT_C_LEAVE_ROOM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_LeaveRoom>(Handle_C_LEAVE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_PLAYER_INPUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Input>(Handle_C_PLAYER_INPUT, session, buffer, len); };
 		GPacketHandler[PKT_C_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_CustomSelect>(Handle_C_CUSTOM_SELECT, session, buffer, len); };
+		GPacketHandler[PKT_C_SCENE_CHANGE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_SceneChange>(Handle_C_SCENE_CHANGE, session, buffer, len); };
 	}
 
 	static bool HandlePacket(shared_ptr<Session> session, char* buffer, int32 len)
