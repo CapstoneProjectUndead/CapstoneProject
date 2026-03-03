@@ -78,6 +78,8 @@ void CCustomScene::Enter()
 
 void CCustomScene::Exit()
 {
+    CScene::Exit();
+
     my_player = nullptr;
 }
 

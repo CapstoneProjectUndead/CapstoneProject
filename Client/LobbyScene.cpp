@@ -113,6 +113,8 @@ void CLobbyScene::Enter()
 
 void CLobbyScene::Exit()
 {
+	CScene::Exit();
+
 	my_player = nullptr;
 }
 

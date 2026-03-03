@@ -26,7 +26,7 @@ public:
 
 	// Scene 이 전환될 때, 호출 될 함수
 	virtual void Enter() abstract;
-	virtual void Exit() abstract;
+	virtual void Exit();
 
 	void EnterScene(std::shared_ptr<CObject>, UINT);
 	void LeaveScene(UINT);

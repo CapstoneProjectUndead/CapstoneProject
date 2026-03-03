@@ -49,6 +49,7 @@ void CTitleScene::Enter()
 
 void CTitleScene::Exit()
 {
+    CScene::Exit();
 }
 
 void CTitleScene::DrawUI()
@@ -73,7 +74,7 @@ bool CTitleScene::IsUIInputEnabled()
     else
         state = false;
 
-    // 로딩 중에는 입력 차단 (선택 사항)
+    // 로그인할 때는 한글 입력 차단
     if ((ui_state == TitleUIState::Login))
         state = false;
 
