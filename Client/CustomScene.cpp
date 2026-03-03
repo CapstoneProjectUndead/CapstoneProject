@@ -38,8 +38,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
     // 플레이어 생성
     if (!my_player) {
         CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-        my_player = std::make_shared<CMyPlayer>();
-        factory->CreateUndeadCharacter(my_player, skinningHeapManager);
+        my_player = factory->CreateMyPlayer(skinningHeapManager);
     }
     my_player->SetPitch(-10);   // 얼굴이 잘보이도록 수치 조정
 

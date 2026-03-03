@@ -54,11 +54,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
-	else {
-		auto moveComp = my_player->GetComponent<CMovementComponent>();
-		if (nullptr == moveComp)
-			factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));
-	}
 
 	if (!camera) {
 		camera = std::make_shared<CCamera>();

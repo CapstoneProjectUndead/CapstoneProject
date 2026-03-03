@@ -31,7 +31,7 @@ int main()
     gGameFramework->Init();
 
     shared_ptr<TcpServerService> serverService = std::make_shared<TcpServerService>(
-        NetAddress(L"127.0.0.1", PORT_NUM),
+        NetAddress(L"0.0.0.0", PORT_NUM),
         []() -> shared_ptr<Session> { return make_shared<CClientSession>(); },
         20);
 
