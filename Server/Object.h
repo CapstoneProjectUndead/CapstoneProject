@@ -88,8 +88,6 @@ protected:
     bool                                is_grounded{};
 
     XMFLOAT3                            velocity{};
-    float                               speed{ 10.0f };
-    float                               max_speed{ 30.0f };
     float                               friction{ 9.0f };
     float                               jump_power{ 5.0f };
 
@@ -100,8 +98,6 @@ protected:
     float		                        pitch = 0.f;
 
     std::vector<std::shared_ptr<CComponent>> components;
-
-    //BoundingOrientedBox oobb; // 충돌은 서버 핵심
 };
 
 template<typename T>

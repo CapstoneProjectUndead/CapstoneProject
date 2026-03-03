@@ -5,6 +5,7 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "GeometryLoader.h"
+#include "Movement.h"
 
 
 CObject::CObject()
@@ -20,7 +21,10 @@ CObject::~CObject()
 
 void CObject::Update(const float elapsedTime)
 {
-
+	for (auto& component : components) {
+		if (component->is_enable)
+			component->Update(elapsedTime);
+	}
 }
 
 void CObject::SetComponent(std::shared_ptr<CComponent> component)
@@ -41,9 +45,14 @@ shared_ptr<CPlayer> CObject::CreatePlayer()
 	pos.z = rand() % 3 - 2;
 	player->SetPosition(pos);
 
-	// ---------------------------------------------------
-	// 서버 플레이어에게 충돌체(Collider) 달아주기
-	// ---------------------------------------------------
+	// -------------------------------------
+	// 플레이어에게 MovementComponent 달아주기
+	// -------------------------------------
+	player->SetComponent(std::make_shared<CMovementComponent>());
+
+	// -----------------------------------
+	// 플레이어에게 충돌체(Collider) 달아주기
+	// -----------------------------------
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
