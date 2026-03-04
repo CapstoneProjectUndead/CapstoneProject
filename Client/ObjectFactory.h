@@ -7,12 +7,14 @@ class CCharacter;
 class CObject;
 class CPlayer;
 class CMyPlayer;
+struct FrameNode;
 
 class CObjectFactory
 {
 public:
 	CObjectFactory() = default;
 	~CObjectFactory() = default;
+	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	std::map<std::string, std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	// Initialize 호출 X
