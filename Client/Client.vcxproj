@@ -168,6 +168,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\packet_struct.h" />
     <ClInclude Include="..\External\Common\struct.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
+    <ClInclude Include="AIComponent.h" />
     <ClInclude Include="Animator.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
@@ -176,6 +177,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="CustomScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
+    <ClInclude Include="IdleState.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
@@ -217,6 +219,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SkinnedData.h" />
+    <ClInclude Include="State.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -228,6 +231,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="User.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AIComponent.cpp" />
     <ClCompile Include="Animator.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
@@ -235,6 +239,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="CustomScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
+    <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
@@ -273,6 +278,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ServerSessionManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SkinnedData.cpp" />
+    <ClCompile Include="State.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

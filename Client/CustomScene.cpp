@@ -168,7 +168,7 @@ void CCustomScene::DrawCustomizingWindow()
             ImGui::Spacing();
             };
 
-        static const char* bodyNames[] = { "Dog", "Cat", "Buddy" };
+        static const char* bodyNames[] = { "Dog", "Cat", "Bunny" };
         static const char* eyeNames[] = { "Pretty", "Line", "Side"};
         static const char* mouthNames[] = { "Ganadi","Nya", "Toto"};
 
