@@ -50,7 +50,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		my_player->SetPosition(0.0f, -2.0f, -2.0f);
+		my_player->SetPosition(0.0f, 0.0f, 0.0f);
 	}
 	else {
 		factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));

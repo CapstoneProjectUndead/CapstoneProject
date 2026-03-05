@@ -164,7 +164,7 @@ std::map<std::string, std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(
 {
 	std::map<std::string, std::shared_ptr<CObject>> objects;
 
-	std::string fileName{ "../Modeling/house_w0_1.bin" };
+	std::string fileName{ "../Modeling/lobby_0305.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	LoadFrameNode(heapManager, objects, frameRoot);
