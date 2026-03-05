@@ -13,7 +13,7 @@
 
 // Player
 CPlayer::CPlayer()
-	: CCharacter()
+	: CCharacter(OBJECT_TYPE::PLAYER)
     , room_id(-1)
 {
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));

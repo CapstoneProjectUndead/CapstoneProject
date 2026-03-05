@@ -5,6 +5,7 @@
 
 enum class OBJECT_TYPE : uint8_t
 {
+	STATIC_OBJECT,
 	PLAYER,
 	MONSTER,
 };
@@ -31,7 +32,6 @@ enum class MON_STATE
 	IDLE,
 	PATROL,
 	TRACE,
-	ATT,
-	RUN,
+	ATTACK,
 	DEAD,
 };

@@ -17,7 +17,7 @@ struct ObjectCB
 // mesh를 가지고 있는 게임 오브젝트 클래스
 class CObject{
 public:
-	CObject();
+	CObject(OBJECT_TYPE type);
 
 	void ReleaseUploadBuffer();
 	// 항상 값 초기화 후 마지막에 호출
@@ -54,8 +54,11 @@ public:
 	uint64  GetID() const { return obj_id; }
 	void	SetID(const uint64 id) { obj_id = id; }
 
-	OBJECT_TYPE GetType() const { return obj_type; }
-	void        SetType(OBJECT_TYPE type) { obj_type = type; }
+	OBJECT_TYPE GetObjectType() const { return obj_type; }
+	void        SetObjectType(OBJECT_TYPE type) { obj_type = type; }
+
+	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
+	void       SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
 
 	//=================================
 	// 회전 함수 (테스트)
@@ -81,8 +84,9 @@ public:
 	friend class CAnimatorComponent;
 	friend class CPhysicsManager;
 protected:
-	uint64 obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
+	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
+	SCENE_TYPE  current_scene_type; // 현재 오브젝트가 속한 씬
 	ObjectCB* mapped{};
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름

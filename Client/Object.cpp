@@ -6,7 +6,8 @@
 #include "MeshRenderer.h"
 #include "Material.h"
 
-CObject::CObject()
+CObject::CObject(OBJECT_TYPE type)
+	: obj_type(type)
 {
 	XMStoreFloat4x4(&world_matrix, XMMatrixIdentity());
 }

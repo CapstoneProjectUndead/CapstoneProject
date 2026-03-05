@@ -6,5 +6,5 @@
 class CCharacter : public CObject
 {
 public:
-    CCharacter();
+    CCharacter(OBJECT_TYPE type);
 };
