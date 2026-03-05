@@ -11,7 +11,7 @@ public:
 	CAIComponent();
 	~CAIComponent();
 
-	void Update();
+	virtual void Update(const float deltaTime) override;
 
 public:
 	void					AddState(std::shared_ptr<CState> state);

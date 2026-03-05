@@ -11,11 +11,11 @@ CAIComponent::~CAIComponent()
 {
 }
 
-void CAIComponent::Update()
+void CAIComponent::Update(float elapsedTime)
 {
 	auto iter = states.find(current_state->GetType());
 	assert(iter->second);
-	iter->second->Update();
+	iter->second->Update(elapsedTime);
 }
 
 void CAIComponent::AddState(std::shared_ptr<CState> state)

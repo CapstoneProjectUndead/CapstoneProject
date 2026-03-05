@@ -8,7 +8,7 @@ public:
     CIdleState();
     ~CIdleState();
 
-    virtual void Update() override;
+    virtual void Update(float elapsedTime) override;
     virtual void Enter() override;
     virtual void Exit() override;
 };
