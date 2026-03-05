@@ -34,14 +34,14 @@ public:
 public:
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
-	void ChangeModelSet(int setIndex);
-	void ChangeEyes(int index);
-	void ChangeMouth(int index);
-
-	std::array<std::shared_ptr<CMaterialComponent>, 3> body_materials;
-	std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
-	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
-	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
+	//void ChangeModelSet(int setIndex);
+	//void ChangeEyes(int index);
+	//void ChangeMouth(int index);
+	//
+	//std::array<std::shared_ptr<CMaterialComponent>, 3> body_materials;
+	//std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
+	//std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
+	//std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
