@@ -1,0 +1,30 @@
+#pragma once
+#include "Character.h"
+
+class CAIComponent;
+
+class CMonster :
+    public CCharacter
+{
+public:
+    CMonster();
+    ~CMonster();
+
+    virtual void Update(float elapsedTime) override;
+
+    // AI 순수 가상 함수 (반드시 구현)
+    virtual void OnIdleMove(float elapsedTime) = 0;
+    virtual void OnTraceMove(float elapsedTime) = 0;
+    virtual void OnAttackMove(float elapsedTime) = 0;
+
+    // AI Enter (진입 시 - 필요한 애들만 오버라이딩하게)
+    virtual void OnIdleEnter() {}
+    virtual void OnTraceEnter() {}
+    virtual void OnAttackEnter() {}
+
+    // AI Exit (탈출 시 - 필요한 애들만 오버라이딩하게)
+    virtual void OnIdleExit() {}
+    virtual void OnTraceExit() {}
+    virtual void OnAttackExit() {}
+};
+
