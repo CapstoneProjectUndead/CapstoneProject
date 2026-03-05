@@ -30,8 +30,6 @@ public:
 	uint32 GetRoomID() const { return room_id; }
 	void SetRoomID(const uint32 id) { room_id = id; }
 
-	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
-	void SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
 	XMFLOAT3 GetHeadPosition() const override;
 public:
 	// 커스터마이징용
@@ -49,7 +47,6 @@ private:
 	void OpponentRotateSync(float elapsedTime);
 protected:
 	uint32 room_id; // 이 플레이어가 참여하고 있는 방 ID
-	SCENE_TYPE current_scene_type; // 현재 플레이어가 속한 씬 (방이 씬을 포함하고 있는 구조)
 
 	float friction{ 125.0f };
 	XMFLOAT3 direction{};

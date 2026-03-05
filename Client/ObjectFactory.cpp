@@ -23,7 +23,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 	for (const auto& children : frameRoot->childrens) {
 		if (children->mesh.positions.empty()) break;
-		auto obj = std::make_shared<CObject>();
+		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 		// 1) MeshComponent 생성
 		auto meshComp = std::make_shared<CMeshComponent>();
 		obj->SetComponent(meshComp);
@@ -248,7 +248,6 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 {
 	auto player = std::make_shared<CPlayer>();
 	CreateUndeadCharacter(player, heapManager);
-	player->SetComponent(std::make_shared<CMovementComponent>());
 	return player;
 }
 
