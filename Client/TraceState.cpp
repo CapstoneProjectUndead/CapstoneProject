@@ -4,7 +4,7 @@
 #include "Monster.h"
 
 CTraceState::CTraceState()
-	: CState(MON_STATE::TRACE)
+	: CState(AI_STATE::MONSTER_TRACE)
 {
 }
 
@@ -38,6 +38,7 @@ void CTraceState::Enter()
 	case OBJECT_TYPE::MONSTER:
 	{
 		auto monster = static_cast<CMonster*>(GetAI()->GetOwner());
+		monster->SetAIState(AI_STATE::MONSTER_TRACE);
 		monster->OnTraceEnter();
 	}
 	break;

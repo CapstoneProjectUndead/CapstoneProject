@@ -7,7 +7,7 @@ class CState
 {
 	friend class CAIComponent;
 public:
-	CState(MON_STATE _state);
+	CState(AI_STATE _state);
 	~CState();
 
 	virtual void Update(float elapsedTime) = 0;
@@ -16,10 +16,10 @@ public:
 
 public:
 	CAIComponent* GetAI() { return AI; }
-	MON_STATE     GetType() { return state; }
+	AI_STATE     GetType() { return state; }
 
 protected:
 	CAIComponent* AI;
-	MON_STATE	  state;
+	AI_STATE	  state;
 };
 

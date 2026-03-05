@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AIComponent.h"
 #include "State.h"
+#include "Monster.h"
 
 CAIComponent::CAIComponent()
 	: current_state(nullptr)
@@ -27,7 +28,7 @@ void CAIComponent::AddState(std::shared_ptr<CState> state)
 	state->AI = this;
 }
 
-std::shared_ptr<CState> CAIComponent::GetState(MON_STATE state)
+std::shared_ptr<CState> CAIComponent::GetState(AI_STATE state)
 {
 	StateMap::iterator iter = states.find(state);
 	if (iter == states.end())
@@ -36,13 +37,13 @@ std::shared_ptr<CState> CAIComponent::GetState(MON_STATE state)
 	return iter->second;
 }
 
-void CAIComponent::SetState(MON_STATE state)
+void CAIComponent::SetState(AI_STATE state)
 {
 	current_state = GetState(state);
 	assert(current_state);
 }
 
-void CAIComponent::ChangeState(MON_STATE _nextState)
+void CAIComponent::ChangeState(AI_STATE _nextState)
 {
 	std::shared_ptr<CState> nextState = GetState(_nextState);
 	assert(current_state != nextState);

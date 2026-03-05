@@ -14,7 +14,6 @@ public:
     virtual void OnIdleMove(float elapsedTime) override;
     virtual void OnTraceMove(float elapsedTime) override;
     virtual void OnAttackMove(float elapsedTime) override;
-
     virtual void OnAttackEnter() override;
 
 private:
@@ -29,6 +28,7 @@ private:
 
 private:
     std::shared_ptr<CPlayer> target_player;
+    float idle_timer;
     float attack_timer; // 공격 상태에서 시간을 잴 타이머
 };
 

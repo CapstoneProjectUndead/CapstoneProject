@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "Movement.h"
 #include "Player.h"
+#include "Monster.h"
 
 CAnimatorComponent::CAnimatorComponent()
 	: head_position{&skinned.head_position }
@@ -40,24 +41,42 @@ void CAnimatorComponent::Update(float deltaTime)
 	if (move)
 		speed = Vector3::Length(owner->velocity);
 
-	auto p = dynamic_cast<CPlayer*>(owner);
-	if (p == nullptr)
-		return;
+	// 타입이 플레이어? or 몬스터?
+	OBJECT_TYPE type = owner->GetObjectType();
 
-	// 내 플레이어
-	if (p->GetIsMyPlayer()) {
-		if (speed < 0.3f)
-			Play("Ganga_idle");
-		else
-			Play("Ganga_walk");
+	switch (type)
+	{
+	case OBJECT_TYPE::PLAYER:
+	{
+		auto p = static_cast<CPlayer*>(owner);
+		if (p == nullptr)
+			return;
+
+		// 내 플레이어
+		if (p->GetIsMyPlayer()) {
+			if (speed < 0.3f)
+				Play("Ganga_idle");
+			else
+				Play("Ganga_walk");
+		}
+		// 상대 플레이어
+		// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
+		else {
+			if (p->GetState() == PLAYER_STATE::IDLE)
+				Play("Ganga_idle");
+			else if (p->GetState() == PLAYER_STATE::WALK)
+				Play("Ganga_walk");
+		}
 	}
-	// 상대 플레이어
-	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
-	else {
-		if (p->GetState() == PLAYER_STATE::IDLE)
-			Play("Ganga_idle");
-		else if (p->GetState() == PLAYER_STATE::WALK)
-			Play("Ganga_walk");
+		break;
+	case OBJECT_TYPE::MONSTER:
+	{
+
+		Play("Ganga_idle");
+	}
+		break;
+	default:
+		break;
 	}
 
 	current_time += deltaTime;

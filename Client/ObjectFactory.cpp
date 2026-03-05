@@ -13,6 +13,11 @@
 #include "GameFramework.h"
 #include "Character.h"
 #include "MyPlayer.h"
+#include "HumanMonster.h"
+#include "AIComponent.h"
+#include "IdleState.h"
+#include "TraceState.h"
+#include "AttackState.h"
 
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHeapManager* heapManager)
 {
@@ -115,7 +120,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	return objects;
 }
 
-void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
@@ -249,6 +254,28 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 	auto player = std::make_shared<CPlayer>();
 	CreateUndeadCharacter(player, heapManager);
 	return player;
+}
+
+std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager)
+{
+	auto humanMonster = std::make_shared<CHumanMonster>();
+	CreateUndeadCharacter(humanMonster, heapManager);
+
+	// AI 생성
+	auto AIComp = std::make_shared<CAIComponent>();
+
+	// HumanMonster의 상태들을 AI에 추가
+	AIComp->AddState(std::make_shared<CIdleState>());
+	AIComp->AddState(std::make_shared<CTraceState>());
+	AIComp->AddState(std::make_shared<CAttackState>());
+	AIComp->SetState(AI_STATE::MONSTER_IDLE);
+
+	// AI 컴포넌트 HumanMonster에 등록
+	humanMonster->SetComponent(AIComp);
+
+	// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
+	humanMonster->SetComponent(std::make_shared<CMovementComponent>());
+	return humanMonster;
 }
 
 void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)

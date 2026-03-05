@@ -4,7 +4,7 @@
 #include "Monster.h"
 
 CIdleState::CIdleState()
-	: CState(MON_STATE::IDLE)
+	: CState(AI_STATE::MONSTER_IDLE)
 {
 }
 
@@ -38,6 +38,7 @@ void CIdleState::Enter()
 	case OBJECT_TYPE::MONSTER:
 	{
 		auto monster = static_cast<CMonster*>(GetAI()->GetOwner());
+		monster->SetAIState(AI_STATE::MONSTER_IDLE);
 		monster->OnIdleEnter();
 	}
 	break;

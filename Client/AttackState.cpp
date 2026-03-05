@@ -4,7 +4,7 @@
 #include "Monster.h"
 
 CAttackState::CAttackState()
-	: CState(MON_STATE::ATTACK)
+	: CState(AI_STATE::MONSTER_ATTACK)
 {
 }
 
@@ -39,6 +39,7 @@ void CAttackState::Enter()
 	{
 		// 몬스터에게 공격 상태 진입을 알림
 		auto monster = static_cast<CMonster*>(GetAI()->GetOwner());
+		monster->SetAIState(AI_STATE::MONSTER_ATTACK);
 		monster->OnAttackEnter();
 	}
 	break;

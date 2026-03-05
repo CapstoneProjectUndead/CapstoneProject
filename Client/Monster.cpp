@@ -3,6 +3,7 @@
 
 CMonster::CMonster()
 	: CCharacter(OBJECT_TYPE::MONSTER)
+	, AI_state(AI_STATE::MONSTER_IDLE)
 {
 }
 

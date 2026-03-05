@@ -26,5 +26,12 @@ public:
     virtual void OnIdleExit() {}
     virtual void OnTraceExit() {}
     virtual void OnAttackExit() {}
+
+public:
+    AI_STATE GetAIState() const { return AI_state; }
+    void     SetAIState(AI_STATE state) { AI_state = state; }
+
+private:
+    AI_STATE AI_state;
 };
 

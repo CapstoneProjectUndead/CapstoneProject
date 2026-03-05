@@ -6,7 +6,7 @@ class CState;
 class CAIComponent :
     public CComponent
 {
-	using StateMap = std::map<MON_STATE, std::shared_ptr<CState>>;
+	using StateMap = std::map<AI_STATE, std::shared_ptr<CState>>;
 public:
 	CAIComponent();
 	~CAIComponent();
@@ -16,13 +16,15 @@ public:
 public:
 	void					AddState(std::shared_ptr<CState> state);
 
-	std::shared_ptr<CState> GetState(MON_STATE state);
-	void					SetState(MON_STATE state);
+	std::shared_ptr<CState> GetState(AI_STATE state);
+	void					SetState(AI_STATE state);
 
-	void					ChangeState(MON_STATE _nextState);
+	std::shared_ptr<CState> GetCurrentState() const { return current_state; }
+
+	void					ChangeState(AI_STATE _nextState);
 
 private:
-	std::map<MON_STATE, std::shared_ptr<CState>>	states;
-	std::shared_ptr<CState>							current_state;
+	std::map<AI_STATE, std::shared_ptr<CState>>	states;
+	std::shared_ptr<CState>						current_state;
 };
 

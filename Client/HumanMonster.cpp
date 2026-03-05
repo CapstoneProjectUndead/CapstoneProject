@@ -2,10 +2,13 @@
 #include "HumanMonster.h"
 #include "Player.h"
 #include "AIComponent.h"
+#include "Movement.h"
 
 CHumanMonster::CHumanMonster()
-    : attack_timer(0.0f) // 타이머 초기화
+    : attack_timer(0.0f)
+    , idle_timer(0.0f)
 {
+    friction = 0.0f;
 }
 
 CHumanMonster::~CHumanMonster()
@@ -19,25 +22,38 @@ void CHumanMonster::Update(float elapsedTime)
 
 void CHumanMonster::OnIdleMove(float elapsedTime)
 {
-    // 테스트 단계이므로 이동은 하지 않고 부동자세 유지
-    velocity.x = 0.0f;
-    velocity.z = 0.0f;
-
+    // 시야 범위에 플레이어가 들어오는지 체크
     auto target = FindNearestPlayer();
-
     if (target) {
-        // 내 위치와 타겟 위치의 거리 계산
         float dist = Vector3::Length(Vector3::Subtract(target->position, this->position));
-
-        // 인식 범위 안에 들어왔다면 추적 시작!
         if (dist <= GetRecogRange()) {
             SetTarget(target);
             auto AIComponent = GetComponent<CAIComponent>();
             if (AIComponent) {
-                AIComponent->ChangeState(MON_STATE::TRACE);
+                AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+                return; // 상태가 바뀌었으니 여기서 함수 종료! (아래 배회 로직 스킵)
             }
         }
     }
+
+    // 배회 
+
+    // 타이머 증가
+    idle_timer += elapsedTime;
+
+    if (idle_timer >= 2.0f) {
+        float newYaw = yaw + 180.0f;
+        SetYaw(newYaw);            
+        SetYawPitch(newYaw, 0.0f);
+        idle_timer = 0.0f;
+    }
+
+    // CMovementComponent::Move 함수 대신 velocity를 직접 세팅!
+    // CObject에 있는 look 벡터(현재 바라보는 방향)를 활용.
+    float walk_speed = 0.4f; // 원하는 산책 속도로 조절
+
+    velocity.x = look.x * walk_speed;
+    velocity.z = look.z * walk_speed;
 }
 
 void CHumanMonster::OnTraceMove(float elapsedTime)
@@ -46,39 +62,9 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
     if (!target_player) {
         // 타겟이 사라졌으면 IDLE로 복귀
-        AIComponent->ChangeState(MON_STATE::IDLE);
+        AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-
-    // 오타 수정됨! (내 위치와 타겟 위치의 거리 계산)
-    float dist = Vector3::Length(Vector3::Subtract(target_player->position, this->position));
-
-    // 1. 공격 사거리 이내로 들어왔는가? -> 공격!
-    if (dist <= GetAttackRange()) {
-        AIComponent->ChangeState(MON_STATE::ATTACK);
-        return;
-    }
-
-    // 2. 너무 멀어져서 추적을 포기해야 하는가? -> 어그로 풀림
-    if (dist > GetRecogRange() * 1.5f) {
-        SetTarget(nullptr);
-        AIComponent->ChangeState(MON_STATE::IDLE);
-        return;
-    }
-
-    // 3. 아직 멀다면 타겟을 향해 이동 (velocity 직접 세팅)
-    XMFLOAT3 dir = Vector3::Normalize(Vector3::Subtract(target_player->position, this->position));
-
-    // Y축(하늘/땅) 방향으로는 걷지 않도록 평면화
-    dir.y = 0.0f;
-    dir = Vector3::Normalize(dir);
-
-    // 몬스터의 속도 세팅 (이 속도를 바탕으로 CMovementComponent가 물리 이동을 수행함)
-    velocity.x = dir.x * GetMoveSpeed();
-    velocity.z = dir.z * GetMoveSpeed();
-
-    // 몬스터가 이동 방향을 쳐다보게 회전 (필요시)
-    yaw = atan2f(dir.x, dir.z);
 }
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
@@ -101,7 +87,7 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
         if (AIComponent) {
             // 공격이 끝났으니 다시 거리를 재기 위해 TRACE 상태로 전환
             // (TRACE 상태에서 거리가 가까우면 다음 프레임에 다시 ATTACK으로 돌아옴)
-            AIComponent->ChangeState(MON_STATE::TRACE);
+            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
         }
     }
 }
@@ -122,6 +108,5 @@ void CHumanMonster::OnAttackEnter()
 
 std::shared_ptr<CPlayer> CHumanMonster::FindNearestPlayer()
 {
-
 	return std::shared_ptr<CPlayer>();
 }
