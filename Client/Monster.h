@@ -7,7 +7,7 @@ class CMonster :
     public CCharacter
 {
 public:
-    CMonster();
+    CMonster(MON_TYPE type);
     ~CMonster();
 
     virtual void Update(float elapsedTime) override;
@@ -34,7 +34,10 @@ public:
     AI_STATE GetAIState() const { return AI_state; }
     void     SetAIState(AI_STATE state) { AI_state = state; }
 
-private:
+    MON_TYPE GetMonsterType() const { return monster_type; }
+
+protected:
     AI_STATE AI_state;
+    MON_TYPE monster_type;
 };
 

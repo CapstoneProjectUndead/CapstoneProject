@@ -28,6 +28,13 @@ enum class SCENE_TYPE
 	END
 };
 
+enum class MON_TYPE : uint8_t
+{
+	HUMAN_MONSTER,
+	ANIMAL_MONSTER,
+	GHOST
+};
+
 enum class AI_STATE
 {
 	MONSTER_IDLE,

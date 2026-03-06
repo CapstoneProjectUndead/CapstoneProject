@@ -12,6 +12,9 @@ public:
 
 	void Update(float deltaTime) override;
 
+	void UpdatePlayerAnimation();
+	void UpdateMonsterAnimation();
+
 	const std::vector<XMFLOAT4X4>& GetFinalTransforms() const { return final_transforms; }
 
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);

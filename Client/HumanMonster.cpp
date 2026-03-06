@@ -7,7 +7,8 @@
 #include "MyPlayer.h"
 
 CHumanMonster::CHumanMonster()
-    : origin_position{}
+    : CMonster(MON_TYPE::HUMAN_MONSTER)
+    , origin_position{}
     , idle_timer(0.0f)
     , patrol_timer(0.0f)
     , attack_timer(0.0f)
@@ -53,8 +54,10 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
     dirToOrigin.y = 0.0f;
     float distToOrigin = Vector3::Length(dirToOrigin);
 
-    // 오차 범위(예: 0.1f)보다 멀리 있다면, 일단 초기 자리로 걸어간다!
     if (distToOrigin > 0.1f) {
+
+        // 플레이어가 초기 위치로 복귀하는 동안에는 걷는 애니메이션이 나와야한다.
+        AI_state = AI_STATE::MONSTER_PATROL;
 
         // 초기 자리를 향해 방향 틀기
         float returnYaw = XMConvertToDegrees(atan2f(dirToOrigin.x, dirToOrigin.z));
@@ -70,13 +73,12 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
         return;
     }
 
-    // (선택) 자리에 딱 맞게 강제 보정해주면 더 깔끔.
-    //position.x = origin_position.x;
-    //position.z = origin_position.z;
-
     // 초기 지점으로 복귀하면 
-    SetYaw(0.0f);
-    SetYawPitch(0.0f, 0.0f);
+    {
+        SetYaw(0.0f);
+        SetYawPitch(0.0f, 0.0f);
+        AI_state = AI_STATE::MONSTER_IDLE;
+    }
 
     // 속도 0 고정 (휴식)
     velocity.x = 0.0f;
