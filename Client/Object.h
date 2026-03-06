@@ -86,7 +86,7 @@ public:
 protected:
 	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
-	SCENE_TYPE  current_scene_type; // 현재 오브젝트가 속한 씬
+	SCENE_TYPE  current_scene_type = SCENE_TYPE::NONE; // 현재 오브젝트가 속한 씬
 	ObjectCB* mapped{};
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름

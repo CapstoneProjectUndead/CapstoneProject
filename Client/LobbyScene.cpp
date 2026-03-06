@@ -53,7 +53,7 @@ void CLobbyScene::Initialize()
 		monster->ChangeModelSet(1); 
 		monster->ChangeEyes(2);     
 		monster->ChangeMouth(0);
-		monster->SetPosition(0.f, 0.0f, -1.0f);
+		monster->SetPosition(0.f, 0.1f, -1.5f);
 		monster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		objects.push_back(monster);
 	}

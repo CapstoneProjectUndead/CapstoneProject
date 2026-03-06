@@ -19,6 +19,7 @@ enum class PLAYER_STATE : uint8_t
 
 enum class SCENE_TYPE
 {
+	NONE,
 	TITLE,
 	CUSTOMS,
 	LOBBY,

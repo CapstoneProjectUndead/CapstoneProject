@@ -35,12 +35,6 @@ void CAnimatorComponent::Update(float deltaTime)
 	if (owner == nullptr)
 		return;
 
-	auto move = owner->GetComponent<CMovementComponent>();
-	float speed = 0.0f;
-
-	if (move)
-		speed = Vector3::Length(owner->velocity);
-
 	// 타입이 플레이어? or 몬스터?
 	OBJECT_TYPE type = owner->GetObjectType();
 
@@ -48,12 +42,19 @@ void CAnimatorComponent::Update(float deltaTime)
 	{
 	case OBJECT_TYPE::PLAYER:
 	{
-		auto p = static_cast<CPlayer*>(owner);
-		if (p == nullptr)
+		auto player = static_cast<CPlayer*>(owner);
+		if (player == nullptr)
 			return;
 
 		// 내 플레이어
-		if (p->GetIsMyPlayer()) {
+		if (player->GetIsMyPlayer()) {
+
+			auto move = owner->GetComponent<CMovementComponent>();
+			float speed = 0.0f;
+
+			if (move)
+				speed = Vector3::Length(owner->velocity);
+
 			if (speed < 0.3f)
 				Play("Ganga_idle");
 			else
@@ -62,15 +63,17 @@ void CAnimatorComponent::Update(float deltaTime)
 		// 상대 플레이어
 		// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
 		else {
-			if (p->GetState() == PLAYER_STATE::IDLE)
+			if (player->GetState() == PLAYER_STATE::IDLE)
 				Play("Ganga_idle");
-			else if (p->GetState() == PLAYER_STATE::WALK)
+			else if (player->GetState() == PLAYER_STATE::WALK)
 				Play("Ganga_walk");
 		}
 	}
 		break;
 	case OBJECT_TYPE::MONSTER:
 	{
+		auto monster = static_cast<CMonster*>(owner);
+		AI_STATE state = monster->GetAIState();
 
 		Play("Ganga_idle");
 	}

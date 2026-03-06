@@ -16,6 +16,7 @@
 #include "HumanMonster.h"
 #include "AIComponent.h"
 #include "IdleState.h"
+#include "PatrolState.h"
 #include "TraceState.h"
 #include "AttackState.h"
 
@@ -266,6 +267,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapMana
 
 	// HumanMonster의 상태들을 AI에 추가
 	AIComp->AddState(std::make_shared<CIdleState>());
+	AIComp->AddState(std::make_shared<CPatrolState>());
 	AIComp->AddState(std::make_shared<CTraceState>());
 	AIComp->AddState(std::make_shared<CAttackState>());
 	AIComp->SetState(AI_STATE::MONSTER_IDLE);
