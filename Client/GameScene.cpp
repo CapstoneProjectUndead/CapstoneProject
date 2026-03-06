@@ -42,6 +42,14 @@ void CGameScene::Initialize()
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
 		prototypes = factory->CreateGameScene(staticHeapManager);
 	}
+	if (objects.empty()) {
+		std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+		for (const auto& inst : instData) {
+			if (inst.type == MapGenerator::EModelType::ROAD) {
+				objects.push_back(prototypes["park_road"]);
+			}
+		}
+	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -93,11 +101,11 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 		if (light)
 			light->Render(commandList);
 
-		for (const auto& obj : prototypes) {
+		/*for (const auto& obj : prototypes) {
 			if (shader.first == obj.second->GetShader()) {
 				shader.second->Render(commandList, obj.second.get());
 			}
-		}
+		}*/
 
 		for (const auto& obj : objects) {
 			if (shader.first == obj->GetShader()) {

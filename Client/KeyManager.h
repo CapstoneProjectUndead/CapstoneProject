@@ -73,7 +73,7 @@ enum class KEY_STATE
     TAP,
     PRESSED,
     RELEASED,
-    NONE
+    ROAD
 };
 
 struct tKeyInfo

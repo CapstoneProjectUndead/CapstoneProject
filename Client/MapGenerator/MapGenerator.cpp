@@ -1,70 +1,58 @@
 #include "stdafx.h"
 #include "MapGenerator.h"
 
-// ====================================================================
-// 🚀 [메인 구역] 맵 데이터 생성
-// ====================================================================
-std::vector<MapGenerator::InstanceData> MapGenerator::Generate3DMap() {
+std::vector < MapGenerator::InstanceData > MapGenerator::Generate3DMap()
+{
     std::vector<InstanceData> instanceList;
     srand((unsigned int)time(NULL));
 
-    // 🔥 [자동 계산 로직] 맵 넓이에 맞춰서 생성될 개수 계산하기!
-    float areaRatio = (WIDTH * HEIGHT) / 5000.0f; // 50x100 맵을 기준(1.0)으로 잡음
-    int halfHeight = HEIGHT / 2; // 맵의 절반 (아래는 공원, 위는 상점가)
+    float areaRatio = (WIDTH * HEIGHT) / 5000.0f;
+    int halfHeight = HEIGHT / 2;
 
+    // 1. 맵 전체를 벽으로 초기화
     for (int y = 0; y < HEIGHT; y++)
-        for (int x = 0; x < WIDTH; x++) mapGrid[y][x] = '#';
+        for (int x = 0; x < WIDTH; x++) mapGrid[y][x] = EModelType::WALL;
 
+    // 2. 미로 생성 및 랜덤 길 뚫기
     CarveMaze(1, 1);
 
     for (int i = 0; i < (WIDTH * HEIGHT) / 3; i++) {
-        mapGrid[1 + rand() % (HEIGHT - 2)][1 + rand() % (WIDTH - 2)] = ' ';
+        mapGrid[1 + rand() % (HEIGHT - 2)][1 + rand() % (WIDTH - 2)] = EModelType::ROAD;
     }
 
-    // 면적에 비례해서 공터 개수 조절
     CreateOpenSpaces(max(5, (int)(20 * areaRatio)));
 
-    // 절반(halfHeight) 이하는 공원(T), 그 위는 상점가(#)
+    // 3. 구역 테마 설정 (아래쪽은 나무 구역으로 변경)
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            if (mapGrid[y][x] == '#') {
-                if (y < halfHeight) mapGrid[y][x] = 'T';
+            if (mapGrid[y][x] == EModelType::WALL && y < halfHeight) {
+                mapGrid[y][x] = EModelType::TREE;
             }
         }
     }
 
-    // ====================================================================
-    // 🏢 건물 자동 스폰 (위치도 맵 크기에 비례해서 자동 계산!)
-    // ====================================================================
+    // 4. 구조물 스폰
     int numWarehouse = max(1, (int)(3 * areaRatio));
     for (int i = 0; i < numWarehouse; i++) {
-        int rX = 4 + rand() % (WIDTH - 8);
-        int rY = halfHeight + rand() % (halfHeight - 10); // 무조건 상점가 구역(위쪽)
-        PlaceLargeWarehouse(rX, rY);
+        PlaceLargeWarehouse(4 + rand() % (WIDTH - 8), halfHeight + rand() % (halfHeight - 10));
     }
 
     int numStore = max(2, (int)(10 * areaRatio));
     for (int i = 0; i < numStore; i++) {
-        int rX = 4 + rand() % (WIDTH - 8);
-        int rY = halfHeight + rand() % (halfHeight - 5);
-        PlaceMediumStore(rX, rY);
+        PlaceMediumStore(4 + rand() % (WIDTH - 8), halfHeight + rand() % (halfHeight - 5));
     }
 
     int numKiosk = max(5, (int)(25 * areaRatio));
     for (int i = 0; i < numKiosk; i++) {
-        int rX = 4 + rand() % (WIDTH - 8);
-        int rY = halfHeight + rand() % (halfHeight - 5);
-        PlaceSmallKiosk(rX, rY);
+        PlaceSmallKiosk(4 + rand() % (WIDTH - 8), halfHeight + rand() % (halfHeight - 5));
     }
 
     int numPark = max(5, (int)(20 * areaRatio));
     for (int i = 0; i < numPark; i++) {
-        int rX = 3 + rand() % (WIDTH - 6);
-        int rY = 5 + rand() % (halfHeight - 10); // 무조건 공원 구역(아래쪽)
-        PlaceParkPlaza(rX, rY);
+        PlaceParkPlaza(3 + rand() % (WIDTH - 6), 5 + rand() % (halfHeight - 10));
     }
 
-    // 보물($) 배치
+    // 5. 보물 배치 로직 (비어있는 곳 탐색)
     const int BLOCK_SIZE = 10;
     for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
         for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
@@ -72,126 +60,155 @@ std::vector<MapGenerator::InstanceData> MapGenerator::Generate3DMap() {
             std::vector<std::pair<int, int>> emptySpaces;
             for (int y = by; y < by + BLOCK_SIZE && y < HEIGHT; y++) {
                 for (int x = bx; x < bx + BLOCK_SIZE && x < WIDTH; x++) {
-                    char c = mapGrid[y][x];
-                    if (c == ' ' || c == 'S' || c == 'M' || c == 'W') {
+                    EModelType type = mapGrid[y][x];
+                    // 길이나 가판대/상점 주변에 보물 배치 가능
+                    if (type == EModelType::ROAD || type == EModelType::KIOSK || type == EModelType::STORE) {
                         emptySpaces.push_back({ x, y });
                     }
                 }
             }
             for (int t = 0; t < treasureCount && !emptySpaces.empty(); t++) {
-                int randIdx = rand() % emptySpaces.size();
-                mapGrid[emptySpaces[randIdx].second][emptySpaces[randIdx].first] = '$';
+                int randIdx = rand() % (int)emptySpaces.size();
+                mapGrid[emptySpaces[randIdx].second][emptySpaces[randIdx].first] = EModelType::TREASURE;
                 emptySpaces.erase(emptySpaces.begin() + randIdx);
             }
         }
     }
 
-    // ====================================================================
-    // 🌟 [7단계] 3D 디테일 업그레이드! (벤치, 문, 나무 등등 귀여운 사이즈 적용)
-    // ====================================================================
+    // 6. 3D InstanceData 생성
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            char c = mapGrid[y][x];
-
-            if (c == ' ') continue;
+            EModelType type = mapGrid[y][x];
 
             InstanceData inst;
+            inst.type = type;
             float posX = (float)x * 1.0f;
             float posZ = (float)y * 1.0f;
 
-            if (c == '#') { // 골목길 벽
-                inst.type = EModelType::WALL;
+            switch (type) {
+            case EModelType::ROAD:
+                inst.scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
+                inst.position = XMFLOAT3(posX, 0.0f, posZ);
+                break;
+            case EModelType::WALL:
                 inst.scale = XMFLOAT3(1.0f, 3.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 1.5f, posZ);
-            }
-            else if (c == 'W') { // 대형 창고
-                inst.type = EModelType::WAREHOUSE;
+                break;
+            case EModelType::WAREHOUSE:
                 inst.scale = XMFLOAT3(1.0f, 6.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 3.0f, posZ);
-            }
-            else if (c == 'M') { // 중형 상점
-                inst.type = EModelType::STORE;
+                break;
+            case EModelType::STORE:
                 inst.scale = XMFLOAT3(1.0f, 3.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 1.5f, posZ);
-            }
-            else if (c == 'S') { // 소형 가판대
-                inst.type = EModelType::KIOSK;
+                break;
+            case EModelType::KIOSK:
                 inst.scale = XMFLOAT3(1.0f, 2.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 1.0f, posZ);
-            }
-            else if (c == 'T' || c == 't') { // 덤불 및 공원 나무
-                inst.type = EModelType::TREE;
+                break;
+            case EModelType::TREE:
                 inst.scale = XMFLOAT3(0.8f, 1.5f, 0.8f);
                 inst.position = XMFLOAT3(posX, 0.75f, posZ);
-            }
-            else if (c == '$') { // 보물 상자
-                inst.type = EModelType::TREASURE;
+                break;
+            case EModelType::TREASURE:
                 inst.scale = XMFLOAT3(0.5f, 0.5f, 0.5f);
                 inst.position = XMFLOAT3(posX, 0.25f, posZ);
-            }
-            else if (c == 'n') { // 공원 벤치
-                inst.type = EModelType::BENCH;
+                break;
+            case EModelType::BENCH:
                 inst.scale = XMFLOAT3(0.8f, 0.4f, 0.4f);
                 inst.position = XMFLOAT3(posX, 0.2f, posZ);
-            }
-            else if (c == 'd') { // 상점 문
-                inst.type = EModelType::DOOR;
+                break;
+            case EModelType::DOOR:
                 inst.scale = XMFLOAT3(0.8f, 2.0f, 0.2f);
                 inst.position = XMFLOAT3(posX, 1.0f, posZ);
-            }
-            else { // 기타
-                inst.type = EModelType::DEFAULT;
+                break;
+            default:
                 inst.scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
                 inst.position = XMFLOAT3(posX, 0.5f, posZ);
+                break;
             }
-
             instanceList.push_back(inst);
         }
     }
 
+    std::sort(instanceList.begin(), instanceList.end(), [](const InstanceData& a, const InstanceData& b) {
+        return (int)a.type < (int)b.type;
+        });
+
+    //std::ofstream out("../Modeling/instData.txt");
+    //for (int y = 0; y < HEIGHT; y++) {
+    //    for (int x = 0; x < WIDTH; x++) {
+    //        // NONE은 0, WALL은 1 등으로 출력됨
+    //        out << (int)mapGrid[y][x] << " ";
+    //    }
+    //    out << "\n";
+    //}
+
     return instanceList;
 }
 
-bool MapGenerator::IsValid(int x, int y)
-{
-    return (x > 0 && x < WIDTH - 1 && y > 0 && y < HEIGHT - 1);
-}
-
+// --- 보조 함수들 (기존 로직 유지하되 enum 적용) ---
 void MapGenerator::CarveMaze(int startX, int startY)
 {
     struct Cell { int x, y; };
     std::stack<Cell> s;
-
     s.push({ startX, startY });
-    mapGrid[startY][startX] = ' ';
+    mapGrid[startY][startX] = EModelType::ROAD;
 
     while (!s.empty()) {
         Cell current = s.top();
-        int x = current.x;
-        int y = current.y;
-
         int dirs[] = { 0, 1, 2, 3 };
         for (int i = 0; i < 4; i++) std::swap(dirs[i], dirs[rand() % 4]);
 
         bool moved = false;
         for (int i = 0; i < 4; i++) {
-            int nx = x + dx[dirs[i]];
-            int ny = y + dy[dirs[i]];
+            int nx = current.x + dx[dirs[i]];
+            int ny = current.y + dy[dirs[i]];
 
-            if (IsValid(nx, ny) && mapGrid[ny][nx] == '#') {
-                mapGrid[y + dy[dirs[i]] / 2][x + dx[dirs[i]] / 2] = ' ';
-                mapGrid[ny][nx] = ' ';
+            if (IsValid(nx, ny) && mapGrid[ny][nx] == EModelType::WALL) {
+                mapGrid[current.y + dy[dirs[i]] / 2][current.x + dx[dirs[i]] / 2] = EModelType::ROAD;
+                mapGrid[ny][nx] = EModelType::ROAD;
                 s.push({ nx, ny });
                 moved = true;
                 break;
             }
         }
-        if (!moved) {
-            s.pop();
-        }
+        if (!moved) s.pop();
     }
 }
 
+void MapGenerator::PlaceMediumStore(int cx, int cy)
+{
+    if (!IsValid(cx - 2, cy - 2) || !IsValid(cx + 2, cy + 2)) return;
+    for (int y = cy - 2; y <= cy + 2; y++)
+        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = EModelType::ROAD;
+    for (int y = cy - 1; y <= cy + 1; y++)
+        for (int x = cx - 1; x <= cx + 1; x++) mapGrid[y][x] = EModelType::STORE;
+
+    int doorDir = rand() % 4;
+    if (doorDir == 0) mapGrid[cy - 1][cx] = EModelType::DOOR;
+    else if (doorDir == 1) mapGrid[cy + 1][cx] = EModelType::DOOR;
+    else if (doorDir == 2) mapGrid[cy][cx - 1] = EModelType::DOOR;
+    else mapGrid[cy][cx + 1] = EModelType::DOOR;
+}
+
+void MapGenerator::PlaceParkPlaza(int cx, int cy)
+{
+    if (!IsValid(cx - 2, cy - 2) || !IsValid(cx + 2, cy + 2)) return;
+    for (int y = cy - 2; y <= cy + 2; y++)
+        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = EModelType::ROAD;
+    mapGrid[cy][cx] = EModelType::BENCH;
+    mapGrid[cy][cx - 1] = EModelType::TREE;
+    mapGrid[cy][cx + 1] = EModelType::TREE;
+}
+
+// 좌표가 맵 범위를 벗어나지 않는지 체크
+bool MapGenerator::IsValid(int x, int y)
+{
+    return (x > 0 && x < WIDTH - 1 && y > 0 && y < HEIGHT - 1);
+}
+
+// 미로 사이사이에 빈 공간(공터)을 만드는 함수
 void MapGenerator::CreateOpenSpaces(int numSpaces)
 {
     std::vector<Rect> builtSpaces;
@@ -201,12 +218,12 @@ void MapGenerator::CreateOpenSpaces(int numSpaces)
         int w, h;
         int sizeType = rand() % 3;
 
-        // 공터 크기도 맵 크기에 맞춰서 최대치가 넘지 않게 안전장치 추가!
+        // 공터 크기 결정
         if (sizeType == 0) { w = 3 + rand() % 4; h = 3 + rand() % 4; }
         else if (sizeType == 1) { w = 7 + rand() % 5; h = 7 + rand() % 5; }
         else { w = 12 + rand() % 5; h = 12 + rand() % 5; }
 
-        w = min(w, WIDTH - 6); // 맵보다 큰 공터가 생기지 않게 방어
+        w = min(w, WIDTH - 6);
         h = min(h, HEIGHT - 6);
 
         int startX = 2 + rand() % (WIDTH - w - 2);
@@ -223,9 +240,10 @@ void MapGenerator::CreateOpenSpaces(int numSpaces)
         }
 
         if (!overlap) {
+            // 공터 영역을 ROAD(빈 공간)으로 채움
             for (int y = startY; y < startY + h; y++) {
                 for (int x = startX; x < startX + w; x++) {
-                    mapGrid[y][x] = ' ';
+                    mapGrid[y][x] = EModelType::ROAD;
                 }
             }
             builtSpaces.push_back(newSpace);
@@ -235,57 +253,57 @@ void MapGenerator::CreateOpenSpaces(int numSpaces)
     }
 }
 
-
+// 소형 가판대 배치
 void MapGenerator::PlaceSmallKiosk(int cx, int cy)
 {
-    if (cx - 2 <= 0 || cx + 2 >= WIDTH - 1 || cy - 2 <= 0 || cy + 2 >= HEIGHT - 1) return;
-    for (int y = cy - 2; y <= cy + 2; y++)
-        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = ' ';
+    if (!IsValid(cx - 2, cy - 2) || !IsValid(cx + 2, cy + 2)) return;
 
+    // 주변 정리 (NONE으로 초기화)
+    for (int y = cy - 2; y <= cy + 2; y++)
+        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = EModelType::ROAD;
+
+    // 가판대 본체 배치 (S자 모양 또는 한 줄)
     if (rand() % 2 == 0) {
-        for (int y = cy - 1; y <= cy + 1; y++) mapGrid[y][cx] = 'S';
+        for (int y = cy - 1; y <= cy + 1; y++) mapGrid[y][cx] = EModelType::KIOSK;
     }
     else {
-        for (int x = cx - 1; x <= cx + 1; x++) mapGrid[cy][x] = 'S';
+        for (int x = cx - 1; x <= cx + 1; x++) mapGrid[cy][x] = EModelType::KIOSK;
     }
 }
 
-void MapGenerator::PlaceMediumStore(int cx, int cy)
-{
-    if (cx - 2 <= 0 || cx + 2 >= WIDTH - 1 || cy - 2 <= 0 || cy + 2 >= HEIGHT - 1) return;
-    for (int y = cy - 2; y <= cy + 2; y++)
-        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = ' ';
-    for (int y = cy - 1; y <= cy + 1; y++)
-        for (int x = cx - 1; x <= cx + 1; x++) mapGrid[y][x] = 'M';
-
-    int doorDir = rand() % 4;
-    if (doorDir == 0) mapGrid[cy - 1][cx] = 'd';
-    else if (doorDir == 1) mapGrid[cy + 1][cx] = 'd';
-    else if (doorDir == 2) mapGrid[cy][cx - 1] = 'd';
-    else mapGrid[cy][cx + 1] = 'd';
-}
-
+// 대형 창고 배치
 void MapGenerator::PlaceLargeWarehouse(int cx, int cy)
 {
-    if (cx - 3 <= 0 || cx + 3 >= WIDTH - 1 || cy - 3 <= 0 || cy + 3 >= HEIGHT - 1) return;
+    if (!IsValid(cx - 3, cy - 3) || !IsValid(cx + 3, cy + 3)) return;
+
+    // 주변 정리
     for (int y = cy - 3; y <= cy + 3; y++)
-        for (int x = cx - 3; x <= cx + 3; x++) mapGrid[y][x] = ' ';
-    for (int y = cy - 2; y <= cy + 2; y++)
-        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = 'W';
+        for (int x = cx - 3; x <= cx + 3; x++) mapGrid[y][x] = EModelType::ROAD;
 
+    // 창고 본체 배치 (W)
+    for (int y = cy - 2; y <= cy + 2; y++)
+        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = EModelType::WAREHOUSE;
+
+    // 입구 생성 (창고 한 면의 중앙을 NONE으로 비움)
     int entranceDir = rand() % 4;
-    if (entranceDir == 0) { mapGrid[cy - 2][cx - 1] = ' '; mapGrid[cy - 2][cx] = ' '; mapGrid[cy - 2][cx + 1] = ' '; }
-    else if (entranceDir == 1) { mapGrid[cy + 2][cx - 1] = ' '; mapGrid[cy + 2][cx] = ' '; mapGrid[cy + 2][cx + 1] = ' '; }
-    else if (entranceDir == 2) { mapGrid[cy - 1][cx - 2] = ' '; mapGrid[cy][cx - 2] = ' '; mapGrid[cy + 1][cx - 2] = ' '; }
-    else { mapGrid[cy - 1][cx + 2] = ' '; mapGrid[cy][cx + 2] = ' '; mapGrid[cy + 1][cx + 2] = ' '; }
-}
-
-void MapGenerator::PlaceParkPlaza(int cx, int cy)
-{
-    if (cx - 2 <= 0 || cx + 2 >= WIDTH - 1 || cy - 2 <= 0 || cy + 2 >= HEIGHT - 1) return;
-    for (int y = cy - 2; y <= cy + 2; y++)
-        for (int x = cx - 2; x <= cx + 2; x++) mapGrid[y][x] = ' ';
-    mapGrid[cy][cx] = 'n';
-    mapGrid[cy][cx - 1] = 't';
-    mapGrid[cy][cx + 1] = 't';
+    if (entranceDir == 0) { // 위쪽 입구
+        mapGrid[cy - 2][cx - 1] = EModelType::ROAD;
+        mapGrid[cy - 2][cx] = EModelType::ROAD;
+        mapGrid[cy - 2][cx + 1] = EModelType::ROAD;
+    }
+    else if (entranceDir == 1) { // 아래쪽 입구
+        mapGrid[cy + 2][cx - 1] = EModelType::ROAD;
+        mapGrid[cy + 2][cx] = EModelType::ROAD;
+        mapGrid[cy + 2][cx + 1] = EModelType::ROAD;
+    }
+    else if (entranceDir == 2) { // 왼쪽 입구
+        mapGrid[cy - 1][cx - 2] = EModelType::ROAD;
+        mapGrid[cy][cx - 2] = EModelType::ROAD;
+        mapGrid[cy + 1][cx - 2] = EModelType::ROAD;
+    }
+    else { // 오른쪽 입구
+        mapGrid[cy - 1][cx + 2] = EModelType::ROAD;
+        mapGrid[cy][cx + 2] = EModelType::ROAD;
+        mapGrid[cy + 1][cx + 2] = EModelType::ROAD;
+    }
 }
