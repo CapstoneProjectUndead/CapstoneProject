@@ -12,23 +12,43 @@ public:
 
     virtual void Update(float elapsedTime) override;
     virtual void OnIdleMove(float elapsedTime) override;
+    virtual void OnPatrolMove(float elapsedTime) override;
     virtual void OnTraceMove(float elapsedTime) override;
     virtual void OnAttackMove(float elapsedTime) override;
+
+    virtual void OnIdleEnter() override;
+    virtual void OnPatrolEnter() override;
     virtual void OnAttackEnter() override;
+
+public:
+    void SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
+    const XMFLOAT3& GetOriginPos() const { return origin_position; }
 
 private:
     std::shared_ptr<CPlayer> FindNearestPlayer();
 
-    // 몬스터 스펙 (필요시 멤버 변수로 빼서 기획 데이터로 로드해도 됩니다)
-    float GetRecogRange() const { return 10.0f; }  // 인식 거리 10m
-    float GetAttackRange() const { return 2.0f; }  // 공격 사거리 2m
-    float GetMoveSpeed() const { return 4.0f; }    // 추적 이동 속도
-
     void SetTarget(std::shared_ptr<CPlayer> player) { target_player = player; }
 
+    void ResetPatrolTimers() 
+    {
+        patrol_timer = 0.0f;
+        turn_timer = 0.0f;
+    }
+
+    void ResetIdleTimer() { idle_timer = 0.0f; }
+    void ResetAttackTimer() { attack_timer = 0.0f; }
+
 private:
+    XMFLOAT3 origin_position;
     std::shared_ptr<CPlayer> target_player;
-    float idle_timer;
+
+    float idle_timer;   // 쉴 때 쓰는 타이머
+    float patrol_timer; // 순찰할 때 쓰는 타이머
     float attack_timer; // 공격 상태에서 시간을 잴 타이머
+    float turn_timer;
+
+    const float recog_range = 1.f;
+    const float attack_range = 0.5f;
+    const float trace_speed = 0.6f;
 };
 

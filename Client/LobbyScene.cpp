@@ -49,13 +49,14 @@ void CLobbyScene::Initialize()
 
 	{
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		auto monster = factory->CreateHumanMonster(skinningHeapManager);
-		monster->ChangeModelSet(1); 
-		monster->ChangeEyes(2);     
-		monster->ChangeMouth(0);
-		monster->SetPosition(0.f, 0.1f, -1.5f);
-		monster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-		objects.push_back(monster);
+		auto humanMonster = factory->CreateHumanMonster(skinningHeapManager);
+		humanMonster->ChangeModelSet(1); 
+		humanMonster->ChangeEyes(2);     
+		humanMonster->ChangeMouth(0);
+		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
+		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+		humanMonster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+		objects.push_back(humanMonster);
 	}
 }
 

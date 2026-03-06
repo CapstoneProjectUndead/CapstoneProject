@@ -8,6 +8,7 @@ class CObject;
 class CPlayer;
 class CMyPlayer;
 class CMonster;
+class CHumanMonster;
 
 class CObjectFactory
 {
@@ -19,7 +20,7 @@ public:
 	void CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
-	std::shared_ptr<CMonster> CreateHumanMonster(CDescriptorHeapManager* heapManager);
+	std::shared_ptr<CHumanMonster> CreateHumanMonster(CDescriptorHeapManager* heapManager);
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 private:
 	enum class UndeadMeshName {

@@ -3,10 +3,15 @@
 #include "Player.h"
 #include "AIComponent.h"
 #include "Movement.h"
+#include "SceneManager.h"
+#include "MyPlayer.h"
 
 CHumanMonster::CHumanMonster()
-    : attack_timer(0.0f)
+    : origin_position{}
     , idle_timer(0.0f)
+    , patrol_timer(0.0f)
+    , attack_timer(0.0f)
+    , turn_timer(0.0f)
 {
     friction = 0.0f;
 }
@@ -22,36 +27,115 @@ void CHumanMonster::Update(float elapsedTime)
 
 void CHumanMonster::OnIdleMove(float elapsedTime)
 {
+    // (Idle 상태)
+
     // 시야 범위에 플레이어가 들어오는지 체크
     auto target = FindNearestPlayer();
+
     if (target) {
+
         float dist = Vector3::Length(Vector3::Subtract(target->position, this->position));
-        if (dist <= GetRecogRange()) {
+
+        if (dist <= recog_range) {
+
             SetTarget(target);
+
             auto AIComponent = GetComponent<CAIComponent>();
             if (AIComponent) {
                 AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
-                return; // 상태가 바뀌었으니 여기서 함수 종료! (아래 배회 로직 스킵)
+                return; 
             }
         }
     }
 
-    // 배회 
+    // 초기 자리(origin_position)로 복귀하기
+    XMFLOAT3 dirToOrigin = Vector3::Subtract(origin_position, position);
+    dirToOrigin.y = 0.0f;
+    float distToOrigin = Vector3::Length(dirToOrigin);
 
-    // 타이머 증가
-    idle_timer += elapsedTime;
+    // 오차 범위(예: 0.1f)보다 멀리 있다면, 일단 초기 자리로 걸어간다!
+    if (distToOrigin > 0.1f) {
 
-    if (idle_timer >= 2.0f) {
-        float newYaw = yaw + 180.0f;
-        SetYaw(newYaw);            
-        SetYawPitch(newYaw, 0.0f);
-        idle_timer = 0.0f;
+        // 초기 자리를 향해 방향 틀기
+        float returnYaw = XMConvertToDegrees(atan2f(dirToOrigin.x, dirToOrigin.z));
+        SetYaw(returnYaw);
+        SetYawPitch(returnYaw, 0.0f);
+
+        // 초기 자리를 향해 걷기 (산책 속도)
+        float walk_speed = 0.5f;
+        velocity.x = look.x * walk_speed;
+        velocity.z = look.z * walk_speed;
+
+        // 아직 도착하지 않았으므로 idle_timer는 증가시키지 않고 여기서 함수 종료!
+        return;
     }
 
-    // CMovementComponent::Move 함수 대신 velocity를 직접 세팅!
-    // CObject에 있는 look 벡터(현재 바라보는 방향)를 활용.
-    float walk_speed = 0.4f; // 원하는 산책 속도로 조절
+    // (선택) 자리에 딱 맞게 강제 보정해주면 더 깔끔.
+    //position.x = origin_position.x;
+    //position.z = origin_position.z;
 
+    // 초기 지점으로 복귀하면 
+    SetYaw(0.0f);
+    SetYawPitch(0.0f, 0.0f);
+
+    // 속도 0 고정 (휴식)
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
+
+    // 타이머 체크: 5초 쉬었으면 순찰(PATROL)하러 출발
+    idle_timer += elapsedTime;
+
+    if (idle_timer >= 5.0f) {
+
+        auto AIComponent = GetComponent<CAIComponent>();
+        if (AIComponent) 
+            AIComponent->ChangeState(AI_STATE::MONSTER_PATROL);
+    }
+}
+
+void CHumanMonster::OnPatrolMove(float elapsedTime)
+{
+    // (순찰 상태)
+    // 타겟 탐색 (TRACE 전환)
+    auto target = FindNearestPlayer();
+    if (target) {
+        float dist = Vector3::Length(Vector3::Subtract(target->position, this->position));
+        if (dist <= recog_range) {
+
+            SetTarget(target);
+
+            auto AIComponent = GetComponent<CAIComponent>();
+            if (AIComponent) {
+                AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+                return;
+            }
+        }
+    }
+
+    patrol_timer += elapsedTime;
+    turn_timer += elapsedTime;
+
+    // 전체 배회 시간 (10초)
+    if (patrol_timer >= 10.0f) {
+
+        auto AIComponent = GetComponent<CAIComponent>();
+        if (AIComponent)
+            AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
+
+        return;
+    }
+
+    // 방향 전환 (2초)
+    if (turn_timer >= 2.0f) {
+        float newYaw = yaw + 180.0f;
+        SetYaw(newYaw);
+        SetYawPitch(newYaw, 0.0f);
+
+        turn_timer = 0.0f;
+    }
+
+    // 이동 처리
+    float walk_speed = 0.4f;
     velocity.x = look.x * walk_speed;
     velocity.z = look.z * walk_speed;
 }
@@ -65,6 +149,36 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
+
+    // 타겟과의 방향 및 평면 거리 계산
+    XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, this->position);
+    dirVec.y = 0.0f; // Y축(높이) 차이는 무시하고 XZ 평면에서의 거리만 계산
+    float dist = Vector3::Length(dirVec);
+
+    // 상태 전환 (State Transition) 판단
+    // 조건 A: 타겟이 인식 범위(0.5f) 밖으로 도망갔을 때 -> 추적 포기
+    if (dist > recog_range) {
+        target_player = nullptr; // 타겟 초기화
+        AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
+        return;
+    }
+    // 조건 B: 타겟이 공격 범위(0.2f) 안으로 들어왔을 때 -> 공격 시작!
+    else if (dist <= 0.2f) {
+        AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
+        return;
+    }
+
+    // 타겟을 향해 회전 (Rotation)
+    // atan2f 함수를 이용해 목표 방향 벡터를 각도(Yaw)로 변환
+    float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+
+    SetYaw(targetYaw);             // 물리적인 앞 방향(look) 갱신
+    SetYawPitch(targetYaw, 0.0f);  // 그래픽(모델링) 방향 갱신
+
+    // 타겟을 향해 돌진 (Movement)
+    // 마찰력이 0인 상태이므로, IDLE(0.4f)보다 훨씬 빠른 속도로 직접 꽂아줍니다.
+    velocity.x = look.x * trace_speed;
+    velocity.z = look.z * trace_speed;
 }
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
@@ -76,9 +190,8 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
     // 타이머 증가
     attack_timer += elapsedTime;
 
-    // 공격 애니메이션 길이 or 쿨타임 (예: 1.5초)이 지나면?
+    // 공격 애니메이션 길이 or 쿨타임이 지나면?
     if (attack_timer >= 1.5f) {
-        attack_timer = 0.0f; // 타이머 초기화
 
         // 실제 데미지 판정 로직은 서버의 이 시점(또는 타이머 중간)에 수행!
         // 예: target_player->TakeDamage(10);
@@ -92,8 +205,20 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
     }
 }
 
+void CHumanMonster::OnIdleEnter()
+{
+    ResetIdleTimer();
+}
+
+void CHumanMonster::OnPatrolEnter()
+{
+    ResetPatrolTimers();
+}
+
 void CHumanMonster::OnAttackEnter()
 {
+    ResetAttackTimer();
+
     // 1. 공격 상태 진입 시, 어떤 공격을 할지 결정 (발 구르기 vs 파리채)
     // 예: int pattern = rand() % 2; 
     // DecideAttackPattern(); 
@@ -108,5 +233,9 @@ void CHumanMonster::OnAttackEnter()
 
 std::shared_ptr<CPlayer> CHumanMonster::FindNearestPlayer()
 {
-	return std::shared_ptr<CPlayer>();
+    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
+    assert(currentScene->GetSceneType() == current_scene_type);
+    auto player = currentScene->GetMyPlayer();  
+    
+	return player;
 }

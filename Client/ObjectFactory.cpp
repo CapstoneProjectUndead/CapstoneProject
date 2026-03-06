@@ -257,7 +257,7 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 	return player;
 }
 
-std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager)
+std::shared_ptr<CHumanMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager)
 {
 	auto humanMonster = std::make_shared<CHumanMonster>();
 	CreateUndeadCharacter(humanMonster, heapManager);
@@ -277,6 +277,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapMana
 
 	// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
 	humanMonster->SetComponent(std::make_shared<CMovementComponent>());
+
 	return humanMonster;
 }
 
