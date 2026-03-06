@@ -50,7 +50,7 @@ public:
 
 	void ReleaseUploadBuffer();
 
-	virtual void Render(ID3D12GraphicsCommandList*);
+	virtual void Render(ID3D12GraphicsCommandList*, uint32 instCount = 1);
 
 	// 불러온 모델 데이터 저장용 함수
 	template<typename T>

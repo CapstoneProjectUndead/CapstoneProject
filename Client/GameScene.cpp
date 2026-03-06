@@ -7,6 +7,7 @@
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
+#include "MeshRenderer.h"
 
 // 맵 생성 알고리즘
 #include "MapGenerator/MapGenerator.h"
@@ -36,19 +37,41 @@ void CGameScene::Initialize()
 			shader->CreateShader(GET_DEVICE);
 			shaders.emplace("skinning", std::move(shader));
 		}
+		{
+			// inst
+			std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
+			shader->CreateShader(GET_DEVICE);
+			shaders.emplace("inst", std::move(shader));
+		}
 	}
 
 	if (prototypes.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
 		prototypes = factory->CreateGameScene(staticHeapManager);
 	}
 	if (objects.empty()) {
 		std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
 		for (const auto& inst : instData) {
 			if (inst.type == MapGenerator::EModelType::ROAD) {
-				objects.push_back(prototypes["park_road"]);
+				auto meshComp = prototypes["park_road"]->GetComponent<CMeshComponent>();
+				auto matComp = prototypes["park_road"]->GetComponent<CMaterialComponent>();
+
+				// 위치/크기 정보를 행렬로 변환하여 추가
+				XMMATRIX world = XMLoadFloat4x4(&prototypes["park_road"]->world_matrix) *XMMatrixScaling(inst.scale.x, inst.scale.y, inst.scale.z) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+
+				objects.push_back(std::make_shared<CObject>());
+				XMStoreFloat4x4(&objects.back()->world_matrix, world);
+
+				// 인스턴스 렌더러에 위치와 리소스 정보 등록
+				CInstRenderer::GetInstance().AddInstance(
+					meshComp->GetMesh().get(),
+					matComp,
+					objects.back()->world_matrix
+				);
+				objects.back()->SetShdaer("inst");
 			}
 		}
+		CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
 	}
 }
 
@@ -58,10 +81,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		my_player->SetPosition(0.0f, 0.0f, 0.0f);
-	}
-	else {
-		factory->SetComponent(dynamic_pointer_cast<CPlayer>(my_player));
+		my_player->SetPosition(0.0f, 2.0f, 0.0f);
 	}
 
 	if (!camera) {
@@ -101,16 +121,20 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 		if (light)
 			light->Render(commandList);
 
-		/*for (const auto& obj : prototypes) {
+		for (const auto& obj : prototypes) {
 			if (shader.first == obj.second->GetShader()) {
 				shader.second->Render(commandList, obj.second.get());
 			}
-		}*/
+		}
 
 		for (const auto& obj : objects) {
-			if (shader.first == obj->GetShader()) {
+			if (shader.first == obj->GetShader() && shader.first != "inst") {
 				shader.second->Render(commandList, obj.get());
 			}
+		}
+
+		if (shader.first == "inst") {
+			shader.second->Render(commandList, nullptr);
 		}
 
 		if (my_player) {
