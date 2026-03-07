@@ -214,9 +214,9 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 {
 	if (chain.bone_indices.empty()) return;
 
-	XMVECTOR gravity = XMVectorSet(0.0f, -1.2f, 0.0f, 0.0f);
-	float stiffness = 70.0f; // 빳빳한 정도
-	float damping = 0.85f;    // 마찰력
+	XMVECTOR gravity = XMVectorSet(0.0f, chain.gravity_y, 0.0f, 0.0f);
+	float stiffness = chain.stiffness;
+	float damping = chain.damping;
 
 	// =======================================================
 	// 🌟 [추가됨] 마법의 관성(Inertia) 계산! 
@@ -224,7 +224,7 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 	XMVECTOR localVelocity = XMVector3TransformNormal(XMLoadFloat3(&playerVelocity), invRot);
 
 	// 내가 이동하는 반대 방향으로 작용하는 관성! (바람맞는 세기 조절: 5.0f 숫자를 키울수록 강해짐!)
-	XMVECTOR inertiaForce = -localVelocity * 5.0f;
+	XMVECTOR inertiaForce = -localVelocity * 1.5f;
 	// =======================================================
 
 	// 0번 구슬(뿌리)은 원래 위치에 꽉 고정!

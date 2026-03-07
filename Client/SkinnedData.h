@@ -23,6 +23,10 @@ struct DynamicBoneChain {
 	std::vector<DynamicBoneNode> nodes;
 	std::vector<int> bone_indices;
 	float bone_length = 1.0f;
+
+	float stiffness = 70.0f;     // 빳빳함
+	float damping = 0.85f;       // 마찰력(탱탱함)
+	float gravity_y = -1.2f;     // 무게감
 };
 
 

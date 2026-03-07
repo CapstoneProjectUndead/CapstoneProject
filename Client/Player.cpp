@@ -262,6 +262,12 @@ void CPlayer::InitDynamicBones()
     // 🐶 3. 꼬리 목걸이 세팅 (예: 뼈 번호가 31번부터 40번이라고 가정!)
     // ======================================================
     tail_chain.bone_indices = { 37,38,39,40,41, 42, 43, 44, 45, 46};
-    tail_chain.bone_length = 0.8f; // 꼬리는 귀보다 뼈 간격이 길 수도 있으니까 다르게!
+    tail_chain.bone_length = 0.5f; // 꼬리는 귀보다 뼈 간격이 길 수도 있으니까 다르게!
     tail_chain.nodes.resize(tail_chain.bone_indices.size());
+
+    tail_chain.stiffness = 300.0f;  // 1. 부모를 꽉! 따라가게 엄청 높이기 (원래 70 -> 250)
+    tail_chain.damping = 0.7f;      // 2. 탱탱(띠용~)거리게 마찰력 줄이기 (원래 0.85 -> 0.7)
+    tail_chain.gravity_y = -0.05f;   // 3. 밑으로 처지지 않게 중력 거의 없애기 (원래 -1.2 -> -0.2)
+
+
 }
