@@ -44,7 +44,7 @@ void CLobbyScene::Start()
 		if (children->mesh.positions.empty() && children->collider.positions.empty())
 			continue;
 
-		auto obj = std::make_shared<CObject>();
+		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 		obj->world_matrix = children->localMatrix;
 
 		// =================================================

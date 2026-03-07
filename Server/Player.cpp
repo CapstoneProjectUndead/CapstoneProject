@@ -6,7 +6,8 @@
 #include "PhysicsManager.h"
 
 CPlayer::CPlayer()
-	: room_id(-1)
+	: CObject(OBJECT_TYPE::PLAYER)
+    , room_id(-1)
     , current_scene_type(SCENE_TYPE::TITLE)
     , last_processed_seq(0)
 	, last_simulated_time(0.0f)

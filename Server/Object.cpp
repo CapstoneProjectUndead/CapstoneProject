@@ -8,8 +8,9 @@
 #include "Movement.h"
 
 
-CObject::CObject()
-	: obj_id(-1)
+CObject::CObject(OBJECT_TYPE type)
+	: obj_type(type)
+	, obj_id(-1)
 {
 	XMStoreFloat4x4(&world_matrix, XMMatrixIdentity());
 }

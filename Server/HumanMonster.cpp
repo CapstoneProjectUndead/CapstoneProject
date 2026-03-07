@@ -1,10 +1,10 @@
-#include "stdafx.h"
+#include "pch.h"
+// Server쪽 HumanMonster
 #include "HumanMonster.h"
 #include "Player.h"
 #include "AIComponent.h"
 #include "Movement.h"
 #include "SceneManager.h"
-#include "MyPlayer.h"
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
@@ -35,7 +35,7 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
     if (target) {
 
-        float dist = Vector3::Length(Vector3::Subtract(target->position, position));
+        float dist = Vector3::Length(Vector3::Subtract(target->GetPosition(), position));
 
         if (dist <= recog_range) {
 
@@ -101,7 +101,7 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
     // 타겟 탐색 (TRACE 전환)
     auto target = FindNearestPlayer();
     if (target) {
-        float dist = Vector3::Length(Vector3::Subtract(target->position, position));
+        float dist = Vector3::Length(Vector3::Subtract(target->GetPosition(), position));
         if (dist <= recog_range) {
 
             SetTarget(target);
@@ -153,7 +153,7 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
     }
 
     // 타겟과의 방향 및 평면 거리 계산
-    XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+    XMFLOAT3 dirVec = Vector3::Subtract(target_player->GetPosition(), position);
     dirVec.y = 0.0f; // Y축(높이) 차이는 무시하고 XZ 평면에서의 거리만 계산
     float dist = Vector3::Length(dirVec);
 
@@ -233,11 +233,11 @@ void CHumanMonster::OnAttackEnter()
     attack_timer = 0.0f;
 }
 
-std::shared_ptr<CPlayer> CHumanMonster::FindNearestPlayer()
+shared_ptr<CPlayer> CHumanMonster::FindNearestPlayer()
 {
-    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    assert(currentScene->GetSceneType() == current_scene_type);
-    auto player = currentScene->GetMyPlayer();  
+    //CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
+    //assert(currentScene->GetSceneType() == current_scene_type);
+    //auto player = currentScene->GetMyPlayer();  
     
-	return player;
+	return nullptr;
 }

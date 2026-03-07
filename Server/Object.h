@@ -14,7 +14,7 @@ class CObject
     friend class CLobbyScene;
 
 public:
-	CObject();
+	CObject(OBJECT_TYPE type);
     virtual ~CObject();
 
     virtual void Update(const float elapsedTime);
@@ -40,6 +40,9 @@ public:
     weak_ptr<CUser>                     GetUserWeak() const { return user; }
     shared_ptr<CUser>                   GetUser() const { return user.lock(); }
     void                                SetUser(shared_ptr<CUser> _user) { user = _user; }
+
+    OBJECT_TYPE                         GetObjectType() const { return obj_type; }
+    void                                SetObjectType(OBJECT_TYPE type) { obj_type = type; }
 
     XMFLOAT3                            GetPosition() { return position; }
     void                                SetPosition(const XMFLOAT3& pos) { position = pos; }
@@ -75,6 +78,7 @@ protected:
     weak_ptr<CUser>                     user;
     weak_ptr<Session>                   session;
     uint64                              obj_id;
+    OBJECT_TYPE                         obj_type;
 
     XMFLOAT4X4                          world_matrix;
 

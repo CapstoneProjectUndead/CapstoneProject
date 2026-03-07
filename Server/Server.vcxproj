@@ -151,6 +151,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AIComponent.cpp" />
+    <ClCompile Include="AttackState.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="Collider.cpp" />
@@ -159,9 +161,13 @@
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
+    <ClCompile Include="HumanMonster.cpp" />
+    <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="Job.cpp" />
+    <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Movement.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="PatrolState.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -182,14 +188,18 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="LobbyScene.cpp" />
     <ClCompile Include="SkinnedData.cpp" />
+    <ClCompile Include="State.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="TitleScene.cpp" />
+    <ClCompile Include="TraceState.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\External\Common\enum.h" />
     <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
+    <ClInclude Include="AIComponent.h" />
+    <ClInclude Include="AttackState.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="Collider.h" />
@@ -200,10 +210,14 @@
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
+    <ClInclude Include="HumanMonster.h" />
+    <ClInclude Include="IdleState.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="macro.h" />
+    <ClInclude Include="Monster.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="PatrolState.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsManager.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -218,8 +232,10 @@
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="LobbyScene.h" />
     <ClInclude Include="SkinnedData.h" />
+    <ClInclude Include="State.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="TitleScene.h" />
+    <ClInclude Include="TraceState.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
