@@ -17,6 +17,7 @@ CPlayer::CPlayer()
     , room_id(-1)
 {
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+    InitDynamicBones();
 }
 
 void CPlayer::Update(float elapsedTime)
@@ -232,4 +233,35 @@ void CPlayer::ChangeMouth(int index)
     for (int i = 0; i < mouth_material.size(); ++i) {
         mouth_material[i]->SetEnable(i == index);
     }
+}
+
+void CPlayer::InitDynamicBones()
+{
+    // =======================================================
+    // 🐶 1. 왼쪽 귀 목걸이 세팅 (예: 뼈 번호가 11번부터 20번이라고 가정!)
+    // =======================================================
+    // 왼쪽 귀를 움직일 뼈 번호표를 순서대로 쭉 적어줘. (뿌리부터 끝부분 순서로!)
+    left_ear_chain.bone_indices = { 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+
+    // 구슬과 구슬 사이의 끈 길이! (모델 크기에 맞춰서 나중에 조절하면 돼)
+    left_ear_chain.bone_length = 0.5f;
+
+    // 뼈 개수(10개)만큼 빈 구슬 상자를 만들어줘! (초기화)
+    left_ear_chain.nodes.resize(left_ear_chain.bone_indices.size());
+
+
+    // =======================================================
+    // 🐶 2. 오른쪽 귀 목걸이 세팅 (예: 뼈 번호가 21번부터 30번이라고 가정!)
+    // =======================================================
+    right_ear_chain.bone_indices = { 18,19, 20, 21, 22, 23, 24, 25, 26,27};
+    right_ear_chain.bone_length = 0.5f;
+    right_ear_chain.nodes.resize(right_ear_chain.bone_indices.size());
+
+
+    // =======================================================
+    // 🐶 3. 꼬리 목걸이 세팅 (예: 뼈 번호가 31번부터 40번이라고 가정!)
+    // ======================================================
+    tail_chain.bone_indices = { 37,38,39,40,41, 42, 43, 44, 45, 46};
+    tail_chain.bone_length = 0.8f; // 꼬리는 귀보다 뼈 간격이 길 수도 있으니까 다르게!
+    tail_chain.nodes.resize(tail_chain.bone_indices.size());
 }

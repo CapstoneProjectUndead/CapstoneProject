@@ -1,5 +1,6 @@
 #pragma once
 #include "Character.h"
+#include <vector>
 
 class CCamera;
 class CMaterialComponent;
@@ -12,6 +13,9 @@ struct OpponentFrameHistory
 	XMFLOAT3 position;
 	PLAYER_STATE state;
 };
+
+
+
 
 class CPlayer : public CCharacter {
 public:
@@ -33,6 +37,14 @@ public:
 	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
 	void SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
 	XMFLOAT3 GetHeadPosition() const override;
+
+	void InitDynamicBones();
+	void UpdateDynamicBones(float elapsedTime);
+	void CPlayer::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4>& toRootTransforms, float elapsedTime);
+	DynamicBoneChain* GetLeftEarChain() { return &left_ear_chain; }
+	DynamicBoneChain* GetRightEarChain() { return &right_ear_chain; }
+	DynamicBoneChain* GetTailChain() { return &tail_chain; }
+
 public:
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
@@ -61,5 +73,9 @@ protected:
 	float smoothed_delay = 0.1f;
 
 	std::deque<OpponentFrameHistory> interpolation_deq;
+
+	DynamicBoneChain left_ear_chain;
+	DynamicBoneChain right_ear_chain;
+	DynamicBoneChain tail_chain;
 };
 

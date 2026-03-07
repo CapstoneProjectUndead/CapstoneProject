@@ -71,7 +71,19 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	// 본 행렬 계산
 	final_transforms.resize(skinned.BoneCount());
-	skinned.GetFinalTransforms(current_animation, current_time, final_transforms, owner->pitch);
+	// =======================================================
+	// 🌟 [수정할 부분] 여기서 드디어 시간과 수첩 3개를 몽땅 넘겨줍니다!
+	skinned.GetFinalTransforms(
+		current_animation,
+		current_time,
+		final_transforms,
+		owner->pitch,
+		deltaTime,              // 🌟 1. 흘러간 시간 전달!
+		p->GetLeftEarChain(),   // 🌟 2. 왼쪽 귀 수첩 전달!
+		p->GetRightEarChain(),  // 🌟 3. 오른쪽 귀 수첩 전달!
+		p->GetTailChain()       // 🌟 4. 꼬리 수첩 전달!
+	);
+	// =======================================================
 }
 
 void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)

@@ -128,7 +128,8 @@ void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<
 	animations = otherAnimations;
 }
 
-void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch)
+void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch,
+	float elapsedTime, DynamicBoneChain* leftEar, DynamicBoneChain* rightEar, DynamicBoneChain* tail)
 {
 	UINT numBones = bone_offsets.size();
 
@@ -169,6 +170,8 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	// is just its local bone transform.
 	toRootTransforms[0] = toParentTransforms[0];
 
+
+
 	// Now find the toRootTransform of the children.
 	for (UINT i = 1; i < numBones; ++i) {
 		XMMATRIX toParent = XMLoadFloat4x4(&toParentTransforms[i]);
@@ -180,6 +183,13 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 
 		XMStoreFloat4x4(&toRootTransforms[i], toRoot);
 	}
+
+	// =======================================================
+		// 🌟 [수정됨] toParentTransforms 변수도 같이 넘겨줍니다!
+	if (leftEar) SimulateChain(*leftEar, toRootTransforms, toParentTransforms, elapsedTime);
+	if (rightEar) SimulateChain(*rightEar, toRootTransforms, toParentTransforms, elapsedTime);
+	if (tail) SimulateChain(*tail, toRootTransforms, toParentTransforms, elapsedTime);
+	// =======================================================
 
 	// Premultiply by the bone offset transform to get the final transform.
 	XMMATRIX rotate = XMMatrixRotationY(XM_PI);	// 180도 회전
@@ -197,4 +207,88 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	XMMATRIX headToRoot = XMLoadFloat4x4(&toRootTransforms[headIdx]); 
 	XMMATRIX localEyeMatrix = headToRoot * rotate;
 	XMStoreFloat3(&head_position, localEyeMatrix.r[3]);
+}
+
+void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4>& toRootTransforms, const std::vector<XMFLOAT4X4>& toParentTransforms, float elapsedTime)
+{
+	if (chain.bone_indices.empty()) return;
+
+	XMVECTOR gravity = XMVectorSet(0.0f, -1.2f, 0.0f, 0.0f);
+	float stiffness = 70.0f; // 빳빳한 정도
+	float damping = 0.85f;    // 마찰력
+
+	// 0번 구슬(뿌리)은 원래 위치에 꽉 고정!
+	int rootIdx = chain.bone_indices[0];
+	XMMATRIX rootMatrix = XMLoadFloat4x4(&toRootTransforms[rootIdx]);
+	XMStoreFloat3(&chain.nodes[0].current_position, rootMatrix.r[3]);
+
+	for (size_t i = 1; i < chain.bone_indices.size(); ++i)
+	{
+		int pIdx = chain.bone_indices[i - 1]; // 부모 뼈 번호
+		int cIdx = chain.bone_indices[i];     // 내(자식) 뼈 번호
+
+		// 1. 방금 전(i-1)에 업데이트 된 '최신 부모 행렬' 가져오기
+		XMMATRIX parentMatrix = XMLoadFloat4x4(&toRootTransforms[pIdx]);
+		XMVECTOR parentPos = parentMatrix.r[3];
+
+		// 2. 내 원래 목표 위치 구하기 (중요: 탈골 방지!)
+		// 내 원래 지역 행렬을 '최신 부모'에 곱해서, 부모가 꺾인 만큼 나도 따라간 위치를 목표로 삼음!
+		XMMATRIX childLocal = XMLoadFloat4x4(&toParentTransforms[cIdx]);
+		XMMATRIX childTargetMatrix = XMMatrixMultiply(childLocal, parentMatrix);
+		XMVECTOR targetPos = childTargetMatrix.r[3];
+
+		// 3. 물리 연산 (통통 튀기기)
+		XMVECTOR currentPos = XMLoadFloat3(&chain.nodes[i].current_position);
+		XMVECTOR velocity = XMLoadFloat3(&chain.nodes[i].velocity);
+
+		XMVECTOR force = (targetPos - currentPos) * stiffness;
+		force += gravity;
+
+		velocity += force * elapsedTime;
+		velocity *= damping;
+		currentPos += velocity * elapsedTime;
+
+		// 고무줄 방지
+		XMVECTOR direction = XMVector3Normalize(currentPos - parentPos);
+		currentPos = parentPos + (direction * chain.bone_length);
+
+		XMStoreFloat3(&chain.nodes[i].current_position, currentPos);
+		XMStoreFloat3(&chain.nodes[i].velocity, velocity);
+
+		// 4. 부모 뼈를 내 쪽으로 살짝 비틀기 (꽈배기 방지 쿼터니언 마법!)
+		XMVECTOR origDir = XMVector3Normalize(targetPos - parentPos);
+		XMVECTOR simDir = direction;
+
+		XMVECTOR cross = XMVector3Cross(origDir, simDir);
+		float d = XMVectorGetX(XMVector3Dot(origDir, simDir));
+
+		XMMATRIX rotMatrix;
+		if (d > 0.9999f) {
+			rotMatrix = XMMatrixIdentity();
+		}
+		else if (d < -0.999f) {
+			rotMatrix = XMMatrixRotationX(XM_PI);
+		}
+		else {
+			float s = sqrtf((1.0f + d) * 2.0f);
+			float invs = 1.0f / s;
+			XMVECTOR q = XMVectorSet(XMVectorGetX(cross) * invs, XMVectorGetY(cross) * invs, XMVectorGetZ(cross) * invs, s * 0.5f);
+			q = XMQuaternionNormalize(q);
+			rotMatrix = XMMatrixRotationQuaternion(q);
+		}
+
+		// 5. 부모 행렬에 회전 적용!
+		parentMatrix.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f); // 이동 임시 제거
+		parentMatrix = XMMatrixMultiply(parentMatrix, rotMatrix);
+		parentMatrix.r[3] = parentPos; // 이동 복구
+		XMStoreFloat4x4(&toRootTransforms[pIdx], parentMatrix); // 부모 완성!
+
+		// =======================================================
+		// 🌟 6. [진짜 제일 중요!!!] 뼈 다시 끼워 맞추기 (접골)
+		// 회전된 최신 부모 행렬에 내 로컬 행렬을 곱해서 내 행렬도 갱신해 줍니다!
+		// 이거 덕분에 다음 루프에서 내 자식이 날아가지 않아요!
+		// =======================================================
+		XMMATRIX finalChildRoot = XMMatrixMultiply(childLocal, parentMatrix);
+		XMStoreFloat4x4(&toRootTransforms[cIdx], finalChildRoot);
+	}
 }
