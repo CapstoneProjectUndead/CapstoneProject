@@ -18,7 +18,5 @@ public:
     bool IsUIInputEnabled() override;
 
 private:
-    // GameScene에 있는 prototype 저장
-    std::map<std::string, std::shared_ptr<CObject>> prototypes;
 };
 

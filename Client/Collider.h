@@ -8,7 +8,9 @@ class CSphereShape;
 
 class CColliderShape {
 public:
+    CColliderShape() = default;
     virtual ~CColliderShape() = default;
+    virtual std::unique_ptr<CColliderShape> Clone() const = 0;
 
     virtual void Update(const XMMATRIX& worldMatrix) = 0;
 
@@ -24,6 +26,9 @@ protected:
 class CBoxShape : public CColliderShape {
 public:
     CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{});
+    std::unique_ptr<CColliderShape> CBoxShape::Clone() const {
+        return std::make_unique<CBoxShape>(*this);
+    }
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
@@ -41,6 +46,9 @@ class CSphereShape : public CColliderShape {
 public:
     CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{});
     CSphereShape(XMFLOAT3& extents, XMFLOAT3& p = XMFLOAT3{});
+    std::unique_ptr<CColliderShape> CSphereShape::Clone() const {
+        return std::make_unique<CSphereShape>(*this);
+    }
 
     void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
@@ -61,7 +69,10 @@ class CConvexMeshShape : public CColliderShape
 {
 public:
     CConvexMeshShape(std::vector<XMFLOAT3>& vertice);
-
+    std::unique_ptr<CColliderShape> CConvexMeshShape::Clone() const {
+        return std::make_unique<CConvexMeshShape>(*this);
+    }
+    
     void Update(const XMMATRIX& worldMatrix) override;
 
     XMVECTOR GetSupport(XMVECTOR direction) const override {
@@ -76,6 +87,11 @@ private:
 // concave를 GJK로 연산하기 위한 class
 class CTriangleShape : public CColliderShape {
 public:
+    CTriangleShape() = default;
+    std::unique_ptr<CColliderShape> CTriangleShape::Clone() const {
+        return std::make_unique<CTriangleShape>(*this);
+    }
+
     XMVECTOR v[3];
 
     XMVECTOR GetSupport(XMVECTOR direction) const override;
@@ -104,6 +120,10 @@ public:
         BoundingBox aabb;
     };
     CConcaveMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices);
+    std::unique_ptr<CColliderShape> CConcaveMeshShape::Clone() const {
+        return std::make_unique<CConcaveMeshShape>(*this);
+    }
+
     BoundingBox ComputeTriangleAABB(const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2);
 
     // GJK용 GetSupport 사용X
@@ -138,6 +158,9 @@ class CColliderComponent : public CComponent
 {
 public:
     CColliderComponent(std::unique_ptr< CColliderShape>& otherShape, const BoundingBox& otherBox);
+    ~CColliderComponent() = default;
+    CColliderComponent(const CColliderComponent& other);
+
     void SetShape(std::unique_ptr< CColliderShape>& otherShape) { shape = std::move(otherShape); }
     CColliderShape* GetShape() const { return shape.get(); }
     void SetFillter(const CollisionFilter& f) { filter = f; }

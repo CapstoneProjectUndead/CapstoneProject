@@ -2,6 +2,9 @@
 #include "Material.h"
 #include "Texture.h"
 
+// 맵 생성 알고리즘
+#include "MapGenerator/MapGenerator.h"
+
 class CDescriptorHeapManager;
 class CCharacter;
 class CObject;
@@ -16,7 +19,9 @@ public:
 	~CObjectFactory() = default;
 	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
-	std::map<std::string, std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
+	// GameScene 모델 파츠 load
+	void LoadGameScene(CDescriptorHeapManager* heapManager);
+	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	// Initialize 호출 X
 	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
@@ -47,8 +52,10 @@ private:
 
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);
+	std::string GameSceneTypeToString(const MapGenerator::EModelType& type);
 
 	CMaterialManager matManager;
 	CTextureManager texManager;
+	std::map<std::string, std::shared_ptr<CObject>> prototypes;
 };
 

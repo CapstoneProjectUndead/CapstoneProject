@@ -14,7 +14,6 @@
 #include "Character.h"
 #include "MyPlayer.h"
 
-
 void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
 {
 	if (node->mesh.positions.empty()) return;
@@ -52,7 +51,7 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	filter.mask = EColLayer::PLAYER;
 	boxCollider->SetFillter(filter);
 	obj->SetComponent(boxCollider);
-	CPhysicsManager::GetInstance().SetCollider(boxCollider);
+	//CPhysicsManager::GetInstance().SetCollider(boxCollider);
 
 	obj->Initialize(GET_DEVICE, GET_CMD_LIST);
 
@@ -63,11 +62,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 {
 	std::vector<std::shared_ptr<CObject>> objects;
 
-	std::string fileName{ "../Modeling/lobby_uv.bin" };
+	std::string fileName{ "../Modeling/lobby_0305.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	for (const auto& children : frameRoot->childrens) {
-		if (children->mesh.positions.empty()) break;
+		if (children->mesh.positions.empty()) continue;
 		auto obj = std::make_shared<CObject>();
 		// 1) MeshComponent 생성
 		auto meshComp = std::make_shared<CMeshComponent>();
@@ -130,15 +129,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			CPhysicsManager::GetInstance().SetCollider(boxCollider);
 			break;
 		}
-		case LobbyMeshName::Counter:
-		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-			collider->SetFillter(filter);
-			obj->SetComponent(collider);
-			CPhysicsManager::GetInstance().SetCollider(collider);
-			break;
-		}
 		case LobbyMeshName::Unknown:
 		{
 			if (children->collider.positions.empty()) break;
@@ -160,18 +150,50 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	return objects;
 }
 
-std::map<std::string, std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)
+void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
 {
-	std::map<std::string, std::shared_ptr<CObject>> objects;
+	if (!prototypes.empty()) return;
 
 	std::string fileName{ "../Modeling/all_map.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	LoadFrameNode(heapManager, objects, frameRoot);
+	LoadFrameNode(heapManager, prototypes, frameRoot);
 	for (const auto& children : frameRoot->childrens) {
-		LoadFrameNode(heapManager, objects, children);
+		LoadFrameNode(heapManager, prototypes, children);
 	}
+}
 
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)
+{
+	if (prototypes.empty()) LoadGameScene(heapManager);
+
+	std::vector<std::shared_ptr<CObject>> objects;
+	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+	for (const auto& inst : instData) {
+		std::string typeName{ GameSceneTypeToString(inst.type) };
+		auto meshComp = prototypes[typeName]->GetComponent<CMeshComponent>();
+		auto matComp = prototypes[typeName]->GetComponent<CMaterialComponent>();
+		auto collider = prototypes[typeName]->GetComponent<CColliderComponent>();
+
+		// 위치/크기 정보를 행렬로 변환하여 추가
+		// * XMMatrixScaling(inst.scale.x, inst.scale.y, inst.scale.z)
+		XMMATRIX world = XMLoadFloat4x4(&prototypes[typeName]->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+
+		objects.push_back(std::make_shared<CObject>());
+		XMStoreFloat4x4(&objects.back()->world_matrix, world);
+
+		// 인스턴스 렌더러에 위치와 리소스 정보 등록
+		CInstRenderer::GetInstance().AddInstance(
+			meshComp->GetMesh().get(),
+			matComp,
+			objects.back()->world_matrix
+		);
+		objects.back()->SetShdaer("inst");
+		auto copyCollider = std::make_shared< CColliderComponent>(*collider);
+		objects.back()->SetComponent(copyCollider);
+		CPhysicsManager::GetInstance().SetCollider(copyCollider);
+	}
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
 	return objects;
 }
 
@@ -346,4 +368,31 @@ CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::s
 
 	auto it = table.find(str);
 	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
+}
+
+std::string CObjectFactory::GameSceneTypeToString(const MapGenerator::EModelType& type)
+{
+	static const std::unordered_map<MapGenerator::EModelType, std::string> table = {
+		{ MapGenerator::EModelType::ROAD,					"park_road" },
+		{ MapGenerator::EModelType::PARK_GREEN,				"park_green" },
+		{ MapGenerator::EModelType::VILLAGE_ROAD,			"village_road" },
+		{ MapGenerator::EModelType::HOUSE_INNTER,			"house_place" },
+
+		{ MapGenerator::EModelType::WALL,					"seesaw001" },
+
+		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		"wall_2001" },
+		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	"wall_1002" },
+		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		"wall_1003" },
+		/*{ MapGenerator::EModelType::WAREHOUSE,				"wall_1002" },
+		{ MapGenerator::EModelType::STORE,					"vending_machine001" },*/
+		{ MapGenerator::EModelType::DOOR,					"wall_1_door001" },
+
+		{ MapGenerator::EModelType::KIOSK,					"table001" },
+		{ MapGenerator::EModelType::TREE,					"pinetree" },
+		{ MapGenerator::EModelType::TREASURE,				"trashcan001" },
+		{ MapGenerator::EModelType::BENCH,					"park_bench002" },
+	};
+
+	auto it = table.find(type);
+	return (it != table.end()) ? it->second : "park_road";
 }

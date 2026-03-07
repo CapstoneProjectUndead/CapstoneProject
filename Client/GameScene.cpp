@@ -7,10 +7,7 @@
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
-#include "MeshRenderer.h"
 
-// 맵 생성 알고리즘
-#include "MapGenerator/MapGenerator.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -45,33 +42,9 @@ void CGameScene::Initialize()
 		}
 	}
 
-	if (prototypes.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
-		prototypes = factory->CreateGameScene(staticHeapManager);
-	}
 	if (objects.empty()) {
-		std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
-		for (const auto& inst : instData) {
-			if (inst.type == MapGenerator::EModelType::ROAD) {
-				auto meshComp = prototypes["park_road"]->GetComponent<CMeshComponent>();
-				auto matComp = prototypes["park_road"]->GetComponent<CMaterialComponent>();
-
-				// 위치/크기 정보를 행렬로 변환하여 추가
-				XMMATRIX world = XMLoadFloat4x4(&prototypes["park_road"]->world_matrix) *XMMatrixScaling(inst.scale.x, inst.scale.y, inst.scale.z) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
-
-				objects.push_back(std::make_shared<CObject>());
-				XMStoreFloat4x4(&objects.back()->world_matrix, world);
-
-				// 인스턴스 렌더러에 위치와 리소스 정보 등록
-				CInstRenderer::GetInstance().AddInstance(
-					meshComp->GetMesh().get(),
-					matComp,
-					objects.back()->world_matrix
-				);
-				objects.back()->SetShdaer("inst");
-			}
-		}
-		CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
+		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
+		objects = factory->CreateGameScene(staticHeapManager);
 	}
 }
 
@@ -120,12 +93,6 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 
 		if (light)
 			light->Render(commandList);
-
-		for (const auto& obj : prototypes) {
-			if (shader.first == obj.second->GetShader()) {
-				shader.second->Render(commandList, obj.second.get());
-			}
-		}
 
 		for (const auto& obj : objects) {
 			if (shader.first == obj->GetShader() && shader.first != "inst") {
