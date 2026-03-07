@@ -289,16 +289,16 @@ struct C_Input : public PacketHeader
 };
 static_assert(sizeof(C_Input) == 4 + 78, "C_PlayerInput size mismatch!");
 
-struct S_Move : public PacketHeader
+struct S_PlayerMove : public PacketHeader
 {
 	uint64			last_seq_num;
 	float			timestamp;
 	NetPlayerInfo	info;
 	SCENE_TYPE		scene_type;
 
-	S_Move() : PacketHeader(sizeof(S_Move), (UINT)PacketType::_S_MOVE) {}
+	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_Move) == 4 + 74, "S_Move size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 74, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {

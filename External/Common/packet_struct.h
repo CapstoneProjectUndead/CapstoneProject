@@ -39,8 +39,8 @@ struct NetPlayerInfo
 	float			vx		= 0.0f;
 	float			vy		= 0.0f;
 	float			vz		= 0.0f;
-	float			pitch	= 0.0f;
 	float			yaw		= 0.0f;
+	float			pitch	= 0.0f;
 	float			roll	= 0.0f; 
 
 	PLAYER_STATE	state;
@@ -89,6 +89,59 @@ struct NetPlayerInfo
 };
 
 static_assert(sizeof(NetPlayerInfo) == 58, "NetObjectInfo size mismatch!");
+
+struct NetMonsterInfo
+{
+	uint64			monster_id;
+	uint32			room_id;
+
+	float			x, y, z;
+	float			vx = 0.0f;
+	float			vy = 0.0f;
+	float			vz = 0.0f;
+	float			yaw = 0.0f;
+	float			pitch = 0.0f;
+	float			roll = 0.0f;
+
+	AI_STATE	    AI_state;
+	MON_TYPE		monster_type;
+
+	NetMonsterInfo() = default;
+	NetMonsterInfo(uint64 _id, uint32 roomId
+		, MON_TYPE type
+		, float _x, float _y, float _z)
+		: monster_id(_id)
+		, room_id(roomId)
+		, AI_state(AI_STATE::MONSTER_IDLE)
+		, monster_type(type)
+		, x(_x)
+		, y(_y)
+		, z(_z)
+		, yaw{}
+		, pitch{}
+		, roll{}
+	{
+	}
+
+	NetMonsterInfo(const NetMonsterInfo& other)
+		: monster_id(other.monster_id)
+		, room_id(other.room_id)
+		, AI_state(other.AI_state)
+		, monster_type(other.monster_type)
+		, x(other.x)
+		, y(other.y)
+		, z(other.z)
+		, vx(other.vx)
+		, vy(other.vy)
+		, vz(other.vz)
+		, yaw(other.yaw)
+		, pitch(other.pitch)
+		, roll(other.roll)
+	{
+	}
+};
+
+static_assert(sizeof(NetMonsterInfo) == 53, "NetMonsterInfo size mismatch!");
 
 
 struct NetRoomInfo

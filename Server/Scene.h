@@ -5,6 +5,7 @@
 #include "User.h"
 
 class CRoom;
+class CMonster;
 
 class CScene
 {
@@ -22,7 +23,8 @@ public:
 	virtual void LeaveScene(uint64 playerId);
 
 	void SendResults();
-	void SendPlayersResults();
+	void SendPlayersResult();
+	void SendMonstersResult();
 	void SendPlayersCheckPing();
 
 	void BroadCast(SendBufferRef sendBuffer);
@@ -30,6 +32,7 @@ public:
 
 private:
 	void SimulatePlayers(const float elapsedTime);
+	void SimulateMonsters(const float elapsedTime);
 
 	// 입장 유저에게 기존 유저들의 정보를 알려준다.
 	void SendExistingUsers(shared_ptr<CPlayer> player);
@@ -79,6 +82,7 @@ public:
 
 protected:
 	map<uint64, shared_ptr<CPlayer>>	players;
+	map<uint64, shared_ptr<CMonster>>   monsters;
 
 	mutex								job_queue_lock;
 	queue<Job>							job_queue;

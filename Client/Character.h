@@ -11,6 +11,8 @@ class CCharacter : public CObject
 public:
     CCharacter(OBJECT_TYPE type);
 
+	// 커스터마이징용
+	// 0: dog, 1: cat, 2: buddy
 	void ChangeModelSet(int setIndex);
 	void ChangeEyes(int index);
 	void ChangeMouth(int index);

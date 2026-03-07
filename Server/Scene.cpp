@@ -2,9 +2,9 @@
 // Server쪽 Scene
 #include "Scene.h"
 #include "ClientSession.h"
-#include "Player.h"
 #include "Room.h"
 #include "RoomManager.h"
+#include "Monster.h"
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -31,6 +31,7 @@ void CScene::Update(const float elapsedTime)
 	// 패킷 큐에 쌓인 메세지들을 한꺼번에 처리
 	HandlePackets();
 	SimulatePlayers(elapsedTime);
+	SimulateMonsters(elapsedTime);
 }
 
 void CScene::HandlePackets()
@@ -53,17 +54,18 @@ void CScene::HandlePackets()
 
 void CScene::SendResults()
 {
-	SendPlayersResults();
+	SendPlayersResult();
+	SendMonstersResult();
 	//SendPlayersCheckPing();
 }
 
-void CScene::SendPlayersResults()
+void CScene::SendPlayersResult()
 {
 	// 시뮬레이션 돌린 플레이어의 결과를 모든 유저들에게 통보
 	for (auto& [id, player] : players) {
 
 		if (player) {
-			S_Move movePkt;
+			S_PlayerMove movePkt;
 
 			movePkt.last_seq_num = player->GetLastSequence();
 			movePkt.info.player_id = player->GetID(); // "움직인 플레이어"의 ID
@@ -83,8 +85,19 @@ void CScene::SendPlayersResults()
 			movePkt.info.state = player->GetState();
 			movePkt.timestamp = player->GetLastSimulatedTime();
 
-			SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Move>(movePkt);
+			SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_PlayerMove>(movePkt);
 			BroadCast(sendBuffer);
+		}
+	}
+}
+
+void CScene::SendMonstersResult()
+{
+	// 시뮬레이션 돌린 플레이어의 결과를 모든 유저들에게 통보
+	for (auto& [id, monster] : monsters) {
+
+		if (monster) {
+			
 		}
 	}
 }
@@ -139,6 +152,15 @@ void CScene::SimulatePlayers(const float elapsedTime)
 	for (auto& [id, player] : players) {
 		if (player) {
 			player->Update(elapsedTime);
+		}
+	}
+}
+
+void CScene::SimulateMonsters(const float elapsedTime)
+{
+	for (auto& [id, monster] : monsters) {
+		if (monster) {
+			monster->Update(elapsedTime);
 		}
 	}
 }

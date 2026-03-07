@@ -237,7 +237,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 	}
 }
 
-void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Move& pkt)
+void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_PlayerMove& pkt)
 {
 	auto& vec = GetObjects();
 	auto& indexMap = GetIDIndex();

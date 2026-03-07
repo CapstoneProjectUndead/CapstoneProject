@@ -143,7 +143,7 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 	return true;
 }
 
-bool Handle_S_MOVE(std::shared_ptr<Session> session, S_Move& pkt)
+bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt)
 {
 	// Title Scene에는 플레이어가 없다.
 	if (pkt.scene_type == SCENE_TYPE::TITLE)

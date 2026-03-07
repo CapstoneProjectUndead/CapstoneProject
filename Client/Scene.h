@@ -49,7 +49,7 @@ public:
 	// 서버 패킷 관련 처리 함수들
 	void Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt);
 	void Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt);
-	void Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Move& pkt);
+	void Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_PlayerMove& pkt);
 	void Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt);
 
 public:
