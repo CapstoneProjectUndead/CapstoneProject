@@ -270,4 +270,20 @@ void CPlayer::InitDynamicBones()
     tail_chain.gravity_y = -0.05f;   // 3. 밑으로 처지지 않게 중력 거의 없애기 (원래 -1.2 -> -0.2)
 
 
+    // 🌟 머리 뼈(5번)에 반지름 1.5 짜리 투명 방어막 씌우기! (크기는 테스트하면서 조절해!)
+    DynamicBoneCollider headCollider;
+    headCollider.bound_bone_index = 5;
+    headCollider.radius = 0.6f;
+    colliders.push_back(headCollider);
+
+    DynamicBoneCollider chestCollider;
+    chestCollider.bound_bone_index = 3;
+    chestCollider.radius = 0.3f;
+    colliders.push_back(chestCollider);
+
+    DynamicBoneCollider hipsCollider;
+    hipsCollider.bound_bone_index = 2;
+    hipsCollider.radius = 0.4f;
+    colliders.push_back(hipsCollider);
+
 }

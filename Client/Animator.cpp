@@ -47,9 +47,9 @@ void CAnimatorComponent::Update(float deltaTime)
 	// 내 플레이어
 	if (p->GetIsMyPlayer()) {
 		if (speed < 0.3f)
-			Play("Ganga_idle");
+			Play("Ganga_run2");
 		else
-			Play("Ganga_walk");
+			Play("Ganga_run2");
 	}
 	// 상대 플레이어
 	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
@@ -83,8 +83,9 @@ void CAnimatorComponent::Update(float deltaTime)
 		p->GetRightEarChain(),  // 🌟 3. 오른쪽 귀 수첩 전달!
 		p->GetTailChain(),       // 🌟 4. 꼬리 수첩 전달!
 		owner->velocity, // 👈 이거랑!
-		owner->yaw       // 👈 이거!
-	);
+		owner->yaw,       // 👈 이거!
+		p->GetColliders()
+		);
 	// =======================================================
 }
 

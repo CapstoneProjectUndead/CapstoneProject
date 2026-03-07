@@ -29,6 +29,10 @@ struct DynamicBoneChain {
 	float gravity_y = -1.2f;     // 무게감
 };
 
+struct DynamicBoneCollider {
+	int bound_bone_index; // 방어막이 따라다닐 뼈 번호 (예: 머리뼈는 5번!)
+	float radius = 1.0f;  // 방어막(머리)의 크기 (반지름)
+};
 
 struct BoneAnimation
 {
@@ -67,7 +71,8 @@ public:
 		DynamicBoneChain* rightEar = nullptr,
 		DynamicBoneChain* tail = nullptr,
 		DirectX::XMFLOAT3 playerVelocity = { 0.0f, 0.0f, 0.0f }, // 👈 요기!
-		float playerYaw = 0.0f);
+		float playerYaw = 0.0f,
+		std::vector<DynamicBoneCollider>* colliders = nullptr); // 👈 요기 추가!);
 
 	AnimationClip& GetAnimation(const std::string& name) { return animations.at(name); }
 
@@ -77,7 +82,7 @@ public:
 
 private:
 	// 🌟 [추가됨] CSkinnedData 안에서 구슬 흔들기를 처리할 도우미 함수 선언!
-	void SimulateChain(DynamicBoneChain& chain, std::vector<DirectX::XMFLOAT4X4>& toRootTransforms, const std::vector<DirectX::XMFLOAT4X4>& toParentTransforms, float elapsedTime, DirectX::XMFLOAT3 playerVelocity, float playerYaw);
+	void SimulateChain(DynamicBoneChain& chain, std::vector<DirectX::XMFLOAT4X4>& toRootTransforms, const std::vector<DirectX::XMFLOAT4X4>& toParentTransforms, float elapsedTime, DirectX::XMFLOAT3 playerVelocity, float playerYaw, std::vector<DynamicBoneCollider>* colliders); // 👈 요기 추가!
 
 private:
 	// 뼈대들의 부모 색인

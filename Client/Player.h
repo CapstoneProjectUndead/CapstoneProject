@@ -45,6 +45,8 @@ public:
 	DynamicBoneChain* GetRightEarChain() { return &right_ear_chain; }
 	DynamicBoneChain* GetTailChain() { return &tail_chain; }
 
+	std::vector<DynamicBoneCollider>* GetColliders() { return &colliders; }
+
 public:
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
@@ -73,6 +75,7 @@ protected:
 	float smoothed_delay = 0.1f;
 
 	std::deque<OpponentFrameHistory> interpolation_deq;
+	std::vector<DynamicBoneCollider> colliders;
 
 	DynamicBoneChain left_ear_chain;
 	DynamicBoneChain right_ear_chain;

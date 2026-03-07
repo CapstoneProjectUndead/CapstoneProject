@@ -131,7 +131,7 @@ void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<
 // 🌟 [수정됨] playerVelocity와 playerYaw 추가!
 void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch,
 	float elapsedTime, DynamicBoneChain* leftEar, DynamicBoneChain* rightEar, DynamicBoneChain* tail,
-	XMFLOAT3 playerVelocity, float playerYaw)
+	XMFLOAT3 playerVelocity, float playerYaw, std::vector<DynamicBoneCollider>* colliders)
 {
 	UINT numBones = bone_offsets.size();
 
@@ -186,9 +186,9 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 
 	// =======================================================
 	// 🌟 [수정됨] playerVelocity와 playerYaw도 같이 넘겨줍니다!
-	if (leftEar) SimulateChain(*leftEar, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw);
-	if (rightEar) SimulateChain(*rightEar, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw);
-	if (tail) SimulateChain(*tail, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw);
+	if (leftEar) SimulateChain(*leftEar, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw, colliders);
+	if (rightEar) SimulateChain(*rightEar, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw, colliders);
+	if (tail) SimulateChain(*tail, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw, colliders);
 	// =======================================================
 
 	// Premultiply by the bone offset transform to get the final transform.
@@ -210,7 +210,7 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 }
 
 // 🌟 [수정됨] playerVelocity와 playerYaw 추가!
-void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4>& toRootTransforms, const std::vector<XMFLOAT4X4>& toParentTransforms, float elapsedTime, XMFLOAT3 playerVelocity, float playerYaw)
+void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4>& toRootTransforms, const std::vector<XMFLOAT4X4>& toParentTransforms, float elapsedTime, XMFLOAT3 playerVelocity, float playerYaw, std::vector<DynamicBoneCollider>* colliders)
 {
 	if (chain.bone_indices.empty()) return;
 
@@ -224,7 +224,7 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 	XMVECTOR localVelocity = XMVector3TransformNormal(XMLoadFloat3(&playerVelocity), invRot);
 
 	// 내가 이동하는 반대 방향으로 작용하는 관성! (바람맞는 세기 조절: 5.0f 숫자를 키울수록 강해짐!)
-	XMVECTOR inertiaForce = -localVelocity * 1.5f;
+	XMVECTOR inertiaForce = -localVelocity * -3.5f;
 	// =======================================================
 
 	// 0번 구슬(뿌리)은 원래 위치에 꽉 고정!
@@ -259,6 +259,26 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 		velocity += force * elapsedTime;
 		velocity *= damping;
 		currentPos += velocity * elapsedTime;
+
+		if (colliders != nullptr) {
+			for (const auto& col : *colliders) {
+				// 방어막(머리/몸통)의 현재 진짜 월드 위치 가져오기
+				XMMATRIX colMatrix = XMLoadFloat4x4(&toRootTransforms[col.bound_bone_index]);
+				XMVECTOR colCenter = colMatrix.r[3];
+
+				// 방어막 중심부터 내 구슬까지의 거리와 방향 구하기
+				XMVECTOR vToNode = currentPos - colCenter;
+				float dist = XMVectorGetX(XMVector3Length(vToNode));
+
+				// 앗! 내 구슬이 방어막 안으로 파고들었다면?! (거리 < 방어막 반지름)
+				if (dist < col.radius && dist > 0.0001f) {
+					XMVECTOR pushDir = XMVector3Normalize(vToNode);
+					// 표면으로 강제로 쑥! 밀어냅니다!
+					currentPos = colCenter + pushDir * col.radius;
+				}
+			}
+		}
+
 
 		// 고무줄 방지
 		XMVECTOR direction = XMVector3Normalize(currentPos - parentPos);
