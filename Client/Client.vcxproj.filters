@@ -70,6 +70,15 @@
     <Filter Include="D3D12\Shaders">
       <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\AI">
+      <UniqueIdentifier>{cc7b4d14-22ec-4f8e-b036-7bb73814975a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\AI\State">
+      <UniqueIdentifier>{f5e28317-abf2-4e97-b237-23dd07477aa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Monster">
+      <UniqueIdentifier>{d6bca2c2-f747-4d00-85f1-bba9b711350e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -252,6 +261,30 @@
     <ClInclude Include="GeometryLoader.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="AIComponent.h">
+      <Filter>Component\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="State.h">
+      <Filter>Component\AI\State</Filter>
+    </ClInclude>
+    <ClInclude Include="IdleState.h">
+      <Filter>Component\AI\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>Object\Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="HumanMonster.h">
+      <Filter>Object\Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="AttackState.h">
+      <Filter>Component\AI\State</Filter>
+    </ClInclude>
+    <ClInclude Include="TraceState.h">
+      <Filter>Component\AI\State</Filter>
+    </ClInclude>
+    <ClInclude Include="PatrolState.h">
+      <Filter>Component\AI\State</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -394,6 +427,30 @@
     </ClCompile>
     <ClCompile Include="GeometryLoader.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="AIComponent.cpp">
+      <Filter>Component\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="State.cpp">
+      <Filter>Component\AI\State</Filter>
+    </ClCompile>
+    <ClCompile Include="IdleState.cpp">
+      <Filter>Component\AI\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Monster.cpp">
+      <Filter>Object\Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="HumanMonster.cpp">
+      <Filter>Object\Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="AttackState.cpp">
+      <Filter>Component\AI\State</Filter>
+    </ClCompile>
+    <ClCompile Include="TraceState.cpp">
+      <Filter>Component\AI\State</Filter>
+    </ClCompile>
+    <ClCompile Include="PatrolState.cpp">
+      <Filter>Component\AI\State</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -9,8 +9,7 @@
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
     // 플레이어가 Custom Scene에 있으면 return
-    auto player = dynamic_cast<CPlayer*>(owner);
-    if (player->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
+    if (owner->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
         return;
 
     XMFLOAT3 accel{};
@@ -71,19 +70,28 @@ void CMovementComponent::Update(const float deltaTime)
     if (owner == nullptr)
         return;
 
-    // 상대 플레이어이라면 return
-    auto player = dynamic_cast<CPlayer*>(owner);
-    if (player != nullptr && !player->GetIsMyPlayer())
-        return;
+    OBJECT_TYPE type = owner->GetObjectType();
 
-    // 플레이어가 Custom Scene에 있으면 return
-    if (player->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
-        return;
-    
-    // 멀티 플레이일 경우, Update를 실행하지 않는다. (클라 예측 이동 적용 시, 삭제할 것!)
-    auto myPlayer = static_cast<CMyPlayer*>(player);
-    if (!myPlayer->GetIsSingle())
-        return;
+    switch (type)
+    {
+    case OBJECT_TYPE::PLAYER:
+    {
+        CMyPlayer* myPlayer = static_cast<CMyPlayer*>(owner);
+
+        // 멀티 플레이일 경우, Update를 실행하지 않는다. (클라 예측 이동 적용 시, 삭제할 것!)
+        if (!myPlayer->GetIsSingle())
+            return;
+
+        // 플레이어가 Custom Scene에 있으면 return
+        if (myPlayer->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
+            return;
+    }
+        break;
+    case OBJECT_TYPE::MONSTER:
+        break;
+    default:
+        break;
+    }
 
     ClampSpeed();
 

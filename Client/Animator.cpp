@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "Movement.h"
 #include "Player.h"
+#include "Monster.h"
 
 CAnimatorComponent::CAnimatorComponent()
 	: head_position{&skinned.head_position }
@@ -34,30 +35,19 @@ void CAnimatorComponent::Update(float deltaTime)
 	if (owner == nullptr)
 		return;
 
-	auto move = owner->GetComponent<CMovementComponent>();
-	float speed = 0.0f;
+	// 타입이 플레이어? or 몬스터?
+	OBJECT_TYPE type = owner->GetObjectType();
 
-	if (move)
-		speed = Vector3::Length(owner->velocity);
-
-	auto p = dynamic_cast<CPlayer*>(owner);
-	if (p == nullptr)
-		return;
-
-	// 내 플레이어
-	if (p->GetIsMyPlayer()) {
-		if (speed < 0.3f)
-			Play("Ganga_idle");
-		else
-			Play("Ganga_walk");
-	}
-	// 상대 플레이어
-	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
-	else {
-		if (p->GetState() == PLAYER_STATE::IDLE)
-			Play("Ganga_idle");
-		else if (p->GetState() == PLAYER_STATE::WALK)
-			Play("Ganga_walk");
+	switch (type)
+	{
+	case OBJECT_TYPE::PLAYER:
+		UpdatePlayerAnimation();
+		break;
+	case OBJECT_TYPE::MONSTER:
+		UpdateMonsterAnimation();
+		break;
+	default:
+		break;
 	}
 
 	current_time += deltaTime;
@@ -72,6 +62,70 @@ void CAnimatorComponent::Update(float deltaTime)
 	// 본 행렬 계산
 	final_transforms.resize(skinned.BoneCount());
 	skinned.GetFinalTransforms(current_animation, current_time, final_transforms, owner->pitch);
+}
+
+void CAnimatorComponent::UpdatePlayerAnimation()
+{
+	auto player = static_cast<CPlayer*>(owner);
+	if (player == nullptr)
+		return;
+
+	// 내 플레이어
+	if (player->GetIsMyPlayer()) {
+
+		auto move = owner->GetComponent<CMovementComponent>();
+		float speed = 0.0f;
+
+		if (move)
+			speed = Vector3::Length(owner->velocity);
+
+		if (speed < 0.3f)
+			Play("Ganga_idle");
+		else
+			Play("Ganga_walk");
+	}
+	// 상대 플레이어
+	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
+	else {
+		if (player->GetState() == PLAYER_STATE::IDLE)
+			Play("Ganga_idle");
+		else if (player->GetState() == PLAYER_STATE::WALK)
+			Play("Ganga_walk");
+	}
+}
+
+void CAnimatorComponent::UpdateMonsterAnimation()
+{
+	auto monster = static_cast<CMonster*>(owner);
+
+	MON_TYPE type = monster->GetMonsterType();
+	AI_STATE state = monster->GetAIState();
+
+	switch (type)
+	{
+	case MON_TYPE::HUMAN_MONSTER:
+	{
+		if (state == AI_STATE::MONSTER_IDLE) {
+			Play("Ganga_idle");
+		}
+		else if (state == AI_STATE::MONSTER_PATROL) {
+			Play("Ganga_walk");
+		}
+		else if (state == AI_STATE::MONSTER_TRACE) {
+			Play("Ganga_walk");
+		}
+		else if (state == AI_STATE::MONSTER_ATTACK) {
+			Play("Ganga_walk");
+		}
+	}
+	break;
+	case MON_TYPE::ANIMAL_MONSTER:
+		break;
+	case MON_TYPE::GHOST:
+		break;
+	default:
+		break;
+	}
 }
 
 void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)

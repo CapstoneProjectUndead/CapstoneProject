@@ -5,6 +5,7 @@
 
 enum class OBJECT_TYPE : uint8_t
 {
+	STATIC_OBJECT,
 	PLAYER,
 	MONSTER,
 };
@@ -18,10 +19,27 @@ enum class PLAYER_STATE : uint8_t
 
 enum class SCENE_TYPE
 {
+	NONE,
 	TITLE,
 	CUSTOMS,
 	LOBBY,
 	GAME,
 
 	END
+};
+
+enum class MON_TYPE : uint8_t
+{
+	HUMAN_MONSTER,
+	ANIMAL_MONSTER,
+	GHOST
+};
+
+enum class AI_STATE
+{
+	MONSTER_IDLE,
+	MONSTER_PATROL,
+	MONSTER_TRACE,
+	MONSTER_ATTACK,
+	MONSTER_DEAD,
 };

@@ -5,15 +5,15 @@
 #include "NetworkClockManager.h"
 #include "JitterMeasurer.h"
 #include "Animator.h"
-#include "Material.h"
-#include "MeshRenderer.h"
+//#include "Material.h"
+//#include "MeshRenderer.h"
 
 #undef min
 #undef max
 
 // Player
 CPlayer::CPlayer()
-	: CCharacter()
+	: CCharacter(OBJECT_TYPE::PLAYER)
     , room_id(-1)
 {
 	SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -207,29 +207,29 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     UpdateWorldMatrix();
 }
 
-void CPlayer::ChangeModelSet(int setIndex)
-{
-    for (int i = 0; i < eartail_parts.size(); ++i) {
-        bool active = (i == setIndex);
-        
-        body_materials[i]->SetEnable(active);
-
-        for (auto& mesh : eartail_parts[i]) {
-            mesh->SetEnable(active);
-        }
-    }
-}
-
-void CPlayer::ChangeEyes(int index)
-{
-    for (int i = 0; i < eyes_material.size(); ++i) {
-        eyes_material[i]->SetEnable(i == index);
-    }
-}
-
-void CPlayer::ChangeMouth(int index)
-{
-    for (int i = 0; i < mouth_material.size(); ++i) {
-        mouth_material[i]->SetEnable(i == index);
-    }
-}
+//void CPlayer::ChangeModelSet(int setIndex)
+//{
+//    for (int i = 0; i < eartail_parts.size(); ++i) {
+//        bool active = (i == setIndex);
+//        
+//        body_materials[i]->SetEnable(active);
+//
+//        for (auto& mesh : eartail_parts[i]) {
+//            mesh->SetEnable(active);
+//        }
+//    }
+//}
+//
+//void CPlayer::ChangeEyes(int index)
+//{
+//    for (int i = 0; i < eyes_material.size(); ++i) {
+//        eyes_material[i]->SetEnable(i == index);
+//    }
+//}
+//
+//void CPlayer::ChangeMouth(int index)
+//{
+//    for (int i = 0; i < mouth_material.size(); ++i) {
+//        mouth_material[i]->SetEnable(i == index);
+//    }
+//}

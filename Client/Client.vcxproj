@@ -168,7 +168,9 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\packet_struct.h" />
     <ClInclude Include="..\External\Common\struct.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
+    <ClInclude Include="AIComponent.h" />
     <ClInclude Include="Animator.h" />
+    <ClInclude Include="AttackState.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="Collider.h" />
@@ -176,6 +178,8 @@ call ClientCopy.bat</Command>
     <ClInclude Include="CustomScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
+    <ClInclude Include="HumanMonster.h" />
+    <ClInclude Include="IdleState.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
@@ -202,12 +206,14 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshRenderer.h" />
+    <ClInclude Include="Monster.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="MyPlayer.h" />
     <ClInclude Include="NetworkClockManager.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectFactory.h" />
+    <ClInclude Include="PatrolState.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Scene.h" />
@@ -217,6 +223,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SkinnedData.h" />
+    <ClInclude Include="State.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -224,17 +231,22 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="TitleScene.h" />
+    <ClInclude Include="TraceState.h" />
     <ClInclude Include="UICommon.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AIComponent.cpp" />
     <ClCompile Include="Animator.cpp" />
+    <ClCompile Include="AttackState.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CustomScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
+    <ClCompile Include="HumanMonster.cpp" />
+    <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
@@ -258,12 +270,14 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshRenderer.cpp" />
+    <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Movement.cpp" />
     <ClCompile Include="MyPlayer.cpp" />
     <ClCompile Include="NetworkClockManager.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectFactory.cpp" />
+    <ClCompile Include="PatrolState.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -273,6 +287,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ServerSessionManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SkinnedData.cpp" />
+    <ClCompile Include="State.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -283,6 +298,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="TitleScene.cpp" />
+    <ClCompile Include="TraceState.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>

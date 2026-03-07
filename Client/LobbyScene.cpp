@@ -13,6 +13,7 @@
 #include "ServerPacketHandler.h"
 #include "Movement.h"
 #include "CustomScene.h"
+#include "HumanMonster.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -44,6 +45,18 @@ void CLobbyScene::Initialize()
 	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
+	}
+
+	{
+		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		auto humanMonster = factory->CreateHumanMonster(skinningHeapManager);
+		humanMonster->ChangeModelSet(1); 
+		humanMonster->ChangeEyes(2);     
+		humanMonster->ChangeMouth(0);
+		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
+		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+		humanMonster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+		objects.push_back(humanMonster);
 	}
 }
 
