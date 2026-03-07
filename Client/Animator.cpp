@@ -47,7 +47,7 @@ void CAnimatorComponent::Update(float deltaTime)
 	// 내 플레이어
 	if (p->GetIsMyPlayer()) {
 		if (speed < 0.3f)
-			Play("Ganga_idle");
+			Play("Ganga_find");
 		else
 			Play("Ganga_walk");
 	}
@@ -81,7 +81,9 @@ void CAnimatorComponent::Update(float deltaTime)
 		deltaTime,              // 🌟 1. 흘러간 시간 전달!
 		p->GetLeftEarChain(),   // 🌟 2. 왼쪽 귀 수첩 전달!
 		p->GetRightEarChain(),  // 🌟 3. 오른쪽 귀 수첩 전달!
-		p->GetTailChain()       // 🌟 4. 꼬리 수첩 전달!
+		p->GetTailChain(),       // 🌟 4. 꼬리 수첩 전달!
+		owner->velocity, // 👈 이거랑!
+		owner->yaw       // 👈 이거!
 	);
 	// =======================================================
 }

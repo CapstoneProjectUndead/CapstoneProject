@@ -61,7 +61,9 @@ public:
 		float elapsedTime = 0.0f,
 		DynamicBoneChain* leftEar = nullptr,
 		DynamicBoneChain* rightEar = nullptr,
-		DynamicBoneChain* tail = nullptr);
+		DynamicBoneChain* tail = nullptr,
+		DirectX::XMFLOAT3 playerVelocity = { 0.0f, 0.0f, 0.0f }, // 👈 요기!
+		float playerYaw = 0.0f);
 
 	AnimationClip& GetAnimation(const std::string& name) { return animations.at(name); }
 
@@ -71,10 +73,7 @@ public:
 
 private:
 	// 🌟 [추가됨] CSkinnedData 안에서 구슬 흔들기를 처리할 도우미 함수 선언!
-	void SimulateChain(DynamicBoneChain& chain,
-		std::vector<DirectX::XMFLOAT4X4>& toRootTransforms,
-		const std::vector<DirectX::XMFLOAT4X4>& toParentTransforms,
-		float elapsedTime);
+	void SimulateChain(DynamicBoneChain& chain, std::vector<DirectX::XMFLOAT4X4>& toRootTransforms, const std::vector<DirectX::XMFLOAT4X4>& toParentTransforms, float elapsedTime, DirectX::XMFLOAT3 playerVelocity, float playerYaw);
 
 private:
 	// 뼈대들의 부모 색인

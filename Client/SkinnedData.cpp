@@ -128,8 +128,10 @@ void CSkinnedData::Set(const std::vector<int>& boneHierarchy, const std::vector<
 	animations = otherAnimations;
 }
 
+// 🌟 [수정됨] playerVelocity와 playerYaw 추가!
 void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms, const float pitch,
-	float elapsedTime, DynamicBoneChain* leftEar, DynamicBoneChain* rightEar, DynamicBoneChain* tail)
+	float elapsedTime, DynamicBoneChain* leftEar, DynamicBoneChain* rightEar, DynamicBoneChain* tail,
+	XMFLOAT3 playerVelocity, float playerYaw)
 {
 	UINT numBones = bone_offsets.size();
 
@@ -170,8 +172,6 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	// is just its local bone transform.
 	toRootTransforms[0] = toParentTransforms[0];
 
-
-
 	// Now find the toRootTransform of the children.
 	for (UINT i = 1; i < numBones; ++i) {
 		XMMATRIX toParent = XMLoadFloat4x4(&toParentTransforms[i]);
@@ -185,10 +185,10 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	}
 
 	// =======================================================
-		// 🌟 [수정됨] toParentTransforms 변수도 같이 넘겨줍니다!
-	if (leftEar) SimulateChain(*leftEar, toRootTransforms, toParentTransforms, elapsedTime);
-	if (rightEar) SimulateChain(*rightEar, toRootTransforms, toParentTransforms, elapsedTime);
-	if (tail) SimulateChain(*tail, toRootTransforms, toParentTransforms, elapsedTime);
+	// 🌟 [수정됨] playerVelocity와 playerYaw도 같이 넘겨줍니다!
+	if (leftEar) SimulateChain(*leftEar, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw);
+	if (rightEar) SimulateChain(*rightEar, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw);
+	if (tail) SimulateChain(*tail, toRootTransforms, toParentTransforms, elapsedTime, playerVelocity, playerYaw);
 	// =======================================================
 
 	// Premultiply by the bone offset transform to get the final transform.
@@ -204,18 +204,28 @@ void CSkinnedData::GetFinalTransforms(const std::string& clipName, float timePos
 	}
 
 	int headIdx = 5;
-	XMMATRIX headToRoot = XMLoadFloat4x4(&toRootTransforms[headIdx]); 
+	XMMATRIX headToRoot = XMLoadFloat4x4(&toRootTransforms[headIdx]);
 	XMMATRIX localEyeMatrix = headToRoot * rotate;
 	XMStoreFloat3(&head_position, localEyeMatrix.r[3]);
 }
 
-void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4>& toRootTransforms, const std::vector<XMFLOAT4X4>& toParentTransforms, float elapsedTime)
+// 🌟 [수정됨] playerVelocity와 playerYaw 추가!
+void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4>& toRootTransforms, const std::vector<XMFLOAT4X4>& toParentTransforms, float elapsedTime, XMFLOAT3 playerVelocity, float playerYaw)
 {
 	if (chain.bone_indices.empty()) return;
 
 	XMVECTOR gravity = XMVectorSet(0.0f, -1.2f, 0.0f, 0.0f);
 	float stiffness = 70.0f; // 빳빳한 정도
 	float damping = 0.85f;    // 마찰력
+
+	// =======================================================
+	// 🌟 [추가됨] 마법의 관성(Inertia) 계산! 
+	XMMATRIX invRot = XMMatrixRotationY(XMConvertToRadians(-playerYaw));
+	XMVECTOR localVelocity = XMVector3TransformNormal(XMLoadFloat3(&playerVelocity), invRot);
+
+	// 내가 이동하는 반대 방향으로 작용하는 관성! (바람맞는 세기 조절: 5.0f 숫자를 키울수록 강해짐!)
+	XMVECTOR inertiaForce = -localVelocity * 0.0f;
+	// =======================================================
 
 	// 0번 구슬(뿌리)은 원래 위치에 꽉 고정!
 	int rootIdx = chain.bone_indices[0];
@@ -232,7 +242,6 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 		XMVECTOR parentPos = parentMatrix.r[3];
 
 		// 2. 내 원래 목표 위치 구하기 (중요: 탈골 방지!)
-		// 내 원래 지역 행렬을 '최신 부모'에 곱해서, 부모가 꺾인 만큼 나도 따라간 위치를 목표로 삼음!
 		XMMATRIX childLocal = XMLoadFloat4x4(&toParentTransforms[cIdx]);
 		XMMATRIX childTargetMatrix = XMMatrixMultiply(childLocal, parentMatrix);
 		XMVECTOR targetPos = childTargetMatrix.r[3];
@@ -243,6 +252,9 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 
 		XMVECTOR force = (targetPos - currentPos) * stiffness;
 		force += gravity;
+		
+		//관성 on off
+		//force += inertiaForce; // 🌟 [추가됨] 관성(바람) 힘 더해주기!
 
 		velocity += force * elapsedTime;
 		velocity *= damping;
@@ -283,11 +295,7 @@ void CSkinnedData::SimulateChain(DynamicBoneChain& chain, std::vector<XMFLOAT4X4
 		parentMatrix.r[3] = parentPos; // 이동 복구
 		XMStoreFloat4x4(&toRootTransforms[pIdx], parentMatrix); // 부모 완성!
 
-		// =======================================================
 		// 🌟 6. [진짜 제일 중요!!!] 뼈 다시 끼워 맞추기 (접골)
-		// 회전된 최신 부모 행렬에 내 로컬 행렬을 곱해서 내 행렬도 갱신해 줍니다!
-		// 이거 덕분에 다음 루프에서 내 자식이 날아가지 않아요!
-		// =======================================================
 		XMMATRIX finalChildRoot = XMMatrixMultiply(childLocal, parentMatrix);
 		XMStoreFloat4x4(&toRootTransforms[cIdx], finalChildRoot);
 	}
