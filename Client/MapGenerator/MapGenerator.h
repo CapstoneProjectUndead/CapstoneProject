@@ -66,4 +66,5 @@ namespace MapGenerator
     void PlaceMediumStore(int cx, int cy);
     void PlaceLargeWarehouse(int cx, int cy);
     void PlaceParkPlaza(int cx, int cy);
+    void PlaceTreasure();
 }

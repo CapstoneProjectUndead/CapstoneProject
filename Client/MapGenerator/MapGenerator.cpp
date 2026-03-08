@@ -51,25 +51,7 @@ std::vector<InstanceData> MapGenerator::Generate3DMap()
     for (int i = 0; i < numPark; i++) PlaceParkPlaza(3 + rand() % (WIDTH - 6), 5 + rand() % (halfHeight - 10));
 
     // 5. 보물 배치 (OBJECT 레이어 활용 - 바닥 위에 겹치기 가능)
-    const int BLOCK_SIZE = 10;
-    for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
-        for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
-            int treasureCount = rand() % 3;
-            for (int t = 0; t < treasureCount; t++) {
-                int rx = bx + rand() % BLOCK_SIZE;
-                int ry = by + rand() % BLOCK_SIZE;
-                if (!IsValid(rx, ry)) continue;
-
-                EModelType floor = mapGrid[(int)ELayer::FLOOR][ry][rx];
-                // 길 위나 건물 내부 바닥에 보물 배치
-                if (floor == EModelType::ROAD || floor == EModelType::VILLAGE_ROAD || floor == EModelType::HOUSE_INNTER) {
-                    if (mapGrid[(int)ELayer::STRUCTURE][ry][rx] == EModelType::UNKNOWN) {
-                        mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::TREASURE;
-                    }
-                }
-            }
-        }
-    }
+    PlaceTreasure();
 
     // 6. 건물 벽 정밀화 (STRUCTURE 레이어 분석)
     RefineBuildingTiles();
@@ -166,6 +148,29 @@ void MapGenerator::PlaceParkPlaza(int cx, int cy) {
     mapGrid[(int)ELayer::OBJECT][cy][cx + 1] = EModelType::TREE;
 }
 
+void MapGenerator::PlaceTreasure()
+{
+    const int BLOCK_SIZE = 10;
+    for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
+        for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
+            int treasureCount = rand() % 3;
+            for (int t = 0; t < treasureCount; t++) {
+                int rx = bx + rand() % BLOCK_SIZE;
+                int ry = by + rand() % BLOCK_SIZE;
+                if (!IsValid(rx, ry)) continue;
+
+                EModelType floor = mapGrid[(int)ELayer::FLOOR][ry][rx];
+                // 길 위나 건물 내부 바닥에 보물 배치
+                if (floor == EModelType::ROAD || floor == EModelType::VILLAGE_ROAD || floor == EModelType::HOUSE_INNTER) {
+                    if (mapGrid[(int)ELayer::STRUCTURE][ry][rx] == EModelType::UNKNOWN) {
+                        mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::TREASURE;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
     if (!IsValid(cx - 1, cy - 1) || !IsValid(cx + 1, cy + 1)) return;
     for (int y = cy - 1; y <= cy + 1; y++)
@@ -175,12 +180,11 @@ void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
 }
 
 // --- 유틸리티 및 정밀화 ---
-
 bool MapGenerator::IsBuilding(int x, int y) {
     if (!IsValid(x, y)) return false;
     EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
     return (t == EModelType::WAREHOUSE || t == EModelType::STORE || t == EModelType::DOOR ||
-        t == EModelType::HOUSE_WALL_CORNER || t == EModelType::HOUSE_WALL_STRAIGHT);
+        t == EModelType::HOUSE_WALL_CORNER || t == EModelType::HOUSE_WALL_STRAIGHT || t == EModelType::HOUSE_WALL_EMPTY);
 }
 
 void MapGenerator::RefineBuildingTiles() {
