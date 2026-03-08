@@ -21,7 +21,7 @@ namespace MapGenerator
         HOUSE_WALL_EMPTY,    // 벽X
 
         // Props
-        KIOSK, TREE, TREASURE, BENCH, UNKNOWN
+        KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW, UNKNOWN
     };
     enum class ELayer : int {
         FLOOR = 0,   // 바닥 (ROAD, PARK_GREEN, VILLAGE_ROAD, HOUSE_INNER)

@@ -170,28 +170,39 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
 	for (const auto& inst : instData) {
-		std::string typeName{ GameSceneTypeToString(inst.type) };
-		auto meshComp = prototypes[typeName]->GetComponent<CMeshComponent>();
-		auto matComp = prototypes[typeName]->GetComponent<CMaterialComponent>();
-		auto collider = prototypes[typeName]->GetComponent<CColliderComponent>();
+		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
+			std::string meshName = PickRandom(typeName);
+			if (meshName.empty()) continue;
 
-		// 위치/크기 정보를 행렬로 변환하여 추가
-		// * XMMatrixScaling(inst.scale.x, inst.scale.y, inst.scale.z)
-		XMMATRIX world = XMLoadFloat4x4(&prototypes[typeName]->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+			auto proto = prototypes[meshName];
+			auto meshComp = proto->GetComponent<CMeshComponent>();
+			auto matComp = proto->GetComponent<CMaterialComponent>();
+			auto collider = proto->GetComponent<CColliderComponent>();
 
-		objects.push_back(std::make_shared<CObject>());
-		XMStoreFloat4x4(&objects.back()->world_matrix, world);
+			// 위치/크기 정보를 행렬로 변환하여 추가
+			auto obj = std::make_shared<CObject>();
 
-		// 인스턴스 렌더러에 위치와 리소스 정보 등록
-		CInstRenderer::GetInstance().AddInstance(
-			meshComp->GetMesh().get(),
-			matComp,
-			objects.back()->world_matrix
-		);
-		objects.back()->SetShdaer("inst");
-		auto copyCollider = std::make_shared< CColliderComponent>(*collider);
-		objects.back()->SetComponent(copyCollider);
-		CPhysicsManager::GetInstance().SetCollider(copyCollider);
+			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+			XMStoreFloat4x4(&obj->world_matrix, world);
+
+			// 인스턴스 렌더러에 위치와 리소스 정보 등록
+			CInstRenderer::GetInstance().AddInstance(
+				meshComp->GetMesh().get(),
+				matComp,
+				obj->world_matrix
+			);
+			obj->SetShdaer("inst");
+
+			// collider copy(잔디, 돌은 필요X)
+			std::string base{ typeName };
+			std::erase_if(base, ::isdigit);
+			if (base != "grass" && base != "stone") {
+				auto copyCollider = std::make_shared< CColliderComponent>(*collider);
+				obj->SetComponent(copyCollider);
+				CPhysicsManager::GetInstance().SetCollider(copyCollider);
+			}
+			objects.push_back(obj);
+		}
 	}
 	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
 	return objects;
@@ -370,29 +381,71 @@ CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::s
 	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
 }
 
-std::string CObjectFactory::GameSceneTypeToString(const MapGenerator::EModelType& type)
+std::vector<std::string> CObjectFactory::GameSceneTypeToString(const MapGenerator::EModelType& type)
 {
-	static const std::unordered_map<MapGenerator::EModelType, std::string> table = {
-		{ MapGenerator::EModelType::ROAD,					"park_road" },
-		{ MapGenerator::EModelType::PARK_GREEN,				"park_green" },
-		{ MapGenerator::EModelType::VILLAGE_ROAD,			"village_road" },
-		{ MapGenerator::EModelType::HOUSE_INNTER,			"house_place" },
+	static const std::unordered_map<MapGenerator::EModelType, std::vector<std::string>> table = {
+		{ MapGenerator::EModelType::ROAD,					{"park_road", "stone"} },
+		{ MapGenerator::EModelType::PARK_GREEN,				{"park_green", "grass"} },
+		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
+		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
 
-		{ MapGenerator::EModelType::WALL,					"seesaw001" },
+		{ MapGenerator::EModelType::WALL,					{"stone011"} },// 임시
 
-		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		"wall_2001" },
-		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	"wall_1002" },
-		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		"wall_1003" },
-		/*{ MapGenerator::EModelType::WAREHOUSE,				"wall_1002" },
-		{ MapGenerator::EModelType::STORE,					"vending_machine001" },*/
-		{ MapGenerator::EModelType::DOOR,					"wall_1_door001" },
+		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
+		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
+		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
+		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
 
-		{ MapGenerator::EModelType::KIOSK,					"table001" },
-		{ MapGenerator::EModelType::TREE,					"pinetree" },
-		{ MapGenerator::EModelType::TREASURE,				"trashcan001" },
-		{ MapGenerator::EModelType::BENCH,					"park_bench002" },
+		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
+		{ MapGenerator::EModelType::TREE,					{"tree"} },
+		{ MapGenerator::EModelType::TREASURE,				{"trashcan"} },
+		{ MapGenerator::EModelType::BENCH,					{"park_bench"} },
+		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
+		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
+
+		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
 	};
 
+
 	auto it = table.find(type);
-	return (it != table.end()) ? it->second : "park_road";
+	return it->second;
+}
+
+// grass, stone 등 랜덤 카테고리 선택
+std::string CObjectFactory::PickRandom(const std::string& key)
+{
+	static const std::unordered_map<std::string, std::vector<std::string>> categoryTable = {
+		{ "grass", {
+			"grass019","grass020","grass021","grass022","grass023","grass024",
+			"grass025","grass026","grass027","grass028","grass029","grass030",
+			"grass031","grass032","grass033","grass034","grass035","grass036","grass037", ""
+		}},
+		{ "stone", {
+			"stone011","stone012","stone013","stone014","stone015","stone016",
+			"stone017","stone018","stone019","stone020","stone021","stone022",
+			"stone023","stone024", ""
+		}},
+		{ "park_bench", {
+			"park_bench002","park_bench003"
+		}},
+		{ "small_bush", {
+			"small_bush001","small_bush002"
+		}},
+		{ "tree", {
+			"tree001","tree002","tree003","pinetree"
+		}},
+		{ "trashcan", {
+			"trashcan001","trashcan002"
+		}},
+	};
+
+	// key가 카테고리인지 확인
+	auto it = categoryTable.find(key);
+	if (it != categoryTable.end()) {
+		const auto& list = it->second;
+		int idx = rand() % list.size();
+		return list[idx];
+	}
+
+	return key;
 }

@@ -133,19 +133,51 @@ void MapGenerator::PlaceLargeWarehouse(int cx, int cy) {
     for (int y = cy - 3; y <= cy + 3; y++)
         for (int x = cx - 3; x <= cx + 3; x++)
             mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::HOUSE_INNTER;
-    for (int y = cy - 2; y <= cy + 2; y++)
-        for (int x = cx - 2; x <= cx + 2; x++)
+    // 건물 본체
+    for (int y = cy - 1; y <= cy + 1; y++)
+        for (int x = cx - 1; x <= cx + 1; x++)
             mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::WAREHOUSE;
+
+    mapGrid[(int)ELayer::STRUCTURE][cy - 1][cx] = EModelType::DOOR;
 }
 
 void MapGenerator::PlaceParkPlaza(int cx, int cy) {
     if (!IsValid(cx - 2, cy - 2) || !IsValid(cx + 2, cy + 2)) return;
+
+    // 바닥 채우기
     for (int y = cy - 2; y <= cy + 2; y++)
         for (int x = cx - 2; x <= cx + 2; x++)
             mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::PARK_GREEN;
+
+    // 벤치/나무
     mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::BENCH;
     mapGrid[(int)ELayer::OBJECT][cy][cx - 1] = EModelType::TREE;
     mapGrid[(int)ELayer::OBJECT][cy][cx + 1] = EModelType::TREE;
+
+    // 랜덤
+    auto pickRandomObject = []() -> EModelType {
+        int r = rand() % 100; // 0~99
+
+        if (r < 5)  return EModelType::SEESAW;
+        if (r < 30)  return EModelType::SMALL_BUSH;
+        return EModelType::UNKNOWN;
+        };
+
+    // 광장 내부에 랜덤 오브젝트 배치
+    for (int y = cy - 2; y <= cy + 2; y++) {
+        for (int x = cx - 2; x <= cx + 2; x++) {
+
+            // 중앙 벤치 + 나무 자리 제외
+            if ((x == cx && y == cy) ||
+                (x == cx - 1 && y == cy) ||
+                (x == cx + 1 && y == cy))
+                continue;
+
+            EModelType obj = pickRandomObject();
+            if (obj != EModelType::UNKNOWN)
+                mapGrid[(int)ELayer::OBJECT][y][x] = obj;
+        }
+    }
 }
 
 void MapGenerator::PlaceTreasure()
@@ -240,9 +272,11 @@ void MapGenerator::CreateOpenSpaces(int numSpaces) {
         bool overlap = false;
         for (const auto& existing : builtSpaces) if (newSpace.Intersects(existing)) { overlap = true; break; }
         if (!overlap) {
-            for (int y = startY; y < startY + h; y++)
-                for (int x = startX; x < startX + w; x++)
+            for (int y = startY; y < startY + h; y++) {
+                for (int x = startX; x < startX + w; x++) {
                     mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::ROAD;
+                }
+            }
             builtSpaces.push_back(newSpace);
             i++;
         }

@@ -52,7 +52,9 @@ private:
 
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);
-	std::string GameSceneTypeToString(const MapGenerator::EModelType& type);
+	// MapGenerator로 생성되는 grid를 model과 매치
+	std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type);
+	std::string PickRandom(const std::string& key);
 
 	CMaterialManager matManager;
 	CTextureManager texManager;
