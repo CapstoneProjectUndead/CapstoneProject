@@ -432,7 +432,7 @@ std::string CObjectFactory::PickRandom(const std::string& key)
 			"small_bush001","small_bush002"
 		}},
 		{ "tree", {
-			"tree001","tree002","tree003","pinetree"
+			"tree002","pinetree"
 		}},
 		{ "trashcan", {
 			"trashcan001","trashcan002"
