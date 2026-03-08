@@ -395,6 +395,7 @@ std::vector<std::string> CObjectFactory::GameSceneTypeToString(const MapGenerato
 		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
 		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
 		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
+		{ MapGenerator::EModelType::CORNER_DOOR,			{"wall_2_door001"} },
 
 		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
 		{ MapGenerator::EModelType::TREE,					{"tree"} },

@@ -13,6 +13,7 @@ namespace MapGenerator
         //  Buildings
         WAREHOUSE, STORE,
         DOOR,
+        CORNER_DOOR,    // HOUSE_WALL_CORNER과 방향 같음
 
         // Building Wall Types (WareHouse, Store 공용)
         HOUSE_INNTER,    // 건물 내부 바닥
@@ -48,6 +49,8 @@ namespace MapGenerator
         }
     };
 
+    static const char HOUSE_SIZE{2};
+
     static const int WIDTH = 51;
     static const int HEIGHT = 101;
     static EModelType mapGrid[(int)ELayer::COUNT][HEIGHT][WIDTH];
@@ -55,13 +58,15 @@ namespace MapGenerator
     static int dx[] = { 0, 0, -2, 2 };
     static int dy[] = { -2, 2, 0, 0 };
 
-    void SetTile(int x, int y, ELayer layer, EModelType type);
-    EModelType GetTile(int x, int y, ELayer layer);
+    bool IsValid(int x, int y);
     void RefineBuildingTiles();
     bool IsBuilding(int x, int y);
-    bool IsValid(int x, int y);
+    bool TryPlaceDoor(int cx, int cy, int size);
+    bool IsSpaceForTree(int x, int y);
+
     void CarveMaze(int startX, int startY);
     void CreateOpenSpaces(int numSpaces);
+
     void PlaceSmallKiosk(int cx, int cy);
     void PlaceMediumStore(int cx, int cy);
     void PlaceLargeWarehouse(int cx, int cy);
