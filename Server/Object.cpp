@@ -1,11 +1,7 @@
 #include "pch.h"
 // Server쪽 Object
 #include "Object.h"
-#include "Player.h"
-#include "Collider.h"
-#include "PhysicsManager.h"
-#include "GeometryLoader.h"
-#include "Movement.h"
+#include "Component.h"
 
 
 CObject::CObject(OBJECT_TYPE type)
@@ -33,61 +29,6 @@ void CObject::SetComponent(std::shared_ptr<CComponent> component)
 	component->owner = this;
 	components.push_back(component);
 	component->Initialize();
-}
-
-shared_ptr<CPlayer> CObject::CreatePlayer()
-{
-	shared_ptr<CPlayer> player = make_shared<CPlayer>();
-
-	// Player 위치 지정 (임시)
-	XMFLOAT3 pos{};
-	pos.x = rand() % 3 - 2;
-	pos.y = 0.f;
-	pos.z = rand() % 3 - 2;
-	player->SetPosition(pos);
-
-	// -------------------------------------
-	// 플레이어에게 MovementComponent 달아주기
-	// -------------------------------------
-	player->SetComponent(std::make_shared<CMovementComponent>());
-
-	// -----------------------------------
-	// 플레이어에게 충돌체(Collider) 달아주기
-	// -----------------------------------
-	std::string fileName{ "../Modeling/undead_char.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-
-	// Mesh 로드 + totalBounds 계산
-	BoundingBox totalBounds;
-	bool firstBounds = true;
-
-	for (const auto& child : frameRoot->childrens) {
-		if (child->mesh.positions.empty())
-			continue;
-		// bounds merge
-		if (firstBounds) {
-			totalBounds = child->mesh.bounds;
-			firstBounds = false;
-		}
-		else {
-			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
-		}
-	}
-
-	// ColliderComponent 생성/ filter 설정
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::PLAYER;
-	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-	collider->SetFillter(filter);
-	player->SetComponent(collider);
-	CPhysicsManager::GetInstance().SetCollider(collider);
-
-	player->UpdateWorldMatrix();
-	collider->Update(0.0f);
-
-	return player;
 }
 
 void CObject::Rotate(float pitch, float yaw, float roll)

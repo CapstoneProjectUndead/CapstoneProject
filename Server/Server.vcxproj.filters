@@ -168,6 +168,9 @@
     <ClCompile Include="HumanMonster.cpp">
       <Filter>Object\Monster</Filter>
     </ClCompile>
+    <ClCompile Include="ServerObjectFactory.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -280,6 +283,9 @@
     </ClInclude>
     <ClInclude Include="HumanMonster.h">
       <Filter>Object\Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerObjectFactory.h">
+      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

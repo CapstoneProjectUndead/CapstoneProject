@@ -20,51 +20,52 @@ public:
     virtual void Update(const float elapsedTime);
 
 public:
-    static shared_ptr<CPlayer>          CreatePlayer();
-
-    void                                Rotate(float pitch, float yaw, float roll);
+    void                    Rotate(float pitch, float yaw, float roll);
 
     template<typename T>
-    T*              GetComponent() const;
-    template<typename T>
-    std::vector<T*> GetComponents() const;
-    void            SetComponent(std::shared_ptr<CComponent> component);
+    T*                      GetComponent() const;
+    template<typename T>    
+    std::vector<T*>         GetComponents() const;
+    void                    SetComponent(std::shared_ptr<CComponent> component);
 
-    uint64                              GetID() const { return obj_id; }
-    void                                SetID(int id) { obj_id = id; }
+    uint64                  GetID() const { return obj_id; }
+    void                    SetID(int id) { obj_id = id; }
 
-    weak_ptr<Session>                   GetSessionWeak() const { return session; }
-    shared_ptr<Session>                 GetSession() const { return session.lock(); }
-    void                                SetSession(shared_ptr<Session> _session) { session = _session; }
+    weak_ptr<Session>       GetSessionWeak() const { return session; }
+    shared_ptr<Session>     GetSession() const { return session.lock(); }
+    void                    SetSession(shared_ptr<Session> _session) { session = _session; }
 
-    weak_ptr<CUser>                     GetUserWeak() const { return user; }
-    shared_ptr<CUser>                   GetUser() const { return user.lock(); }
-    void                                SetUser(shared_ptr<CUser> _user) { user = _user; }
+    weak_ptr<CUser>         GetUserWeak() const { return user; }
+    shared_ptr<CUser>       GetUser() const { return user.lock(); }
+    void                    SetUser(shared_ptr<CUser> _user) { user = _user; }
 
-    OBJECT_TYPE                         GetObjectType() const { return obj_type; }
-    void                                SetObjectType(OBJECT_TYPE type) { obj_type = type; }
+    OBJECT_TYPE             GetObjectType() const { return obj_type; }
+    void                    SetObjectType(OBJECT_TYPE type) { obj_type = type; }
 
-    XMFLOAT3                            GetPosition() { return position; }
-    void                                SetPosition(const XMFLOAT3& pos) { position = pos; }
-    void                                SetPosition(float x, float y, float z) { position = { x, y, z }; }
+    void                    SetCurrentSceneType(SCENE_TYPE type) { current_scene_type = type; }
+    SCENE_TYPE              GetCurrentSceneType() const { return current_scene_type; }
 
-    XMFLOAT3                            GetVelocity() { return velocity; }
-    void                                SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
-    void                                SetVelocity(float vx, float vy, float vz) { velocity = { vx, vy, vz }; }
+    XMFLOAT3                GetPosition() { return position; }
+    void                    SetPosition(const XMFLOAT3& pos) { position = pos; }
+    void                    SetPosition(float x, float y, float z) { position = { x, y, z }; }
 
-    XMFLOAT3                            GetRight() { return right; }
-    void                                SetRight(const XMFLOAT3 _right) { right = _right; }
+    XMFLOAT3                GetVelocity() { return velocity; }
+    void                    SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
+    void                    SetVelocity(float vx, float vy, float vz) { velocity = { vx, vy, vz }; }
 
-    XMFLOAT3                            GetUp() { return up; }
-    void                                SetUp(const XMFLOAT3 _up) { up = _up; }
+    XMFLOAT3                GetRight() { return right; }
+    void                    SetRight(const XMFLOAT3 _right) { right = _right; }
 
-    XMFLOAT3                            GetLook() { return look; }
-    void                                SetLook(const XMFLOAT3 _look) { look = _look; }
+    XMFLOAT3                GetUp() { return up; }
+    void                    SetUp(const XMFLOAT3 _up) { up = _up; }
 
-    float                               GetYaw() const { return yaw; }
+    XMFLOAT3                GetLook() { return look; }
+    void                    SetLook(const XMFLOAT3 _look) { look = _look; }
 
-    void                                SetPitch(const float _pitch) { pitch = _pitch; }
-    float                               GetPitch() const { return pitch; }
+    float                   GetYaw() const { return yaw; }
+
+    void                    SetPitch(const float _pitch) { pitch = _pitch; }
+    float                   GetPitch() const { return pitch; }
 
     //=================================
     // 회전 함수 (테스트)
@@ -79,6 +80,7 @@ protected:
     weak_ptr<Session>                   session;
     uint64                              obj_id;
     OBJECT_TYPE                         obj_type;
+    SCENE_TYPE					        current_scene_type; // 현재 오브젝트가 속한 씬 (방이 씬을 포함하고 있는 구조)
 
     XMFLOAT4X4                          world_matrix;
 

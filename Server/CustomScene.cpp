@@ -36,36 +36,11 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 	auto user = CAST_CS(session)->GetUser();
 	assert(user);
 
-	uint32 roomId = pkt.room_id;
 	auto room = user->GetRoom();
 	assert(room);
 
-	// 플레이어 생성
-	shared_ptr<CPlayer> player = CObject::CreatePlayer();
-
-	// 유저를 약한 참조 (refcount 증가x)
-	player->SetUser(user);
-
-	// 세션도 약한 참조 (refcount 증가x)
-	player->SetSession(user->GetSession());
-
-	// 플레이어의 (플레이어 ID = 유저 ID)
-	player->SetID(user->GetUserID());
-
-	// 지금 플레이어가 속한 방ID
-	player->SetRoomID(roomId);
-
-	// 지금 플레이어가 속한 방
-	player->SetRoom(room);
-
-	// Player가 속한 Scene 설정
-	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-
-	// 유저가 자신의 플레이어를 참조 (refcount 증가)
-	user->SetPlayer(player);
-
-	// 방 인원 수 증가
-	room->PlayerEnter();
+	// Player 생성 (플레이어 ID = 유저 ID)
+	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room);
 
 	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정.
 
@@ -115,6 +90,8 @@ void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_C
 		assert(lobbyScene && lobbyScene->GetSceneType() == SCENE_TYPE::LOBBY);
 
 		// 플레이어를 Lobby Scene으로 이동
+		// 유저 Scene에 입장
+		// EnterScene 에서 유저들의 입장 정보들을 다 처리하도록 수정. (26. 2. 25)
 		lobbyScene->EnterScene(player);
 
 		// 유저에게 커스터마이징 완료되었고,

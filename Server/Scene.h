@@ -3,6 +3,7 @@
 #include "Player.h"
 #include "Job.h"
 #include "User.h"
+#include "ServerObjectFactory.h"
 
 class CRoom;
 class CMonster;
@@ -83,6 +84,7 @@ public:
 protected:
 	map<uint64, shared_ptr<CPlayer>>	players;
 	map<uint64, shared_ptr<CMonster>>   monsters;
+	SCENE_TYPE							scene_type;
 
 	mutex								job_queue_lock;
 	queue<Job>							job_queue;
@@ -91,7 +93,6 @@ protected:
 	uint32								room_id;
 
 private:
-	SCENE_TYPE							scene_type;
 	float								dt_ping_accumulator;
 };
 
