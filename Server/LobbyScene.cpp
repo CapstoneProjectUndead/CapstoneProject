@@ -7,6 +7,8 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "GeometryLoader.h"
+#include "HumanMonster.h"
+#include "ServerObjectFactory.h"
 
 #undef min
 #undef max
@@ -27,6 +29,79 @@ CLobbyScene::~CLobbyScene()
 }
 
 void CLobbyScene::Start()
+{
+	CreateLobby();
+
+	// 테스트
+	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type));
+	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
+	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+	//monsters.insert
+}
+
+void CLobbyScene::Update(float elapsedTime)
+{
+	CScene::Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
+}
+
+// 특정 Scene을 테스트할 때, 사용할 함수. 
+void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt)
+{
+	// User 객체 생성
+	shared_ptr<CUser> user;
+	if (!CAST_CS(session)->GetUser()) {
+		user = make_shared<CUser>();
+
+		// ClientSession이 Plyaer를 참조. (refcount 증가)
+		CAST_CS(session)->SetUser(user);
+	}
+
+	// Player 생성 (플레이어 ID = 유저 ID)
+	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayerTest(SCENE_TYPE::LOBBY, session, user);
+
+	// Player 위치 지정 (임시)
+	XMFLOAT3 pos{};
+	pos.x = rand() % 3 - 2;
+	pos.y = 0.f;
+	pos.z = rand() % 3 - 2;
+	player->SetPosition(pos);
+
+	// 지금 접속한 유저에게 로그인 허락 / 플레이어 생성 패킷 보냄
+	{
+		S_SpawnPlayer spawnPkt;
+		//spawnPkt.room_id = player->GetRoomID();
+		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
+		spawnPkt.is_my_player = true;
+		spawnPkt.info.player_id = player->GetID();
+		//spawnPkt.info.room_id = player->GetRoomID();
+		spawnPkt.info.is_my_player = true;
+		spawnPkt.info.x = player->GetPosition().x;
+		spawnPkt.info.y = player->GetPosition().y;
+		spawnPkt.info.z = player->GetPosition().z;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+		session->DoSend(sendBuffer);
+	}
+
+	// 유저 Scene에 입장
+	EnterScene(player);
+}
+
+CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)
+{
+	static const std::unordered_map<std::string, LobbyMeshName> table = {
+		{"Wall", LobbyMeshName::Wall},
+		{"Floor", LobbyMeshName::Floor},
+		{"GroundPipe", LobbyMeshName::GroundPipe},
+		{"Stone012", LobbyMeshName::Counter}
+	};
+
+	auto it = table.find(str);
+	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
+}
+
+void CLobbyScene::CreateLobby()
 {
 	// 1. 맵 파일 로드
 	std::string fileName{ "../Modeling/lobby_uv.bin" };
@@ -146,143 +221,4 @@ void CLobbyScene::Start()
 		// 오브젝트 보관 (이전처럼 switch문 밖, for문 안에 위치!)
 		static_objects.push_back(obj);
 	}
-}
-
-void CLobbyScene::Update(float elapsedTime)
-{
-	CScene::Update(elapsedTime);
-	CPhysicsManager::GetInstance().Update(elapsedTime);
-}
-
-// 특정 Scene을 테스트할 때, 사용할 함수. 
-void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt)
-{
-	// User 객체 생성
-	shared_ptr<CUser> user;
-	if (!CAST_CS(session)->GetUser()) {
-		user = make_shared<CUser>();
-
-		// ClientSession이 Plyaer를 참조. (refcount 증가)
-		CAST_CS(session)->SetUser(user);
-	}
-
-	// Player 객체 생성
-	shared_ptr<CPlayer> player = CObject::CreatePlayer();
-
-	// Player의 ID는 User ID와 동일
-	player->SetID(user->GetUserID());
-	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-
-	// Player도 ClientSession을 약한 참조 (refcount 증가 x)
-	player->SetSession(session);
-
-	// User Player를 참조 (refcount 증가)
-	user->SetPlayer(player);
-
-	// Player도 CUser를 약한 참조 (refcount 증가 x)
-	player->SetUser(CAST_CS(session)->GetUser());
-
-	// 지금 접속한 유저에게 로그인 허락 / 플레이어 생성 패킷 보냄
-	{
-		S_SpawnPlayer spawnPkt;
-		//spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = true;
-		spawnPkt.info.player_id = player->GetID();
-		//spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = true;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		session->DoSend(sendBuffer);
-	}
-
-	// 유저 Scene에 입장
-	EnterScene(player);
-}
-
-void CLobbyScene::C_Enter_Lobby(shared_ptr<Session> session, const PktDummy& pkt)
-{
-	auto user = CAST_CS(session)->GetUser();
-	assert(user);
-
-	uint32 roomId = pkt.value;
-	auto room = user->GetRoom();
-	assert(room);
-
-	// 플레이어 생성
-	shared_ptr<CPlayer> player = CObject::CreatePlayer();
-
-	// 유저를 약한 참조 (refcount 증가x)
-	player->SetUser(user);
-
-	// 세션도 약한 참조 (refcount 증가x)
-	player->SetSession(user->GetSession());
-
-	// 플레이어의 (플레이어 ID = 유저 ID)
-	player->SetID(user->GetUserID());
-
-	// 지금 플레이어가 속한 방ID
-	player->SetRoomID(roomId);
-
-	// 지금 플레이어가 속한 방
-	player->SetRoom(room);
-
-	// Player가 속한 Scene 설정
-	player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-
-	// 유저가 자신의 플레이어를 참조 (refcount 증가)
-	user->SetPlayer(player);
-
-	// 방 인원 수 증가
-	room->PlayerEnter();
-
-	// 지금 방에 입장한 유저에게 플레이어 생성 허락
-	{
-		S_SpawnPlayer spawnPkt;
-		spawnPkt.room_id = player->GetRoomID();
-		spawnPkt.scene_type = SCENE_TYPE::LOBBY;
-		spawnPkt.is_my_player = true;
-		spawnPkt.info.player_id = player->GetID();
-		spawnPkt.info.room_id = player->GetRoomID();
-		spawnPkt.info.is_my_player = true;
-		spawnPkt.info.x = player->GetPosition().x;
-		spawnPkt.info.y = player->GetPosition().y;
-		spawnPkt.info.z = player->GetPosition().z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
-		if (user->GetSession())
-			user->GetSession()->DoSend(sendBuffer);
-	}
-
-	// 유저 Scene에 입장
-	// EnterScene 에서 유저들의 입장 정보들을 다 처리하도록 수정. (26. 2. 25)
-	EnterScene(player);
-	
-	// S_Enter_Room 패킷
-	// 입장 허락.
-	{
-		S_EnterRoom enterPkt;
-		enterPkt.success = true;
-		enterPkt.room_id = user->GetRoomID();
-		enterPkt.scene_type = player->GetCurrentSceneType();
-		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
-		if (user->GetSession())
-			user->GetSession()->DoSend(sendBuffer);
-	}
-}
-
-CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)
-{
-	static const std::unordered_map<std::string, LobbyMeshName> table = {
-		{"Wall", LobbyMeshName::Wall},
-		{"Floor", LobbyMeshName::Floor},
-		{"GroundPipe", LobbyMeshName::GroundPipe},
-		{"Stone012", LobbyMeshName::Counter}
-	};
-
-	auto it = table.find(str);
-	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
 }
