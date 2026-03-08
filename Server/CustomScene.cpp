@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "User.h"
 #include "Room.h"
+#include "PhysicsManager.h"
 
 
 CCustomScene::CCustomScene()
@@ -28,7 +29,8 @@ void CCustomScene::Start()
 
 void CCustomScene::Update(float elapsedTime)
 {
-
+	CScene::Update(elapsedTime);
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 }
 
 void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)

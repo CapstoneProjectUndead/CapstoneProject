@@ -69,13 +69,24 @@ void CMovementComponent::Jump()
 
 void CMovementComponent::Update(const float deltaTime)
 {
-    if (owner == nullptr)
-        return;
+    OBJECT_TYPE type = owner->GetObjectType();
 
-    // 플레이어가 Custom Scene에 있으면 return
-    auto player = dynamic_cast<CPlayer*>(owner);
-    if (player->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
-        return;
+    switch (type)
+    {
+    case OBJECT_TYPE::PLAYER:
+    {
+        CPlayer* player = static_cast<CPlayer*>(owner);
+
+        // 플레이어가 Custom Scene에 있으면 return
+        if (player->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
+            return;
+    }
+    break;
+    case OBJECT_TYPE::MONSTER:
+        break;
+    default:
+        break;
+    }
 
     ClampSpeed();
 

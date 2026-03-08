@@ -118,15 +118,15 @@ void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& p
 	// 플레이어 Custom Scene에 입장 (일감 push만)
 	{
 		auto& scenes = room->GetScenes();
-		CScene* scene = scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
-		assert(scene);
+		CCustomScene* customScene = dynamic_cast<CCustomScene*>(scenes[(UINT)SCENE_TYPE::CUSTOMS].get());
+		assert(customScene);
 
 		C_EnterRoom enterPkt;
 		enterPkt.user_id = user->GetUserID();
 		enterPkt.room_id = room->GetRoomID();
 
-		scene->PushPacketJob(session
-			, (CCustomScene*)scene
+		customScene->PushPacketJob(session
+			, (CCustomScene*)customScene
 			, &CCustomScene::C_Handle_Enter_CustomScene
 			, enterPkt);
 	}
@@ -150,7 +150,7 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 
 			// 플레이어 Custom Scene에 입장
 			auto& scenes = room->GetScenes();
-			CCustomScene* customScene = (CCustomScene*)scenes[(UINT)SCENE_TYPE::CUSTOMS].get();
+			CCustomScene* customScene = dynamic_cast<CCustomScene*>(scenes[(UINT)SCENE_TYPE::CUSTOMS].get());
 			assert(customScene);
 
 			customScene->PushPacketJob(session

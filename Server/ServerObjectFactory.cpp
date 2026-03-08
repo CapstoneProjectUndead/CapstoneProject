@@ -52,7 +52,7 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, sha
 	player->SetUser(user);
 
 	// (플레이어 ID = 유저 ID)
-	//player->SetID(user->GetUserID());
+	player->SetID(user->GetUserID());
 
 	// 세션도 약한 참조 (refcount 증가x)
 	player->SetSession(user->GetSession());

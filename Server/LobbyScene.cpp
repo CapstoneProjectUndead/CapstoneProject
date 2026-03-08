@@ -36,7 +36,7 @@ void CLobbyScene::Start()
 	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type));
 	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
 	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-	//monsters.insert
+	AddMonster(humanMonster);
 }
 
 void CLobbyScene::Update(float elapsedTime)

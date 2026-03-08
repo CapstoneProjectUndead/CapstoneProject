@@ -35,7 +35,7 @@ CRoom::~CRoom()
 void CRoom::Initialize()
 {
 	// CCustomScene »ý¼º
-	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CLobbyScene>(room_info.room_id);
+	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CCustomScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Start();
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetRoom(shared_from_this());
 

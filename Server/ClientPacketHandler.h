@@ -37,6 +37,7 @@ enum : uint16
 	PKT_S_CUSTOM_SELECT,
 	PKT_C_SCENE_CHANGE,
 	PKT_S_SCENE_CHANGE,
+	PKT_S_Spawn_MONSTER,
 };
 
 // Custom Handlers

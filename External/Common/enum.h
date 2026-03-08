@@ -17,7 +17,7 @@ enum class PLAYER_STATE : uint8_t
 	RUN,
 };
 
-enum class SCENE_TYPE
+enum class SCENE_TYPE : uint8_t
 {
 	NONE,
 	TITLE,

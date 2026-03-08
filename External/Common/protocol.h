@@ -45,6 +45,7 @@ enum PacketType : uint16_t
 	_S_CUSTOM_SELECT,
 	_C_SCENE_CHANGE,
 	_S_SCENE_CHANGE,
+	_S_Spawn_MONSTER,
 };
 
 #pragma pack (push, 1)
@@ -187,7 +188,7 @@ struct S_EnterRoom : public PacketHeader
 
 	S_EnterRoom() : PacketHeader(sizeof(S_EnterRoom), (UINT)PacketType::_S_ENTER_ROOM) {}
 };
-static_assert(sizeof(S_EnterRoom) == 4 + 9, "S_EnterRoom size mismatch!");
+static_assert(sizeof(S_EnterRoom) == 4 + 6, "S_EnterRoom size mismatch!");
 
 // 가변길이 패킷
 // 여러 방 정보를 패킷에 담아서 보낸다.
@@ -224,7 +225,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 67, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 64, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -262,7 +263,7 @@ struct S_PLAYER_LIST : public PacketHeader
 		return PlayerList(reinterpret_cast<Player*>(data), player_count);
 	}
 };
-static_assert(sizeof(S_PLAYER_LIST) == 4 + 16, "S_PLAYER_LIST size mismatch!");
+static_assert(sizeof(S_PLAYER_LIST) == 4 + 13, "S_PLAYER_LIST size mismatch!");
 
 struct S_RemovePlayer : public PacketHeader
 {
@@ -271,7 +272,7 @@ struct S_RemovePlayer : public PacketHeader
 
 	S_RemovePlayer() : PacketHeader(sizeof(S_RemovePlayer), (UINT)PacketType::_S_REMOVE_PLAYER) {}
 };
-static_assert(sizeof(S_RemovePlayer) == 4 + 12, "S_RemovePlayer size mismatch!");
+static_assert(sizeof(S_RemovePlayer) == 4 + 9, "S_RemovePlayer size mismatch!");
 
 // 서버 권한 + 클라 예측
 struct C_Input : public PacketHeader
@@ -287,7 +288,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 78, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 75, "C_PlayerInput size mismatch!");
 
 struct S_PlayerMove : public PacketHeader
 {
@@ -298,7 +299,7 @@ struct S_PlayerMove : public PacketHeader
 
 	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_MOVE) {}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 74, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 71, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {
@@ -325,6 +326,16 @@ struct C_SceneChange : public PacketHeader
 
 	C_SceneChange() : PacketHeader(sizeof(C_SceneChange), (UINT)PacketType::_C_SCENE_CHANGE) {}
 };
-static_assert(sizeof(C_SceneChange) == 4 + 16, "C_SceneChange size mismatch!");
+static_assert(sizeof(C_SceneChange) == 4 + 10, "C_SceneChange size mismatch!");
+
+struct S_SpawnMonster : public PacketHeader
+{
+	NetMonsterInfo info;    // 53바이트
+	uint32         room_id;
+	SCENE_TYPE     scene_type;
+
+	S_SpawnMonster() : PacketHeader(sizeof(S_SpawnMonster), (UINT)PacketType::_S_Spawn_MONSTER) {}
+};
+static_assert(sizeof(S_SpawnMonster) == 4 + 58, "S_SpawnMonster size mismatch!");
 
 #pragma pack (pop)

@@ -31,6 +31,8 @@ public:
 	void BroadCast(SendBufferRef sendBuffer);
 	void BroadCast(SendBufferRef sendBuffer, uint64 exceptID);
 
+	void AddMonster(shared_ptr<CMonster> monster);
+
 private:
 	void SimulatePlayers(const float elapsedTime);
 	void SimulateMonsters(const float elapsedTime);

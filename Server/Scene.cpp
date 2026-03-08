@@ -147,6 +147,11 @@ void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 	}
 }
 
+void CScene::AddMonster(shared_ptr<CMonster> monster)
+{
+	monsters[monster->GetID()] = monster;
+}
+
 void CScene::SimulatePlayers(const float elapsedTime)
 {
 	for (auto& [id, player] : players) {
@@ -173,6 +178,28 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 	player->SetCurrentSceneType(scene_type);
 
 	BroadcastUserEnter(player);
+
+	// 3월 9일 추가
+	// 몬스터가 있다면 몬스터 정보도 보내기
+	{
+		S_SpawnMonster spawnMonsterPkt;
+
+		for (auto& [id, monster] : monsters) {
+
+			spawnMonsterPkt.room_id = room_id;
+			spawnMonsterPkt.scene_type = scene_type;
+			spawnMonsterPkt.info.monster_id = monster->GetID();
+			spawnMonsterPkt.info.room_id = room_id;
+
+			spawnMonsterPkt.info.x = monster->GetPosition().x;
+			spawnMonsterPkt.info.y = monster->GetPosition().y;
+			spawnMonsterPkt.info.z = monster->GetPosition().z;
+
+			auto sendBuffer = MAKE_SEND_BUFFER(spawnMonsterPkt);
+			if (player->GetUser()->GetSession())
+				player->GetUser()->GetSession()->DoSend(sendBuffer);
+		}
+	}
 }
 
 void CScene::LeaveScene(uint64 playerId)

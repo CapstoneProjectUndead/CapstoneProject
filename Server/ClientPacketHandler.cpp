@@ -158,7 +158,7 @@ bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pk
 {
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
 	assert(room->IsActive());
-	CScene* customScene = room->GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
+	CCustomScene* customScene = dynamic_cast<CCustomScene*>(room->GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get());
 	assert(customScene);
 
 	customScene->PushPacketJob(
