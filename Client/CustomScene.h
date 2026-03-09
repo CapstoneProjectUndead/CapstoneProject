@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Scene.h"
 
 class CCustomScene : public CScene
@@ -10,7 +10,6 @@ public:
 	void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) override;
 
 	void Enter() override;
-	void Exit() override;
 	bool IsUIInputEnabled() override;
 
 	void DrawUI() override;

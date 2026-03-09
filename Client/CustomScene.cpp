@@ -60,6 +60,8 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
 
 void CCustomScene::Enter()
 {
+    CScene::Enter();
+
     BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
     if (my_player) {
@@ -67,12 +69,6 @@ void CCustomScene::Enter()
         camera->SetTarget(my_player.get());
     }
 }
-
-void CCustomScene::Exit()
-{
-
-}
-
 bool CCustomScene::IsUIInputEnabled()
 {
     bool state = true;

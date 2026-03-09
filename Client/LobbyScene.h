@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Scene.h"
 
 class CLobbyScene :
@@ -13,7 +13,6 @@ public:
     virtual void Update(float elapsedTime) override;
 
     virtual void Enter();
-    virtual void Exit();
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;

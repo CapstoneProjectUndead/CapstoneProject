@@ -1,12 +1,10 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Movement.h"
 #include "Object.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "Player.h"
 #include "MyPlayer.h"
-
-bool is_fly{ true };
 
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {

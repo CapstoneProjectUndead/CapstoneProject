@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Collider.h"
 #include "Object.h"
 #include "Mesh.h"
@@ -9,6 +9,7 @@ CBoxShape::CBoxShape(XMFLOAT3 extents, XMFLOAT3& p)
 {
     local.Center = p;
     local.Extents = extents;
+    world = local;
     debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
 };
 
@@ -246,10 +247,9 @@ int CConcaveMeshShape::BuildBVHRecursive(std::vector<int>& indices, int start, i
 
 // component
 CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
-    : shape{ std::move(otherShape) }, local_aabb{ otherBox }
+    : shape{ std::move(otherShape) }, local_aabb{ otherBox }, world_aabb{otherBox}
 {
     debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local_aabb.Extents, local_aabb.Center);
-
 }
 
 CColliderComponent::CColliderComponent(const CColliderComponent& other)
