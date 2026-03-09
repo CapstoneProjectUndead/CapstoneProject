@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "LightManager.h"
 
 class CPlayer;
@@ -25,7 +25,7 @@ public:
 	virtual void Update(float elapsedTime);
 
 	// Scene 이 전환될 때, 호출 될 함수
-	virtual void Enter() abstract;
+	virtual void Enter();
 	virtual void Exit();
 
 	void AddObject(std::shared_ptr<CObject>, UINT);

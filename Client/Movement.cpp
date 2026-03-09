@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Movement.h"
 #include "Object.h"
 #include "Collider.h"
@@ -89,7 +89,11 @@ void CMovementComponent::Update(const float deltaTime)
         break;
     }
 
-    ClampSpeed();
+    if (is_fly) {
+        CPhysicsManager::GetInstance().ApplyFriction(owner, deltaTime);
+        owner->position = Vector3::Add(owner->position, owner->velocity);
+        return;
+    }
 
     // 중력/마찰/땅 확인
     XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
@@ -102,6 +106,8 @@ void CMovementComponent::Update(const float deltaTime)
 
     // 반복 슬라이딩 + 턱 오르기 수행
     ResolveCollisions(finalPos, internalMotion, deltaTime);
+
+    ClampSpeed();
 
     // 최종 위치 적용
     XMStoreFloat3(&owner->position, finalPos);

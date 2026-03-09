@@ -1,9 +1,8 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "LobbyScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Shader.h"
-#include "PhysicsManager.h"
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
@@ -26,7 +25,7 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Initialize()
 {
-	// ·»´õ¸µÇÒ ¶§ ÇÊ¿äÇÑ ½¦ÀÌ´õ °´Ã¼ »ı¼º
+	// ë Œë”ë§í•  ë•Œ í•„ìš”í•œ ì‰ì´ë” ê°ì²´ ìƒì„±
 	if(shaders.empty()) {
 		{
 			// static shader
@@ -50,7 +49,7 @@ void CLobbyScene::Initialize()
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	// ÇÃ·¹ÀÌ¾î »ı¼º
+	// í”Œë ˆì´ì–´ ìƒì„±
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
@@ -62,12 +61,12 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		camera->Initialize(device, commandList);
 	}
 	
-	// light »ı¼º
+	// light ìƒì„±
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
 	}
-	// test ¿ë »èÁ¦X
+	// test ìš© ì‚­ì œX
 	{
 		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
 		std::ofstream txt("../Modeling/char.txt");
@@ -105,7 +104,6 @@ void CLobbyScene::Update(float elapsedTime)
 		return;
 
 	CScene::Update(elapsedTime);
-	CPhysicsManager::GetInstance().Update(elapsedTime);
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
@@ -114,6 +112,8 @@ void CLobbyScene::Update(float elapsedTime)
 
 void CLobbyScene::Enter()
 {
+	CScene::Enter();
+
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
 	if (my_player) {
@@ -131,17 +131,17 @@ void CLobbyScene::Exit()
 
 void CLobbyScene::DrawUI()
 {
-	// ·Îµù ÆË¾÷ (ÃÖ¿ì¼± ¼øÀ§)
+	// ë¡œë”© íŒì—… (ìµœìš°ì„  ìˆœìœ„)
 	if (loading_type != LoadingType::None) {
 		
 	}
 
-	// °á°ú ÆË¾÷
+	// ê²°ê³¼ íŒì—…
 	if (pop_up_result.is_visible) {
 		
 	}
 
-	// »óÅÂ¿¡ µû¸¥ UI ºĞ±â
+	// ìƒíƒœì— ë”°ë¥¸ UI ë¶„ê¸°
 	switch (ui_state)
 	{
 	case LobbyUIState::Menu:
@@ -180,35 +180,35 @@ void CLobbyScene::DrawMenu()
 
 	float scale = G_RATIO_Y;
 
-	// Ã¢À» È­¸é Á¤Áß¾Ó¿¡ ¹èÄ¡
+	// ì°½ì„ í™”ë©´ ì •ì¤‘ì•™ì— ë°°ì¹˜
 	ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
 	ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
-	// À©µµ¿ì Å¸ÀÌÆ²¹Ù, ¸®»çÀÌÁî, ÀÌµ¿ ±â´É ¸ğµÎ Á¦°Å
+	// ìœˆë„ìš° íƒ€ì´í‹€ë°”, ë¦¬ì‚¬ì´ì¦ˆ, ì´ë™ ê¸°ëŠ¥ ëª¨ë‘ ì œê±°
 	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove 
 		| ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
 
-	// ¹è°æ Ã¤¿ì±â 
+	// ë°°ê²½ ì±„ìš°ê¸° 
 	ImGui::GetBackgroundDrawList()->AddRectFilled(
 		ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.75f))
 	);
 
 	if (ImGui::Begin("Lobby Menu", nullptr, menuFlags)) {
-		// ÆùÆ® ½ºÄÉÀÏ¸µ Àû¿ë
+		// í°íŠ¸ ìŠ¤ì¼€ì¼ë§ ì ìš©
 		ImGui::SetWindowFontScale(scale);
 		
-		// ¹öÆ° Å©±âµµ ½ºÄÉÀÏ¸µ Àû¿ë
+		// ë²„íŠ¼ í¬ê¸°ë„ ìŠ¤ì¼€ì¼ë§ ì ìš©
 		ImVec2 btnSize = ImVec2(200.0f * scale, 60.0f * scale);
 		
-		// ¿©¹é »ìÂ¦ ÁÖ±â
+		// ì—¬ë°± ì‚´ì§ ì£¼ê¸°
 		ImGui::Spacing(); ImGui::Spacing();
 
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));        // Æò¼Ò »ö»ó
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // ¸¶¿ì½º ¿Ã·ÈÀ» ¶§
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.1f, 0.1f, 1.0f));  // Å¬¸¯ÇßÀ» ¶§
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));        // í‰ì†Œ ìƒ‰ìƒ
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // ë§ˆìš°ìŠ¤ ì˜¬ë ¸ì„ ë•Œ
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.1f, 0.1f, 1.0f));  // í´ë¦­í–ˆì„ ë•Œ
 
-		// Ä¿½ºÅÒ ¹öÆ° ·»´õ¸µ (¹æ ³ª°¡±â ¹öÆ° ¹Ù·Î ¾Æ·¡¿¡ »ı¼ºµÊ)
-		if (ImGui::Button((const char*)u8"Ä¿½ºÅÒ", btnSize)) {
+		// ì»¤ìŠ¤í…€ ë²„íŠ¼ ë Œë”ë§ (ë°© ë‚˜ê°€ê¸° ë²„íŠ¼ ë°”ë¡œ ì•„ë˜ì— ìƒì„±ë¨)
+		if (ImGui::Button((const char*)u8"ì»¤ìŠ¤í…€", btnSize)) {
 
 			if (g_is_single) {
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
@@ -236,8 +236,8 @@ void CLobbyScene::DrawMenu()
 		ImGui::Spacing(); 
 		ImGui::Spacing();
 
-		// ¹æ ³ª°¡±â ¹öÆ° ·»´õ¸µ
-		if (ImGui::Button((const char*)u8"³ª°¡±â", btnSize)) {
+		// ë°© ë‚˜ê°€ê¸° ë²„íŠ¼ ë Œë”ë§
+		if (ImGui::Button((const char*)u8"ë‚˜ê°€ê¸°", btnSize)) {
 			ImGui::OpenPopup((const char*)u8"LeaveConfirmPopup");
 		}
 		
@@ -263,20 +263,20 @@ void CLobbyScene::DrawRoomLeavePopUp()
 	ImVec2 popupCenter = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
 	ImGui::SetNextWindowPos(popupCenter, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
-	// BeginPopupModalÀº OpenPopupÀÌ È£ÃâµÇ¾úÀ» ¶§¸¸ true¸¦ ¹İÈ¯.
+	// BeginPopupModalì€ OpenPopupì´ í˜¸ì¶œë˜ì—ˆì„ ë•Œë§Œ trueë¥¼ ë°˜í™˜.
 	if (ImGui::BeginPopupModal((const char*)u8"LeaveConfirmPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar)) {
 
 		ImGui::SetWindowFontScale(scale);
 
-		ImGui::Text((const char*)u8"Á¤¸»·Î ³ª°¡½Ã°Ú½À´Ï±î?");
+		ImGui::Text((const char*)u8"ì •ë§ë¡œ ë‚˜ê°€ì‹œê² ìŠµë‹ˆê¹Œ?");
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		// ÆË¾÷ ¾ÈÀÇ ¹öÆ° Å©±â ¼¼ÆÃ
+		// íŒì—… ì•ˆì˜ ë²„íŠ¼ í¬ê¸° ì„¸íŒ…
 		ImVec2 popupBtnSize = ImVec2(100.0f * scale, 40.0f * scale);
 
-		// [È®ÀÎ ¹öÆ°]
-		if (ImGui::Button((const char*)u8"È®ÀÎ", popupBtnSize)) {
+		// [í™•ì¸ ë²„íŠ¼]
+		if (ImGui::Button((const char*)u8"í™•ì¸", popupBtnSize)) {
 			
 			if (!g_is_single) {
 				C_LeaveRoom leavePkt;
@@ -296,16 +296,16 @@ void CLobbyScene::DrawRoomLeavePopUp()
 
 			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
 
-			ImGui::CloseCurrentPopup(); // ÆË¾÷ ´İ±â
-			SetUIState(LobbyUIState::None); // ÀüÃ¼ ESC ¸Ş´º ´İ±â
+			ImGui::CloseCurrentPopup(); // íŒì—… ë‹«ê¸°
+			SetUIState(LobbyUIState::None); // ì „ì²´ ESC ë©”ë‰´ ë‹«ê¸°
 			paused = false;
 		}
 
 		ImGui::SameLine(); 
 
-		// [Ãë¼Ò ¹öÆ°]
-		if (ImGui::Button((const char*)u8"Ãë¼Ò", popupBtnSize)) {
-			ImGui::CloseCurrentPopup(); // ÆË¾÷¸¸ ´İ±â (ESC ¸Ş´º´Â ±×´ë·Î µÒ)
+		// [ì·¨ì†Œ ë²„íŠ¼]
+		if (ImGui::Button((const char*)u8"ì·¨ì†Œ", popupBtnSize)) {
+			ImGui::CloseCurrentPopup(); // íŒì—…ë§Œ ë‹«ê¸° (ESC ë©”ë‰´ëŠ” ê·¸ëŒ€ë¡œ ë‘ )
 		}
 
 		ImGui::SetWindowFontScale(1.0f);

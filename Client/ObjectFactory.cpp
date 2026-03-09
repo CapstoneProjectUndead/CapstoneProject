@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ObjectFactory.h"
 
 // Component
@@ -19,15 +19,59 @@
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
+void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
+{
+	if (node->mesh.positions.empty()) return;
+
+	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+	// 1) MeshComponent 생성
+	auto meshComp = std::make_shared<CMeshComponent>();
+	obj->SetComponent(meshComp);
+	meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
+	obj->world_matrix = node->localMatrix;
+
+	// 2) MaterialComponent 생성
+	auto matComp = std::make_shared<CMaterialComponent>();
+	obj->SetComponent(matComp);
+
+	std::string name{ node->mesh.materials[0].albedoMap };
+	if (!name.empty()) {
+		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
+		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		mat->material.albedo = node->mesh.materials[0].albedoColor;
+		mat->material.glossiness = node->mesh.materials[0].glossiness;
+		matComp->SetMaterial(mat);
+	}
+
+	// 3) MeshRendererComponent 생성
+	auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+	obj->SetComponent(meshRenderer);
+	meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
+
+	// ColliderComponent 생성
+	std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
+	auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+	CollisionFilter filter;
+	filter.category = EColLayer::OBJECT;
+	filter.mask = EColLayer::PLAYER;
+	boxCollider->SetFillter(filter);
+	obj->SetComponent(boxCollider);
+	//CPhysicsManager::GetInstance().SetCollider(boxCollider);
+
+	obj->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	objects.emplace(node->name, std::move(obj));
+}
+
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHeapManager* heapManager)
 {
 	std::vector<std::shared_ptr<CObject>> objects;
 
-	std::string fileName{ "../Modeling/lobby_uv.bin" };
+	std::string fileName{ "../Modeling/lobby_0305.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	for (const auto& children : frameRoot->childrens) {
-		if (children->mesh.positions.empty()) break;
+		if (children->mesh.positions.empty()) continue;
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 		// 1) MeshComponent 생성
 		auto meshComp = std::make_shared<CMeshComponent>();
@@ -90,15 +134,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			CPhysicsManager::GetInstance().SetCollider(boxCollider);
 			break;
 		}
-		case LobbyMeshName::Counter:
-		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-			collider->SetFillter(filter);
-			obj->SetComponent(collider);
-			CPhysicsManager::GetInstance().SetCollider(collider);
-			break;
-		}
 		case LobbyMeshName::Unknown:
 		{
 			if (children->collider.positions.empty()) break;
@@ -117,6 +152,64 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	}
 
 
+	return objects;
+}
+
+void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
+{
+	if (!prototypes.empty()) return;
+
+	std::string fileName{ "../Modeling/all_map.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+	LoadFrameNode(heapManager, prototypes, frameRoot);
+	for (const auto& children : frameRoot->childrens) {
+		LoadFrameNode(heapManager, prototypes, children);
+	}
+}
+
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)
+{
+	if (prototypes.empty()) LoadGameScene(heapManager);
+
+	std::vector<std::shared_ptr<CObject>> objects;
+	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+	for (const auto& inst : instData) {
+		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
+			std::string meshName = PickRandom(typeName);
+			if (meshName.empty()) continue;
+
+			auto proto = prototypes[meshName];
+			auto meshComp = proto->GetComponent<CMeshComponent>();
+			auto matComp = proto->GetComponent<CMaterialComponent>();
+			auto collider = proto->GetComponent<CColliderComponent>();
+
+			// 위치/크기 정보를 행렬로 변환하여 추가
+			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
+			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+			XMStoreFloat4x4(&obj->world_matrix, world);
+
+			// 인스턴스 렌더러에 위치와 리소스 정보 등록
+			CInstRenderer::GetInstance().AddInstance(
+				meshComp->GetMesh().get(),
+				matComp,
+				obj->world_matrix
+			);
+			obj->SetShdaer("inst");
+
+			// collider copy(잔디, 돌은 필요X)
+			std::string base{ typeName };
+			std::erase_if(base, ::isdigit);
+			if (base != "grass" && base != "stone") {
+				auto copyCollider = std::make_shared< CColliderComponent>(*collider);
+				obj->SetComponent(copyCollider);
+				CPhysicsManager::GetInstance().SetCollider(copyCollider);
+			}
+			objects.push_back(obj);
+		}
+	}
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
 	return objects;
 }
 
@@ -352,9 +445,78 @@ CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::s
 		{"Wall", LobbyMeshName::Wall},
 		{"Floor", LobbyMeshName::Floor},
 		{"GroundPipe", LobbyMeshName::GroundPipe},
-		{"Stone012", LobbyMeshName::Counter}
 	};
 
 	auto it = table.find(str);
 	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
+}
+
+std::vector<std::string> CObjectFactory::GameSceneTypeToString(const MapGenerator::EModelType& type)
+{
+	static const std::unordered_map<MapGenerator::EModelType, std::vector<std::string>> table = {
+		{ MapGenerator::EModelType::ROAD,					{"park_road", "stone"} },
+		{ MapGenerator::EModelType::PARK_GREEN,				{"park_green", "grass"} },
+		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
+		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
+
+		{ MapGenerator::EModelType::WALL,					{"stone011"} },// 임시
+
+		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
+		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
+		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
+		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
+		{ MapGenerator::EModelType::CORNER_DOOR,			{"wall_2_door001"} },
+
+		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
+		{ MapGenerator::EModelType::TREE,					{"tree"} },
+		{ MapGenerator::EModelType::TREASURE,				{"trashcan"} },
+		{ MapGenerator::EModelType::BENCH,					{"park_bench"} },
+		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
+		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
+
+		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
+	};
+
+
+	auto it = table.find(type);
+	return it->second;
+}
+
+// grass, stone 등 랜덤 카테고리 선택
+std::string CObjectFactory::PickRandom(const std::string& key)
+{
+	static const std::unordered_map<std::string, std::vector<std::string>> categoryTable = {
+		{ "grass", {
+			"grass019","grass020","grass021","grass022","grass023","grass024",
+			"grass025","grass026","grass027","grass028","grass029","grass030",
+			"grass031","grass032","grass033","grass034","grass035","grass036","grass037", ""
+		}},
+		{ "stone", {
+			"stone011","stone012","stone013","stone014","stone015","stone016",
+			"stone017","stone018","stone019","stone020","stone021","stone022",
+			"stone023","stone024", ""
+		}},
+		{ "park_bench", {
+			"park_bench002","park_bench003"
+		}},
+		{ "small_bush", {
+			"small_bush001","small_bush002"
+		}},
+		{ "tree", {
+			"tree002","pinetree"
+		}},
+		{ "trashcan", {
+			"trashcan001","trashcan002"
+		}},
+	};
+
+	// key가 카테고리인지 확인
+	auto it = categoryTable.find(key);
+	if (it != categoryTable.end()) {
+		const auto& list = it->second;
+		int idx = rand() % list.size();
+		return list[idx];
+	}
+
+	return key;
 }

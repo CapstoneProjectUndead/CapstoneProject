@@ -177,6 +177,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Collider.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="CustomScene.h" />
+    <ClInclude Include="GameScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
     <ClInclude Include="HumanMonster.h" />
@@ -204,6 +205,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="LagSimulator.h" />
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="macro.h" />
+    <ClInclude Include="MapGenerator\MapGenerator.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshRenderer.h" />
@@ -244,6 +246,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CustomScene.cpp" />
+    <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
     <ClCompile Include="HumanMonster.cpp" />
@@ -268,6 +271,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="LagSimulator.cpp" />
     <ClCompile Include="LightManager.cpp" />
+    <ClCompile Include="MapGenerator\MapGenerator.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshRenderer.cpp" />
@@ -310,6 +314,16 @@ call ClientCopy.bat</Command>
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="InstShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Light.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>

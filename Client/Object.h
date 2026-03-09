@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CComponent;
 class CShader;
@@ -83,6 +83,7 @@ public:
 	friend class CMovementComponent;
 	friend class CAnimatorComponent;
 	friend class CPhysicsManager;
+	std::string name;	// 디버깅용
 protected:
 	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
@@ -104,6 +105,7 @@ protected:
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;
 	float		pitch = 0.f;
+
 };
 
 template<typename T>
