@@ -1,9 +1,8 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "LobbyScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Shader.h"
-#include "PhysicsManager.h"
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
@@ -83,7 +82,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	CPhysicsManager::GetInstance().Update(elapsedTime);
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
@@ -110,15 +108,12 @@ bool CLobbyScene::IsUIInputEnabled()
 
 void CLobbyScene::Enter()
 {
+	CScene::Enter();
+
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		camera->SetTarget(my_player.get());
 	}
-}
-
-void CLobbyScene::Exit()
-{
-	
 }

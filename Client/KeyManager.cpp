@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "KeyManager.h"
 
 
@@ -33,7 +33,7 @@ UINT gKeyValue[(UINT)KEY::KEY_END]
 void CKeyManager::Init()
 {
 	for (UINT i = 0; i < (UINT)KEY::KEY_END; ++i)
-		input_vector.emplace_back(KEY_STATE::ROAD, false);
+		input_vector.emplace_back(KEY_STATE::NONE, false);
 }
 
 void CKeyManager::Tick()
@@ -48,7 +48,7 @@ void CKeyManager::Tick()
 			}
 			else if (KEY_STATE::RELEASED == input_vector[i].state)
 			{
-				input_vector[i].state = KEY_STATE::ROAD;
+				input_vector[i].state = KEY_STATE::NONE;
 			}
 
 			input_vector[i].prev_pressed = false;
@@ -86,7 +86,7 @@ void CKeyManager::Tick()
 				else
 				{
 					// 이전에도 안눌려있었고, 지금도 안눌려있다.
-					input_vector[i].state = KEY_STATE::ROAD;
+					input_vector[i].state = KEY_STATE::NONE;
 				}
 
 				input_vector[i].prev_pressed = false;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 
 class CObject;
@@ -36,6 +36,8 @@ public:
 
 	// 서버에서 받은 결과를 바탕으로 재시뮬
 	void Simulate(const XMFLOAT3& dir, float deltaTime);
+
+	bool is_fly{ false }; // 무적 모드(디버깅용)
 private:
 	float speed{ 10.0f };
 	float max_speed{ 30.0f };

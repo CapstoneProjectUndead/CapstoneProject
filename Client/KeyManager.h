@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 struct Vec2
 {
@@ -73,7 +73,7 @@ enum class KEY_STATE
     TAP,
     PRESSED,
     RELEASED,
-    ROAD
+    NONE
 };
 
 struct tKeyInfo

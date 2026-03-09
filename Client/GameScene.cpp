@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GameScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
@@ -34,12 +34,12 @@ void CGameScene::Initialize()
 			shader->CreateShader(GET_DEVICE);
 			shaders.emplace("skinning", std::move(shader));
 		}
-		{
-			// inst
-			std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("inst", std::move(shader));
-		}
+	}
+	{
+		// inst
+		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
+		shader->CreateShader(GET_DEVICE);
+		shaders.emplace("inst", std::move(shader));
 	}
 
 	if (objects.empty()) {
@@ -73,7 +73,6 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	CPhysicsManager::GetInstance().Update(elapsedTime);
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
@@ -136,11 +135,7 @@ void CGameScene::Enter()
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
 	if (my_player) {
-		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
 	}
-}
-
-void CGameScene::Exit()
-{
 }
