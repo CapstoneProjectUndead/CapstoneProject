@@ -49,6 +49,11 @@ private:
     std::vector<RenderUnit> render_units;
 };
 
+struct InstCB {
+    XMFLOAT4X4 world_matrix;
+    UINT material_idx{};
+};
+
 class CInstRenderer
 {
 private:
@@ -65,7 +70,7 @@ public:
 
     void Render(ID3D12GraphicsCommandList* commandList);
 private:
-    ObjectCB* mapped{};
+    InstCB* mapped{};
     ComPtr<ID3D12Resource> inst_cb;
 
     struct BatchKey {
@@ -75,5 +80,5 @@ private:
             return std::tie(mesh, material) < std::tie(other.mesh, other.material);
         }
     };
-    std::map<BatchKey, std::vector<ObjectCB>> batches;
+    std::map<BatchKey, std::vector<InstCB>> batches;
 };

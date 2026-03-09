@@ -12,20 +12,13 @@
 
 #include "Light.hlsl"
 
-cbuffer CameraInfo : register(b1)
+cbuffer CameraInfo : register(b0)
 {
     float4x4 viewMatrix : packoffset(c0);
     float4x4 projectionMatrix : packoffset(c4);
 };
 
-cbuffer MaterialInfo : register(b2)
-{
-    float4 albedo;
-    float3 fresnel;
-    float glossiness;
-};
-
-cbuffer LightInfo : register(b3)
+cbuffer LightInfo : register(b1)
 {
     float4 ambientLight;
     float3 eyePosWorld;
@@ -46,23 +39,38 @@ struct VS_OUTPUT
     float3 position_world : POSITION;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD;
+    
+    nointerpolation uint mat_idx : MATINDEX;
 };
 
 struct InstanceData
 {
     float4x4 world_matrix;
+    uint material_idx;
 };
 
-StructuredBuffer<InstanceData> gInstanceData : register(t100);
+struct MaterialData
+{
+    float4 albedo;
+    float3 fresnel;
+    float glossiness;
+    uint tex_idx;
+};
 
-Texture2D texDiffuse : register(t0);
+StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
+StructuredBuffer<MaterialData> gMaterialData : register(t1, space1);
+
+Texture2D texDiffuse[50] : register(t0);
 SamplerState sample : register(s0);
 
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 {
     VS_OUTPUT output;
     
-    float4x4 finalWorld = gInstanceData[instanceID].world_matrix;
+    // load instData
+    InstanceData instData = gInstanceData[instanceID];
+    float4x4 finalWorld = instData.world_matrix;
+    output.mat_idx = instData.material_idx;
     
     float4 posW = mul(float4(input.position, 1.0f), finalWorld);
     output.position_world = posW.xyz;
@@ -78,8 +86,9 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET
 {
+    MaterialData instMat = gMaterialData[input.mat_idx];
     // texture
-    float4 diffuseAlbedo = texDiffuse.Sample(sample, input.tex) * albedo;
+    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex) * instMat.albedo;
 
     // light
     input.normal = normalize(input.normal);
@@ -88,7 +97,7 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
 
     float4 ambient = ambientLight * diffuseAlbedo;
 
-    Material mat = { diffuseAlbedo, fresnel, glossiness };
+    Material mat = { diffuseAlbedo, instMat.fresnel, instMat.glossiness };
     float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, input.position_world, input.normal, toEyeW, shadowFactor);
 

@@ -52,7 +52,7 @@ void CInstRenderer::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void CInstRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world)
 {
-	ObjectCB data;
+	InstCB data;
 	XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
 	XMStoreFloat4x4(&data.world_matrix, worldT);
 
@@ -70,12 +70,12 @@ void CInstRenderer::Render(ID3D12GraphicsCommandList* commandList)
 		// 1. 데이터 복사
 		memcpy(&mapped[currentOffset], instances.data(), sizeof(ObjectCB) * count);
 
-		// 2. 머티리얼 및 텍스처 설정 (Slot 5번 Descriptor Table 포함)
+		// 2. 머티리얼 및 텍스처 설정
 		if (key.material) {
 			key.material->UpdateMeshShaderVariables(commandList);
 		}
 
-		// 3. 인스턴스 데이터 바인딩 (Slot 3번 - t100)
+		// 3. 인스턴스 데이터 바인딩
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddr = inst_cb->GetGPUVirtualAddress();
 		gpuAddr += currentOffset * sizeof(ObjectCB);
 		commandList->SetGraphicsRootShaderResourceView(4, gpuAddr);
