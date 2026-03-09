@@ -28,8 +28,10 @@ public:
 	virtual void Enter() abstract;
 	virtual void Exit();
 
-	void EnterScene(std::shared_ptr<CObject>, UINT);
-	void LeaveScene(UINT);
+	void AddObject(std::shared_ptr<CObject>, UINT);
+	void RemoveObject(UINT);
+
+	void EraseAllMonsters();
 
 	// UI 관련 
 	void DrawUI_Final();
@@ -51,6 +53,8 @@ public:
 	void Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt);
 	void Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_PlayerMove& pkt);
 	void Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt);
+	void Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt);
+	void Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt);
 
 public:
 	// 멤버 변수 set

@@ -8,8 +8,10 @@
 #include "Room.h"
 #include "Player.h"
 #include "HumanMonster.h"
+#include "AIComponent.h"
+#include "AIStates.h"
 
-atomic<uint32> CServerObjectFactory::monster_id = 1001;
+atomic<uint32> CServerObjectFactory::monster_id_generator = 1001;
 
 
 CServerObjectFactory::CServerObjectFactory()
@@ -75,23 +77,19 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, sha
 	return player;
 }
 
-shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType)
+shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType, shared_ptr<CRoom> room)
 {
+	shared_ptr<CMonster> monster;
+
+	// AI 생성
+	auto AIComp = std::make_shared<CAIComponent>();
+
 	switch (monType)
 	{
 	case MON_TYPE::HUMAN_MONSTER:
 	{
-		auto humanMonster = make_shared<CHumanMonster>();
-		InitializeCharacter(humanMonster);
-
-		// monster 오브젝트 ID 설정
-		uint32 id = monster_id.fetch_add(1);
-		humanMonster->SetID(id);
-
-		// monster가 속한 scene
-		humanMonster->SetCurrentSceneType(sceneType);
-
-		return humanMonster;
+		monster = make_shared<CHumanMonster>();
+		InitializeCharacter(monster);
 	}
 		break;
 	case MON_TYPE::ANIMAL_MONSTER:
@@ -99,10 +97,37 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	case MON_TYPE::GHOST:
 		break;
 	default:
+		return nullptr;
 		break;
 	}
 
-	return nullptr;
+	// monster 오브젝트 ID 설정
+	uint32 id = monster_id_generator.fetch_add(1);
+	monster->SetID(id);
+
+	// monster가 속한 scene
+	monster->SetCurrentSceneType(sceneType);
+
+	// IDLE, PATROL, TRACE, ATTACK 상태는 모든 몬스터가 공통으로 가진다.
+	AIComp->AddState(std::make_shared<CIdleState>());
+	AIComp->AddState(std::make_shared<CPatrolState>());
+	AIComp->AddState(std::make_shared<CTraceState>());
+	AIComp->AddState(std::make_shared<CAttackState>());
+
+	// 항상 IDLE 로 시작.
+	AIComp->SetState(AI_STATE::MONSTER_IDLE);
+
+	// AI 컴포넌트 Monster에 등록
+	monster->SetComponent(AIComp);
+
+	// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
+	monster->SetComponent(std::make_shared<CMovementComponent>());
+
+	// Monster가 속한 Room 
+	monster->SetRoom(room);
+	monster->SetRoomID(room->GetRoomID());
+
+	return monster;
 }
 
 void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object)

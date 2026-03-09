@@ -145,8 +145,8 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 
 bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt)
 {
-	// Title Scene에는 플레이어가 없다.
-	if (pkt.scene_type == SCENE_TYPE::TITLE)
+	// Title 씬과 Custom 씬에는 플레이어가 없다.
+	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
 		assert(nullptr);
 
 	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
@@ -167,6 +167,27 @@ bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pk
 
 bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pkt)
 {
-	
+	// Title 씬과 Custom 씬에는 몬스터가 존재할 수 없다.
+	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
+		assert(nullptr);
+
+	SCENE_TYPE sceneType = pkt.scene_type;
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)sceneType].get();
+	assert(targetScene && targetScene->GetSceneType() == sceneType);
+	targetScene->Handle_S_Spawn_Monster(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt)
+{
+	// Title 씬과 Custom 씬에는 플레이어가 없다.
+	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
+		assert(nullptr);
+
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
+	assert(targetScene);
+	targetScene->Handle_S_Move_Monster(session, pkt);
+
 	return true;
 }

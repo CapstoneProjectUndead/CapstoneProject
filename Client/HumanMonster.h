@@ -20,10 +20,6 @@ public:
     virtual void OnPatrolEnter() override;
     virtual void OnAttackEnter() override;
 
-public:
-    void SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
-    const XMFLOAT3& GetOriginPos() const { return origin_position; }
-
 private:
     std::shared_ptr<CPlayer> FindNearestPlayer();
 
@@ -39,7 +35,6 @@ private:
     void ResetAttackTimer() { attack_timer = 0.0f; }
 
 private:
-    XMFLOAT3 origin_position;
     std::shared_ptr<CPlayer> target_player;
 
     float idle_timer;   // 쉴 때 쓰는 타이머

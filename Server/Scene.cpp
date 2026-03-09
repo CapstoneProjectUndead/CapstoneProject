@@ -97,7 +97,27 @@ void CScene::SendMonstersResult()
 	for (auto& [id, monster] : monsters) {
 
 		if (monster) {
-			
+			S_MonsterMove movePkt;
+
+			movePkt.info.monster_id = monster->GetID(); // "움직인 몬스터"의 ID
+			movePkt.scene_type = monster->GetCurrentSceneType();
+
+			movePkt.info.x = monster->GetPosition().x;
+			movePkt.info.y = monster->GetPosition().y;
+			movePkt.info.z = monster->GetPosition().z;
+
+			movePkt.info.vx = monster->GetVelocity().x;
+			movePkt.info.vy = monster->GetVelocity().y;
+			movePkt.info.vz = monster->GetVelocity().z;
+
+			movePkt.info.yaw = monster->GetYaw();
+			movePkt.info.pitch = monster->GetPitch();
+
+			movePkt.info.AI_state = monster->GetAIState();
+			movePkt.timestamp = monster->GetLastSimulatedTime();
+
+			SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_MonsterMove>(movePkt);
+			BroadCast(sendBuffer);
 		}
 	}
 }
@@ -189,6 +209,7 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 			spawnMonsterPkt.room_id = room_id;
 			spawnMonsterPkt.scene_type = scene_type;
 			spawnMonsterPkt.info.monster_id = monster->GetID();
+			spawnMonsterPkt.info.monster_type = monster->GetMonsterType();
 			spawnMonsterPkt.info.room_id = room_id;
 
 			spawnMonsterPkt.info.x = monster->GetPosition().x;

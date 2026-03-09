@@ -30,19 +30,20 @@ CRoom::CRoom(string name)
 
 CRoom::~CRoom()
 {
+	
 }
 
 void CRoom::Initialize()
 {
 	// CCustomScene 생성
 	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CCustomScene>(room_info.room_id);
-	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Start();
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetRoom(shared_from_this());
+	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Start();
 
 	// LobbyScene 생성
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>(room_info.room_id);
-	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 	scenes[(UINT)SCENE_TYPE::LOBBY]->SetRoom(shared_from_this());
+	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 
 	// 나중에 여기서 GameScene도 같이 생성
 }

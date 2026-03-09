@@ -8,7 +8,6 @@
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
-    , origin_position{}
     , idle_timer(0.0f)
     , patrol_timer(0.0f)
     , attack_timer(0.0f)

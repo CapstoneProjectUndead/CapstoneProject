@@ -10,6 +10,7 @@
 #include "User.h"
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
+#include "Monster.h"
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -130,13 +131,13 @@ void CScene::ManageIME()
 	}
 }
 
-void CScene::EnterScene(std::shared_ptr<CObject> obj, UINT id)
+void CScene::AddObject(std::shared_ptr<CObject> obj, UINT id)
 {
 	id_To_Index[id] = objects.size();
 	objects.push_back(obj);
 }
 
-void CScene::LeaveScene(UINT id)
+void CScene::RemoveObject(UINT id)
 {
 	auto iter = id_To_Index.find(id);
 	if (iter == id_To_Index.end())
@@ -150,6 +151,22 @@ void CScene::LeaveScene(UINT id)
 
 	objects.pop_back();
 	id_To_Index.erase(id);
+}
+
+void CScene::EraseAllMonsters()
+{
+	std::vector<UINT> eraseIds;
+
+	for (const auto& [id, idx] : id_To_Index)
+	{
+		if (id >= 1001)
+			eraseIds.push_back(id);
+	}
+
+	for (UINT id : eraseIds)
+	{
+		RemoveObject(id);
+	}
 }
 
 void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt)
@@ -199,7 +216,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->ChangeEyes(pkt.info.eyes_type);
 		otherPlayer->ChangeMouth(pkt.info.mouth_type);
 
-		EnterScene(otherPlayer, otherPlayer->GetID());
+		AddObject(otherPlayer, otherPlayer->GetID());
 	}
 }
 
@@ -234,7 +251,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 		otherPlayer->ChangeMouth(userList[i].info.mouth_type);
 
 		// Active Scene에 다른 유저 입장
-		EnterScene(otherPlayer, otherPlayer->GetID());
+		AddObject(otherPlayer, otherPlayer->GetID());
 	}
 }
 
@@ -314,5 +331,53 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 
 void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt)
 {
-	LeaveScene(pkt.player_id);
+	RemoveObject(pkt.player_id);
+}
+
+void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt)
+{
+	CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+
+	MON_TYPE type = pkt.info.monster_type;
+	NetMonsterInfo info = pkt.info;
+
+	auto monster = factory->CreateHumanMonster(skinningHeapManager, type, scene_type);
+	monster->SetID(info.monster_id);
+	monster->ChangeModelSet(1);
+	monster->ChangeEyes(2);
+	monster->ChangeMouth(0);
+	monster->SetPosition(0.f, 0.1f, -1.5f);
+	monster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+	AddObject(monster, info.monster_id);
+}
+
+void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt)
+{
+	auto& vec = GetObjects();
+	auto& indexMap = GetIDIndex();
+
+	// 해당 ID가 존재하는 플레이어인지 확인
+	auto it = indexMap.find(pkt.info.monster_id);
+	if (it == indexMap.end())
+		return;
+
+	uint64 idx = it->second;
+	if (idx >= vec.size())
+		return;
+
+	auto monster = std::static_pointer_cast<CMonster>(vec[idx]);
+	monster->SetYaw(pkt.info.yaw);
+	monster->SetPitch(pkt.info.pitch);
+	monster->SetAIState(pkt.info.AI_state);
+
+	// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
+	MonsterFrameHistory state{};
+	state.monster_id = pkt.info.monster_id;
+	state.AI_state = pkt.info.AI_state;
+	state.position = XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z);
+	state.yaw = pkt.info.yaw;
+	state.pitch = pkt.info.pitch;
+	state.server_timestamp = pkt.timestamp;
+
+	monster->RecordMonsterFrameHistory(state);
 }

@@ -115,6 +115,7 @@ bool Handle_C_LEAVE_ROOM(shared_ptr<Session> session, C_LeaveRoom& pkt)
 	CRoomManager::GetInstance().LeaveAndCleanupRoom(session, pkt);
 	auto user = CAST_CS(session)->GetUser();
 	user->SetPlayer(nullptr);
+	user->SetRoom(nullptr);
 	return true;
 }
 

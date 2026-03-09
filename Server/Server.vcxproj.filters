@@ -287,5 +287,8 @@
     <ClInclude Include="ServerObjectFactory.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="AIStates.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

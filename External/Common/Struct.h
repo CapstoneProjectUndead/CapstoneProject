@@ -74,6 +74,40 @@ struct PlayerInfo
 	}
 };
 
+struct MonsterInfo
+{
+	uint64			monster_id;
+	uint32			room_id;
+
+	float			x, y, z;
+	float			vx = 0.0f;
+	float			vy = 0.0f;
+	float			vz = 0.0f;
+	float			yaw = 0.0f;
+	float			pitch = 0.0f;
+	float			roll = 0.0f;
+
+	AI_STATE	    AI_state;
+	MON_TYPE		monster_type;
+
+	MonsterInfo() = default;
+	MonsterInfo(uint64 _id, uint32 roomId
+		, MON_TYPE type
+		, float _x, float _y, float _z)
+		: monster_id(_id)
+		, room_id(roomId)
+		, AI_state(AI_STATE::MONSTER_IDLE)
+		, monster_type(type)
+		, x(_x)
+		, y(_y)
+		, z(_z)
+		, yaw{}
+		, pitch{}
+		, roll{}
+	{
+	}
+};
+
 struct RoomInfo
 {
 	uint32	room_id;	// 방 ID

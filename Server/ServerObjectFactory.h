@@ -19,9 +19,9 @@ public:
     static shared_ptr<CPlayer> CreatePlayerTest(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user);
 
     static shared_ptr<CPlayer> CreatePlayer(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user, shared_ptr<CRoom> room);
-    static shared_ptr<CMonster> CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType);
+    static shared_ptr<CMonster> CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType, shared_ptr<CRoom> room);
     static void InitializeCharacter(shared_ptr<CObject> object);
 
 private:
-    static atomic<uint32> monster_id;
+    static atomic<uint32> monster_id_generator;
 };

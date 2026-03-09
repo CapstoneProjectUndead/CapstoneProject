@@ -15,5 +15,7 @@ CMonster::~CMonster()
 
 void CMonster::Update(float elapsedTime)
 {
+	last_simulated_time = static_cast<float>(g_server_total_time);
+
 	CObject::Update(elapsedTime);
 }

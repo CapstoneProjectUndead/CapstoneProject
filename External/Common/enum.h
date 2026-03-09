@@ -15,6 +15,7 @@ enum class PLAYER_STATE : uint8_t
 	IDLE,
 	WALK,
 	RUN,
+	DEAD,
 };
 
 enum class SCENE_TYPE : uint8_t

@@ -7,9 +7,7 @@
 
 CPlayer::CPlayer()
 	: CObject(OBJECT_TYPE::PLAYER)
-    , room_id(-1)
     , last_processed_seq(0)
-	, last_simulated_time(0.0f)
     , ping(0.0f)
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)

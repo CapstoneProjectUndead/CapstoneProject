@@ -40,6 +40,7 @@ enum : uint16
 	PKT_C_SCENE_CHANGE,
 	PKT_S_SCENE_CHANGE,
 	PKT_S_Spawn_MONSTER,
+	PKT_S_MONSTER_MOVE,
 };
 
 // Custom Handlers
@@ -57,6 +58,7 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt);
 bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pkt);
 bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pkt);
+bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt);
 
 class CServerPacketHandler
 {
@@ -79,6 +81,7 @@ public:
 		GPacketHandler[PKT_S_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PlayerMove>(Handle_S_PLAYER_MOVE, session, buffer, len); };
 		GPacketHandler[PKT_S_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_CustomSelect>(Handle_S_CUSTOM_SELECT, session, buffer, len); };
 		GPacketHandler[PKT_S_Spawn_MONSTER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnMonster>(Handle_S_SPAWN_MONSTER, session, buffer, len); };
+		GPacketHandler[PKT_S_MONSTER_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MonsterMove>(Handle_S_MONSTER_MOVE, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

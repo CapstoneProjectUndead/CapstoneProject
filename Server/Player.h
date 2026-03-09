@@ -48,19 +48,11 @@ public:
 	std::shared_ptr<CUser>    GetUser() const { return user.lock(); }
 	void SetUser(shared_ptr<CUser> _user) { user = _user; }
 
-	uint32 GetRoomID() const { return room_id; }
-	void SetRoomID(const uint32 id) { room_id = id; }
-
-	shared_ptr<CRoom> GetRoom() const { return room; }
-	void SetRoom(shared_ptr<CRoom> _room) { room = _room; }
-
 	void RecordServerFrameHistory(const ServerFrameHistory& history);
 	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
 
 	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return server_history_deq; }
 	void PushInput(const PendingInput& input) { input_queue.push_back(input); }
-
-	float GetLastSimulatedTime() const { return last_simulated_time; }
 
 	// 클라의 핑 측정
 	void  SendPing();
@@ -82,11 +74,8 @@ public:
 	void SetMouthType(uint8 type) { mouth_type = type; }
 
 private:
-	uint32						room_id; // 이 플레이어가 참여하고 있는 방 ID
 	weak_ptr<CUser>				user;
-	shared_ptr<CRoom>			room;
 	uint64						last_processed_seq;
-	float						last_simulated_time;
 	float						ping;
 	float						dt_ping_accumulator;
 	PLAYER_STATE				state;

@@ -169,6 +169,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\struct.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />
+    <ClInclude Include="AIStates.h" />
     <ClInclude Include="Animator.h" />
     <ClInclude Include="AttackState.h" />
     <ClInclude Include="Camera.h" />

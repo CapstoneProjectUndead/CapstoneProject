@@ -4,7 +4,8 @@
 #include "Player.h"
 #include "AIComponent.h"
 #include "Movement.h"
-#include "SceneManager.h"
+#include "Room.h"
+#include "Scene.h"
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
@@ -235,9 +236,37 @@ void CHumanMonster::OnAttackEnter()
 
 shared_ptr<CPlayer> CHumanMonster::FindNearestPlayer()
 {
-    //CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    //assert(currentScene->GetSceneType() == current_scene_type);
-    //auto player = currentScene->GetMyPlayer();  
+    if (auto room = GetRoom()) {
+        CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
+        auto& players = scene->GetPlayers();
+
+        shared_ptr<CPlayer> nearest_player = nullptr;
+        float min_dist_sq = FLT_MAX; // 최소 거리를 찾기 위해 float 최대값으로 초기화
+
+        for (const auto& pair : players) {
+
+            auto player = pair.second;
+            if (!player) 
+                continue;
+
+            // 추가 조건: 플레이어가 죽었거나 연결이 끊긴 상태라면 무시
+            if (player->GetState() == PLAYER_STATE::DEAD)
+                continue;
+
+            // MathHelper를 활용해 직관적으로 두 좌표의 차이 벡터를 구함
+            XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);
+
+            // Vector3::Distance 대신 직접 제곱합을 구해 루트 연산(sqrt) 오버헤드 방지
+            float dist_sq = (dir.x * dir.x) + (dir.y * dir.y) + (dir.z * dir.z);
+
+            if (dist_sq < min_dist_sq) {
+                min_dist_sq = dist_sq;
+                nearest_player = player;
+            }
+        }
+
+        return nearest_player;
+    }
     
 	return nullptr;
 }

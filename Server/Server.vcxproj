@@ -200,6 +200,7 @@
     <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />
+    <ClInclude Include="AIStates.h" />
     <ClInclude Include="AttackState.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />

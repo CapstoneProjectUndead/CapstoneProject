@@ -7,6 +7,8 @@
 CObject::CObject(OBJECT_TYPE type)
 	: obj_type(type)
 	, obj_id(-1)
+	, room_id(-1)
+	, last_simulated_time(0.0f)
 {
 	XMStoreFloat4x4(&world_matrix, XMMatrixIdentity());
 }

@@ -39,13 +39,14 @@ enum PacketType : uint16_t
 	_S_REMOVE_PLAYER,
 
 	_C_PLAYER_INPUT,	// 서버 권위 방식 + 클라 예측 이동
-	_S_MOVE,
+	_S_PLAYER_MOVE,
 
 	_C_CUSTOM_SELECT,
 	_S_CUSTOM_SELECT,
 	_C_SCENE_CHANGE,
 	_S_SCENE_CHANGE,
 	_S_Spawn_MONSTER,
+	_S_MONSTER_MOVE,
 };
 
 #pragma pack (push, 1)
@@ -297,7 +298,7 @@ struct S_PlayerMove : public PacketHeader
 	NetPlayerInfo	info;
 	SCENE_TYPE		scene_type;
 
-	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_MOVE) {}
+	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
 };
 static_assert(sizeof(S_PlayerMove) == 4 + 71, "S_PlayerMove size mismatch!");
 
@@ -337,5 +338,15 @@ struct S_SpawnMonster : public PacketHeader
 	S_SpawnMonster() : PacketHeader(sizeof(S_SpawnMonster), (UINT)PacketType::_S_Spawn_MONSTER) {}
 };
 static_assert(sizeof(S_SpawnMonster) == 4 + 58, "S_SpawnMonster size mismatch!");
+
+struct S_MonsterMove : public PacketHeader
+{
+	float			timestamp;
+	NetMonsterInfo	info;
+	SCENE_TYPE		scene_type;
+
+	S_MonsterMove() : PacketHeader(sizeof(S_MonsterMove), (UINT)PacketType::_S_MONSTER_MOVE) {}
+};
+static_assert(sizeof(S_MonsterMove) == 4 + 58, "S_MonsterMove size mismatch!");
 
 #pragma pack (pop)

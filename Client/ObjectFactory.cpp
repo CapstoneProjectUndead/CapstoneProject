@@ -15,10 +15,9 @@
 #include "MyPlayer.h"
 #include "HumanMonster.h"
 #include "AIComponent.h"
-#include "IdleState.h"
-#include "PatrolState.h"
-#include "TraceState.h"
-#include "AttackState.h"
+#include "AIStates.h"
+
+uint32 CObjectFactory::s_monster_id_generator = 1001;
 
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHeapManager* heapManager)
 {
@@ -262,28 +261,66 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 	return player;
 }
 
-std::shared_ptr<CHumanMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager)
+std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType)
 {
-	auto humanMonster = std::make_shared<CHumanMonster>();
-	CreateUndeadCharacter(humanMonster, heapManager);
+	std::shared_ptr<CMonster>     monster;
+	std::shared_ptr<CAIComponent> AIComp;
 
 	// AI 생성
-	auto AIComp = std::make_shared<CAIComponent>();
+	if (g_is_single)
+		AIComp = std::make_shared<CAIComponent>();
 
-	// HumanMonster의 상태들을 AI에 추가
-	AIComp->AddState(std::make_shared<CIdleState>());
-	AIComp->AddState(std::make_shared<CPatrolState>());
-	AIComp->AddState(std::make_shared<CTraceState>());
-	AIComp->AddState(std::make_shared<CAttackState>());
-	AIComp->SetState(AI_STATE::MONSTER_IDLE);
+	switch (monType)
+	{
+	case MON_TYPE::HUMAN_MONSTER:
+	{
+		monster = std::make_shared<CHumanMonster>();
+		CreateUndeadCharacter(monster, heapManager);
+	}
+	break;
+	case MON_TYPE::ANIMAL_MONSTER:
+	{
 
-	// AI 컴포넌트 HumanMonster에 등록
-	humanMonster->SetComponent(AIComp);
+	}
+		break;
+	case MON_TYPE::GHOST:
+	{
 
-	// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
-	humanMonster->SetComponent(std::make_shared<CMovementComponent>());
+	}
+		break;
+	default:
+		return nullptr;
+		break;
+	}
 
-	return humanMonster;
+	// monster가 속한 scene
+	monster->SetCurrentSceneType(sceneType);
+
+	// monster ID, AI, Movement 셋팅 (싱글 모드일 때만)
+	// ID 값은 멀티 모드일 때도 여전히 필요하지만 다른 곳에서 셋팅된다. 
+	if (g_is_single) {
+
+		// ID 설정
+		monster->SetID(s_monster_id_generator);
+		++s_monster_id_generator;
+
+		// IDLE, PATROL, TRACE, ATTACK 상태는 모든 몬스터가 공통으로 가진다.
+		AIComp->AddState(std::make_shared<CIdleState>());
+		AIComp->AddState(std::make_shared<CPatrolState>());
+		AIComp->AddState(std::make_shared<CTraceState>());
+		AIComp->AddState(std::make_shared<CAttackState>());
+
+		// 항상 IDLE 로 시작.
+		AIComp->SetState(AI_STATE::MONSTER_IDLE);
+
+		// AI 컴포넌트 Monster에 등록
+		monster->SetComponent(AIComp);
+
+		// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
+		monster->SetComponent(std::make_shared<CMovementComponent>());
+	}
+
+	return monster;
 }
 
 void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)

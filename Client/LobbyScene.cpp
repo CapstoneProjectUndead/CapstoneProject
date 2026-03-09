@@ -84,16 +84,18 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	}
 
 	// HumanMonster 생성
-	if (g_is_single) {
+	static bool firstInitialize = true;  // (임시!!!)
+	if (g_is_single && firstInitialize) {
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		auto humanMonster = factory->CreateHumanMonster(skinningHeapManager);
+		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateHumanMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
 		humanMonster->ChangeModelSet(1);
 		humanMonster->ChangeEyes(2);
 		humanMonster->ChangeMouth(0);
 		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
 		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-		humanMonster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-		objects.push_back(humanMonster);
+		AddObject(humanMonster, humanMonster->GetID());
+
+		firstInitialize = false;
 	}
 }
 

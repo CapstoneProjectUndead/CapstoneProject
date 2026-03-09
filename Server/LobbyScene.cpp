@@ -33,7 +33,7 @@ void CLobbyScene::Start()
 	CreateLobby();
 
 	// Å×½ºÆ®
-	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type));
+	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom()));
 	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
 	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
 	AddMonster(humanMonster);

@@ -5,6 +5,7 @@ class CPlayer;
 class Session;
 class CUser;
 class CComponent;
+class CRoom;
 
 class CObject
 {
@@ -34,6 +35,13 @@ public:
     weak_ptr<Session>       GetSessionWeak() const { return session; }
     shared_ptr<Session>     GetSession() const { return session.lock(); }
     void                    SetSession(shared_ptr<Session> _session) { session = _session; }
+
+    uint32                  GetRoomID() const { return room_id; }
+    void                    SetRoomID(const uint32 id) { room_id = id; }
+
+    weak_ptr<CRoom>         GetRoomWeak() const { return room; }
+    shared_ptr<CRoom>       GetRoom() const { return room.lock(); }
+    void                    SetRoom(shared_ptr<CRoom> _room) { room = _room; }
 
     weak_ptr<CUser>         GetUserWeak() const { return user; }
     shared_ptr<CUser>       GetUser() const { return user.lock(); }
@@ -67,6 +75,8 @@ public:
     void                    SetPitch(const float _pitch) { pitch = _pitch; }
     float                   GetPitch() const { return pitch; }
 
+    float                   GetLastSimulatedTime() const { return last_simulated_time; }
+
     //=================================
     // 회전 함수 (테스트)
     void SetYaw(float _yaw);
@@ -77,10 +87,13 @@ public:
 
 protected:
     weak_ptr<CUser>                     user;
+    weak_ptr<CRoom>			            room;
+    uint32						        room_id; // 오브젝트가 존재하는 방의 ID
     weak_ptr<Session>                   session;
     uint64                              obj_id;
     OBJECT_TYPE                         obj_type;
     SCENE_TYPE					        current_scene_type; // 현재 오브젝트가 속한 씬 (방이 씬을 포함하고 있는 구조)
+    float						        last_simulated_time;
 
     XMFLOAT4X4                          world_matrix;
 

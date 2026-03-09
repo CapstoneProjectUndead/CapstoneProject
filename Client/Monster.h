@@ -1,6 +1,17 @@
 #pragma once
 #include "Character.h"
 
+struct MonsterFrameHistory
+{
+    uint32	 monster_id;
+    float	 server_timestamp; // 서버에서 찍어준 도장
+    XMFLOAT3 position;
+    float    yaw;
+    float    pitch;
+    AI_STATE AI_state;
+    MON_TYPE type;
+};
+
 class CAIComponent;
 
 class CMonster :
@@ -36,8 +47,25 @@ public:
 
     MON_TYPE GetMonsterType() const { return monster_type; }
 
+    void            SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
+    const XMFLOAT3& GetOriginPos() const { return origin_position; }
+
+    void            SetDestInfo(const MonsterInfo& pos) { dest_info = pos; }
+    void            RecordMonsterFrameHistory(const MonsterFrameHistory& state);
+
 protected:
+    void            MonsterMoveSyncByInterpolation(float elapsedTime);
+
+protected:
+    XMFLOAT3 origin_position;
     AI_STATE AI_state;
     MON_TYPE monster_type;
+
+    //==================================================
+    // 서버쪽에서 전달받은 몬스터의 정보 (서버 관련)
+    float       smoothed_delay = 0.1f;
+    MonsterInfo dest_info;
+    std::deque<MonsterFrameHistory> interpolation_deq;
+    //==================================================
 };
 
