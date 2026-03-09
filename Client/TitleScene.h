@@ -1,15 +1,15 @@
-#pragma once
+ï»¿#pragma once
 #include "Scene.h"
 
-// ¸ŞÀÎ UI È­¸é »óÅÂ (ÇÑ ¹ø¿¡ ÇÏ³ª¸¸ º¸ÀÓ)
+// ë©”ì¸ UI í™”ë©´ ìƒíƒœ (í•œ ë²ˆì— í•˜ë‚˜ë§Œ ë³´ì„)
 enum class TitleUIState
 {
-    None,               // UI ¾øÀ½ (ÀÎ°ÔÀÓ µî)
-    Main,               // ÃÊ±â È­¸é [½Ì±Û][¸ÖÆ¼][³ª°¡±â]
-    MultiSelect,        // ¸ÖÆ¼ ¸Ş´º [·Î±×ÀÎ][°¡ÀÔ] or [¹æ°Ë»ö][·Î±×¾Æ¿ô]
-    Login,              // ·Î±×ÀÎ ÀÔ·Â Ã¢
-    SignUp,             // È¸¿ø°¡ÀÔ ÀÔ·Â Ã¢
-    RoomList            // ¹æ ¸ñ·Ï (¸ÅÄª È­¸é)
+    None,               // UI ì—†ìŒ (ì¸ê²Œì„ ë“±)
+    Main,               // ì´ˆê¸° í™”ë©´ [ì‹±ê¸€][ë©€í‹°][ë‚˜ê°€ê¸°]
+    MultiSelect,        // ë©€í‹° ë©”ë‰´ [ë¡œê·¸ì¸][ê°€ì…] or [ë°©ê²€ìƒ‰][ë¡œê·¸ì•„ì›ƒ]
+    Login,              // ë¡œê·¸ì¸ ì…ë ¥ ì°½
+    SignUp,             // íšŒì›ê°€ì… ì…ë ¥ ì°½
+    RoomList            // ë°© ëª©ë¡ (ë§¤ì¹­ í™”ë©´)
 };
 
 
@@ -26,13 +26,12 @@ public:
     virtual void Render(ID3D12GraphicsCommandList*) override;
 
     virtual void Enter();
-    virtual void Exit();
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
 
 public:
-    // ¼­¹ö ÆĞÅ¶ °ü·Ã Ã³¸® ÇÔ¼öµé
+    // ì„œë²„ íŒ¨í‚· ê´€ë ¨ ì²˜ë¦¬ í•¨ìˆ˜ë“¤
     void Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGIN& pkt);
     void Handle_S_Logout(std::shared_ptr<Session>& session, const S_LOGOUT& pkt);
     void Handle_S_SignRes(std::shared_ptr<Session>& session, const S_SIGN_RES& pkt);
@@ -41,7 +40,7 @@ public:
 
 public:
     // -----------------------------------------------------
-    // »óÅÂ º¯°æ ÇÔ¼öµé (¿ÜºÎ¿¡¼­ È£Ãâ)
+    // ìƒíƒœ ë³€ê²½ í•¨ìˆ˜ë“¤ (ì™¸ë¶€ì—ì„œ í˜¸ì¶œ)
     // -----------------------------------------------------
     void SetUIState(TitleUIState state) { ui_state = state; }
     TitleUIState GetUIState() const { return ui_state; }
@@ -49,7 +48,7 @@ public:
     void SetOnline(bool online) { is_online = online; }
     void SetRoomCreatePopup(bool show) { show_room_create_popup = show; }
 
-    // µ¥ÀÌÅÍ °»½Å
+    // ë°ì´í„° ê°±ì‹ 
     std::unordered_map<uint32, RoomInfo>& GetRooms() { return rooms; }
     const std::unordered_map<uint32, RoomInfo>& GetRooms() const { return rooms; }
 
@@ -59,19 +58,19 @@ public:
     void SetIsEnter(bool result) { is_room_enter = result; }
 
 private:
-    // UI ±×¸®±â ÇÔ¼öµé
+    // UI ê·¸ë¦¬ê¸° í•¨ìˆ˜ë“¤
     void DrawTitle();
     void DrawTitleUI();
 
-    void DrawTitleMainWindow();     // ¸ŞÀÎ/¸ÖÆ¼¼±ÅÃ ¸Ş´º ÅëÇÕ
+    void DrawTitleMainWindow();     // ë©”ì¸/ë©€í‹°ì„ íƒ ë©”ë‰´ í†µí•©
     void DrawLogInWindow();
     void DrawSignUpWindow();
-    void DrawRoomListUI();          // ¹æ ¸ñ·Ï ÀüÃ¼
-    void DrawRoomListTable();       // Å×ÀÌºí ºÎºĞ
-    void DrawRoomCreatePopUp();     // ¹æ »ı¼º ÆË¾÷
+    void DrawRoomListUI();          // ë°© ëª©ë¡ ì „ì²´
+    void DrawRoomListTable();       // í…Œì´ë¸” ë¶€ë¶„
+    void DrawRoomCreatePopUp();     // ë°© ìƒì„± íŒì—…
 
-    void DrawLoadingPopUp();        // ·Îµù (»±±ÛÀÌ)
-    void DrawLoadingPopUpResult();  // °á°ú È®ÀÎ Ã¢
+    void DrawLoadingPopUp();        // ë¡œë”© (ëº‘ê¸€ì´)
+    void DrawLoadingPopUpResult();  // ê²°ê³¼ í™•ì¸ ì°½
 
     void DrawRefreshButton();
     void DrawThreeButton();
@@ -86,7 +85,7 @@ private:
     std::unordered_map<uint32, RoomInfo> rooms;
 
     // --------------------------
-    // [ÇÙ½É] ¸®ÆÑÅä¸µµÈ »óÅÂ º¯¼öµé
+    // [í•µì‹¬] ë¦¬íŒ©í† ë§ëœ ìƒíƒœ ë³€ìˆ˜ë“¤
     // --------------------------
     TitleUIState ui_state = TitleUIState::Main;
     LoadingType loading_type = LoadingType::None;

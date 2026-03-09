@@ -99,3 +99,13 @@ public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 };
+
+// hardware instancing shader
+class CInstShader : public CShader
+{
+public:
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+	void Render(ID3D12GraphicsCommandList*, CObject*) override;
+};

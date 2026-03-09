@@ -1,6 +1,9 @@
-#pragma once
+﻿#pragma once
 #include "Material.h"
 #include "Texture.h"
+
+// 맵 생성 알고리즘
+#include "MapGenerator/MapGenerator.h"
 
 class CDescriptorHeapManager;
 class CCharacter;
@@ -9,13 +12,18 @@ class CPlayer;
 class CMyPlayer;
 class CMonster;
 class CHumanMonster;
+struct FrameNode;
 
 class CObjectFactory
 {
 public:
 	CObjectFactory() = default;
 	~CObjectFactory() = default;
+	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
+	// GameScene 모델 파츠 load
+	void LoadGameScene(CDescriptorHeapManager* heapManager);
+	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	// Initialize 호출 X
 	void CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
@@ -40,15 +48,18 @@ private:
 		Wall,
 		Floor,
 		GroundPipe,
-		Counter,	// 카운터
 		Unknown
 	};
 
 
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);
+	// MapGenerator로 생성되는 grid를 model과 매치
+	std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type);
+	std::string PickRandom(const std::string& key);
 
 	CMaterialManager matManager;
 	CTextureManager texManager;
+	std::map<std::string, std::shared_ptr<CObject>> prototypes;
 };
 

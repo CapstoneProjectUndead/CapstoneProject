@@ -46,7 +46,7 @@ void CMesh::ReleaseUploadBuffer()
 	vertex_upload_buffer = nullptr;
 }
 
-void CMesh::Render(ID3D12GraphicsCommandList* commandList)
+void CMesh::Render(ID3D12GraphicsCommandList* commandList, uint32 instCount)
 {
 	// 프리미티브 유형 설정
 	commandList->IASetPrimitiveTopology(primitive_topology);
@@ -54,11 +54,11 @@ void CMesh::Render(ID3D12GraphicsCommandList* commandList)
 	commandList->IASetVertexBuffers(slot_num, 1, &vertex_buffer_view);
 	if (index_buffer) {
 		commandList->IASetIndexBuffer(&index_buffer_view);
-		commandList->DrawIndexedInstanced(index_num, 1, start_index, base_vertex_index, 0);
+		commandList->DrawIndexedInstanced(index_num, instCount, start_index, base_vertex_index, 0);
 	}
 	else {
 		// 렌더링(입력 조립기 작동)
-		commandList->DrawInstanced(vertex_num, 1, offset, 0);
+		commandList->DrawInstanced(vertex_num, instCount, offset, 0);
 	}
 }
 

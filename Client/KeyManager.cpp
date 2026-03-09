@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "KeyManager.h"
 
 
@@ -60,15 +60,15 @@ void CKeyManager::Tick()
 	{
 		for (size_t i = 0; i < input_vector.size(); ++i)
 		{
-			// KEY °¡ ´­·È´Ù
+			// KEY ê°€ ëˆŒë ¸ë‹¤
 			if (GetAsyncKeyState(gKeyValue[i]) & 0x8001)
 			{
-				// ÀÌÀü¿¡´Â ¾È´­·ÁÀÖ¾ú´Ù.
+				// ì´ì „ì—ëŠ” ì•ˆëˆŒë ¤ìžˆì—ˆë‹¤.
 				if (!input_vector[i].prev_pressed)
 				{
 					input_vector[i].state = KEY_STATE::TAP;
 				}
-				// ÀÌÀü¿¡µµ ´­·ÁÀÖ¾ú´Ù.
+				// ì´ì „ì—ë„ ëˆŒë ¤ìžˆì—ˆë‹¤.
 				else
 				{
 					input_vector[i].state = KEY_STATE::PRESSED;
@@ -76,17 +76,17 @@ void CKeyManager::Tick()
 
 				input_vector[i].prev_pressed = true;
 			}
-			// ÇØ´ç KEY °¡ ¾È´­·ÁÀÖ´Ù.
+			// í•´ë‹¹ KEY ê°€ ì•ˆëˆŒë ¤ìžˆë‹¤.
 			else
 			{
 				if (input_vector[i].prev_pressed)
 				{
-					// ÀÌÀü Frame ¿¡¼­´Â ´­·ÁÀÖ¾ú´Ù.
+					// ì´ì „ Frame ì—ì„œëŠ” ëˆŒë ¤ìžˆì—ˆë‹¤.
 					input_vector[i].state = KEY_STATE::RELEASED;
 				}
 				else
 				{
-					// ÀÌÀü¿¡µµ ¾È´­·ÁÀÖ¾ú°í, Áö±Ýµµ ¾È´­·ÁÀÖ´Ù.
+					// ì´ì „ì—ë„ ì•ˆëˆŒë ¤ìžˆì—ˆê³ , ì§€ê¸ˆë„ ì•ˆëˆŒë ¤ìžˆë‹¤.
 					input_vector[i].state = KEY_STATE::NONE;
 				}
 
@@ -94,7 +94,7 @@ void CKeyManager::Tick()
 			}
 		}
 		 
-		// ¸¶¿ì½º ÁÂÇ¥ °»½Å
+		// ë§ˆìš°ìŠ¤ ì¢Œí‘œ ê°±ì‹ 
 		prev_mouse_pos = cur_mouse_pos;	
 
 		POINT ptMouse = {};

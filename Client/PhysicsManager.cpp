@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "PhysicsManager.h"
 #include "Collider.h"
 #include "Object.h"
@@ -22,12 +22,12 @@ void CPhysicsManager::BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& d
     expanded.Center = Vector3::Add(expanded.Center, Vector3::ScalarProduct(delta, 0.5f));
 
     for (auto& col : colliders) {
-        if (col.get() == checkCol) continue;
+        if (col == checkCol) continue;
         // filtering. 물리적으로 충돌 설정이 되어 있는지 확인
         if (!CheckFilter(checkCol->filter, col->filter)) continue;
 
         if (expanded.Intersects(col->world_aabb))
-            candidates.push_back(col.get());
+            candidates.push_back(col);
     }
 }
 
@@ -81,8 +81,7 @@ bool CPhysicsManager::OverlapConcave(CConcaveMeshShape* concaveShape, CColliderC
 
     // BroadPhase
     // BVH를 통해 충돌 가능성이 있는 삼각형 인덱스만 빠르게 수집
-    static std::vector<int> candidateIndices;
-    candidateIndices.clear();
+    std::vector<int> candidateIndices;
     concaveShape->GetCandidateTrianglesBVH(convexAABB, candidateIndices);
 
     float maxDepth = -FLT_MAX;

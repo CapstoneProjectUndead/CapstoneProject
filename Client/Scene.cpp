@@ -1,16 +1,17 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Camera.h"
 #include "MyPlayer.h"
 #include "Shader.h"
 #include "Scene.h"
 #include "ObjectFactory.h"
+#include "PhysicsManager.h"
+#include "Collider.h"
 
 #include "GameFramework.h"
 #include "ServerSession.h"
 #include "User.h"
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
-
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
@@ -48,6 +49,7 @@ void CScene::AnimateObjects(float elapsedTime)
 
 void CScene::Update(float elapsedTime)
 {
+	CPhysicsManager::GetInstance().Update(elapsedTime);
 	AnimateObjects(elapsedTime);
 
 	if(camera)
@@ -88,7 +90,18 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 
 void CScene::Exit()
 {
+	CPhysicsManager::GetInstance().ClearCollider();
 	last_input_state = !last_input_state;
+}
+
+void CScene::Enter()
+{
+	for (const auto& obj : objects) {
+		CColliderComponent* col = obj->GetComponent<CColliderComponent>();
+		if (col) {
+			CPhysicsManager::GetInstance().SetCollider(col);
+		}
+	}
 }
 
 void CScene::DrawUI_Final()

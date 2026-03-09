@@ -57,13 +57,10 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
     }
 }
 
-void CCustomScene::Update(float elapsedTime)
-{
-    CScene::Update(elapsedTime);
-}
-
 void CCustomScene::Enter()
 {
+    CScene::Enter();
+
     BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
     if (my_player) {
