@@ -167,5 +167,6 @@ bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pk
 
 bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pkt)
 {
+	
 	return true;
 }

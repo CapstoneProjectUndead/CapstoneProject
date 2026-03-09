@@ -190,7 +190,7 @@ void CCustomScene::DrawCustomizingWindow()
         // 완료 버튼도 적당한 크기로 수정
         if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150 * scale, 40 * scale))) {
 
-            if (my_player->GetIsSingle()) {
+            if (g_is_single) {
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
             }
             else {

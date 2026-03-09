@@ -78,10 +78,6 @@ void CMovementComponent::Update(const float deltaTime)
     {
         CMyPlayer* myPlayer = static_cast<CMyPlayer*>(owner);
 
-        // 멀티 플레이일 경우, Update를 실행하지 않는다. (클라 예측 이동 적용 시, 삭제할 것!)
-        if (!myPlayer->GetIsSingle())
-            return;
-
         // 플레이어가 Custom Scene에 있으면 return
         if (myPlayer->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
             return;

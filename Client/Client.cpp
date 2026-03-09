@@ -33,6 +33,7 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 
 double g_client_total_time = 0.0f;
 bool   g_run = true;
+bool   g_is_single = true;
 
 HWND ghWnd;
 CGameFramework gGameFramework;

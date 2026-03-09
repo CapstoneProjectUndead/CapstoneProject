@@ -84,6 +84,7 @@ using Microsoft::WRL::ComPtr;
 
 extern double g_client_total_time;
 extern bool g_run;
+extern bool g_is_single;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;

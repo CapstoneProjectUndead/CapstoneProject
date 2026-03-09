@@ -46,18 +46,6 @@ void CLobbyScene::Initialize()
 		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
 	}
-
-	{
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		auto humanMonster = factory->CreateHumanMonster(skinningHeapManager);
-		humanMonster->ChangeModelSet(1); 
-		humanMonster->ChangeEyes(2);     
-		humanMonster->ChangeMouth(0);
-		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
-		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-		humanMonster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-		objects.push_back(humanMonster);
-	}
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -93,6 +81,19 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 				txt << ch;
 			}
 		}*/
+	}
+
+	// HumanMonster 생성
+	if (g_is_single) {
+		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		auto humanMonster = factory->CreateHumanMonster(skinningHeapManager);
+		humanMonster->ChangeModelSet(1);
+		humanMonster->ChangeEyes(2);
+		humanMonster->ChangeMouth(0);
+		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
+		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+		humanMonster->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+		objects.push_back(humanMonster);
 	}
 }
 
@@ -207,7 +208,7 @@ void CLobbyScene::DrawMenu()
 		// 커스텀 버튼 렌더링 (방 나가기 버튼 바로 아래에 생성됨)
 		if (ImGui::Button((const char*)u8"커스텀", btnSize)) {
 
-			if (my_player->GetIsSingle()) {
+			if (g_is_single) {
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
 				SetUIState(LobbyUIState::None);
 				paused = false;
@@ -275,7 +276,7 @@ void CLobbyScene::DrawRoomLeavePopUp()
 		// [확인 버튼]
 		if (ImGui::Button((const char*)u8"확인", popupBtnSize)) {
 			
-			if (!my_player->GetIsSingle()) {
+			if (!g_is_single) {
 				C_LeaveRoom leavePkt;
 				leavePkt.user_id = my_player->GetID();
 

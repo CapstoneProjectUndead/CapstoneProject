@@ -246,7 +246,12 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 {
 	auto player = std::make_shared<CMyPlayer>();
 	CreateUndeadCharacter(player, heapManager);
-	player->SetComponent(std::make_shared<CMovementComponent>());
+
+	// 싱글 모드에서만 CMovementComponent를 추가한다.
+	if (g_is_single) {
+		player->SetComponent(std::make_shared<CMovementComponent>());
+	}
+
 	return player;
 }
 

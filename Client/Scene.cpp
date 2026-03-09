@@ -156,6 +156,9 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 {
 	if (pkt.is_my_player) {
 		{
+			// 싱글 모드가 아닌 멀티 모드로 전환
+			g_is_single = false;
+
 			CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 			my_player = factory->CreateMyPlayer(skinningHeapManager);
 
@@ -169,8 +172,6 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 			my_player->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 			// 플레이어가 속한 Scene
 			my_player->SetCurrentSceneType(pkt.scene_type);
-
-			my_player->SetIsSingle(false);
 
 			if (SERVER_SESSION) {
 				auto user = SERVER_SESSION->GetUser();
