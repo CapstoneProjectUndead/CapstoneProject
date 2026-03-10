@@ -48,16 +48,30 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	obj->SetComponent(meshRenderer);
 	meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
 
+	auto SetColliderComp = [&node, obj](std::unique_ptr<CColliderShape>& shape) {
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		CollisionFilter filter;
+		filter.category = EColLayer::OBJECT;
+		filter.mask = EColLayer::PLAYER;
+		collider->SetFillter(filter);
+		obj->SetComponent(collider);
+		};
 	// ColliderComponent 생성
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
-	auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::OBJECT;
-	filter.mask = EColLayer::PLAYER;
-	boxCollider->SetFillter(filter);
-	obj->SetComponent(boxCollider);
-	//CPhysicsManager::GetInstance().SetCollider(boxCollider);
-
+	bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
+	if (!node->collider.positions.empty()) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
+		SetColliderComp(shape);
+	}
+	else if (isRoad) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
+		auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		CollisionFilter filter;
+		filter.category = EColLayer::GROUND;
+		filter.mask = EColLayer::PLAYER;
+		boxCollider->SetFillter(filter);
+		obj->SetComponent(boxCollider);
+	}
+	
 	obj->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	objects.emplace(node->name, std::move(obj));
@@ -103,7 +117,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		switch (stringToLobbyMeshName(children->name)) {
 		case LobbyMeshName::Wall:
 		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			CollisionFilter filter;
 			filter.category = EColLayer::WALL;
@@ -115,7 +129,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		}
 		case LobbyMeshName::Floor:
 		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			CollisionFilter filter;
 			filter.category = EColLayer::GROUND;
@@ -127,7 +141,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		}
 		case LobbyMeshName::GroundPipe:
 		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(children->mesh.bounds.Extents, children->mesh.bounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			boxCollider->SetFillter(filter);
 			obj->SetComponent(boxCollider);
@@ -137,7 +151,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		case LobbyMeshName::Unknown:
 		{
 			if (children->collider.positions.empty()) break;
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
 			auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
 			collider->SetFillter(filter);
 			obj->SetComponent(collider);
@@ -201,8 +215,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			// collider copy(잔디, 돌은 필요X)
 			std::string base{ typeName };
 			std::erase_if(base, ::isdigit);
-			if (base != "grass" && base != "stone") {
-				auto copyCollider = std::make_shared< CColliderComponent>(*collider);
+			// 길이면 boxShape으로 새로 생성
+			if ((base != "grass" && base != "stone" && collider)) {
+				auto copyCollider = std::make_shared<CColliderComponent>(*collider);
 				obj->SetComponent(copyCollider);
 				CPhysicsManager::GetInstance().SetCollider(copyCollider);
 			}
@@ -459,7 +474,7 @@ std::vector<std::string> CObjectFactory::GameSceneTypeToString(const MapGenerato
 		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
 		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
 
-		{ MapGenerator::EModelType::WALL,					{"stone011"} },// 임시
+		{ MapGenerator::EModelType::WALL,					{"house_place"} },// 임시
 
 		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
 		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
