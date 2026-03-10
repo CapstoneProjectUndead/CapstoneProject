@@ -132,6 +132,8 @@ bool CGameScene::IsUIInputEnabled()
 
 void CGameScene::Enter()
 {
+	CScene::Enter();
+
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
 
 	if (my_player) {
