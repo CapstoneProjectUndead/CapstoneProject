@@ -279,7 +279,7 @@ void CTitleScene::DrawTitleMainWindow()
 
                     StartLoading(LoadingType::Logout);
 
-                    // 로그아웃 패킷 전송 로직...
+                    // 로그아웃 패킷 전송 로직
                     auto serverSession = GET_SERVER_SESSION
                         if (serverSession) {
                             C_LOGOUT logOutPkt;

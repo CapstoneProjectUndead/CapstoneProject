@@ -41,6 +41,10 @@ public:
     virtual void OnTraceExit() {}
     virtual void OnAttackExit() {}
 
+private:
+    void UpdateSingle(float elapsedTime);
+    void UpdateMulti(float elapsedTime);
+
 public:
     AI_STATE GetAIState() const { return AI_state; }
     void     SetAIState(AI_STATE state) { AI_state = state; }

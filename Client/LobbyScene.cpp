@@ -81,21 +81,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 			}
 		}*/
 	}
-
-	// HumanMonster ����
-	static bool firstInitialize = true;  // (�ӽ�!!!)
-	if (g_is_single && firstInitialize) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateHumanMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
-		humanMonster->ChangeModelSet(1);
-		humanMonster->ChangeEyes(2);
-		humanMonster->ChangeMouth(0);
-		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
-		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-		AddObject(humanMonster, humanMonster->GetID());
-
-		firstInitialize = false;
-	}
 }
 
 void CLobbyScene::Update(float elapsedTime)
@@ -119,6 +104,18 @@ void CLobbyScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		camera->SetTarget(my_player.get());
+	}
+
+	// HumanMonster 생성
+	if (g_is_single) {
+		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateHumanMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
+		humanMonster->ChangeModelSet(1);
+		humanMonster->ChangeEyes(2);
+		humanMonster->ChangeMouth(0);
+		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
+		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+		AddObject(humanMonster, humanMonster->GetID());
 	}
 }
 
@@ -299,6 +296,8 @@ void CLobbyScene::DrawRoomLeavePopUp()
 			ImGui::CloseCurrentPopup(); // 팝업 닫기
 			SetUIState(LobbyUIState::None); // 전체 ESC 메뉴 닫기
 			paused = false;
+
+			g_is_single = true; // 다시 싱글 모드 
 		}
 
 		ImGui::SameLine(); 

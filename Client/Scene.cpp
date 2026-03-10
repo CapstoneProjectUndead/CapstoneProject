@@ -92,6 +92,9 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 void CScene::Exit()
 {
 	CPhysicsManager::GetInstance().ClearCollider();
+
+	RemoveAllMonsters();
+
 	last_input_state = !last_input_state;
 }
 
@@ -166,7 +169,7 @@ void CScene::RemoveObject(UINT id)
 	id_To_Index.erase(id);
 }
 
-void CScene::EraseAllMonsters()
+void CScene::RemoveAllMonsters()
 {
 	std::vector<UINT> eraseIds;
 
@@ -379,9 +382,6 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 		return;
 
 	auto monster = std::static_pointer_cast<CMonster>(vec[idx]);
-	monster->SetYaw(pkt.info.yaw);
-	monster->SetPitch(pkt.info.pitch);
-	monster->SetAIState(pkt.info.AI_state);
 
 	// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
 	MonsterFrameHistory state{};

@@ -31,7 +31,7 @@ public:
 	void AddObject(std::shared_ptr<CObject>, UINT);
 	void RemoveObject(UINT);
 
-	void EraseAllMonsters();
+	void RemoveAllMonsters();
 
 	// UI 관련 
 	void DrawUI_Final();

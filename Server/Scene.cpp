@@ -5,6 +5,7 @@
 #include "Room.h"
 #include "RoomManager.h"
 #include "Monster.h"
+#include "PhysicsManager.h"
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -28,6 +29,8 @@ CScene::~CScene()
 
 void CScene::Update(const float elapsedTime)
 {
+	CPhysicsManager::GetInstance().Update(elapsedTime);
+
 	// 패킷 큐에 쌓인 메세지들을 한꺼번에 처리
 	HandlePackets();
 	SimulatePlayers(elapsedTime);
