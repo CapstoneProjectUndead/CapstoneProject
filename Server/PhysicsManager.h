@@ -28,8 +28,12 @@ public:
         return instance;
     }
 
-    void SetCollider(std::shared_ptr<CColliderComponent> c) {
+    void SetCollider(CColliderComponent* c) {
         colliders.push_back(c);
+    }
+
+    void SetCollider(std::shared_ptr<CColliderComponent> c) {
+        colliders.push_back(c.get());
     }
 
     XMVECTOR ApplyGravity(CObject* obj, float dt);
@@ -55,6 +59,6 @@ private:
     // 충돌 시간 계산(for Sweep())
     bool ComputeCollisionTime(CColliderComponent* a, CColliderComponent* b, const XMFLOAT3& delta, float& outTime);
 private:
-    std::vector<std::shared_ptr<CColliderComponent>> colliders;
+    std::vector<CColliderComponent*> colliders;
     float gravity{ -9.8f };
 };

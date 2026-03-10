@@ -26,7 +26,6 @@ private:
         Wall,
         Floor,
         GroundPipe,
-        Counter,	// д╚©Нем
         Unknown
     };
 

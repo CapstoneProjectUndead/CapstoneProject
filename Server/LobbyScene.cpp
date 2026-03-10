@@ -93,7 +93,6 @@ CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string&
 		{"Wall", LobbyMeshName::Wall},
 		{"Floor", LobbyMeshName::Floor},
 		{"GroundPipe", LobbyMeshName::GroundPipe},
-		{"Stone012", LobbyMeshName::Counter}
 	};
 
 	auto it = table.find(str);
@@ -103,7 +102,7 @@ CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string&
 void CLobbyScene::CreateLobby()
 {
 	// 1. 맵 파일 로드
-	std::string fileName{ "../Modeling/lobby_uv.bin" };
+	std::string fileName{ "../Modeling/lobby_0305.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	if (!frameRoot) {
@@ -185,19 +184,6 @@ void CLobbyScene::CreateLobby()
 			boxCollider->Update(0.0f);
 			obj->SetComponent(boxCollider);
 			CPhysicsManager::GetInstance().SetCollider(boxCollider);
-			break;
-		}
-		case LobbyMeshName::Counter:
-		{
-			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-			// children->mesh.bounds 대신 realBounds 사용!
-			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
-			collider->SetFillter(filter);
-
-			collider->owner = obj.get();
-			collider->Update(0.0f);
-			obj->SetComponent(collider);
-			CPhysicsManager::GetInstance().SetCollider(collider);
 			break;
 		}
 		case LobbyMeshName::Unknown:
