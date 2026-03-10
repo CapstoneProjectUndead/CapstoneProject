@@ -485,7 +485,7 @@ void CGameFramework::CommandEnd()
 	waitForGpuComplete();
 
 	// 스왑체인 프리젠트. 현재 렌더 타겟의 내용이 전면 버퍼로 옮겨지고 렌더 타겟 인덱스가 바뀜
-	swap_chain->Present(0, 0);
+	swap_chain->Present(1, 0);
 
 	MoveToNextFrame();
 
