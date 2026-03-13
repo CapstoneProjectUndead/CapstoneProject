@@ -2,9 +2,6 @@
 #include "Shader.h"
 #include "Object.h"
 #include "GeometryLoader.h"
-#include "MeshRenderer.h"
-
-CDescriptorHeapManager* CShader::current_heap_manager = nullptr;
 
 void CDescriptorHeapManager::Initialize(ID3D12Device* device, UINT numDescriptors)
 {
@@ -175,7 +172,7 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
-	const int numDesc{ 100 };
+	const int numDesc{ 50 };
 	D3D12_DESCRIPTOR_RANGE descriptorRanges;
 	// texture
 	descriptorRanges.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -185,42 +182,30 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	descriptorRanges.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
-	// gameObjectInfo
-	D3D12_ROOT_PARAMETER rootParameters[6];
+	D3D12_ROOT_PARAMETER rootParameters[4];
+	// CameraInfo
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
 	rootParameters[0].Descriptor.RegisterSpace = 0;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// CameraInfo
+	// LightInfo
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[1].Descriptor.ShaderRegister = 1;
 	rootParameters[1].Descriptor.RegisterSpace = 0;
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	// MaterialInfo
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[2].Descriptor.ShaderRegister = 2;
-	rootParameters[2].Descriptor.RegisterSpace = 0;
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	// table(texture map)
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &descriptorRanges;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// LightInfo
-	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[3].Descriptor.ShaderRegister = 3;
-	rootParameters[3].Descriptor.RegisterSpace = 0;
-	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	// SkinningInfo
-	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[4].Descriptor.ShaderRegister = 4;
-	rootParameters[4].Descriptor.RegisterSpace = 0;
-	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-	// table
-	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[5].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[5].DescriptorTable.pDescriptorRanges = &descriptorRanges;
-	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	// instData
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParameters[3].Descriptor.ShaderRegister = 0;
+	rootParameters[3].Descriptor.RegisterSpace = 1;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	// static sampler
 	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
@@ -267,17 +252,19 @@ void CShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
 	}
 	commandList->SetGraphicsRootSignature(graphics_root_signature.Get());
 	commandList->SetPipelineState(pipeline_states.Get());
+
+	if (heap_manager) {
+	
+		// 첫 번째 핸들값 Get
+		D3D12_GPU_DESCRIPTOR_HANDLE handle = heap_manager->GetGPUHandle(0);
+		commandList->SetGraphicsRootDescriptorTable(2, handle);
+	}
 }
 
 void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
 {
-	current_heap_manager = heap_manager.get();
-
 	object->UpdateShaderVariables(commandList);
 	object->Render(commandList);
-
-	// 사용 후 초기화
-	current_heap_manager = nullptr;
 }
 
 // CSkinningShader
@@ -315,18 +302,7 @@ D3D12_SHADER_BYTECODE CSkinningShader::CreatePixelShader(ID3DBlob** shaderBlob)
 	return CompileShaderFromFile(L"SkinningShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
-// CInstShader
-D3D12_SHADER_BYTECODE CInstShader::CreateVertexShader(ID3DBlob** shaderBlob)
-{
-	return CompileShaderFromFile(L"InstShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
-}
-
-D3D12_SHADER_BYTECODE CInstShader::CreatePixelShader(ID3DBlob** shaderBlob)
-{
-	return CompileShaderFromFile(L"InstShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
-}
-
-ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* device)
+ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* device)
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
@@ -353,23 +329,23 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	rootParameters[1].Descriptor.RegisterSpace = 0;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+	// table(texture map)
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &descriptorRanges;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	// instData
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParameters[2].Descriptor.ShaderRegister = 0;
-	rootParameters[2].Descriptor.RegisterSpace = 1;
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-	// MaterialData
 	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParameters[3].Descriptor.ShaderRegister = 1;
+	rootParameters[3].Descriptor.ShaderRegister = 0;
 	rootParameters[3].Descriptor.RegisterSpace = 1;
-	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// table
-	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[4].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[4].DescriptorTable.pDescriptorRanges = &descriptorRanges;
-	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	// finalBoneTransforms
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParameters[4].Descriptor.ShaderRegister = 1;
+	rootParameters[4].Descriptor.RegisterSpace = 1;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	// static sampler
 	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
@@ -408,12 +384,13 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	return graphicsRootSignature;
 }
 
-void CInstShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
+// CInstShader
+D3D12_SHADER_BYTECODE CInstShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	current_heap_manager = heap_manager.get();
+	return CompileShaderFromFile(L"InstShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+}
 
-	CInstRenderer::GetInstance().Render(commandList);
-
-	// 사용 후 초기화
-	current_heap_manager = nullptr;
+D3D12_SHADER_BYTECODE CInstShader::CreatePixelShader(ID3DBlob** shaderBlob)
+{
+	return CompileShaderFromFile(L"InstShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }

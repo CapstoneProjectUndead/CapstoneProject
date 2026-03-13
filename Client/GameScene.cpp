@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GameScene.h"
 #include "MyPlayer.h"
 #include "Camera.h"
@@ -7,7 +7,7 @@
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
-
+#include "MeshRenderer.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -20,20 +20,11 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
-	// 렌더링할 때 필요한 쉐이더 객체 생성
-	if (shaders.empty()) {
-		{
-			// static shader
-			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("static", std::move(shader));
-		}
-		{
-			// skinning
-			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("skinning", std::move(shader));
-		}
+	{
+		// skinning
+		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+		shader->CreateShader(GET_DEVICE);
+		shaders.emplace("skinning", std::move(shader));
 	}
 	{
 		// inst
@@ -94,23 +85,22 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 			light->Render(commandList);
 
 		for (const auto& obj : objects) {
-			if (shader.first == obj->GetShader() && shader.first != "inst") {
+			if (shader.first == obj->GetShader()) {
 				shader.second->Render(commandList, obj.get());
 			}
 		}
 
-		if (shader.first == "inst") {
-			shader.second->Render(commandList, nullptr);
-		}
+		CInstRenderer::GetInstance().Render(commandList);
 
-		if (my_player) {
+		/*if (my_player) {
 			if (shader.first == my_player->GetShader()) {
 				shader.second->Render(commandList, my_player.get());
 			}
-		}
+		}*/
 
 		shader.second->RenderEnd(commandList);
 	}
+
 }
 
 void CGameScene::DrawUI()

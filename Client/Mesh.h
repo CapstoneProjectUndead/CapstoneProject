@@ -1,8 +1,10 @@
-#pragma once
+﻿#pragma once
 
-struct Mesh;	// GeometryLoader에 정의
-struct FrameNode;	// GeometryLoader에 정의
-struct MeshCollider;	// GeometryLoader에 정의
+namespace CGeometryLoader {
+	struct FrameNode;
+	struct MeshCollider;
+	struct Mesh;
+}
 
 class CVertex {
 public:
@@ -58,9 +60,9 @@ public:
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
 
 	template<typename T>
-	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
 	template<typename T>
-	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const MeshCollider& collider);
+	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const CGeometryLoader::MeshCollider& collider);
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};
@@ -139,9 +141,9 @@ void CMesh::SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* command
 
 
 template<typename T>
-void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
-	Mesh& mesh{ node->mesh };
+	CGeometryLoader::Mesh& mesh{ node->mesh };
 	name = node->name;
 
 	std::vector<T> vertices;
@@ -161,7 +163,7 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 }
 
 template<typename T>
-inline void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const MeshCollider& collider)
+inline void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const CGeometryLoader::MeshCollider& collider)
 {
 	std::vector<T> vertices;
 	size_t count = collider.positions.size();
@@ -181,7 +183,7 @@ inline void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList
 }
 
 template<>
-void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
 
 template<>
-void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node);

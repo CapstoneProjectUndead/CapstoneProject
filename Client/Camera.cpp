@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -39,7 +39,7 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 	XMStoreFloat4x4(&mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
 	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
 
-	commandList->SetGraphicsRootConstantBufferView(1, camera_cb->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(0, camera_cb->GetGPUVirtualAddress());
 }
 
 void CCamera::GenerateProjectionMatrix(float nearPlaneDistance, float farPlaneDistance, float aspectRatio, float fovAngle)
