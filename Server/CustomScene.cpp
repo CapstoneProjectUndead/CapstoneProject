@@ -7,12 +7,6 @@
 #include "Room.h"
 
 
-CCustomScene::CCustomScene()
-	: CScene(SCENE_TYPE::CUSTOMS)
-{
-
-}
-
 CCustomScene::CCustomScene(uint32 roomId)
 	: CScene(SCENE_TYPE::CUSTOMS, roomId)
 {

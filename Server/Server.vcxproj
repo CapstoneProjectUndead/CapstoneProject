@@ -159,6 +159,7 @@
     <ClCompile Include="CustomScene.cpp" />
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="GameFramework.cpp" />
+    <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
     <ClCompile Include="HumanMonster.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="DBManager.h" />
     <ClInclude Include="DirectXMathHelper.h" />
     <ClInclude Include="GameFramework.h" />
+    <ClInclude Include="GameScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
     <ClInclude Include="HumanMonster.h" />

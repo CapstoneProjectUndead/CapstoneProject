@@ -14,11 +14,6 @@
 #undef max
 
 
-CLobbyScene::CLobbyScene()
-    : CScene(SCENE_TYPE::LOBBY)
-{
-}
-
 CLobbyScene::CLobbyScene(uint32 roomId)
 	: CScene(SCENE_TYPE::LOBBY, roomId)
 {

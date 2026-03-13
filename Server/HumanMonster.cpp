@@ -210,11 +210,14 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
 
 void CHumanMonster::OnIdleEnter()
 {
+    // IDLE 상태로 진입하면 10초 동안 쉬는데
+    // 그 타이머를 0으로 만든다.
     ResetIdleTimer();
 }
 
 void CHumanMonster::OnPatrolEnter()
 {
+    // 순찰 타이머 리셋
     ResetPatrolTimers();
 }
 

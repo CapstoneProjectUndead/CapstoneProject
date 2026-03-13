@@ -8,7 +8,6 @@ class CLobbyScene :
     public CScene
 {
 public:
-    CLobbyScene();
     CLobbyScene(uint32 roomId);
     ~CLobbyScene();
 

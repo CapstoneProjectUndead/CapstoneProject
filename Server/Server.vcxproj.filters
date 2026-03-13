@@ -70,6 +70,9 @@
     <Filter Include="Object\Monster">
       <UniqueIdentifier>{b11d7ebd-bd1e-43b4-91d1-04a2a6b475a2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene\GameScene">
+      <UniqueIdentifier>{818ea841-dcf0-4c09-80a1-71408132adc1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -170,6 +173,9 @@
     </ClCompile>
     <ClCompile Include="ServerObjectFactory.cpp">
       <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -288,6 +294,9 @@
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="AIStates.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

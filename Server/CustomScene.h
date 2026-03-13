@@ -7,7 +7,6 @@ class CCustomScene :
     public CScene
 {
 public:
-    CCustomScene();
     CCustomScene(uint32 roomId);
     ~CCustomScene();
 
