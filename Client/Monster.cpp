@@ -3,12 +3,18 @@
 #include "NetworkManager.h"
 #include "NetworkClockManager.h"
 #include "Animator.h"
+#include "MyPlayer.h"
+#include "SceneManager.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CCharacter(OBJECT_TYPE::MONSTER)
 	, origin_position{}
 	, monster_type(type)
 	, AI_state(AI_STATE::MONSTER_IDLE)
+    , idle_timer(0.0f)
+    , patrol_timer(0.0f)
+    , attack_timer(0.0f)
+    , turn_timer(0.0f)
 {
 }
 
@@ -178,4 +184,13 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
     while (interpolation_deq.size() > 2 && interpolation_deq[1].server_timestamp < targetServerTime) {
         interpolation_deq.pop_front();
     }
+}
+
+std::shared_ptr<CPlayer> CMonster::FindNearestPlayer()
+{
+    CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
+    assert(currentScene->GetSceneType() == current_scene_type);
+    auto player = currentScene->GetMyPlayer();
+
+    return player;
 }

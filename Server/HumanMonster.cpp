@@ -9,13 +9,9 @@
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
-    , origin_position{}
-    , idle_timer(0.0f)
-    , patrol_timer(0.0f)
-    , attack_timer(0.0f)
-    , turn_timer(0.0f)
 {
     friction = 0.0f;
+    SetFOV(120);
 }
 
 CHumanMonster::~CHumanMonster()
@@ -36,16 +32,29 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
     if (target) {
 
-        float dist = Vector3::Length(Vector3::Subtract(target->GetPosition(), position));
+        // 타겟을 향하는 방향 벡터 및 평면(XZ) 거리 계산
+        XMFLOAT3 dirVec = Vector3::Subtract(target->GetPosition(), position);
+        dirVec.y = 0.0f; // Y축(높이) 차이는 무시
+        float dist = Vector3::Length(dirVec);
 
-        if (dist <= recog_range) {
+        // 인식 거리(recog_range) 내에 있는지 1차 확인
+        if (dist <= recog_range && dist > 0.001f) {
 
-            SetTarget(target);
+            // 타겟 방향 벡터 정규화 (길이를 1로 만듦)
+            XMFLOAT3 dirNorm = { dirVec.x / dist, 0.0f, dirVec.z / dist };
 
-            auto AIComponent = GetComponent<CAIComponent>();
-            if (AIComponent) {
-                AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
-                return; 
+            // 내적(Dot Product) 계산 (Object의 look 벡터 활용)
+            float dotProduct = (look.x * dirNorm.x) + (look.z * dirNorm.z);
+
+            // 플레이어가 시야각 안에 들어왔다면 추적 시작
+            if (dotProduct >= cos_threshold) {
+                SetTarget(target);
+
+                auto AIComponent = GetComponent<CAIComponent>();
+                if (AIComponent) {
+                    AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+                    return;
+                }
             }
         }
     }
@@ -91,7 +100,7 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
     if (idle_timer >= 5.0f) {
 
         auto AIComponent = GetComponent<CAIComponent>();
-        if (AIComponent) 
+        if (AIComponent)
             AIComponent->ChangeState(AI_STATE::MONSTER_PATROL);
     }
 }
@@ -102,15 +111,32 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
     // 타겟 탐색 (TRACE 전환)
     auto target = FindNearestPlayer();
     if (target) {
-        float dist = Vector3::Length(Vector3::Subtract(target->GetPosition(), position));
-        if (dist <= recog_range) {
 
-            SetTarget(target);
+        // 타겟을 향하는 벡터 및 평면(XZ) 거리 계산
+        XMFLOAT3 dirVec = Vector3::Subtract(target->GetPosition(), position);
+        dirVec.y = 0.0f; // 높이 차이는 무시 (위아래는 안 보고 평면 시야만 체크)
+        float dist = Vector3::Length(dirVec);
 
-            auto AIComponent = GetComponent<CAIComponent>();
-            if (AIComponent) {
-                AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
-                return;
+        // 일단 인식 거리(recog_range) 안에 들어왔는지 1차 확인
+        if (dist <= recog_range && dist > 0.001f) {
+
+            // 타겟 방향 벡터 정규화 (길이를 1로 만듦)
+            XMFLOAT3 dirNorm = { dirVec.x / dist, 0.0f, dirVec.z / dist };
+
+            // 내적(Dot Product) 계산 (Object의 look 벡터 활용)
+            // (내적 = x끼리 곱 + z끼리 곱)
+            float dotProduct = (look.x * dirNorm.x) + (look.z * dirNorm.z);
+
+            // 내적값이 임계값 이상이면 시야각 안에 있는 것!
+            if (dotProduct >= cos_threshold) {
+
+                // 발각!
+                SetTarget(target);
+                auto AIComponent = GetComponent<CAIComponent>();
+                if (AIComponent) {
+                    AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+                    return;
+                }
             }
         }
     }
@@ -118,13 +144,11 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
     patrol_timer += elapsedTime;
     turn_timer += elapsedTime;
 
-    // 전체 배회 시간 (10초)
-    if (patrol_timer >= 10.0f) {
-
+    // 전체 배회 시간 (5초)
+    if (patrol_timer >= 5.0f) {
         auto AIComponent = GetComponent<CAIComponent>();
         if (AIComponent)
             AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
-
         return;
     }
 
@@ -133,7 +157,6 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
         float newYaw = yaw + 180.0f;
         SetYaw(newYaw);
         SetYawPitch(newYaw, 0.0f);
-
         turn_timer = 0.0f;
     }
 
@@ -235,41 +258,4 @@ void CHumanMonster::OnAttackEnter()
 
     // 3. 공격 타이머 초기화 (이제 CHumanMonster의 멤버 변수이므로 직접 접근 가능!)
     attack_timer = 0.0f;
-}
-
-shared_ptr<CPlayer> CHumanMonster::FindNearestPlayer()
-{
-    if (auto room = GetRoom()) {
-        CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
-        auto& players = scene->GetPlayers();
-
-        shared_ptr<CPlayer> nearest_player = nullptr;
-        float min_dist_sq = FLT_MAX; // 최소 거리를 찾기 위해 float 최대값으로 초기화
-
-        for (const auto& pair : players) {
-
-            auto player = pair.second;
-            if (!player) 
-                continue;
-
-            // 추가 조건: 플레이어가 죽었거나 연결이 끊긴 상태라면 무시
-            if (player->GetState() == PLAYER_STATE::DEAD)
-                continue;
-
-            // MathHelper를 활용해 직관적으로 두 좌표의 차이 벡터를 구함
-            XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);
-
-            // Vector3::Distance 대신 직접 제곱합을 구해 루트 연산(sqrt) 오버헤드 방지
-            float dist_sq = (dir.x * dir.x) + (dir.y * dir.y) + (dir.z * dir.z);
-
-            if (dist_sq < min_dist_sq) {
-                min_dist_sq = dist_sq;
-                nearest_player = player;
-            }
-        }
-
-        return nearest_player;
-    }
-    
-	return nullptr;
 }

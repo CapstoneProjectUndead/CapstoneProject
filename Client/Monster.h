@@ -12,6 +12,7 @@ struct MonsterFrameHistory
     MON_TYPE type;
 };
 
+class CPlayer;
 class CAIComponent;
 
 class CMonster :
@@ -60,10 +61,43 @@ public:
 protected:
     void            MonsterMoveSyncByInterpolation(float elapsedTime);
 
+    std::shared_ptr<CPlayer> FindNearestPlayer();
+
+    void SetTarget(std::shared_ptr<CPlayer> player) { target_player = player; }
+
+    void ResetPatrolTimers()
+    {
+        patrol_timer = 0.0f;
+        turn_timer = 0.0f;
+    }
+
+    void ResetIdleTimer() { idle_timer = 0.0f; }
+    void ResetAttackTimer() { attack_timer = 0.0f; }
+
+    void SetFOV(float angle) 
+    {
+        fov_angle = angle;
+        cos_threshold = cosf(XMConvertToRadians(fov_angle * 0.5f));
+    }
+
 protected:
     XMFLOAT3 origin_position;
     AI_STATE AI_state;
     MON_TYPE monster_type;
+
+    std::shared_ptr<CPlayer> target_player;
+
+    float idle_timer;   // 쉴 때 쓰는 타이머
+    float patrol_timer; // 순찰할 때 쓰는 타이머
+    float attack_timer; // 공격 상태에서 시간을 잴 타이머
+    float turn_timer;
+
+    const float recog_range = 1.2f; // 인지 범위
+    float fov_angle = 120.f; // 시야각
+    float cos_threshold; // 미리 계산된 코사인 임계값
+
+    const float attack_range = 0.5f; // 공격 범위
+    const float trace_speed = 0.6f;  // 추격 속도
 
     //==================================================
     // 서버쪽에서 전달받은 몬스터의 정보 (서버 관련)
