@@ -30,6 +30,9 @@ public:
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMonster> CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
 	void SetComponent(std::shared_ptr<CPlayer>& player);
+
+	std::vector<XMFLOAT3>& GetTreauserPositions() { return treasure_positions; }
+
 private:
 	enum class UndeadMeshName {
 		body,
@@ -64,5 +67,7 @@ private:
 
 	// 싱글모드에서만 의미있다.
 	static uint32 s_monster_id_generator;
+
+	std::vector<XMFLOAT3> treasure_positions;
 };
 

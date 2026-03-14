@@ -17,6 +17,6 @@ public:
     virtual bool IsUIInputEnabled() override;
 
 private:
-
+    std::vector<XMFLOAT3> treasure_positions;
 };
 

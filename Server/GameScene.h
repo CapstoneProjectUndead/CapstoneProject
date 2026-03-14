@@ -2,6 +2,7 @@
 // Server쪽 GameScene
 #include "Scene.h"
 #include "GeometryLoader.h"
+#include <MapGenerator/MapGenerator.h>
 
 class CGameScene :
     public CScene
@@ -23,5 +24,9 @@ private:
 
 private:
     std::map<std::string, std::shared_ptr<CObject>> prototypes;
+
+    // MapGenerator로 생성되는 grid를 model과 매치
+    std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type);
+    std::string PickRandom(const std::string& key);
 };
 

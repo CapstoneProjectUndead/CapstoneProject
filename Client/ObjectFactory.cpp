@@ -16,6 +16,7 @@
 #include "HumanMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
+#include "ItemFinder.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
@@ -188,6 +189,14 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+
+	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	for (const auto& inst : instData) {
+		if (inst.type == MapGenerator::EModelType::TREASURE) {
+			treasure_positions.push_back(inst.position);
+		}
+	}
+
 	for (const auto& inst : instData) {
 		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
 			std::string meshName = PickRandom(typeName);
@@ -358,6 +367,10 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	if (g_is_single) {
 		player->SetComponent(std::make_shared<CMovementComponent>());
 	}
+
+	// 다우징 로드 component 추가
+	auto itemFinder = std::make_shared<CItemFinder>();
+	player->SetComponent(itemFinder);
 
 	return player;
 }

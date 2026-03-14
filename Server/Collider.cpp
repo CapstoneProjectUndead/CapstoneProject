@@ -235,6 +235,14 @@ CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherSha
 
 }
 
+CColliderComponent::CColliderComponent(const CColliderComponent& other)
+{
+    shape = other.shape->Clone();
+    world_aabb = other.GetWorldAABB();
+    local_aabb = other.local_aabb;
+    filter = other.filter;
+}
+
 void CColliderComponent::Update(const float deltaTime)
 {
     XMMATRIX worldMatrix{ XMLoadFloat4x4(&owner->world_matrix) };
