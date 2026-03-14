@@ -82,7 +82,7 @@ void CGameScene::CreateGameScene()
 	if (prototypes.empty()) 
 		LoadGameScene();
 
-	std::vector<std::shared_ptr<CObject>> objects;
+	//std::vector<std::shared_ptr<CObject>> objects;
 	//std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
 	//for (const auto& inst : instData) {
 	//	for (const std::string& typeName : GameSceneTypeToString(inst.type)) {

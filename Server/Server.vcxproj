@@ -71,19 +71,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)External\Library\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)External\Library\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)External\Library\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)External\Include\;$(SolutionDir)External\Common\;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)External\Library\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -151,6 +151,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="AIComponent.cpp" />
     <ClCompile Include="AttackState.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
@@ -198,6 +204,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\External\Common\enum.h" />
+    <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h" />
     <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />

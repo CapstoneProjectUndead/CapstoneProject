@@ -3,7 +3,7 @@
 #include "Texture.h"
 
 // 맵 생성 알고리즘
-#include "MapGenerator/MapGenerator.h"
+#include <MapGenerator/MapGenerator.h>
 
 class CDescriptorHeapManager;
 class CCharacter;

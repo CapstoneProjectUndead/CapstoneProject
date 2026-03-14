@@ -73,6 +73,9 @@
     <Filter Include="Scene\GameScene">
       <UniqueIdentifier>{818ea841-dcf0-4c09-80a1-71408132adc1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MapGenerator">
+      <UniqueIdentifier>{d21bd492-99e6-4668-ab0c-ccf6900e6c25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -176,6 +179,9 @@
     </ClCompile>
     <ClCompile Include="GameScene.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
+      <Filter>MapGenerator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -298,6 +304,9 @@
     </ClInclude>
     <ClInclude Include="GameScene.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h">
+      <Filter>MapGenerator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

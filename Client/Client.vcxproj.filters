@@ -78,8 +78,8 @@
     </Filter>
     <Filter Include="Object\Monster">
       <UniqueIdentifier>{d6bca2c2-f747-4d00-85f1-bba9b711350e}</UniqueIdentifier>
-	</Filter>
-	<Filter Include="Scene\GameScene">
+    </Filter>
+    <Filter Include="Scene\GameScene">
       <UniqueIdentifier>{07a27db7-6ff8-41d7-ae71-eb3db1c0198b}</UniqueIdentifier>
     </Filter>
     <Filter Include="MapGenerator">
@@ -290,15 +290,15 @@
     </ClInclude>
     <ClInclude Include="PatrolState.h">
       <Filter>Component\AI\State</Filter>
-	</ClInclude>
-	<ClInclude Include="GameScene.h">
-      <Filter>Scene\GameScene</Filter>
     </ClInclude>
-    <ClInclude Include="MapGenerator\MapGenerator.h">
-      <Filter>MapGenerator</Filter>
+    <ClInclude Include="GameScene.h">
+      <Filter>Scene\GameScene</Filter>
     </ClInclude>
     <ClInclude Include="AIStates.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h">
+      <Filter>MapGenerator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -466,11 +466,11 @@
     </ClCompile>
     <ClCompile Include="PatrolState.cpp">
       <Filter>Component\AI\State</Filter>
-	</ClCompile>
-	<ClCompile Include="GameScene.cpp">
+    </ClCompile>
+    <ClCompile Include="GameScene.cpp">
       <Filter>Scene\GameScene</Filter>
     </ClCompile>
-    <ClCompile Include="MapGenerator\MapGenerator.cpp">
+    <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
       <Filter>MapGenerator</Filter>
     </ClCompile>
   </ItemGroup>
