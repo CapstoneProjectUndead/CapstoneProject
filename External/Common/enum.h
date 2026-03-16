@@ -44,3 +44,10 @@ enum class AI_STATE
 	MONSTER_ATTACK,
 	MONSTER_DEAD,
 };
+
+enum class TREASURE_STATE : uint8_t
+{
+	Vaild,
+	Invalid,
+	Occupied,
+};

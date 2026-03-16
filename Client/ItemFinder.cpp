@@ -4,6 +4,7 @@
 #include "MyPlayer.h"
 
 CItemFinder::CItemFinder()
+    : closest_treasure_pos{}
 {
 }
 
@@ -18,7 +19,7 @@ void CItemFinder::Initialize()
 void CItemFinder::Update(const float deltaTime)
 {
     if (KEY_PRESSED(KEY::F)) {
-        float res = SearchNearbyTreasure(owner->position, 10.f);
+        float res = SearchNearbyTreasure(owner->position);
         if (res == -1) {
             int a = 0;
         }
@@ -30,36 +31,44 @@ void CItemFinder::Update(const float deltaTime)
 
 void CItemFinder::RegisterTreasures(const std::vector<MapGenerator::InstanceData>& mapData)
 {
-    treasure_positions.clear();
+    treasures.clear();
 
     // 맵 데이터를 순회하며 보물만 찾아 벡터에 저장
     for (const auto& instance : mapData) {
         if (instance.type == MapGenerator::EModelType::TREASURE) {
-            treasure_positions.push_back(instance.position);
+            treasures.emplace_back(TreasureInfo{ instance.position });
         }
     }
 }
 
-float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos, float radius)
+void CItemFinder::RegisterTreasures(const std::vector<TreasureInfo>& _treasures)
+{
+    treasures.clear();
+    treasures = _treasures;
+}
+
+float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos)
 {
     float minDistance = -1.0f; // 발견 못 함을 의미
 
-    for (const auto& treasurePos : treasure_positions) {
+    for (const auto& treasure : treasures) {
 
-        // XZ 평면 거리만 구합니다. (높이 무시)
-        XMFLOAT3 dirVec = {
-            treasurePos.x - playerPos.x,
-            0.0f,
-            treasurePos.z - playerPos.z
-        };
+        // 유효한 상태(Vaild)인 보물만 검사
+        // 이미 누가 파고 있거나(Occupied), 사라진(Invalid) 보물은 감지되지 않는다.
+        if (treasure.treasure_state != TREASURE_STATE::Vaild) 
+            continue;
 
-        float dist = sqrtf((dirVec.x * dirVec.x) + (dirVec.z * dirVec.z));
+        // XZ 평면 거리 계산
+        float dx = treasure.treasure_pos.x - playerPos.x;
+        float dz = treasure.treasure_pos.z - playerPos.z;
+        float distSq = (dx * dx) + (dz * dz);
+        float radiusSq = recog_range * recog_range;
 
-        // 탐색 반경(radius) 안에 들어왔다면?
-        if (dist <= radius) {
-            // 가장 가까운 보물의 거리를 갱신
+        if (distSq <= radiusSq) {
+            float dist = sqrtf(distSq);
             if (minDistance < 0.0f || dist < minDistance) {
                 minDistance = dist;
+                closest_treasure_pos = treasure.treasure_pos;
             }
         }
     }

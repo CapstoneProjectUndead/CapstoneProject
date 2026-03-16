@@ -38,7 +38,7 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	std::string name{ node->mesh.materials[0].albedoMap };
 	if (!name.empty()) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex);
 		mat->material.albedo = node->mesh.materials[0].albedoColor;
 		mat->material.glossiness = node->mesh.materials[0].glossiness;
 		matComp->SetMaterial(mat);
@@ -100,7 +100,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 		std::string name{ children->mesh.materials[0].albedoMap };
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex);
 		mat->material.albedo = children->mesh.materials[0].albedoColor;
 		mat->material.glossiness = children->mesh.materials[0].glossiness;
 		matComp->SetMaterial(mat);
@@ -193,7 +193,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	// 맵 데이터를 순회하며 보물 좌표만 빼오기
 	for (const auto& inst : instData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			treasure_positions.push_back(inst.position);
+			treasures.push_back(TreasureInfo{ inst.position });
 		}
 	}
 
@@ -251,7 +251,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 	};
 	for (const std::string& name : resourceNames) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		matManager.LoadMeterial(name, tex);
+		matManager.LoadMaterial(name, tex);
 	}
 
 	// Mesh 로드 + totalBounds 계산
@@ -283,7 +283,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 		auto CreateUnit = [&](std::string texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
 			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-			auto mat = matManager.GetMeterial(texName, tex);
+			auto mat = matManager.GetMaterial(texName, tex);
 			matComp->SetMaterial(mat);
 			character->SetComponent(matComp);
 

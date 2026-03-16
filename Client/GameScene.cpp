@@ -46,7 +46,7 @@ void CGameScene::Initialize()
 	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
-		treasure_positions = factory->GetTreauserPositions();
+		treasures = factory->GetTreauserPositions();
 	}
 }
 
@@ -60,8 +60,8 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
-		if (itemFinder->GetTreasuerPositions().empty()) {
-			itemFinder->GetTreasuerPositions() = treasure_positions;
+		if (itemFinder) {
+			itemFinder->RegisterTreasures(treasures);
 		}
 	}
 
@@ -150,8 +150,8 @@ void CGameScene::Enter()
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
-		if (itemFinder->GetTreasuerPositions().empty()) {
-			itemFinder->GetTreasuerPositions() = treasure_positions;
+		if (itemFinder) {
+			itemFinder->RegisterTreasures(treasures);
 		}
 	}
 }

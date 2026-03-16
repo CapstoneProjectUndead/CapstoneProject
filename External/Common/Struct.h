@@ -23,6 +23,7 @@ struct PlayerInfo
 
 	// 서버권위 방식) InputData는 서버권위 방식에서 필요한 데이터이다.
 	InputData		input;
+	bool            is_grounded = true;
 
 	float			x, y, z;	// 좌표
 	float			vx, vy, vz; // velocity
@@ -123,4 +124,15 @@ struct RoomInfo
 	{
 		strncpy_s(room_name, name, ROOM_NAME_MAX - 1);
 	}
+};
+
+struct TreasureInfo
+{
+	XMFLOAT3 treasure_pos;
+	TREASURE_STATE treasure_state;
+
+	TreasureInfo(const XMFLOAT3 pos)
+		: treasure_pos(pos)
+		, treasure_state(TREASURE_STATE::Vaild)
+	{}
 };

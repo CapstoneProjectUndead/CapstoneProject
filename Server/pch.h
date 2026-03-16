@@ -99,15 +99,15 @@ using std::make_pair;
 #include <ServerEngine/BufferWriter.h>
 #include <ServerEngine/BufferReader.h>
 
+#include <DirectXCollision.h>
+#include "DirectXMathHelper.h"
 #include <enum.h>
 #include <struct.h>
 #include <protocol.h>
 #include <VarialbePacketWriter.h>
-#include <DirectXCollision.h>
 
 #include "ClientSession.h"
 #include "ClientPacketHandler.h"
-#include "DirectXMathHelper.h"
 #include "DBManager.h"
 #include "macro.h"
 
