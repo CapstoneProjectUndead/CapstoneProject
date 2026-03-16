@@ -74,6 +74,9 @@ public:
 
     float                   GetYaw() const { return yaw; }
 
+    bool                    GetIsGround() const { return is_grounded; }
+    void                    SetIsGround(bool ground) { is_grounded = ground; }
+
     void                    SetPitch(const float _pitch) { pitch = _pitch; }
     float                   GetPitch() const { return pitch; }
 

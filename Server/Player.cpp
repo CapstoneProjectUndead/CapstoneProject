@@ -105,6 +105,11 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
         state = PLAYER_STATE::WALK;
     }
 
+    // มกวม 
+    if (velocity.y > 0) {
+        state = PLAYER_STATE::WALK;
+    }
+
     if (dir.x != 0 || dir.z != 0) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Move(dir, elapsedTime);

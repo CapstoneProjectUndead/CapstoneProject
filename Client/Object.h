@@ -60,6 +60,9 @@ public:
 	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
 	void       SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
 
+	bool       GetIsGround() const { return is_grounded; }
+	void       SetIsGround(bool ground) { is_grounded = ground; }
+
 	//=================================
 	// 회전 함수 (테스트)
 	void SetYaw(float _yaw);

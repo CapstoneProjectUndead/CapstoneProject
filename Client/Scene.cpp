@@ -279,6 +279,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 
 	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
+
 		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
 
 		// 예측 이동을 없애고
@@ -289,8 +290,6 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 			info.y = pkt.info.y;
 			info.z = pkt.info.z;
 			myPlayer->SetDestInfo(info);
-
-			myPlayer->SetVelocity({ pkt.info.vx, pkt.info.vy, pkt.info.vz });
 		}
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.

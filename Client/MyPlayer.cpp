@@ -29,8 +29,7 @@ void CMyPlayer::Update(float elapsedTime)
 
 	// 멀티 플레이일 경우에만, 아래 로직이 실행
 	if (!g_is_single && current_scene_type != SCENE_TYPE::CUSTOMS) {
-		float lerpSpeed = 8.0f * elapsedTime;
-		position = Vector3::Lerp(position, { dest_info.x, dest_info.y, dest_info.z }, lerpSpeed);
+		InterpolateMyPlayer(elapsedTime);
 	}
 
 	CPlayer::Update(elapsedTime);
@@ -76,6 +75,36 @@ void CMyPlayer::ProcessInput()
 				Rotate(mouseDelta.y, 0.0f, -mouseDelta.x);
 		}
 	}
+}
+
+void CMyPlayer::InterpolateMyPlayer(float elapsedTime)
+{
+	// 목적지 좌표 세팅
+	XMFLOAT3 destPos = { dest_info.x, dest_info.y, dest_info.z };
+
+	// 현재 위치와 목적지의 평면(XZ) 거리 차이 계산
+	float dx = destPos.x - position.x;
+	float dz = destPos.z - position.z;
+	float distSq = (dx * dx) + (dz * dz);
+
+	// 임계값을 10cm (0.1f * 0.1f)로 살짝 넉넉하게 키움!
+	float thresholdSq = 0.01f;
+
+	// 거리에 따른 기본 상태 결정
+	if (distSq > thresholdSq) {
+		state = PLAYER_STATE::WALK;
+	}
+	else {
+		state = PLAYER_STATE::IDLE;
+	}
+
+	if (std::abs(server_velocity.y) > 0.2f) {
+		state = PLAYER_STATE::WALK; // 나중에 JUMP로 바꿀 곳
+	}
+
+	// 부드러운 이동 (Lerp)
+	float lerpSpeed = 8.0f * elapsedTime;
+	position = Vector3::Lerp(position, destPos, lerpSpeed);
 }
 
 void CMyPlayer::ServerAuthorityMove(const float elapsedTime)

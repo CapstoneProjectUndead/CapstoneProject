@@ -34,9 +34,6 @@ public:
     XMFLOAT3 GetServerVelocity() const { return server_velocity; }
     void SetServerVelocity(const XMFLOAT3 vel) { server_velocity = vel; }
 
-    //void SetIsSingle(bool res) { is_single = res; }
-    //bool GetIsSingle() const { return is_single; }
-
     // 클라이언트 예측을 서버 기준에 맞게 다시 보정하는 코드
     void ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos);
     void SimulateMove(const InputData& input, float elapsedTime);
@@ -46,6 +43,9 @@ public:
 private:
     void ProcessRotation();
     void ProcessInput();
+
+    // 내 캐릭터 보간 코드 (클라이언트 예측이동이 없어서 추가된 함수)
+    void InterpolateMyPlayer(float elapsedTime);
 
     // 서버 권위 방식 + 클라 예측 이동 방식
     void ServerAuthorityMove(const float elapsedTime);
