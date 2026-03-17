@@ -31,7 +31,7 @@ public:
 	std::shared_ptr<CMonster> CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 
-	std::vector<TreasureInfo>& GetTreauserPositions() { return treasures; }
+	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
 
 private:
 	enum class UndeadMeshName {

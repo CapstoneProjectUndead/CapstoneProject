@@ -47,7 +47,7 @@ enum class AI_STATE
 
 enum class TREASURE_STATE : uint8_t
 {
-	Vaild,
-	Invalid,
-	Occupied,
+	Vaild, // 파밍 가능한 보물
+	Invalid, // 파밍 불가능 
+	Occupied, // 누가 지금 파고있다.
 };

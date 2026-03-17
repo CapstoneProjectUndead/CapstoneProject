@@ -24,7 +24,7 @@ CGameScene::~CGameScene()
 
 void CGameScene::Start()
 {
-
+	CreateGameScene();
 }
 
 void CGameScene::Update(float elapsedTime)
@@ -92,6 +92,7 @@ void CGameScene::CreateGameScene()
 	std::vector<std::shared_ptr<CObject>> objects;
 
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+
 	for (const auto& inst : instData) {
 
 		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {

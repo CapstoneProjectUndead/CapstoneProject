@@ -46,7 +46,7 @@ void CGameScene::Initialize()
 	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
-		treasures = factory->GetTreauserPositions();
+		treasures = factory->GetTreauseres();
 	}
 }
 
