@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "SkinnedData.h"
 
@@ -16,17 +16,11 @@ public:
 	void UpdateMonsterAnimation();
 
 	const std::vector<XMFLOAT4X4>& GetFinalTransforms() const { return final_transforms; }
-
-	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
-	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	XMFLOAT3 GetHeadPosition() const { return *head_position; }
 private:
 	CSkinnedData skinned;
 	const XMFLOAT3*const head_position;
-	SkinnedDataCB* mapped{};
 	std::string current_animation{ "Ganga_idle" };
 	float current_time{};
 	std::vector<XMFLOAT4X4> final_transforms;
-
-	ComPtr<ID3D12Resource> skinned_cb;
 };

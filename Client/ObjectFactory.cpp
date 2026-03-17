@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ObjectFactory.h"
 
 // Component
@@ -19,7 +19,7 @@
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
-void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
+void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
 	if (node->mesh.positions.empty()) return;
 
@@ -193,23 +193,24 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			std::string meshName = PickRandom(typeName);
 			if (meshName.empty()) continue;
 
+			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
 			auto proto = prototypes[meshName];
 			auto meshComp = proto->GetComponent<CMeshComponent>();
 			auto matComp = proto->GetComponent<CMaterialComponent>();
 			auto collider = proto->GetComponent<CColliderComponent>();
+			auto renderer = std::make_shared<CMeshRendererComponent>();
+
+			obj->SetComponent(renderer);
+			RenderUnit unit;
+			unit.mesh = meshComp;
+			unit.material = matComp;
+			renderer->SetRenderUnit(unit);
 
 			// 위치/크기 정보를 행렬로 변환하여 추가
-			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-
 			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 			XMStoreFloat4x4(&obj->world_matrix, world);
 
-			// 인스턴스 렌더러에 위치와 리소스 정보 등록
-			CInstRenderer::GetInstance().AddInstance(
-				meshComp->GetMesh().get(),
-				matComp,
-				obj->world_matrix
-			);
 			obj->SetShdaer("inst");
 
 			// collider copy(잔디, 돌은 필요X)

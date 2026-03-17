@@ -1,13 +1,14 @@
-﻿#pragma once
+#pragma once
 
 class CComponent;
 class CShader;
 class CCamera;
 class CMesh;
 
-// GeometryLoader에 정의
-struct Mesh;
-struct FrameNode;
+namespace CGeometryLoader {
+	struct FrameNode;
+	struct Mesh;
+}
 
 struct ObjectCB
 {
@@ -88,11 +89,8 @@ protected:
 	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
 	SCENE_TYPE  current_scene_type = SCENE_TYPE::NONE; // 현재 오브젝트가 속한 씬
-	ObjectCB* mapped{};
 
 	std::string shader_name{"static"};	// 적용 쉐이더 이름
-
-	ComPtr<ID3D12Resource> object_cb;
 
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;
@@ -105,7 +103,6 @@ protected:
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;
 	float		pitch = 0.f;
-
 };
 
 template<typename T>

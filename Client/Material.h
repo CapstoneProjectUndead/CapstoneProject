@@ -1,13 +1,14 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 
 class CTexture;
 
-struct MaterialCB
+struct MaterialData
 {
     XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
     XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
     float glossiness{ 0.25f };
+    UINT tex_idx;
 };
 
 class CMaterial
@@ -15,14 +16,13 @@ class CMaterial
 public:
     CMaterial() = default;
     void SetTexture(const std::shared_ptr<CTexture>& tex);
-    void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
-    void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    MaterialData GetMaterialData() const { return material; }
+    void SetMaterialData(MaterialData other) { material = other; }
+    UINT GetTexIndex() const { return material.tex_idx; };
 public:
-    MaterialCB material{};
+    MaterialData material{};  // meterial Data
 
     std::shared_ptr<CTexture> texture;
-    ComPtr<ID3D12Resource> material_cb;
-    MaterialCB* mapped{};
 };
 
 class CMaterialManager
@@ -45,8 +45,6 @@ public:
     CMaterial* GetMaterial() const { return material.get(); }
 
     void Update(const float deltaTime) override {};
-    void UpdateMeshShaderVariables(ID3D12GraphicsCommandList* commandList) override;
-    void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 private:
     std::shared_ptr<CMaterial> material;
 };

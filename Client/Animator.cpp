@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "GeometryLoader.h"
 #include "Object.h"
@@ -14,7 +14,7 @@ CAnimatorComponent::CAnimatorComponent()
 // animator
 void CAnimatorComponent::Initialize(const std::string& charName, const std::string& AniName)
 {
-	SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
+	CGeometryLoader::SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
 	auto animData = CGeometryLoader::LoadAnimations(AniName, skeleton.bone_names.size());
 	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
 }
@@ -126,19 +126,4 @@ void CAnimatorComponent::UpdateMonsterAnimation()
 	default:
 		break;
 	}
-}
-
-void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
-{
-	if (!final_transforms.empty()) {
-		memcpy(mapped, final_transforms.data(), sizeof(XMFLOAT4X4) * final_transforms.size());
-	}
-
-	commandList->SetGraphicsRootConstantBufferView(4, skinned_cb->GetGPUVirtualAddress());
-}
-
-void CAnimatorComponent::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
-{
-	skinned_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
-	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 }

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GeometryLoader.h"
 #include "Mesh.h"
 
@@ -74,9 +74,9 @@ void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 }
 
 template<>
-void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
-	Mesh& mesh{ node->mesh };
+	CGeometryLoader::Mesh& mesh{ node->mesh };
 	name = node->name;
 
 	std::vector<CSkinnedVertex> vertices;
@@ -108,9 +108,9 @@ void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCo
 }
 
 template<>
-void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node)
+void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
-	Mesh& mesh{ node->mesh };
+	CGeometryLoader::Mesh& mesh{ node->mesh };
 	name = node->name;
 
 	std::vector<CMatVertex> vertices;

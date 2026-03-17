@@ -1,68 +1,4 @@
-#pragma once
-
-struct SkeletonData
-{
-    std::vector<std::string> bone_names;
-    std::vector<int> parent_index;          // bone_hierarchy    
-    std::vector<XMFLOAT4X4> inverse_bind_pose; // mesh.bindposes
-};
-
-struct BoneWeightData
-{
-    XMUINT4 bone_index;
-    XMFLOAT4 weight;
-};
-
-struct MaterialData
-{
-    XMFLOAT4 albedoColor{ 1,1,1,1 };
-    XMFLOAT4 emissiveColor{ 0,0,0,1 };
-    XMFLOAT4 specularColor{ 1,1,1,1 };
-
-    float glossiness = 0.0f;
-    float smoothness = 0.0f;
-    float metallic = 0.0f;
-    float specularHighlight = 0.0f;
-    float glossyReflection = 0.0f;
-
-    std::string albedoMap;
-    std::string specularMap;
-    std::string metallicMap;
-    std::string normalMap;
-    std::string emissionMap;
-    std::string detailAlbedoMap;
-    std::string detailNormalMap;
-};
-
-struct MeshCollider
-{
-    std::vector<XMFLOAT3> positions;
-    std::vector<XMFLOAT3> normals;
-    std::vector<UINT> indices;
-};
-
-// Load 용 Mesh, 사용X
-struct Mesh
-{
-    std::vector<XMFLOAT3> positions;
-    std::vector<XMFLOAT4> colors;
-    std::vector<XMFLOAT2> texcoords;
-    std::vector<XMFLOAT3> normals;
-    std::vector<MaterialData> materials;
-    std::vector<UINT> indices;
-    std::vector<BoneWeightData> bone_weights;
-    BoundingBox bounds;
-};
-
-// 메쉬가 여러 개면 childrens 사용
-struct FrameNode
-{
-    std::string name;
-    XMFLOAT4X4 localMatrix;
-    Mesh mesh;
-    MeshCollider collider;
-    std::vector<std::unique_ptr<FrameNode>> childrens;
-};
+﻿#pragma once
 
 class BinaryReader {
 public:
@@ -204,6 +140,70 @@ private:
 struct AnimationClip;
 
 namespace CGeometryLoader {
+    struct SkeletonData
+    {
+        std::vector<std::string> bone_names;
+        std::vector<int> parent_index;          // bone_hierarchy    
+        std::vector<XMFLOAT4X4> inverse_bind_pose; // mesh.bindposes
+    };
+
+    struct BoneWeightData
+    {
+        XMUINT4 bone_index;
+        XMFLOAT4 weight;
+    };
+
+    struct MaterialData
+    {
+        XMFLOAT4 albedoColor{ 1,1,1,1 };
+        XMFLOAT4 emissiveColor{ 0,0,0,1 };
+        XMFLOAT4 specularColor{ 1,1,1,1 };
+
+        float glossiness = 0.0f;
+        float smoothness = 0.0f;
+        float metallic = 0.0f;
+        float specularHighlight = 0.0f;
+        float glossyReflection = 0.0f;
+
+        std::string albedoMap;
+        std::string specularMap;
+        std::string metallicMap;
+        std::string normalMap;
+        std::string emissionMap;
+        std::string detailAlbedoMap;
+        std::string detailNormalMap;
+    };
+
+    struct MeshCollider
+    {
+        std::vector<XMFLOAT3> positions;
+        std::vector<XMFLOAT3> normals;
+        std::vector<UINT> indices;
+    };
+
+    // Load 용 Mesh, 사용X
+    struct Mesh
+    {
+        std::vector<XMFLOAT3> positions;
+        std::vector<XMFLOAT4> colors;
+        std::vector<XMFLOAT2> texcoords;
+        std::vector<XMFLOAT3> normals;
+        std::vector<MaterialData> materials;
+        std::vector<UINT> indices;
+        std::vector<BoneWeightData> bone_weights;
+        BoundingBox bounds;
+    };
+
+    // 메쉬가 여러 개면 childrens 사용
+    struct FrameNode
+    {
+        std::string name;
+        XMFLOAT4X4 localMatrix;
+        Mesh mesh;
+        MeshCollider collider;
+        std::vector<std::unique_ptr<FrameNode>> childrens;
+    };
+
     // load model
 	std::unique_ptr<FrameNode> LoadGeometry(const std::string& filename);
     Mesh LoadMesh(BinaryReader& br);

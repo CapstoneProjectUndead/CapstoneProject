@@ -7,8 +7,8 @@ class CCamera;
 * 텍스처(srv) 바인딩 순서
 1. srvIndex = Allocate()
 2. texture->CreateTextureResource(), CreateSrv(GetCPUHandle(srvIndex))
-3. 오브젝트에 SRV 인덱스 저장
 4. SetDescriptorHeaps
+3. material->texture->GetDescriptorIndex()
 5. SetGraphicsRootDescriptorTable
 */
 class CDescriptorHeapManager {
@@ -83,8 +83,6 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*, CObject*);
 	virtual void RenderEnd(ID3D12GraphicsCommandList*) {};
 
-	// 임시 통로 역할
-	static CDescriptorHeapManager* current_heap_manager;
 protected:
 	ComPtr<ID3D12PipelineState> pipeline_states{};
 	ComPtr<ID3D12RootSignature> graphics_root_signature{};
@@ -98,6 +96,7 @@ public:
 	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 };
 
 // hardware instancing shader
@@ -106,6 +105,4 @@ class CInstShader : public CShader
 public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
-	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
-	void Render(ID3D12GraphicsCommandList*, CObject*) override;
 };
