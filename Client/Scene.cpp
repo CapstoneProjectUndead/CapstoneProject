@@ -362,7 +362,7 @@ void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_S
 	MON_TYPE type = pkt.info.monster_type;
 	NetMonsterInfo info = pkt.info;
 
-	auto monster = factory->CreateHumanMonster(skinningHeapManager, type, scene_type);
+	auto monster = factory->CreateMonster(skinningHeapManager, type, scene_type);
 	monster->SetID(info.monster_id);
 	monster->ChangeModelSet(1);
 	monster->ChangeEyes(2);

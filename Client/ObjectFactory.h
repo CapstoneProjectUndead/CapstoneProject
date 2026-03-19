@@ -28,7 +28,7 @@ public:
 	void CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
-	std::shared_ptr<CMonster> CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
+	std::shared_ptr<CMonster> CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }

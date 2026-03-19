@@ -382,7 +382,7 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 	return player;
 }
 
-std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType)
+std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType)
 {
 	std::shared_ptr<CMonster>     monster;
 	std::shared_ptr<CAIComponent> AIComp;
