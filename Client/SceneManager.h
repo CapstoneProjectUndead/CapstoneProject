@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Scene.h"
 #include "TitleScene.h"
@@ -18,6 +18,7 @@ public:
     }
 
 public:
+    void Init(ID3D12Device* device);
     void    Update();
     void    Render(ID3D12GraphicsCommandList* commandList);
 
@@ -33,7 +34,10 @@ public:
 
     void ChangeScene(SCENE_TYPE type);
 
+    auto& GetShaders() { return shaders; }
+    void SetShaders(auto& otherShaders) { shaders = otherShaders; }
 private:
+    std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
     std::unique_ptr<CScene> scenes[(UINT)SCENE_TYPE::END];
     CScene*                 active_scene = nullptr;
 };

@@ -22,30 +22,8 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
-	// 렌더링할 때 필요한 쉐이더 객체 생성
-	if (shaders.empty()) {
-		{
-			// static shader
-			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("static", std::move(shader));
-		}
-		{
-			// skinning
-			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("skinning", std::move(shader));
-		}
-	}
-	{
-		// inst
-		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("inst", std::move(shader));
-	}
-
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
+		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
 		treasures = factory->GetTreauseres();
 	}
@@ -55,7 +33,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 {
 	// 플레이어 생성
 	if (!my_player) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		my_player->SetPosition(0.0f, 2.0f, 0.0f);
 
@@ -93,7 +71,7 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 	if (camera)
 		camera->SetViewportsAndScissorRects(commandList);
 
-	for (const auto& shader : shaders) {
+	for (const auto& shader : CSceneManager::GetInstance().GetShaders()) {
 		shader.second->RenderBegin(commandList);
 
 		if (camera)

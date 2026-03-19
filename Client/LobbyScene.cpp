@@ -25,24 +25,8 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Initialize()
 {
-	// 렌더링할 때 필요한 쉐이더 객체 생성
-	if(shaders.empty()) {
-		{
-			// static shader
-			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("static", std::move(shader));
-		}
-		{
-			// skinning
-			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("skinning", std::move(shader));
-		}
-	}
-
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["static"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
 	}
 }
@@ -51,7 +35,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 {
 	// 플레이어 생성
 	if (!my_player) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
 
@@ -127,7 +111,7 @@ void CLobbyScene::Enter()
 
 	// HumanMonster 생성
 	if (g_is_single) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateHumanMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
 		humanMonster->ChangeModelSet(1);
 		humanMonster->ChangeEyes(2);

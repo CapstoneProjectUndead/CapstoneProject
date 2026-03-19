@@ -1,8 +1,32 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
 #include "MyPlayer.h"
+#include "Shader.h"
+
+
+void CSceneManager::Init(ID3D12Device* device)
+{
+	{
+		// static shader
+		std::shared_ptr<CShader> shader = std::make_unique<CShader>();
+		shader->CreateShader(device);
+		shaders.emplace("static", std::move(shader));
+	}
+	{
+		// skinning
+		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+		shader->CreateShader(device);
+		shaders.emplace("skinning", std::move(shader));
+	}
+	{
+		// inst
+		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
+		shader->CreateShader(device);
+		shaders.emplace("inst", std::move(shader));
+	}
+}
 
 
 void CSceneManager::Update()
@@ -27,13 +51,6 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	if (active_scene->GetMyPlayer())
 		myPlayer = active_scene->GetMyPlayer();
 
-	// 기존 씬의 shader Set
-	std::unordered_map<std::string, std::shared_ptr<CShader>> newShader;
-	auto& shaders = active_scene->GetShaders();
-	if (!shaders.empty()) {
-		newShader = shaders;
-	}
-
 	// 기존 씬에서 정리할게 있으면 여기서 처리
 	active_scene->Exit();
 	
@@ -43,9 +60,6 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	// 해당 씬에 플레이어 셋팅
 	if (myPlayer && active_scene->GetSceneType() != SCENE_TYPE::TITLE)
 		active_scene->SetPlayer(myPlayer);
-
-	if (!newShader.empty())
-		active_scene->SetShaders(newShader);
 
 	// 해당 씬에서 할 게 있으면 여기서 처리
 	active_scene->Enter();

@@ -233,7 +233,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			objects.push_back(obj);
 		}
 	}
-	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, objects.size());
 	return objects;
 }
 

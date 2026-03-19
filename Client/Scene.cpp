@@ -65,7 +65,7 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	if (camera)
 		camera->SetViewportsAndScissorRects(commandList);
 
-	for (const auto& shader : shaders) {
+	for (const auto& shader : CSceneManager::GetInstance().GetShaders()) {
 		shader.second->RenderBegin(commandList);
 
 		if (camera)
@@ -188,6 +188,8 @@ void CScene::RemoveAllMonsters()
 
 void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt)
 {
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+
 	if (pkt.is_my_player) {
 		{
 			// 싱글 모드가 아닌 멀티 모드로 전환
@@ -241,6 +243,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 {
 	S_PLAYER_LIST::PlayerList userList = pkt.GetPlayerList();
 
+	auto shaders = CSceneManager::GetInstance().GetShaders();
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
@@ -352,6 +355,8 @@ void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_R
 
 void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt)
 {
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	
 	CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 
 	MON_TYPE type = pkt.info.monster_type;

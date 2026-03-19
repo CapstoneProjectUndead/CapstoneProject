@@ -11,24 +11,8 @@
 
 void CCustomScene::Initialize()
 {
-	// 렌더링할 때 필요한 쉐이더 객체 생성
-    if (shaders.empty()) {
-        {
-            // static shader
-            std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-            shader->CreateShader(GET_DEVICE);
-            shaders.emplace("static", std::move(shader));
-        }
-        {
-            // skinning
-            std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-            shader->CreateShader(GET_DEVICE);
-            shaders.emplace("skinning", std::move(shader));
-        }
-	}
-
     if (objects.empty()) {
-        CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+        CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["static"]->GetHeapManager() };
         objects = factory->CreateLobby(staticHeapManager);
     }
 }
@@ -37,7 +21,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
 {
     // 플레이어 생성
     if (!my_player) {
-        CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+        CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
         my_player = factory->CreateMyPlayer(skinningHeapManager);
     }
     my_player->SetPitch(-10);   // 얼굴이 잘보이도록 수치 조정
