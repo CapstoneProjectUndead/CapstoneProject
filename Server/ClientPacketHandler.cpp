@@ -139,9 +139,7 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 	);
 #else
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
-	//assert(room->IsActive());
-	if (!room->IsActive())
-		return true;
+	assert(room);
 
 	CScene* currentScene = room->GetScenes()[(UINT)pkt.scene_type].get();
 	assert(currentScene);
@@ -161,7 +159,7 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pkt)
 {
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
-	assert(room->IsActive());
+	assert(room);
 	CCustomScene* customScene = dynamic_cast<CCustomScene*>(room->GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get());
 	assert(customScene);
 

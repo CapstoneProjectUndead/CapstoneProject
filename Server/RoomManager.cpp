@@ -164,7 +164,6 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 			S_EnterRoom enterPkt;
 			enterPkt.success = false;
 			enterPkt.room_id = pkt.room_id;
-			enterPkt.scene_type = SCENE_TYPE::LOBBY;
 			auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
 			if (user->GetSession())
 				user->GetSession()->DoSend(sendBuffer);
@@ -224,8 +223,16 @@ void CRoomManager::SendRoomList(shared_ptr<Session> session)
 			roomList[idx++] = S_Room_List::Room{ NetRoomInfo{room.second->GetRoomInfo()} };
 		}
 
-		SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
-		session->DoSend(sendBuffer);
+		if (idx == 0) {
+			S_Room_List roomPkt;
+			roomPkt.room_count = 0;
+			auto sendBuffer = MAKE_SEND_BUFFER(roomPkt);
+			session->DoSend(sendBuffer);
+		}
+		else {
+			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
+			session->DoSend(sendBuffer);
+		}
 	}
 	else {
 		S_Room_List roomPkt;

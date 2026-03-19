@@ -56,7 +56,6 @@ void CLobbyScene::CheckReady()
 
 			// 이 방은 게임이 시작되어서, 이제 입장 불가능
 			r->SetIsGameStart(true);
-			r->SetActive(false);
 
 			player_ready_cnt = 0;
 		}
@@ -135,11 +134,11 @@ void CLobbyScene::SendPlayerToGameScene()
 				//	}
 				//}
 
-				//S_MapEnd mapEndtpkt;
-				//sendBuffer = MAKE_SEND_BUFFER(mapEndtpkt);
-				//if (session) {
-				//	session->DoSend(sendBuffer);
-				//}
+				S_MapEnd mapEndtpkt;
+				sendBuffer = MAKE_SEND_BUFFER(mapEndtpkt);
+				if (session) {
+					session->DoSend(sendBuffer);
+				}
 			}
 		}
 
@@ -152,18 +151,18 @@ void CLobbyScene::SendPlayerToGameScene()
 
 		for (auto& player : vecPlayers) {
 			ChangeScene(player, SCENE_TYPE::GAME);
-		}
 
-		// 플레이어에게 GameScene으로 전환하라고 알려야한다.
-		//S_SceneChange changeScenePkt;
-		//changeScenePkt.player_id = player->GetID();
-		//changeScenePkt.current_scene = scene_type;
-		//changeScenePkt.target_scene = SCENE_TYPE::GAME;
-		//
-		//auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
-		//if (session) {
-		//	session->DoSend(sendBuffer);
-		//}
+			// 플레이어에게 GameScene으로 전환하라고 알려야한다.
+			S_SceneChange changeScenePkt;
+			changeScenePkt.player_id = player->GetID();
+			changeScenePkt.current_scene = scene_type;
+			changeScenePkt.target_scene = SCENE_TYPE::GAME;
+
+			auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
+			if (auto session = player->GetSession()) {
+				session->DoSend(sendBuffer);
+			}
+		}
 	}
 }
 

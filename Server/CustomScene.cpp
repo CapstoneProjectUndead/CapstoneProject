@@ -33,6 +33,20 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 	auto room = user->GetRoom();
 	assert(room);
 
+	// 3월 19일 추가
+	// 방에 있던 기존 플레이어들이 사신에게 말을 걸어서 준비완료하면 GameScene으로 넘어간다.
+	// 그 찰나에 새로운 유저가 들어온다면 입장을 막아야한다.
+	if (room->GetIsGameStart()) {
+		S_EnterRoom enterPkt;
+		enterPkt.success = false;
+		enterPkt.room_id = pkt.room_id;
+		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+		if (user->GetSession())
+			user->GetSession()->DoSend(sendBuffer);
+
+		return;
+	}
+
 	// Player 생성 (플레이어 ID = 유저 ID)
 	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room);
 

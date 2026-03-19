@@ -96,14 +96,20 @@ void CLobbyScene::Update(float elapsedTime)
 
 	// 테스트 (나중에 지울 것)
 	if (KEY_TAP(KEY::P)) {
-		if (!my_player->GetIsReady()) {
-			my_player->SetIsReady(true);
-			C_Ready readyPkt;
-			readyPkt.player_id = my_player->GetID();
-			if (auto session = my_player->GetSession()) {
-				auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
-				session->DoSend(sendBuffer);
+
+		if (!g_is_single) {
+			if (!my_player->GetIsReady()) {
+				my_player->SetIsReady(true);
+				C_Ready readyPkt;
+				readyPkt.player_id = my_player->GetID();
+				if (auto session = my_player->GetSession()) {
+					auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
+					session->DoSend(sendBuffer);
+				}
 			}
+		}
+		else {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 		}
 	}
 }
@@ -138,6 +144,7 @@ void CLobbyScene::Exit()
 
 	my_player = nullptr;
 	paused = false; 
+	StopLoading();
 }
 
 void CLobbyScene::DrawUI()
@@ -346,7 +353,8 @@ void CLobbyScene::DrawLoadingPopUp()
 
 		const char* txt = "로딩 중...";
 		switch (loading_type) {
-		case LoadingType::EnterGame: txt = (const char*)u8"맵 로딩 중..."; break;
+		case LoadingType::MapLoading: txt = (const char*)u8"맵 로딩 중..."; break;
+		case LoadingType::GenerateMap: txt = (const char*)u8"맵 생성 중..."; break;
 		}
 		ImGui::Text("%s", txt);
 
@@ -360,11 +368,11 @@ void CLobbyScene::DrawLoadingPopUp()
 // 서버 패킷 처리 관련 함수들
 void CLobbyScene::Handle_S_MapStart(std::shared_ptr<Session> session, const S_MapStart& pkt)
 {
-	StartLoading(LoadingType::EnterGame);
+	StartLoading(LoadingType::GenerateMap);
 	paused = true;
 }
 
 void CLobbyScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt)
 {
-	StopLoading();
+	StartLoading(LoadingType::GenerateMap);
 }

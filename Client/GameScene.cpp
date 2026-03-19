@@ -8,6 +8,7 @@
 #include "ObjectFactory.h"
 #include "SceneManager.h"
 #include "ItemFinder.h"
+#include "NetworkManager.h"
 
 
 CGameScene::CGameScene()
