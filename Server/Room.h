@@ -27,7 +27,9 @@ public:
     uint32          GetRoomID() const { return room_info.room_id; }
     const string&   GetRoomName() const { return string(room_info.room_name); }
     uint16          GetCurrentPlayerCount() const { return room_info.current_player_count; }
+
     bool            GetIsGameStart() const { return room_info.is_game_start; }
+    void            SetIsGameStart(bool start) { room_info.is_game_start = start; }
 
     bool            IsValid();
     bool            IsActive() const { return is_active; }

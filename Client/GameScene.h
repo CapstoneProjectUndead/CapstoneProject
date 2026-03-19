@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include "Scene.h"
 
-class CGameScene : public CScene {
+class CGameScene : public CScene 
+{
 public:
     CGameScene();
     ~CGameScene();
@@ -15,6 +16,10 @@ public:
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
+
+public:
+    // 서버 패킷 처리 관련 함수들
+    void Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt);
 
 private:
     std::vector<TreasureInfo> treasures;

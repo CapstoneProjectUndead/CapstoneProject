@@ -43,6 +43,9 @@ private:
 	// 기존 유저에게 지금 접속한 유저의 정보를 알려준다.
 	void BroadcastUserEnter(shared_ptr<CPlayer> player);
 
+protected:
+	void ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType);
+
 public:
 	// Scene에 플레이어가 있는지 체크
 	bool HasPlayers()

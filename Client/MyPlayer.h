@@ -23,6 +23,7 @@ public:
     virtual void Update(float elapsedTime) override;
     inline void PreUpdate(float elapsedTime);
 
+public:
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }
     std::shared_ptr<Session> GetSession() const { return session.lock(); }
     void SetSession(std::shared_ptr<Session> _session) { session = _session; }
@@ -39,6 +40,9 @@ public:
     void SimulateMove(const InputData& input, float elapsedTime);
 
     void BeginSendInputPacket(float elapsedTime);
+
+    bool GetIsReady() const { return is_ready; }
+    void SetIsReady(bool ready) { is_ready = ready; }
 
 private:
     void ProcessRotation();
@@ -74,6 +78,6 @@ private:
 
     XMFLOAT3                          server_velocity{};
 
-    //bool                              is_single = true;
+    bool                              is_ready;
 };
 

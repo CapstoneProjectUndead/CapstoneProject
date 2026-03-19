@@ -155,3 +155,8 @@ void CGameScene::Enter()
 		}
 	}
 }
+
+void CGameScene::Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt)
+{
+
+}

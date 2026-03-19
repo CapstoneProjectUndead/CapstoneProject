@@ -3,8 +3,7 @@
 #include "Scene.h"
 #include "CustomScene.h"
 #include "LobbyScene.h"
-
-#define ROOM_MAX_PLAYER 4
+#include "GameScene.h"
 
 atomic<uint32> CRoom::s_room_id_generator = 1;
 
@@ -46,6 +45,9 @@ void CRoom::Initialize()
 	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 
 	// 나중에 여기서 GameScene도 같이 생성
+	scenes[(UINT)SCENE_TYPE::GAME] = make_unique<CGameScene>(room_info.room_id);
+	scenes[(UINT)SCENE_TYPE::GAME]->SetRoom(shared_from_this());
+	scenes[(UINT)SCENE_TYPE::GAME]->Start();
 }
 
 void CRoom::Update(const float elapsedTime)

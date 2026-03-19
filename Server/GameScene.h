@@ -7,15 +7,13 @@
 class CGameScene :
     public CScene
 {
+    friend class CLobbyScene;
 public:
     CGameScene(uint32 roomId);
     ~CGameScene();
 
     virtual void Start() override;
     virtual void Update(float elapsedTime) override;
-
-public:
-
 
 private:
     void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
@@ -24,6 +22,7 @@ private:
 
 private:
     std::map<std::string, std::shared_ptr<CObject>> prototypes;
+    vector<MapGenerator::InstanceData> instance_data;
 
     // MapGenerator로 생성되는 grid를 model과 매치
     std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type);

@@ -112,6 +112,7 @@ using std::make_pair;
 #include "macro.h"
 
 #define RENDER_BUFFER_MAX_SIZE 60
+#define ROOM_MAX_PLAYER 4
 
 extern unique_ptr<class CGameFramework> gGameFramework;
 //extern DBConnector g_db;

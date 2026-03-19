@@ -55,6 +55,7 @@ public:
 	void Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt);
 	void Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt);
 	void Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt);
+	void Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt);
 
 public:
 	// 멤버 변수 set

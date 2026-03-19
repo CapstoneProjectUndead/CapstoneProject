@@ -13,6 +13,7 @@
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
 #include "Monster.h"
+#include "SceneManager.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
@@ -392,4 +393,9 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 	state.server_timestamp = pkt.timestamp;
 
 	monster->RecordMonsterFrameHistory(state);
+}
+
+void CScene::Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt)
+{
+	CSceneManager::GetInstance().ChangeScene(pkt.target_scene);
 }

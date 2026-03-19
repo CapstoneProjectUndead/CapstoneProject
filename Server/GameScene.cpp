@@ -24,7 +24,7 @@ CGameScene::~CGameScene()
 
 void CGameScene::Start()
 {
-	CreateGameScene();
+	
 }
 
 void CGameScene::Update(float elapsedTime)
@@ -89,11 +89,9 @@ void CGameScene::CreateGameScene()
 	if (prototypes.empty()) 
 		LoadGameScene();
 
-	std::vector<std::shared_ptr<CObject>> objects;
+	instance_data = MapGenerator::Generate3DMap();
 
-	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
-
-	for (const auto& inst : instData) {
+	for (const auto& inst : instance_data) {
 
 		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
 

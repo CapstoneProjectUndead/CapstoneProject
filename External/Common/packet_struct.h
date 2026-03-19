@@ -172,3 +172,46 @@ struct NetRoomInfo
 };
 
 static_assert(sizeof(NetRoomInfo) == 57, "NetRoomInfo size mismatch!");
+
+namespace NetPacket
+{
+	enum class EModelType : unsigned char
+	{
+		// Road Types
+		ROAD = 0,      // 공원 구역의 일반 길
+		PARK_GREEN,         // 공원 구역의 수풀/벤치 아래 바닥
+		VILLAGE_ROAD,       // 마을(상점) 구역의 일반 길
+
+		WALL,
+
+		//  Buildings
+		WAREHOUSE, STORE,
+		DOOR,
+		CORNER_DOOR,    // HOUSE_WALL_CORNER과 방향 같음
+
+		// Building Wall Types (WareHouse, Store 공용)
+		HOUSE_INNTER,    // 건물 내부 바닥
+		HOUSE_WALL_STRAIGHT, // 일자 벽
+		HOUSE_WALL_CORNER,   // 모서리 벽
+		HOUSE_WALL_EMPTY,    // 벽X
+
+		// Props
+		KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW, UNKNOWN
+	};
+
+	struct InstanceData
+	{
+		XMFLOAT3 position;
+		float rotationY{ 0.0f }; // scale 대신 회전(도 단위) 추가
+		EModelType type{ EModelType::ROAD };
+
+		InstanceData() = default;
+		InstanceData(XMFLOAT3 pos, float rot, EModelType _type)
+			: position(pos)
+			, rotationY(rot)
+			, type(_type)
+		{ }
+	};
+
+	static_assert(sizeof(InstanceData) == 17, "InstanceData size mismatch!");
+}

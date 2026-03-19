@@ -15,10 +15,15 @@ public:
     virtual void Update(float elapsedTime) override;
 
 public:
+    void CheckReady();
+
+public:
     //=================
     // 테스트용 함수
     void C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt);
     //=================
+
+    void Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt);
 
 private:
     enum class LobbyMeshName {
@@ -31,9 +36,12 @@ private:
     LobbyMeshName stringToLobbyMeshName(const std::string& str);
 
     void CreateLobby();
+    void SendPlayerToGameScene();
 
 private:
     // 맵의 바닥, 장애물 등 움직이지 않는 정적 충돌체들을 보관하는 곳
     std::vector<std::shared_ptr<CObject>> static_objects;
+
+    int  player_ready_cnt;
 };
 

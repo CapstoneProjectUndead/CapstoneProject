@@ -136,3 +136,16 @@ struct TreasureInfo
 		, treasure_state(TREASURE_STATE::Vaild)
 	{}
 };
+
+
+// 아이템 
+
+struct ItemData 
+{
+	int			item_id;
+	ITEM_TYPE	item_type;
+	std::string item_name;
+
+	std::string icon_path; // 인벤토리 UI에서 그릴 이미지 경로
+	std::string mesh_path; // 땅에 떨어졌을 때 그릴 3D 모델 경로
+};

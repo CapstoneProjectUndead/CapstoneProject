@@ -9,6 +9,7 @@
 #include "GeometryLoader.h"
 #include "HumanMonster.h"
 #include "ServerObjectFactory.h"
+#include "GameScene.h"
 
 #undef min
 #undef max
@@ -16,6 +17,7 @@
 
 CLobbyScene::CLobbyScene(uint32 roomId)
 	: CScene(SCENE_TYPE::LOBBY, roomId)
+	, player_ready_cnt(0)
 {
 }
 
@@ -37,6 +39,132 @@ void CLobbyScene::Start()
 void CLobbyScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+
+	CheckReady();
+}
+
+void CLobbyScene::CheckReady()
+{
+	if (auto r = room.lock()) {
+
+		// 모든 플레이어 준비완료, GameScene으로 이동!
+		const int total = r->GetCurrentPlayerCount();
+		if (player_ready_cnt == total) {
+			
+			// GameScene 생성, 플레이어에게 GameScene Map 전송, 플레이어 GameScene으로 이동
+			SendPlayerToGameScene();
+
+			// 이 방은 게임이 시작되어서, 이제 입장 불가능
+			r->SetIsGameStart(true);
+			r->SetActive(false);
+
+			player_ready_cnt = 0;
+		}
+	}
+}
+
+void CLobbyScene::SendPlayerToGameScene()
+{
+	if (auto r = room.lock()) {
+
+		for (auto& [id, player] : players) {
+
+			auto session = player->GetSession();
+
+			// GameScene은 절차적 생성 map이라,
+			// 입장전에 항상 CreateGameScene을 호출한다.
+			CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+			//gameScene->CreateGameScene();
+
+			// 플레이어들에게 GameScene Map 정보 패킷을 보낸다. 
+			{
+				S_MapStart mapStartpkt;
+				auto sendBuffer = MAKE_SEND_BUFFER(mapStartpkt);
+				if (session) {
+					session->DoSend(sendBuffer);
+				}
+
+				auto& instanceData = gameScene->instance_data;
+
+				const int chunkSize = 70;
+				int totalDataCnt = instanceData.size();
+				int currentIndex = 0;
+
+				//while (totalDataCnt > 0) {
+				//
+				//	S_MapData mapDataPkt;
+				//	mapDataPkt.data_count = chunkSize;
+				//
+				//	for (int i = 0; i < chunkSize; ++i) {
+				//
+				//		NetPacket::InstanceData instData{ instanceData[currentIndex].position
+				//			, instanceData[currentIndex].rotationY
+				//			, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
+				//
+				//		mapDataPkt.data[i] = instData;
+				//		++currentIndex;
+				//	}
+				//	totalDataCnt -= chunkSize;
+				//
+				//	auto sendBuffer = MAKE_SEND_BUFFER(mapDataPkt);
+				//	if (session) {
+				//		session->DoSend(sendBuffer);
+				//	}
+				//
+				//	// 남은 수가 chunkSize(70개) 보다 작다면
+				//	if (totalDataCnt < chunkSize) {
+				//
+				//		S_MapData mapDataPkt;
+				//		mapDataPkt.data_count = totalDataCnt;
+				//
+				//		for (int i = 0; i < totalDataCnt; ++i) {
+				//			NetPacket::InstanceData instData{ instanceData[currentIndex].position
+				//				, instanceData[currentIndex].rotationY
+				//				, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
+				//
+				//			mapDataPkt.data[i] = instData;
+				//			++currentIndex;
+				//		}
+				//
+				//		auto sendBuffer = MAKE_SEND_BUFFER(mapDataPkt);
+				//		if (session) {
+				//			session->DoSend(sendBuffer);
+				//		}
+				//
+				//		break;
+				//	}
+				//}
+
+				//S_MapEnd mapEndtpkt;
+				//sendBuffer = MAKE_SEND_BUFFER(mapEndtpkt);
+				//if (session) {
+				//	session->DoSend(sendBuffer);
+				//}
+			}
+		}
+
+		// 플레이어를 GameScene으로 이동
+		vector<shared_ptr<CPlayer>> vecPlayers;
+
+		for (auto& [id, player] : players) {
+			vecPlayers.push_back(player);
+		}
+
+		for (auto& player : vecPlayers) {
+			ChangeScene(player, SCENE_TYPE::GAME);
+		}
+
+		// 플레이어에게 GameScene으로 전환하라고 알려야한다.
+		//S_SceneChange changeScenePkt;
+		//changeScenePkt.player_id = player->GetID();
+		//changeScenePkt.current_scene = scene_type;
+		//changeScenePkt.target_scene = SCENE_TYPE::GAME;
+		//
+		//auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
+		//if (session) {
+		//	session->DoSend(sendBuffer);
+		//}
+	}
 }
 
 // 특정 Scene을 테스트할 때, 사용할 함수. 
@@ -80,6 +208,14 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 
 	// 유저 Scene에 입장
 	EnterScene(player);
+}
+
+void CLobbyScene::Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt)
+{
+	auto iter = players.find(pkt.player_id);
+	assert(iter != players.end());
+	iter->second->SetIsReady(true);
+	++player_ready_cnt;
 }
 
 CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)

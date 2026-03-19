@@ -15,6 +15,7 @@
 
 CMyPlayer::CMyPlayer()
 	: CPlayer()
+	, is_ready(false)
 {
     is_my_player = true;
 }

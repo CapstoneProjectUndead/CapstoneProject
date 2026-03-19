@@ -93,6 +93,19 @@ void CLobbyScene::Update(float elapsedTime)
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	}
+
+	// 테스트 (나중에 지울 것)
+	if (KEY_TAP(KEY::P)) {
+		if (!my_player->GetIsReady()) {
+			my_player->SetIsReady(true);
+			C_Ready readyPkt;
+			readyPkt.player_id = my_player->GetID();
+			if (auto session = my_player->GetSession()) {
+				auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
+				session->DoSend(sendBuffer);
+			}
+		}
+	}
 }
 
 void CLobbyScene::Enter()
@@ -124,13 +137,14 @@ void CLobbyScene::Exit()
 	CScene::Exit();
 
 	my_player = nullptr;
+	paused = false; 
 }
 
 void CLobbyScene::DrawUI()
 {
 	// 로딩 팝업 (최우선 순위)
 	if (loading_type != LoadingType::None) {
-		
+		DrawLoadingPopUp();
 	}
 
 	// 결과 팝업
@@ -311,4 +325,46 @@ void CLobbyScene::DrawRoomLeavePopUp()
 
 		ImGui::EndPopup();
 	}
+}
+
+void CLobbyScene::DrawLoadingPopUp()
+{
+	if (!ImGui::IsPopupOpen("LoadingPopup")) {
+		ImGui::OpenPopup("LoadingPopup");
+	}
+
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+		float scale = G_RATIO_Y;
+
+		CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f * scale, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+		ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+		ImGui::SetWindowFontScale(scale);
+
+		const char* txt = "로딩 중...";
+		switch (loading_type) {
+		case LoadingType::EnterGame: txt = (const char*)u8"맵 로딩 중..."; break;
+		}
+		ImGui::Text("%s", txt);
+
+		// 폰트 스케일 원상 복구
+		ImGui::SetWindowFontScale(1.0f);
+
+		ImGui::EndPopup();
+	}
+}
+
+// 서버 패킷 처리 관련 함수들
+void CLobbyScene::Handle_S_MapStart(std::shared_ptr<Session> session, const S_MapStart& pkt)
+{
+	StartLoading(LoadingType::EnterGame);
+	paused = true;
+}
+
+void CLobbyScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt)
+{
+	StopLoading();
 }

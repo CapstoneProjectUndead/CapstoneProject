@@ -342,17 +342,22 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt)
 {
 	auto player = players[pkt.player_id];
-	auto room = player->GetRoom();
-	CScene* targetScene = room->GetScenes()[(UINT)pkt.target_scene].get();
+	ChangeScene(player, pkt.target_scene);
+}
 
-	if(pkt.target_scene == SCENE_TYPE::CUSTOMS) { 
+void CScene::ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType)
+{
+	auto room = player->GetRoom();
+	CScene* targetScene = room->GetScenes()[(UINT)targetSceneType].get();
+
+	if (targetSceneType == SCENE_TYPE::CUSTOMS) {
 		player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
 	}
 	else {
 		targetScene->EnterScene(player);
 	}
 
-	LeaveScene(pkt.player_id);
+	LeaveScene(player->GetID());
 
 	// 지금 나간 유저에게도 해당 씬에 있는 유저들을 삭제하라고 알려줘야함.
 	for (auto it : players) {
@@ -360,6 +365,6 @@ void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneCha
 		removePkt.player_id = it.first;
 		removePkt.scene_type = scene_type;
 		auto sendBuffer = MAKE_SEND_BUFFER(removePkt);
-		session->DoSend(sendBuffer);
+		player->GetSession()->DoSend(sendBuffer);
 	}
 }
