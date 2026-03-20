@@ -227,9 +227,9 @@ bool Handle_S_MAP_DATA(std::shared_ptr<Session> session, S_MapData& pkt)
 
 bool Handle_S_MAP_END(std::shared_ptr<Session> session, S_MapEnd& pkt)
 {
-	CLobbyScene* lobbyScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
-	assert(lobbyScene);
-	lobbyScene->Handle_S_MapEnd(session, pkt);
+	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	assert(gameScene);
+	gameScene->Handle_S_MapEnd(session, pkt);
 
 	return true;
 }

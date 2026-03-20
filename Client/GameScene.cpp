@@ -135,7 +135,23 @@ void CGameScene::Enter()
 	}
 }
 
+void CGameScene::Exit()
+{
+	CScene::Exit();
+
+	my_player = nullptr;
+}
+
 void CGameScene::Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt)
 {
+	const int cnt = pkt.data_count;	
+	for (UINT i = 0; i < cnt; ++i) {
+		instance_data.push_back(pkt.data[i]);
+	}
+}
 
+void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt)
+{
+	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
+	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
 }

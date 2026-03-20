@@ -37,9 +37,17 @@ namespace MapGenerator
     struct Cell { int x, y; };
 
     struct InstanceData {
-        XMFLOAT3 position;
+        XMFLOAT3 position{};
         float rotationY{ 0.0f }; // scale 대신 회전(도 단위) 추가
         EModelType type{ EModelType::ROAD };
+
+        InstanceData() = default;
+
+        InstanceData(const NetPacket::InstanceData& data)
+            : position(data.position)
+            , rotationY(data.rotationY)
+            , type(static_cast<EModelType>(data.type))
+        { }
     };
 
     std::vector<InstanceData> Generate3DMap();

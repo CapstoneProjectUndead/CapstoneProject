@@ -57,20 +57,23 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 		collider->SetFillter(filter);
 		obj->SetComponent(collider);
 		};
+
 	// ColliderComponent 생성
-	bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
-	if (!node->collider.positions.empty()) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
-		SetColliderComp(shape);
-	}
-	else if (isRoad) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
-		auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
-		CollisionFilter filter;
-		filter.category = EColLayer::GROUND;
-		filter.mask = EColLayer::PLAYER;
-		boxCollider->SetFillter(filter);
-		obj->SetComponent(boxCollider);
+	if (g_is_single) {
+		bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
+		if (!node->collider.positions.empty()) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
+			SetColliderComp(shape);
+		}
+		else if (isRoad) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+			CollisionFilter filter;
+			filter.category = EColLayer::GROUND;
+			filter.mask = EColLayer::PLAYER;
+			boxCollider->SetFillter(filter);
+			obj->SetComponent(boxCollider);
+		}
 	}
 	
 	obj->Initialize(GET_DEVICE, GET_CMD_LIST);
@@ -237,6 +240,50 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	return objects;
 }
 
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CDescriptorHeapManager* heapManager, std::vector<MapGenerator::InstanceData> instanceData)
+{
+	if (prototypes.empty()) LoadGameScene(heapManager);
+
+	std::vector<std::shared_ptr<CObject>> objects;
+
+	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	for (const auto& inst : instanceData) {
+		if (inst.type == MapGenerator::EModelType::TREASURE) {
+			treasures.push_back(TreasureInfo{ inst.position });
+		}
+	}
+
+	for (const auto& inst : instanceData) {
+		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
+			std::string meshName = PickRandom(typeName);
+			if (meshName.empty()) continue;
+
+			auto proto = prototypes[meshName];
+			auto meshComp = proto->GetComponent<CMeshComponent>();
+			auto matComp = proto->GetComponent<CMaterialComponent>();
+			auto collider = proto->GetComponent<CColliderComponent>();
+
+			// 위치/크기 정보를 행렬로 변환하여 추가
+			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
+			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+			XMStoreFloat4x4(&obj->world_matrix, world);
+
+			// 인스턴스 렌더러에 위치와 리소스 정보 등록
+			CInstRenderer::GetInstance().AddInstance(
+				meshComp->GetMesh().get(),
+				matComp,
+				obj->world_matrix
+			);
+			obj->SetShdaer("inst");
+
+			objects.push_back(obj);
+		}
+	}
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, objects.size());
+	return objects;
+}
+
 void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
@@ -338,15 +385,18 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 			break;
 		}
 	}
+
 	// ColliderComponent 생성/ filter 설정
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::PLAYER;
-	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-	collider->SetFillter(filter);
-	character->SetComponent(collider);
-	CPhysicsManager::GetInstance().SetCollider(collider);
+	if (g_is_single) {
+		std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
+		auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+		CollisionFilter filter;
+		filter.category = EColLayer::PLAYER;
+		filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+		collider->SetFillter(filter);
+		character->SetComponent(collider);
+		CPhysicsManager::GetInstance().SetCollider(collider);
+	}
 
 	// Animator
 	auto animator = std::make_shared<CAnimatorComponent>();

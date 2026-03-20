@@ -66,14 +66,18 @@ void CLobbyScene::SendPlayerToGameScene()
 {
 	if (auto r = room.lock()) {
 
+		CPhysicsManager::GetInstance().EraseCollider(OBJECT_TYPE::STATIC_OBJECT);
+		CPhysicsManager::GetInstance().EraseCollider(OBJECT_TYPE::MONSTER);
+
+		// GameScene은 절차적 생성 map이라,
+		// 입장전에 항상 CreateGameScene을 호출한다.
+		CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		gameScene->CreateGameScene();
+
 		for (auto& [id, player] : players) {
 
 			auto session = player->GetSession();
-
-			// GameScene은 절차적 생성 map이라,
-			// 입장전에 항상 CreateGameScene을 호출한다.
-			CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
-			//gameScene->CreateGameScene();
+			player->SetPosition(XMFLOAT3{ 0.0f, 2.0f, 0.0f });
 
 			// 플레이어들에게 GameScene Map 정보 패킷을 보낸다. 
 			{
@@ -89,50 +93,50 @@ void CLobbyScene::SendPlayerToGameScene()
 				int totalDataCnt = instanceData.size();
 				int currentIndex = 0;
 
-				//while (totalDataCnt > 0) {
-				//
-				//	S_MapData mapDataPkt;
-				//	mapDataPkt.data_count = chunkSize;
-				//
-				//	for (int i = 0; i < chunkSize; ++i) {
-				//
-				//		NetPacket::InstanceData instData{ instanceData[currentIndex].position
-				//			, instanceData[currentIndex].rotationY
-				//			, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
-				//
-				//		mapDataPkt.data[i] = instData;
-				//		++currentIndex;
-				//	}
-				//	totalDataCnt -= chunkSize;
-				//
-				//	auto sendBuffer = MAKE_SEND_BUFFER(mapDataPkt);
-				//	if (session) {
-				//		session->DoSend(sendBuffer);
-				//	}
-				//
-				//	// 남은 수가 chunkSize(70개) 보다 작다면
-				//	if (totalDataCnt < chunkSize) {
-				//
-				//		S_MapData mapDataPkt;
-				//		mapDataPkt.data_count = totalDataCnt;
-				//
-				//		for (int i = 0; i < totalDataCnt; ++i) {
-				//			NetPacket::InstanceData instData{ instanceData[currentIndex].position
-				//				, instanceData[currentIndex].rotationY
-				//				, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
-				//
-				//			mapDataPkt.data[i] = instData;
-				//			++currentIndex;
-				//		}
-				//
-				//		auto sendBuffer = MAKE_SEND_BUFFER(mapDataPkt);
-				//		if (session) {
-				//			session->DoSend(sendBuffer);
-				//		}
-				//
-				//		break;
-				//	}
-				//}
+				while (totalDataCnt > 0) {
+				
+					S_MapData mapDataPkt;
+					mapDataPkt.data_count = chunkSize;
+				
+					for (int i = 0; i < chunkSize; ++i) {
+				
+						NetPacket::InstanceData instData{ instanceData[currentIndex].position
+							, instanceData[currentIndex].rotationY
+							, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
+				
+						mapDataPkt.data[i] = instData;
+						++currentIndex;
+					}
+					totalDataCnt -= chunkSize;
+				
+					auto sendBuffer = MAKE_SEND_BUFFER(mapDataPkt);
+					if (session) {
+						session->DoSend(sendBuffer);
+					}
+				
+					// 남은 수가 chunkSize(70개) 보다 작다면
+					if (totalDataCnt < chunkSize) {
+				
+						S_MapData mapDataPkt;
+						mapDataPkt.data_count = totalDataCnt;
+				
+						for (int i = 0; i < totalDataCnt; ++i) {
+							NetPacket::InstanceData instData{ instanceData[currentIndex].position
+								, instanceData[currentIndex].rotationY
+								, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
+				
+							mapDataPkt.data[i] = instData;
+							++currentIndex;
+						}
+				
+						auto sendBuffer = MAKE_SEND_BUFFER(mapDataPkt);
+						if (session) {
+							session->DoSend(sendBuffer);
+						}
+				
+						break;
+					}
+				}
 
 				S_MapEnd mapEndtpkt;
 				sendBuffer = MAKE_SEND_BUFFER(mapEndtpkt);

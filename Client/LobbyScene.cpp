@@ -355,8 +355,3 @@ void CLobbyScene::Handle_S_MapStart(std::shared_ptr<Session> session, const S_Ma
 	StartLoading(LoadingType::GenerateMap);
 	paused = true;
 }
-
-void CLobbyScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt)
-{
-	StartLoading(LoadingType::GenerateMap);
-}

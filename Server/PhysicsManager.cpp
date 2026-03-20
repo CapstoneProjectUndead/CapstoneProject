@@ -10,6 +10,14 @@ void CPhysicsManager::Update(float deltaTime)
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end());
 }
 
+void CPhysicsManager::EraseCollider(OBJECT_TYPE type)
+{
+    colliders.erase(std::remove_if(colliders.begin(), colliders.end(), [type](const CColliderComponent* coll) {
+            return coll->owner->obj_type == type;
+            }),
+        colliders.end());
+}
+
 bool CPhysicsManager::CheckFilter(const CollisionFilter& a, const CollisionFilter& b)
 {
     // 서로의 마스크가 상대방의 카테고리를 포함하고 있는지 확인 (AND 연산)

@@ -48,6 +48,8 @@ public:
 
     void Update(float deltaTime);
 
+    void EraseCollider(OBJECT_TYPE type);
+
 private:
     // 충돌 후보 추리기(자기 자신 제외)
     void BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);
