@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ObjectFactory.h"
 
 // Component
@@ -16,6 +16,8 @@
 #include "HumanMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
+
+#include "Renderers.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 

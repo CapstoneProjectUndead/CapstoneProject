@@ -312,6 +312,9 @@
     <ClInclude Include="UIComponent.h">
       <Filter>Component\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Renderers.h">
+      <Filter>Component\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -487,6 +490,9 @@
     </ClCompile>
     <ClCompile Include="UIComponent.cpp">
       <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderers.cpp">
+      <Filter>Component\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

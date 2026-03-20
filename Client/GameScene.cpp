@@ -8,6 +8,8 @@
 #include "ObjectFactory.h"
 #include "SceneManager.h"
 #include "MeshRenderer.h"
+#include "Renderers.h"
+
 #include "UIComponent.h"
 
 CGameScene::CGameScene()

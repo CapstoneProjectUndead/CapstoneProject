@@ -41,34 +41,3 @@ protected:
 
     XMFLOAT4X4 world_matrix; // UI의 위치, 크기, 회전이 담긴 행렬
 };
-
-class CMesh;
-class CRectangleMesh;
-
-struct UIInstCB {
-    XMFLOAT4X4 world_matrix; // UI의 위치, 크기, 회전이 담긴 행렬
-    XMFLOAT4 color;          // 추후에 material로 변경
-};
-
-class CUIRenderer {
-private:
-    CUIRenderer();
-    CUIRenderer(const CUIRenderer&) = delete;
-public:
-    static CUIRenderer& GetInstance() {
-        static CUIRenderer instance;
-        return instance;
-    }
-    void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT instSize = 100);
-    void ResizeBuffer(UINT requiredSize);
-
-    void AddInstance(XMFLOAT4 color, const XMFLOAT4X4& world);
-    void Render(ID3D12GraphicsCommandList* commandList);
-private:
-    UIInstCB* mapped{};
-    ComPtr<ID3D12Resource> inst_cb;
-    UINT max_capacity{};
-    std::shared_ptr<CRectangleMesh> quad_mesh;
-
-    std::map<std::shared_ptr<CMesh>, std::vector<UIInstCB>> ui_batches;
-};

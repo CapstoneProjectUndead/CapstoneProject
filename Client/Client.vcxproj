@@ -219,6 +219,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="PatrolState.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Renderers.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="ServerPacketHandler.h" />
@@ -291,6 +292,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="PatrolState.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Renderers.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="ServerPacketHandler.cpp" />
