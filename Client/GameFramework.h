@@ -47,6 +47,8 @@ public:
 
 	ComPtr<ID3D12Device>				GetDevice() { return d3d_device; }
 	ComPtr<ID3D12GraphicsCommandList>	GetCommandList() { return command_list; }
+	int	GetClientWidth() { return client_width; }
+	int	GetClientHeight() { return client_height; }
 
 private:
 	int client_width{FRAME_BUFFER_WIDTH};

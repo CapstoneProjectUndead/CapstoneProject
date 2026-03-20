@@ -8,6 +8,7 @@
 #include "ObjectFactory.h"
 #include "SceneManager.h"
 #include "MeshRenderer.h"
+#include "UIComponent.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -32,6 +33,12 @@ void CGameScene::Initialize()
 		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("inst", std::move(shader));
 	}
+	{
+		// UI
+		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
+		shader->CreateShader(GET_DEVICE);
+		shaders.emplace("ui", std::move(shader));
+	}
 
 	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
@@ -46,6 +53,9 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		my_player->SetPosition(0.0f, 2.0f, 0.0f);
+		std::shared_ptr<CUIComponent> ui = std::make_shared<CUIComponent>();
+		my_player->SetComponent(ui);
+		CUIRenderer::GetInstance().Initialize(device, commandList, 1);
 	}
 
 	if (!camera) {
@@ -76,13 +86,14 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 		camera->SetViewportsAndScissorRects(commandList);
 
 	for (const auto& shader : shaders) {
+		if (shader.first == "ui") continue;
 		shader.second->RenderBegin(commandList);
 
-		if (camera)
-			camera->UpdateShaderVariables(commandList);
+		camera->UpdateShaderVariables(commandList);
 
-		if (light)
+		if (light) {
 			light->Render(commandList);
+		}
 
 		for (const auto& obj : objects) {
 			if (shader.first == obj->GetShader()) {
@@ -90,15 +101,27 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 			}
 		}
 
-		CInstRenderer::GetInstance().Render(commandList);
-
-		/*if (my_player) {
+		if (my_player) {
 			if (shader.first == my_player->GetShader()) {
 				shader.second->Render(commandList, my_player.get());
 			}
-		}*/
+		}
+
+		if (shader.first == "inst")
+			CInstRenderer::GetInstance().Render(commandList);
 
 		shader.second->RenderEnd(commandList);
+	}
+
+	auto uiShader = shaders.find("ui");
+	if (uiShader != shaders.end()) {
+		uiShader->second->RenderBegin(commandList); // 여기서 RootSig, PSO 설정
+		camera->UpdateShaderVariables(commandList, true); // Ortho 행렬 전달
+
+		// 중요: UI용 Descriptor Heap을 여기서 다시 한번 세팅!
+		CUIRenderer::GetInstance().Render(commandList);
+
+		uiShader->second->RenderEnd(commandList);
 	}
 
 }

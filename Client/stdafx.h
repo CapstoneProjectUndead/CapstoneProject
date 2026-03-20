@@ -423,6 +423,20 @@ namespace Matrix4x4
 		return(xmmtx4x4Result);
 	}
 
+	inline XMFLOAT4X4 OrthGraphic(float width, float height, float fNearZ, float fFarZ)
+	{
+		XMFLOAT4X4 xmmtx4x4Result;
+		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixOrthographicLH(width, height, fNearZ, fFarZ));
+		return(xmmtx4x4Result);
+	}
+
+	inline XMFLOAT4X4 OrthGraphic(float left, float right, float bottom, float top, float fNearZ, float fFarZ)
+	{
+		XMFLOAT4X4 xmmtx4x4Result;
+		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixOrthographicOffCenterLH(left, right, bottom, top, fNearZ, fFarZ));
+		return(xmmtx4x4Result);
+	}
+
 	inline XMFLOAT4X4 LookAtLH(XMFLOAT3& xmf3EyePosition, XMFLOAT3& xmf3LookAtPosition, XMFLOAT3& xmf3UpDirection)
 	{
 		XMFLOAT4X4 xmmtx4x4Result;

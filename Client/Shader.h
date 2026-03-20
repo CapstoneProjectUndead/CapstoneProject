@@ -106,3 +106,13 @@ public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 };
+
+class CUIShader : public CShader
+{
+public:
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+};

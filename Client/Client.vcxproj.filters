@@ -85,6 +85,15 @@
     <Filter Include="MapGenerator">
       <UniqueIdentifier>{71994315-a5ce-429c-bb73-7c0e44c4b1f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\Animation">
+      <UniqueIdentifier>{ce0c701a-f574-4956-a66e-2c717ac3e726}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Rendering">
+      <UniqueIdentifier>{2c4c8485-c5af-4a91-8992-4d189db7f916}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\UI">
+      <UniqueIdentifier>{44a02536-db82-46a6-b92c-131aa5b802fc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -183,16 +192,10 @@
     <ClInclude Include="JitterMeasurer.h">
       <Filter>Network\NetworkManager</Filter>
     </ClInclude>
-    <ClInclude Include="SkinnedData.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="Movement.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="Animator.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="NetworkClockManager.h">
@@ -200,9 +203,6 @@
     </ClInclude>
     <ClInclude Include="LagSimulator.h">
       <Filter>Network\NetworkManager</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshRenderer.h">
-      <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Collider.h">
       <Filter>Component\Collider/Physics</Filter>
@@ -252,9 +252,6 @@
     <ClInclude Include="ObjectFactory.h">
       <Filter>Object\Factory</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="CollisionAlgorithm.h">
       <Filter>Component\Collider/Physics</Filter>
     </ClInclude>
@@ -299,6 +296,21 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h">
       <Filter>MapGenerator</Filter>
+    </ClInclude>
+    <ClInclude Include="Animator.h">
+      <Filter>Component\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedData.h">
+      <Filter>Component\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Component\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Component\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="UIComponent.h">
+      <Filter>Component\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -368,13 +380,7 @@
     <ClCompile Include="JitterMeasurer.cpp">
       <Filter>Network\NetworkManager</Filter>
     </ClCompile>
-    <ClCompile Include="SkinnedData.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="Movement.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Animator.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="NetworkClockManager.cpp">
@@ -382,9 +388,6 @@
     </ClCompile>
     <ClCompile Include="LagSimulator.cpp">
       <Filter>Network\NetworkManager</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshRenderer.cpp">
-      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Collider.cpp">
       <Filter>Component\Collider/Physics</Filter>
@@ -428,9 +431,6 @@
     <ClCompile Include="ObjectFactory.cpp">
       <Filter>Object\Factory</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="CollisionAlgorithm.cpp">
       <Filter>Component\Collider/Physics</Filter>
     </ClCompile>
@@ -473,6 +473,21 @@
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
       <Filter>MapGenerator</Filter>
     </ClCompile>
+    <ClCompile Include="Animator.cpp">
+      <Filter>Component\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedData.cpp">
+      <Filter>Component\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Component\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>Component\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="UIComponent.cpp">
+      <Filter>Component\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -503,10 +518,13 @@
     <FxCompile Include="InstShader.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="UI.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MeshComponent.inl">
-      <Filter>Component</Filter>
+      <Filter>Component\Rendering</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -1,10 +1,11 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
 CCamera::CCamera()
 	: view_matrix{ Matrix4x4::Identity() },
 	projection_matrix{ Matrix4x4::Identity() },
+	ortho_matrix{Matrix4x4::Identity()},
 	viewport{ 0.0f, 0.0f, float(FRAME_BUFFER_WIDTH), float(FRAME_BUFFER_HEIGHT), 0.0f, 1.0f },
 	scissor_rect{ 0, 0, LONG(FRAME_BUFFER_WIDTH), LONG(FRAME_BUFFER_HEIGHT) }
 {
@@ -21,7 +22,8 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
 	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
-	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, 0.0f));
+	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
+	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, -1.0f));
 
 	CreateConstantBuffers(device, commandList);
 }
@@ -31,11 +33,19 @@ void CCamera::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 	{
 		camera_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<CameraCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 		camera_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
+		ortho_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<OrthoCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		ortho_cb->Map(0, nullptr, reinterpret_cast<void**>(&ortho_mapped));
 	}
 }
 
-void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
+void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool isUI)
 {
+	if (isUI) {
+		XMStoreFloat4x4(&ortho_mapped->ortho_projection, XMMatrixTranspose(XMLoadFloat4x4(&ortho_matrix)));
+
+		commandList->SetGraphicsRootConstantBufferView(0, ortho_cb->GetGPUVirtualAddress());
+		return;
+	}
 	XMStoreFloat4x4(&mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
 	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
 
@@ -47,6 +57,11 @@ void CCamera::GenerateProjectionMatrix(float nearPlaneDistance, float farPlaneDi
 	projection_matrix = Matrix4x4::PerspectiveFovLH(fovAngle, aspectRatio, nearPlaneDistance, farPlaneDistance);
 }
 
+void CCamera::GenerateOrthoProjectionMatrix(float nearZ, float farZ, float width, float height)
+{
+	// farZ를 1000 정도로 크게 잡으면, 10.0이었던 Z값이 0.01 정도로 압축되어 들어옵니다.
+	ortho_matrix = Matrix4x4::OrthGraphic(0.0f, width, height, 0.0f, 0.0f, 100.0f);
+}
 void CCamera::SetViewport(int x, int y, int width, int height, float minZ, float maxZ)
 {
 	viewport.TopLeftX = (float)x;

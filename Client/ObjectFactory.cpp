@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ObjectFactory.h"
 
 // Component
@@ -225,7 +225,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			objects.push_back(obj);
 		}
 	}
-	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, objects.size());
 	return objects;
 }
 
@@ -345,7 +345,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 
 	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
 	character->SetComponent(animator);
-	character->SetShdaer("skinning");
+	character->SetShdaer("inst");	// 임시 설정
 
 	character->Initialize(GET_DEVICE, GET_CMD_LIST);
 }
