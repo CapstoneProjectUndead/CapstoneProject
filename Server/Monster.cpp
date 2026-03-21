@@ -3,6 +3,8 @@
 #include "Monster.h"
 #include "Scene.h"
 #include "Room.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CObject(OBJECT_TYPE::MONSTER)
@@ -17,6 +19,7 @@ CMonster::CMonster(MON_TYPE type)
 
 CMonster::~CMonster()
 {
+    CPhysicsManager::GetInstance().EraseCollider(GetComponent<CColliderComponent>());
 }
 
 void CMonster::Update(float elapsedTime)

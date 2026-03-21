@@ -18,7 +18,7 @@ CPlayer::CPlayer()
 
 CPlayer::~CPlayer()
 {
-
+    CPhysicsManager::GetInstance().EraseCollider(GetComponent<CColliderComponent>());
 }
 
 void CPlayer::Update(const float elapsedTime)

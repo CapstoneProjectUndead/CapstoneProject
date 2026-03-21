@@ -16,7 +16,7 @@ class CScene
 public:
 	CScene(SCENE_TYPE type);
 	CScene(SCENE_TYPE type, uint32 roomId);
-	~CScene();
+	virtual ~CScene();
 
 	virtual void Start() {};
 	virtual void Update(const float elapsedTime);

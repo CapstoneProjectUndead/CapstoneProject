@@ -32,7 +32,7 @@ class CPlayer : public CObject
 {
 public:
 	CPlayer();
-	~CPlayer();
+	virtual ~CPlayer() override;
 
 	void Update(const float elapsedTime) override;
 	void ProcessInputQueue(const float elapsedTime);

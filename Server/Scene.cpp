@@ -24,7 +24,7 @@ CScene::CScene(SCENE_TYPE type, uint32 roomId)
 
 CScene::~CScene()
 {
-
+	
 }
 
 void CScene::Update(const float elapsedTime)
@@ -331,6 +331,12 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 		// 해당 방에 유저가 한명도 없다면 방 삭제!
 		if (r->GetCurrentPlayerCount() == 0) {
 			CRoomManager::GetInstance().DeActiveRoom(r);
+
+			// 어차피 삭제될 방이니 몬스터 vector도 clear 해준다.
+			monsters.clear();
+
+			// 모든 충돌체도 clear
+			CPhysicsManager::GetInstance().ClearCollider();
 		}
 
 		// 아래 함수는 Room Update를 멀티스레드로 돌렸을 때 사용한 함수.

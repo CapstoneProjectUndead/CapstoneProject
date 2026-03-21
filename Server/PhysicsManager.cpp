@@ -18,6 +18,15 @@ void CPhysicsManager::EraseCollider(OBJECT_TYPE type)
         colliders.end());
 }
 
+void CPhysicsManager::EraseCollider(CColliderComponent* coll)
+{
+    auto iter = std::find(colliders.begin(), colliders.end(), coll);
+
+    if (iter != colliders.end()) {
+        colliders.erase(iter);
+    }
+}
+
 bool CPhysicsManager::CheckFilter(const CollisionFilter& a, const CollisionFilter& b)
 {
     // 서로의 마스크가 상대방의 카테고리를 포함하고 있는지 확인 (AND 연산)

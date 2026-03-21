@@ -10,7 +10,7 @@ class CGameScene :
     friend class CLobbyScene;
 public:
     CGameScene(uint32 roomId);
-    ~CGameScene();
+    virtual ~CGameScene() override;
 
     virtual void Start() override;
     virtual void Update(float elapsedTime) override;
