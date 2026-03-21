@@ -26,6 +26,16 @@ void CCustomScene::Update(float elapsedTime)
 	CScene::Update(elapsedTime);
 }
 
+void CCustomScene::Enter()
+{
+	CScene::Enter();
+}
+
+void CCustomScene::Exit()
+{
+	CScene::Exit();
+}
+
 void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
@@ -101,7 +111,7 @@ void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_C
 		// 플레이어를 Lobby Scene으로 이동
 		// 유저 Scene에 입장
 		// EnterScene 에서 유저들의 입장 정보들을 다 처리하도록 수정. (26. 2. 25)
-		lobbyScene->EnterScene(player);
+		ChangeScene(player, SCENE_TYPE::LOBBY);
 
 		// 유저에게 커스터마이징 완료되었고,
 		// Lobby Scene으로 씬 전환하라고 알려주기

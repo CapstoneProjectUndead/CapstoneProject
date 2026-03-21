@@ -43,7 +43,7 @@ public:
 
     void Update(float deltaTime);
 
-    void EraseCollider(OBJECT_TYPE type);
+    void EraseCollider(OBJECT_TYPE objType, SCENE_TYPE sceneType);
     void EraseCollider(CColliderComponent* coll);
 
 private:

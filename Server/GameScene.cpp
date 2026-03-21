@@ -1,5 +1,5 @@
 #include "pch.h"
-// Server�� GameScene
+// Server쪽 GameScene
 #include "GameScene.h"
 #include "Player.h"
 #include "User.h"
@@ -31,6 +31,16 @@ void CGameScene::Start()
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+}
+
+void CGameScene::Enter()
+{
+	CScene::Enter();
+}
+
+void CGameScene::Exit()
+{
+	CScene::Exit();
 }
  
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
@@ -116,6 +126,7 @@ void CGameScene::CreateGameScene()
 			auto collider = proto->GetComponent<CColliderComponent>();
 
 			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+			obj->SetCurrentSceneType(scene_type);
 
 			XMMATRIX world = XMLoadFloat4x4(&proto->GetWorldMatrix()) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 			XMStoreFloat4x4(&obj->GetWorldMatrix(), world);

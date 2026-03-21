@@ -174,14 +174,12 @@ void CScene::RemoveAllMonsters()
 {
 	std::vector<UINT> eraseIds;
 
-	for (const auto& [id, idx] : id_To_Index)
-	{
+	for (const auto& [id, idx] : id_To_Index) {
 		if (id >= 1001)
 			eraseIds.push_back(id);
 	}
 
-	for (UINT id : eraseIds)
-	{
+	for (UINT id : eraseIds) {
 		RemoveObject(id);
 	}
 }

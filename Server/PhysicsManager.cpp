@@ -20,11 +20,11 @@ void CPhysicsManager::Update(float deltaTime)
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end());
 }
 
-void CPhysicsManager::EraseCollider(OBJECT_TYPE type)
+void CPhysicsManager::EraseCollider(OBJECT_TYPE objType, SCENE_TYPE sceneType)
 {
-    colliders.erase(std::remove_if(colliders.begin(), colliders.end(), [type](const CColliderComponent* coll) {
-            return coll->owner->obj_type == type;
-            }),
+    colliders.erase(std::remove_if(colliders.begin(), colliders.end(), [objType, sceneType](const CColliderComponent* coll) {
+        return (coll->owner->obj_type == objType) && (coll->owner->current_scene_type == sceneType);
+        }),
         colliders.end());
 }
 

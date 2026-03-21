@@ -1,11 +1,12 @@
 #include "pch.h"
-// ServerÂÊ Scene
+// Serverìª½ Scene
 #include "Scene.h"
 #include "ClientSession.h"
 #include "Room.h"
 #include "RoomManager.h"
 #include "Monster.h"
 #include "PhysicsManager.h"
+#include "Collider.h"
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -29,7 +30,7 @@ CScene::~CScene()
 
 void CScene::Update(const float elapsedTime)
 {
-	// ÆĞÅ¶ Å¥¿¡ ½×ÀÎ ¸Ş¼¼ÁöµéÀ» ÇÑ²¨¹ø¿¡ Ã³¸®
+	// íŒ¨í‚· íì— ìŒ“ì¸ ë©”ì„¸ì§€ë“¤ì„ í•œêº¼ë²ˆì— ì²˜ë¦¬
 	HandlePackets();
 	SimulatePlayers(elapsedTime);
 	SimulateMonsters(elapsedTime);
@@ -62,14 +63,14 @@ void CScene::SendResults()
 
 void CScene::SendPlayersResult()
 {
-	// ½Ã¹Ä·¹ÀÌ¼Ç µ¹¸° ÇÃ·¹ÀÌ¾îÀÇ °á°ú¸¦ ¸ğµç À¯Àúµé¿¡°Ô Åëº¸
+	// ì‹œë®¬ë ˆì´ì…˜ ëŒë¦° í”Œë ˆì´ì–´ì˜ ê²°ê³¼ë¥¼ ëª¨ë“  ìœ ì €ë“¤ì—ê²Œ í†µë³´
 	for (auto& [id, player] : players) {
 
 		if (player) {
 			S_PlayerMove movePkt;
 
 			movePkt.last_seq_num = player->GetLastSequence();
-			movePkt.info.player_id = player->GetID(); // "¿òÁ÷ÀÎ ÇÃ·¹ÀÌ¾î"ÀÇ ID
+			movePkt.info.player_id = player->GetID(); // "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½"ï¿½ï¿½ ID
 			movePkt.scene_type = player->GetCurrentSceneType();
 
 			movePkt.info.x = player->GetPosition().x;
@@ -94,13 +95,13 @@ void CScene::SendPlayersResult()
 
 void CScene::SendMonstersResult()
 {
-	// ½Ã¹Ä·¹ÀÌ¼Ç µ¹¸° ÇÃ·¹ÀÌ¾îÀÇ °á°ú¸¦ ¸ğµç À¯Àúµé¿¡°Ô Åëº¸
+	// ì‹œë®¬ë ˆì´ì…˜ ëŒë¦° í”Œë ˆì´ì–´ì˜ ê²°ê³¼ë¥¼ ëª¨ë“  ìœ ì €ë“¤ì—ê²Œ í†µë³´
 	for (auto& [id, monster] : monsters) {
 
 		if (monster) {
 			S_MonsterMove movePkt;
 
-			movePkt.info.monster_id = monster->GetID(); // "¿òÁ÷ÀÎ ¸ó½ºÅÍ"ÀÇ ID
+			movePkt.info.monster_id = monster->GetID(); // "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"ï¿½ï¿½ ID
 			movePkt.scene_type = monster->GetCurrentSceneType();
 
 			movePkt.info.x = monster->GetPosition().x;
@@ -200,8 +201,8 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 
 	BroadcastUserEnter(player);
 
-	// 3¿ù 9ÀÏ Ãß°¡
-	// ¸ó½ºÅÍ°¡ ÀÖ´Ù¸é ¸ó½ºÅÍ Á¤º¸µµ º¸³»±â
+	// 3ì›” 9ì¼ ì¶”ê°€
+	// ëª¬ìŠ¤í„°ê°€ ìˆë‹¤ë©´ ëª¬ìŠ¤í„° ì •ë³´ë„ ë³´ë‚´ê¸°
 	{
 		S_SpawnMonster spawnMonsterPkt;
 
@@ -228,7 +229,7 @@ void CScene::LeaveScene(uint64 playerId)
 {
 	players.erase(playerId);
 
-	// ´Ù¸¥ À¯Àúµé¿¡°Ô À¯Àú°¡ ³ª°£´Ù´Â °ÍÀ» ¾Ë·ÁÁØ´Ù.
+	// ë‹¤ë¥¸ ìœ ì €ë“¤ì—ê²Œ ìœ ì €ê°€ ë‚˜ê°„ë‹¤ëŠ” ê²ƒì„ ì•Œë ¤ì¤€ë‹¤.
 	S_RemovePlayer removePkt;
 	removePkt.player_id = playerId;
 	removePkt.scene_type = scene_type;
@@ -237,9 +238,35 @@ void CScene::LeaveScene(uint64 playerId)
 	BroadCast(sendBuffer);
 }
 
+void CScene::Enter()
+{
+	if (colliders_active)
+		return;
+
+	if ((scene_type != SCENE_TYPE::TITLE) && (scene_type != SCENE_TYPE::GAME)) {
+		for (const auto& obj : static_objects) {
+			CColliderComponent* col = obj->GetComponent<CColliderComponent>();
+			if (col) {
+				GetPhysicsManager()->SetCollider(col);
+			}
+		}
+	}
+
+	colliders_active = true;
+}
+
+void CScene::Exit()
+{
+	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT, scene_type);
+	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
+	colliders_active = false;
+
+	monsters.clear();
+}
+
 void CScene::SendExistingUsers(shared_ptr<CPlayer> player)
 {
-	// ¿©±â¼­´Â °¡º¯±æÀÌ ÆĞÅ¶À» º¸³½´Ù.
+	// ì—¬ê¸°ì„œëŠ” ê°€ë³€ê¸¸ì´ íŒ¨í‚·ì„ ë³´ë‚¸ë‹¤.
 	if (!players.empty()) {
 
 		int32 cnt = players.size();
@@ -289,7 +316,7 @@ void CScene::BroadcastUserEnter(shared_ptr<CPlayer> player)
 	BroadCast(sendBuffer, player->GetID());
 }
 
-// ¼­¹ö ±ÇÀ§ ¹æ½Ä
+// ì„œë²„ ê¶Œìœ„ ë°©ì‹
 void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt)
 {
 	auto mover = CAST_CS(session)->GetUser()->GetPlayer();
@@ -298,11 +325,11 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	if (pkt.seq_num <= mover->GetLastSequence())
 		return;
 
-	// È¸ÀüÀº Å¬¶ó ±ÇÀ§ ¹æ½ÄÀÌ±â ¶§¹®¿¡, Å¬¶ó¿¡¼­ ¹ŞÀº È¸Àü°ªÀ» Àû¿ëÇÑ´Ù.
+	// íšŒì „ì€ í´ë¼ ê¶Œìœ„ ë°©ì‹ì´ê¸° ë•Œë¬¸ì—, í´ë¼ì—ì„œ ë°›ì€ íšŒì „ê°’ì„ ì ìš©í•œë‹¤.
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
 
-	// ÇÃ·¹ÀÌ¾î°¡ ´©¸¥ ÀÔ·Â°ú ½ÃÄö½º ³Ñ¹ö¸¦ ÀÔ·Â Å¥¿¡ ÀúÀå
+	// í”Œë ˆì´ì–´ê°€ ëˆ„ë¥¸ ì…ë ¥ê³¼ ì‹œí€€ìŠ¤ ë„˜ë²„ë¥¼ ì…ë ¥ íì— ì €ì¥
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space };
 	PendingInput pInput{ input, pkt.seq_num };
 	mover->PushInput(pInput);
@@ -312,7 +339,7 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 {
 	LeaveScene(pkt.user_id);
 
-	// Áö±İ ³ª°£ À¯Àú¿¡°Ôµµ ÇØ´ç ¾À¿¡ ÀÖ´Â À¯ÀúµéÀ» »èÁ¦ÇÏ¶ó°í ¾Ë·ÁÁà¾ßÇÔ.
+	// ì§€ê¸ˆ ë‚˜ê°„ ìœ ì €ì—ê²Œë„ í•´ë‹¹ ì”¬ì— ìˆëŠ” ìœ ì €ë“¤ì„ ì‚­ì œí•˜ë¼ê³  ì•Œë ¤ì¤˜ì•¼í•¨.
 	for (auto it : players) {
 		S_RemovePlayer removePkt;
 		removePkt.player_id = it.first;
@@ -323,22 +350,22 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 
 	if (auto r = room.lock()) {
 
-		// À¯Àú°¡ ¹æ¿¡¼­ ³ª°£´Ù.
+		// ìœ ì €ê°€ ë°©ì—ì„œ ë‚˜ê°„ë‹¤.
 		r->PlayerLeave();
 
-		// ÇØ´ç ¹æ¿¡ À¯Àú°¡ ÇÑ¸íµµ ¾ø´Ù¸é ¹æ »èÁ¦!
+		// í•´ë‹¹ ë°©ì— ìœ ì €ê°€ í•œëª…ë„ ì—†ë‹¤ë©´ ë°© ì‚­ì œ!
 		if (r->GetCurrentPlayerCount() == 0) {
 			CRoomManager::GetInstance().DeActiveRoom(r);
 
-			// ¾îÂ÷ÇÇ »èÁ¦µÉ ¹æÀÌ´Ï ¸ó½ºÅÍ vectorµµ clear ÇØÁØ´Ù.
+			// ì–´ì°¨í”¼ ì‚­ì œë  ë°©ì´ë‹ˆ ëª¬ìŠ¤í„° vectorë„ clear í•´ì¤€ë‹¤.
 			monsters.clear();
 
-			// ¸ğµç Ãæµ¹Ã¼µµ clear
+			// ëª¨ë“  ì¶©ëŒì²´ë„ clear
 			GetPhysicsManager()->ClearCollider();
 		}
 
-		// ¾Æ·¡ ÇÔ¼ö´Â Room Update¸¦ ¸ÖÆ¼½º·¹µå·Î µ¹·ÈÀ» ¶§ »ç¿ëÇÑ ÇÔ¼ö.
-		// Áö±İÀº ½Ì±Û ½º·¹µå·Î Room Update¸¦ ÇÏ±â ¶§¹®¿¡ ¾Æ·¡ ÇÔ¼ö´Â »ç¿ëÇØ¼­´Â ¾ÈµÈ´Ù.
+		/// ì•„ë˜ í•¨ìˆ˜ëŠ” Room Updateë¥¼ ë©€í‹°ìŠ¤ë ˆë“œë¡œ ëŒë ¸ì„ ë•Œ ì‚¬ìš©í•œ í•¨ìˆ˜.
+		// ì§€ê¸ˆì€ ì‹±ê¸€ ìŠ¤ë ˆë“œë¡œ Room Updateë¥¼ í•˜ê¸° ë•Œë¬¸ì— ì•„ë˜ í•¨ìˆ˜ëŠ” ì‚¬ìš©í•´ì„œëŠ” ì•ˆëœë‹¤.
 		//CRoomManager::GetInstance().DestroyRoomLock(room_id);
 	}
 }
@@ -351,8 +378,14 @@ void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneCha
 
 void CScene::ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType)
 {
+	// ê¸°ì¡´ ì”¬ì—ì„œ ì²˜ë¦¬í•  ê²ƒë“¤ ì²˜ë¦¬
+	Exit();
+
 	auto room = player->GetRoom();
 	CScene* targetScene = room->GetScenes()[(UINT)targetSceneType].get();
+
+	// ì…ì¥í•  ì”¬ì— ì…ì¥ ì „ ì²˜ë¦¬í•  ê²ƒë“¤ ì²˜ë¦¬
+	targetScene->Enter();
 
 	if (targetSceneType == SCENE_TYPE::CUSTOMS) {
 		player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
@@ -363,7 +396,7 @@ void CScene::ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType)
 
 	LeaveScene(player->GetID());
 
-	// Áö±İ ³ª°£ À¯Àú¿¡°Ôµµ ÇØ´ç ¾À¿¡ ÀÖ´Â À¯ÀúµéÀ» »èÁ¦ÇÏ¶ó°í ¾Ë·ÁÁà¾ßÇÔ.
+	// ì§€ê¸ˆ ë‚˜ê°„ ìœ ì €ì—ê²Œë„ í•´ë‹¹ ì”¬ì— ìˆëŠ” ìœ ì €ë“¤ì„ ì‚­ì œí•˜ë¼ê³  ì•Œë ¤ì¤˜ì•¼í•¨.
 	for (auto it : players) {
 		S_RemovePlayer removePkt;
 		removePkt.player_id = it.first;

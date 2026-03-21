@@ -28,6 +28,18 @@ CLobbyScene::~CLobbyScene()
 void CLobbyScene::Start()
 {
 	CreateLobby();
+}
+
+void CLobbyScene::Update(float elapsedTime)
+{
+	CScene::Update(elapsedTime);
+
+	CheckReady();
+}
+
+void CLobbyScene::Enter()
+{
+	CScene::Enter();
 
 	// (임시)
 	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
@@ -36,11 +48,9 @@ void CLobbyScene::Start()
 	AddMonster(humanMonster);
 }
 
-void CLobbyScene::Update(float elapsedTime)
+void CLobbyScene::Exit()
 {
-	CScene::Update(elapsedTime);
-
-	CheckReady();
+	CScene::Exit();
 }
 
 void CLobbyScene::CheckReady()
@@ -62,9 +72,6 @@ void CLobbyScene::CheckReady()
 void CLobbyScene::SendPlayerToGameScene()
 {
 	if (auto r = room.lock()) {
-
-		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT);
-		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER);
 
 		// GameScene의 Map data 생성
 		CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
@@ -247,6 +254,7 @@ void CLobbyScene::CreateLobby()
 			continue;
 
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+		obj->SetCurrentSceneType(scene_type);
 		obj->world_matrix = children->localMatrix;
 
 		BoundingBox realBounds = children->mesh.bounds;
@@ -329,4 +337,7 @@ void CLobbyScene::CreateLobby()
 
 		static_objects.push_back(obj);
 	}
+
+	// Start()에서 이미 PhysicsManager에 등록했으므로 중복 등록 방지
+	colliders_active = true;
 }
