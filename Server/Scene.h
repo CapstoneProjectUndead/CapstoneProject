@@ -7,6 +7,7 @@
 
 class CRoom;
 class CMonster;
+class CPhysicsManager;
 
 class CScene
 {
@@ -59,9 +60,13 @@ public:
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
 
-	std::weak_ptr<CRoom>      GetRoomWeak() const { return room; }
-	std::shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
+	weak_ptr<CRoom>      GetRoomWeak() const { return room; }
+	shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
 	void					  SetRoom(std::shared_ptr<CRoom> _room) { room = _room; }
+
+	weak_ptr<CPhysicsManager>   GetPhysicsManagerWeak() const { return physics_manager; }
+	shared_ptr<CPhysicsManager> GetPhysicsManager() const { return physics_manager.lock(); }
+	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
 
 public:
 	// IOCP 스레드들이 호출 (패킷 받자마자 실행)
@@ -98,7 +103,10 @@ protected:
 	uint32								room_id;
 
 	// 맵의 바닥, 장애물 등 움직이지 않는 정적 충돌체들을 보관하는 곳
-	std::vector<std::shared_ptr<CObject>> static_objects;
+	vector<shared_ptr<CObject>>			static_objects;
+
+	// Room의 PhysicsManager를 약한 참조
+	weak_ptr<CPhysicsManager>			physics_manager;
 
 private:
 	float								dt_ping_accumulator;

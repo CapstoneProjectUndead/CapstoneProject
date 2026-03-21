@@ -19,7 +19,11 @@ CMonster::CMonster(MON_TYPE type)
 
 CMonster::~CMonster()
 {
-    CPhysicsManager::GetInstance().EraseCollider(GetComponent<CColliderComponent>());
+    if (auto r = room.lock()) {
+        if (auto physicsManager = r->GetScenes()[(UINT)current_scene_type]->GetPhysicsManager()) {
+            physicsManager->EraseCollider(GetComponent<CColliderComponent>());
+        }
+    }
 }
 
 void CMonster::Update(float elapsedTime)

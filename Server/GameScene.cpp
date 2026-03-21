@@ -130,7 +130,7 @@ void CGameScene::CreateGameScene()
 				copyCollider->owner = obj.get();
 				copyCollider->Update(0.0f);
 				obj->SetComponent(copyCollider);
-				CPhysicsManager::GetInstance().SetCollider(copyCollider);
+				GetPhysicsManager()->SetCollider(copyCollider);
 			}
 			static_objects.push_back(obj);
 		}

@@ -3,6 +3,7 @@
 #include "Component.h"
 
 class CObject;
+class CPhysicsManager;
 struct CollisionInfo;
 
 /*
@@ -41,7 +42,13 @@ public:
 	// 서버에서 받은 결과를 바탕으로 재시뮬
 	void Simulate(const XMFLOAT3& dir, float deltaTime);
 
+	weak_ptr<CPhysicsManager>   GetPhysicsManagerWeak() const { return physics_manager; }
+	shared_ptr<CPhysicsManager> GetPhysicsManager() const { return physics_manager.lock(); }
+	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
+
 private:
 	float speed{ 10.0f };
 	float max_speed{ 30.0f };
+
+	weak_ptr<CPhysicsManager> physics_manager;
 };

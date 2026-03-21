@@ -3,7 +3,10 @@
 #include "Player.h"
 #include "Collider.h"
 #include "Movement.h"
+#include "Scene.h"
+#include "Room.h"
 #include "PhysicsManager.h"
+
 
 CPlayer::CPlayer()
 	: CObject(OBJECT_TYPE::PLAYER)
@@ -18,7 +21,11 @@ CPlayer::CPlayer()
 
 CPlayer::~CPlayer()
 {
-    CPhysicsManager::GetInstance().EraseCollider(GetComponent<CColliderComponent>());
+    if (auto r = room.lock()) {
+        if (auto physicsManager = r->GetScenes()[(UINT)current_scene_type]->GetPhysicsManager()) {
+            physicsManager->EraseCollider(GetComponent<CColliderComponent>());
+        }
+    }
 }
 
 void CPlayer::Update(const float elapsedTime)

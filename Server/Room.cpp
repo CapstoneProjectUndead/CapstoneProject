@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "Room.h"
-#include "Scene.h"
 #include "CustomScene.h"
 #include "LobbyScene.h"
 #include "GameScene.h"
+#include "PhysicsManager.h"
 
 atomic<uint32> CRoom::s_room_id_generator = 1;
 
@@ -34,19 +34,25 @@ CRoom::~CRoom()
 
 void CRoom::Initialize()
 {
+	// PhysicsManager 생성
+	physics_manager = make_shared<CPhysicsManager>();
+
 	// CCustomScene 생성
 	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CCustomScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetRoom(shared_from_this());
+	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetPhysicsManager(physics_manager);
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Start();
 
 	// LobbyScene 생성
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->SetRoom(shared_from_this());
+	scenes[(UINT)SCENE_TYPE::LOBBY]->SetPhysicsManager(physics_manager);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 
 	// 나중에 여기서 GameScene도 같이 생성
 	scenes[(UINT)SCENE_TYPE::GAME] = make_unique<CGameScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::GAME]->SetRoom(shared_from_this());
+	scenes[(UINT)SCENE_TYPE::GAME]->SetPhysicsManager(physics_manager);
 	scenes[(UINT)SCENE_TYPE::GAME]->Start();
 }
 

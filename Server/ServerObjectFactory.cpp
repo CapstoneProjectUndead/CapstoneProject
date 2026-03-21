@@ -22,10 +22,10 @@ CServerObjectFactory::~CServerObjectFactory()
 {
 }
 
-shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user)
+shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user, shared_ptr<CPhysicsManager> physicsManager)
 {
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
-	InitializeCharacter(player);
+	InitializeCharacter(player, physicsManager);
 
 	// 유저를 약한 참조 (refcount 증가x)
 	player->SetUser(user);
@@ -45,10 +45,10 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType,
 	return player;
 }
 
-shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user, shared_ptr<CRoom> room)
+shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user, shared_ptr<CRoom> room, shared_ptr<CPhysicsManager> physicsManager)
 {
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
-	InitializeCharacter(player);
+	InitializeCharacter(player, physicsManager);
 
 	// 유저를 약한 참조 (refcount 증가x)
 	player->SetUser(user);
@@ -77,7 +77,7 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, sha
 	return player;
 }
 
-shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType, shared_ptr<CRoom> room)
+shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType, shared_ptr<CRoom> room, shared_ptr<CPhysicsManager> physicsManager)
 {
 	shared_ptr<CMonster> monster;
 
@@ -89,7 +89,7 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = make_shared<CHumanMonster>();
-		InitializeCharacter(monster);
+		InitializeCharacter(monster, physicsManager);
 	}
 		break;
 	case MON_TYPE::ANIMAL_MONSTER:
@@ -121,7 +121,9 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	monster->SetComponent(AIComp);
 
 	// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
-	monster->SetComponent(std::make_shared<CMovementComponent>());
+	shared_ptr<CMovementComponent> movementComponent = std::make_shared<CMovementComponent>();
+	movementComponent->SetPhysicsManager(physicsManager);
+	monster->SetComponent(movementComponent);
 
 	// Monster가 속한 Room 
 	monster->SetRoom(room);
@@ -130,12 +132,20 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	return monster;
 }
 
-void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object)
+void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	// -------------------------------------
 	// 플레이어에게 MovementComponent 달아주기
 	// -------------------------------------
-	object->SetComponent(std::make_shared<CMovementComponent>());
+	if (object->GetObjectType() == OBJECT_TYPE::PLAYER) {
+
+		shared_ptr<CMovementComponent> movementComponent = std::make_shared<CMovementComponent>();
+
+		// 3월 21일 (추가) MovementComponent는 physics_manager를 들고있는게 편하다. 그래서 여기서 추가한다.
+		movementComponent->SetPhysicsManager(physicsManager);
+
+		object->SetComponent(movementComponent);
+	}
 
 	// -----------------------------------
 	// 플레이어에게 충돌체(Collider) 달아주기
@@ -168,7 +178,7 @@ void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object)
 	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
 	collider->SetFillter(filter);
 	object->SetComponent(collider);
-	CPhysicsManager::GetInstance().SetCollider(collider);
+	physicsManager->SetCollider(collider);
 
 	object->UpdateWorldMatrix();
 	collider->Update(0.0f);

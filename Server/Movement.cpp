@@ -5,6 +5,8 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "Player.h"
+#include "Scene.h"
+#include "Room.h"
 
 
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
@@ -89,7 +91,7 @@ void CMovementComponent::Update(const float deltaTime)
     }
 
     // 중력/마찰/땅 확인
-    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+    XMVECTOR groundSeparation = GetPhysicsManager()->ApplyGravity(owner, deltaTime);
 
     // 이동량 계산 = 기존 위치 + 바닥 보정 + 외부 발판
     XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
@@ -110,7 +112,7 @@ XMVECTOR CMovementComponent::CalculatePlatform(float dt)
 {
     CollisionInfo info{};
     XMFLOAT3 downDelta = { 0, -0.1f, 0 };
-    if (CPhysicsManager::GetInstance().Overlap(owner, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT)) {
+    if (GetPhysicsManager()->Overlap(owner, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT)) {
         if (info.other_object && Vector3::Length(info.other_object->velocity) > 0.001f) {
             return XMLoadFloat3(&info.other_object->velocity) * dt;
         }
@@ -130,7 +132,7 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
         if (moveLen < 0.0001f) break; // 더 이상 갈 거리가 없으면 종료
 
         CollisionInfo info{};
-        if (CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), info, wallMask)) {
+        if (GetPhysicsManager()->Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), info, wallMask)) {
             // 1. step up
             if (TryStepUp(outPos, remainingMotion, info, stepHeight, wallMask)) {
                 break;
@@ -177,7 +179,7 @@ bool CMovementComponent::TryStepUp(XMVECTOR& outPos, XMVECTOR motion, const Coll
     owner->position = Vector3::XMVectorToFloat3(testPos);   // 잠시 위치 이동
 
     CollisionInfo stepInfo{};
-    bool obstructed = CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(motion), stepInfo, mask);
+    bool obstructed = GetPhysicsManager()->Overlap(owner, Vector3::XMVectorToFloat3(motion), stepInfo, mask);
 
     owner->position = originalPos; // 복구
 
@@ -203,7 +205,7 @@ void CMovementComponent::Simulate(const XMFLOAT3& dir, float deltaTime)
     ClampSpeed();
 
     // 중력/마찰/땅 확인
-    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+    XMVECTOR groundSeparation = GetPhysicsManager()->ApplyGravity(owner, deltaTime);
 
     // 이동량 계산 = 기존 위치 + 바닥 보정 + 외부 발판
     XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);

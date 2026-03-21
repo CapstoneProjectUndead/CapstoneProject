@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "User.h"
 #include "Room.h"
+#include "Movement.h"
 
 
 CCustomScene::CCustomScene(uint32 roomId)
@@ -48,7 +49,7 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 	}
 
 	// Player 생성 (플레이어 ID = 유저 ID)
-	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room);
+	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room, GetPhysicsManager());
 
 	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정.
 

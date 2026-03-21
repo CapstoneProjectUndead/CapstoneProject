@@ -5,6 +5,16 @@
 #include "Object.h"
 
 
+CPhysicsManager::CPhysicsManager()
+{
+
+}
+
+CPhysicsManager::~CPhysicsManager()
+{
+
+}
+
 void CPhysicsManager::Update(float deltaTime)
 {
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end());

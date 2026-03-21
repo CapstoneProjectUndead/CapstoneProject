@@ -17,17 +17,12 @@ struct CollisionFilter;
 
 class CPhysicsManager
 {
-private:
-    CPhysicsManager() {};
-    CPhysicsManager(const CPhysicsManager&) = delete;
 public:
-    ~CPhysicsManager() {};
+    CPhysicsManager();
+    ~CPhysicsManager();
+    CPhysicsManager(const CPhysicsManager&) = delete;
 
-    static CPhysicsManager& GetInstance() {
-        static CPhysicsManager instance;
-        return instance;
-    }
-
+public:
     void SetCollider(CColliderComponent* c) {
         colliders.push_back(c);
     }

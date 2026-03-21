@@ -2,6 +2,7 @@
 
 class CScene;
 class CUser;
+class CPhysicsManager;
 
 class CRoom : public enable_shared_from_this<CRoom>
 {
@@ -42,6 +43,8 @@ private:
     RoomInfo    room_info;
     SceneArray  scenes;
     mutex       room_lock;
+
+    shared_ptr<CPhysicsManager> physics_manager;
 };
 
 /*

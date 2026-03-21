@@ -30,7 +30,7 @@ void CLobbyScene::Start()
 	CreateLobby();
 
 	// (임시)
-	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom()));
+	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
 	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
 	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
 	AddMonster(humanMonster);
@@ -63,8 +63,8 @@ void CLobbyScene::SendPlayerToGameScene()
 {
 	if (auto r = room.lock()) {
 
-		CPhysicsManager::GetInstance().EraseCollider(OBJECT_TYPE::STATIC_OBJECT);
-		CPhysicsManager::GetInstance().EraseCollider(OBJECT_TYPE::MONSTER);
+		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT);
+		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER);
 
 		// GameScene의 Map data 생성
 		CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
@@ -168,28 +168,29 @@ void CLobbyScene::SendPlayerToGameScene()
 	}
 }
 
+// 특정 Scene을 테스트할 때, 사용할 함수. 
 void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
-	// User ��ü ����
+	// User 객체 생성
 	shared_ptr<CUser> user;
 	if (!CAST_CS(session)->GetUser()) {
 		user = make_shared<CUser>();
 
-		// ClientSession�� Plyaer�� ����. (refcount ����)
+		// ClientSession이 Plyaer를 참조. (refcount 증가)
 		CAST_CS(session)->SetUser(user);
 	}
 
-	// Player ���� (�÷��̾� ID = ���� ID)
-	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayerTest(SCENE_TYPE::LOBBY, session, user);
+	// Player 생성 (플레이어 ID = 유저 ID)
+	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayerTest(SCENE_TYPE::LOBBY, session, user, GetPhysicsManager());
 
-	// Player ��ġ ���� (�ӽ�)
+	// Player 위치 지정 (임시)
 	XMFLOAT3 pos{};
 	pos.x = rand() % 3 - 2;
 	pos.y = 0.f;
 	pos.z = rand() % 3 - 2;
 	player->SetPosition(pos);
 
-	// ���� ������ �������� �α��� ��� / �÷��̾� ���� ��Ŷ ����
+	// 지금 접속한 유저에게 로그인 허락 / 플레이어 생성 패킷 보냄
 	{
 		S_SpawnPlayer spawnPkt;
 		//spawnPkt.room_id = player->GetRoomID();
@@ -206,7 +207,7 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 		session->DoSend(sendBuffer);
 	}
 
-	// ���� Scene�� ����
+	// 유저 Scene에 입장
 	EnterScene(player);
 }
 
@@ -277,7 +278,7 @@ void CLobbyScene::CreateLobby()
 			collider->owner = obj.get();
 			collider->Update(0.0f);
 			obj->SetComponent(collider);
-			CPhysicsManager::GetInstance().SetCollider(collider);
+			GetPhysicsManager()->SetCollider(collider);
 			break;
 		}
 		case LobbyMeshName::Floor:
@@ -293,7 +294,7 @@ void CLobbyScene::CreateLobby()
 			boxCollider->owner = obj.get();
 			boxCollider->Update(0.0f);
 			obj->SetComponent(boxCollider);
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			GetPhysicsManager()->SetCollider(boxCollider);
 			break;
 		}
 		case LobbyMeshName::GroundPipe:
@@ -306,7 +307,7 @@ void CLobbyScene::CreateLobby()
 			boxCollider->owner = obj.get();
 			boxCollider->Update(0.0f);
 			obj->SetComponent(boxCollider);
-			CPhysicsManager::GetInstance().SetCollider(boxCollider);
+			GetPhysicsManager()->SetCollider(boxCollider);
 			break;
 		}
 		case LobbyMeshName::Unknown:
@@ -320,7 +321,7 @@ void CLobbyScene::CreateLobby()
 			collider->owner = obj.get();
 			collider->Update(0.0f);
 			obj->SetComponent(collider);
-			CPhysicsManager::GetInstance().SetCollider(collider);
+			GetPhysicsManager()->SetCollider(collider);
 			break;
 		}
 

@@ -29,8 +29,6 @@ CScene::~CScene()
 
 void CScene::Update(const float elapsedTime)
 {
-	CPhysicsManager::GetInstance().Update(elapsedTime);
-
 	// 패킷 큐에 쌓인 메세지들을 한꺼번에 처리
 	HandlePackets();
 	SimulatePlayers(elapsedTime);
@@ -336,7 +334,7 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 			monsters.clear();
 
 			// 모든 충돌체도 clear
-			CPhysicsManager::GetInstance().ClearCollider();
+			GetPhysicsManager()->ClearCollider();
 		}
 
 		// 아래 함수는 Room Update를 멀티스레드로 돌렸을 때 사용한 함수.
