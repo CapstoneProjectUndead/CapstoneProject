@@ -306,6 +306,9 @@
     <ClInclude Include="ItemFinder.h">
       <Filter>Object\ItemFinder</Filter>
     </ClInclude>
+    <ClInclude Include="..\External\Common\MapUtils.h">
+      <Filter>MapGenerator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -481,6 +484,9 @@
     </ClCompile>
     <ClCompile Include="ItemFinder.cpp">
       <Filter>Object\ItemFinder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\External\Common\MapUtils.cpp">
+      <Filter>MapGenerator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

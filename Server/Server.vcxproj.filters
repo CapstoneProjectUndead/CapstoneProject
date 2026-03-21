@@ -183,6 +183,9 @@
     <ClCompile Include="GameScene.cpp">
       <Filter>Scene\GameScene</Filter>
     </ClCompile>
+    <ClCompile Include="..\External\Common\MapUtils.cpp">
+      <Filter>MapGenerator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -307,6 +310,9 @@
     </ClInclude>
     <ClInclude Include="GameScene.h">
       <Filter>Scene\GameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\MapUtils.h">
+      <Filter>MapGenerator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

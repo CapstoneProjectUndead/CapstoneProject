@@ -26,8 +26,5 @@ private:
     std::vector<TreasureInfo>                       treasures;
 
     std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type);
-    std::string              GetVariantFileName(EModelVariant variant);
-    std::string              PickRandom(const std::string& key);
-    EModelVariant            PickRandomVariant(const std::string& key);
 };
 
