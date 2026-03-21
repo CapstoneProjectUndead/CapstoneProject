@@ -104,18 +104,18 @@ void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& p
 
 	shared_ptr<CRoom> room = make_shared<CRoom>(pkt.room_name);
 
-	// ¹æ¿¡ Á¸ÀçÇØ¾ß ÇÏ´Â ¸ðµç SceneµéÀ» »ý¼ºÇÏ°í ÃÊ±âÈ­
+	// ï¿½æ¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ Sceneï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ê±ï¿½È­
 	room->Initialize();
 
 	uint32 roomId = room->GetRoomID();
 
-	// À¯Àú¿¡µµ ÀÚ½ÅÀÌ ¼ÓÇÑ ¹æID¸¦ °¡Áö°í ÀÖ´Â´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½IDï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Â´ï¿½.
 	user->SetRoomID(roomId);
 
-	// À¯Àú´Â ÀÚ½ÅÀÇ Room Æ÷ÀÎÅÍ¸¦ µé°í ÀÖ´Â´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ Room ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ ï¿½Ö´Â´ï¿½.
 	user->SetRoom(room);
 
-	// ÇÃ·¹ÀÌ¾î Custom Scene¿¡ ÀÔÀå (ÀÏ°¨ push¸¸)
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ Custom Sceneï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Ï°ï¿½ pushï¿½ï¿½)
 	{
 		auto& scenes = room->GetScenes();
 		CCustomScene* customScene = dynamic_cast<CCustomScene*>(scenes[(UINT)SCENE_TYPE::CUSTOMS].get());
@@ -131,7 +131,7 @@ void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& p
 			, enterPkt);
 	}
 
-	// ¹æ map¿¡ ÀúÀå
+	// ï¿½ï¿½ mapï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	lock_guard<mutex> lg(rooms_lock);
 	rooms[room->GetRoomID()] = room;
 }
@@ -144,11 +144,11 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 	auto room = FindRoomLock(pkt.room_id);
 	if (room) {
 		if (room->IsValid()) {
-			// À¯Àú ¹æID¿Í ¹æ Set
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½IDï¿½ï¿½ ï¿½ï¿½ Set
 			user->SetRoomID(pkt.room_id);
 			user->SetRoom(room);
 
-			// ÇÃ·¹ÀÌ¾î Custom Scene¿¡ ÀÔÀå
+			// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ Custom Sceneï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			auto& scenes = room->GetScenes();
 			CCustomScene* customScene = dynamic_cast<CCustomScene*>(scenes[(UINT)SCENE_TYPE::CUSTOMS].get());
 			assert(customScene);
@@ -159,8 +159,8 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 				, pkt);
 		}
 		else {
-			// Á¤¿ø ÃÊ°ú ¶Ç´Â ÀÌ¹Ì °ÔÀÓ ½ÃÀÛÇÑ ¹æ
-			// fail ÆÐÅ¶ Àü¼Û
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½Ç´ï¿½ ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+			// fail ï¿½ï¿½Å¶ ï¿½ï¿½ï¿½ï¿½
 			S_EnterRoom enterPkt;
 			enterPkt.success = false;
 			enterPkt.room_id = pkt.room_id;
@@ -170,8 +170,8 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 		}
 	}
 	else {
-		// À¯È¿ÇÏÁö ¾ÊÀº ¹æ
-		// fail ÆÐÅ¶ Àü¼Û
+		// ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+		// fail ï¿½ï¿½Å¶ ï¿½ï¿½ï¿½ï¿½
 		S_EnterRoom enterPkt;
 		enterPkt.success = false;
 		enterPkt.room_id = pkt.room_id;
@@ -192,7 +192,7 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<Session> session, const C_Leav
 	auto room = player->GetRoom();
 	assert(room);
 
-	// ÇÃ·¹ÀÌ¾î°¡ ÀÖ´Â ·ë¿¡¼­ ÇÃ·¹ÀÌ¾î°¡ ¼ÓÇÑ ¾À¿¡¼­ ÇÃ·¹ÀÌ¾î¸¦ Á¦°Å
+	// ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½Ö´ï¿½ ï¿½ë¿¡ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¸¦ ï¿½ï¿½ï¿½ï¿½
 	auto& scenes = room->GetScenes();
 	CScene* scene = scenes[(UINT)player->GetCurrentSceneType()].get();
 	assert(scene);
@@ -208,28 +208,30 @@ void CRoomManager::SendRoomList(shared_ptr<Session> session)
 	lock_guard<mutex> lg(rooms_lock);
 	if (!rooms.empty()) {
 
-		int32 roomCount = rooms.size();
-		int32 pktSize = sizeof(S_Room_List) + sizeof(S_Room_List::Room) * roomCount;
-
-		S_ROOMLIST_WRITE pktWriter;
-		S_ROOMLIST_WRITE::RoomList roomList = pktWriter.ReserveRoomList(roomCount);
-
-		int idx = 0;
+		// ê²Œìž„ ì‹œìž‘ ì „ì¸ ë°©ë§Œ ì¹´ìš´íŠ¸
+		int32 validRoomCount = 0;
 		for (auto& room : rooms) {
-
-			if (room.second->GetIsGameStart() == true)
-				continue;
-
-			roomList[idx++] = S_Room_List::Room{ NetRoomInfo{room.second->GetRoomInfo()} };
+			if (!room.second->GetIsGameStart())
+				validRoomCount++;
 		}
 
-		if (idx == 0) {
+		if (validRoomCount == 0) {
 			S_Room_List roomPkt;
 			roomPkt.room_count = 0;
 			auto sendBuffer = MAKE_SEND_BUFFER(roomPkt);
 			session->DoSend(sendBuffer);
 		}
 		else {
+			S_ROOMLIST_WRITE pktWriter;
+			S_ROOMLIST_WRITE::RoomList roomList = pktWriter.ReserveRoomList(validRoomCount);
+
+			int idx = 0;
+			for (auto& room : rooms) {
+				if (room.second->GetIsGameStart() == true)
+					continue;
+				roomList[idx++] = S_Room_List::Room{ NetRoomInfo{room.second->GetRoomInfo()} };
+			}
+
 			SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
 			session->DoSend(sendBuffer);
 		}
