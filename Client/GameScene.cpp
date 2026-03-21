@@ -9,6 +9,7 @@
 #include "SceneManager.h"
 #include "ItemFinder.h"
 #include "NetworkManager.h"
+#include "MeshRenderer.h"
 
 
 CGameScene::CGameScene()
@@ -152,6 +153,15 @@ void CGameScene::Handle_S_MapData(std::shared_ptr<Session> session, const S_MapD
 
 void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt)
 {
+	// 기존 GameScene의 맵 데이터가 있다면 모두 clear
+	objects.erase(std::remove_if(objects.begin(), objects.end(), [](const std::shared_ptr<CObject> obj) {
+		return obj->GetObjectType() == OBJECT_TYPE::STATIC_OBJECT;
+		}),
+		objects.end());
+
+	// CInstRenderer의 batches clear
+	CInstRenderer::GetInstance().Clear();
+
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
 }

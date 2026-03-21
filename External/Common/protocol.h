@@ -377,11 +377,11 @@ struct S_MapData : public PacketHeader
 	//uint16    total_chunks; // 총 몇 조각인지 (82개 등)
 
 	uint16    data_count;    // 이번 패킷에 담긴 구조체 개수
-	NetPacket::InstanceData data[70];   // 17바이트 구조체 x 70
+	NetPacket::InstanceData data[60];   // 17바이트 구조체 x 60
 
 	S_MapData() : PacketHeader(sizeof(S_MapData), _S_MAP_DATA) {}
 };
-static_assert(sizeof(S_MapData) == 4 + 1192, "S_MapData size mismatch!");
+static_assert(sizeof(S_MapData) == 4 + 1142, "S_MapData size mismatch!");
 
 struct S_MapEnd : public PacketHeader
 {

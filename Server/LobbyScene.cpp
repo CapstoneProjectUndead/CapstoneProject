@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ LobbyScene
+// Serverìª½ LobbyScene
 #include "LobbyScene.h"
 #include "Player.h"
 #include "User.h"
@@ -29,7 +29,7 @@ void CLobbyScene::Start()
 {
 	CreateLobby();
 
-	// Å×½ºÆ®
+	// (ì„ì‹œ)
 	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom()));
 	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
 	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
@@ -47,14 +47,11 @@ void CLobbyScene::CheckReady()
 {
 	if (auto r = room.lock()) {
 
-		// ¸ğµç ÇÃ·¹ÀÌ¾î ÁØºñ¿Ï·á, GameSceneÀ¸·Î ÀÌµ¿!
 		const int total = r->GetCurrentPlayerCount();
-		if (player_ready_cnt == total) {
+		if (total > 0 && player_ready_cnt == total) {
 			
-			// GameScene »ı¼º, ÇÃ·¹ÀÌ¾î¿¡°Ô GameScene Map Àü¼Û, ÇÃ·¹ÀÌ¾î GameSceneÀ¸·Î ÀÌµ¿
 			SendPlayerToGameScene();
 
-			// ÀÌ ¹æÀº °ÔÀÓÀÌ ½ÃÀÛµÇ¾î¼­, ÀÌÁ¦ ÀÔÀå ºÒ°¡´É
 			r->SetIsGameStart(true);
 
 			player_ready_cnt = 0;
@@ -69,8 +66,7 @@ void CLobbyScene::SendPlayerToGameScene()
 		CPhysicsManager::GetInstance().EraseCollider(OBJECT_TYPE::STATIC_OBJECT);
 		CPhysicsManager::GetInstance().EraseCollider(OBJECT_TYPE::MONSTER);
 
-		// GameSceneÀº ÀıÂ÷Àû »ı¼º mapÀÌ¶ó,
-		// ÀÔÀåÀü¿¡ Ç×»ó CreateGameSceneÀ» È£ÃâÇÑ´Ù.
+		// GameSceneì˜ Map data ìƒì„±
 		CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
 		gameScene->CreateGameScene();
 
@@ -79,7 +75,7 @@ void CLobbyScene::SendPlayerToGameScene()
 			auto session = player->GetSession();
 			player->SetPosition(XMFLOAT3{ 0.0f, 2.0f, 0.0f });
 
-			// ÇÃ·¹ÀÌ¾îµé¿¡°Ô GameScene Map Á¤º¸ ÆĞÅ¶À» º¸³½´Ù. 
+			// GameScene Map ë°ì´í„°ë¥¼ í´ë¼ì´ì–¸íŠ¸ë¡œ ì „ì†¡
 			{
 				S_MapStart mapStartpkt;
 				auto sendBuffer = MAKE_SEND_BUFFER(mapStartpkt);
@@ -87,10 +83,10 @@ void CLobbyScene::SendPlayerToGameScene()
 					session->DoSend(sendBuffer);
 				}
 
-				auto& instanceData = gameScene->instance_data;
+				auto& mapInstanceData = gameScene->map_instance_data;
 
-				const int chunkSize = 70;
-				int totalDataCnt = instanceData.size();
+				const int chunkSize = 60;
+				int totalDataCnt = mapInstanceData.size();
 				int currentIndex = 0;
 
 				while (totalDataCnt > 0) {
@@ -100,9 +96,10 @@ void CLobbyScene::SendPlayerToGameScene()
 				
 					for (int i = 0; i < chunkSize; ++i) {
 				
-						NetPacket::InstanceData instData{ instanceData[currentIndex].position
-							, instanceData[currentIndex].rotationY
-							, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
+						NetPacket::InstanceData instData{ mapInstanceData[currentIndex].position
+							, mapInstanceData[currentIndex].rotationY
+							, static_cast<NetPacket::EModelType>(mapInstanceData[currentIndex].type)
+							, mapInstanceData[currentIndex].model };
 				
 						mapDataPkt.data[i] = instData;
 						++currentIndex;
@@ -114,16 +111,17 @@ void CLobbyScene::SendPlayerToGameScene()
 						session->DoSend(sendBuffer);
 					}
 				
-					// ³²Àº ¼ö°¡ chunkSize(70°³) º¸´Ù ÀÛ´Ù¸é
+					// chunkSize(60)
 					if (totalDataCnt < chunkSize) {
 				
 						S_MapData mapDataPkt;
 						mapDataPkt.data_count = totalDataCnt;
 				
 						for (int i = 0; i < totalDataCnt; ++i) {
-							NetPacket::InstanceData instData{ instanceData[currentIndex].position
-								, instanceData[currentIndex].rotationY
-								, static_cast<NetPacket::EModelType>(instanceData[currentIndex].type) };
+							NetPacket::InstanceData instData{ mapInstanceData[currentIndex].position
+								, mapInstanceData[currentIndex].rotationY
+								, static_cast<NetPacket::EModelType>(mapInstanceData[currentIndex].type)
+								, mapInstanceData[currentIndex].model };
 				
 							mapDataPkt.data[i] = instData;
 							++currentIndex;
@@ -146,7 +144,7 @@ void CLobbyScene::SendPlayerToGameScene()
 			}
 		}
 
-		// ÇÃ·¹ÀÌ¾î¸¦ GameSceneÀ¸·Î ÀÌµ¿
+		// í”Œë ˆì´ì–´ GameSceneìœ¼ë¡œ ì´ë™
 		vector<shared_ptr<CPlayer>> vecPlayers;
 
 		for (auto& [id, player] : players) {
@@ -156,7 +154,7 @@ void CLobbyScene::SendPlayerToGameScene()
 		for (auto& player : vecPlayers) {
 			ChangeScene(player, SCENE_TYPE::GAME);
 
-			// ÇÃ·¹ÀÌ¾î¿¡°Ô GameSceneÀ¸·Î ÀüÈ¯ÇÏ¶ó°í ¾Ë·Á¾ßÇÑ´Ù.
+			// í´ë¼ì´ì–¸íŠ¸ì—ê²Œ GameSceneìœ¼ë¡œ ì „í™˜í•´ì•¼í•¨ì„ ì•Œë¦¼.
 			S_SceneChange changeScenePkt;
 			changeScenePkt.player_id = player->GetID();
 			changeScenePkt.current_scene = scene_type;
@@ -170,29 +168,28 @@ void CLobbyScene::SendPlayerToGameScene()
 	}
 }
 
-// Æ¯Á¤ SceneÀ» Å×½ºÆ®ÇÒ ¶§, »ç¿ëÇÒ ÇÔ¼ö. 
 void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
-	// User °´Ã¼ »ı¼º
+	// User ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½
 	shared_ptr<CUser> user;
 	if (!CAST_CS(session)->GetUser()) {
 		user = make_shared<CUser>();
 
-		// ClientSessionÀÌ Plyaer¸¦ ÂüÁ¶. (refcount Áõ°¡)
+		// ClientSessionï¿½ï¿½ Plyaerï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. (refcount ï¿½ï¿½ï¿½ï¿½)
 		CAST_CS(session)->SetUser(user);
 	}
 
-	// Player »ı¼º (ÇÃ·¹ÀÌ¾î ID = À¯Àú ID)
+	// Player ï¿½ï¿½ï¿½ï¿½ (ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ID = ï¿½ï¿½ï¿½ï¿½ ID)
 	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayerTest(SCENE_TYPE::LOBBY, session, user);
 
-	// Player À§Ä¡ ÁöÁ¤ (ÀÓ½Ã)
+	// Player ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ (ï¿½Ó½ï¿½)
 	XMFLOAT3 pos{};
 	pos.x = rand() % 3 - 2;
 	pos.y = 0.f;
 	pos.z = rand() % 3 - 2;
 	player->SetPosition(pos);
 
-	// Áö±İ Á¢¼ÓÇÑ À¯Àú¿¡°Ô ·Î±×ÀÎ Çã¶ô / ÇÃ·¹ÀÌ¾î »ı¼º ÆĞÅ¶ º¸³¿
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ / ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¶ ï¿½ï¿½ï¿½ï¿½
 	{
 		S_SpawnPlayer spawnPkt;
 		//spawnPkt.room_id = player->GetRoomID();
@@ -209,7 +206,7 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 		session->DoSend(sendBuffer);
 	}
 
-	// À¯Àú Scene¿¡ ÀÔÀå
+	// ï¿½ï¿½ï¿½ï¿½ Sceneï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	EnterScene(player);
 }
 
@@ -235,7 +232,6 @@ CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string&
 
 void CLobbyScene::CreateLobby()
 {
-	// 1. ¸Ê ÆÄÀÏ ·Îµå
 	std::string fileName{ "../Modeling/lobby_0305.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
@@ -244,27 +240,20 @@ void CLobbyScene::CreateLobby()
 		return;
 	}
 
-	// 2. ¸Ê µ¥ÀÌÅÍ¸¦ ¼øÈ¸ÇÏ¸ç Ãæµ¹Ã¼¸¸ »Ì¾Æ³»±â
 	for (const auto& children : frameRoot->childrens) {
 
-		// À§Ä¡ Á¤º¸°¡ ¾Æ¿¹ ¾ø´Â ºó ³ëµå´Â ½ºÅµ
 		if (children->mesh.positions.empty() && children->collider.positions.empty())
 			continue;
 
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 		obj->world_matrix = children->localMatrix;
 
-		// =================================================
-		// mesh.bounds°¡ ºñÁ¤»óÀÏ °æ¿ì¸¦ ´ëºñÇØ Á÷Á¢ Bounds °è»ê
-		// =================================================
 		BoundingBox realBounds = children->mesh.bounds;
 
-		// 1. ½Ã°¢Àû ¸Ş½¬°¡ ¾ø°í Ãæµ¹Ã¼¸¸ ÀÖ´Â ³ëµå¶ó¸é collider µ¥ÀÌÅÍ·Î Bounds Àç°è»ê
 		if (children->mesh.positions.empty() && !children->collider.positions.empty()) {
 			BoundingBox::CreateFromPoints(realBounds, children->collider.positions.size(), children->collider.positions.data(), sizeof(XMFLOAT3));
 		}
 
-		// 2. ¹Ù´ÚÀÌ ¿ÏÀü Æò¸é(µÎ²² 0)ÀÌ¸é EPA ¿¬»êÀÌ ½ÇÆĞÇÏ¹Ç·Î °­Á¦·Î ÃÖ¼Ò µÎ²²(0.1f) ºÎ¿©
 		if (realBounds.Extents.y < 0.1f) {
 			realBounds.Extents.y = 0.1f;
 		}
@@ -278,7 +267,7 @@ void CLobbyScene::CreateLobby()
 		case LobbyMeshName::Wall:
 		{
 			std::unique_ptr< CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
-			// children->mesh.bounds ´ë½Å realBounds »ç¿ë!
+			// children->mesh.bounds realBounds!
 			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
 			CollisionFilter filter;
 			filter.category = EColLayer::WALL;
@@ -293,7 +282,7 @@ void CLobbyScene::CreateLobby()
 		}
 		case LobbyMeshName::Floor:
 		{
-			// children->mesh.bounds ´ë½Å realBounds »ç¿ë!
+			// children->mesh.bounds realBounds
 			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
 			CollisionFilter filter;
@@ -309,7 +298,7 @@ void CLobbyScene::CreateLobby()
 		}
 		case LobbyMeshName::GroundPipe:
 		{
-			// children->mesh.bounds ´ë½Å realBounds »ç¿ë!
+			// children->mesh.bounds realBounds 
 			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
 			boxCollider->SetFillter(filter);
@@ -324,7 +313,7 @@ void CLobbyScene::CreateLobby()
 		{
 			if (children->collider.positions.empty()) break;
 			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-			// children->mesh.bounds ´ë½Å realBounds »ç¿ë!
+			// children->mesh.bounds realBounds!
 			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
 			collider->SetFillter(filter);
 
@@ -337,7 +326,6 @@ void CLobbyScene::CreateLobby()
 
 		}
 
-		// ¿ÀºêÁ§Æ® º¸°ü (ÀÌÀüÃ³·³ switch¹® ¹Û, for¹® ¾È¿¡ À§Ä¡!)
 		static_objects.push_back(obj);
 	}
 }

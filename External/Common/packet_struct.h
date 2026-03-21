@@ -201,17 +201,19 @@ namespace NetPacket
 
 	struct InstanceData
 	{
-		XMFLOAT3 position;
+		XMFLOAT3 position{};
 		float rotationY{ 0.0f }; // scale 대신 회전(도 단위) 추가
 		EModelType type{ EModelType::ROAD };
+		EModelVariant model = EModelVariant::NONE;
 
 		InstanceData() = default;
-		InstanceData(XMFLOAT3 pos, float rot, EModelType _type)
+		InstanceData(XMFLOAT3 pos, float rot, EModelType _type, EModelVariant _model)
 			: position(pos)
 			, rotationY(rot)
 			, type(_type)
+			, model(_model)
 		{ }
 	};
 
-	static_assert(sizeof(InstanceData) == 17, "InstanceData size mismatch!");
+	static_assert(sizeof(InstanceData) == 19, "InstanceData size mismatch!");
 }
