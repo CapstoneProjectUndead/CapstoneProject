@@ -260,8 +260,6 @@ void CScene::Exit()
 	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT, scene_type);
 	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
 	colliders_active = false;
-
-	monsters.clear();
 }
 
 void CScene::SendExistingUsers(shared_ptr<CPlayer> player)

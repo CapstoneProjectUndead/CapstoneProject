@@ -43,5 +43,7 @@ private:
 
 private:
     int  player_ready_cnt;
+    int  monster_cnt = 0;
+    const int max_monster_cnt = 1;
 };
 

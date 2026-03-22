@@ -42,15 +42,22 @@ void CLobbyScene::Enter()
 	CScene::Enter();
 
 	// (임시)
-	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
-	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
-	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-	AddMonster(humanMonster);
+	// 몬스터는 1 마리만 스폰
+	if (monster_cnt < max_monster_cnt) {
+		shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
+		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
+		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
+		AddMonster(humanMonster);
+		++monster_cnt;
+	}
 }
 
 void CLobbyScene::Exit()
 {
 	CScene::Exit();
+
+	monsters.clear();
+	--monster_cnt;
 }
 
 void CLobbyScene::CheckReady()
