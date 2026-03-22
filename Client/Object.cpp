@@ -6,6 +6,7 @@
 #include "MeshRenderer.h"
 #include "Material.h"
 #include "UIComponent.h"
+#include "Renderers.h"
 
 CObject::CObject(OBJECT_TYPE type)
 	: obj_type(type)
@@ -45,16 +46,22 @@ void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 void CObject::Render(ID3D12GraphicsCommandList* commandList)
 {
 	auto meshRenderer = GetComponents<CMeshRendererComponent>();
-	auto UIComp = GetComponents<CUIComponent>();
 
 	// mesh, collider(for debugging), material render
 	for (auto& renderer : meshRenderer)
 		if (renderer->is_enable)
 			renderer->Render(commandList);
+}
 
-	for (auto& ui : UIComp)
-		if (ui->is_enable)
-			ui->Render(commandList);
+void CObject::OnCollect(IRenderer* renderer)
+{
+	auto meshRenderers = GetComponents<CMeshRendererComponent>();
+	bool isStatic = (obj_type == OBJECT_TYPE::STATIC_OBJECT);
+
+	for (auto& meshRenderer : meshRenderers) {
+		// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
+		meshRenderer->Collect(renderer, isStatic);
+	}
 }
 
 void CObject::SetComponent(std::shared_ptr<CComponent> component)

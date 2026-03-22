@@ -21,6 +21,14 @@
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
+std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name)
+{
+	std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
+	std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+
+	return mat;
+}
+
 void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
 	if (node->mesh.positions.empty()) return;
@@ -227,7 +235,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			objects.push_back(obj);
 		}
 	}
-	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, objects.size());
 	return objects;
 }
 

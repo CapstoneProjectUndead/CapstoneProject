@@ -40,11 +40,41 @@ void CGameScene::Initialize()
 		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
 		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("ui", std::move(shader));
+
+		// 1. 캔버스 생성
+		auto mainCanvas = CUIManager::GetInstance().CreateCanvas();
+
+		// 2. 체력바 배경 추가 (예시)
+		auto hpBarBg = std::make_shared<CUIImage>();
+		hpBarBg->SetSize({ 400.0f, 40.0f });
+		hpBarBg->SetRelativePos({ 0.0f, 450.0f }); // 화면 하단 쪽
+		hpBarBg->SetColor({ 0.2f, 0.2f, 0.2f, 1.0f }); // 어두운 배경
+
+		mainCanvas->AddChild(hpBarBg);
+
+		factory->GetMaterial(shaders["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 	}
 
 	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
+	}
+
+	{
+		// 1. 일반 인스턴싱 렌더러 등록
+		auto instRenderer = std::make_unique<CInstRenderer>();
+		instRenderer->Initialize(GET_DEVICE, objects.size());
+		renderers["inst"] = std::move(instRenderer);
+
+		// 2. UI 전용 렌더러 등록
+		auto uiRenderer = std::make_unique<CUIRenderer>();
+		uiRenderer->Initialize(GET_DEVICE, 100);
+		renderers["ui"] = std::move(uiRenderer);
+
+		//// 3. 빌보드 전용 렌더러 등록
+		//auto bbRenderer = std::make_unique<CBillboardRenderer>();
+		//bbRenderer->Initialize(GET_DEVICE, 500);
+		//renderers["billboard"] = std::move(bbRenderer);
 	}
 }
 
@@ -55,9 +85,6 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		my_player->SetPosition(0.0f, 2.0f, 0.0f);
-		std::shared_ptr<CUIComponent> ui = std::make_shared<CUIComponent>();
-		my_player->SetComponent(ui);
-		CUIRenderer::GetInstance().Initialize(device, commandList, 1);
 	}
 
 	if (!camera) {
@@ -76,6 +103,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+	CUIManager::GetInstance().Update(elapsedTime);
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
@@ -84,48 +112,47 @@ void CGameScene::Update(float elapsedTime)
 
 void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (camera)
-		camera->SetViewportsAndScissorRects(commandList);
+	if (camera) camera->SetViewportsAndScissorRects(commandList);
 
-	for (const auto& shader : shaders) {
-		if (shader.first == "ui") continue;
-		shader.second->RenderBegin(commandList);
-
-		camera->UpdateShaderVariables(commandList);
-
-		if (light) {
-			light->Render(commandList);
+	// Collect Phase
+	// 3D 객체들 수집
+	for (const auto& obj : objects) {
+		auto it = renderers.find(obj->GetShader());
+		if (it != renderers.end()) {
+			obj->OnCollect(it->second.get());
 		}
-
-		for (const auto& obj : objects) {
-			if (shader.first == obj->GetShader()) {
-				shader.second->Render(commandList, obj.get());
-			}
-		}
-
-		if (my_player) {
-			if (shader.first == my_player->GetShader()) {
-				shader.second->Render(commandList, my_player.get());
-			}
-		}
-
-		if (shader.first == "inst")
-			CInstRenderer::GetInstance().Render(commandList);
-
-		shader.second->RenderEnd(commandList);
 	}
 
-	auto uiShader = shaders.find("ui");
-	if (uiShader != shaders.end()) {
-		uiShader->second->RenderBegin(commandList); // 여기서 RootSig, PSO 설정
-		camera->UpdateShaderVariables(commandList, true); // Ortho 행렬 전달
-
-		// 중요: UI용 Descriptor Heap을 여기서 다시 한번 세팅!
-		CUIRenderer::GetInstance().Render(commandList);
-
-		uiShader->second->RenderEnd(commandList);
+	// 플레이어 수집
+	if (my_player) {
+		auto it = renderers.find(my_player->GetShader());
+		if (it != renderers.end()) {
+			my_player->OnCollect(it->second.get());
+		}
 	}
 
+	// UI 매니저 수집
+	auto uiIt = renderers.find("ui");
+	if (uiIt != renderers.end()) {
+		CUIManager::GetInstance().Collect(uiIt->second.get());
+	}
+
+	// Draw Phase
+	for (const auto& [name, pShader] : shaders) {
+		pShader->RenderBegin(commandList);
+
+		bool isUI = (name == "ui");
+		camera->UpdateShaderVariables(commandList, isUI);
+
+		if (light && !isUI) light->Render(commandList);
+
+		auto it = renderers.find(name);
+		if (it != renderers.end()) {
+			it->second->Render(commandList);
+		}
+
+		pShader->RenderEnd(commandList);
+	}
 }
 
 void CGameScene::DrawUI()

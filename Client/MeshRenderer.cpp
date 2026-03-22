@@ -32,7 +32,24 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 		if (!unit.mesh->is_enable) continue;
 		if (unit.material && !unit.material->is_enable) continue;
 
-		CInstRenderer::GetInstance().AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix);
+		//CInstRenderer::GetInstance().AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix);
+#ifdef DEBUG
+		auto collider = owner->GetComponents<CColliderComponent>();
+		for (auto c : collider)
+			c->Render(commandList);
+#endif
+	}
+}
+
+void CMeshRendererComponent::Collect(IRenderer* renderer, bool isStatic)
+{
+	if (!owner) return;
+
+	for (auto& unit : render_units) {
+		if (!unit.mesh->is_enable) continue;
+		if (unit.material && !unit.material->is_enable) continue;
+
+		renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix, isStatic);
 #ifdef DEBUG
 		auto collider = owner->GetComponents<CColliderComponent>();
 		for (auto c : collider)

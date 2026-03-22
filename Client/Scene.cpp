@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Camera.h"
 #include "MyPlayer.h"
 #include "Shader.h"
@@ -13,6 +13,7 @@
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
 #include "Monster.h"
+#include "Renderers.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)

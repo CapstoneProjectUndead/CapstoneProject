@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Material.h"
 #include "Texture.h"
 
@@ -32,6 +32,7 @@ public:
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMonster> CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
 	void SetComponent(std::shared_ptr<CPlayer>& player);
+	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
 private:
 	enum class UndeadMeshName {
 		body,

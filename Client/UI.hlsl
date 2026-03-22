@@ -18,13 +18,24 @@ struct VS_OUTPUT
     nointerpolation uint instanceID : INSTANCEID;
 };
 
+struct MaterialData
+{
+    float4 albedo;
+    float3 fresnel;
+    float glossiness;
+    uint tex_idx;
+};
+
 struct InstanceData
 {
     float4x4 world_matrix; // UI의 위치, 크기, 피벗이 반영된 행렬
-    float4 color; // UI 기본 색상
+    MaterialData material;
 };
 
-StructuredBuffer<InstanceData> gInstanceData : register(t0);
+StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
+
+Texture2D texDiffuse[50] : register(t0);
+SamplerState sample : register(s0);
 
 // UIShader.hlsl
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
@@ -43,7 +54,10 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET
 {
-    float4 finalColor = gInstanceData[input.instanceID].color;
-    
-    return finalColor;
+    input.normal = normalize(input.normal);
+    MaterialData instMat = gInstanceData[input.instanceID].material;
+    // texture
+    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex) * instMat.albedo;
+
+    return diffuseAlbedo;
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "LightManager.h"
 
 class CPlayer;
@@ -7,6 +7,7 @@ class CCamera;
 class CObject;
 class CShader;
 class CObjectFactory;
+class IRenderer;
 
 class CScene
 {
@@ -76,6 +77,7 @@ public:
 protected:
 	SCENE_TYPE								scene_type;
 
+	std::map<std::string, std::unique_ptr<IRenderer>> renderers;	// shader에 버퍼 설정하는 멤버 변수(rendering 담당)
 	std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
 	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어
 	std::shared_ptr<CCamera>				camera;

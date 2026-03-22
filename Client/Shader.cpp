@@ -451,7 +451,7 @@ ID3D12RootSignature* CUIShader::CreateGraphicsRootSignature(ID3D12Device* device
 	descriptorRanges.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRanges.NumDescriptors = numDesc;
 	descriptorRanges.BaseShaderRegister = 0;
-	descriptorRanges.RegisterSpace = 1;
+	descriptorRanges.RegisterSpace = 0;
 	descriptorRanges.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
@@ -465,7 +465,7 @@ ID3D12RootSignature* CUIShader::CreateGraphicsRootSignature(ID3D12Device* device
 	// instData
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	rootParameters[1].Descriptor.ShaderRegister = 0;
-	rootParameters[1].Descriptor.RegisterSpace = 0;
+	rootParameters[1].Descriptor.RegisterSpace = 1;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	// table(texture map)

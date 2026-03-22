@@ -3,6 +3,7 @@
 
 class CMesh;
 class CMaterialComponent;
+class IRenderer;
 
 namespace CGeometryLoader {
     struct FrameNode;
@@ -39,6 +40,7 @@ class CMeshRendererComponent : public CComponent
 public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
+    void Collect(IRenderer* renderer, bool isStatic);
     void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat = nullptr)
     {
         render_units.push_back({ mesh, mat });

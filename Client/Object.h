@@ -4,6 +4,7 @@ class CComponent;
 class CShader;
 class CCamera;
 class CMesh;
+class IRenderer;
 
 namespace CGeometryLoader {
 	struct FrameNode;
@@ -39,6 +40,8 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList* );
+	// RenderCallback을 호출
+	virtual void OnCollect(IRenderer* renderer);
 
 	//
 	virtual XMFLOAT3 GetHeadPosition() const { return position; };

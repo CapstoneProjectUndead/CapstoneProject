@@ -1,6 +1,10 @@
 #pragma once
 #include "Component.h"
 
+class CMaterialComponent;
+class IRenderer;
+
+// UIManager로 관리, 각자의 world_matrix가 존재
 class CUIComponent : public CComponent{
 public:
 	struct Rect {
@@ -18,16 +22,20 @@ public:
         bool Intersects(const Rect& other) const;
     };
 
-    CUIComponent() = default;
+    CUIComponent();
 
     virtual void Update(const float deltaTime) override;
 
     virtual void Render(ID3D12GraphicsCommandList* commandList) override;
+    virtual void Collect(IRenderer* renderer);
     Rect GetParentRect();
     void AddChild(std::shared_ptr<CUIComponent> newChild) {
         newChild->parent_ui = this; // 부모 연결
         child.push_back(newChild);
     }
+    void SetSize(const XMFLOAT2& s) { size = s; }
+    void SetPivot(const XMFLOAT2& p) { pivot = p; }
+    void SetRelativePos(const XMFLOAT2& p) { relative_pos = p; }
 protected:
 	XMFLOAT2 relative_pos{ .0f, .0f };
 	XMFLOAT2 size{ 100.0f, 100.0f };
@@ -40,4 +48,57 @@ protected:
     CUIComponent* parent_ui{ nullptr }; // 부모 UI 참조 (순환 참조 방지를 위해 생포인터)
 
     XMFLOAT4X4 world_matrix; // UI의 위치, 크기, 회전이 담긴 행렬
+};
+
+class CUICanvas : public CUIComponent
+{
+public:
+    CUICanvas();
+
+    void Update(float deltaTime) override;
+};
+
+class CUIImage : public CUIComponent {
+public:
+    void SetFillAmount(float amt) { fill_amount = std::clamp(amt, 0.0f, 1.0f); }
+    void SetColor(XMFLOAT4 c);
+
+    virtual void Update(float deltaTime) override;
+    virtual void Collect(IRenderer* renderer) override;
+protected:
+    float fill_amount = 1.0f;
+    std::shared_ptr<CMaterialComponent> mat_comp;
+};
+
+class CBillboardUI : public CUIComponent {
+public:
+    CBillboardUI(CObject* obj) :target{obj} {}
+    virtual void Update(float deltaTime) override;
+
+    // 빌보드를 띄울 타겟(말하는 주체)
+    void SetTarget(CObject* obj);
+private:
+    XMFLOAT3 offset{ 0.0f, 2.0f, 0.0f }; // 머리 위 높이 조절
+    CObject* target{};
+};
+
+class CUIManager
+{
+private:
+    CUIManager() = default;
+    std::vector<std::shared_ptr<CUICanvas>> canvases;
+public:
+    static CUIManager& GetInstance() {
+        static CUIManager instance;
+        return instance;
+    }
+
+    // 새로운 캔버스 생성
+    std::shared_ptr<CUICanvas> CreateCanvas();
+    void Update(float deltaTime);
+    void Render(ID3D12GraphicsCommandList* commandList);
+    void Collect(IRenderer* renderer);
+
+    // 마우스 클릭 등의 이벤트 처리
+    //void HandleInput();
 };
