@@ -75,7 +75,7 @@ protected:
 
     const float recog_range = 1.2f; // 인지 범위
     float fov_angle = 120.f; // 시야각
-    float cos_threshold; // 미리 계산된 코사인 임계값
+    float cos_threshold = 0.f; // 미리 계산된 코사인 임계값
 
     const float attack_range = 0.5f; // 공격 범위
     const float trace_speed = 0.4f;  // 추격 속도

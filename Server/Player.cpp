@@ -3,7 +3,10 @@
 #include "Player.h"
 #include "Collider.h"
 #include "Movement.h"
+#include "Scene.h"
+#include "Room.h"
 #include "PhysicsManager.h"
+
 
 CPlayer::CPlayer()
 	: CObject(OBJECT_TYPE::PLAYER)
@@ -11,13 +14,18 @@ CPlayer::CPlayer()
     , ping(0.0f)
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
+    , is_ready(false)
 {
 
 }
 
 CPlayer::~CPlayer()
 {
-
+    if (auto r = room.lock()) {
+        if (auto physicsManager = r->GetScenes()[(UINT)current_scene_type]->GetPhysicsManager()) {
+            physicsManager->EraseCollider(GetComponent<CColliderComponent>());
+        }
+    }
 }
 
 void CPlayer::Update(const float elapsedTime)
@@ -102,6 +110,11 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
         state = PLAYER_STATE::IDLE;
     }
     else {
+        state = PLAYER_STATE::WALK;
+    }
+
+    // มกวม 
+    if (velocity.y > 0) {
         state = PLAYER_STATE::WALK;
     }
 

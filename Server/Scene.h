@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ Scene
+// Serverìª½ Scene
 #include "Player.h"
 #include "Job.h"
 #include "User.h"
@@ -7,6 +7,7 @@
 
 class CRoom;
 class CMonster;
+class CPhysicsManager;
 
 class CScene
 {
@@ -16,12 +17,15 @@ class CScene
 public:
 	CScene(SCENE_TYPE type);
 	CScene(SCENE_TYPE type, uint32 roomId);
-	~CScene();
+	virtual ~CScene();
 
 	virtual void Start() {};
 	virtual void Update(const float elapsedTime);
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
+
+	virtual void Enter();
+	virtual void Exit();
 
 	void SendResults();
 	void SendPlayersResult();
@@ -37,14 +41,17 @@ private:
 	void SimulatePlayers(const float elapsedTime);
 	void SimulateMonsters(const float elapsedTime);
 
-	// ÀÔÀå À¯Àú¿¡°Ô ±âÁ¸ À¯ÀúµéÀÇ Á¤º¸¸¦ ¾Ë·ÁÁØ´Ù.
+	// ì…ì¥ ìœ ì €ì—ê²Œ ê¸°ì¡´ ìœ ì €ë“¤ì˜ ì •ë³´ë¥¼ ì•Œë ¤ì¤€ë‹¤.
 	void SendExistingUsers(shared_ptr<CPlayer> player);
 
-	// ±âÁ¸ À¯Àú¿¡°Ô Áö±İ Á¢¼ÓÇÑ À¯ÀúÀÇ Á¤º¸¸¦ ¾Ë·ÁÁØ´Ù.
+	// ê¸°ì¡´ ìœ ì €ì—ê²Œ ì§€ê¸ˆ ì ‘ì†í•œ ìœ ì €ì˜ ì •ë³´ë¥¼ ì•Œë ¤ì¤€ë‹¤.
 	void BroadcastUserEnter(shared_ptr<CPlayer> player);
 
+protected:
+	void ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType);
+
 public:
-	// Scene¿¡ ÇÃ·¹ÀÌ¾î°¡ ÀÖ´ÂÁö Ã¼Å©
+	// Sceneì— í”Œë ˆì´ì–´ê°€ ìˆëŠ”ì§€ ì²´í¬
 	bool HasPlayers()
 	{
 		if (!players.empty())
@@ -56,12 +63,16 @@ public:
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
 
-	std::weak_ptr<CRoom>      GetRoomWeak() const { return room; }
-	std::shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
+	weak_ptr<CRoom>      GetRoomWeak() const { return room; }
+	shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
 	void					  SetRoom(std::shared_ptr<CRoom> _room) { room = _room; }
 
+	weak_ptr<CPhysicsManager>   GetPhysicsManagerWeak() const { return physics_manager; }
+	shared_ptr<CPhysicsManager> GetPhysicsManager() const { return physics_manager.lock(); }
+	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
+
 public:
-	// IOCP ½º·¹µåµéÀÌ È£Ãâ (ÆĞÅ¶ ¹ŞÀÚ¸¶ÀÚ ½ÇÇà)
+	// IOCP ìŠ¤ë ˆë“œë“¤ì´ í˜¸ì¶œ (íŒ¨í‚· ë°›ìë§ˆì ì‹¤í–‰)
 	template<typename T, typename PacketType>
 	void PushPacketJob(shared_ptr<Session> session
 		, T* obj
@@ -74,11 +85,11 @@ public:
 			});
 	}
 
-	// IOCP ¿öÄ¿ ½º·¹µå°¡ ¹Ş¾ÆµĞ ÆĞÅ¶µéÀ» ¿©±â¼­ ·ÎÁ÷¿¡ ¹İ¿µ
+	// IOCP ì›Œì»¤ ìŠ¤ë ˆë“œê°€ ë°›ì•„ë‘” íŒ¨í‚·ë“¤ì„ ì—¬ê¸°ì„œ ë¡œì§ì— ë°˜ì˜
 	void HandlePackets();
 
 public:
-	// ¼­¹ö ±ÇÇÑ + Å¬¶ó ¿¹Ãø ±â¹İ Move
+	// ì„œë²„ ê¶Œí•œ + í´ë¼ ì˜ˆì¸¡ ê¸°ë°˜ Move
 	void Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt);
 	void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
 	void Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt);
@@ -94,10 +105,14 @@ protected:
 	weak_ptr<CRoom>						room;
 	uint32								room_id;
 
-	// ¸ÊÀÇ ¹Ù´Ú, Àå¾Ö¹° µî ¿òÁ÷ÀÌÁö ¾Ê´Â Á¤Àû Ãæµ¹Ã¼µéÀ» º¸°üÇÏ´Â °÷
-	std::vector<std::shared_ptr<CObject>> static_objects;
+	// ë§µì˜ ë°”ë‹¥, ì¥ì• ë¬¼ ë“± ì›€ì§ì´ì§€ ì•ŠëŠ” ì •ì  ì¶©ëŒì²´ë“¤ì„ ë³´ê´€í•˜ëŠ” ê³³
+	vector<shared_ptr<CObject>>			static_objects;
+
+	// Roomì˜ PhysicsManagerë¥¼ ì•½í•œ ì°¸ì¡°
+	weak_ptr<CPhysicsManager>			physics_manager;
 
 private:
+	int									active_player_count;
 	float								dt_ping_accumulator;
 };
 

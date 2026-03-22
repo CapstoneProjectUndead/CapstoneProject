@@ -85,6 +85,9 @@
     <Filter Include="MapGenerator">
       <UniqueIdentifier>{71994315-a5ce-429c-bb73-7c0e44c4b1f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\ItemFinder">
+      <UniqueIdentifier>{73a7f2fb-07a7-474b-bac0-4683ec588d92}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -300,6 +303,12 @@
     <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h">
       <Filter>MapGenerator</Filter>
     </ClInclude>
+    <ClInclude Include="ItemFinder.h">
+      <Filter>Object\ItemFinder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\MapUtils.h">
+      <Filter>MapGenerator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -471,6 +480,12 @@
       <Filter>Scene\GameScene</Filter>
     </ClCompile>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
+      <Filter>MapGenerator</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemFinder.cpp">
+      <Filter>Object\ItemFinder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\External\Common\MapUtils.cpp">
       <Filter>MapGenerator</Filter>
     </ClCompile>
   </ItemGroup>

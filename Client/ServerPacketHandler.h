@@ -41,6 +41,12 @@ enum : uint16
 	PKT_S_SCENE_CHANGE,
 	PKT_S_Spawn_MONSTER,
 	PKT_S_MONSTER_MOVE,
+
+	PKT_S_MAP_START,
+	PKT_S_MAP_DATA,
+	PKT_S_MAP_END,
+
+	PKT_C_READY,	// 로비씬에서 사신에게 준비 완료 버튼 누름
 };
 
 // Custom Handlers
@@ -59,6 +65,10 @@ bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt);
 bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pkt);
 bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pkt);
 bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt);
+bool Handle_S_SCENE_CHANGE(std::shared_ptr<Session> session, S_SceneChange& pkt);
+bool Handle_S_MAP_START(std::shared_ptr<Session> session, S_MapStart& pkt);
+bool Handle_S_MAP_DATA(std::shared_ptr<Session> session, S_MapData& pkt);
+bool Handle_S_MAP_END(std::shared_ptr<Session> session, S_MapEnd& pkt);
 
 class CServerPacketHandler
 {
@@ -82,6 +92,10 @@ public:
 		GPacketHandler[PKT_S_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_CustomSelect>(Handle_S_CUSTOM_SELECT, session, buffer, len); };
 		GPacketHandler[PKT_S_Spawn_MONSTER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnMonster>(Handle_S_SPAWN_MONSTER, session, buffer, len); };
 		GPacketHandler[PKT_S_MONSTER_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MonsterMove>(Handle_S_MONSTER_MOVE, session, buffer, len); };
+		GPacketHandler[PKT_S_SCENE_CHANGE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SceneChange>(Handle_S_SCENE_CHANGE, session, buffer, len); };
+		GPacketHandler[PKT_S_MAP_START] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MapStart>(Handle_S_MAP_START, session, buffer, len); };
+		GPacketHandler[PKT_S_MAP_DATA] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MapData>(Handle_S_MAP_DATA, session, buffer, len); };
+		GPacketHandler[PKT_S_MAP_END] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MapEnd>(Handle_S_MAP_END, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

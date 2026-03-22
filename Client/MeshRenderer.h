@@ -64,6 +64,10 @@ public:
     void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world);
 
     void Render(ID3D12GraphicsCommandList* commandList);
+
+public:
+    void Clear() { batches.clear(); }
+
 private:
     ObjectCB* mapped{};
     ComPtr<ID3D12Resource> inst_cb;

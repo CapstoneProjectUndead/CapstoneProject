@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "User.h"
 #include "Room.h"
+#include "Movement.h"
 
 
 CCustomScene::CCustomScene(uint32 roomId)
@@ -25,6 +26,16 @@ void CCustomScene::Update(float elapsedTime)
 	CScene::Update(elapsedTime);
 }
 
+void CCustomScene::Enter()
+{
+	CScene::Enter();
+}
+
+void CCustomScene::Exit()
+{
+	CScene::Exit();
+}
+
 void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)
 {
 	auto user = CAST_CS(session)->GetUser();
@@ -33,8 +44,22 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 	auto room = user->GetRoom();
 	assert(room);
 
+	// 3월 19일 추가
+	// 방에 있던 기존 플레이어들이 사신에게 말을 걸어서 준비완료하면 GameScene으로 넘어간다.
+	// 그 찰나에 새로운 유저가 들어온다면 입장을 막아야한다.
+	if (room->GetIsGameStart()) {
+		S_EnterRoom enterPkt;
+		enterPkt.success = false;
+		enterPkt.room_id = pkt.room_id;
+		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+		if (user->GetSession())
+			user->GetSession()->DoSend(sendBuffer);
+
+		return;
+	}
+
 	// Player 생성 (플레이어 ID = 유저 ID)
-	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room);
+	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room, GetPhysicsManager());
 
 	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정.
 
@@ -86,7 +111,7 @@ void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_C
 		// 플레이어를 Lobby Scene으로 이동
 		// 유저 Scene에 입장
 		// EnterScene 에서 유저들의 입장 정보들을 다 처리하도록 수정. (26. 2. 25)
-		lobbyScene->EnterScene(player);
+		ChangeScene(player, SCENE_TYPE::LOBBY);
 
 		// 유저에게 커스터마이징 완료되었고,
 		// Lobby Scene으로 씬 전환하라고 알려주기

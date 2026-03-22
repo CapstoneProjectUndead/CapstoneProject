@@ -177,10 +177,13 @@
     <ClCompile Include="ServerObjectFactory.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="GameScene.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
+      <Filter>MapGenerator</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene.cpp">
+      <Filter>Scene\GameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\External\Common\MapUtils.cpp">
       <Filter>MapGenerator</Filter>
     </ClCompile>
   </ItemGroup>
@@ -302,10 +305,13 @@
     <ClInclude Include="AIStates.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GameScene.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h">
+      <Filter>MapGenerator</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene.h">
+      <Filter>Scene\GameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\MapUtils.h">
       <Filter>MapGenerator</Filter>
     </ClInclude>
   </ItemGroup>

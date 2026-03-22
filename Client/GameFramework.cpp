@@ -40,6 +40,8 @@ bool CGameFramework::OnCreate()
 	CreateSwapChain();
 	CreateDepthStencilView();
 
+	CSceneManager::GetInstance().Init(d3d_device.Get());
+
 	// 렌더링 게임 객체 생성
 	BuildObjects();
 

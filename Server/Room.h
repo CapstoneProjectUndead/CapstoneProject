@@ -2,6 +2,7 @@
 
 class CScene;
 class CUser;
+class CPhysicsManager;
 
 class CRoom : public enable_shared_from_this<CRoom>
 {
@@ -27,7 +28,9 @@ public:
     uint32          GetRoomID() const { return room_info.room_id; }
     const string&   GetRoomName() const { return string(room_info.room_name); }
     uint16          GetCurrentPlayerCount() const { return room_info.current_player_count; }
+
     bool            GetIsGameStart() const { return room_info.is_game_start; }
+    void            SetIsGameStart(bool start) { room_info.is_game_start = start; }
 
     bool            IsValid();
     bool            IsActive() const { return is_active; }
@@ -40,6 +43,8 @@ private:
     RoomInfo    room_info;
     SceneArray  scenes;
     mutex       room_lock;
+
+    shared_ptr<CPhysicsManager> physics_manager;
 };
 
 /*

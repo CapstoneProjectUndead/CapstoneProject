@@ -39,6 +39,12 @@ enum : uint16
 	PKT_S_SCENE_CHANGE,
 	PKT_S_Spawn_MONSTER,
 	PKT_S_MONSTER_MOVE,
+
+	PKT_S_MAP_START,
+	PKT_S_MAP_DATA,
+	PKT_S_MAP_END,
+
+	PKT_C_READY,	// 로비씬에서 사신에게 준비 완료 버튼 누름
 };
 
 // Custom Handlers
@@ -55,6 +61,7 @@ bool Handle_C_LEAVE_ROOM(shared_ptr<Session> session, C_LeaveRoom& pkt);
 bool Handle_C_PLAYER_INPUT(std::shared_ptr<Session> session, C_Input& pkt);
 bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pkt);
 bool Handle_C_SCENE_CHANGE(std::shared_ptr<Session> session, C_SceneChange& pkt);
+bool Handle_C_READY(std::shared_ptr<Session> session, C_Ready& pkt);
 
 class CClientPacketHandler
 {
@@ -76,6 +83,7 @@ public:
 		GPacketHandler[PKT_C_PLAYER_INPUT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Input>(Handle_C_PLAYER_INPUT, session, buffer, len); };
 		GPacketHandler[PKT_C_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_CustomSelect>(Handle_C_CUSTOM_SELECT, session, buffer, len); };
 		GPacketHandler[PKT_C_SCENE_CHANGE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_SceneChange>(Handle_C_SCENE_CHANGE, session, buffer, len); };
+		GPacketHandler[PKT_C_READY] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Ready>(Handle_C_READY, session, buffer, len); };
 	}
 
 	static bool HandlePacket(shared_ptr<Session> session, char* buffer, int32 len)

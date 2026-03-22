@@ -675,9 +675,24 @@ void CTitleScene::DrawRoomListTable()
                 }
 
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+
                     selected_room_id = room.room_id;
-                    StartLoading(LoadingType::RoomEnter);
-                    // SendEnterRoomPacket(selected_room_id); 
+                    
+                    // 더블 클릭했을 때, 방 입장 처리
+                    if (selected_room_id != 0) {
+                        StartLoading(LoadingType::RoomEnter);
+                        // 입장 패킷 전송...
+                        if (SERVER_SESSION) {
+                            auto user = SERVER_SESSION->GetUser();
+                            if (user) {
+                                C_EnterRoom enterPkt;
+                                enterPkt.room_id = selected_room_id;
+                                enterPkt.user_id = user->GetUserID();
+                                auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+                                SERVER_SESSION->DoSend(sendBuffer);
+                            }
+                        }
+                    }
                 }
 
                 ImGui::TableSetColumnIndex(2);

@@ -16,6 +16,8 @@
 #include "HumanMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
+#include "ItemFinder.h"
+#include "MapUtils.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
@@ -37,7 +39,7 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	std::string name{ node->mesh.materials[0].albedoMap };
 	if (!name.empty()) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex);
 		mat->material.albedo = node->mesh.materials[0].albedoColor;
 		mat->material.glossiness = node->mesh.materials[0].glossiness;
 		matComp->SetMaterial(mat);
@@ -56,20 +58,23 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 		collider->SetFillter(filter);
 		obj->SetComponent(collider);
 		};
+
 	// ColliderComponent 생성
-	bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
-	if (!node->collider.positions.empty()) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
-		SetColliderComp(shape);
-	}
-	else if (isRoad) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
-		auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
-		CollisionFilter filter;
-		filter.category = EColLayer::GROUND;
-		filter.mask = EColLayer::PLAYER;
-		boxCollider->SetFillter(filter);
-		obj->SetComponent(boxCollider);
+	if (g_is_single) {
+		bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
+		if (!node->collider.positions.empty()) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
+			SetColliderComp(shape);
+		}
+		else if (isRoad) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
+			auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+			CollisionFilter filter;
+			filter.category = EColLayer::GROUND;
+			filter.mask = EColLayer::PLAYER;
+			boxCollider->SetFillter(filter);
+			obj->SetComponent(boxCollider);
+		}
 	}
 	
 	obj->Initialize(GET_DEVICE, GET_CMD_LIST);
@@ -99,7 +104,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 		std::string name{ children->mesh.materials[0].albedoMap };
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		std::shared_ptr<CMaterial> mat = matManager.GetMeterial(name, tex);
+		std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex);
 		mat->material.albedo = children->mesh.materials[0].albedoColor;
 		mat->material.glossiness = children->mesh.materials[0].glossiness;
 		matComp->SetMaterial(mat);
@@ -188,10 +193,22 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+
+	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	for (const auto& inst : instData) {
+		if (inst.type == MapGenerator::EModelType::TREASURE) {
+			treasures.push_back(TreasureInfo{ inst.position });
+		}
+	}
+
 	for (const auto& inst : instData) {
 		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
-			std::string meshName = PickRandom(typeName);
-			if (meshName.empty()) continue;
+
+			EModelVariant model = PickRandomVariant(typeName);
+			if (model == EModelVariant::NONE) 
+				continue;
+
+			std::string meshName = GetVariantFileName(model);
 
 			auto proto = prototypes[meshName];
 			auto meshComp = proto->GetComponent<CMeshComponent>();
@@ -224,7 +241,48 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			objects.push_back(obj);
 		}
 	}
-	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, objects.size());
+	return objects;
+}
+
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData)
+{
+	if (prototypes.empty()) LoadGameScene(heapManager);
+
+	std::vector<std::shared_ptr<CObject>> objects;
+
+	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	for (const auto& inst : instanceData) {
+		if (inst.type == MapGenerator::EModelType::TREASURE) {
+			treasures.push_back(TreasureInfo{ inst.position });
+		}
+	}
+
+	for (const auto& inst : instanceData) {
+
+		std::string meshName = GetVariantFileName(inst.model);
+
+		auto proto = prototypes[meshName];
+		auto meshComp = proto->GetComponent<CMeshComponent>();
+		auto matComp = proto->GetComponent<CMaterialComponent>();
+
+		// 위치/크기 정보를 행렬로 변환하여 추가
+		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
+		XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+		XMStoreFloat4x4(&obj->world_matrix, world);
+
+		// 인스턴스 렌더러에 위치와 리소스 정보 등록
+		CInstRenderer::GetInstance().AddInstance(
+			meshComp->GetMesh().get(),
+			matComp,
+			obj->world_matrix
+		);
+		obj->SetShdaer("inst");
+
+		objects.push_back(obj);
+	}
+	CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, objects.size());
 	return objects;
 }
 
@@ -242,7 +300,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 	};
 	for (const std::string& name : resourceNames) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		matManager.LoadMeterial(name, tex);
+		matManager.LoadMaterial(name, tex);
 	}
 
 	// Mesh 로드 + totalBounds 계산
@@ -274,7 +332,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 		auto CreateUnit = [&](std::string texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
 			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-			auto mat = matManager.GetMeterial(texName, tex);
+			auto mat = matManager.GetMaterial(texName, tex);
 			matComp->SetMaterial(mat);
 			character->SetComponent(matComp);
 
@@ -329,15 +387,18 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 			break;
 		}
 	}
+
 	// ColliderComponent 생성/ filter 설정
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::PLAYER;
-	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-	collider->SetFillter(filter);
-	character->SetComponent(collider);
-	CPhysicsManager::GetInstance().SetCollider(collider);
+	if (g_is_single) {
+		std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
+		auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+		CollisionFilter filter;
+		filter.category = EColLayer::PLAYER;
+		filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+		collider->SetFillter(filter);
+		character->SetComponent(collider);
+		CPhysicsManager::GetInstance().SetCollider(collider);
+	}
 
 	// Animator
 	auto animator = std::make_shared<CAnimatorComponent>();
@@ -359,6 +420,10 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 		player->SetComponent(std::make_shared<CMovementComponent>());
 	}
 
+	// 다우징 로드 component 추가
+	auto itemFinder = std::make_shared<CItemFinder>();
+	player->SetComponent(itemFinder);
+
 	return player;
 }
 
@@ -369,7 +434,7 @@ std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* he
 	return player;
 }
 
-std::shared_ptr<CMonster> CObjectFactory::CreateHumanMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType)
+std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType)
 {
 	std::shared_ptr<CMonster>     monster;
 	std::shared_ptr<CAIComponent> AIComp;
@@ -464,74 +529,4 @@ CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::s
 
 	auto it = table.find(str);
 	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
-}
-
-std::vector<std::string> CObjectFactory::GameSceneTypeToString(const MapGenerator::EModelType& type)
-{
-	static const std::unordered_map<MapGenerator::EModelType, std::vector<std::string>> table = {
-		{ MapGenerator::EModelType::ROAD,					{"park_road", "stone"} },
-		{ MapGenerator::EModelType::PARK_GREEN,				{"park_green", "grass"} },
-		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
-		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
-
-		{ MapGenerator::EModelType::WALL,					{"house_place"} },// 임시
-
-		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
-		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
-		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
-		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
-		{ MapGenerator::EModelType::CORNER_DOOR,			{"wall_2_door001"} },
-
-		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
-		{ MapGenerator::EModelType::TREE,					{"tree"} },
-		{ MapGenerator::EModelType::TREASURE,				{"trashcan"} },
-		{ MapGenerator::EModelType::BENCH,					{"park_bench"} },
-		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
-		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
-
-		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
-	};
-
-
-	auto it = table.find(type);
-	return it->second;
-}
-
-// grass, stone 등 랜덤 카테고리 선택
-std::string CObjectFactory::PickRandom(const std::string& key)
-{
-	static const std::unordered_map<std::string, std::vector<std::string>> categoryTable = {
-		{ "grass", {
-			"grass019","grass020","grass021","grass022","grass023","grass024",
-			"grass025","grass026","grass027","grass028","grass029","grass030",
-			"grass031","grass032","grass033","grass034","grass035","grass036","grass037", ""
-		}},
-		{ "stone", {
-			"stone011","stone012","stone013","stone014","stone015","stone016",
-			"stone017","stone018","stone019","stone020","stone021","stone022",
-			"stone023","stone024", ""
-		}},
-		{ "park_bench", {
-			"park_bench002","park_bench003"
-		}},
-		{ "small_bush", {
-			"small_bush001","small_bush002"
-		}},
-		{ "tree", {
-			"tree002","pinetree"
-		}},
-		{ "trashcan", {
-			"trashcan001","trashcan002"
-		}},
-	};
-
-	// key가 카테고리인지 확인
-	auto it = categoryTable.find(key);
-	if (it != categoryTable.end()) {
-		const auto& list = it->second;
-		int idx = rand() % list.size();
-		return list[idx];
-	}
-
-	return key;
 }
