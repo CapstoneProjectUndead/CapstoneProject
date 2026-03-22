@@ -27,7 +27,5 @@ private:
     std::map<std::string, std::shared_ptr<CObject>> prototypes;
     vector<MapGenerator::InstanceData>              map_instance_data;
     std::vector<TreasureInfo>                       treasures;
-
-    std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type);
 };
 

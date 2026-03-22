@@ -1,10 +1,44 @@
 #ifdef CLIENT
+//==================================
+// **** 클라/서버 공동 참조 파일 ****
+//==================================
 #include "stdafx.h"
 #else
 #include "pch.h"
 #endif
 
 #include "MapUtils.h"
+
+std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type)
+{
+	static const std::unordered_map<MapGenerator::EModelType, std::vector<std::string>> table = {
+		{ MapGenerator::EModelType::ROAD,					{"park_road", "stone"} },
+		{ MapGenerator::EModelType::PARK_GREEN,				{"park_green", "grass"} },
+		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
+		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
+
+		{ MapGenerator::EModelType::WALL,					{"house_place"} },// 임시
+
+		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
+		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
+		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
+		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
+		{ MapGenerator::EModelType::CORNER_DOOR,			{"wall_2_door001"} },
+
+		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
+		{ MapGenerator::EModelType::TREE,					{"tree"} },
+		{ MapGenerator::EModelType::TREASURE,				{"trashcan"} },
+		{ MapGenerator::EModelType::BENCH,					{"park_bench"} },
+		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
+		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
+
+		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
+	};
+
+
+	auto it = table.find(type);
+	return it->second;
+}
 
 std::string GetVariantFileName(EModelVariant variant)
 {

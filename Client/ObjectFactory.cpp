@@ -245,7 +245,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	return objects;
 }
 
-std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CDescriptorHeapManager* heapManager, std::vector<MapGenerator::InstanceData> instanceData)
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData)
 {
 	if (prototypes.empty()) LoadGameScene(heapManager);
 
@@ -529,74 +529,4 @@ CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::s
 
 	auto it = table.find(str);
 	return (it != table.end()) ? it->second : LobbyMeshName::Unknown;
-}
-
-std::vector<std::string> CObjectFactory::GameSceneTypeToString(const MapGenerator::EModelType& type)
-{
-	static const std::unordered_map<MapGenerator::EModelType, std::vector<std::string>> table = {
-		{ MapGenerator::EModelType::ROAD,					{"park_road", "stone"} },
-		{ MapGenerator::EModelType::PARK_GREEN,				{"park_green", "grass"} },
-		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
-		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
-
-		{ MapGenerator::EModelType::WALL,					{"house_place"} },// 임시
-
-		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
-		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
-		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
-		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
-		{ MapGenerator::EModelType::CORNER_DOOR,			{"wall_2_door001"} },
-
-		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
-		{ MapGenerator::EModelType::TREE,					{"tree"} },
-		{ MapGenerator::EModelType::TREASURE,				{"trashcan"} },
-		{ MapGenerator::EModelType::BENCH,					{"park_bench"} },
-		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
-		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
-
-		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
-	};
-
-
-	auto it = table.find(type);
-	return it->second;
-}
-
-// grass, stone 등 랜덤 카테고리 선택
-std::string CObjectFactory::PickRandom(const std::string& key)
-{
-	static const std::unordered_map<std::string, std::vector<std::string>> categoryTable = {
-		{ "grass", {
-			"grass019","grass020","grass021","grass022","grass023","grass024",
-			"grass025","grass026","grass027","grass028","grass029","grass030",
-			"grass031","grass032","grass033","grass034","grass035","grass036","grass037", ""
-		}},
-		{ "stone", {
-			"stone011","stone012","stone013","stone014","stone015","stone016",
-			"stone017","stone018","stone019","stone020","stone021","stone022",
-			"stone023","stone024", ""
-		}},
-		{ "park_bench", {
-			"park_bench002","park_bench003"
-		}},
-		{ "small_bush", {
-			"small_bush001","small_bush002"
-		}},
-		{ "tree", {
-			"tree002","pinetree"
-		}},
-		{ "trashcan", {
-			"trashcan001","trashcan002"
-		}},
-	};
-
-	// key가 카테고리인지 확인
-	auto it = categoryTable.find(key);
-	if (it != categoryTable.end()) {
-		const auto& list = it->second;
-		int idx = rand() % list.size();
-		return list[idx];
-	}
-
-	return key;
 }
