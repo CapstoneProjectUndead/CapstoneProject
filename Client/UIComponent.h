@@ -36,6 +36,8 @@ public:
     void SetSize(const XMFLOAT2& s) { size = s; }
     void SetPivot(const XMFLOAT2& p) { pivot = p; }
     void SetRelativePos(const XMFLOAT2& p) { relative_pos = p; }
+    virtual std::string GetShaderName() const { return "ui"; }
+    void Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
 protected:
 	XMFLOAT2 relative_pos{ .0f, .0f };
 	XMFLOAT2 size{ 100.0f, 100.0f };
@@ -62,6 +64,7 @@ class CUIImage : public CUIComponent {
 public:
     void SetFillAmount(float amt) { fill_amount = std::clamp(amt, 0.0f, 1.0f); }
     void SetColor(XMFLOAT4 c);
+    void SetMaterial(std::shared_ptr<CMaterialComponent>& m);
 
     virtual void Update(float deltaTime) override;
     virtual void Collect(IRenderer* renderer) override;
@@ -70,15 +73,17 @@ protected:
     std::shared_ptr<CMaterialComponent> mat_comp;
 };
 
-class CBillboardUI : public CUIComponent {
+class CBillboardUI : public CUIImage {
 public:
     CBillboardUI(CObject* obj) :target{obj} {}
     virtual void Update(float deltaTime) override;
+    virtual void Collect(IRenderer* renderer) override;
 
     // 빌보드를 띄울 타겟(말하는 주체)
     void SetTarget(CObject* obj);
+    virtual std::string GetShaderName() const override { return "billboard"; }
 private:
-    XMFLOAT3 offset{ 0.0f, 2.0f, 0.0f }; // 머리 위 높이 조절
+    XMFLOAT3 offset{ 0.0f, 1.0f, 0.0f }; // 머리 위 높이 조절
     CObject* target{};
 };
 
@@ -97,7 +102,7 @@ public:
     std::shared_ptr<CUICanvas> CreateCanvas();
     void Update(float deltaTime);
     void Render(ID3D12GraphicsCommandList* commandList);
-    void Collect(IRenderer* renderer);
+    void Collect(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
 
     // 마우스 클릭 등의 이벤트 처리
     //void HandleInput();

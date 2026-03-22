@@ -3,6 +3,7 @@
 
 class CMesh;
 class CRectangleMesh;
+class CBillboardMesh;
 
 // GPU에 넘겨줄 배열 구조체
 struct InstCB {
@@ -13,6 +14,11 @@ struct InstCB {
 
 struct UIInstCB {
     XMFLOAT4X4 world_matrix; // UI의 위치, 크기, 회전이 담긴 행렬
+    MaterialData material;
+};
+
+struct BillboardInstCB {
+    XMFLOAT4X4 world_matrix;
     MaterialData material;
 };
 
@@ -61,7 +67,6 @@ protected:
     std::map<CMesh*, std::vector<T>> dynamic_batches;
 };
 
-
 class CInstRenderer : public CRenderer<InstCB> {
 public:
     void Render(ID3D12GraphicsCommandList* cmdList) override;
@@ -77,4 +82,12 @@ private:
     std::shared_ptr<CRectangleMesh> quad_mesh;
 };
 
-
+class CBillboardRenderer : public CRenderer<BillboardInstCB> {
+public:
+    CBillboardRenderer();
+    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic) override;
+    void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+    void Render(ID3D12GraphicsCommandList* cmdList) override;
+private:
+    std::shared_ptr<CBillboardMesh> b_mesh;
+};

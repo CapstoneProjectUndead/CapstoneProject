@@ -26,11 +26,11 @@ CSkinnedVertex::CSkinnedVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal)
 
 // CBillBoardVertex
 CBillBoardVertex::CBillBoardVertex()
-	: size{ 3, 3 }
 {
 }
-CBillBoardVertex::CBillBoardVertex(XMFLOAT3 position, XMFLOAT2 size)
-	: position{position} , size{size}
+
+CBillBoardVertex::CBillBoardVertex(XMFLOAT3 position)
+	: position{position}
 {
 
 }
@@ -241,7 +241,7 @@ CBillboardMesh::CBillboardMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 
 	XMFLOAT2 size{ 3.0f, 3.0f };
-	CBillBoardVertex vertex{ XMFLOAT3(0.0f, 0.0f, 0.0f), size };
+	CBillBoardVertex vertex{ XMFLOAT3(0.0f, 0.0f, 0.0f) };
 
 	// 삼각형 메쉬를 리소스로 생성
 	vertex_buffer = CreateBufferResource(device, commandList, &vertex, stride * vertex_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_upload_buffer.GetAddressOf());
@@ -255,14 +255,13 @@ CBillboardMesh::CBillboardMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 CBillboardMesh::CBillboardMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float width, float height)
 	: CMesh(device, commandList)
 {
-
 	// 정점 버퍼 생성
 	vertex_num = 1;
 	stride = sizeof(CBillBoardVertex);
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 
 	XMFLOAT2 size{ width, height};
-	CBillBoardVertex vertex{ XMFLOAT3(0.0f, 0.0f, 0.0f), size };
+	CBillBoardVertex vertex{ XMFLOAT3(0.0f, 0.0f, 0.0f) };
 
 	// 삼각형 메쉬를 리소스로 생성
 	vertex_buffer = CreateBufferResource(device, commandList, &vertex, stride * vertex_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_upload_buffer.GetAddressOf());

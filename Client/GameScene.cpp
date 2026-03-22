@@ -36,28 +36,41 @@ void CGameScene::Initialize()
 		shaders.emplace("inst", std::move(shader));
 	}
 	{
+		std::shared_ptr<CShader> shader = std::make_unique<CBillboardShader>();
+		shader->CreateShader(GET_DEVICE);
+		shaders.emplace("billboard", std::move(shader));
+	}
+	{
 		// UI
 		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
 		shader->CreateShader(GET_DEVICE);
 		shaders.emplace("ui", std::move(shader));
-
-		// 1. 캔버스 생성
-		auto mainCanvas = CUIManager::GetInstance().CreateCanvas();
-
-		// 2. 체력바 배경 추가 (예시)
-		auto hpBarBg = std::make_shared<CUIImage>();
-		hpBarBg->SetSize({ 400.0f, 40.0f });
-		hpBarBg->SetRelativePos({ 0.0f, 450.0f }); // 화면 하단 쪽
-		hpBarBg->SetColor({ 0.2f, 0.2f, 0.2f, 1.0f }); // 어두운 배경
-
-		mainCanvas->AddChild(hpBarBg);
-
-		factory->GetMaterial(shaders["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 	}
+
+	// 1. 캔버스 생성
+	auto mainCanvas = CUIManager::GetInstance().CreateCanvas();
+
+	// 2. 체력바 배경 추가 (예시)
+	auto hpBarBg = std::make_shared<CUIImage>();
+	hpBarBg->SetSize({ 400.0f, 40.0f });
+	hpBarBg->SetRelativePos({ 0.0f, 450.0f }); // 화면 하단 쪽
+
+	mainCanvas->AddChild(hpBarBg);
+
+	factory->GetMaterial(shaders["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 
 	if (objects.empty()) {
 		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
+		auto obj = factory->CreatePlayer(staticHeapManager);
+		obj->SetPosition(3, 0, 3);
+		auto billboard = std::make_shared<CBillboardUI>(obj.get());
+		std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
+		m->SetMaterial(factory->GetMaterial(shaders["billboard"]->GetHeapManager(), "white"));
+		billboard->SetMaterial(m);
+
+		mainCanvas->AddChild(billboard);
+		objects.push_back(std::move(obj));
 	}
 
 	{
@@ -71,10 +84,10 @@ void CGameScene::Initialize()
 		uiRenderer->Initialize(GET_DEVICE, 100);
 		renderers["ui"] = std::move(uiRenderer);
 
-		//// 3. 빌보드 전용 렌더러 등록
-		//auto bbRenderer = std::make_unique<CBillboardRenderer>();
-		//bbRenderer->Initialize(GET_DEVICE, 500);
-		//renderers["billboard"] = std::move(bbRenderer);
+		// 3. 빌보드 전용 렌더러 등록
+		auto bbRenderer = std::make_unique<CBillboardRenderer>();
+		bbRenderer->Initialize(GET_DEVICE, 500);
+		renderers["billboard"] = std::move(bbRenderer);
 	}
 }
 
@@ -132,20 +145,29 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 	}
 
 	// UI 매니저 수집
-	auto uiIt = renderers.find("ui");
-	if (uiIt != renderers.end()) {
-		CUIManager::GetInstance().Collect(uiIt->second.get());
-	}
+	CUIManager::GetInstance().Collect(renderers);
 
 	// Draw Phase
 	for (const auto& [name, pShader] : shaders) {
 		pShader->RenderBegin(commandList);
 
-		bool isUI = (name == "ui");
-		camera->UpdateShaderVariables(commandList, isUI);
+		if (name == "billboard") {
+			camera->UpdateShaderVariablesBillBoard(commandList);
+		}
+		else if (name == "ui") {
+			camera->UpdateShaderVariables(commandList, true);
+		}
+		else {
+			camera->UpdateShaderVariables(commandList, false);
+		}
 
-		if (light && !isUI) light->Render(commandList);
+		// 2. 광원 처리 (UI와 빌보드는 보통 자체 발광이므로 라이트를 끕니다)
+		bool useLight = (name != "ui" && name != "billboard");
+		if (light && useLight) {
+			light->Render(commandList);
+		}
 
+		// 3. 실제 그리기 (인스턴싱 드로우)
 		auto it = renderers.find(name);
 		if (it != renderers.end()) {
 			it->second->Render(commandList);

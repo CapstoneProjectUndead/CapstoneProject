@@ -65,6 +65,20 @@ void CUIComponent::Render(ID3D12GraphicsCommandList* commandList)
     }
 }
 
+void CUIComponent::Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers)
+{
+    std::string shaderKey = GetShaderName(); // 아래 3번 참고
+    auto it = renderers.find(shaderKey);
+
+    if (it != renderers.end()) {
+        Collect(it->second.get());
+    }
+
+    for (auto& c : child) {
+        c->Traverse(renderers);
+    }
+}
+
 void CUIComponent::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
@@ -132,6 +146,11 @@ void CUIImage::SetColor(XMFLOAT4 c)
     m.albedo = c;
 }
 
+void CUIImage::SetMaterial(std::shared_ptr<CMaterialComponent>& m)
+{
+    mat_comp = m;
+}
+
 void CUIImage::Update(float deltaTime)
 {
     Rect parentRect = GetParentRect();
@@ -165,7 +184,7 @@ void CUIImage::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
 
-    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
+    renderer->AddInstance(nullptr, { 1, 1, 0, 1 }, world_matrix, true);
 
     for (auto& c : child) {
         c->Collect(renderer);
@@ -178,18 +197,24 @@ void CBillboardUI::SetTarget(CObject* obj)
     target = obj;
 }
 
+// UIComponent.cpp 수정
 void CBillboardUI::Update(float deltaTime)
 {
     if (target) {
-        // 1. 주인의 월드 위치 가져오기
-        XMVECTOR ownerPos = XMLoadFloat3(&owner->position);
-        XMVECTOR finalPos = ownerPos + XMLoadFloat3(&offset);
+        // 타겟(플레이어 등)의 월드 위치 + 오프셋
+        XMVECTOR targetPos = XMLoadFloat3(&target->position);
+        XMVECTOR finalPos = targetPos + XMLoadFloat3(&offset);
 
-        // 2. 이 위치를 world_matrix의 이동 성분으로 넣음
-        // (GS에서 사용할 점의 위치가 됨)
-        XMMATRIX matWorld = XMMatrixTranslationFromVector(finalPos);
-        XMStoreFloat4x4(&world_matrix, matWorld);
+        // GS에서 사용할 수 있게 world_matrix의 이동 행렬만 생성
+        XMStoreFloat4x4(&world_matrix, XMMatrixTranslationFromVector(finalPos));
     }
+}
+
+void CBillboardUI::Collect(IRenderer* renderer)
+{
+    if (!is_enable) return;
+
+    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, false);
 }
 
 // CUIManager
@@ -207,9 +232,10 @@ void CUIManager::Render(ID3D12GraphicsCommandList* commandList)
     }
 }
 
-void CUIManager::Collect(IRenderer* renderer)
+void CUIManager::Collect(std::map<std::string, std::unique_ptr<IRenderer>>& renderers)
 {
     for (auto& canvas : canvases) {
-        canvas->Collect(renderer);
+        // 캔버스부터 시작해서 재귀적으로 수집 시작
+        canvas->Traverse(renderers);
     }
 }

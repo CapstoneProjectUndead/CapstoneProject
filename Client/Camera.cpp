@@ -35,6 +35,8 @@ void CCamera::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 		camera_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 		ortho_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<OrthoCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 		ortho_cb->Map(0, nullptr, reinterpret_cast<void**>(&ortho_mapped));
+		billboard_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<BillboardCameraCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		billboard_cb->Map(0, nullptr, reinterpret_cast<void**>(&billboard_mapped));
 	}
 }
 
@@ -50,6 +52,15 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool
 	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
 
 	commandList->SetGraphicsRootConstantBufferView(0, camera_cb->GetGPUVirtualAddress());
+}
+
+void CCamera::UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandList)
+{
+	XMStoreFloat4x4(&billboard_mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
+	XMStoreFloat4x4(&billboard_mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
+	billboard_mapped->pos = position;
+
+	commandList->SetGraphicsRootConstantBufferView(0, billboard_cb->GetGPUVirtualAddress());
 }
 
 void CCamera::GenerateProjectionMatrix(float nearPlaneDistance, float farPlaneDistance, float aspectRatio, float fovAngle)

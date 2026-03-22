@@ -146,7 +146,27 @@ void CUIRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     RenderBatches(cmdList, 1);
 }
 
+CBillboardRenderer::CBillboardRenderer()
+{
+    b_mesh = std::make_shared<CBillboardMesh>(GET_DEVICE, GET_CMD_LIST, 1.0f, 1.0f);
+}
+
+void CBillboardRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic)
+{
+    CRenderer<BillboardInstCB>::AddInstance(b_mesh.get(), material, world, isStatic);
+}
+
+void CBillboardRenderer::AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic)
+{
+    CRenderer<BillboardInstCB>::AddInstance(b_mesh.get(), color, world, isStatic);
+}
+
+void CBillboardRenderer::Render(ID3D12GraphicsCommandList* cmdList)
+{
+    RenderBatches(cmdList, 1);
+}
+
 // CRenderer.cpp 맨 아래 추가
 template class CRenderer<InstCB>;
 template class CRenderer<UIInstCB>;
-//template class CRenderer<BillboardCB>;
+template class CRenderer<BillboardInstCB>;

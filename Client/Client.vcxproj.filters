@@ -512,7 +512,7 @@
     <FxCompile Include="Shaders.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="TexShader.hlsl">
+    <FxCompile Include="BillboardShader.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Light.hlsl">

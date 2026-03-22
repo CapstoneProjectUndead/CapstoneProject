@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 namespace CGeometryLoader {
 	struct FrameNode;
@@ -37,11 +37,11 @@ public:
 class CBillBoardVertex {
 public:
 	CBillBoardVertex();
-	CBillBoardVertex(XMFLOAT3 position, XMFLOAT2 size);
+	CBillBoardVertex(XMFLOAT3 position);
 	void SetPos(XMFLOAT3 pos) { position = pos; }
 protected:
 	XMFLOAT3 position{};
-	XMFLOAT2 size{};
+	//XMFLOAT2 size{};	// world_matrix에서 추출해서 사용
 };
 
 class CMesh
@@ -53,6 +53,7 @@ public:
 	void ReleaseUploadBuffer();
 
 	virtual void Render(ID3D12GraphicsCommandList*, uint32 instCount = 1);
+	void SetPrimitive(D3D12_PRIMITIVE_TOPOLOGY t) { primitive_topology = t; }
 
 	// 불러온 모델 데이터 저장용 함수
 	template<typename T>

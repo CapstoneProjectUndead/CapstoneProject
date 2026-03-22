@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Component.h"
 
 class CTexture;
@@ -41,6 +41,7 @@ private:
 class CMaterialComponent : public CComponent
 {
 public:
+    CMaterialComponent() = default;
     void SetMaterial(std::shared_ptr<CMaterial>& mat) { material = mat; }
     CMaterial* GetMaterial() const { return material.get(); }
 
