@@ -104,18 +104,18 @@ void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& p
 
 	shared_ptr<CRoom> room = make_shared<CRoom>(pkt.room_name);
 
-	// �濡 �����ؾ� �ϴ� ��� Scene���� �����ϰ� �ʱ�ȭ
+	// 방에 존재해야 하는 모든 Scene들을 생성하고 초기화
 	room->Initialize();
 
 	uint32 roomId = room->GetRoomID();
 
-	// �������� �ڽ��� ���� ��ID�� ������ �ִ´�.
+	// 유저에도 자신이 속한 방ID를 가지고 있는다.
 	user->SetRoomID(roomId);
 
-	// ������ �ڽ��� Room �����͸� ��� �ִ´�.
+	// 유저는 자신의 Room 포인터를 들고 있는다.
 	user->SetRoom(room);
 
-	// �÷��̾� Custom Scene�� ���� (�ϰ� push��)
+	// 플레이어 Custom Scene에 입장 (일감 push만)
 	{
 		auto& scenes = room->GetScenes();
 		CCustomScene* customScene = dynamic_cast<CCustomScene*>(scenes[(UINT)SCENE_TYPE::CUSTOMS].get());
@@ -131,7 +131,7 @@ void CRoomManager::CreateRoom(shared_ptr<Session> session, const C_CreateRoom& p
 			, enterPkt);
 	}
 
-	// �� map�� ����
+	// 방 map에 저장
 	lock_guard<mutex> lg(rooms_lock);
 	rooms[room->GetRoomID()] = room;
 }
@@ -144,11 +144,11 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 	auto room = FindRoomLock(pkt.room_id);
 	if (room) {
 		if (room->IsValid()) {
-			// ���� ��ID�� �� Set
+			// 유저 방ID와 방 Set
 			user->SetRoomID(pkt.room_id);
 			user->SetRoom(room);
 
-			// �÷��̾� Custom Scene�� ����
+			// 플레이어 Custom Scene에 입장
 			auto& scenes = room->GetScenes();
 			CCustomScene* customScene = dynamic_cast<CCustomScene*>(scenes[(UINT)SCENE_TYPE::CUSTOMS].get());
 			assert(customScene);
@@ -159,8 +159,8 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 				, pkt);
 		}
 		else {
-			// ���� �ʰ� �Ǵ� �̹� ���� ������ ��
-			// fail ��Ŷ ����
+			// 정원 초과 또는 이미 게임 시작한 방
+			// fail 패킷 전송
 			S_EnterRoom enterPkt;
 			enterPkt.success = false;
 			enterPkt.room_id = pkt.room_id;
@@ -170,8 +170,8 @@ void CRoomManager::EnterRoom(shared_ptr<Session> session, const C_EnterRoom& pkt
 		}
 	}
 	else {
-		// ��ȿ���� ���� ��
-		// fail ��Ŷ ����
+		// 유효하지 않은 방
+		// fail 패킷 전송
 		S_EnterRoom enterPkt;
 		enterPkt.success = false;
 		enterPkt.room_id = pkt.room_id;
@@ -192,7 +192,7 @@ void CRoomManager::LeaveAndCleanupRoom(shared_ptr<Session> session, const C_Leav
 	auto room = player->GetRoom();
 	assert(room);
 
-	// �÷��̾ �ִ� �뿡�� �÷��̾ ���� ������ �÷��̾ ����
+	// 플레이어가 있는 룸에서 플레이어가 속한 씬에서 플레이어를 제거
 	auto& scenes = room->GetScenes();
 	CScene* scene = scenes[(UINT)player->GetCurrentSceneType()].get();
 	assert(scene);

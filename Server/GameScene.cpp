@@ -58,7 +58,7 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 		collider->SetFillter(filter);
 		obj->SetComponent(collider);
 		};
-	// ColliderComponent ����
+	// ColliderComponent 
 	bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
 	if (!node->collider.positions.empty()) {
 		std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);

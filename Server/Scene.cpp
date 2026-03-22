@@ -11,6 +11,8 @@
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
+	, room_id(-1)
+	, active_player_count(0)
 	, dt_ping_accumulator(0.0f)
 {
 
@@ -19,6 +21,7 @@ CScene::CScene(SCENE_TYPE type)
 CScene::CScene(SCENE_TYPE type, uint32 roomId)
 	: scene_type(type)
 	, room_id(roomId)
+	, active_player_count(0)
 	, dt_ping_accumulator(0.0f)
 {
 }
@@ -240,26 +243,38 @@ void CScene::LeaveScene(uint64 playerId)
 
 void CScene::Enter()
 {
-	if (colliders_active)
-		return;
+	if (scene_type != SCENE_TYPE::TITLE && scene_type != SCENE_TYPE::CUSTOMS) {
 
-	if ((scene_type != SCENE_TYPE::TITLE) && (scene_type != SCENE_TYPE::GAME)) {
-		for (const auto& obj : static_objects) {
-			CColliderComponent* col = obj->GetComponent<CColliderComponent>();
-			if (col) {
-				GetPhysicsManager()->SetCollider(col);
+		active_player_count++;
+
+		// 이미 다른 플레이어가 있으면 충돌체 이미 등록됨
+		if (active_player_count > 1)
+			return;
+
+		if (scene_type != SCENE_TYPE::GAME) {
+			for (const auto& obj : static_objects) {
+				CColliderComponent* col = obj->GetComponent<CColliderComponent>();
+				if (col) {
+					GetPhysicsManager()->SetCollider(col);
+				}
 			}
 		}
 	}
-
-	colliders_active = true;
 }
 
 void CScene::Exit()
 {
-	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT, scene_type);
-	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
-	colliders_active = false;
+	if (scene_type != SCENE_TYPE::TITLE && scene_type != SCENE_TYPE::CUSTOMS) {
+
+		active_player_count--;
+
+		// 아직 다른 플레이어가 남아있으면 충돌체 유지
+		if (active_player_count > 0)
+			return;
+
+		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT, scene_type);
+		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
+	}
 }
 
 void CScene::SendExistingUsers(shared_ptr<CPlayer> player)
@@ -353,13 +368,12 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 
 		// 해당 방에 유저가 한명도 없다면 방 삭제!
 		if (r->GetCurrentPlayerCount() == 0) {
+
+			// 방을 비활성화
 			CRoomManager::GetInstance().DeActiveRoom(r);
 
 			// 어차피 삭제될 방이니 몬스터 vector도 clear 해준다.
 			monsters.clear();
-
-			// 모든 충돌체도 clear
-			GetPhysicsManager()->ClearCollider();
 		}
 
 		/// 아래 함수는 Room Update를 멀티스레드로 돌렸을 때 사용한 함수.

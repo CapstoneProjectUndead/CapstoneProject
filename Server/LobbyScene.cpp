@@ -293,7 +293,6 @@ void CLobbyScene::CreateLobby()
 			collider->owner = obj.get();
 			collider->Update(0.0f);
 			obj->SetComponent(collider);
-			GetPhysicsManager()->SetCollider(collider);
 			break;
 		}
 		case LobbyMeshName::Floor:
@@ -309,12 +308,11 @@ void CLobbyScene::CreateLobby()
 			boxCollider->owner = obj.get();
 			boxCollider->Update(0.0f);
 			obj->SetComponent(boxCollider);
-			GetPhysicsManager()->SetCollider(boxCollider);
 			break;
 		}
 		case LobbyMeshName::GroundPipe:
 		{
-			// children->mesh.bounds realBounds 
+			// children->mesh.bounds realBounds
 			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
 			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
 			boxCollider->SetFillter(filter);
@@ -322,7 +320,6 @@ void CLobbyScene::CreateLobby()
 			boxCollider->owner = obj.get();
 			boxCollider->Update(0.0f);
 			obj->SetComponent(boxCollider);
-			GetPhysicsManager()->SetCollider(boxCollider);
 			break;
 		}
 		case LobbyMeshName::Unknown:
@@ -336,7 +333,6 @@ void CLobbyScene::CreateLobby()
 			collider->owner = obj.get();
 			collider->Update(0.0f);
 			obj->SetComponent(collider);
-			GetPhysicsManager()->SetCollider(collider);
 			break;
 		}
 
@@ -344,7 +340,4 @@ void CLobbyScene::CreateLobby()
 
 		static_objects.push_back(obj);
 	}
-
-	// Start()에서 이미 PhysicsManager에 등록했으므로 중복 등록 방지
-	colliders_active = true;
 }

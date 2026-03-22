@@ -111,10 +111,8 @@ protected:
 	// Room의 PhysicsManager를 약한 참조
 	weak_ptr<CPhysicsManager>			physics_manager;
 
-	// 콜라이더가 PhysicsManager에 등록된 상태인지 추적
-	bool								colliders_active = false;
-
 private:
+	int									active_player_count;
 	float								dt_ping_accumulator;
 };
 
