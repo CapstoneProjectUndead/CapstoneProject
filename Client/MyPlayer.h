@@ -48,9 +48,9 @@ public:
     std::shared_ptr<CInventory> GetInventory() const { return inventory; }
     void                        SetInventory(std::shared_ptr<CInventory> inven) { inventory = inven; }
 
-    uint32 GetGold() const { return gold; }
-    void   SetGold(uint32 amount) { gold = amount; }
-    void   AddGold(uint32 amount) { gold += amount; }
+    uint64 GetGold() const { return gold; }
+    void   SetGold(uint64 amount) { gold = amount; }
+    void   AddGold(uint64 amount) { gold += amount; }
 
 private:
     void ProcessRotation();
