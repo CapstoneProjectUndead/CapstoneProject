@@ -167,12 +167,12 @@ void CTitleScene::DrawTitle()
 
     if (ImGui::Begin("Title", NULL, mainFlags)) {
 
-        if (CImGuiManager::title_font) {
+        if (CImGuiManager::vineritc_font) {
 
             float fontScale = G_RATIO_Y;
             //fontScale = std::clamp(fontScale, 1.0f, 2.0f);
 
-            ImGui::PushFont(CImGuiManager::title_font);
+            ImGui::PushFont(CImGuiManager::vineritc_font);
             ImGui::SetWindowFontScale(fontScale);
         }
 
@@ -180,7 +180,7 @@ void CTitleScene::DrawTitle()
         ImGui::Text("UNDEAD");
         ImGui::PopStyleColor();
 
-        if (CImGuiManager::title_font)
+        if (CImGuiManager::vineritc_font)
             ImGui::PopFont();
     }
     ImGui::End();
@@ -597,7 +597,7 @@ void CTitleScene::DrawRoomListUI()
 
         // 타이틀 (빨간 UNDEAD)
         ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-        if (CImGuiManager::title_font2) ImGui::PushFont(CImGuiManager::title_font2);
+        if (CImGuiManager::elephnt_font) ImGui::PushFont(CImGuiManager::elephnt_font);
 
         const char* titleText = "UNDEAD";
         float textWidth = ImGui::CalcTextSize(titleText).x;
@@ -607,7 +607,7 @@ void CTitleScene::DrawRoomListUI()
         ImGui::Text(titleText);
         ImGui::PopStyleColor();
 
-        if (CImGuiManager::title_font2)
+        if (CImGuiManager::elephnt_font)
             ImGui::PopFont();
 
         ImGui::Spacing(); ImGui::Spacing();

@@ -23,8 +23,11 @@ public:
 	void  Draw();
 
 private:
-	void DrawItemTable(ITEM_TYPE type);  // 탭별 아이템 목록 테이블
-	void DrawBottomBar();                // 하단 용량 + 소지금 바
+	void BeginDrawInventory();
+	void DrawTitleBar(float winW, float titleH); // 타이틀 + X 버튼
+	void DrawTabBar();                           // 탭 4개 + 아이템 테이블
+	void DrawItemTable(ITEM_TYPE type);          // 탭별 아이템 목록 테이블
+	void DrawBottomBar();                        // 하단 용량 + 소지금 바
 
 private:
 	std::weak_ptr<CMyPlayer>             owner;          // 소지금 접근용
@@ -34,4 +37,5 @@ private:
 	float                                max_weight     = 200.0f; // 기본값, 업그레이드로 증가
 
 	bool                                 is_open        = false;
+	ITEM_TYPE                            active_tab     = ITEM_TYPE::EQUIPMENT;
 };

@@ -87,7 +87,7 @@ private:
     XMFLOAT3                          server_velocity{};
 
     std::shared_ptr<CInventory>       inventory;
-    uint32                            gold;      // 소지금
+    uint64                            gold;      // 소지금
 
     bool                              is_ready;
 };

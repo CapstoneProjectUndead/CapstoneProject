@@ -3,6 +3,9 @@
 #include "ImGuiManager.h"
 #include "MyPlayer.h"
 
+#undef max
+#undef min
+
 CInventory::CInventory(std::shared_ptr<CMyPlayer> _owner)
 	: owner(_owner)
 {
@@ -42,21 +45,296 @@ void CInventory::Draw()
 	if (!is_open)
 		return;
 
-	// TODO: 인벤토리 창 ImGui 코드 작성
+	BeginDrawInventory();
+}
+
+void CInventory::BeginDrawInventory()
+{
+	float  scale = G_RATIO_Y;
+	ImVec2 screen = ImGui::GetIO().DisplaySize;
+	float  winW = 348.0f * scale;
+	float  winH = 455.0f * scale;
+	float  titleH = 36.0f * scale;
+
+	ImGui::SetNextWindowPos(ImVec2(screen.x * 0.5f, screen.y * 0.5f), ImGuiCond_Once, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_Always);
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+		| ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 20.0f * scale);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, 0.85f));
+
+	if (ImGui::Begin("##Inventory", nullptr, flags)) {
+
+		ImGui::SetWindowFontScale(scale);
+
+		DrawTitleBar(winW, titleH);
+		DrawTabBar();
+		DrawBottomBar();
+
+		ImGui::SetWindowFontScale(1.0f);
+	}
+	ImGui::End();
+
+	ImGui::PopStyleColor(); // WindowBg
+	ImGui::PopStyleVar(3);  // WindowPadding, ItemSpacing, WindowRounding
+}
+
+void CInventory::DrawTitleBar(float winW, float titleH)
+{
+	float scale = G_RATIO_Y;
+
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0)); // 투명 - 배경 직접 그림
+	if (ImGui::BeginChild("##TitleBar", ImVec2(winW, titleH), false)) {
+
+		// 위쪽 모서리만 둥글게 배경 직접 그리기
+		ImDrawList* dl   = ImGui::GetWindowDrawList();
+		ImVec2      wpos = ImGui::GetWindowPos();
+		ImVec2      wsz  = ImGui::GetWindowSize();
+		dl->AddRectFilled(wpos, ImVec2(wpos.x + wsz.x, wpos.y + wsz.y),
+		                  IM_COL32(115, 115, 115, 64), 20.0f * scale, ImDrawFlags_RoundCornersTop);
+
+		ImGui::SetWindowFontScale(scale);
+
+		// "Inventory" 텍스트 가운데 정렬 (Bold + 형광 노란색)
+		const char* title = "Inventory";
+
+		if (CImGuiManager::bold_font) 
+			ImGui::PushFont(CImGuiManager::bold_font);
+
+		float textW = ImGui::CalcTextSize(title).x;
+		ImGui::SetCursorPos(ImVec2((winW - textW) * 0.5f, (titleH - ImGui::GetTextLineHeight()) * 0.5f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // 형광 노란색
+		ImGui::Text(title);
+		ImGui::PopStyleColor();
+
+		if (CImGuiManager::bold_font) 
+			ImGui::PopFont();
+
+		// 우상단 빨간 X 버튼
+		float btnSize = 26.0f * scale;
+		ImGui::SetCursorPos(ImVec2(winW - btnSize - 15.0f * scale, (titleH - btnSize) * 0.5f));
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.85f, 0.10f, 0.10f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.00f, 0.25f, 0.25f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.60f, 0.00f, 0.00f, 1.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+
+		if (ImGui::Button("X##close", ImVec2(btnSize, btnSize)))
+			is_open = false;
+
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(3);
+		ImGui::SetWindowFontScale(1.0f);
+	}
+	ImGui::EndChild();
+	ImGui::PopStyleColor(); // ChildBg
+}
+
+void CInventory::DrawTabBar()
+{
+	float scale  = G_RATIO_Y;
+	float winW   = ImGui::GetWindowWidth();
+	float gap    = 4.0f * scale;
+	float tabW   = (winW - gap * 3) / 4.0f;
+	float tabH   = 30.0f * scale;
+
+	struct TabInfo { const char* label; ITEM_TYPE type; };
+	TabInfo tabs[4] = {
+		{ (const char*)u8"장비",      ITEM_TYPE::EQUIPMENT  },
+		{ (const char*)u8"회복",      ITEM_TYPE::CONSUMABLE },
+		{ (const char*)u8"기타",      ITEM_TYPE::ETC        },
+		{ (const char*)u8"보물",      ITEM_TYPE::TREASURE   },
+	};
+
+	// 탭 전체 영역 시작점 기록 (외곽선용)
+	ImVec2 tabBarStart = ImGui::GetCursorScreenPos();
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(gap, 0));
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f * scale);
+
+	for (int i = 0; i < 4; i++) {
+
+		bool isActive = (active_tab == tabs[i].type);
+
+		if (isActive) {
+			ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.85f, 0.15f, 0.85f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.10f, 0.40f, 0.80f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.10f, 0.40f, 0.80f, 1.0f));
+		}
+		else {
+			ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.15f, 0.50f, 0.85f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.85f, 0.60f, 1.00f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.10f, 0.40f, 0.80f, 1.0f));
+		}
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		ImGui::PushFont(CImGuiManager::bold_font);
+
+		if (ImGui::Button(tabs[i].label, ImVec2(tabW, tabH)))
+			active_tab = tabs[i].type;
+
+		ImGui::PopStyleColor(4);
+		ImGui::PopFont();
+
+		if (i < 3) 
+			ImGui::SameLine();
+	}
+
+	ImGui::PopStyleVar(2);
+
+	// 선택된 탭의 아이템 테이블 렌더링
+	DrawItemTable(active_tab);
 }
 
 void CInventory::DrawItemTable(ITEM_TYPE type)
 {
-	// TODO: type에 맞는 아이템만 필터링해서 테이블 렌더링
+	float scale = G_RATIO_Y;
+
+	// 현재 탭에 해당하는 아이템 필터링
+	std::vector<CItem*> filtered;
+	for (auto& item : items) {
+		if (item->GetItemType() == type)
+			filtered.push_back(item.get());
+	}
+
+	float bottomH = 40.0f * scale;
+	float rowH    = 70.0f * scale;
+
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.18f, 0.18f, 0.18f, 0.85f));
+
+	if (ImGui::BeginChild("##ItemScroll", ImVec2(0, -bottomH), false, ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+
+		ImGui::SetWindowFontScale(scale);
+
+		ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders
+			| ImGuiTableFlags_RowBg
+			| ImGuiTableFlags_SizingFixedFit;
+
+		ImGui::PushStyleColor(ImGuiCol_TableRowBg,       ImVec4(0.42f, 0.42f, 0.42f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt,    ImVec4(0.42f, 0.42f, 0.42f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_TableBorderLight, ImVec4(0.20f, 0.20f, 0.20f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Text,             ImVec4(0.00f, 0.00f, 0.00f, 1.0f));
+
+		if (ImGui::BeginTable("##ItemTable", 3, tableFlags)) {
+
+			ImGui::TableSetupColumn("##img",    ImGuiTableColumnFlags_WidthFixed,  80.0f * scale);
+			ImGui::TableSetupColumn("##name",   ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("##weight", ImGuiTableColumnFlags_WidthFixed,  70.0f * scale);
+
+			int minRows   = 50;
+			int totalRows = std::max((int)filtered.size(), minRows);
+
+			for (int i = 0; i < totalRows; i++) {
+				ImGui::TableNextRow(ImGuiTableRowFlags_None, rowH);
+
+				// 이미지 셀
+				ImGui::TableSetColumnIndex(0);
+				if (i < (int)filtered.size()) {
+					// TODO: 실제 텍스처 로드 후 ImGui::Image()로 교체
+					float pad = (rowH - ImGui::GetTextLineHeight()) * 0.5f;
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + pad);
+					ImGui::Text("[img]");
+				}
+
+				// 아이템 이름 셀
+				ImGui::TableSetColumnIndex(1);
+				if (i < (int)filtered.size()) {
+					std::string name = CP949ToUTF8(filtered[i]->GetName());
+					float pad = (rowH - ImGui::GetTextLineHeight()) * 0.5f;
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + pad);
+					ImGui::Text("%s", name.c_str());
+
+					// 툴팁 
+					//if (ImGui::IsItemHovered()) {
+					//	ImGui::BeginTooltip();
+					//	ImGui::Text("%s", name.c_str());
+					//	std::string desc = CP949ToUTF8(filtered[i]->GetDescription());
+					//	if (!desc.empty())
+					//		ImGui::Text("%s", desc.c_str());
+					//	ImGui::EndTooltip();
+					//}
+				}
+
+				// 무게 셀
+				ImGui::TableSetColumnIndex(2);
+				if (i < (int)filtered.size()) {
+					char buf[32];
+					snprintf(buf, sizeof(buf), "%.0f un", filtered[i]->GetWeight());
+					float pad = (rowH - ImGui::GetTextLineHeight()) * 0.5f;
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + pad);
+					ImGui::Text(buf);
+				}
+			}
+
+			ImGui::EndTable();
+		}
+
+		ImGui::PopStyleColor(4);
+		ImGui::SetWindowFontScale(1.0f);
+	}
+	ImGui::EndChild();
+	ImGui::PopStyleColor(); // ChildBg
 }
 
 void CInventory::DrawBottomBar()
 {
-	// TODO: 하단 용량 + 소지금 렌더링
+	float scale = G_RATIO_Y;
+
 	auto player = owner.lock();
 	if (!player)
 		return;
 
-	// 용량: current_weight / max_weight un
-	// 소지금: player->GetGold() 원
+	float bottomH = 40.0f * scale;
+
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0)); // 투명 - 배경 직접 그림
+	ImGui::PushStyleColor(ImGuiCol_Text,    ImVec4(0.00f, 0.00f, 0.00f, 1.0f)); // 검정 텍스트
+
+	if (ImGui::BeginChild("##BottomBar", ImVec2(0, bottomH), false)) {
+
+		// 아래쪽 모서리만 둥글게 노란 배경 직접 그리기
+		ImDrawList* dl   = ImGui::GetWindowDrawList();
+		ImVec2      wpos = ImGui::GetWindowPos();
+		ImVec2      wsz  = ImGui::GetWindowSize();
+		dl->AddRectFilled(wpos, ImVec2(wpos.x + wsz.x, wpos.y + wsz.y),
+		                  IM_COL32(255, 199, 0, 255), 20.0f * scale, ImDrawFlags_RoundCornersBottom);
+
+		ImGui::SetWindowFontScale(scale);
+
+		if (CImGuiManager::bold_font)
+			ImGui::PushFont(CImGuiManager::bold_font);
+
+		float barH    = ImGui::GetWindowHeight();
+		float textY   = (barH - ImGui::GetTextLineHeight()) * 0.5f;
+		float padX    = 10.0f * scale;
+
+		// 소지금 (왼쪽)
+		char goldBuf[256];
+		player->SetGold(1000000000000);
+		snprintf(goldBuf, sizeof(goldBuf), "%u", player->GetGold());
+		std::string goldText = (const char*)u8"소지금: ";
+		std::string unit = (const char*)u8"원";
+		goldText += goldBuf + unit;
+		ImGui::SetCursorPos(ImVec2(padX, textY));
+		ImGui::Text("%s", goldText.c_str());
+
+		// 가방 용량 (오른쪽)
+		char weightBuf[64];
+		snprintf(weightBuf, sizeof(weightBuf), "%.0f  / %.0f", current_weight, max_weight);
+		std::string weightText = (const char*)u8"가방:  ";
+		weightText += weightBuf;
+		float textW = ImGui::CalcTextSize(weightText.c_str()).x;
+		ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() - textW - padX, textY));
+		ImGui::Text("%s", weightText.c_str());
+
+		ImGui::SetWindowFontScale(1.0f);
+
+		if (CImGuiManager::bold_font)
+			ImGui::PopFont();
+	}
+	ImGui::EndChild();
+
+	ImGui::PopStyleColor(2);
 }

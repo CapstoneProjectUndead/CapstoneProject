@@ -10,6 +10,7 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "Inventory.h"
+#include "ImGuiManager.h"
 
 #undef min
 #undef max
@@ -35,7 +36,7 @@ void CMyPlayer::Update(float elapsedTime)
 		InterpolateMyPlayer(elapsedTime);
 	}
 
-	// "I" 키를 누르면 인벤토리를 열고/닫기
+	// "I" 키를 누르면 인벤토리를 열고
 	if (KEY_TAP(KEY::I)) {
 		inventory->ToggleOpen();
 	}
@@ -140,6 +141,9 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 
 void CMyPlayer::ProcessRotation()
 {
+	if (ImGui::GetIO().WantCaptureMouse)
+		return;
+
 	CKeyManager& keyManager = CKeyManager::GetInstance();
 	if (KEY_PRESSED(KEY::LBTN)) {
 		Vec2 mouseDelta = (keyManager.GetMousePos() - keyManager.GetPrevMousePos()) / 3.0f;
