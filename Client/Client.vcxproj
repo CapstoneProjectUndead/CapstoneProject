@@ -193,6 +193,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Item.h" />
     <ClInclude Include="ItemFinder.h" />
     <ClInclude Include="JitterMeasurer.h" />
     <ClInclude Include="KeyManager.h">
@@ -273,6 +274,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemFinder.cpp" />
     <ClCompile Include="JitterMeasurer.cpp" />
     <ClCompile Include="KeyManager.cpp">
