@@ -12,6 +12,7 @@ struct ClientFrameHistory
 };
 
 class CUser;
+class CInventory;
 
 class CMyPlayer :
     public CPlayer
@@ -43,6 +44,13 @@ public:
 
     bool GetIsReady() const { return is_ready; }
     void SetIsReady(bool ready) { is_ready = ready; }
+
+    std::shared_ptr<CInventory> GetInventory() const { return inventory; }
+    void                        SetInventory(std::shared_ptr<CInventory> inven) { inventory = inven; }
+
+    uint32 GetGold() const { return gold; }
+    void   SetGold(uint32 amount) { gold = amount; }
+    void   AddGold(uint32 amount) { gold += amount; }
 
 private:
     void ProcessRotation();
@@ -77,6 +85,9 @@ private:
     InputData                         current_input;
 
     XMFLOAT3                          server_velocity{};
+
+    std::shared_ptr<CInventory>       inventory;
+    uint32                            gold;      // 소지금
 
     bool                              is_ready;
 };

@@ -10,6 +10,7 @@
 #include "ItemFinder.h"
 #include "NetworkManager.h"
 #include "MeshRenderer.h"
+#include "Inventory.h"
 
 
 CGameScene::CGameScene()
@@ -103,6 +104,11 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 
 void CGameScene::DrawUI()
 {
+	if (my_player) {
+		auto& inventory = my_player->GetInventory();
+		assert(inventory);
+		inventory->Draw();
+	}
 }
 
 bool CGameScene::IsUIInputEnabled()

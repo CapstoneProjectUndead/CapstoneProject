@@ -97,6 +97,9 @@
     <Filter Include="Object\Item\World Item">
       <UniqueIdentifier>{8822c58a-f9ea-4f45-8606-99773d5793bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Inventory">
+      <UniqueIdentifier>{29e63e26-539e-44e2-ac37-927ef5d676f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -321,6 +324,9 @@
     <ClInclude Include="Item.h">
       <Filter>Object\Item\Inventory Item</Filter>
     </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -502,6 +508,9 @@
     </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>Object\Item\Inventory Item</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

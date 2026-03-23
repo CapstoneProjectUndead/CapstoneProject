@@ -10,6 +10,9 @@ public:
 	virtual ~CItem();
 
 	// UI에서 쉽게 가져다 쓸 수 있도록 Getter 제공
+	int                GetItemId() const { return base_data->item_id; }
+	ITEM_TYPE          GetItemType() const { return base_data->item_type; }
+	float              GetWeight() const { return base_data->weight; }
 	const std::string& GetIconPath() const { return base_data->icon_path; }
 	const std::string& GetName() const { return base_data->item_name; }
 	const std::string& GetDescription() const { return base_data->description; }
