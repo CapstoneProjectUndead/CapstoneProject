@@ -26,7 +26,8 @@ private:
 	void BeginDrawInventory();
 	void DrawTitleBar(float winW, float titleH); // 타이틀 + X 버튼
 	void DrawTabBar();                           // 탭 4개 + 아이템 테이블
-	void DrawItemTable(ITEM_TYPE type);          // 탭별 아이템 목록 테이블
+	void DrawItemTable(ITEM_TYPE type);          // 보물 탭 - 이름/무게 테이블
+	void DrawItemGrid(ITEM_TYPE type);           // 장비/회복/기타 탭 - 이미지 격자
 	void DrawBottomBar();                        // 하단 용량 + 소지금 바
 
 private:

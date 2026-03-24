@@ -185,8 +185,85 @@ void CInventory::DrawTabBar()
 
 	ImGui::PopStyleVar(2);
 
-	// 선택된 탭의 아이템 테이블 렌더링
-	DrawItemTable(active_tab);
+	// 선택된 탭의 아이템 렌더링
+	if (active_tab == ITEM_TYPE::TREASURE)
+		DrawItemTable(active_tab);
+	else
+		DrawItemGrid(active_tab);
+}
+
+void CInventory::DrawItemGrid(ITEM_TYPE type)
+{
+	float scale = G_RATIO_Y;
+
+	std::vector<CItem*> filtered;
+	for (auto& item : items) {
+		if (item->GetItemType() == type)
+			filtered.push_back(item.get());
+	}
+
+	const int cols    = 4;
+	float     bottomH = 40.0f * scale;
+	float     pad     = 4.0f * scale;
+	float     rounding = 6.0f * scale;
+
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	if (ImGui::BeginChild("##ItemScroll", ImVec2(0, -bottomH), false, ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+
+		ImGui::SetWindowFontScale(scale);
+
+		float avail  = ImGui::GetContentRegionAvail().x;
+		float cellSz = (avail - pad * (cols + 1)) / cols;
+
+		int minSlots = cols * 5;
+		int total    = std::max((int)filtered.size(), minSlots);
+		int rows     = (total + cols - 1) / cols;
+
+		ImGui::Dummy(ImVec2(0.0f, pad * 2)); // 상단 여백
+
+		for (int row = 0; row < rows; row++) {
+
+			ImGui::SetCursorPosX(pad);
+			for (int col = 0; col < cols; col++) {
+				int idx = row * cols + col;
+
+				ImVec2      cellMin = ImGui::GetCursorScreenPos();
+				ImVec2      cellMax = ImVec2(cellMin.x + cellSz, cellMin.y + cellSz);
+				ImDrawList* dl      = ImGui::GetWindowDrawList();
+
+				dl->AddRectFilled(cellMin, cellMax, IM_COL32(210, 210, 215, 255), rounding);
+				dl->AddRect(cellMin, cellMax,       IM_COL32(170, 170, 175, 255), rounding);
+
+				if (idx < (int)filtered.size()) {
+
+					// TODO: 실제 아이템 이미지 로드 후 ImGui::Image()로 교체
+					const char* placeholder = "[img]";
+					ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
+					ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
+					                     cellMin.y + (cellSz - tSz.y) * 0.5f);
+					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
+
+					// TODO: 실제 수량으로 교체
+					char countBuf[16];
+					snprintf(countBuf, sizeof(countBuf), "%.0f", filtered[idx]->GetWeight());
+					float lineH = ImGui::GetTextLineHeight();
+					ImVec2 cPos = ImVec2(cellMin.x + pad, cellMax.y - lineH - pad * 0.5f);
+					dl->AddText(cPos, IM_COL32(30, 30, 30, 255), countBuf);
+				}
+
+				ImGui::Dummy(ImVec2(cellSz, cellSz));
+
+				if (col < cols - 1)
+					ImGui::SameLine(0.0f, pad);
+			}
+			ImGui::Dummy(ImVec2(0.0f, pad)); // 행 간격
+		}
+
+		ImGui::SetWindowFontScale(1.0f);
+	}
+	ImGui::EndChild();
+	ImGui::PopStyleColor();
 }
 
 void CInventory::DrawItemTable(ITEM_TYPE type)

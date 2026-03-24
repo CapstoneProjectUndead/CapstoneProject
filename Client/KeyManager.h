@@ -41,7 +41,7 @@ enum class KEY
     W, S, A, D,
     Z, X, C, V,
     F,
-    R, T, Y, U, I, O, P,
+    E, R, T, Y, U, I, O, P,
 
     _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
 
