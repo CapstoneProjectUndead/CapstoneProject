@@ -53,7 +53,7 @@ void CInventory::BeginDrawInventory()
 	float  scale = G_RATIO_Y;
 	ImVec2 screen = ImGui::GetIO().DisplaySize;
 	float  winW = 348.0f * scale;
-	float  winH = 465.0f * scale;
+	float  winH = 460.0f * scale;
 	float  titleH = 36.0f * scale;
 
 	ImGui::SetNextWindowPos(ImVec2(screen.x * 0.5f, screen.y * 0.5f), ImGuiCond_Once, ImVec2(0.5f, 0.5f));
