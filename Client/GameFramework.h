@@ -22,8 +22,11 @@ public:
 	void CreateRenderTargetViews();
 	void CreateDepthStencilView();
 
-	// swap chain state 변경
+	// swap chain state 변경 (보더리스 전체화면 토글)
 	void ChangeSwapChainState();
+	// 창 크기 변경 시 스왑체인/DSV 버퍼 재생성
+	void OnResize();
+
 	// 동기화
 	void waitForGpuComplete();
 	void MoveToNextFrame();
@@ -47,6 +50,7 @@ public:
 
 	ComPtr<ID3D12Device>				GetDevice() { return d3d_device; }
 	ComPtr<ID3D12GraphicsCommandList>	GetCommandList() { return command_list; }
+	bool IsFullscreen() const { return is_fullscreen; }
 
 private:
 	int client_width{FRAME_BUFFER_WIDTH};
@@ -91,6 +95,11 @@ private:
 	// 뷰포트와 씨저 사각형
 	D3D12_VIEWPORT viewport{};
 	D3D12_RECT scissor_rect{};
+
+	// 보더리스 전체화면 상태
+	bool  is_fullscreen   = false;
+	RECT  windowed_rect   = {};
+	DWORD windowed_style  = 0;
 
 	// Timer 관련
 	CTimer& timer;
