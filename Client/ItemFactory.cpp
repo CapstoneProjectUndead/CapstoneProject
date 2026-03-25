@@ -64,7 +64,7 @@ namespace ItemFactory
 		case ITEM_TYPE::EQUIPMENT:
 			return std::make_shared<CEquipment>(data, e.max_durability);
 		case ITEM_TYPE::CONSUMABLE:
-			return std::make_shared<CHealItem>(data, e.heal_amount);
+			return std::make_shared<CCunsumable>(data, e.heal_amount);
 		case ITEM_TYPE::TREASURE:
 			return std::make_shared<CTreasure>(data, e.grade);
 		case ITEM_TYPE::ETC:

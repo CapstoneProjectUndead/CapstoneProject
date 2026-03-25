@@ -242,6 +242,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="TraceState.h" />
     <ClInclude Include="UICommon.h" />
     <ClInclude Include="User.h" />
+    <ClInclude Include="WorldItem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
@@ -325,6 +326,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="TraceState.cpp" />
     <ClCompile Include="User.cpp" />
+    <ClCompile Include="WorldItem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />

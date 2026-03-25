@@ -27,13 +27,13 @@ CEquipment::~CEquipment()
 }
 
 // 회복(음식)
-CHealItem::CHealItem(const ItemData* data, const uint32 healAmount)
+CCunsumable::CCunsumable(const ItemData* data, const uint32 healAmount)
 	: CItem(data)
 	, heal_amount(healAmount)
 {
 }
 
-CHealItem::~CHealItem()
+CCunsumable::~CCunsumable()
 {
 }
 

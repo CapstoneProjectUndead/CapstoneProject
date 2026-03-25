@@ -34,12 +34,12 @@ private:
 	uint32 current_durability; // 내구도
 };
 
-// 회복(음식)
-class CHealItem : public CItem
+// 소비(회복템)
+class CCunsumable : public CItem
 {
 public:
-	CHealItem(const ItemData* data, const uint32 healAmount);
-	virtual ~CHealItem() override;
+	CCunsumable(const ItemData* data, const uint32 healAmount);
+	virtual ~CCunsumable() override;
 
 private:
 	const uint32 heal_amount;
