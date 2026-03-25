@@ -43,9 +43,6 @@
     <Filter Include="Component">
       <UniqueIdentifier>{45504bc4-4e5b-4261-8657-a5cd235e8939}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Scene\Lobby Scene">
-      <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Component\Collider/Physics">
       <UniqueIdentifier>{f71884ed-a63a-483e-97b8-9dc96901df53}</UniqueIdentifier>
     </Filter>
@@ -93,6 +90,12 @@
     </Filter>
     <Filter Include="Component\UI">
       <UniqueIdentifier>{44a02536-db82-46a6-b92c-131aa5b802fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\UIScene">
+      <UniqueIdentifier>{6f74d0b5-ef33-4689-88de-cb97ed1f11db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\LobbyScene">
+      <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -154,7 +157,7 @@
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="LobbyScene.h">
-      <Filter>Scene\Lobby Scene</Filter>
+      <Filter>Scene\LobbyScene</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\VarialbePacketWriter.h">
       <Filter>Network\PacketHandler</Filter>
@@ -315,6 +318,9 @@
     <ClInclude Include="Renderers.h">
       <Filter>Component\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="UIScene.h">
+      <Filter>Scene\UIScene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -360,7 +366,7 @@
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="LobbyScene.cpp">
-      <Filter>Scene\Lobby Scene</Filter>
+      <Filter>Scene\LobbyScene</Filter>
     </ClCompile>
     <ClCompile Include="MyPlayer.cpp">
       <Filter>Object\MyPlayer</Filter>
@@ -493,6 +499,9 @@
     </ClCompile>
     <ClCompile Include="Renderers.cpp">
       <Filter>Component\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="UIScene.cpp">
+      <Filter>Scene\UIScene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

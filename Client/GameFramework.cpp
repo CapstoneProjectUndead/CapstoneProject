@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Player.h"
 #include "KeyManager.h"
 #include "NetworkManager.h"
@@ -14,6 +14,7 @@
 #include "TitleScene.h"
 #include "CustomScene.h"
 #include "GameScene.h"
+#include "UIScene.h"
 
 extern HWND ghWnd;
 
@@ -287,9 +288,12 @@ void CGameFramework::BuildObjects()
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME] = std::make_unique<CGameScene>();
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME]->Initialize();
 
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI] = std::make_unique<CUIScene>();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI]->Initialize();
+
 	// 시작 Scene은 항상 TitleScene 이지만,
 	// 해당 Scene 작업을 위해서, 여기서 바꾸면 된다.
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI].get();
 	CSceneManager::GetInstance().SetActiveScene(activeScene);
 
 	// 서버와 연결 체크

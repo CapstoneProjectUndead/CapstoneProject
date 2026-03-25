@@ -238,6 +238,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="TraceState.h" />
     <ClInclude Include="UICommon.h" />
     <ClInclude Include="UIComponent.h" />
+    <ClInclude Include="UIScene.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>
   <ItemGroup>
@@ -313,6 +314,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="TraceState.cpp" />
     <ClCompile Include="UIComponent.cpp" />
+    <ClCompile Include="UIScene.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //======================================
 // **** 클라/서버 공동 참조 헤더 파일 ****
 //======================================
@@ -25,6 +25,7 @@ enum class SCENE_TYPE : uint8_t
 	CUSTOMS,
 	LOBBY,
 	GAME,
+	UI,	// ui 생성용
 
 	END
 };
