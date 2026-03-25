@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 
 class CMaterialComponent;
@@ -21,6 +21,7 @@ public:
         // 두 사각형이 겹치는지 확인 (UI 레이아웃 겹침 방지 등)
         bool Intersects(const Rect& other) const;
     };
+    enum class EButtonState { Normal, Hover, Pressed, Disabled };
 
     CUIComponent();
 
@@ -38,11 +39,14 @@ public:
     void SetRelativePos(const XMFLOAT2& p) { relative_pos = p; }
     virtual std::string GetShaderName() const { return "ui"; }
     void Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
+    virtual bool IntersectsMouse(float x, float y);
 protected:
-	XMFLOAT2 relative_pos{ .0f, .0f };
+    EButtonState state{ EButtonState::Disabled };
+    XMFLOAT2 relative_pos{ .0f, .0f };
 	XMFLOAT2 size{ 100.0f, 100.0f };
-	XMFLOAT2 pivot{ 0.0f, 0.0f };	// 본인 기준(0 ~ 1)
+	XMFLOAT2 pivot{ 1.0f, 1.0f };	// 본인 기준(0 ~ 1)
 	XMFLOAT2 anchor{ 0.0f, 0.0f };	// 부모기준 UI 정렬 기준. (-1 ~ 1)
+    XMFLOAT4 color{1, 1, 0, 1};
 
 	XMFLOAT2 final_screen_pos{ .0f, .0f };
     Rect rect{ relative_pos.x - size.x / 2, relative_pos.y - size.y / 2};
@@ -58,26 +62,28 @@ public:
     CUICanvas();
 
     void Update(float deltaTime) override;
+    bool IntersectsMouse(float x, float y) override;
 };
 
 class CUIImage : public CUIComponent {
 public:
+    CUIImage();
     void SetFillAmount(float amt) { fill_amount = std::clamp(amt, 0.0f, 1.0f); }
     void SetColor(XMFLOAT4 c);
     void SetMaterial(std::shared_ptr<CMaterialComponent>& m);
 
+    // fill_amount 적용 외에 UIComponent와 유사
     virtual void Update(float deltaTime) override;
     virtual void Collect(IRenderer* renderer) override;
 protected:
     float fill_amount = 1.0f;
-    std::shared_ptr<CMaterialComponent> mat_comp;
+    std::shared_ptr<CMaterialComponent> mat_comp;  // 생성 시 heap 0 index 사용
 };
 
-class CBillboardUI : public CUIImage {
+class CUIBillboard : public CUIImage {
 public:
-    CBillboardUI(CObject* obj) :target{obj} {}
+    CUIBillboard(CObject* obj) :target{obj} {}
     virtual void Update(float deltaTime) override;
-    virtual void Collect(IRenderer* renderer) override;
 
     // 빌보드를 띄울 타겟(말하는 주체)
     void SetTarget(CObject* obj);
@@ -87,10 +93,31 @@ private:
     CObject* target{};
 };
 
+class CUIText : public CUIComponent {
+public:
+    void SetText(const std::wstring& text);
+    virtual void Collect(IRenderer* renderer) override;
+    virtual std::string GetShaderName() const override { return "text"; }
+private:
+    std::wstring text{ L"안녕" }; // 서명있는 유니코드로 저장
+    bool is_billboard{};
+};
+
+class CUIButton : public CUIImage {
+public:
+    CUIButton() : CUIImage() { state = EButtonState::Normal; }
+    virtual void Update(float deltaTime) override;
+    virtual void Collect(IRenderer* renderer) override;
+private:
+    void GetColorByState();
+    void UpdateState();
+};
+
 class CUIManager
 {
 private:
     CUIManager() = default;
+    CUIManager(const CUIManager&) = delete;
     std::vector<std::shared_ptr<CUICanvas>> canvases;
 public:
     static CUIManager& GetInstance() {
@@ -105,5 +132,5 @@ public:
     void Collect(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
 
     // 마우스 클릭 등의 이벤트 처리
-    //void HandleInput();
+    bool IntersectsMouse();
 };

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Player.h"
 #include "KeyManager.h"
 #include "NetworkManager.h"
@@ -51,17 +51,21 @@ bool CGameFramework::OnCreate()
 	// format: 보통 DXGI_FORMAT_R8G8B8A8_UNORM
 	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
 
+	graphics_memory = std::make_unique<GraphicsMemory>(d3d_device.Get());
+
 	return true;
 }
+
 void CGameFramework::OnDestroy()
 {
 	waitForGpuComplete();
 
-	ReleaseObjects();
-
 	::CloseHandle(fence_event);
 
+	graphics_memory.reset();
+
 	swap_chain->SetFullscreenState(FALSE, nullptr);
+
 #if defined(_DEBUG)
 	// 리소스 누수 확인
 	IDXGIDebug1* dxgi_debug = nullptr;
@@ -285,7 +289,7 @@ void CGameFramework::BuildObjects()
 
 	// 시작 Scene은 항상 TitleScene 이지만,
 	// 해당 Scene 작업을 위해서, 여기서 바꾸면 된다.
-	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
+	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
 	CSceneManager::GetInstance().SetActiveScene(activeScene);
 
 	// 서버와 연결 체크
@@ -306,10 +310,6 @@ void CGameFramework::BuildObjects()
 		activeScene->ReleaseUploadBuffers();
 
 	timer.Reset();
-}
-
-void CGameFramework::ReleaseObjects()
-{
 }
 
 void CGameFramework::waitForGpuComplete()
@@ -486,6 +486,9 @@ void CGameFramework::CommandEnd()
 
 	// 스왑체인 프리젠트. 현재 렌더 타겟의 내용이 전면 버퍼로 옮겨지고 렌더 타겟 인덱스가 바뀜
 	swap_chain->Present(1, 0);
+
+	// 임시 메모리 정리
+	GraphicsMemory::Get().Commit(command_queue.Get());
 
 	MoveToNextFrame();
 

@@ -1,9 +1,10 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "UIComponent.h"
 #include "Mesh.h"
 #include "Renderers.h"
 #include "GameFramework.h"
 #include "Object.h"
+#include "KeyManager.h"
 
 CUIComponent::CUIComponent()
     : world_matrix{Matrix4x4::Identity()}
@@ -23,30 +24,35 @@ bool CUIComponent::Rect::Intersects(const Rect& other) const
 
 void CUIComponent::Update(const float deltaTime)
 {
-    // 내 위치 계산
     Rect parentRect = GetParentRect();
 
-    // Anchor: 부모 내 기준점 (-1 ~ 1 -> 0 ~ 1 변환 후 좌표 산출)
+    // 기준점(Anchor + Relative) 계산
     float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
     float anchorY = parentRect.top + (parentRect.Height() * (1.0f - anchor.y) * 0.5f);
 
     float finalX = anchorX + relative_pos.x;
     float finalY = anchorY + relative_pos.y;
 
-    // 내 Rect 갱신 (자식들이 나중에 참조할 값)
+    // 판정용 Rect 갱신 (피벗 반영)
+    // pivot == 0: left -> finalX가 되고, pivot == 1: right -> finalX
     rect.left = finalX - (pivot.x * size.x);
     rect.top = finalY - (pivot.y * size.y);
     rect.right = rect.left + size.x;
     rect.bottom = rect.top + size.y;
 
-    // 행렬 생성 수정
+    // Scale 생성
     XMMATRIX matScale = XMMatrixScaling(size.x, size.y, 1.0f);
 
-    // Pivot: (0,0) 기준 메쉬라면 (-pivot.x, pivot.y)
-    XMMATRIX matPivot = XMMatrixTranslation(-pivot.x, pivot.y, 0.0f);
+    // Pivot 보정
+    float pivotOffsetX = (0.5f - pivot.x) * size.x;
+    float pivotOffsetY = (0.5f - pivot.y) * size.y;
 
+    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+
+    // 최종 위치 이동
     XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
 
+    // Scale -> Pivot -> Translation
     XMMATRIX world = matScale * matPivot * matTranslation;
     XMStoreFloat4x4(&world_matrix, world);
 
@@ -79,11 +85,17 @@ void CUIComponent::Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& r
     }
 }
 
+bool CUIComponent::IntersectsMouse(float x, float y)
+{
+    if (state == EButtonState::Disabled) return false;
+    return rect.IsPointInside(x, y);
+}
+
 void CUIComponent::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
 
-    renderer->AddInstance(nullptr, { 1, 1, 0, 1 }, world_matrix, true);
+    renderer->AddInstance(nullptr, color, world_matrix, true);
 
     for (auto& c : child) {
         c->Collect(renderer);
@@ -132,6 +144,17 @@ void CUICanvas::Update(float deltaTime)
     }
 }
 
+bool CUICanvas::IntersectsMouse(float x, float y)
+{
+    // 리스트의 뒤에 있는 자식이 가장 앞에 그려지므로 rbegin()으로 역순 순회
+    for (auto it = child.rbegin(); it != child.rend(); ++it) {
+        if ((*it)->IntersectsMouse(x, y)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::shared_ptr<CUICanvas> CUIManager::CreateCanvas()
 {
     auto canvas = std::make_shared<CUICanvas>();
@@ -139,11 +162,16 @@ std::shared_ptr<CUICanvas> CUIManager::CreateCanvas()
     return canvas;
 }
 
+CUIImage::CUIImage()
+    : CUIComponent(), mat_comp{ std::make_shared<CMaterialComponent>() }
+{
+    mat_comp->SetMaterial(std::make_shared<CMaterial>());
+}
+
 // CUIImage
 void CUIImage::SetColor(XMFLOAT4 c)
 {
-    MaterialData m{};
-    m.albedo = c;
+    color = c;
 }
 
 void CUIImage::SetMaterial(std::shared_ptr<CMaterialComponent>& m)
@@ -166,15 +194,22 @@ void CUIImage::Update(float deltaTime)
     rect.right = rect.left + size.x;
     rect.bottom = rect.top + size.y;
 
-    // Fill Amount에 따라 실제 가로 크기를 조절한 world_matrix 재생성
+    // Scale 생성
     XMMATRIX matScale = XMMatrixScaling(size.x * fill_amount, size.y, 1.0f);
-    XMMATRIX matPivot = XMMatrixTranslation(-pivot.x + 0.5f, -pivot.y + 0.5f, 0.0f);
 
+    // Pivot 보정
+    float pivotOffsetX = (0.5f - pivot.x) * size.x;
+    float pivotOffsetY = (0.5f - pivot.y) * size.y;
+
+    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+
+    // 최종 위치 이동
     XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
 
+    // Scale -> Pivot -> Translation
     XMMATRIX world = matScale * matPivot * matTranslation;
     XMStoreFloat4x4(&world_matrix, world);
-
+    
     for (auto& c : child) {
         c->Update(deltaTime);
     }
@@ -184,21 +219,21 @@ void CUIImage::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
 
-    renderer->AddInstance(nullptr, { 1, 1, 0, 1 }, world_matrix, true);
+    mat_comp->GetMaterial()->material.albedo = color;
+    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
 
     for (auto& c : child) {
         c->Collect(renderer);
     }
 }
 
-// CBillboardUI
-void CBillboardUI::SetTarget(CObject* obj)
+// CUIBillboard
+void CUIBillboard::SetTarget(CObject* obj)
 {
     target = obj;
 }
 
-// UIComponent.cpp 수정
-void CBillboardUI::Update(float deltaTime)
+void CUIBillboard::Update(float deltaTime)
 {
     if (target) {
         // 타겟(플레이어 등)의 월드 위치 + 오프셋
@@ -210,11 +245,81 @@ void CBillboardUI::Update(float deltaTime)
     }
 }
 
-void CBillboardUI::Collect(IRenderer* renderer)
+// CUIText
+void CUIText::SetText(const std::wstring& t)
+{
+    text = t;
+}
+
+void CUIText::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
 
-    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, false);
+    auto textRenderer = dynamic_cast<CTextRenderer*>(renderer);
+    if (textRenderer) {
+        textRenderer->AddTextInstance(text, world_matrix, color, is_billboard);
+    }
+
+    for (auto& c : child) {
+        c->Collect(renderer);
+    }
+}
+
+void CUIButton::Update(float deltaTime)
+{
+    UpdateState();
+    CUIComponent::Update(deltaTime);
+}
+
+// CUIButton
+void CUIButton::Collect(IRenderer* renderer)
+{
+    if (!is_enable) return;
+
+    GetColorByState();
+    mat_comp->GetMaterial()->material.albedo = color;
+    renderer->AddInstance(nullptr, color, world_matrix, false);
+
+    for (auto& c : child) {
+        c->Collect(renderer);
+    }
+}
+
+void CUIButton::GetColorByState()
+{
+    switch (state) {
+    case EButtonState::Hover:
+        color = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+        break;
+    case EButtonState::Pressed:
+        color = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+        break;
+    default:
+        color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+        break;
+    }
+}
+
+void CUIButton::UpdateState()
+{
+    if (state == EButtonState::Disabled) return;
+
+    // 마우스 포인터가 버튼 영역(Rect) 안에 있는지 검사
+    CKeyManager& keyManager = CKeyManager::GetInstance();
+    Vec2 mouseDelta = keyManager.GetMousePos();
+    if (KEY_PRESSED(KEY::LBTN)) {
+        if(rect.IsPointInside(mouseDelta.x, mouseDelta.y)) {
+            state = EButtonState::Pressed;
+        }
+    }
+    else {
+        if (rect.IsPointInside(mouseDelta.x, mouseDelta.y)) {
+            state = EButtonState::Hover;
+        }
+        else {
+            state = EButtonState::Normal;
+        }
+    }
 }
 
 // CUIManager
@@ -238,4 +343,15 @@ void CUIManager::Collect(std::map<std::string, std::unique_ptr<IRenderer>>& rend
         // 캔버스부터 시작해서 재귀적으로 수집 시작
         canvas->Traverse(renderers);
     }
+}
+
+bool CUIManager::IntersectsMouse()
+{
+    Vec2 mousePos = CKeyManager::GetInstance().GetMousePos();
+    for (auto& canvas : canvases) {
+        if (canvas->IntersectsMouse(mousePos.x, mousePos.y)) {
+            return true;
+        }
+    }
+    return false;
 }

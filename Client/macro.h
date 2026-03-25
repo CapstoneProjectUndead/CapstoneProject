@@ -9,6 +9,7 @@
 #define GET_CMD_LIST gGameFramework.GetCommandList().Get()
 #define GET_CLIENT_WIDTH gGameFramework.GetClientWidth()
 #define GET_CLIENT_HEIGHT gGameFramework.GetClientHeight()
+#define GET_CMD_QUEUE gGameFramework.GetCommandQueue()
 
 #define IS_CONNECT true == CNetworkManager::GetInstance().GetClientService()->GetConnection()
 

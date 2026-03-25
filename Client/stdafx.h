@@ -32,8 +32,9 @@
 #include <dxgidebug.h>
 
 // font
-#include <dwrite.h>
-#include <d2d1.h>
+#include <SpriteFont.h>
+#include <SpriteBatch.h>
+#include <GraphicsMemory.h>
 
 // STL
 #include <memory>
@@ -54,8 +55,6 @@ using Microsoft::WRL::ComPtr;
 #pragma comment(lib, "dxgi.lib")
 
 #pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "dwrite")
-#pragma comment(lib, "d2d1")
 
 #pragma comment(lib, "winmm.lib")
 

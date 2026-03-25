@@ -532,5 +532,6 @@
     <None Include="MeshComponent.inl">
       <Filter>Component\Rendering</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

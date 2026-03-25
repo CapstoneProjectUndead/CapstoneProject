@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Material.h"
 
 class CMesh;
@@ -20,6 +20,13 @@ struct UIInstCB {
 struct BillboardInstCB {
     XMFLOAT4X4 world_matrix;
     MaterialData material;
+};
+
+struct TextInst {
+    std::wstring text;
+    XMFLOAT4X4 world_matrix;
+    XMFLOAT4 color;
+    bool is_billboard;
 };
 
 /*
@@ -90,4 +97,18 @@ public:
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:
     std::shared_ptr<CBillboardMesh> b_mesh;
+};
+
+class CTextRenderer : public IRenderer {
+public:
+    // ui shader heap의 20번째 인덱스 사용(덮어버리지 않게 주의)
+    void Initialize(ID3D12Device* device, ID3D12CommandQueue* commandQueue, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle);
+    virtual void Initialize(ID3D12Device* dev, UINT instSize) override {};
+    // casting 하여 사용
+    void AddTextInstance(const std::wstring & str, const XMFLOAT4X4 & world, const XMFLOAT4 & color, bool billboard);
+    void Render(ID3D12GraphicsCommandList* cmdList) override;
+private:
+    std::unique_ptr<SpriteBatch> sprite_batch;
+    std::unique_ptr<SpriteFont> default_font;
+    std::vector<TextInst> textes;
 };

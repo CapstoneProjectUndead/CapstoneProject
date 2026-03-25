@@ -1,8 +1,11 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Renderers.h"
 #include "GameFramework.h"
 #include "Mesh.h"
 #include "Object.h"
+#include "SceneManager.h"
+#include "Camera.h"
+#include "ResourceUploadBatch.h"
 
 //#include <pix.h>    // PIX 디버깅용
 
@@ -164,6 +167,83 @@ void CBillboardRenderer::AddInstance(CMesh* mesh, const XMFLOAT4 color, const XM
 void CBillboardRenderer::Render(ID3D12GraphicsCommandList* cmdList)
 {
     RenderBatches(cmdList, 1);
+}
+
+// CTextRenderer
+void CTextRenderer::Initialize(ID3D12Device* device, ID3D12CommandQueue* commandQueue, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle)
+{
+    ResourceUploadBatch uploadBatch(device);
+    uploadBatch.Begin();
+
+    // SpriteBatch 생성
+    DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+    // RenderTargetState 생성
+    RenderTargetState rtState(backBufferFormat, depthBufferFormat);
+
+    SpriteBatchPipelineStateDescription psoDesc(rtState);
+
+    sprite_batch = std::make_unique<SpriteBatch>(device, uploadBatch, psoDesc);
+
+    // SpriteFont 생성
+    default_font = std::make_unique<SpriteFont>(
+        device,
+        uploadBatch,
+        L"../Modeling/font/MalgunGothic.spritefont",
+        cpuHandle,
+        gpuHandle
+    );
+
+    // GPU 복사 대기
+    auto uploadFinished = uploadBatch.End(commandQueue);
+    uploadFinished.wait();
+}
+
+void CTextRenderer::AddTextInstance(const std::wstring& str, const XMFLOAT4X4& world, const XMFLOAT4& color, bool billboard)
+{
+    textes.push_back({ str, world, color, billboard });
+}
+
+void CTextRenderer::Render(ID3D12GraphicsCommandList* cmdList)
+{
+    if (textes.empty()) return;
+
+    CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+    if (!scene) return;
+    auto& camera = scene->GetCamera();
+    XMMATRIX view = XMLoadFloat4x4(&camera->GetViewMatrix());
+    XMMATRIX proj = XMLoadFloat4x4(&camera->GetProjectionMatrix());
+    D3D12_VIEWPORT viewport = camera->GetViewPort();
+    // 2D용 렌더링 (View/Proj 없이)
+    sprite_batch->SetViewport(viewport);
+
+    sprite_batch->Begin(cmdList, SpriteSortMode_Deferred);
+    for (auto& item : textes) {
+        if (!item.is_billboard) {
+            XMFLOAT2 pos = XMFLOAT2(item.world_matrix._41, item.world_matrix._42);
+            default_font->DrawString(sprite_batch.get(), item.text.c_str(), pos, XMLoadFloat4(&item.color));
+        }
+    }
+    sprite_batch->End();
+
+    // 3D 빌보드용 렌더링 (View/Proj 필요)
+    sprite_batch->Begin(cmdList, SpriteSortMode_Deferred, view*proj);
+    for (auto& item : textes) {
+        if (item.is_billboard) {
+            XMVECTOR worldPos = XMVectorSet(item.world_matrix._41, item.world_matrix._42, item.world_matrix._43, 1.0f);
+
+            // 중앙 정렬을 위한 Origin 계산
+            XMVECTOR size = default_font->MeasureString(item.text.c_str());
+            XMVECTOR origin = size * 0.5f;
+
+            default_font->DrawString(sprite_batch.get(), item.text.c_str(), worldPos,
+                XMLoadFloat4(&item.color), 0.f, origin, 0.02f);
+        }
+    }
+    sprite_batch->End();
+
+    textes.clear();
 }
 
 // CRenderer.cpp 맨 아래 추가

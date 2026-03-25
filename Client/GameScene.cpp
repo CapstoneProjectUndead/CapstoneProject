@@ -57,6 +57,18 @@ void CGameScene::Initialize()
 
 	mainCanvas->AddChild(hpBarBg);
 
+	auto uiText = std::make_shared<CUIText>();
+	uiText->SetSize({ 400.0f, 40.0f });
+	uiText->SetRelativePos({ 0.0f, 300.0f }); // 화면 하단 쪽
+
+	mainCanvas->AddChild(uiText);
+
+	auto uibutton = std::make_shared<CUIButton>();
+	uibutton->SetSize({ 400.0f, 40.0f });
+	uibutton->SetRelativePos({ 0.0f, 100 }); // 화면 하단 쪽
+
+	mainCanvas->AddChild(uibutton);
+
 	factory->GetMaterial(shaders["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 
 	if (objects.empty()) {
@@ -64,7 +76,8 @@ void CGameScene::Initialize()
 		objects = factory->CreateGameScene(staticHeapManager);
 		auto obj = factory->CreatePlayer(staticHeapManager);
 		obj->SetPosition(3, 0, 3);
-		auto billboard = std::make_shared<CBillboardUI>(obj.get());
+
+		auto billboard = std::make_shared<CUIBillboard>(obj.get());
 		std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
 		m->SetMaterial(factory->GetMaterial(shaders["billboard"]->GetHeapManager(), "white"));
 		billboard->SetMaterial(m);
@@ -74,20 +87,23 @@ void CGameScene::Initialize()
 	}
 
 	{
-		// 1. 일반 인스턴싱 렌더러 등록
 		auto instRenderer = std::make_unique<CInstRenderer>();
 		instRenderer->Initialize(GET_DEVICE, objects.size());
 		renderers["inst"] = std::move(instRenderer);
 
-		// 2. UI 전용 렌더러 등록
 		auto uiRenderer = std::make_unique<CUIRenderer>();
 		uiRenderer->Initialize(GET_DEVICE, 100);
 		renderers["ui"] = std::move(uiRenderer);
 
-		// 3. 빌보드 전용 렌더러 등록
 		auto bbRenderer = std::make_unique<CBillboardRenderer>();
 		bbRenderer->Initialize(GET_DEVICE, 500);
 		renderers["billboard"] = std::move(bbRenderer);
+
+		// 20부터 font용(아직 제한X)
+		CDescriptorHeapManager* heap = shaders["ui"]->GetHeapManager();
+		auto textRenderer = std::make_unique<CTextRenderer>();
+		textRenderer->Initialize(GET_DEVICE, GET_CMD_QUEUE, heap->GetCPUHandle(20), heap->GetGPUHandle(20));
+		renderers["text"] = std::move(textRenderer);
 	}
 }
 
@@ -147,6 +163,8 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 	// UI 매니저 수집
 	CUIManager::GetInstance().Collect(renderers);
 
+
+	// 4. 일반 2D UI 렌더링
 	// Draw Phase
 	for (const auto& [name, pShader] : shaders) {
 		pShader->RenderBegin(commandList);
@@ -171,6 +189,9 @@ void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
 		auto it = renderers.find(name);
 		if (it != renderers.end()) {
 			it->second->Render(commandList);
+			if (name == "ui") {
+				renderers["text"]->Render(commandList);
+			}
 		}
 
 		pShader->RenderEnd(commandList);
