@@ -252,11 +252,11 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
 
 					// TODO: 실제 수량으로 교체
-					char countBuf[16];
-					snprintf(countBuf, sizeof(countBuf), "%.0f", filtered[idx]->GetWeight());
-					float lineH = ImGui::GetTextLineHeight();
-					ImVec2 cPos = ImVec2(cellMin.x + pad, cellMax.y - lineH - pad * 0.5f);
-					dl->AddText(cPos, IM_COL32(30, 30, 30, 255), countBuf);
+					//char countBuf[16];
+					//snprintf(countBuf, sizeof(countBuf), "%.0f", filtered[idx]->GetWeight());
+					//float lineH = ImGui::GetTextLineHeight();
+					//ImVec2 cPos = ImVec2(cellMin.x + pad, cellMax.y - lineH - pad * 0.5f);
+					//dl->AddText(cPos, IM_COL32(30, 30, 30, 255), countBuf);
 				}
 
 				ImGui::Dummy(ImVec2(cellSz, cellSz));
@@ -375,16 +375,18 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 					ImVec2      boxMin  = ImVec2(cellMin.x + slotPad, cellMin.y + slotPad);
 					ImVec2      boxMax  = ImVec2(cellMin.x + cellW - slotPad, cellMin.y + rowH - slotPad);
 					ImDrawList* dl      = ImGui::GetWindowDrawList();
+					ImFont*     font    = ImGui::GetFont();
+					float       baseSz  = ImGui::GetFontSize();
 					dl->AddRectFilled(boxMin, boxMax, IM_COL32(210, 210, 215, 255), rounding);
 					dl->AddRect(boxMin, boxMax,       IM_COL32(170, 170, 175, 255), rounding);
 
 					if (i < (int)filtered.size()) {
 						char  buf[32];
 						snprintf(buf, sizeof(buf), "%.0f un", filtered[i]->GetWeight());
-						float textX = boxMin.x + (boxMax.x - boxMin.x - ImGui::CalcTextSize(buf).x) * 0.5f;
-						float textY = boxMin.y + (boxMax.y - boxMin.y - ImGui::GetTextLineHeight()) * 0.5f;
-						ImGui::SetCursorScreenPos(ImVec2(textX, textY));
-						ImGui::Text("%s", buf);
+						float       textW = font->CalcTextSizeA(baseSz, FLT_MAX, 0.0f, buf).x;
+						float       textX = boxMin.x + (boxMax.x - boxMin.x - textW) * 0.5f;
+						float       textY = boxMin.y + (boxMax.y - boxMin.y - baseSz) * 0.5f;
+						dl->AddText(font, baseSz, ImVec2(textX, textY), IM_COL32(0, 0, 0, 255), buf);
 					}
 					ImGui::Dummy(ImVec2(cellW, rowH));
 				}

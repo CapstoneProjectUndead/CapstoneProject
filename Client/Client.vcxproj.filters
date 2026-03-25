@@ -325,10 +325,10 @@
       <Filter>Object\Item\Inventory Item</Filter>
     </ClInclude>
     <ClInclude Include="Inventory.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Inventory</Filter>
     </ClInclude>
     <ClInclude Include="ItemFactory.h">
-      <Filter>소스 파일</Filter>
+      <Filter>Object\Factory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -513,10 +513,10 @@
       <Filter>Object\Item\Inventory Item</Filter>
     </ClCompile>
     <ClCompile Include="Inventory.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Inventory</Filter>
     </ClCompile>
     <ClCompile Include="ItemFactory.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Object\Factory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
