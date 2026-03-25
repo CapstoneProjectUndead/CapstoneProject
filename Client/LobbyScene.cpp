@@ -25,24 +25,8 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Initialize()
 {
-	// 렌더링할 때 필요한 쉐이더 객체 생성
-	if(shaders.empty()) {
-		{
-			// static shader
-			std::shared_ptr<CShader> shader = std::make_unique<CShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("static", std::move(shader));
-		}
-		{
-			// skinning
-			std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-			shader->CreateShader(GET_DEVICE);
-			shaders.emplace("skinning", std::move(shader));
-		}
-	}
-
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["static"]->GetHeapManager() };
+		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 		objects = factory->CreateLobby(staticHeapManager);
 	}
 }
@@ -51,7 +35,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 {
 	// 플레이어 생성
 	if (!my_player) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
 
@@ -93,6 +77,25 @@ void CLobbyScene::Update(float elapsedTime)
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	}
+
+	// 테스트 (나중에 지울 것)
+	if (KEY_TAP(KEY::P)) {
+
+		if (!g_is_single) {
+			if (!my_player->GetIsReady()) {
+				my_player->SetIsReady(true);
+				C_Ready readyPkt;
+				readyPkt.player_id = my_player->GetID();
+				if (auto session = my_player->GetSession()) {
+					auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
+					session->DoSend(sendBuffer);
+				}
+			}
+		}
+		else {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
+		}
+	}
 }
 
 void CLobbyScene::Enter()
@@ -108,8 +111,8 @@ void CLobbyScene::Enter()
 
 	// HumanMonster 생성
 	if (g_is_single) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateHumanMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
+		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
 		humanMonster->ChangeModelSet(1);
 		humanMonster->ChangeEyes(2);
 		humanMonster->ChangeMouth(0);
@@ -124,13 +127,15 @@ void CLobbyScene::Exit()
 	CScene::Exit();
 
 	my_player = nullptr;
+	paused = false; 
+	StopLoading();
 }
 
 void CLobbyScene::DrawUI()
 {
 	// 로딩 팝업 (최우선 순위)
 	if (loading_type != LoadingType::None) {
-		
+		DrawLoadingPopUp();
 	}
 
 	// 결과 팝업
@@ -311,4 +316,42 @@ void CLobbyScene::DrawRoomLeavePopUp()
 
 		ImGui::EndPopup();
 	}
+}
+
+void CLobbyScene::DrawLoadingPopUp()
+{
+	if (!ImGui::IsPopupOpen("LoadingPopup")) {
+		ImGui::OpenPopup("LoadingPopup");
+	}
+
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.55f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal("LoadingPopup", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize)) {
+
+		float scale = G_RATIO_Y;
+
+		CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f * scale, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
+		ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
+
+		ImGui::SetWindowFontScale(scale);
+
+		const char* txt = "로딩 중...";
+		switch (loading_type) {
+		case LoadingType::MapLoading: txt = (const char*)u8"맵 로딩 중..."; break;
+		case LoadingType::GenerateMap: txt = (const char*)u8"맵 생성 중..."; break;
+		}
+		ImGui::Text("%s", txt);
+
+		// 폰트 스케일 원상 복구
+		ImGui::SetWindowFontScale(1.0f);
+
+		ImGui::EndPopup();
+	}
+}
+
+// 서버 패킷 처리 관련 함수들
+void CLobbyScene::Handle_S_MapStart(std::shared_ptr<Session> session, const S_MapStart& pkt)
+{
+	StartLoading(LoadingType::GenerateMap);
+	paused = true;
 }

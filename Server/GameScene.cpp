@@ -1,7 +1,15 @@
 #include "pch.h"
-// ServerÂÊ GameScene
+// Serverìª½ GameScene
 #include "GameScene.h"
+#include "Player.h"
+#include "User.h"
+#include "Room.h"
 #include "Collider.h"
+#include "PhysicsManager.h"
+#include "GeometryLoader.h"
+#include "HumanMonster.h"
+#include "ServerObjectFactory.h"
+#include "MapUtils.h"
 
 
 CGameScene::CGameScene(uint32 roomId)
@@ -17,7 +25,7 @@ CGameScene::~CGameScene()
 
 void CGameScene::Start()
 {
-
+	
 }
 
 void CGameScene::Update(float elapsedTime)
@@ -25,12 +33,22 @@ void CGameScene::Update(float elapsedTime)
 	CScene::Update(elapsedTime);
 }
 
+void CGameScene::Enter()
+{
+	CScene::Enter();
+}
+
+void CGameScene::Exit()
+{
+	CScene::Exit();
+}
+ 
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
 {
-	if (node->mesh.positions.empty()) 
-		return;
+	if (node->mesh.positions.empty()) return;
 
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+	obj->GetWorldMatrix() = node->localMatrix;
 
 	auto SetColliderComp = [&node, obj](std::unique_ptr<CColliderShape>& shape) {
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
@@ -38,11 +56,9 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 		filter.category = EColLayer::OBJECT;
 		filter.mask = EColLayer::PLAYER;
 		collider->SetFillter(filter);
-		collider->owner = obj.get();
-		collider->Update(0.0f);
 		obj->SetComponent(collider);
 		};
-	// ColliderComponent »ý¼º
+	// ColliderComponent 
 	bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
 	if (!node->collider.positions.empty()) {
 		std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
@@ -55,8 +71,6 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 		filter.category = EColLayer::GROUND;
 		filter.mask = EColLayer::PLAYER;
 		boxCollider->SetFillter(filter);
-		boxCollider->owner = obj.get();
-		boxCollider->Update(0.0f);
 		obj->SetComponent(boxCollider);
 	}
 
@@ -82,42 +96,54 @@ void CGameScene::CreateGameScene()
 	if (prototypes.empty()) 
 		LoadGameScene();
 
-	//std::vector<std::shared_ptr<CObject>> objects;
-	//std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
-	//for (const auto& inst : instData) {
-	//	for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
-	//		std::string meshName = PickRandom(typeName);
-	//		if (meshName.empty()) continue;
-	//
-	//		auto proto = prototypes[meshName];
-	//		auto collider = proto->GetComponent<CColliderComponent>();
-	//
-	//		// À§Ä¡/Å©±â Á¤º¸¸¦ Çà·Ä·Î º¯È¯ÇÏ¿© Ãß°¡
-	//		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-	//
-	//		XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
-	//		XMStoreFloat4x4(&obj->world_matrix, world);
-	//
-	//		// ÀÎ½ºÅÏ½º ·»´õ·¯¿¡ À§Ä¡¿Í ¸®¼Ò½º Á¤º¸ µî·Ï
-	//		CInstRenderer::GetInstance().AddInstance(
-	//			meshComp->GetMesh().get(),
-	//			matComp,
-	//			obj->world_matrix
-	//		);
-	//		obj->SetShdaer("inst");
-	//
-	//		// collider copy(ÀÜµð, µ¹Àº ÇÊ¿äX)
-	//		std::string base{ typeName };
-	//		std::erase_if(base, ::isdigit);
-	//		// ±æÀÌ¸é boxShapeÀ¸·Î »õ·Î »ý¼º
-	//		if ((base != "grass" && base != "stone" && collider)) {
-	//			auto copyCollider = std::make_shared<CColliderComponent>(*collider);
-	//			obj->SetComponent(copyCollider);
-	//			CPhysicsManager::GetInstance().SetCollider(copyCollider);
-	//		}
-	//		objects.push_back(obj);
-	//	}
-	//}
-	//CInstRenderer::GetInstance().Initialize(GET_DEVICE, GET_CMD_LIST, instData.size());
-	//return objects;
+	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
+
+	// ë§µ ë°ì´í„°ë¥¼ ìˆœíšŒí•˜ë©° ë³´ë¬¼ ì¢Œí‘œë§Œ ë¹¼ì˜¤ê¸°
+	for (const auto& inst : instanceData) {
+		if (inst.type == MapGenerator::EModelType::TREASURE) {
+			treasures.push_back(TreasureInfo{ inst.position });
+		}
+	}
+
+	for (auto& inst : instanceData) {
+		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
+
+			EModelVariant model = PickRandomVariant(typeName);
+			if (model == EModelVariant::NONE) continue;
+
+			std::string meshName = GetVariantFileName(model);
+			if (meshName.empty()) continue;
+
+			// ì˜¤ë¸Œì íŠ¸ë³„ ë Œë”ë§ ë°ì´í„°ë¥¼ ë³„ë„ ë²¡í„°ì— ì €ìž¥ (ì…€ë‹¹ ì—¬ëŸ¬ ì˜¤ë¸Œì íŠ¸ ì§€ì›)
+			MapGenerator::InstanceData rd;
+			rd.position = inst.position;
+			rd.rotationY = inst.rotationY;
+			rd.type = inst.type;
+			rd.model = model;
+			map_instance_data.push_back(rd);
+
+			auto proto = prototypes[meshName];
+			auto collider = proto->GetComponent<CColliderComponent>();
+
+			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+			obj->SetCurrentSceneType(scene_type);
+
+			XMMATRIX world = XMLoadFloat4x4(&proto->GetWorldMatrix()) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+			XMStoreFloat4x4(&obj->GetWorldMatrix(), world);
+
+			// collider copy
+			std::string base{ typeName };
+			std::erase_if(base, ::isdigit);
+
+			// boxShape
+			if ((base != "grass" && base != "stone" && collider)) {
+				auto copyCollider = std::make_shared<CColliderComponent>(*collider);
+				copyCollider->owner = obj.get();
+				copyCollider->Update(0.0f);
+				obj->SetComponent(copyCollider);
+				GetPhysicsManager()->SetCollider(copyCollider);
+			}
+			static_objects.push_back(obj);
+		}
+	}
 }

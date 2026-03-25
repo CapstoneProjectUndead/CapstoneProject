@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "ObjectFactory.h"
 #include "MyPlayer.h"
+#include "SceneManager.h"
 
 CUIScene::CUIScene()
 	:CScene(SCENE_TYPE::UI)

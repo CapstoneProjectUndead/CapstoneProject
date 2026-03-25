@@ -7,7 +7,6 @@ class CCamera;
 class CObject;
 class CShader;
 class CObjectFactory;
-class IRenderer;
 class CUIManager;
 
 class CScene
@@ -57,6 +56,7 @@ public:
 	void Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_RemovePlayer& pkt);
 	void Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt);
 	void Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt);
+	void Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt);
 
 public:
 	// 멤버 변수 set
@@ -67,19 +67,15 @@ public:
 
 	SCENE_TYPE								GetSceneType() const { return scene_type; }
 
-	auto&									GetShaders() { return shaders; }
-	void									SetShaders(auto& otherShaders) { shaders = otherShaders; }
 	std::vector<std::shared_ptr<CObject>>&	GetObjects() { return objects; }
 	std::unordered_map<uint64, size_t>&     GetIDIndex() { return id_To_Index; }
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
-
+	
 	std::shared_ptr<CObjectFactory>& GetFactory() { return factory; };
 protected:
 	SCENE_TYPE								scene_type;
 
-	std::map<std::string, std::unique_ptr<IRenderer>> renderers;	// shader에 버퍼 설정하는 멤버 변수(rendering 담당)
-	std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
 	std::shared_ptr<CMyPlayer>				my_player;			// 내 플레이어
 	std::shared_ptr<CCamera>				camera;
 

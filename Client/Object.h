@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CComponent;
 class CShader;
@@ -93,7 +93,7 @@ protected:
 	OBJECT_TYPE obj_type;
 	SCENE_TYPE  current_scene_type = SCENE_TYPE::NONE; // 현재 오브젝트가 속한 씬
 
-	std::string shader_name{"static"};	// 적용 쉐이더 이름
+	std::string shader_name{"inst"};	// 적용 쉐이더 이름
 
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;

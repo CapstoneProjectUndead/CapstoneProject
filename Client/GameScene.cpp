@@ -7,10 +7,11 @@
 #include "GameFramework.h"
 #include "ObjectFactory.h"
 #include "SceneManager.h"
+#include "ItemFinder.h"
+#include "NetworkManager.h"
 #include "MeshRenderer.h"
-#include "Renderers.h"
-
 #include "UIComponent.h"
+
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -23,65 +24,28 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
-	{
-		// skinning
-		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("skinning", std::move(shader));
-	}
-	{
-		// inst
-		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("inst", std::move(shader));
-	}
-	{
-		std::shared_ptr<CShader> shader = std::make_unique<CBillboardShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("billboard", std::move(shader));
-	}
-	{
-		// UI
-		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
-		shader->CreateShader(GET_DEVICE);
-		shaders.emplace("ui", std::move(shader));
-	}
-
-	factory->GetMaterial(shaders["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ shaders["inst"]->GetHeapManager() };
+		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
+		treasures = factory->GetTreauseres();
 	}
 
-	{	// 나중에 sceneManager로 옮기기
-		auto instRenderer = std::make_unique<CInstRenderer>();
-		instRenderer->Initialize(GET_DEVICE, objects.size());
-		renderers["inst"] = std::move(instRenderer);
-
-		auto uiRenderer = std::make_unique<CUIRenderer>();
-		uiRenderer->Initialize(GET_DEVICE, 100);
-		renderers["ui"] = std::move(uiRenderer);
-
-		auto bbRenderer = std::make_unique<CBillboardRenderer>();
-		bbRenderer->Initialize(GET_DEVICE, 500);
-		renderers["billboard"] = std::move(bbRenderer);
-
-		// 20부터 font용(아직 제한X)
-		CDescriptorHeapManager* heap = shaders["ui"]->GetHeapManager();
-		auto textRenderer = std::make_unique<CTextRenderer>();
-		textRenderer->Initialize(GET_DEVICE, GET_CMD_QUEUE, heap->GetCPUHandle(20), heap->GetGPUHandle(20));
-		renderers["text"] = std::move(textRenderer);
-	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	// 플레이어 생성
 	if (!my_player) {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		my_player->SetPosition(0.0f, 2.0f, 0.0f);
+
+		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
+		auto itemFinder = my_player->GetComponent<CItemFinder>();
+		if (itemFinder) {
+			itemFinder->RegisterTreasures(treasures);
+		}
 	}
 
 	if (!camera) {
@@ -132,5 +96,38 @@ void CGameScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
+
+		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
+		auto itemFinder = my_player->GetComponent<CItemFinder>();
+		if (itemFinder) {
+			itemFinder->RegisterTreasures(treasures);
+		}
 	}
+}
+
+void CGameScene::Exit()
+{
+	CScene::Exit();
+
+	my_player = nullptr;
+}
+
+void CGameScene::Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt)
+{
+	const int cnt = pkt.data_count;	
+	for (UINT i = 0; i < cnt; ++i) {
+		instance_data.push_back(pkt.data[i]);
+	}
+}
+
+void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt)
+{
+	// 기존 GameScene의 맵 데이터가 있다면 모두 clear
+	objects.erase(std::remove_if(objects.begin(), objects.end(), [](const std::shared_ptr<CObject> obj) {
+		return obj->GetObjectType() == OBJECT_TYPE::STATIC_OBJECT;
+		}),
+		objects.end());
+
+	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
+	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
 }

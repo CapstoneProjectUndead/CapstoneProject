@@ -1,8 +1,60 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
 #include "MyPlayer.h"
+#include "Shader.h"
+#include "GameFramework.h"
+
+void CSceneManager::Init(ID3D12Device* device)
+{
+	// shader
+	{
+		// inst
+		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
+		shader->CreateShader(device);
+		shaders.emplace("inst", std::move(shader));
+	}
+	{
+		// skinning
+		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
+		shader->CreateShader(device);
+		shaders.emplace("skinning", std::move(shader));
+	}
+	{
+		// billboard(ui용)
+		std::shared_ptr<CShader> shader = std::make_unique<CBillboardShader>();
+		shader->CreateShader(device);
+		shaders.emplace("billboard", std::move(shader));
+	}
+	{
+		// UI
+		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
+		shader->CreateShader(device);
+		shaders.emplace("ui", std::move(shader));
+	}
+
+	// renderer
+	{
+		auto instRenderer = std::make_unique<CInstRenderer>();
+		instRenderer->Initialize(device, 5000);
+		renderers["inst"] = std::move(instRenderer);
+
+		auto uiRenderer = std::make_unique<CUIRenderer>();
+		uiRenderer->Initialize(device, 100);
+		renderers["ui"] = std::move(uiRenderer);
+
+		auto bbRenderer = std::make_unique<CBillboardRenderer>();
+		bbRenderer->Initialize(device, 500);
+		renderers["billboard"] = std::move(bbRenderer);
+
+		// 20부터 font용(아직 제한X)
+		CDescriptorHeapManager* heap = shaders["ui"]->GetHeapManager();
+		auto textRenderer = std::make_unique<CTextRenderer>();
+		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetCPUHandle(20), heap->GetGPUHandle(20));
+		renderers["text"] = std::move(textRenderer);
+	}
+}
 
 
 void CSceneManager::Update()
@@ -27,13 +79,6 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	if (active_scene->GetMyPlayer())
 		myPlayer = active_scene->GetMyPlayer();
 
-	// 기존 씬의 shader Set
-	std::unordered_map<std::string, std::shared_ptr<CShader>> newShader;
-	auto& shaders = active_scene->GetShaders();
-	if (!shaders.empty()) {
-		newShader = shaders;
-	}
-
 	// 기존 씬에서 정리할게 있으면 여기서 처리
 	active_scene->Exit();
 	
@@ -43,9 +88,6 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	// 해당 씬에 플레이어 셋팅
 	if (myPlayer && active_scene->GetSceneType() != SCENE_TYPE::TITLE)
 		active_scene->SetPlayer(myPlayer);
-
-	if (!newShader.empty())
-		active_scene->SetShaders(newShader);
 
 	// 해당 씬에서 할 게 있으면 여기서 처리
 	active_scene->Enter();

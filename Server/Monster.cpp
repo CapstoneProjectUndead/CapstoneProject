@@ -3,16 +3,27 @@
 #include "Monster.h"
 #include "Scene.h"
 #include "Room.h"
+#include "Collider.h"
+#include "PhysicsManager.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CObject(OBJECT_TYPE::MONSTER)
 	, monster_type(type)
 	, AI_state(AI_STATE::MONSTER_IDLE)
+    , idle_timer(0.f)
+    , patrol_timer(0.f)
+    , attack_timer(0.f)
+    , turn_timer(0.f)
 {
 }
 
 CMonster::~CMonster()
 {
+    if (auto r = room.lock()) {
+        if (auto physicsManager = r->GetScenes()[(UINT)current_scene_type]->GetPhysicsManager()) {
+            physicsManager->EraseCollider(GetComponent<CColliderComponent>());
+        }
+    }
 }
 
 void CMonster::Update(float elapsedTime)

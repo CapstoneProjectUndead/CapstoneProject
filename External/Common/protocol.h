@@ -47,6 +47,12 @@ enum PacketType : uint16_t
 	_S_SCENE_CHANGE,
 	_S_Spawn_MONSTER,
 	_S_MONSTER_MOVE,
+
+	_S_MAP_START,
+	_S_MAP_DATA,
+	_S_MAP_END,
+
+	_C_READY,	// 로비씬에서 사신에게 준비 완료 버튼 누름
 };
 
 #pragma pack (push, 1)
@@ -226,7 +232,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 64, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 65, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -289,7 +295,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 75, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 76, "C_PlayerInput size mismatch!");
 
 struct S_PlayerMove : public PacketHeader
 {
@@ -300,7 +306,7 @@ struct S_PlayerMove : public PacketHeader
 
 	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 71, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 72, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {
@@ -329,6 +335,16 @@ struct C_SceneChange : public PacketHeader
 };
 static_assert(sizeof(C_SceneChange) == 4 + 10, "C_SceneChange size mismatch!");
 
+struct S_SceneChange : public PacketHeader
+{
+	uint64     player_id;
+	SCENE_TYPE current_scene;
+	SCENE_TYPE target_scene;
+
+	S_SceneChange() : PacketHeader(sizeof(S_SceneChange), (UINT)PacketType::_S_SCENE_CHANGE) {}
+};
+static_assert(sizeof(S_SceneChange) == 4 + 10, "S_SceneChange size mismatch!");
+
 struct S_SpawnMonster : public PacketHeader
 {
 	NetMonsterInfo info;    // 53바이트
@@ -348,5 +364,37 @@ struct S_MonsterMove : public PacketHeader
 	S_MonsterMove() : PacketHeader(sizeof(S_MonsterMove), (UINT)PacketType::_S_MONSTER_MOVE) {}
 };
 static_assert(sizeof(S_MonsterMove) == 4 + 58, "S_MonsterMove size mismatch!");
+
+struct S_MapStart : public PacketHeader
+{
+	S_MapStart() : PacketHeader(sizeof(S_MapStart), _S_MAP_START) {}
+};
+static_assert(sizeof(S_MapStart) == 4, "S_MapStart size mismatch!");
+
+struct S_MapData : public PacketHeader
+{
+	//uint16    chunk_index;  // 몇 번째 조각인지 (0, 1, 2...)
+	//uint16    total_chunks; // 총 몇 조각인지 (82개 등)
+
+	uint16    data_count;    // 이번 패킷에 담긴 구조체 개수
+	NetPacket::InstanceData data[60];   // 17바이트 구조체 x 60
+
+	S_MapData() : PacketHeader(sizeof(S_MapData), _S_MAP_DATA) {}
+};
+static_assert(sizeof(S_MapData) == 4 + 1142, "S_MapData size mismatch!");
+
+struct S_MapEnd : public PacketHeader
+{
+	S_MapEnd() : PacketHeader(sizeof(S_MapEnd), _S_MAP_END) {}
+};
+static_assert(sizeof(S_MapEnd) == 4, "S_MapEnd size mismatch!");
+
+struct C_Ready : public PacketHeader
+{
+	uint64 player_id;
+
+	C_Ready() : PacketHeader(sizeof(C_Ready), _C_READY) {}
+};
+static_assert(sizeof(C_Ready) == 4 + 8, "C_Ready size mismatch!");
 
 #pragma pack (pop)

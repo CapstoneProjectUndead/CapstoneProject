@@ -9,7 +9,7 @@ void CMaterial::SetTexture(const std::shared_ptr<CTexture>& tex)
 	texture = tex;
 }
 
-std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
+std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
 {
 	auto it = materials.find(name);
 	if (it != materials.end())
@@ -26,7 +26,7 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name
 	return mat;
 }
 
-std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name)
+std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name)
 {
 	auto it = materials.find(name);
 	if (it != materials.end()) return nullptr;
@@ -34,7 +34,7 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMeterial(const std::string& name
 	return it->second;
 }
 
-void CMaterialManager::LoadMeterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
+void CMaterialManager::LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex)
 {
-	GetMeterial(name, tex);
+	GetMaterial(name, tex);
 }

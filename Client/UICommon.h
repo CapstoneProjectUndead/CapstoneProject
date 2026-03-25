@@ -16,6 +16,10 @@ enum class LoadingType
 
     // Custom Scene 관련
     SelectResult,
+
+    // LobbyScene 관련
+    MapLoading,
+    GenerateMap,
 };
 
 // 결과 팝업 데이터 (성공/실패 메시지)

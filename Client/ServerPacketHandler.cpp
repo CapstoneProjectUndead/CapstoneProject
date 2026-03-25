@@ -16,6 +16,7 @@
 #include "User.h"
 #include "TitleScene.h"
 #include "CustomScene.h"
+#include "GameScene.h"
 
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
@@ -188,6 +189,47 @@ bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt)
 	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	assert(targetScene);
 	targetScene->Handle_S_Move_Monster(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_SCENE_CHANGE(std::shared_ptr<Session> session, S_SceneChange& pkt)
+{
+	CScene* currentScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.current_scene].get();
+	assert(currentScene);
+
+	// 유저가 현재 속한 Scene이 서버쪽 기록과 다르면 assert!
+	auto player = CAST_SS(session)->GetUser()->GetMyPlayer();
+	assert(player->GetCurrentSceneType() == pkt.current_scene);
+
+	currentScene->Handle_S_Scene_Change(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_MAP_START(std::shared_ptr<Session> session, S_MapStart& pkt)
+{
+	CLobbyScene* lobbyScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(lobbyScene);
+	lobbyScene->Handle_S_MapStart(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_MAP_DATA(std::shared_ptr<Session> session, S_MapData& pkt)
+{
+	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	assert(gameScene);
+	gameScene->Handle_S_MapData(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_MAP_END(std::shared_ptr<Session> session, S_MapEnd& pkt)
+{
+	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	assert(gameScene);
+	gameScene->Handle_S_MapEnd(session, pkt);
 
 	return true;
 }

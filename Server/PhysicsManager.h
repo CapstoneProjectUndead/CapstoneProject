@@ -17,17 +17,12 @@ struct CollisionFilter;
 
 class CPhysicsManager
 {
-private:
-    CPhysicsManager() {};
-    CPhysicsManager(const CPhysicsManager&) = delete;
 public:
-    ~CPhysicsManager() {};
+    CPhysicsManager();
+    ~CPhysicsManager();
+    CPhysicsManager(const CPhysicsManager&) = delete;
 
-    static CPhysicsManager& GetInstance() {
-        static CPhysicsManager instance;
-        return instance;
-    }
-
+public:
     void SetCollider(CColliderComponent* c) {
         colliders.push_back(c);
     }
@@ -35,6 +30,8 @@ public:
     void SetCollider(std::shared_ptr<CColliderComponent> c) {
         colliders.push_back(c.get());
     }
+
+    void ClearCollider() { colliders.clear(); }
 
     XMVECTOR ApplyGravity(CObject* obj, float dt);
     void ApplyFriction(CObject* obj, float dt);
@@ -45,6 +42,9 @@ public:
     bool Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction, float maxDistance, CollisionInfo& outInfo);
 
     void Update(float deltaTime);
+
+    void EraseCollider(OBJECT_TYPE objType, SCENE_TYPE sceneType);
+    void EraseCollider(CColliderComponent* coll);
 
 private:
     // 충돌 후보 추리기(자기 자신 제외)

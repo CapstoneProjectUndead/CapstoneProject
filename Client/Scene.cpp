@@ -13,8 +13,10 @@
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
 #include "Monster.h"
-#include "Renderers.h"
+
 #include "UIComponent.h"
+#include "Renderers.h"
+#include "SceneManager.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
@@ -30,6 +32,7 @@ CScene::~CScene()
 
 void CScene::Initialize()
 {
+	factory->GetMaterial(CSceneManager::GetInstance().GetShaders()["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -66,6 +69,7 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	if (camera) camera->SetViewportsAndScissorRects(commandList);
 
+	auto& renderers = CSceneManager::GetInstance().GetRanderers();
 	// Collect Phase
 	// 3D 객체들 수집
 	for (const auto& obj : objects) {
@@ -74,6 +78,8 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 			obj->OnCollect(it->second.get());
 		}
 	}
+
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
 
 	// 플레이어 수집
 	if (my_player) {
@@ -86,7 +92,6 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	// UI 매니저 수집
 	ui_manager->Collect(renderers);
 
-	// 일반 2D UI 렌더링
 	// Draw Phase
 	for (const auto& [name, pShader] : shaders) {
 		pShader->RenderBegin(commandList);
@@ -203,20 +208,20 @@ void CScene::RemoveAllMonsters()
 {
 	std::vector<UINT> eraseIds;
 
-	for (const auto& [id, idx] : id_To_Index)
-	{
+	for (const auto& [id, idx] : id_To_Index) {
 		if (id >= 1001)
 			eraseIds.push_back(id);
 	}
 
-	for (UINT id : eraseIds)
-	{
+	for (UINT id : eraseIds) {
 		RemoveObject(id);
 	}
 }
 
 void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt)
 {
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+
 	if (pkt.is_my_player) {
 		{
 			// 싱글 모드가 아닌 멀티 모드로 전환
@@ -270,6 +275,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 {
 	S_PLAYER_LIST::PlayerList userList = pkt.GetPlayerList();
 
+	auto shaders = CSceneManager::GetInstance().GetShaders();
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
@@ -309,6 +315,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 
 	// 내 플레이어이면, 내 플레이어 보정용 함수 호출
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
+
 		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
 
 		// 예측 이동을 없애고
@@ -319,8 +326,6 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 			info.y = pkt.info.y;
 			info.z = pkt.info.z;
 			myPlayer->SetDestInfo(info);
-
-			myPlayer->SetVelocity({ pkt.info.vx, pkt.info.vy, pkt.info.vz });
 		}
 
 		// 서버가 처리한 시퀀스 넘버를 받아야한다.
@@ -382,12 +387,14 @@ void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_R
 
 void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt)
 {
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	
 	CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 
 	MON_TYPE type = pkt.info.monster_type;
 	NetMonsterInfo info = pkt.info;
 
-	auto monster = factory->CreateHumanMonster(skinningHeapManager, type, scene_type);
+	auto monster = factory->CreateMonster(skinningHeapManager, type, scene_type);
 	monster->SetID(info.monster_id);
 	monster->ChangeModelSet(1);
 	monster->ChangeEyes(2);
@@ -423,4 +430,9 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 	state.server_timestamp = pkt.timestamp;
 
 	monster->RecordMonsterFrameHistory(state);
+}
+
+void CScene::Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt)
+{
+	CSceneManager::GetInstance().ChangeScene(pkt.target_scene);
 }

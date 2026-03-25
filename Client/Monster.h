@@ -59,7 +59,7 @@ public:
     void            RecordMonsterFrameHistory(const MonsterFrameHistory& state);
 
 protected:
-    void            MonsterMoveSyncByInterpolation(float elapsedTime);
+    void MonsterMoveSyncByInterpolation(float elapsedTime);
 
     std::shared_ptr<CPlayer> FindNearestPlayer();
 
@@ -74,6 +74,7 @@ protected:
     void ResetIdleTimer() { idle_timer = 0.0f; }
     void ResetAttackTimer() { attack_timer = 0.0f; }
 
+    // 몬스터 시야각 추가
     void SetFOV(float angle) 
     {
         fov_angle = angle;

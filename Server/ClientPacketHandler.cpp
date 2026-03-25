@@ -139,7 +139,8 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 	);
 #else
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
-	assert(room->IsActive());
+	assert(room);
+
 	CScene* currentScene = room->GetScenes()[(UINT)pkt.scene_type].get();
 	assert(currentScene);
 
@@ -158,7 +159,7 @@ bool Handle_C_PLAYER_INPUT(shared_ptr<Session> session, C_Input& pkt)
 bool Handle_C_CUSTOM_SELECT(std::shared_ptr<Session> session, C_CustomSelect& pkt)
 {
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
-	assert(room->IsActive());
+	assert(room);
 	CCustomScene* customScene = dynamic_cast<CCustomScene*>(room->GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get());
 	assert(customScene);
 
@@ -186,6 +187,21 @@ bool Handle_C_SCENE_CHANGE(std::shared_ptr<Session> session, C_SceneChange& pkt)
 	currentScene->PushPacketJob(session,
 		(CScene*)currentScene,
 		&CScene::Handle_C_Scene_Change,
+		pkt);
+
+	return true;
+}
+
+bool Handle_C_READY(std::shared_ptr<Session> session, C_Ready& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room->IsActive());
+	CLobbyScene* lobbyScene = (CLobbyScene*)room->GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(lobbyScene);
+
+	lobbyScene->PushPacketJob(session,
+		(CLobbyScene*)lobbyScene,
+		&CLobbyScene::Handle_C_Ready,
 		pkt);
 
 	return true;

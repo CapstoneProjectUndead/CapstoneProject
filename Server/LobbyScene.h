@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ TestScene
+// Serverìª½ Lobbycene
 #include "Scene.h"
 
 class CUser;
@@ -14,11 +14,19 @@ public:
     virtual void Start() override;
     virtual void Update(float elapsedTime) override;
 
+    virtual void Enter() override;
+    virtual void Exit() override;
+
+public:
+    void CheckReady();
+
 public:
     //=================
-    // Å×½ºÆ®¿ë ÇÔ¼ö
+    // í…ŒìŠ¤íŠ¸ìš© í•¨ìˆ˜
     void C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt);
     //=================
+
+    void Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt);
 
 private:
     enum class LobbyMeshName {
@@ -31,9 +39,11 @@ private:
     LobbyMeshName stringToLobbyMeshName(const std::string& str);
 
     void CreateLobby();
+    void SendPlayerToGameScene();
 
 private:
-    // ¸ÊÀÇ ¹Ù´Ú, Àå¾Ö¹° µî ¿òÁ÷ÀÌÁö ¾Ê´Â Á¤Àû Ãæµ¹Ã¼µéÀ» º¸°üÇÏ´Â °÷
-    std::vector<std::shared_ptr<CObject>> static_objects;
+    int  player_ready_cnt;
+    int  monster_cnt = 0;
+    const int max_monster_cnt = 1;
 };
 

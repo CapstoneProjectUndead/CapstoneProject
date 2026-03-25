@@ -5,9 +5,36 @@
 #include "Object.h"
 
 
+CPhysicsManager::CPhysicsManager()
+{
+
+}
+
+CPhysicsManager::~CPhysicsManager()
+{
+
+}
+
 void CPhysicsManager::Update(float deltaTime)
 {
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end());
+}
+
+void CPhysicsManager::EraseCollider(OBJECT_TYPE objType, SCENE_TYPE sceneType)
+{
+    colliders.erase(std::remove_if(colliders.begin(), colliders.end(), [objType, sceneType](const CColliderComponent* coll) {
+        return (coll->owner->obj_type == objType) && (coll->owner->current_scene_type == sceneType);
+        }),
+        colliders.end());
+}
+
+void CPhysicsManager::EraseCollider(CColliderComponent* coll)
+{
+    auto iter = std::find(colliders.begin(), colliders.end(), coll);
+
+    if (iter != colliders.end()) {
+        colliders.erase(iter);
+    }
 }
 
 bool CPhysicsManager::CheckFilter(const CollisionFilter& a, const CollisionFilter& b)

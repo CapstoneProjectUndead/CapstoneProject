@@ -32,12 +32,13 @@ class CPlayer : public CObject
 {
 public:
 	CPlayer();
-	~CPlayer();
+	virtual ~CPlayer() override;
 
 	void Update(const float elapsedTime) override;
 	void ProcessInputQueue(const float elapsedTime);
 	void SimulateMove(const InputData& input, float elapsedTime);
 
+public:
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
 
@@ -73,6 +74,9 @@ public:
 	uint8 GetMouthType() const { return mouth_type; }
 	void SetMouthType(uint8 type) { mouth_type = type; }
 
+	bool GetIsReady() const { return is_ready; }
+	void SetIsReady(bool ready) { is_ready = ready; }
+
 private:
 	weak_ptr<CUser>				user;
 	uint64						last_processed_seq;
@@ -86,5 +90,7 @@ private:
 	uint8 body_type{};
 	uint8 eyes_type{};
 	uint8 mouth_type{};
+
+	bool is_ready;
 };
 

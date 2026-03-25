@@ -53,6 +53,8 @@ public:
     void                    SetCurrentSceneType(SCENE_TYPE type) { current_scene_type = type; }
     SCENE_TYPE              GetCurrentSceneType() const { return current_scene_type; }
 
+    XMFLOAT4X4&             GetWorldMatrix() { return world_matrix; }
+
     XMFLOAT3                GetPosition() { return position; }
     void                    SetPosition(const XMFLOAT3& pos) { position = pos; }
     void                    SetPosition(float x, float y, float z) { position = { x, y, z }; }
@@ -71,6 +73,9 @@ public:
     void                    SetLook(const XMFLOAT3 _look) { look = _look; }
 
     float                   GetYaw() const { return yaw; }
+
+    bool                    GetIsGround() const { return is_grounded; }
+    void                    SetIsGround(bool ground) { is_grounded = ground; }
 
     void                    SetPitch(const float _pitch) { pitch = _pitch; }
     float                   GetPitch() const { return pitch; }
