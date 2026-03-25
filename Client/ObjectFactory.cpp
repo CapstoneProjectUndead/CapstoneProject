@@ -8,18 +8,14 @@
 #include "Animator.h"
 #include "Movement.h"
 
-#include "Shader.h"
 #include "PhysicsManager.h"
 #include "GameFramework.h"
-#include "Character.h"
 #include "MyPlayer.h"
 #include "HumanMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
 #include "ItemFinder.h"
 #include "MapUtils.h"
-
-#include "Renderers.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
@@ -224,6 +220,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			auto meshComp = proto->GetComponent<CMeshComponent>();
 			auto matComp = proto->GetComponent<CMaterialComponent>();
 			auto collider = proto->GetComponent<CColliderComponent>();
+			auto meshRenderer = std::make_shared<CMeshRendererComponent>();
 
 			// 위치/크기 정보를 행렬로 변환하여 추가
 			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
@@ -231,7 +228,12 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 			XMStoreFloat4x4(&obj->world_matrix, world);
 
-			obj->SetShdaer("inst");
+			RenderUnit unit;
+			unit.mesh = meshComp;
+			unit.material = matComp;
+			meshRenderer->SetRenderUnit(unit);
+			
+			obj->SetComponent(meshRenderer);
 
 			// collider copy(잔디, 돌은 필요X)
 			std::string base{ typeName };
@@ -242,6 +244,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 				obj->SetComponent(copyCollider);
 				CPhysicsManager::GetInstance().SetCollider(copyCollider);
 			}
+			obj->SetShdaer("inst");
+
 			objects.push_back(obj);
 		}
 	}

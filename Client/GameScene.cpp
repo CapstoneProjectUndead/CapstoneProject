@@ -24,13 +24,11 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
-
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
-		objects = factory->CreateGameScene(staticHeapManager);
+		CDescriptorHeapManager* heapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
+		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
 	}
-
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
