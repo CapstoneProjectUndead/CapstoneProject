@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "TitleScene.h"
+#include "Renderers.h"
 
 class CSceneManager
 {
@@ -36,8 +37,13 @@ public:
 
     auto& GetShaders() { return shaders; }
     void SetShaders(auto& otherShaders) { shaders = otherShaders; }
+
+    auto& GetRanderers() { return renderers; }
+    void SetRanderers(auto& otherShaders) { shaders = otherShaders; }
 private:
     std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
+    std::map<std::string, std::unique_ptr<IRenderer>> renderers;	// shader에 버퍼 설정하는 멤버 변수(rendering 담당)
+
     std::unique_ptr<CScene> scenes[(UINT)SCENE_TYPE::END];
     CScene*                 active_scene = nullptr;
 };

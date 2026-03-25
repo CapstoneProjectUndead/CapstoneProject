@@ -15,6 +15,7 @@
 #include "TitleScene.h"
 #include "CustomScene.h"
 #include "GameScene.h"
+#include "UIScene.h"
 
 extern HWND ghWnd;
 
@@ -54,15 +55,18 @@ bool CGameFramework::OnCreate()
 	// format: 보통 DXGI_FORMAT_R8G8B8A8_UNORM
 	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
 
+	graphics_memory = std::make_unique<GraphicsMemory>(d3d_device.Get());
+
 	return true;
 }
+
 void CGameFramework::OnDestroy()
 {
 	waitForGpuComplete();
 
-	ReleaseObjects();
-
 	::CloseHandle(fence_event);
+
+	graphics_memory.reset();
 
 	// 보더리스 전체화면 방식 사용 중이므로 SetFullscreenState 불필요
 	if (is_fullscreen) {
@@ -294,6 +298,9 @@ void CGameFramework::BuildObjects()
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME] = std::make_unique<CGameScene>();
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME]->Initialize();
 
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI] = std::make_unique<CUIScene>();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI]->Initialize();
+
 	// 시작 Scene은 항상 TitleScene 이지만,
 	// 해당 Scene 작업을 위해서, 여기서 바꾸면 된다.
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
@@ -317,10 +324,6 @@ void CGameFramework::BuildObjects()
 		activeScene->ReleaseUploadBuffers();
 
 	timer.Reset();
-}
-
-void CGameFramework::ReleaseObjects()
-{
 }
 
 void CGameFramework::waitForGpuComplete()
@@ -551,6 +554,9 @@ void CGameFramework::CommandEnd()
 
 	// 스왑체인 프리젠트. 현재 렌더 타겟의 내용이 전면 버퍼로 옮겨지고 렌더 타겟 인덱스가 바뀜
 	swap_chain->Present(1, 0);
+
+	// 임시 메모리 정리
+	GraphicsMemory::Get().Commit(command_queue.Get());
 
 	MoveToNextFrame();
 

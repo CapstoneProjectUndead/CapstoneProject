@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CObject;
 
@@ -7,6 +7,19 @@ struct CameraCB
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
 };
+
+struct BillboardCameraCB
+{
+	XMFLOAT4X4 view_matrix;
+	XMFLOAT4X4 projection_matrix;
+	XMFLOAT3 pos;
+};
+
+struct OrthoCB
+{
+	XMFLOAT4X4 ortho_projection;
+};
+
 
 // 생성 시 Initialize, SetTarget 호출
 class CCamera
@@ -17,9 +30,11 @@ public:
 
 	void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList*);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool isUI = false);
+	virtual void UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandList);
 
 	void GenerateProjectionMatrix(float, float, float, float);
+	void GenerateOrthoProjectionMatrix(float, float, float, float);
 	void SetViewport(int, int, int, int, float = 0.0f, float = 1.0f);
 	void SetScissorRect(LONG, LONG, LONG, LONG);
 	virtual void SetViewportsAndScissorRects(ID3D12GraphicsCommandList*);
@@ -39,6 +54,9 @@ public:
 
 	XMFLOAT3 GetPos() const { return position; }
 	XMFLOAT3 GetOffset() const { return offset; }
+	XMFLOAT4X4 GetViewMatrix() const { return view_matrix; }
+	XMFLOAT4X4 GetProjectionMatrix() const { return projection_matrix; }
+	D3D12_VIEWPORT GetViewPort() const { return viewport; }
 
 	void SetTarget(CObject* object) { target_object = object; }
 	void SetMode(EMode m) { mode = m; }
@@ -47,8 +65,13 @@ protected:
 
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
+	XMFLOAT4X4 ortho_matrix;
 	ComPtr<ID3D12Resource> camera_cb;
+	ComPtr<ID3D12Resource> ortho_cb;	// UI에 필요한 값 저장
+	ComPtr<ID3D12Resource> billboard_cb;
 	CameraCB* mapped{};
+	OrthoCB* ortho_mapped{};
+	BillboardCameraCB* billboard_mapped{};
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;
@@ -60,5 +83,5 @@ protected:
 	XMFLOAT3 offset{};
 	XMFLOAT3 look_at{};
 
-	CObject* target_object;	// 소유X, 참조용
+	CObject* target_object{};	// 소유X, 참조용
 };

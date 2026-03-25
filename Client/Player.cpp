@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Player.h"
 #include "NetworkManager.h"
 #include "Movement.h"
@@ -206,3 +206,30 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     SetYawPitch(yaw, 0.0f);
     UpdateWorldMatrix();
 }
+
+//void CPlayer::ChangeModelSet(int setIndex)
+//{
+//    for (int i = 0; i < eartail_parts.size(); ++i) {
+//        bool active = (i == setIndex);
+//        
+//        body_materials[i]->SetEnable(active);
+//
+//        for (auto& mesh : eartail_parts[i]) {
+//            mesh->SetEnable(active);
+//        }
+//    }
+//}
+//
+//void CPlayer::ChangeEyes(int index)
+//{
+//    for (int i = 0; i < eyes_material.size(); ++i) {
+//        eyes_material[i]->SetEnable(i == index);
+//    }
+//}
+//
+//void CPlayer::ChangeMouth(int index)
+//{
+//    for (int i = 0; i < mouth_material.size(); ++i) {
+//        mouth_material[i]->SetEnable(i == index);
+//    }
+//}

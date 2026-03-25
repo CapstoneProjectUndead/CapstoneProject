@@ -1,18 +1,20 @@
 ﻿#include "stdafx.h"
 #include "GameScene.h"
+#include "SceneManager.h"
+#include "PhysicsManager.h"
+#include "GameFramework.h"
+
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Shader.h"
-#include "PhysicsManager.h"
-#include "GameFramework.h"
 #include "ObjectFactory.h"
-#include "SceneManager.h"
+
 #include "ItemFinder.h"
 #include "NetworkManager.h"
-#include "MeshRenderer.h"
 #include "Inventory.h"
 #include "WorldItem.h"
 #include "ItemFactory.h"
+
 #include "KeyManager.h"
 
 
@@ -28,8 +30,8 @@ CGameScene::~CGameScene()
 void CGameScene::Initialize()
 {
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
-		objects = factory->CreateGameScene(staticHeapManager);
+		CDescriptorHeapManager* heapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
+		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
 
 		// 보물 위치에 보물 생성
@@ -140,40 +142,6 @@ void CGameScene::SpawnWorldItem(int itemID, XMFLOAT3 position)
 	++world_item_id_counter;
 }
 
-void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
-{
-	if (camera)
-		camera->SetViewportsAndScissorRects(commandList);
-
-	for (const auto& shader : CSceneManager::GetInstance().GetShaders()) {
-		shader.second->RenderBegin(commandList);
-
-		if (camera)
-			camera->UpdateShaderVariables(commandList);
-
-		if (light)
-			light->Render(commandList);
-
-		for (const auto& obj : objects) {
-			if (shader.first == obj->GetShader() && shader.first != "inst") {
-				shader.second->Render(commandList, obj.get());
-			}
-		}
-
-		if (shader.first == "inst") {
-			shader.second->Render(commandList, nullptr);
-		}
-
-		if (my_player) {
-			if (shader.first == my_player->GetShader()) {
-				shader.second->Render(commandList, my_player.get());
-			}
-		}
-
-		shader.second->RenderEnd(commandList);
-	}
-}
-
 void CGameScene::DrawUI()
 {
 	if (my_player) {
@@ -236,9 +204,6 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 		return obj->GetObjectType() == OBJECT_TYPE::STATIC_OBJECT;
 		}),
 		objects.end());
-
-	// CInstRenderer의 batches clear
-	CInstRenderer::GetInstance().Clear();
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);

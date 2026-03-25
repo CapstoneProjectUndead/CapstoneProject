@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "LightManager.h"
 #include "Camera.h"
 
@@ -43,5 +43,5 @@ void CLightManager::Render(ID3D12GraphicsCommandList* commandList)
 {
     UpdateShaderVariables(commandList);
 
-    commandList->SetGraphicsRootConstantBufferView(3, light_cb->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(1, light_cb->GetGPUVirtualAddress());
 }

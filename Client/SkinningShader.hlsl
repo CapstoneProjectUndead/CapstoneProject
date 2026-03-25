@@ -14,36 +14,19 @@
 
 #include "Light.hlsl"
 
-cbuffer gameObjectInfo : register(b0)
-{
-    float4x4 worldMatrix : packoffset(c0);
-};
-
-cbuffer CameraInfo : register(b1)
+cbuffer CameraInfo : register(b0)
 {
     float4x4 viewMatrix : packoffset(c0);
     float4x4 projectionMatrix : packoffset(c4);
 };
 
-cbuffer MaterialInfo : register(b2)
-{
-    float4 albedo;
-    float3 fresnel;
-    float glossiness;
-};
-
-cbuffer LightInfo : register(b3)
+cbuffer LightInfo : register(b1)
 {
     float4 ambientLight;
     float3 eyePosWorld;
     
     Light gLights[MaxLights];
 }
-
-cbuffer SkinningInfo : register(b4)
-{
-    float4x4 gBoneTransforms[100];
-};
 
 struct VS_INPUT
 {
@@ -62,16 +45,41 @@ struct VS_OUTPUT
     float3 position_world : POSITION;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD;
+    nointerpolation uint mat_idx : MATINDEX;
 };
 
-Texture2D texDiffuse : register(t0);
+struct MaterialData
+{
+    float4 albedo;
+    float3 fresnel;
+    float glossiness;
+    uint tex_idx;
+};
+
+struct InstanceData
+{
+    float4x4 world_matrix;
+    MaterialData material;
+    uint bone_offset; // 이 인스턴스의 본 행렬들이 시작되는 위치 (Index)
+};
+
+StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
+StructuredBuffer<float4x4> gFinalBoneTransforms : register(t1, space1);
+
+Texture2D texDiffuse[50] : register(t0);
 SamplerState sample : register(s0);
 
-VS_OUTPUT VSMain(VS_INPUT input)
+VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 {
     VS_OUTPUT output;
 
+    // inst Data Load
+    InstanceData instData = gInstanceData[instanceID];
+    float4x4 finalWorld = instData.world_matrix;
+    output.mat_idx = instData.material.tex_idx;
 #ifdef SKINNED
+    uint offset = instData.bone_offset;
+    
     float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     weights[0] = input.bone_weights.x;
     weights[1] = input.bone_weights.y;
@@ -82,20 +90,19 @@ VS_OUTPUT VSMain(VS_INPUT input)
     float3 normalL = float3(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < 4; ++i)
     {
-            // Assume no nonuniform scaling when transforming normals, so 
-            // that we do not have to use the inverse-transpose.
-
-        posL += weights[i] * mul(float4(input.position, 1.0f), gBoneTransforms[input.bone_indices[i]]).xyz;
-        normalL += weights[i] * mul(input.normal, (float3x3) gBoneTransforms[input.bone_indices[i]]);
+        // gFinalBoneTransforms[offset + 본_인덱스] 로 접근!
+        uint boneIdx = offset + input.bone_indices[i];
+        posL += weights[i] * mul(float4(input.position, 1.0f), gFinalBoneTransforms[boneIdx]).xyz;
+        normalL += weights[i] * mul(input.normal, (float3x3) gFinalBoneTransforms[boneIdx]);
     }
-
+    
     input.position = posL;
     input.normal = normalL;
 #endif
-    float4 posW = mul(float4(input.position, 1.0f), worldMatrix);
+    float4 posW = mul(float4(input.position, 1.0f), finalWorld);
     output.position_world = posW.xyz;
 
-    output.normal = mul(input.normal, (float3x3) worldMatrix);
+    output.normal = mul(input.normal, (float3x3) finalWorld);
     
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
     output.tex = input.tex;
@@ -103,10 +110,12 @@ VS_OUTPUT VSMain(VS_INPUT input)
     return output;
 }
 
+
 float4 PSMain(VS_OUTPUT input) : SV_TARGET
 {
+    MaterialData instMat = gInstanceData[input.mat_idx].material;
     // texture
-    float4 diffuseAlbedo = texDiffuse.Sample(sample, input.tex) * albedo;
+    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex) * instMat.albedo;
 
     // light
     input.normal = normalize(input.normal);
@@ -115,7 +124,7 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
 
     float4 ambient = ambientLight * diffuseAlbedo;
 
-    Material mat = { diffuseAlbedo, fresnel, glossiness };
+    Material mat = { diffuseAlbedo, instMat.fresnel, instMat.glossiness };
     float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, input.position_world, input.normal, toEyeW, shadowFactor);
 

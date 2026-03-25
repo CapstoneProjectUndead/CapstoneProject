@@ -12,14 +12,17 @@ class CPlayer;
 class CMyPlayer;
 class CMonster;
 class CHumanMonster;
-struct FrameNode;
+namespace CGeometryLoader {
+	struct FrameNode;
+}
 
 class CObjectFactory
 {
 public:
 	CObjectFactory() = default;
 	~CObjectFactory() = default;
-	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
+	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
+	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	// GameScene 모델 파츠 load
 	void LoadGameScene(CDescriptorHeapManager* heapManager);

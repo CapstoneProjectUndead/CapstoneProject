@@ -3,9 +3,12 @@
 
 class CMesh;
 class CMaterialComponent;
-struct FrameNode;
-struct MeshCollider;
-struct ObjectCB;
+class IRenderer;
+
+namespace CGeometryLoader {
+    struct FrameNode;
+    struct MeshCollider;
+}
 
 class CMeshComponent : public CComponent
 {
@@ -19,9 +22,9 @@ public:
     std::shared_ptr<CMesh>& GetMesh() { return mesh; };
     // LoadFrame 정보 Set, T: Vertex type
     template<typename T>
-    void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<FrameNode>& node);
+    void SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
     template<typename T>
-    void CMeshComponent::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const MeshCollider& meshData);
+    void CMeshComponent::SetMeshFromFile(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const CGeometryLoader::MeshCollider& meshData);
 private:
     std::shared_ptr<CMesh> mesh;
 };
@@ -37,6 +40,7 @@ class CMeshRendererComponent : public CComponent
 public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
+    void Collect(IRenderer* renderer, bool isStatic);
     void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat = nullptr)
     {
         render_units.push_back({ mesh, mat });
@@ -47,37 +51,4 @@ public:
     }
 private:
     std::vector<RenderUnit> render_units;
-};
-
-class CInstRenderer
-{
-private:
-    CInstRenderer() = default;
-    CInstRenderer(const CInstRenderer&) = delete;
-public:
-    static CInstRenderer& GetInstance() {
-        static CInstRenderer instance;
-        return instance;
-    }
-    void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT instSize = 100);
-
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world);
-
-    void Render(ID3D12GraphicsCommandList* commandList);
-
-public:
-    void Clear() { batches.clear(); }
-
-private:
-    ObjectCB* mapped{};
-    ComPtr<ID3D12Resource> inst_cb;
-
-    struct BatchKey {
-        CMesh* mesh;
-        CMaterialComponent* material;
-        bool operator<(const BatchKey& other) const {
-            return std::tie(mesh, material) < std::tie(other.mesh, other.material);
-        }
-    };
-    std::map<BatchKey, std::vector<ObjectCB>> batches;
 };

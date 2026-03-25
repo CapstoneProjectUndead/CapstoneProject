@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CTimer;
 
@@ -33,7 +33,6 @@ public:
 
 	// 렌더링할 메쉬와 게임 객체 생성 및 소멸 함수
 	void BuildObjects();
-	void ReleaseObjects();
 
 	// 사용자 입력, 애니메이션, 렌더링 함수
 	//void ProcessInput();
@@ -50,6 +49,9 @@ public:
 
 	ComPtr<ID3D12Device>				GetDevice() { return d3d_device; }
 	ComPtr<ID3D12GraphicsCommandList>	GetCommandList() { return command_list; }
+	ID3D12CommandQueue*	GetCommandQueue() { return command_queue.Get(); }
+	int	GetClientWidth() { return client_width; }
+	int	GetClientHeight() { return client_height; }
 	bool IsFullscreen() const { return is_fullscreen; }
 
 private:
@@ -104,5 +106,8 @@ private:
 	// Timer 관련
 	CTimer& timer;
 	_TCHAR frame_rate_str[50];
+
+	// spriteFont를 위한 객체
+	std::unique_ptr<GraphicsMemory> graphics_memory;
 };
 

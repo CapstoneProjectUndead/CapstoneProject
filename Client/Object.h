@@ -4,10 +4,12 @@ class CComponent;
 class CShader;
 class CCamera;
 class CMesh;
+class IRenderer;
 
-// GeometryLoader에 정의
-struct Mesh;
-struct FrameNode;
+namespace CGeometryLoader {
+	struct FrameNode;
+	struct Mesh;
+}
 
 struct ObjectCB
 {
@@ -38,6 +40,8 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList* );
+	// RenderCallback을 호출
+	virtual void OnCollect(IRenderer* renderer);
 
 	//
 	virtual XMFLOAT3 GetHeadPosition() const { return position; };
@@ -59,9 +63,6 @@ public:
 
 	SCENE_TYPE GetCurrentSceneType() const { return current_scene_type; }
 	void       SetCurrentSceneType(const SCENE_TYPE type) { current_scene_type = type; }
-
-	bool       GetIsGround() const { return is_grounded; }
-	void       SetIsGround(bool ground) { is_grounded = ground; }
 
 	//=================================
 	// 회전 함수 (테스트)
@@ -91,11 +92,8 @@ protected:
 	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
 	SCENE_TYPE  current_scene_type = SCENE_TYPE::NONE; // 현재 오브젝트가 속한 씬
-	ObjectCB* mapped{};
 
-	std::string shader_name{"static"};	// 적용 쉐이더 이름
-
-	ComPtr<ID3D12Resource> object_cb;
+	std::string shader_name{"inst"};	// 적용 쉐이더 이름
 
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;
@@ -108,7 +106,6 @@ protected:
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;
 	float		pitch = 0.f;
-
 };
 
 template<typename T>

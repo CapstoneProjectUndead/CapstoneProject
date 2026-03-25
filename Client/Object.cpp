@@ -5,6 +5,8 @@
 #include "Object.h"
 #include "MeshRenderer.h"
 #include "Material.h"
+#include "UIComponent.h"
+#include "Renderers.h"
 
 CObject::CObject(OBJECT_TYPE type)
 	: obj_type(type)
@@ -28,13 +30,6 @@ void CObject::ReleaseUploadBuffer()
 
 void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 {
-	{
-		XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world_matrix));
-		XMStoreFloat4x4(&mapped->world_matrix, worldT);
-
-		commandList->SetGraphicsRootConstantBufferView(0, object_cb->GetGPUVirtualAddress());
-	}
-
 	for (auto& component : components) {
 		if (component->is_enable)
 			component->UpdateShaderVariables(commandList);
@@ -43,11 +38,6 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
 
 void CObject::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	{
-		object_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<ObjectCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
-		object_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-	}
-
 	for (auto& component : components) {
 		component->CreateConstantBuffers(device, commandList);
 	}
@@ -61,6 +51,17 @@ void CObject::Render(ID3D12GraphicsCommandList* commandList)
 	for (auto& renderer : meshRenderer)
 		if (renderer->is_enable)
 			renderer->Render(commandList);
+}
+
+void CObject::OnCollect(IRenderer* renderer)
+{
+	auto meshRenderers = GetComponents<CMeshRendererComponent>();
+	bool isStatic = (obj_type == OBJECT_TYPE::STATIC_OBJECT);
+
+	for (auto& meshRenderer : meshRenderers) {
+		// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
+		meshRenderer->Collect(renderer, isStatic);
+	}
 }
 
 void CObject::SetComponent(std::shared_ptr<CComponent> component)

@@ -23,5 +23,5 @@ public:
 	// 없으면 생성
 	std::shared_ptr<CTexture> GetTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmd, CDescriptorHeapManager* heap, const std::string& name);
 private:
-    std::unordered_map<std::string, std::shared_ptr<CTexture>> textures;
+	std::map<std::pair<std::string, ID3D12DescriptorHeap*>, std::shared_ptr<CTexture>> textures;
 };

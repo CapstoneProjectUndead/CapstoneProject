@@ -1,4 +1,4 @@
-// header.h: 표준 시스템 포함 파일
+﻿// header.h: 표준 시스템 포함 파일
 // 또는 프로젝트 특정 포함 파일이 들어 있는 포함 파일입니다.
 //
 
@@ -30,6 +30,14 @@
 #include <DirectXCollision.h>
 
 #include <dxgidebug.h>
+
+// font
+#include <SpriteFont.h>
+#include <SpriteBatch.h>
+#include <GraphicsMemory.h>
+
+// UI
+#include <nlohmann/json.hpp>
 
 // STL
 #include <memory>
@@ -85,6 +93,7 @@ using Microsoft::WRL::ComPtr;
 extern double g_client_total_time;
 extern bool g_run;
 extern bool g_is_single;
+using json = nlohmann::json;
 
 extern HWND ghWnd;
 extern class CGameFramework gGameFramework;
@@ -420,6 +429,20 @@ namespace Matrix4x4
 	{
 		XMFLOAT4X4 xmmtx4x4Result;
 		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixPerspectiveFovLH(XMConvertToRadians(fFovAngleY), fAspectRatio, fNearZ, fFarZ));
+		return(xmmtx4x4Result);
+	}
+
+	inline XMFLOAT4X4 OrthGraphic(float width, float height, float fNearZ, float fFarZ)
+	{
+		XMFLOAT4X4 xmmtx4x4Result;
+		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixOrthographicLH(width, height, fNearZ, fFarZ));
+		return(xmmtx4x4Result);
+	}
+
+	inline XMFLOAT4X4 OrthGraphic(float left, float right, float bottom, float top, float fNearZ, float fFarZ)
+	{
+		XMFLOAT4X4 xmmtx4x4Result;
+		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixOrthographicOffCenterLH(left, right, bottom, top, fNearZ, fFarZ));
 		return(xmmtx4x4Result);
 	}
 

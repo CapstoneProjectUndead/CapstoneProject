@@ -1,6 +1,8 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "SkinnedData.h"
 #include "GeometryLoader.h"
+
+using namespace CGeometryLoader;
 
 std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(const std::string& filename, int boneCount)
 {
@@ -72,7 +74,7 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
     return animations;
 }
 
-SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
+CGeometryLoader::SkeletonData CGeometryLoader::LoadSkeleton(const std::string& filename)
 {
     SkeletonData skel{};
 

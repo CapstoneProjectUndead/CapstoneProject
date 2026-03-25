@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "GeometryLoader.h"
 #include "Object.h"
@@ -14,7 +14,7 @@ CAnimatorComponent::CAnimatorComponent()
 // animator
 void CAnimatorComponent::Initialize(const std::string& charName, const std::string& AniName)
 {
-	SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
+	CGeometryLoader::SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
 	auto animData = CGeometryLoader::LoadAnimations(AniName, skeleton.bone_names.size());
 	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
 }
@@ -73,27 +73,16 @@ void CAnimatorComponent::UpdatePlayerAnimation()
 	// 내 플레이어
 	if (player->GetIsMyPlayer()) {
 
-		// 싱글 플레이일 때
-		if (g_is_single) {
-			auto move = owner->GetComponent<CMovementComponent>();
-			float speed = 0.0f;
+		auto move = owner->GetComponent<CMovementComponent>();
+		float speed = 0.0f;
 
-			if (move)
-				speed = Vector3::Length(owner->velocity);
+		if (move)
+			speed = Vector3::Length(owner->velocity);
 
-			if (speed < 0.3f)
-				Play("Ganga_idle");
-			else
-				Play("Ganga_walk");
-		}
-		else {
-
-			// 멀티 플레이일 때
-			if (player->GetState() == PLAYER_STATE::IDLE)
-				Play("Ganga_idle");
-			else if (player->GetState() == PLAYER_STATE::WALK)
-				Play("Ganga_walk");
-		}
+		if (speed < 0.3f)
+			Play("Ganga_idle");
+		else
+			Play("Ganga_walk");
 	}
 	// 상대 플레이어
 	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
@@ -137,19 +126,4 @@ void CAnimatorComponent::UpdateMonsterAnimation()
 	default:
 		break;
 	}
-}
-
-void CAnimatorComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)
-{
-	if (!final_transforms.empty()) {
-		memcpy(mapped, final_transforms.data(), sizeof(XMFLOAT4X4) * final_transforms.size());
-	}
-
-	commandList->SetGraphicsRootConstantBufferView(4, skinned_cb->GetGPUVirtualAddress());
-}
-
-void CAnimatorComponent::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
-{
-	skinned_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<SkinnedDataCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
-	skinned_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 }

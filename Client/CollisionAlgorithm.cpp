@@ -222,14 +222,14 @@ GJKAlgorithm::EPAFace GJKAlgorithm::CreateFace(const std::vector<XMVECTOR>& poly
 CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const CColliderShape* shapeA, const CColliderShape* shapeB)
 {
     char logBuf[512];
-    OutputDebugStringA("\n[EPA] --- Collision Detected, Starting EPA ---\n");
+    //OutputDebugStringA("\n[EPA] --- Collision Detected, Starting EPA ---\n");
 
     std::vector<XMVECTOR> polytope;
     XMVECTOR center = XMVectorSet(0, 0, 0, 0);
 
     // 1. 심플렉스 크기 체크 및 폴리토프 초기화
     if (simplex.size < 4) {
-        sprintf_s(logBuf, "[EPA] Warning: Simplex size is %d (Not a Tetrahedron!)\n", simplex.size);
+        //sprintf_s(logBuf, "[EPA] Warning: Simplex size is %d (Not a Tetrahedron!)\n", simplex.size);
         OutputDebugStringA(logBuf);
     }
 
@@ -272,20 +272,20 @@ CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const
 
         // --- 실시간 데이터 로그 ---
         XMFLOAT3 n; XMStoreFloat3(&n, searchDir);
-        sprintf_s(logBuf, "[EPA Iter %d] Normal: (%.2f, %.2f, %.2f), Depth: %.4f\n", iter, n.x, n.y, n.z, d);
-        OutputDebugStringA(logBuf);
+        /*sprintf_s(logBuf, "[EPA Iter %d] Normal: (%.2f, %.2f, %.2f), Depth: %.4f\n", iter, n.x, n.y, n.z, d);
+        OutputDebugStringA(logBuf);*/
 
         // 4. 수렴 조건 확인
         if (d - minDistance < 0.0001f) {
-            sprintf_s(logBuf, "[EPA Success] Final Depth: %.4f, Final Normal: (%.2f, %.2f, %.2f)\n", d, n.x, n.y, n.z);
-            OutputDebugStringA(logBuf);
+            /*sprintf_s(logBuf, "[EPA Success] Final Depth: %.4f, Final Normal: (%.2f, %.2f, %.2f)\n", d, n.x, n.y, n.z);
+            OutputDebugStringA(logBuf);*/
             return { searchDir, d, true };
         }
 
         // 5. 중복 점 체크
         for (const auto& v : polytope) {
             if (XMVectorGetX(XMVector3LengthSq(p - v)) < 1e-6f) {
-                OutputDebugStringA("[EPA Done] Duplicate point found, stopping expansion.\n");
+                //OutputDebugStringA("[EPA Done] Duplicate point found, stopping expansion.\n");
                 return { searchDir, minDistance, true };
             }
         }
@@ -314,6 +314,6 @@ CollisionInfo GJKAlgorithm::SolveEPA(const GJKAlgorithm::Simplex& simplex, const
         }
     }
 
-    OutputDebugStringA("[EPA] Failed to converge within max iterations.\n");
+    //OutputDebugStringA("[EPA] Failed to converge within max iterations.\n");
     return { XMVectorSet(0, 1, 0, 0), 0.0f, true };
 }
