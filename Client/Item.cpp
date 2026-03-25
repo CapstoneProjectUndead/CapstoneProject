@@ -1,21 +1,18 @@
 #include "stdafx.h"
 #include "Item.h"
 
-CItem::CItem(const ItemData* data)
+CItem::CItem(std::shared_ptr<ItemData> data)
 	: base_data(data)
 {
 }
 
 CItem::~CItem()
 {
-	if (base_data != nullptr) {
-		delete base_data;
-		base_data = nullptr;
-	}
+
 }
 
 // 장비
-CEquipment::CEquipment(const ItemData* data, uint32 maxDur)
+CEquipment::CEquipment(const std::shared_ptr<ItemData> data, uint32 maxDur)
 	: CItem(data) 
 	, max_durability(maxDur)
 {
@@ -27,7 +24,7 @@ CEquipment::~CEquipment()
 }
 
 // 회복(음식)
-CCunsumable::CCunsumable(const ItemData* data, const uint32 healAmount)
+CCunsumable::CCunsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount)
 	: CItem(data)
 	, heal_amount(healAmount)
 {
@@ -38,7 +35,7 @@ CCunsumable::~CCunsumable()
 }
 
 // 기타(예능 아이템)
-COtherItem::COtherItem(const ItemData* data)
+COtherItem::COtherItem(const std::shared_ptr<ItemData> data)
 	: CItem(data)
 {
 }
@@ -48,7 +45,7 @@ COtherItem::~COtherItem()
 }
 
 // 보물
-CTreasure::CTreasure(const ItemData* data, TREASURE_GRADE _grade)
+CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade)
 	: CItem(data)
 	, grade(_grade)
 {

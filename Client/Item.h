@@ -6,7 +6,7 @@
 class CItem
 {
 public:
-	CItem(const ItemData* data);
+	CItem(std::shared_ptr<ItemData> data);
 	virtual ~CItem() = 0;
 
 	// UI에서 쉽게 가져다 쓸 수 있도록 Getter 제공
@@ -18,7 +18,7 @@ public:
 	const std::string& GetDescription() const { return base_data->description; }
 
 protected:
-	const ItemData* base_data;
+	const std::shared_ptr<ItemData> base_data;
 };
 
 
@@ -26,7 +26,7 @@ protected:
 class CEquipment : public CItem 
 {
 public:
-	CEquipment(const ItemData* data, const uint32 maxDur);
+	CEquipment(const std::shared_ptr<ItemData> data, const uint32 maxDur);
 	virtual ~CEquipment() override;
 
 private:
@@ -38,7 +38,7 @@ private:
 class CCunsumable : public CItem
 {
 public:
-	CCunsumable(const ItemData* data, const uint32 healAmount);
+	CCunsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount);
 	virtual ~CCunsumable() override;
 
 private:
@@ -49,7 +49,7 @@ private:
 class COtherItem : public CItem
 {
 public:
-	COtherItem(const ItemData* data);
+	COtherItem(const std::shared_ptr<ItemData> data);
 	virtual ~COtherItem() override;
 
 private:
@@ -60,7 +60,7 @@ private:
 class CTreasure : public CItem
 {
 public:
-	CTreasure::CTreasure(const ItemData* data, TREASURE_GRADE _grade);
+	CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade);
 	virtual ~CTreasure() override;
 
 private:

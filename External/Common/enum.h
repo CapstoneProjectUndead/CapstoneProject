@@ -8,6 +8,7 @@ enum class OBJECT_TYPE : uint8_t
 	STATIC_OBJECT,
 	PLAYER,
 	MONSTER,
+	WORLD_ITEM,
 };
 
 enum class PLAYER_STATE : uint8_t

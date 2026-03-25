@@ -36,7 +36,7 @@ void CMyPlayer::Update(float elapsedTime)
 		InterpolateMyPlayer(elapsedTime);
 	}
 
-	// "E" 키를 누르면 인벤토리를 열고
+	// "E" 키를 누르면 인벤토리를 열고/닫기
 	if (KEY_TAP(KEY::E)) {
 		inventory->ToggleOpen();
 	}

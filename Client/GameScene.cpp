@@ -11,6 +11,9 @@
 #include "NetworkManager.h"
 #include "MeshRenderer.h"
 #include "Inventory.h"
+#include "WorldItem.h"
+#include "ItemFactory.h"
+#include "KeyManager.h"
 
 
 CGameScene::CGameScene()
@@ -28,6 +31,11 @@ void CGameScene::Initialize()
 		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(staticHeapManager);
 		treasures = factory->GetTreauseres();
+
+		// 보물 위치에 보물 생성
+		for (auto& treasure : treasures) {
+			SpawnWorldItem(1000, treasure.treasure_pos);
+		}
 	}
 }
 
@@ -65,7 +73,71 @@ void CGameScene::Update(float elapsedTime)
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
+	};
+
+	ProcessPickup();
+}
+
+void CGameScene::ProcessPickup()
+{
+	if (!my_player)
+		return;
+
+	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) != KEY_STATE::TAP)
+		return;
+
+	XMFLOAT3 player_pos = my_player->GetPosition();
+
+	std::vector<std::shared_ptr<CObject>> worldItems;;
+	for (auto& obj : objects) {
+		if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
+			worldItems.push_back(obj);
+		}
 	}
+
+	auto it = std::find_if(worldItems.begin(), worldItems.end(),
+		[&](const std::shared_ptr<CObject>& item) {
+			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), player_pos);
+			return Vector3::Length(diff) <= PICKUP_RANGE;
+		});
+
+	if (it == worldItems.end())
+		return;
+
+	auto inv = my_player->GetInventory();
+	if (inv) {
+		auto worldItem = static_cast<CWorldItem*>(it->get());
+		inv->AddItem(worldItem->GetItem());
+
+		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
+			XMFLOAT3 pos = worldItem->GetPosition();
+			auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
+				[&pos](const TreasureInfo& info) {
+					return info.treasure_pos.x == pos.x &&
+					       info.treasure_pos.y == pos.y &&
+					       info.treasure_pos.z == pos.z;
+				});
+
+			if (treasure_it != treasures.end())
+				treasures.erase(treasure_it);
+
+			my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+		}
+
+		RemoveObject(worldItem->GetID());
+	}
+}
+
+void CGameScene::SpawnWorldItem(int itemID, XMFLOAT3 position)
+{
+	auto itemData = ItemFactory::Create(itemID);
+
+	auto item = std::make_shared<CWorldItem>(itemData);
+	item->SetPosition(position);
+	item->SetID(world_item_id_counter);
+	item->Initialize(GET_DEVICE, GET_CMD_LIST);
+	AddObject(item, world_item_id_counter);
+	++world_item_id_counter;
 }
 
 void CGameScene::Render(ID3D12GraphicsCommandList* commandList)
@@ -170,4 +242,10 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
+	treasures = factory->GetTreauseres();
+
+	// 보물 위치에 보물 생성
+	for (auto& treasure : treasures) {
+		SpawnWorldItem(1000, treasure.treasure_pos);
+	}
 }

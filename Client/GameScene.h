@@ -2,7 +2,9 @@
 #include "Scene.h"
 #include "MapGenerator/MapGenerator.h"
 
-class CGameScene : public CScene 
+class CWorldItem;
+
+class CGameScene : public CScene
 {
 public:
     CGameScene();
@@ -19,13 +21,21 @@ public:
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
 
+    void SpawnWorldItem(int itemID, XMFLOAT3 position);
+
 public:
     // 서버 패킷 처리 관련 함수들
     void Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt);
     void Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt);
 
 private:
-    std::vector<MapGenerator::InstanceData> instance_data;
-    std::vector<TreasureInfo> treasures;
+    void ProcessPickup();
+
+    std::vector<MapGenerator::InstanceData>  instance_data;
+    std::vector<TreasureInfo>                treasures;
+
+    static constexpr float  PICKUP_RANGE       = 2.0f;
+    static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값
+    uint32 world_item_id_counter = WORLD_ITEM_ID_BASE;
 };
 

@@ -58,7 +58,7 @@ namespace ItemFactory
 		}
 
 		const ItemEntry& e = it->second;
-		ItemData* data = new ItemData(e.base);
+		std::shared_ptr<ItemData> data = std::make_shared<ItemData>(e.base);
 
 		switch (e.base.item_type) {
 		case ITEM_TYPE::EQUIPMENT:
@@ -70,7 +70,6 @@ namespace ItemFactory
 		case ITEM_TYPE::ETC:
 			return std::make_shared<COtherItem>(data);
 		default:
-			delete data;
 			return nullptr;
 		}
 	}

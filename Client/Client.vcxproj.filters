@@ -331,7 +331,7 @@
       <Filter>Object\Factory</Filter>
     </ClInclude>
     <ClInclude Include="WorldItem.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Object\Item\World Item</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -522,7 +522,7 @@
       <Filter>Object\Factory</Filter>
     </ClCompile>
     <ClCompile Include="WorldItem.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Object\Item\World Item</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
