@@ -25,11 +25,27 @@ public:
 
     CUIComponent();
 
+    // json data
+    virtual json Serialize();
+    virtual void Deserialize(const json& j);
+
     virtual void Update(const float deltaTime) override;
 
     virtual void Render(ID3D12GraphicsCommandList* commandList) override;
     virtual void Collect(IRenderer* renderer);
+    // getter
     Rect GetParentRect();
+    virtual std::string GetShaderName() const { return "ui"; }
+    std::string& GetName() { return name; }
+    std::vector<std::shared_ptr<CUIComponent>>& GetChildren() { return child; }
+    // imgui를 통해 수정
+    XMFLOAT2& GetRelativePos() { return relative_pos; }
+    XMFLOAT2& GetSize() { return size; }
+    XMFLOAT2& GetPivot() { return pivot; }
+    XMFLOAT2& GetAnchor() { return anchor; }
+    XMFLOAT4& GetColor() { return color; }
+
+    // setter
     void AddChild(std::shared_ptr<CUIComponent> newChild) {
         newChild->parent_ui = this; // 부모 연결
         child.push_back(newChild);
@@ -37,10 +53,14 @@ public:
     void SetSize(const XMFLOAT2& s) { size = s; }
     void SetPivot(const XMFLOAT2& p) { pivot = p; }
     void SetRelativePos(const XMFLOAT2& p) { relative_pos = p; }
-    virtual std::string GetShaderName() const { return "ui"; }
+    void SetName(const std::string& n) { name = n; }
+
+    // Collect 후 자식 순회
     void Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
+    // Rect에 마우스가 있는지 검사
     virtual bool IntersectsMouse(float x, float y);
 protected:
+    std::string name{ "UI_Element" };
     EButtonState state{ EButtonState::Disabled };
     XMFLOAT2 relative_pos{ .0f, .0f };
 	XMFLOAT2 size{ 100.0f, 100.0f };
@@ -68,18 +88,32 @@ public:
 class CUIImage : public CUIComponent {
 public:
     CUIImage();
+    float GetFillAmount() const { return fill_amount; }
     void SetFillAmount(float amt) { fill_amount = std::clamp(amt, 0.0f, 1.0f); }
     void SetColor(XMFLOAT4 c);
     void SetMaterial(std::shared_ptr<CMaterialComponent>& m);
+    void SetBindingKey(const std::string& key) { binding_key = key; }
 
     // fill_amount 적용 외에 UIComponent와 유사
     virtual void Update(float deltaTime) override;
     virtual void Collect(IRenderer* renderer) override;
+
+    virtual json Serialize() override;
+    virtual void Deserialize(const json& j) override;
 protected:
+    std::string binding_key = ""; // ex) "PlayerHP"
     float fill_amount = 1.0f;
     std::shared_ptr<CMaterialComponent> mat_comp;  // 생성 시 heap 0 index 사용
 };
 
+/*
+* 사용 예시
+auto billboard = std::make_shared<CUIBillboard>(obj.get());
+std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
+m->SetMaterial(factory->GetMaterial(shaders["billboard"]->GetHeapManager(), "white"));
+billboard->SetMaterial(m);
+mainCanvas->AddChild(billboard);
+*/
 class CUIBillboard : public CUIImage {
 public:
     CUIBillboard(CObject* obj) :target{obj} {}
@@ -105,9 +139,11 @@ private:
 
 class CUIButton : public CUIImage {
 public:
-    CUIButton() : CUIImage() { state = EButtonState::Normal; }
+    CUIButton();
     virtual void Update(float deltaTime) override;
     virtual void Collect(IRenderer* renderer) override;
+
+    virtual json Serialize() override;
 private:
     void GetColorByState();
     void UpdateState();
@@ -115,16 +151,7 @@ private:
 
 class CUIManager
 {
-private:
-    CUIManager() = default;
-    CUIManager(const CUIManager&) = delete;
-    std::vector<std::shared_ptr<CUICanvas>> canvases;
 public:
-    static CUIManager& GetInstance() {
-        static CUIManager instance;
-        return instance;
-    }
-
     // 새로운 캔버스 생성
     std::shared_ptr<CUICanvas> CreateCanvas();
     void Update(float deltaTime);
@@ -133,4 +160,6 @@ public:
 
     // 마우스 클릭 등의 이벤트 처리
     bool IntersectsMouse();
+private:
+    std::vector<std::shared_ptr<CUICanvas>> canvases;
 };

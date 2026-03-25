@@ -11,6 +11,34 @@ CUIComponent::CUIComponent()
 {
 }
 
+json CUIComponent::Serialize()
+{
+    json j;
+    j["Type"] = "Base"; // 하위 클래스에서 오버라이드
+    j["Name"] = name;
+    j["RelativePos"] = { relative_pos.x, relative_pos.y };
+    j["Size"] = { size.x, size.y };
+    j["Pivot"] = { pivot.x, pivot.y };
+    j["Anchor"] = { anchor.x, anchor.y };
+    j["Color"] = { color.x, color.y, color.z, color.w };
+
+    j["Children"] = json::array();
+    for (auto& c : child) {
+        j["Children"].push_back(c->Serialize());
+    }
+    return j;
+}
+
+void CUIComponent::Deserialize(const json& j)
+{
+    name = j["Name"];
+    relative_pos = { j["RelativePos"][0], j["RelativePos"][1] };
+    size = { j["Size"][0], j["Size"][1] };
+    pivot = { j["Pivot"][0], j["Pivot"][1] };
+    anchor = { j["Anchor"][0], j["Anchor"][1] };
+    color = { j["Color"][0], j["Color"][1], j["Color"][2], j["Color"][3] };
+}
+
 bool CUIComponent::Rect::IsPointInside(float x, float y) const
 {
     return (x >= left && x <= right && y >= top && y <= bottom);
@@ -166,6 +194,7 @@ CUIImage::CUIImage()
     : CUIComponent(), mat_comp{ std::make_shared<CMaterialComponent>() }
 {
     mat_comp->SetMaterial(std::make_shared<CMaterial>());
+    name = "Image_Element";
 }
 
 // CUIImage
@@ -181,6 +210,12 @@ void CUIImage::SetMaterial(std::shared_ptr<CMaterialComponent>& m)
 
 void CUIImage::Update(float deltaTime)
 {
+    if (!binding_key.empty()) {
+        // 외부 전역 매니저에서 키에 해당하는 0.0 ~ 1.0 값을 가져옴
+        //float value = CDataManager::GetInstance().GetFloat(binding_key);
+        //SetFillAmount(value);
+    }
+
     Rect parentRect = GetParentRect();
 
     float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
@@ -227,6 +262,20 @@ void CUIImage::Collect(IRenderer* renderer)
     }
 }
 
+json CUIImage::Serialize()
+{
+    json j = CUIComponent::Serialize();
+    j["Type"] = "Image";
+    j["FillAmount"] = fill_amount;
+    return j;
+}
+
+void CUIImage::Deserialize(const json& j)
+{
+    CUIComponent::Deserialize(j);
+    if (j.contains("FillAmount")) fill_amount = j["FillAmount"];
+}
+
 // CUIBillboard
 void CUIBillboard::SetTarget(CObject* obj)
 {
@@ -265,6 +314,13 @@ void CUIText::Collect(IRenderer* renderer)
     }
 }
 
+CUIButton::CUIButton()
+    : CUIImage()
+{
+    name = "Button_Element";
+    state = EButtonState::Normal;
+}
+
 void CUIButton::Update(float deltaTime)
 {
     UpdateState();
@@ -283,6 +339,13 @@ void CUIButton::Collect(IRenderer* renderer)
     for (auto& c : child) {
         c->Collect(renderer);
     }
+}
+
+json CUIButton::Serialize()
+{
+    json j = CUIImage::Serialize();
+    j["Type"] = "Button";
+    return j;
 }
 
 void CUIButton::GetColorByState()

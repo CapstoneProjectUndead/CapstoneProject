@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "LightManager.h"
 
 class CPlayer;
@@ -8,6 +8,7 @@ class CObject;
 class CShader;
 class CObjectFactory;
 class IRenderer;
+class CUIManager;
 
 class CScene
 {
@@ -87,4 +88,5 @@ protected:
 
 	std::unique_ptr<CLightManager> light;
 	std::shared_ptr<CObjectFactory> factory;
+	std::shared_ptr<CUIManager> ui_manager;
 };

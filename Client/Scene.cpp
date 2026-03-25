@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Camera.h"
 #include "MyPlayer.h"
 #include "Shader.h"
@@ -14,11 +14,13 @@
 #include "ImGuiManager.h"
 #include "Monster.h"
 #include "Renderers.h"
+#include "UIComponent.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
 {
 	factory = std::make_shared<CObjectFactory>();
+	ui_manager = std::make_shared<CUIManager>();
 }
 
 CScene::~CScene()
@@ -28,7 +30,6 @@ CScene::~CScene()
 
 void CScene::Initialize()
 {
-
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -53,6 +54,7 @@ void CScene::Update(float elapsedTime)
 {
 	CPhysicsManager::GetInstance().Update(elapsedTime);
 	AnimateObjects(elapsedTime);
+	ui_manager->Update(elapsedTime);
 
 	if(camera)
 		camera->Update(my_player->position, elapsedTime);
@@ -62,31 +64,58 @@ void CScene::Update(float elapsedTime)
 
 void CScene::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (camera)
-		camera->SetViewportsAndScissorRects(commandList);
+	if (camera) camera->SetViewportsAndScissorRects(commandList);
 
-	for (const auto& shader : shaders) {
-		shader.second->RenderBegin(commandList);
+	// Collect Phase
+	// 3D 객체들 수집
+	for (const auto& obj : objects) {
+		auto it = renderers.find(obj->GetShader());
+		if (it != renderers.end()) {
+			obj->OnCollect(it->second.get());
+		}
+	}
 
-		if (camera)
-			camera->UpdateShaderVariables(commandList);
+	// 플레이어 수집
+	if (my_player) {
+		auto it = renderers.find(my_player->GetShader());
+		if (it != renderers.end()) {
+			my_player->OnCollect(it->second.get());
+		}
+	}
 
-		if (light)
+	// UI 매니저 수집
+	ui_manager->Collect(renderers);
+
+	// 일반 2D UI 렌더링
+	// Draw Phase
+	for (const auto& [name, pShader] : shaders) {
+		pShader->RenderBegin(commandList);
+
+		if (name == "billboard") {
+			camera->UpdateShaderVariablesBillBoard(commandList);
+		}
+		else if (name == "ui") {
+			camera->UpdateShaderVariables(commandList, true);
+		}
+		else {
+			camera->UpdateShaderVariables(commandList, false);
+		}
+
+		bool useLight = (name != "ui" && name != "billboard");
+		if (light && useLight) {
 			light->Render(commandList);
+		}
 
-		for (const auto& obj : objects) {
-			if (shader.first == obj->GetShader()) {
-				shader.second->Render(commandList, obj.get());
+		// 인스턴싱 드로우
+		auto it = renderers.find(name);
+		if (it != renderers.end()) {
+			it->second->Render(commandList);
+			if (name == "ui") {
+				renderers["text"]->Render(commandList);
 			}
 		}
 
-		if (my_player) {
-			if (shader.first == my_player->GetShader()) {
-				shader.second->Render(commandList, my_player.get());
-			}
-		}
-
-		shader.second->RenderEnd(commandList);
+		pShader->RenderEnd(commandList);
 	}
 }
 

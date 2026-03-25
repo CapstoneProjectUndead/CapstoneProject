@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CObject;
 
@@ -83,5 +83,5 @@ protected:
 	XMFLOAT3 offset{};
 	XMFLOAT3 look_at{};
 
-	CObject* target_object;	// 소유X, 참조용
+	CObject* target_object{};	// 소유X, 참조용
 };

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -129,6 +129,7 @@ void CCamera::UpdateCameraVectors()
 
 void CCamera::SetCameraOffset(XMFLOAT3& cameraOffset)
 {
+	if (!target_object) return;
 	offset = cameraOffset;
 	XMVECTOR vOffset = XMLoadFloat3(&offset);
 	XMVECTOR vPlayerPos = XMLoadFloat3(&target_object->position); // 플레이어 위치 기준
