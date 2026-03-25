@@ -88,6 +88,18 @@
     <Filter Include="Object\ItemFinder">
       <UniqueIdentifier>{73a7f2fb-07a7-474b-bac0-4683ec588d92}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Item">
+      <UniqueIdentifier>{3494fd25-a60a-4272-b2eb-ce14502ff680}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\Inventory Item">
+      <UniqueIdentifier>{b3d1ffcc-2de0-415d-b127-3d48262e257d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\World Item">
+      <UniqueIdentifier>{8822c58a-f9ea-4f45-8606-99773d5793bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inventory">
+      <UniqueIdentifier>{29e63e26-539e-44e2-ac37-927ef5d676f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -309,6 +321,18 @@
     <ClInclude Include="..\External\Common\MapUtils.h">
       <Filter>MapGenerator</Filter>
     </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Object\Item\Inventory Item</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemFactory.h">
+      <Filter>Object\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldItem.h">
+      <Filter>Object\Item\World Item</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -487,6 +511,18 @@
     </ClCompile>
     <ClCompile Include="..\External\Common\MapUtils.cpp">
       <Filter>MapGenerator</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Object\Item\Inventory Item</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemFactory.cpp">
+      <Filter>Object\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldItem.cpp">
+      <Filter>Object\Item\World Item</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

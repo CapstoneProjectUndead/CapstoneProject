@@ -13,8 +13,9 @@
 
 HIMC CImGuiManager::default_IMC = nullptr;
 bool CImGuiManager::need_reset_focus = false;
-ImFont* CImGuiManager::title_font = nullptr;
-ImFont* CImGuiManager::title_font2 = nullptr;
+ImFont* CImGuiManager::vineritc_font = nullptr;
+ImFont* CImGuiManager::elephnt_font = nullptr;
+ImFont* CImGuiManager::bold_font = nullptr;
 
 CImGuiManager::CImGuiManager()
 {
@@ -35,8 +36,10 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
 
     // 폰트 로드
     io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
-    title_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
-    title_font2 = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
+    vineritc_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
+    elephnt_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
+    bold_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgunbd.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+
     io.Fonts->Build();
 
     // Win32 & DX12 초기화

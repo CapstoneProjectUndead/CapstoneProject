@@ -128,7 +128,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     AdjustWindowRect(&rc, dwstyle, FALSE);
 
     // 디버그 콘솔 생성
-    //CreateDebugConsole();
+    CreateDebugConsole();
 
     //hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
     ghWnd = CreateWindow(szWindowClass, szTitle, dwstyle,
@@ -176,9 +176,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_SIZE:
-        if (wParam == SIZE_MAXIMIZED) {
-            gGameFramework.ChangeSwapChainState();
-        }
         break;
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:

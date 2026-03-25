@@ -142,10 +142,17 @@ struct TreasureInfo
 
 struct ItemData 
 {
-	int			item_id;
-	ITEM_TYPE	item_type;
-	std::string item_name;
+	int				item_id;
+	ITEM_TYPE		item_type;
+	ITEM_SUB_TYPE	item_sub_type;
+	std::string		item_name;
 
-	std::string icon_path; // 인벤토리 UI에서 그릴 이미지 경로
-	std::string mesh_path; // 땅에 떨어졌을 때 그릴 3D 모델 경로
+	std::string		icon_path;		// 인벤토리 UI에서 그릴 이미지 경로
+	std::string		mesh_path;		// 땅에 떨어졌을 때 그릴 3D 모델 경로
+	std::string		description;	// 아이템 설명 (툴팁용)
+
+	uint16			max_stack;		// 99개씩 겹칠 수 있는지 등
+	uint32			price;			// 상점 판매가
+	float           weight;			// 무게
+	bool            is_throwable;	// 던질 수 있는지.
 };

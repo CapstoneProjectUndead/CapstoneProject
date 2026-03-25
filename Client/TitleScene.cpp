@@ -145,46 +145,16 @@ void CTitleScene::DrawTitle()
         ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
     );
 
-    // 화면 중앙 상단 좌표 계산
-    // X는 정확히 화면 절반, Y는 화면 위에서 30% 내려온 지점
-    ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.3f);
-
-    // Pivot(0.5f, 0.5f)을 주면, 윈도우의 '정중앙'이 centerPos에 딱 맞춰진다.
-    ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-    ImGui::SetNextWindowBgAlpha(0.0f);
-
-    // ImGuiWindowFlags_AlwaysAutoResize 추가
-    // 윈도우 크기를 고정하지 않고, 글자 크기(270px)에 맞춰서 그릇이 자동으로 늘어난다! (짤림 방지)
-    ImGuiWindowFlags mainFlags = ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoBringToFrontOnFocus |
-        ImGuiWindowFlags_NoInputs |
-        ImGuiWindowFlags_AlwaysAutoResize;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-
-    if (ImGui::Begin("Title", NULL, mainFlags)) {
-
-        if (CImGuiManager::title_font) {
-
-            float fontScale = G_RATIO_Y;
-            //fontScale = std::clamp(fontScale, 1.0f, 2.0f);
-
-            ImGui::PushFont(CImGuiManager::title_font);
-            ImGui::SetWindowFontScale(fontScale);
-        }
-
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));
-        ImGui::Text("UNDEAD");
-        ImGui::PopStyleColor();
-
-        if (CImGuiManager::title_font)
-            ImGui::PopFont();
+    if (CImGuiManager::vineritc_font) {
+        float fontSize = 270.0f * G_RATIO_Y;
+        ImFont* font = CImGuiManager::vineritc_font;
+        ImVec2 textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, "UNDEAD");
+        ImVec2 pos = ImVec2(
+            (screenSize.x - textSize.x) * 0.5f,
+            screenSize.y * 0.3f - textSize.y * 0.5f
+        );
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, pos, IM_COL32(204, 0, 0, 255), "UNDEAD");
     }
-    ImGui::End();
-    ImGui::PopStyleVar(2);
 }
 
 // 메인 메뉴 & 멀티 선택 메뉴 통합 관리
@@ -597,7 +567,7 @@ void CTitleScene::DrawRoomListUI()
 
         // 타이틀 (빨간 UNDEAD)
         ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-        if (CImGuiManager::title_font2) ImGui::PushFont(CImGuiManager::title_font2);
+        if (CImGuiManager::elephnt_font) ImGui::PushFont(CImGuiManager::elephnt_font);
 
         const char* titleText = "UNDEAD";
         float textWidth = ImGui::CalcTextSize(titleText).x;
@@ -607,7 +577,7 @@ void CTitleScene::DrawRoomListUI()
         ImGui::Text(titleText);
         ImGui::PopStyleColor();
 
-        if (CImGuiManager::title_font2)
+        if (CImGuiManager::elephnt_font)
             ImGui::PopFont();
 
         ImGui::Spacing(); ImGui::Spacing();

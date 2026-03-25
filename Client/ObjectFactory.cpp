@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "ObjectFactory.h"
+#include "ItemFactory.h"
 
 // Component
 #include "MeshComponent.inl"
@@ -18,6 +19,7 @@
 #include "AIStates.h"
 #include "ItemFinder.h"
 #include "MapUtils.h"
+#include "Inventory.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
@@ -252,6 +254,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 	std::vector<std::shared_ptr<CObject>> objects;
 
 	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	treasures.clear();
 	for (const auto& inst : instanceData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
 			treasures.push_back(TreasureInfo{ inst.position });
@@ -423,6 +426,15 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	// 다우징 로드 component 추가
 	auto itemFinder = std::make_shared<CItemFinder>();
 	player->SetComponent(itemFinder);
+
+	// Inventory 추가
+	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);
+	player->SetInventory(inventory);
+
+	// 테스트! (꼭 지울 것)
+	ItemFactory::LoadFromJson("Data/items.json");
+	//inventory->AddItem(ItemFactory::Create(100));
+	//inventory->AddItem(ItemFactory::Create(1000));
 
 	return player;
 }

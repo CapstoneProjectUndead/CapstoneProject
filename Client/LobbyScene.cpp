@@ -108,18 +108,6 @@ void CLobbyScene::Enter()
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		camera->SetTarget(my_player.get());
 	}
-
-	// HumanMonster 생성
-	if (g_is_single) {
-		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
-		auto humanMonster = static_pointer_cast<CHumanMonster>(factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type));
-		humanMonster->ChangeModelSet(1);
-		humanMonster->ChangeEyes(2);
-		humanMonster->ChangeMouth(0);
-		humanMonster->SetPosition(0.f, 0.1f, -1.5f);
-		humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-		AddObject(humanMonster, humanMonster->GetID());
-	}
 }
 
 void CLobbyScene::Exit()

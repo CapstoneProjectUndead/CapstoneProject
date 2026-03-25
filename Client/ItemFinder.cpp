@@ -24,7 +24,11 @@ void CItemFinder::Update(const float deltaTime)
             int a = 0;
         }
         else {
-            int a = 0;
+            std::cout << "Player pos: " << owner->GetPosition().x << ", " 
+                << owner->GetPosition().z << std::endl;
+           
+            std::cout << "Treasure pos: " << closest_treasure_pos.x << ", " 
+                << closest_treasure_pos.z << std::endl;
         }
     }
 }

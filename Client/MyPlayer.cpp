@@ -9,12 +9,15 @@
 #include "User.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
+#include "Inventory.h"
+#include "ImGuiManager.h"
 
 #undef min
 #undef max
 
 CMyPlayer::CMyPlayer()
 	: CPlayer()
+	, gold(0)
 	, is_ready(false)
 {
     is_my_player = true;
@@ -31,6 +34,11 @@ void CMyPlayer::Update(float elapsedTime)
 	// 멀티 플레이일 경우에만, 아래 로직이 실행
 	if (!g_is_single && current_scene_type != SCENE_TYPE::CUSTOMS) {
 		InterpolateMyPlayer(elapsedTime);
+	}
+
+	// "E" 키를 누르면 인벤토리를 열고/닫기
+	if (KEY_TAP(KEY::E)) {
+		inventory->ToggleOpen();
 	}
 
 	CPlayer::Update(elapsedTime);
@@ -133,6 +141,9 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 
 void CMyPlayer::ProcessRotation()
 {
+	if (ImGui::GetIO().WantCaptureMouse)
+		return;
+
 	CKeyManager& keyManager = CKeyManager::GetInstance();
 	if (KEY_PRESSED(KEY::LBTN)) {
 		Vec2 mouseDelta = (keyManager.GetMousePos() - keyManager.GetPrevMousePos()) / 3.0f;

@@ -4,6 +4,7 @@
 #include "NetworkManager.h"
 
 #include "Timer.h"
+#include "Camera.h"
 #include "Scene.h"
 #include "GameFramework.h"
 
@@ -63,7 +64,15 @@ void CGameFramework::OnDestroy()
 
 	::CloseHandle(fence_event);
 
-	swap_chain->SetFullscreenState(FALSE, nullptr);
+	// 보더리스 전체화면 방식 사용 중이므로 SetFullscreenState 불필요
+	if (is_fullscreen) {
+		::SetWindowLong(ghWnd, GWL_STYLE, windowed_style);
+		::SetWindowPos(ghWnd, HWND_TOP,
+			windowed_rect.left, windowed_rect.top,
+			windowed_rect.right  - windowed_rect.left,
+			windowed_rect.bottom - windowed_rect.top,
+			SWP_FRAMECHANGED);
+	}
 #if defined(_DEBUG)
 	// 리소스 누수 확인
 	IDXGIDebug1* dxgi_debug = nullptr;
@@ -329,46 +338,100 @@ void CGameFramework::waitForGpuComplete()
 
 void CGameFramework::ChangeSwapChainState()
 {
+	// DXGI 독점 전체화면 대신 보더리스 윈도우 전체화면을 사용한다.
+	// 이유: DXGI 독점 전체화면은 한글 IME 조합 창과 충돌하여 자동으로 전체화면이 해제된다.
+
+	if (!is_fullscreen) {
+
+		// 현재 창 스타일과 위치 저장
+		windowed_style = static_cast<DWORD>(::GetWindowLong(ghWnd, GWL_STYLE));
+		::GetWindowRect(ghWnd, &windowed_rect);
+
+		// 현재 모니터 전체 영역 얻기
+		MONITORINFO mi = { sizeof(mi) };
+		::GetMonitorInfo(::MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST), &mi);
+		int w = mi.rcMonitor.right  - mi.rcMonitor.left;
+		int h = mi.rcMonitor.bottom - mi.rcMonitor.top;
+
+		// 테두리 없는 전체화면으로 전환 (IME 호환)
+		::SetWindowLong(ghWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+		::SetWindowPos(ghWnd, HWND_TOP,
+			mi.rcMonitor.left, mi.rcMonitor.top, w, h,
+			SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+		is_fullscreen = true;
+
+		// SetWindowPos 후 창이 이미 모니터 크기로 변경된 상태에서 버퍼를 재생성
+		OnResize();
+	}
+	else {
+		int w = windowed_rect.right  - windowed_rect.left;
+		int h = windowed_rect.bottom - windowed_rect.top;
+
+		// 원래 창 스타일과 위치 복원
+		::SetWindowLong(ghWnd, GWL_STYLE, windowed_style);
+		::SetWindowPos(ghWnd, HWND_TOP,
+			windowed_rect.left, windowed_rect.top, w, h,
+			SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+		is_fullscreen = false;
+
+		// 원래 창 크기로 버퍼 리사이즈
+		OnResize();
+	}
+}
+
+void CGameFramework::OnResize()
+{
+	if (!swap_chain)
+		return;
+
 	waitForGpuComplete();
 
-	BOOL fullScreenState{};
-	swap_chain->GetFullscreenState(&fullScreenState, NULL);
-	swap_chain->SetFullscreenState(!fullScreenState, NULL);	// full -> window, window -> full
-
-	DXGI_MODE_DESC targetParameters;
-	targetParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	targetParameters.Width = client_width;
-	targetParameters.Height = client_height;
-	targetParameters.RefreshRate.Numerator = 0;	// 시스템 기본값 사용(프레임 고정 시 tearing 발생)
-	targetParameters.RefreshRate.Denominator = 0;
-	targetParameters.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	targetParameters.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	swap_chain->ResizeTarget(&targetParameters);
-
-	// ResizeBuffers가 성공하기 위해 모든 직/간접 참조를 해제해야 함
+	// ResizeBuffers가 성공하기 위해 모든 참조를 해제
 	for (int i = 0; i < swap_chain_buffer_num; ++i) {
 		if (render_target_buffers[i]) render_target_buffers[i].Reset();
 	}
 
+	// Depth Stencil Buffer도 해제 (크기가 바뀌므로 재생성 필요)
+	if (depth_stencil_buffer) depth_stencil_buffer.Reset();
+
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
 	swap_chain->GetDesc(&swapChainDesc);
-	swap_chain->ResizeBuffers(swap_chain_buffer_num, 0, 0, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags);
+	// width=0, height=0 → 현재 윈도우 클라이언트 영역 크기를 자동으로 사용
+	ThrowIfFailed(swap_chain->ResizeBuffers(swap_chain_buffer_num, 0, 0,
+		swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
 	swap_chain_buffer_index = swap_chain->GetCurrentBackBufferIndex();
 
 	CreateRenderTargetViews();
 
-	// 화면 변수 변경
+	// 실제 버퍼 크기를 스왑체인에서 읽어옴
 	DXGI_SWAP_CHAIN_DESC sd;
 	swap_chain->GetDesc(&sd);
-	client_width = sd.BufferDesc.Width;
+	client_width  = sd.BufferDesc.Width;
 	client_height = sd.BufferDesc.Height;
 
-	viewport = { 0.0f, 0.0f, (float)client_width, (float)client_height, 0.0f, 1.0f };
+	// Depth Stencil Buffer를 새 크기로 재생성
+	CreateDepthStencilView();
+
+	viewport     = { 0.0f, 0.0f, (float)client_width, (float)client_height, 0.0f, 1.0f };
 	scissor_rect = { 0, 0, (long)client_width, (long)client_height };
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2((float)client_width, (float)client_height);
+
+	// 활성 씬의 카메라 뷰포트/프로젝션도 새 크기로 업데이트
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	if (scene) {
+		auto& cam = scene->GetCamera();
+		if (cam) {
+			cam->SetViewport(0, 0, client_width, client_height);
+			cam->SetScissorRect(0, 0, client_width, client_height);
+			cam->GenerateProjectionMatrix(0.01f, 500.0f,
+				(float)client_width / (float)client_height, 90.0f);
+		}
+	}
 }
 
 void CGameFramework::MoveToNextFrame()

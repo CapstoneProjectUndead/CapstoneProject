@@ -29,8 +29,9 @@ public:
     }
 
 public:
-    static ImFont* title_font;
-    static ImFont* title_font2;
+    static ImFont* vineritc_font;
+    static ImFont* elephnt_font;
+    static ImFont* bold_font; 
     static bool need_reset_focus;
 
 public:

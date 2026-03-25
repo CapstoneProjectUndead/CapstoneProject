@@ -193,6 +193,9 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Inventory.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="ItemFactory.h" />
     <ClInclude Include="ItemFinder.h" />
     <ClInclude Include="JitterMeasurer.h" />
     <ClInclude Include="KeyManager.h">
@@ -239,6 +242,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="TraceState.h" />
     <ClInclude Include="UICommon.h" />
     <ClInclude Include="User.h" />
+    <ClInclude Include="WorldItem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
@@ -273,6 +277,9 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="Item.cpp" />
+    <ClCompile Include="ItemFactory.cpp" />
     <ClCompile Include="ItemFinder.cpp" />
     <ClCompile Include="JitterMeasurer.cpp" />
     <ClCompile Include="KeyManager.cpp">
@@ -319,6 +326,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="TraceState.cpp" />
     <ClCompile Include="User.cpp" />
+    <ClCompile Include="WorldItem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />
