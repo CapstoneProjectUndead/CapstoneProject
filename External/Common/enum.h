@@ -101,8 +101,8 @@ enum class ITEM_SUB_TYPE : uint16_t
 
 	// Equipment 시리즈 (100번대)
 	EQUIP_AXE = 100,
-	EQUIP_DRILL,
 	EQUIP_PICKAXE,
+	EQUIP_DRILL,
 
 	// 회복 아이템 시리즈 (200번대)
 	HEAL_POTION = 200,

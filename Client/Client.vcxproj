@@ -195,6 +195,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="ItemFactory.h" />
     <ClInclude Include="ItemFinder.h" />
     <ClInclude Include="JitterMeasurer.h" />
     <ClInclude Include="KeyManager.h">
@@ -277,6 +278,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="Item.cpp" />
+    <ClCompile Include="ItemFactory.cpp" />
     <ClCompile Include="ItemFinder.cpp" />
     <ClCompile Include="JitterMeasurer.cpp" />
     <ClCompile Include="KeyManager.cpp">

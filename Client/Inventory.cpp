@@ -17,13 +17,20 @@ CInventory::~CInventory()
 
 void CInventory::AddItem(std::shared_ptr<CItem> item)
 {
-	if (current_weight >= max_weight)
-		return;
+	// 보물만 무게에 영향을 준다.
+	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
 
-	if (current_weight + item->GetWeight() > max_weight)
-		return;
+		// 이미 꽉 찼다면 return!
+		if (current_weight >= max_weight)
+			return;
 
-	current_weight += item->GetWeight();
+		// 이 보물을 추가했을 때 최대 무게를 초과하면 거부
+		if (current_weight + item->GetWeight() > max_weight)
+			return;
+
+		current_weight += item->GetWeight();
+	}
+
 	items.push_back(std::move(item));
 }
 
@@ -346,10 +353,16 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 					dl->AddRect(boxMin, boxMax,       IM_COL32(170, 170, 175, 255), rounding);
 
 					if (i < (int)filtered.size()) {
-						std::string name  = CP949ToUTF8(filtered[i]->GetName());
-						float       textY = boxMin.y + (boxMax.y - boxMin.y - ImGui::GetTextLineHeight()) * 0.5f;
-						ImGui::SetCursorScreenPos(ImVec2(boxMin.x + slotPad, textY));
-						ImGui::Text("%s", name.c_str());
+						std::string name    = filtered[i]->GetName();
+						ImFont*     font    = ImGui::GetFont();
+						float       baseSz  = ImGui::GetFontSize();
+						float       innerW  = (boxMax.x - boxMin.x) - slotPad * 4.0f;
+						float       textW   = font->CalcTextSizeA(baseSz, FLT_MAX, 0.0f, name.c_str()).x;
+						float       fontSize = (textW > innerW) ? baseSz * (innerW / textW) : baseSz;
+						float       scaledW = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, name.c_str()).x;
+						float       textX   = boxMin.x + (boxMax.x - boxMin.x - scaledW) * 0.5f;
+						float       textY   = boxMin.y + (boxMax.y - boxMin.y - fontSize) * 0.5f;
+						dl->AddText(font, fontSize, ImVec2(textX, textY), IM_COL32(0, 0, 0, 255), name.c_str());
 					}
 					ImGui::Dummy(ImVec2(cellW, rowH));
 				}

@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "ObjectFactory.h"
+#include "ItemFactory.h"
 
 // Component
 #include "MeshComponent.inl"
@@ -428,6 +429,10 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	// Inventory 추가
 	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);
 	player->SetInventory(inventory);
+
+	ItemFactory::LoadFromJson("Data/items.json");
+	inventory->AddItem(ItemFactory::Create(100));
+	inventory->AddItem(ItemFactory::Create(1000));
 
 	return player;
 }

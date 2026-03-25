@@ -7,7 +7,7 @@ class CItem
 {
 public:
 	CItem(const ItemData* data);
-	virtual ~CItem();
+	virtual ~CItem() = 0;
 
 	// UI에서 쉽게 가져다 쓸 수 있도록 Getter 제공
 	int                GetItemId() const { return base_data->item_id; }
