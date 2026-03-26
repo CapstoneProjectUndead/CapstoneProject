@@ -13,7 +13,6 @@ CWorldItem::CWorldItem(std::shared_ptr<CItem> _item)
 
 CWorldItem::~CWorldItem()
 {
-
 }
 
 void CWorldItem::Update(float dt)

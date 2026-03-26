@@ -12,8 +12,8 @@
         "description": ""
     },
     {
-        "item_id": 1000,
-        "item_type": 2,
+        "item_id": 1001,
+        "item_type": 3,
         "item_sub_type": 401,
         "item_name": "금",
         "weight": 1.0,

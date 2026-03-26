@@ -11,26 +11,48 @@ CItem::~CItem()
 
 }
 
-// 장비
-CEquipment::CEquipment(const std::shared_ptr<ItemData> data, uint32 maxDur)
-	: CItem(data) 
-	, max_durability(maxDur)
+// 장비 공통
+CEquipment::CEquipment(const std::shared_ptr<ItemData> data)
+	: CItem(data)
 {
-	current_durability = max_durability; // 생성 시 최대 내구도로 채움
 }
 
 CEquipment::~CEquipment()
 {
 }
 
-// 회복(음식)
-CCunsumable::CCunsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount)
-	: CItem(data)
-	, heal_amount(healAmount)
+// 파밍 도구
+CTool::CTool(const std::shared_ptr<ItemData> data, const uint32 maxDur)
+	: CEquipment(data)
+	, max_durability(maxDur)
+{
+	current_durability = max_durability;
+}
+
+CTool::~CTool()
 {
 }
 
-CCunsumable::~CCunsumable()
+// 무기
+CWeapon::CWeapon(const std::shared_ptr<ItemData> data)
+	: CEquipment(data)
+{
+}
+
+CWeapon::~CWeapon()
+{
+}
+
+// 소비(회복템)
+CConsumable::CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount)
+	: CItem(data)
+	, heal_amount(healAmount)
+	, energy_amount(energyAmount)
+	, effect_amount(effectAmount)
+{
+}
+
+CConsumable::~CConsumable()
 {
 }
 

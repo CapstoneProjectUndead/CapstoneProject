@@ -36,7 +36,7 @@ void CGameScene::Initialize()
 
 		// 보물 위치에 보물 생성
 		for (auto& treasure : treasures) {
-			SpawnWorldItem(1000, treasure.treasure_pos);
+			SpawnWorldItem(1001, treasure.treasure_pos);
 		}
 	}
 }
@@ -211,6 +211,6 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	// 보물 위치에 보물 생성
 	for (auto& treasure : treasures) {
-		SpawnWorldItem(1000, treasure.treasure_pos);
+		SpawnWorldItem(1001, treasure.treasure_pos);
 	}
 }

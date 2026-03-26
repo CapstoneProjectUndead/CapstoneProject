@@ -40,6 +40,8 @@ namespace MapGenerator
         XMFLOAT3 position{};
         float rotationY{ 0.0f }; // scale 대신 회전(도 단위) 추가
         EModelType type{ EModelType::ROAD };
+
+        // 멀티 환경에서만 필요한 변수
         EModelVariant model;
 
         InstanceData() = default;
