@@ -6,7 +6,6 @@
 #include "SceneManager.h"
 #include "Camera.h"
 #include "ResourceUploadBatch.h"
-
 //#include <pix.h>    // PIX 디버깅용
 
 template<typename T>
@@ -214,7 +213,9 @@ void CTextRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     auto& camera = scene->GetCamera();
     XMMATRIX view = XMLoadFloat4x4(&camera->GetViewMatrix());
     XMMATRIX proj = XMLoadFloat4x4(&camera->GetProjectionMatrix());
+    XMMATRIX viewProj = (view * proj);
     D3D12_VIEWPORT viewport = camera->GetViewPort();
+
     // 2D용 렌더링 (View/Proj 없이)
     sprite_batch->SetViewport(viewport);
 
@@ -227,18 +228,45 @@ void CTextRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     }
     sprite_batch->End();
 
-    // 3D 빌보드용 렌더링 (View/Proj 필요)
-    sprite_batch->Begin(cmdList, SpriteSortMode_Deferred, view*proj);
+    // 3D 빌보드용 렌더링
+    sprite_batch->Begin(cmdList, SpriteSortMode_Deferred);
     for (auto& item : textes) {
         if (item.is_billboard) {
+            // 3D 월드 좌표 추출
+            XMMATRIX world = XMMatrixIdentity();
             XMVECTOR worldPos = XMVectorSet(item.world_matrix._41, item.world_matrix._42, item.world_matrix._43, 1.0f);
 
-            // 중앙 정렬을 위한 Origin 계산
+            // 거리 계산
+            XMVECTOR cameraPos = XMLoadFloat3(&camera->GetPosition());
+            float distance = XMVectorGetX(XMVector3Length(worldPos - cameraPos));
+
+            // 거리에 따른 스케일 계산 (기본 거리 10.0f 기준)
+            float baseScale = 0.2f;
+            float minScale = 0.05f;
+            float finalScale = (10.0f / distance) * baseScale;
+            if (finalScale < minScale) finalScale = minScale;
+
+            // 3D 좌표를 화면의 픽셀 좌표(0~1920 등)로 변환
+            XMVECTOR screenPos = XMVector3Project(
+                worldPos,
+                viewport.TopLeftX, viewport.TopLeftY, viewport.Width, viewport.Height,
+                viewport.MinDepth, viewport.MaxDepth,
+                proj, view, world
+            );
+
+            // 중앙 정렬
             XMVECTOR size = default_font->MeasureString(item.text.c_str());
             XMVECTOR origin = size * 0.5f;
 
-            default_font->DrawString(sprite_batch.get(), item.text.c_str(), worldPos,
-                XMLoadFloat4(&item.color), 0.f, origin, 0.02f);
+            default_font->DrawString(
+                sprite_batch.get(),
+                item.text.c_str(),
+                screenPos,
+                XMLoadFloat4(&item.color),
+                0.f,
+                origin,
+                finalScale
+            );
         }
     }
     sprite_batch->End();

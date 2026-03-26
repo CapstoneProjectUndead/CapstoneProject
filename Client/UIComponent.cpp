@@ -284,13 +284,26 @@ void CUIBillboard::SetTarget(CObject* obj)
 
 void CUIBillboard::Update(float deltaTime)
 {
-    if (target) {
-        // 타겟(플레이어 등)의 월드 위치 + 오프셋
-        XMVECTOR targetPos = XMLoadFloat3(&target->position);
-        XMVECTOR finalPos = targetPos + XMLoadFloat3(&offset);
+    if (!target) return;
 
-        // GS에서 사용할 수 있게 world_matrix의 이동 행렬만 생성
-        XMStoreFloat4x4(&world_matrix, XMMatrixTranslationFromVector(finalPos));
+    // 빌보드의 기준 3D 위치 계산
+    XMVECTOR targetPos = XMLoadFloat3(&target->position);
+    XMVECTOR finalPos = targetPos + XMLoadFloat3(&offset);
+
+    // 빌보드 본인의 행렬 갱신
+    XMStoreFloat4x4(&world_matrix, XMMatrixTranslationFromVector(finalPos));
+
+    // 자식들 업데이트
+    for (auto& c : child) {
+        XMMATRIX parentMat = XMLoadFloat4x4(&world_matrix);
+        XMMATRIX childOffset = XMMatrixTranslation(
+            c->GetRelativePos().x * 0.01f,
+            c->GetRelativePos().y * 0.01f,
+            -0.01f // 글자가 말풍선보다 살짝 카메라 앞에 오도록 Z값 조절
+        );
+
+        // 자식의 최종 3D 월드 행렬 = 자식 오프셋 * 부모(빌보드) 위치
+        c->SetWorldMatrix(Matrix4x4::XMMatrixToFloat4x4(childOffset * parentMat));
     }
 }
 

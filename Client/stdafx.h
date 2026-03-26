@@ -355,6 +355,13 @@ namespace Vector4
 
 namespace Matrix4x4
 {
+	inline XMFLOAT4X4 XMMatrixToFloat4x4(XMMATRIX& m)
+	{
+		XMFLOAT4X4 result;
+		XMStoreFloat4x4(&result, m);
+		return(result);
+	}
+
 	inline XMFLOAT4X4 Identity()
 	{
 		XMFLOAT4X4 xmmtx4x4Result;

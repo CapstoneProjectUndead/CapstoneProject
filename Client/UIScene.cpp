@@ -91,7 +91,6 @@ void CUIScene::SaveToFile()
     if (file.is_open()) {
         file << rootData.dump(4); // 4칸 들여쓰기로 보기 좋게 저장
         file.close();
-        // ImGui 알림 등을 띄우면 좋습니다.
     }
 }
 
@@ -232,8 +231,8 @@ void CUIScene::RenderInspectorWindow()
                 if (s.y < 0) s.y = 0;
             }
 
-            ImGui::SliderFloat2("Pivot", (float*)&selected_UI->GetPivot(), 0.0f, 1.0f);
-            ImGui::SliderFloat2("Anchor", (float*)&selected_UI->GetAnchor(), -1.0f, 1.0f);
+            ImGui::DragFloat2("Pivot", (float*)&selected_UI->GetPivot(), 0.0f, 1.0f);
+            ImGui::DragFloat2("Anchor", (float*)&selected_UI->GetAnchor(), -1.0f, 1.0f);
         }
 
         // Style

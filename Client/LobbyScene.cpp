@@ -37,8 +37,8 @@ void CLobbyScene::Initialize()
 
 	// UI 생성
 	// billboard 생성 후 manager에 등록
-	std::shared_ptr<CUIBillboard> billboard;
 	auto mainCanvas = ui_manager->CreateCanvas();
+	std::shared_ptr<CUIBillboard> billboard;
 	auto repeaper = factory->CreateReaper(heapManager);
 	billboard = std::make_shared<CUIBillboard>(repeaper.get());
 	mainCanvas->AddChild(billboard);
@@ -49,6 +49,11 @@ void CLobbyScene::Initialize()
 	std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
 	m->SetMaterial(factory->GetMaterial(shaders["billboard"]->GetHeapManager(), "speech_bubble"));
 	billboard->SetMaterial(m);
+
+	// text
+	auto text = std::make_shared<CUIText>();
+	text->SetBillboard(true);
+	billboard->AddChild(text);
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

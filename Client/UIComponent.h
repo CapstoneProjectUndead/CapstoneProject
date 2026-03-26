@@ -44,6 +44,7 @@ public:
     XMFLOAT2& GetPivot() { return pivot; }
     XMFLOAT2& GetAnchor() { return anchor; }
     XMFLOAT4& GetColor() { return color; }
+    XMFLOAT4X4 GetWorldMatrix() const { return world_matrix; }
 
     // setter
     void AddChild(std::shared_ptr<CUIComponent> newChild) {
@@ -54,6 +55,7 @@ public:
     void SetPivot(const XMFLOAT2& p) { pivot = p; }
     void SetRelativePos(const XMFLOAT2& p) { relative_pos = p; }
     void SetName(const std::string& n) { name = n; }
+    void SetWorldMatrix(const XMFLOAT4X4& m) { world_matrix = m; }
 
     // Collect 후 자식 순회
     void Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
@@ -64,8 +66,8 @@ protected:
     EButtonState state{ EButtonState::Disabled };
     XMFLOAT2 relative_pos{ .0f, .0f };
 	XMFLOAT2 size{ 100.0f, 100.0f };
-	XMFLOAT2 pivot{ 1.0f, 1.0f };	// 본인 기준(0 ~ 1)
-	XMFLOAT2 anchor{ 0.0f, 0.0f };	// 부모기준 UI 정렬 기준. (-1 ~ 1)
+	XMFLOAT2 pivot{ 0.5f, 0.5f };	// 본인 기준(0 ~ 1)
+	XMFLOAT2 anchor{ 0.5f, 0.5f };	// 부모기준 UI 정렬 기준. (-1 ~ 1)
     XMFLOAT4 color{1, 1, 1, 1};
 
 	XMFLOAT2 final_screen_pos{ .0f, .0f };
@@ -123,7 +125,7 @@ public:
     void SetTarget(CObject* obj);
     virtual std::string GetShaderName() const override { return "billboard"; }
 private:
-    XMFLOAT3 offset{ 0.0f, 1.0f, 0.0f }; // 머리 위 높이 조절
+    XMFLOAT3 offset{ 1.0f, 1.0f, -0.1f }; // 머리 위 높이 조절
     CObject* target{};
 };
 
@@ -132,6 +134,7 @@ public:
     void SetText(const std::wstring& text);
     virtual void Collect(IRenderer* renderer) override;
     virtual std::string GetShaderName() const override { return "text"; }
+    void SetBillboard(bool b) { is_billboard = b; }
 private:
     std::wstring text{ L"안녕" }; // 서명있는 유니코드로 저장
     bool is_billboard{};

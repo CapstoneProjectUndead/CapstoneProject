@@ -34,7 +34,7 @@ private:
 private:
     std::shared_ptr<CUICanvas> editor_canvas;
     std::shared_ptr<CUIComponent> selected_UI = nullptr;
-    char save_path[256] = "UI_Layout.json";
+    char save_path[256] = "../Modeling/UI/UI_Layout.json";
 
     // UIScene은 Shader를 따로 가짐
     std::unordered_map<std::string, std::shared_ptr<CShader>>	shaders{};
