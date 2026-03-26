@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Object.h"
 #include "SkinnedData.h"
 
@@ -11,6 +11,7 @@ class CCharacter : public CObject
 public:
     CCharacter(OBJECT_TYPE type);
 
+	// 나중에 player로 옮기기
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
 	void ChangeModelSet(int setIndex);

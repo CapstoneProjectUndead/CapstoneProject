@@ -1,18 +1,22 @@
 ﻿#include "stdafx.h"
 #include "LobbyScene.h"
-#include "MyPlayer.h"
-#include "Camera.h"
-#include "Shader.h"
-#include "GameFramework.h"
-#include "ObjectFactory.h"
+#include "CustomScene.h"
 #include "SceneManager.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
+
+#include "HumanMonster.h"
+#include "MyPlayer.h"
+#include "Camera.h"
+#include "Shader.h"
+#include "ObjectFactory.h"
+#include "UIComponent.h"
+
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
-#include "Movement.h"
-#include "CustomScene.h"
-#include "HumanMonster.h"
+#include "GameFramework.h"
+
+#include "Movement.h"	// 나중에 삭제
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -25,10 +29,26 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Initialize()
 {
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
-		objects = factory->CreateLobby(staticHeapManager);
+		objects = factory->CreateLobby(heapManager);
 	}
+
+	// UI 생성
+	// billboard 생성 후 manager에 등록
+	std::shared_ptr<CUIBillboard> billboard;
+	auto mainCanvas = ui_manager->CreateCanvas();
+	auto repeaper = factory->CreateReaper(heapManager);
+	billboard = std::make_shared<CUIBillboard>(repeaper.get());
+	mainCanvas->AddChild(billboard);
+
+	objects.push_back(repeaper);
+
+	// Material 설정
+	std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
+	m->SetMaterial(factory->GetMaterial(shaders["billboard"]->GetHeapManager(), "speech_bubble"));
+	billboard->SetMaterial(m);
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -37,6 +57,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
+		my_player->GetComponent<CMovementComponent>()->is_fly = true;
 	}
 
 	if (!camera) {
@@ -49,21 +70,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
-	}
-	// test 용 삭제X
-	{
-		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
-		std::ofstream txt("../Modeling/char.txt");
-
-		char ch;
-		while (bin.get(ch)) {
-			if (
-				ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
-		 (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
-			{
-				txt << ch;
-			}
-		}*/
 	}
 }
 

@@ -66,7 +66,7 @@ protected:
 	XMFLOAT2 size{ 100.0f, 100.0f };
 	XMFLOAT2 pivot{ 1.0f, 1.0f };	// 본인 기준(0 ~ 1)
 	XMFLOAT2 anchor{ 0.0f, 0.0f };	// 부모기준 UI 정렬 기준. (-1 ~ 1)
-    XMFLOAT4 color{1, 1, 0, 1};
+    XMFLOAT4 color{1, 1, 1, 1};
 
 	XMFLOAT2 final_screen_pos{ .0f, .0f };
     Rect rect{ relative_pos.x - size.x / 2, relative_pos.y - size.y / 2};
@@ -94,7 +94,7 @@ public:
     void SetMaterial(std::shared_ptr<CMaterialComponent>& m);
     void SetBindingKey(const std::string& key) { binding_key = key; }
 
-    // fill_amount 적용 외에 UIComponent와 유사
+    // fill_amount 적용 외에 UIComponent와 유사(UIComponent Update 변경 시 수정 필요)
     virtual void Update(float deltaTime) override;
     virtual void Collect(IRenderer* renderer) override;
 

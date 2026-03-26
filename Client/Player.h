@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Character.h"
 
 class CCamera;
@@ -48,5 +48,11 @@ protected:
 	float smoothed_delay = 0.1f;
 
 	std::deque<OpponentFrameHistory> interpolation_deq;
+
+
+	std::array<std::shared_ptr<CMaterialComponent>, 3> body_materials;
+	std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
+	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
+	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
 };
 
