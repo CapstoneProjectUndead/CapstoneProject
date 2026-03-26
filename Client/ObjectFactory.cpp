@@ -282,6 +282,14 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 		XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 		XMStoreFloat4x4(&obj->world_matrix, world);
 
+		// MeshRendererComponent 생성 (CreateGameScene과 동일하게)
+		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+		RenderUnit unit;
+		unit.mesh = meshComp;
+		unit.material = matComp;
+		meshRenderer->SetRenderUnit(unit);
+		obj->SetComponent(meshRenderer);
+
 		obj->SetShdaer("inst");
 
 		objects.push_back(obj);
@@ -432,7 +440,6 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	player->SetInventory(inventory);
 
 	// 테스트! (꼭 지울 것)
-	ItemFactory::LoadFromJson("Data/items.json");
 	//inventory->AddItem(ItemFactory::Create(100));
 	//inventory->AddItem(ItemFactory::Create(1000));
 
