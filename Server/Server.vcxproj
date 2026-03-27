@@ -176,6 +176,8 @@
     <ClCompile Include="CollisionAlgorithm.cpp" />
     <ClCompile Include="HumanMonster.cpp" />
     <ClCompile Include="IdleState.cpp" />
+    <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="Item.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Movement.cpp" />
@@ -230,6 +232,8 @@
     <ClInclude Include="CollisionAlgorithm.h" />
     <ClInclude Include="HumanMonster.h" />
     <ClInclude Include="IdleState.h" />
+    <ClInclude Include="Inventory.h" />
+    <ClInclude Include="Item.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Monster.h" />

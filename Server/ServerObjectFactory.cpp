@@ -7,6 +7,7 @@
 #include "User.h"
 #include "Room.h"
 #include "Player.h"
+#include "Inventory.h"
 #include "HumanMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
@@ -42,6 +43,10 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType,
 	// 유저가 자신의 플레이어를 참조 (refcount 증가)
 	user->SetPlayer(player);
 
+	// 인벤토리 생성
+	shared_ptr<CInventory> inventory = make_shared<CInventory>(player);
+	player->SetInventory(inventory);
+
 	return player;
 }
 
@@ -70,6 +75,10 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, sha
 
 	// 지금 플레이어가 속한 방ID
 	player->SetRoomID(room->GetRoomID());
+
+	// 인벤토리 생성
+	shared_ptr<CInventory> inventory = make_shared<CInventory>(player);
+	player->SetInventory(inventory);
 
 	// 방 인원 수 증가
 	room->PlayerEnter();

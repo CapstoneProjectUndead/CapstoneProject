@@ -76,6 +76,12 @@
     <Filter Include="MapGenerator">
       <UniqueIdentifier>{d21bd492-99e6-4668-ab0c-ccf6900e6c25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Item">
+      <UniqueIdentifier>{2e021bc4-c82d-485c-a290-8eb69e56e033}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inventory">
+      <UniqueIdentifier>{6e0ae11d-a44e-4c17-813c-1d04dbd9eff4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -185,6 +191,12 @@
     </ClCompile>
     <ClCompile Include="..\External\Common\MapUtils.cpp">
       <Filter>MapGenerator</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Object\Item</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -313,6 +325,12 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\MapUtils.h">
       <Filter>MapGenerator</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Object\Item</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

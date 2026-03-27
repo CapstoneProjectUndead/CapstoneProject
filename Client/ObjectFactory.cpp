@@ -203,6 +203,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
 
 	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	treasures.clear();
 	for (const auto& inst : instData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
 			treasures.push_back(TreasureInfo{ inst.position });
