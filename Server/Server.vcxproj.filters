@@ -82,6 +82,9 @@
     <Filter Include="Inventory">
       <UniqueIdentifier>{6e0ae11d-a44e-4c17-813c-1d04dbd9eff4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Factory">
+      <UniqueIdentifier>{8d37c926-cf9c-4c3b-8864-326c6f3c6825}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -180,9 +183,6 @@
     <ClCompile Include="HumanMonster.cpp">
       <Filter>Object\Monster</Filter>
     </ClCompile>
-    <ClCompile Include="ServerObjectFactory.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
       <Filter>MapGenerator</Filter>
     </ClCompile>
@@ -197,6 +197,12 @@
     </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>Object\Item</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerObjectFactory.cpp">
+      <Filter>Object\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemFactory.cpp">
+      <Filter>Object\Factory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -311,9 +317,6 @@
     <ClInclude Include="HumanMonster.h">
       <Filter>Object\Monster</Filter>
     </ClInclude>
-    <ClInclude Include="ServerObjectFactory.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="AIStates.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -331,6 +334,12 @@
     </ClInclude>
     <ClInclude Include="Item.h">
       <Filter>Object\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerObjectFactory.h">
+      <Filter>Object\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemFactory.h">
+      <Filter>Object\Factory</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

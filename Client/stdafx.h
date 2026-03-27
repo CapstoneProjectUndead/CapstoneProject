@@ -80,7 +80,7 @@ using Microsoft::WRL::ComPtr;
 #include <enum.h>
 #include <struct.h>
 #include <protocol.h>
-#include <VarialbePacketWriter.h>
+#include <VariablePacketWriter.h>
 #include "UICommon.h"
 #include "ServerSessionManager.h"
 

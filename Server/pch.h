@@ -104,7 +104,7 @@ using std::make_pair;
 #include <enum.h>
 #include <struct.h>
 #include <protocol.h>
-#include <VarialbePacketWriter.h>
+#include <VariablePacketWriter.h>
 
 #include "ClientSession.h"
 #include "ClientPacketHandler.h"

@@ -169,7 +169,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\packet_struct.h" />
     <ClInclude Include="..\External\Common\struct.h" />
-    <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
+    <ClInclude Include="..\External\Common\VariablePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />
     <ClInclude Include="AIStates.h" />
     <ClInclude Include="Animator.h" />

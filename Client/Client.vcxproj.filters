@@ -186,7 +186,7 @@
     <ClInclude Include="LobbyScene.h">
       <Filter>Scene\LobbyScene</Filter>
     </ClInclude>
-    <ClInclude Include="..\External\Common\VarialbePacketWriter.h">
+    <ClInclude Include="..\External\Common\VariablePacketWriter.h">
       <Filter>Network\PacketHandler</Filter>
     </ClInclude>
     <ClInclude Include="MyPlayer.h">
