@@ -75,7 +75,7 @@ namespace ItemFactory
 		case ITEM_TYPE::TREASURE:
 			return std::make_shared<CTreasure>(data, e.grade);
 		case ITEM_TYPE::ETC:
-			return std::make_shared<COtherItem>(data);
+			return std::make_shared<COther>(data);
 		default:
 			return nullptr;
 		}

@@ -245,7 +245,9 @@ call ClientCopy.bat</Command>
     <ClInclude Include="UIComponent.h" />
     <ClInclude Include="UIScene.h" />
     <ClInclude Include="User.h" />
+    <ClInclude Include="WorldConsumable.h" />
     <ClInclude Include="WorldItem.h" />
+    <ClInclude Include="WorldTreasure.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
@@ -332,7 +334,9 @@ call ClientCopy.bat</Command>
     <ClCompile Include="UIComponent.cpp" />
     <ClCompile Include="UIScene.cpp" />
     <ClCompile Include="User.cpp" />
+    <ClCompile Include="WorldConsumable.cpp" />
     <ClCompile Include="WorldItem.cpp" />
+    <ClCompile Include="WorldTreasure.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />

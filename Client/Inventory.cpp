@@ -151,7 +151,7 @@ void CInventory::DrawTabBar()
 	struct TabInfo { const char* label; ITEM_TYPE type; };
 	TabInfo tabs[4] = {
 		{ (const char*)u8"장비",      ITEM_TYPE::EQUIPMENT  },
-		{ (const char*)u8"회복",      ITEM_TYPE::CONSUMABLE },
+		{ (const char*)u8"소비",      ITEM_TYPE::CONSUMABLE },
 		{ (const char*)u8"기타",      ITEM_TYPE::ETC        },
 		{ (const char*)u8"보물",      ITEM_TYPE::TREASURE   },
 	};
@@ -245,7 +245,7 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				if (idx < (int)filtered.size()) {
 
 					// TODO: 실제 아이템 이미지 로드 후 ImGui::Image()로 교체
-					const char* placeholder = "[img]";
+					const char* placeholder = filtered[col]->GetName().c_str();
 					ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
 					ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
 					                     cellMin.y + (cellSz - tSz.y) * 0.5f);

@@ -9,6 +9,7 @@ public:
 	CItem(std::shared_ptr<ItemData> data);
 	virtual ~CItem() = 0;
 
+public:
 	// UI에서 쉽게 가져다 쓸 수 있도록 Getter 제공
 	int                GetItemId() const { return base_data->item_id; }
 	ITEM_TYPE          GetItemType() const { return base_data->item_type; }
@@ -22,7 +23,7 @@ protected:
 };
 
 
-// 장비 공통 (나중에 퀵슬롯을 고려하여 CEquipment로 통합 처리)
+// 장비 공통 
 class CEquipment : public CItem
 {
 public:
@@ -73,11 +74,11 @@ private:
 };
 
 // 기타(예능 아이템)
-class COtherItem : public CItem
+class COther : public CItem
 {
 public:
-	COtherItem(const std::shared_ptr<ItemData> data);
-	virtual ~COtherItem() override;
+	COther(const std::shared_ptr<ItemData> data);
+	virtual ~COther() override;
 
 private:
 	

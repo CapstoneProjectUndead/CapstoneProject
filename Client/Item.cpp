@@ -57,12 +57,12 @@ CConsumable::~CConsumable()
 }
 
 // 기타(예능 아이템)
-COtherItem::COtherItem(const std::shared_ptr<ItemData> data)
+COther::COther(const std::shared_ptr<ItemData> data)
 	: CItem(data)
 {
 }
 
-COtherItem::~COtherItem()
+COther::~COther()
 {
 }
 

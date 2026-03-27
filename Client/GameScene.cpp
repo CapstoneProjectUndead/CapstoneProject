@@ -14,6 +14,8 @@
 #include "Inventory.h"
 #include "WorldItem.h"
 #include "ItemFactory.h"
+#include "WorldTreasure.h"
+#include "WorldConsumable.h"
 
 #include "KeyManager.h"
 
@@ -39,6 +41,9 @@ void CGameScene::Initialize()
 			SpawnWorldItem(1001, treasure.treasure_pos);
 		}
 	}
+
+	// 과자 생성 (테스트)
+	SpawnWorldItem(25, XMFLOAT3{3, 0, 3});
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -88,7 +93,8 @@ void CGameScene::ProcessPickup()
 	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) != KEY_STATE::TAP)
 		return;
 
-	XMFLOAT3 player_pos = my_player->GetPosition();
+	XMFLOAT3 playerPos = my_player->GetPosition();
+	//std::cout << playerPos.z << ", " << playerPos.z << std::endl;
 
 	std::vector<std::shared_ptr<CObject>> worldItems;;
 	for (auto& obj : objects) {
@@ -99,7 +105,7 @@ void CGameScene::ProcessPickup()
 
 	auto it = std::find_if(worldItems.begin(), worldItems.end(),
 		[&](const std::shared_ptr<CObject>& item) {
-			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), player_pos);
+			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), playerPos);
 			return Vector3::Length(diff) <= PICKUP_RANGE;
 		});
 
@@ -133,8 +139,30 @@ void CGameScene::ProcessPickup()
 void CGameScene::SpawnWorldItem(int itemID, XMFLOAT3 position)
 {
 	auto itemData = ItemFactory::Create(itemID);
+	if (!itemData) 
+		return;
 
-	auto item = std::make_shared<CWorldItem>(itemData);
+	std::shared_ptr<CWorldItem> item;
+
+	switch (itemData->GetItemType())
+	{
+	case ITEM_TYPE::EQUIPMENT:
+		break;
+	case ITEM_TYPE::CONSUMABLE:
+		item = std::make_shared<CWorldConsumable>(itemData);
+		break;
+	case ITEM_TYPE::ETC:
+		break;
+	case ITEM_TYPE::TREASURE:
+		item = std::make_shared<CWorldTreasure>(itemData);
+		break;
+	default:
+		break;
+	}
+
+	if (!item) 
+		return;
+
 	item->SetPosition(position);
 	item->SetID(world_item_id_counter);
 	item->Initialize(GET_DEVICE, GET_CMD_LIST);

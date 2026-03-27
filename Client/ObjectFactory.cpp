@@ -439,10 +439,6 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);
 	player->SetInventory(inventory);
 
-	// 테스트! (꼭 지울 것)
-	//inventory->AddItem(ItemFactory::Create(100));
-	//inventory->AddItem(ItemFactory::Create(1000));
-
 	return player;
 }
 

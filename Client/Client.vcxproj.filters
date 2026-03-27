@@ -96,8 +96,8 @@
     </Filter>
     <Filter Include="Scene\LobbyScene">
       <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
-	</Filter>
-	<Filter Include="Object\ItemFinder">
+    </Filter>
+    <Filter Include="Object\ItemFinder">
       <UniqueIdentifier>{73a7f2fb-07a7-474b-bac0-4683ec588d92}</UniqueIdentifier>
     </Filter>
     <Filter Include="Object\Item">
@@ -111,6 +111,18 @@
     </Filter>
     <Filter Include="Inventory">
       <UniqueIdentifier>{29e63e26-539e-44e2-ac37-927ef5d676f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\World Item\Equip">
+      <UniqueIdentifier>{3b95fc5b-ccca-460c-b79f-6d27c24ea4ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\World Item\Consum">
+      <UniqueIdentifier>{430f0e52-0d4d-453a-b5a9-53a7596bc898}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\World Item\Other">
+      <UniqueIdentifier>{b2410d8f-5652-4ae8-bb40-ebb57d67cc44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\World Item\Treasure">
+      <UniqueIdentifier>{0aff41c6-dc81-49a2-9818-292cf08198cb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -335,8 +347,8 @@
     </ClInclude>
     <ClInclude Include="UIScene.h">
       <Filter>Scene\UIScene</Filter>
-	</ClInclude>
-	<ClInclude Include="ItemFinder.h">
+    </ClInclude>
+    <ClInclude Include="ItemFinder.h">
       <Filter>Object\ItemFinder</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\MapUtils.h">
@@ -353,6 +365,12 @@
     </ClInclude>
     <ClInclude Include="WorldItem.h">
       <Filter>Object\Item\World Item</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldTreasure.h">
+      <Filter>Object\Item\World Item\Treasure</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldConsumable.h">
+      <Filter>Object\Item\World Item\Consum</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -535,8 +553,8 @@
     </ClCompile>
     <ClCompile Include="UIScene.cpp">
       <Filter>Scene\UIScene</Filter>
-	</ClCompile>
-	<ClCompile Include="ItemFinder.cpp">
+    </ClCompile>
+    <ClCompile Include="ItemFinder.cpp">
       <Filter>Object\ItemFinder</Filter>
     </ClCompile>
     <ClCompile Include="..\External\Common\MapUtils.cpp">
@@ -553,6 +571,12 @@
     </ClCompile>
     <ClCompile Include="WorldItem.cpp">
       <Filter>Object\Item\World Item</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldTreasure.cpp">
+      <Filter>Object\Item\World Item\Treasure</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldConsumable.cpp">
+      <Filter>Object\Item\World Item\Consum</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
