@@ -68,7 +68,7 @@ protected:
     XMFLOAT2 relative_pos{ .0f, .0f };
 	XMFLOAT2 size{ 100.0f, 100.0f };
 	XMFLOAT2 pivot{ 0.5f, 0.5f };	// 본인 기준(0 ~ 1)
-	XMFLOAT2 anchor{ 0.5f, 0.5f };	// 부모기준 UI 정렬 기준. (-1 ~ 1)
+	XMFLOAT2 anchor{ 0.0f, 0.0f };	// 부모기준 UI 정렬 기준. (-1 ~ 1)
     XMFLOAT4 color{1, 1, 1, 1};
 
 	XMFLOAT2 final_screen_pos{ .0f, .0f };
@@ -150,6 +150,20 @@ public:
 private:
     void GetColorByState();
     void UpdateState();
+};
+
+// 비활성화를 위해 owner가 필요
+class CUIDowsingArrow : public CUIImage {
+public:
+    CUIDowsingArrow(float* angle) : CUIImage(), target_angle{angle}
+    { name = "Dowsing_Arrow"; }
+
+    // 외부에서 계산한 각도를 주입 (라디안 값)
+    void SetTargeAngle(float* radian) { target_angle = radian; }
+
+    virtual void Update(float deltaTime) override;
+private:
+    float* target_angle{}; // 현재 가리킬 각도
 };
 
 class CUIManager

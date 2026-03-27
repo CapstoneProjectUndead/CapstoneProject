@@ -491,6 +491,7 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	// 다우징 로드 component 추가
 	auto itemFinder = std::make_shared<CItemFinder>();
 	player->SetComponent(itemFinder);
+	itemFinder->SetEnable(false);
 
 	// Inventory 추가
 	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);

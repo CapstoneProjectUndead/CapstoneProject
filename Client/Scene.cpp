@@ -69,6 +69,7 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	if (camera) camera->SetViewportsAndScissorRects(commandList);
 
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
 	// Collect Phase
 	// 3D 객체들 수집
@@ -78,8 +79,6 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 			obj->OnCollect(it->second.get());
 		}
 	}
-
-	auto& shaders = CSceneManager::GetInstance().GetShaders();
 
 	// 플레이어 수집
 	if (my_player) {

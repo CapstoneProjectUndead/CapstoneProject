@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GeometryLoader.h"
 #include "Mesh.h"
 
@@ -202,11 +202,11 @@ CRectangleMesh::CRectangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	float halfWidth = width * 0.5f;
 	float halfHeight = height * 0.5f;
 
-	CMatVertex vertices[] = {
-		CMatVertex(XMFLOAT3(-halfWidth,  halfHeight, 0.0f), XMFLOAT2(0.0f, 0.0f)),
-		CMatVertex(XMFLOAT3(halfWidth,  halfHeight, 0.0f), XMFLOAT2(1.0f, 0.0f)),
-		CMatVertex(XMFLOAT3(halfWidth, -halfHeight, 0.0f), XMFLOAT2(1.0f, 1.0f)),
-		CMatVertex(XMFLOAT3(-halfWidth, -halfHeight, 0.0f), XMFLOAT2(0.0f, 1.0f))
+	CMatVertex vertices[] = { 
+		CMatVertex(XMFLOAT3(-halfWidth,  halfHeight, 0.0f), XMFLOAT2(0.0f, 1.0f)),
+		CMatVertex(XMFLOAT3(halfWidth,   halfHeight, 0.0f), XMFLOAT2(1.0f, 1.0f)),
+		CMatVertex(XMFLOAT3(halfWidth,  -halfHeight, 0.0f), XMFLOAT2(1.0f, 0.0f)),
+		CMatVertex(XMFLOAT3(-halfWidth, -halfHeight, 0.0f), XMFLOAT2(0.0f, 0.0f))
 	};
 
 	// 삼각형 메쉬를 리소스로 생성

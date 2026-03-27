@@ -1,7 +1,8 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "ItemFinder.h"
 #include "KeyManager.h"
 #include "MyPlayer.h"
+#include "UIComponent.h"
 
 CItemFinder::CItemFinder()
     : closest_treasure_pos{}
@@ -18,18 +19,33 @@ void CItemFinder::Initialize()
 
 void CItemFinder::Update(const float deltaTime)
 {
-    if (KEY_PRESSED(KEY::F)) {
-        float res = SearchNearbyTreasure(owner->position);
-        if (res == -1) {
-            int a = 0;
+    float res = SearchNearbyTreasure(owner->position);
+    auto ui = owner->GetComponent<CUIDowsingArrow>();
+
+    if (res == -1) {
+        int a = 0;
+
+        if (ui) {
+            ui->SetEnable(false);
         }
-        else {
-            std::cout << "Player pos: " << owner->GetPosition().x << ", " 
-                << owner->GetPosition().z << std::endl;
+    }
+    else {
+        // player ìœ„ì¹˜ë¡œ íˆ¬ì˜
+        XMFLOAT3 dirWorld = Vector3::Subtract(closest_treasure_pos, owner->GetPosition());
+        float dx = Vector3::DotProduct(dirWorld, owner->right);
+        float dz = Vector3::DotProduct(dirWorld, owner->look);
+        angle = atan2f(dx, dz);
+
+        if (ui) {
+            ui->SetEnable(true);
+        }
+#ifdef DEBUG
+        std::cout << "Player pos: " << owner->GetPosition().x << ", " 
+            << owner->GetPosition().z << std::endl;
            
-            std::cout << "Treasure pos: " << closest_treasure_pos.x << ", " 
-                << closest_treasure_pos.z << std::endl;
-        }
+        std::cout << "Treasure pos: " << closest_treasure_pos.x << ", " 
+            << closest_treasure_pos.z << std::endl;
+#endif // DEBUG
     }
 }
 
@@ -37,7 +53,7 @@ void CItemFinder::RegisterTreasures(const std::vector<MapGenerator::InstanceData
 {
     treasures.clear();
 
-    // ¸Ê µ¥ÀÌÅÍ¸¦ ¼øÈ¸ÇÏ¸ç º¸¹°¸¸ Ã£¾Æ º¤ÅÍ¿¡ ÀúÀå
+    // ë§µ ë°ì´í„°ë¥¼ ìˆœíšŒí•˜ë©° ë³´ë¬¼ë§Œ ì°¾ì•„ ë²¡í„°ì— ì €ìž¥
     for (const auto& instance : mapData) {
         if (instance.type == MapGenerator::EModelType::TREASURE) {
             treasures.emplace_back(TreasureInfo{ instance.position });
@@ -53,16 +69,16 @@ void CItemFinder::RegisterTreasures(const std::vector<TreasureInfo>& _treasures)
 
 float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos)
 {
-    float minDistance = -1.0f; // ¹ß°ß ¸ø ÇÔÀ» ÀÇ¹Ì
+    float minDistance = -1.0f; // ë°œê²¬ ëª» í•¨ì„ ì˜ë¯¸
 
     for (const auto& treasure : treasures) {
 
-        // À¯È¿ÇÑ »óÅÂ(Vaild)ÀÎ º¸¹°¸¸ °Ë»ç
-        // ÀÌ¹Ì ´©°¡ ÆÄ°í ÀÖ°Å³ª(Occupied), »ç¶óÁø(Invalid) º¸¹°Àº °¨ÁöµÇÁö ¾Ê´Â´Ù.
+        // ìœ íš¨í•œ ìƒíƒœ(Vaild)ì¸ ë³´ë¬¼ë§Œ ê²€ì‚¬
+        // ì´ë¯¸ ëˆ„ê°€ íŒŒê³  ìžˆê±°ë‚˜(Occupied), ì‚¬ë¼ì§„(Invalid) ë³´ë¬¼ì€ ê°ì§€ë˜ì§€ ì•ŠëŠ”ë‹¤.
         if (treasure.treasure_state != TREASURE_STATE::Vaild) 
             continue;
 
-        // XZ Æò¸é °Å¸® °è»ê
+        // XZ í‰ë©´ ê±°ë¦¬ ê³„ì‚°
         float dx = treasure.treasure_pos.x - playerPos.x;
         float dz = treasure.treasure_pos.z - playerPos.z;
         float distSq = (dx * dx) + (dz * dz);
@@ -78,4 +94,14 @@ float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos)
     }
 
     return minDistance;
+}
+
+void CItemFinder::Toggle()
+{
+    SetEnable(!is_enable);
+
+    auto ui = owner->GetComponent<CUIDowsingArrow>();
+    if (ui) {
+        ui->SetEnable(is_enable);
+    }
 }

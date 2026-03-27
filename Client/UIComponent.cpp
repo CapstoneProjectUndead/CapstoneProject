@@ -143,7 +143,7 @@ CUIComponent::Rect CUIComponent::GetParentRect()
 CUICanvas::CUICanvas()
 {
     anchor = { 0.0f, 0.0f };
-    pivot = { 0.5f, 0.5f };
+    pivot = { 0.0f, 0.0f };
     relative_pos = { 0.0f, 0.0f };
 
     float sw = static_cast<float>(GET_CLIENT_WIDTH);
@@ -382,6 +382,45 @@ void CUIButton::UpdateState()
     }
 }
 
+// CUIDowsingArrow
+void CUIDowsingArrow::Update(float deltaTime)
+{
+    if (!is_enable) return;
+
+    float angle = *target_angle;
+
+    float orbitRadius = 250.0f;
+
+    // 원 위에 위치
+    relative_pos.x = sinf(angle) * orbitRadius;
+    relative_pos.y = -cosf(angle) * orbitRadius;
+
+    Rect parentRect = GetParentRect();
+    float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
+    float anchorY = parentRect.top + (parentRect.Height() * (1.0f - anchor.y) * 0.5f);
+
+    float finalX = anchorX + relative_pos.x;
+    float finalY = anchorY + relative_pos.y;
+
+    // 행렬 조립
+    XMMATRIX matScale = XMMatrixScaling(size.x, size.y, 1.0f);
+    XMMATRIX matRot = XMMatrixRotationZ(angle);
+
+    // 피벗 (중심 회전)
+    float pivotOffsetX = (0.5f - pivot.x) * size.x;
+    float pivotOffsetY = (0.5f - pivot.y) * size.y;
+    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
+
+    XMMATRIX world = matScale * matRot * matPivot * matTranslation;
+    XMStoreFloat4x4(&world_matrix, world);
+
+    for (auto& c : child) {
+        c->Update(deltaTime);
+    }
+}
+
 // CUIManager
 void CUIManager::Update(float deltaTime)
 {
@@ -415,3 +454,4 @@ bool CUIManager::IntersectsMouse()
     }
     return false;
 }
+
