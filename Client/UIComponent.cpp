@@ -124,10 +124,6 @@ void CUIComponent::Collect(IRenderer* renderer)
     if (!is_enable) return;
 
     renderer->AddInstance(nullptr, color, world_matrix, true);
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 CUIComponent::Rect CUIComponent::GetParentRect()
@@ -256,10 +252,6 @@ void CUIImage::Collect(IRenderer* renderer)
 
     mat_comp->GetMaterial()->material.albedo = color;
     renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 json CUIImage::Serialize()
@@ -321,10 +313,6 @@ void CUIText::Collect(IRenderer* renderer)
     if (textRenderer) {
         textRenderer->AddTextInstance(text, world_matrix, color, is_billboard);
     }
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 CUIButton::CUIButton()
@@ -348,10 +336,6 @@ void CUIButton::Collect(IRenderer* renderer)
     GetColorByState();
     mat_comp->GetMaterial()->material.albedo = color;
     renderer->AddInstance(nullptr, color, world_matrix, false);
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 json CUIButton::Serialize()

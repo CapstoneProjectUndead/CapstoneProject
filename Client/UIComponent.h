@@ -53,6 +53,7 @@ public:
     }
     void SetSize(const XMFLOAT2& s) { size = s; }
     void SetPivot(const XMFLOAT2& p) { pivot = p; }
+    void SetAnchor(const XMFLOAT2& a) { anchor = a; }
     void SetRelativePos(const XMFLOAT2& p) { relative_pos = p; }
     void SetName(const std::string& n) { name = n; }
     void SetWorldMatrix(const XMFLOAT4X4& m) { world_matrix = m; }
@@ -82,7 +83,6 @@ class CUICanvas : public CUIComponent
 {
 public:
     CUICanvas();
-
     void Update(float deltaTime) override;
     bool IntersectsMouse(float x, float y) override;
 };
