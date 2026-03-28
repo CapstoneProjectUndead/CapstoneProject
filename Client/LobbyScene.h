@@ -24,7 +24,6 @@ public:
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
-
 public:
     void SetUIState(LobbyUIState state) { ui_state = state; }
     LobbyUIState GetUIState() const { return ui_state; }
@@ -32,6 +31,8 @@ public:
     void StartLoading(LoadingType type) { loading_type = type; }
     void StopLoading() { loading_type = LoadingType::None; }
 
+    void InteractWithReaper();
+    void SetupDialogueEvents();
 private:
     void DrawMenu();
     void DrawRoomLeavePopUp();

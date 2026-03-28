@@ -28,7 +28,6 @@ public:
     void LoadRecursive(std::shared_ptr<CUIComponent> parent, const json& data);
 private:
     // UTF-8(JSON) -> Wstring 변환 헬퍼
-    std::wstring Utf8ToWstring(const std::string& str);
 private:
     std::map<std::string, NPCScript> npc_scripts;
 };

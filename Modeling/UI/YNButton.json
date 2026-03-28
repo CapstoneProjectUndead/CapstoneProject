@@ -22,7 +22,7 @@
                         0.0,
                         1.0
                     ],
-                    "Name": "Text_Element",
+                    "Name": "Yes",
                     "Pivot": [
                         0.5,
                         0.5
@@ -35,6 +35,7 @@
                         100.0,
                         100.0
                     ],
+                    "Text": "응",
                     "Type": "Text"
                 }
             ],
@@ -45,7 +46,7 @@
                 1.0
             ],
             "FillAmount": 1.0,
-            "Name": "YesBtn",
+            "Name": "YesButton",
             "Pivot": [
                 0.0,
                 0.5
@@ -78,19 +79,20 @@
                         0.0,
                         1.0
                     ],
-                    "Name": "Text_Element",
+                    "Name": "No",
                     "Pivot": [
                         0.5,
                         0.5
                     ],
                     "RelativePos": [
-                        -15.0,
+                        -30.0,
                         -20.0
                     ],
                     "Size": [
                         100.0,
                         100.0
                     ],
+                    "Text": "아니",
                     "Type": "Text"
                 }
             ],
@@ -101,7 +103,7 @@
                 1.0
             ],
             "FillAmount": 1.0,
-            "Name": "NoBtn",
+            "Name": "NoButton",
             "Pivot": [
                 1.0,
                 0.5
@@ -123,7 +125,7 @@
         1.0,
         1.0
     ],
-    "Name": "UI_Element",
+    "Name": "YNCanvas",
     "Pivot": [
         0.5,
         0.5

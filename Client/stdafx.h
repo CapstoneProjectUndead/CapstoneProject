@@ -125,6 +125,29 @@ inline std::wstring AnsiToWString(const std::string& str)
 	return std::wstring(buffer);
 }
 
+inline std::wstring Utf8ToWstring(const std::string& str)
+{
+	if (str.empty()) return L"";
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	std::wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	return wstrTo;
+}
+
+inline std::string WstringToUtf8(const std::wstring& wstr)
+{
+	if (wstr.empty()) return std::string();
+
+	// 1. 필요한 크기 계산 (CP_UTF8 사용)
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+
+	// 2. 버퍼 할당 및 변환
+	std::string strTo(size_needed, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+
+	return strTo;
+}
+
 // 디버그용 클래스 및 매크로(d3d12 책 참고)
 class CDxException {
 public:

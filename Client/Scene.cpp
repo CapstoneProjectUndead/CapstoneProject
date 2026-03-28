@@ -57,12 +57,13 @@ void CScene::Update(float elapsedTime)
 {
 	CPhysicsManager::GetInstance().Update(elapsedTime);
 	AnimateObjects(elapsedTime);
-	ui_manager->Update(elapsedTime);
 
 	if(camera)
 		camera->Update(my_player->position, elapsedTime);
 	if(light)
 		light->Update(camera.get());
+
+	ui_manager->Update(elapsedTime);
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* commandList)

@@ -53,42 +53,37 @@ bool CUIComponent::Rect::Intersects(const Rect& other) const
 
 void CUIComponent::Update(const float deltaTime)
 {
+    // 부모 영역 계산
     Rect parentRect = GetParentRect();
 
-    // 기준점(Anchor + Relative) 계산
+    // 위치 계산 (기존과 동일)
     float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
     float anchorY = parentRect.top + (parentRect.Height() * (1.0f - anchor.y) * 0.5f);
-
     float finalX = anchorX + relative_pos.x;
     float finalY = anchorY + relative_pos.y;
 
-    // 판정용 Rect 갱신 (피벗 반영)
-    // pivot == 0: left -> finalX가 되고, pivot == 1: right -> finalX
+    // Depth 설정 (이 부분이 핵심)
+    float depth = 0.1f; // 기본값 (0.0 ~ 1.0 사이, 카메라에 가까울수록 작은 값인 경우 기준)
+    if (parent_ui) {
+        // 부모보다 무조건 0.01f만큼 앞으로 (Z값이 작아짐)
+        depth = parent_ui->GetWorldMatrix()._43 - 0.001f;
+    }
+
+    // 행렬 생성
+    XMMATRIX matScale = XMMatrixScaling(size.x, size.y, 1.0f);
+    float pivotOffsetX = (0.5f - pivot.x) * size.x;
+    float pivotOffsetY = (0.5f - pivot.y) * size.y;
+    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
+
+    XMMATRIX world = matScale * matPivot * matTranslation;
+    XMStoreFloat4x4(&world_matrix, world);
+
+    // 판정용 Rect 갱신
     rect.left = finalX - (pivot.x * size.x);
     rect.top = finalY - (pivot.y * size.y);
     rect.right = rect.left + size.x;
     rect.bottom = rect.top + size.y;
-
-    // Scale 생성
-    XMMATRIX matScale = XMMatrixScaling(size.x, size.y, 1.0f);
-
-    // Pivot 보정
-    float pivotOffsetX = (0.5f - pivot.x) * size.x;
-    float pivotOffsetY = (0.5f - pivot.y) * size.y;
-
-    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
-
-    float depth = 0.1f;
-    if (parent_ui) {
-        // 부모의 월드 행렬에서 Z값을 추출해서 사용
-        depth = parent_ui->GetWorldMatrix()._43 - 0.001f; // 0.001f씩 앞으로
-    }
-    // 최종 위치 이동
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
-
-    // Scale -> Pivot -> Translation
-    XMMATRIX world = matScale * matPivot * matTranslation;
-    XMStoreFloat4x4(&world_matrix, world);
 
     for (auto& c : child) {
         c->Update(deltaTime);
@@ -107,6 +102,8 @@ void CUIComponent::Render(ID3D12GraphicsCommandList* commandList)
 
 void CUIComponent::Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers)
 {
+    if (!is_enable) return;
+
     std::string shaderKey = GetShaderName(); // 아래 3번 참고
     auto it = renderers.find(shaderKey);
 
@@ -159,6 +156,8 @@ CUICanvas::CUICanvas()
 
 void CUICanvas::Update(float deltaTime)
 {
+    if (!is_enable) return;
+
     Rect parentRect = GetParentRect();
 
     size.x = parentRect.right;
@@ -183,6 +182,11 @@ bool CUICanvas::IntersectsMouse(float x, float y)
         }
     }
     return false;
+}
+
+CUIManager::CUIManager()
+    : data_manager{std::make_shared<CDataManager>()}
+{
 }
 
 std::shared_ptr<CUICanvas> CUIManager::CreateCanvas()
@@ -212,40 +216,38 @@ void CUIImage::SetMaterial(std::shared_ptr<CMaterialComponent>& m)
 
 void CUIImage::Update(float deltaTime)
 {
+    // 부모 영역 계산
     Rect parentRect = GetParentRect();
 
+    // 위치 계산 (기존과 동일)
     float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
     float anchorY = parentRect.top + (parentRect.Height() * (1.0f - anchor.y) * 0.5f);
-
     float finalX = anchorX + relative_pos.x;
     float finalY = anchorY + relative_pos.y;
 
+    // Depth 설정 (이 부분이 핵심)
+    float depth = 0.1f; // 기본값 (0.0 ~ 1.0 사이, 카메라에 가까울수록 작은 값인 경우 기준)
+    if (parent_ui) {
+        // 부모보다 무조건 0.01f만큼 앞으로 (Z값이 작아짐)
+        depth = parent_ui->GetWorldMatrix()._43 - 0.001f;
+    }
+
+    // 행렬 생성
+    XMMATRIX matScale = XMMatrixScaling(size.x * fill_amount, size.y, 1.0f);
+    float pivotOffsetX = (0.5f - pivot.x) * size.x;
+    float pivotOffsetY = (0.5f - pivot.y) * size.y;
+    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
+
+    XMMATRIX world = matScale * matPivot * matTranslation;
+    XMStoreFloat4x4(&world_matrix, world);
+
+    // 판정용 Rect 갱신
     rect.left = finalX - (pivot.x * size.x);
     rect.top = finalY - (pivot.y * size.y);
     rect.right = rect.left + size.x;
     rect.bottom = rect.top + size.y;
 
-    // Scale 생성
-    XMMATRIX matScale = XMMatrixScaling(size.x * fill_amount, size.y, 1.0f);
-
-    // Pivot 보정
-    float pivotOffsetX = (0.5f - pivot.x) * size.x;
-    float pivotOffsetY = (0.5f - pivot.y) * size.y;
-
-    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
-
-    float depth = 0.1f;
-    if (parent_ui) {
-        // 부모의 월드 행렬에서 Z값을 추출해서 사용
-        depth = parent_ui->GetWorldMatrix()._43 - 0.001f; // 0.001f씩 앞으로
-    }
-    // 최종 위치 이동
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
-
-    // Scale -> Pivot -> Translation
-    XMMATRIX world = matScale * matPivot * matTranslation;
-    XMStoreFloat4x4(&world_matrix, world);
-    
     for (auto& c : child) {
         c->Update(deltaTime);
     }
@@ -359,7 +361,14 @@ json CUIText::Serialize()
 {
     json j = CUIComponent::Serialize();
     j["Type"] = "Text";
+    j["Text"] = WstringToUtf8(full_text);
     return j;
+}
+
+void CUIText::Deserialize(const json& j)
+{
+    CUIComponent::Deserialize(j);
+    if (j.contains("Text")) full_text = Utf8ToWstring(j["Text"]);
 }
 
 void CUIText::Skip()
@@ -426,6 +435,7 @@ void CUIButton::UpdateState()
     if (KEY_PRESSED(KEY::LBTN)) {
         if(rect.IsPointInside(mouseDelta.x, mouseDelta.y)) {
             state = EButtonState::Pressed;
+            OnMouseLButtonDown();
         }
     }
     else {
@@ -441,8 +451,6 @@ void CUIButton::UpdateState()
 // CUIDowsingArrow
 void CUIDowsingArrow::Update(float deltaTime)
 {
-    if (!is_enable) return;
-
     float angle = *target_angle;
 
     float orbitRadius = 250.0f;

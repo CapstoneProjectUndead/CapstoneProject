@@ -139,17 +139,18 @@ public:
     virtual void Collect(IRenderer* renderer) override;
     virtual void Update(float deltaTime) override;
     virtual json Serialize() override;
+    virtual void Deserialize(const json& j) override;
 
     bool IsFinished() const { return is_finished; }
     void Skip();
 
-    std::function<void()> onFinished; // 버튼 띄우기용 콜백
+    std::function<void()> onFinished{}; // 버튼 띄우기용 콜백
 private:
     std::wstring full_text{ L"Hi" };
     std::wstring current_text{}; // 서명있는 유니코드로 저장
     UINT current_index{};
     float timer{};
-    float typing_speed{ 5.0f }; // 글자당 속도
+    float typing_speed{ 0.3f }; // 글자당 속도
     bool is_finished{true};
     bool is_billboard{};
 };
@@ -200,6 +201,8 @@ public:
     std::shared_ptr<CDataManager>& GetDataManager() { return data_manager; }
 
     // 새로운 캔버스 생성
+    CUIManager();
+
     std::shared_ptr<CUICanvas> CreateCanvas();
     void AddCanvas(std::shared_ptr<CUICanvas>& canvas) {
         canvases.push_back(canvas);

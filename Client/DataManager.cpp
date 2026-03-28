@@ -5,7 +5,10 @@
 void CDataManager::LoadScripts(const std::string& filePath)
 {
     std::ifstream file(filePath);
-    if (!file.is_open()) return;
+    if (!file.is_open()) {
+        OutputDebugStringA("Failed to open Dialogue JSON file!\n");
+        return;
+    }
 
     json j;
     file >> j;
@@ -17,6 +20,8 @@ void CDataManager::LoadScripts(const std::string& filePath)
             }
         }
     }
+
+    OutputDebugStringA("Scripts Loaded Successfully.\n");
 }
 
 std::wstring CDataManager::GetDialogue(const std::string& npcName, const std::string& tag)
@@ -88,13 +93,4 @@ void CDataManager::LoadRecursive(std::shared_ptr<CUIComponent> parent, const jso
             LoadRecursive(newUI, childData);
         }
     }
-}
-
-std::wstring CDataManager::Utf8ToWstring(const std::string& str)
-{
-    if (str.empty()) return L"";
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
-    std::wstring wstrTo(size_needed, 0);
-    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-    return wstrTo;
 }
