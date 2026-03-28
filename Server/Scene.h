@@ -8,6 +8,7 @@
 class CRoom;
 class CMonster;
 class CPhysicsManager;
+class CItem;
 
 class CScene
 {
@@ -93,10 +94,12 @@ public:
 	void Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt);
 	void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
 	void Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt);
+	virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) {};
 
 protected:
 	map<uint64, shared_ptr<CPlayer>>	players;
 	map<uint64, shared_ptr<CMonster>>   monsters;
+	map<uint64, shared_ptr<CItem>>		items;
 	SCENE_TYPE							scene_type;
 
 	mutex								job_queue_lock;

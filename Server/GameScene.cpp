@@ -10,6 +10,9 @@
 #include "HumanMonster.h"
 #include "ServerObjectFactory.h"
 #include "MapUtils.h"
+#include "Item.h"
+#include "ItemFactory.h"
+#include "Inventory.h"
 
 
 CGameScene::CGameScene(uint32 roomId)
@@ -146,6 +149,82 @@ void CGameScene::CreateGameScene()
 				GetPhysicsManager()->SetCollider(copyCollider);
 			}
 			static_objects.push_back(obj);
+		}
+	}
+}
+
+void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt)
+{
+	// 지금 서버 구조가 게임 로직은 싱글 스레드로 돌리고 있다.
+	// 그래서 클라의 C_Pickup_Item 패킷 처리를 오는 순서대로 처리하기 때문에
+	// 먼저 들어온 유저가 아이템을 소유한다.
+
+	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+		
+		// 보물이 있다면
+		if (treasure_map.find(pkt.item_world_id) != treasure_map.end()) {
+
+			// (임시) 보물은 등급 테이블에 의해서 계산된 등급의 id가 결정된다. 지금은 그냥 1001.
+			auto item = ItemFactory::Create(1001);
+			auto& player = players[pkt.player_id];
+			player->GetInventory()->AddItem(item);
+
+			// 너가 처음 주운 유저다.
+			// S_AddItem 패킷 보낸다.
+			S_AddItem addItem;
+
+			addItem.item_id = 1001;
+			addItem.item_world_id = pkt.item_world_id;
+			addItem.player_id = pkt.player_id;
+			addItem.item_type = ITEM_TYPE::TREASURE;
+			addItem.scene_type = scene_type;
+
+			SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
+			session->DoSend(sendBuffer);
+
+			// S_DeSpawnItem
+			S_DeSpawnItem despawnItem;
+			despawnItem.item_type = ITEM_TYPE::TREASURE;
+			despawnItem.item_world_id = pkt.item_world_id;
+			despawnItem.scene_type = scene_type;
+
+			sendBuffer = MAKE_SEND_BUFFER(despawnItem);
+			BroadCast(sendBuffer, pkt.player_id);
+
+			// 보물 삭제
+			treasure_map.erase(pkt.item_world_id);
+		}
+	}
+	else {
+		auto it = items.find(pkt.item_world_id);
+
+		// 너가 처음 주운 유저다.
+		if (it != items.end()) {
+
+			// 아이템 도감 번호
+			uint16 itemID = it->second->GetItemId();
+
+			// S_AddItem 패킷 보낸다.
+			S_AddItem addItem;
+			addItem.item_id = itemID;
+			addItem.item_world_id = pkt.item_world_id;
+			addItem.player_id = pkt.player_id;
+			addItem.item_type = pkt.item_type;
+			addItem.scene_type = scene_type;
+
+			SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
+			session->DoSend(sendBuffer);
+
+			// S_DeSpawnItem
+			S_DeSpawnItem despawnItem;
+			despawnItem.item_type = pkt.item_type;
+			despawnItem.item_world_id = pkt.item_world_id;
+			despawnItem.scene_type = scene_type;
+
+			sendBuffer = MAKE_SEND_BUFFER(despawnItem);
+			BroadCast(sendBuffer, pkt.player_id);
+
+			items.erase(it);
 		}
 	}
 }

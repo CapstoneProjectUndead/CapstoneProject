@@ -3,6 +3,8 @@
 #include "GameFramework.h"
 #include "SceneManager.h"
 #include "RoomManager.h"
+#include "ItemFactory.h"
+#include <filesystem>
 
 CGameFramework::CGameFramework()
 {
@@ -16,6 +18,11 @@ CGameFramework::~CGameFramework()
 
 void CGameFramework::Init()
 {
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+    std::filesystem::path jsonPath = std::filesystem::path(exePath).parent_path() / "Data/items.json";
+    ItemFactory::LoadFromJson(jsonPath.string());
+
     CSceneManager::GetInstance().Initialize();
     CRoomManager::GetInstance().Initialize();
 }

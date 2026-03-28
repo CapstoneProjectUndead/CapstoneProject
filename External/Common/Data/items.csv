@@ -28,9 +28,9 @@ item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,ener
 ,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
-item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,energy_amount,effect_amount,grade,price,max_stack,is_throwable,
+item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,energy_amount,effect_amount,grade,price,max_stack,is_throwable,description
 20,1,201,싱싱한 고기,1,-1,0,30,0,-1,300,99,TRUE,
-21,1,201,냉동 만두,1,-1,0,50,0,-1,200,99,TRUE,description
+21,1,201,냉동 만두,1,-1,0,50,0,-1,200,99,TRUE,
 22,1,201,브로콜리,1,-1,0,10,0,-1,180,99,TRUE,
 23,1,201,두리안,1,-1,0,30,0,-1,250,99,TRUE,
 24,1,201,바나나,1,-1,0,15,0,-1,120,99,TRUE,
@@ -62,9 +62,9 @@ item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,ener
 ,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
-item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,energy_amount,effect_amount,grade,price,max_stack,is_throwable,
+item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,energy_amount,effect_amount,grade,price,max_stack,is_throwable,description
 47,2,302,풍선,1,-1,-1,-1,-1,-1,80,99,TRUE,
-48,2,301,부부젤라,1,-1,-1,-1,-1,-1,150,99,TRUE,description
+48,2,301,부부젤라,1,-1,-1,-1,-1,-1,150,99,TRUE,
 49,2,301,양동이,1,-1,-1,-1,-1,-1,100,99,TRUE,
 50,2,303,바나나 껍질,1,-1,-1,-1,-1,-1,60,99,TRUE,
 51,2,300,구멍난 양말,1,-1,-1,-1,-1,-1,40,99,TRUE,
@@ -79,6 +79,6 @@ item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,ener
 ,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
-item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,energy_amount,effect_amount,grade,price,max_stack,is_throwable,
+item_id,item_type,item_sub_type,item_name,weight,max_durability,heal_amount,energy_amount,effect_amount,grade,price,max_stack,is_throwable,description
 1000,3,400,은,3,-1,-1,-1,-1,2,5000,1,TRUE,
-1001,3,401,금,5,-1,-1,-1,-1,3,10000,1,TRUE,description
+1001,3,401,금,5,-1,-1,-1,-1,3,10000,1,TRUE,

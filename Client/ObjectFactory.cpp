@@ -202,11 +202,12 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
 
-	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	// 맵 데이터를 순회하며 보물 좌표 + ID 부여
 	treasures.clear();
+	uint32 treasure_id = 0;
 	for (const auto& inst : instData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			treasures.push_back(TreasureInfo{ inst.position });
+			treasures.push_back(TreasureInfo{ treasure_id++, inst.position });
 		}
 	}
 

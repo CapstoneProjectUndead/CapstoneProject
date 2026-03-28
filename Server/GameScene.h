@@ -23,6 +23,9 @@ private:
     void LoadGameScene();
     void CreateGameScene();
 
+public:
+    virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;
+
 private:
     map<string, shared_ptr<CObject>>    prototypes;
     vector<MapGenerator::InstanceData>  map_instance_data;

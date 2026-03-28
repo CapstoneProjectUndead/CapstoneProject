@@ -56,7 +56,10 @@ enum PacketType : uint16_t
 
 	_S_SPAWN_ITEM,      // 서버 → 클라: 월드에 보물 생성
 	_S_SPAWN_ITEM_LIST,
+	_S_DESPAWN_ITEM,
 	_C_PICKUP_ITEM,     // 클라 → 서버: 보물 줍기 요청
+	_S_ADD_ITEM,		// 서버 → 클라: 인벤토리에 추가해라
+	_S_REMOVE_ITEM,		// 서버 → 클라: 인벤토리에서 없애라
 };
 
 #pragma pack (push, 1)
@@ -414,7 +417,7 @@ struct S_SpawnItem : public PacketHeader
 };
 static_assert(sizeof(S_SpawnItem) == 4 + 20, "S_SpawnItem size mismatch!");
 
-struct S_Spawn_Item_List : public PacketHeader
+struct S_Item_List : public PacketHeader
 {
 	struct Item
 	{
@@ -428,9 +431,9 @@ struct S_Spawn_Item_List : public PacketHeader
 	uint32      item_count;
 	SCENE_TYPE	scene_type;
 
-	S_Spawn_Item_List(int32 count) : PacketHeader(sizeof(S_Spawn_Item_List), (UINT)PacketType::_S_SPAWN_ITEM_LIST) {}
+	S_Item_List(int32 count) : PacketHeader(sizeof(S_Item_List), (UINT)PacketType::_S_SPAWN_ITEM_LIST) {}
 
-	using ItemList = PacketList<S_Spawn_Item_List::Item>;
+	using ItemList = PacketList<S_Item_List::Item>;
 
 	ItemList GetItemList()
 	{
@@ -439,7 +442,17 @@ struct S_Spawn_Item_List : public PacketHeader
 		return ItemList(reinterpret_cast<Item*>(data), item_count);
 	}
 };
-static_assert(sizeof(S_Spawn_Item_List) == 4 + 9, "S_Spawn_Item_List size mismatch!");
+static_assert(sizeof(S_Item_List) == 4 + 9, "S_Spawn_Item_List size mismatch!");
+
+struct S_DeSpawnItem : public PacketHeader
+{
+	uint32 item_world_id;  // 오브젝트 고유 ID
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	S_DeSpawnItem() : PacketHeader(sizeof(S_DeSpawnItem), (UINT)PacketType::_S_DESPAWN_ITEM) {}
+};
+static_assert(sizeof(S_DeSpawnItem) == 4 + 6, "S_DeSpawnItem size mismatch!");
 
 // 클라 → 서버: 보물 줍기 요청
 struct C_PickupItem : public PacketHeader
@@ -447,9 +460,32 @@ struct C_PickupItem : public PacketHeader
 	uint64 player_id;
 	uint32 item_world_id; 
 	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
 
 	C_PickupItem() : PacketHeader(sizeof(C_PickupItem), (UINT)PacketType::_C_PICKUP_ITEM) {}
 };
-static_assert(sizeof(C_PickupItem) == 4 + 13, "C_PickupItem size mismatch!");
+static_assert(sizeof(C_PickupItem) == 4 + 14, "C_PickupItem size mismatch!");
+
+struct S_AddItem : public PacketHeader
+{
+	uint64 player_id;
+	uint16 item_id;
+	uint32 item_world_id;
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	S_AddItem() : PacketHeader(sizeof(S_AddItem), (UINT)PacketType::_S_ADD_ITEM) {}
+};
+static_assert(sizeof(S_AddItem) == 4 + 16, "S_AddItem size mismatch!");
+
+struct S_RemoveItem : public PacketHeader
+{
+	uint64 player_id;
+	uint16 item_id;
+	SCENE_TYPE scene_type;
+
+	S_RemoveItem() : PacketHeader(sizeof(S_RemoveItem), (UINT)PacketType::_S_REMOVE_ITEM) {}
+};
+static_assert(sizeof(S_RemoveItem) == 4 + 11, "S_RemoveItem size mismatch!");
 
 #pragma pack (pop)
