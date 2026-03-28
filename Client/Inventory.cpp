@@ -88,6 +88,55 @@ void CInventory::BeginDrawInventory()
 
 	ImGui::PopStyleColor(); // WindowBg
 	ImGui::PopStyleVar(3);  // WindowPadding, ItemSpacing, WindowRounding
+
+	// 드래그 프리뷰: 마우스 커서 위치에 아이템 ghost 렌더링
+	if (is_dragging && dragged_item) {
+		ImVec2      mousePos = ImGui::GetMousePos();
+		float       ghostSz  = 50.0f * scale;
+		ImVec2      ghostMin = ImVec2(mousePos.x - ghostSz * 0.5f, mousePos.y - ghostSz * 0.5f);
+		ImVec2      ghostMax = ImVec2(mousePos.x + ghostSz * 0.5f, mousePos.y + ghostSz * 0.5f);
+		ImDrawList* dl       = ImGui::GetForegroundDrawList();
+
+		dl->AddRectFilled(ghostMin, ghostMax, IM_COL32(210, 210, 215, 200), 6.0f * scale);
+		dl->AddRect(ghostMin, ghostMax,       IM_COL32(120, 120, 125, 255), 6.0f * scale);
+
+		const char* name = dragged_item->GetName().c_str();
+		ImVec2 tSz = ImGui::CalcTextSize(name);
+		dl->AddText(ImVec2(mousePos.x - tSz.x * 0.5f, mousePos.y - tSz.y * 0.5f),
+		            IM_COL32(30, 30, 30, 255), name);
+	}
+
+	// 마우스 버튼 놓으면 드래그 종료
+	if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) && is_dragging && dragged_item) {
+
+		// 인벤토리 창 밖에서 놓았는지 확인
+		ImGuiWindow* win = ImGui::FindWindowByName("##Inventory");
+		bool droppedOutside = true;
+		if (win) {
+			ImVec2 mp = ImGui::GetMousePos();
+			droppedOutside = !(mp.x >= win->Pos.x && mp.x <= win->Pos.x + win->Size.x &&
+			                   mp.y >= win->Pos.y && mp.y <= win->Pos.y + win->Size.y);
+		}
+
+		if (droppedOutside) {
+			auto it = std::find_if(items.begin(), items.end(), [this](const std::shared_ptr<CItem>& item) {
+				return item.get() == dragged_item;
+				});
+
+			if (it != items.end()) {
+				if ((*it)->GetItemType() == ITEM_TYPE::TREASURE)
+					current_weight -= (*it)->GetWeight();
+
+				if (on_drop_callback)
+					on_drop_callback(*it);
+
+				items.erase(it);
+			}
+		}
+
+		is_dragging  = false;
+		dragged_item = nullptr;
+	}
 }
 
 void CInventory::DrawTitleBar(float winW, float titleH)
@@ -245,21 +294,24 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				if (idx < (int)filtered.size()) {
 
 					// TODO: 실제 아이템 이미지 로드 후 ImGui::Image()로 교체
-					const char* placeholder = filtered[col]->GetName().c_str();
+					const char* placeholder = filtered[idx]->GetName().c_str();
 					ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
 					ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
 					                     cellMin.y + (cellSz - tSz.y) * 0.5f);
 					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
-
-					// TODO: 실제 수량으로 교체
-					//char countBuf[16];
-					//snprintf(countBuf, sizeof(countBuf), "%.0f", filtered[idx]->GetWeight());
-					//float lineH = ImGui::GetTextLineHeight();
-					//ImVec2 cPos = ImVec2(cellMin.x + pad, cellMax.y - lineH - pad * 0.5f);
-					//dl->AddText(cPos, IM_COL32(30, 30, 30, 255), countBuf);
 				}
 
-				ImGui::Dummy(ImVec2(cellSz, cellSz));
+				// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지
+				char btnId[32];
+				snprintf(btnId, sizeof(btnId), "##grid_slot_%d", idx);
+				ImGui::InvisibleButton(btnId, ImVec2(cellSz, cellSz));
+
+				if (idx < (int)filtered.size()) {
+					if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
+						is_dragging  = true;
+						dragged_item = filtered[idx];
+					}
+				}
 
 				if (col < cols - 1)
 					ImGui::SameLine(0.0f, pad);
@@ -337,7 +389,17 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 						dl->AddText(textPos, IM_COL32(100, 100, 100, 255), "[img]");
 					}
 
-					ImGui::Dummy(ImVec2(imgColW, rowH)); // 셀 공간 확보
+					// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지
+					char btnId[32];
+					snprintf(btnId, sizeof(btnId), "##table_slot_%d", i);
+					ImGui::InvisibleButton(btnId, ImVec2(imgColW, rowH));
+
+					if (i < (int)filtered.size()) {
+						if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
+							is_dragging  = true;
+							dragged_item = filtered[i];
+						}
+					}
 				}
 
 				// 아이템 이름 셀

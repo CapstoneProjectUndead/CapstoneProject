@@ -3,6 +3,7 @@
 #include "MapGenerator/MapGenerator.h"
 
 class CWorldItem;
+class CItem;
 
 class CGameScene : public CScene
 {
@@ -31,6 +32,8 @@ public:
     virtual void Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt) override;
 
 private:
+    void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
+
     // 싱글용
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
 

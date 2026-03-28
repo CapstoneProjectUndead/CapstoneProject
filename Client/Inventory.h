@@ -10,17 +10,20 @@ public:
 	CInventory(const CInventory&) = delete;
 	~CInventory();
 
-	void AddItem(std::shared_ptr<CItem> item);
-	void RemoveItem(int itemID);
+public:
+	void  AddItem(std::shared_ptr<CItem> item);
+	void  RemoveItem(int itemID);
 
-	void ToggleOpen() { is_open = !is_open; }
-	bool IsOpen() const { return is_open; }
+	void  ToggleOpen() { is_open = !is_open; }
+	bool  IsOpen() const { return is_open; }
 
 	float GetCurrentWeight() const { return current_weight; }
 	float GetMaxWeight() const { return max_weight; }
 	void  UpgradeMaxWeight(float amount) { max_weight += amount; }
 
 	void  Draw();
+
+	void  SetDropCallback(std::function<void(std::shared_ptr<CItem>)> cb) { on_drop_callback = cb; }
 
 private:
 	void BeginDrawInventory();
@@ -39,4 +42,10 @@ private:
 
 	bool                                 is_open        = false;
 	ITEM_TYPE                            active_tab     = ITEM_TYPE::EQUIPMENT;
+
+	// 드래그 상태
+	CItem*                               dragged_item   = nullptr;
+	bool                                 is_dragging    = false;
+
+	std::function<void(std::shared_ptr<CItem>)> on_drop_callback;
 };

@@ -64,7 +64,6 @@ public:
 	virtual void Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt) {}
 	virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) {}
 
-
 public:
 	// 멤버 변수 set
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }

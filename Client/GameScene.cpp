@@ -47,6 +47,7 @@ void CGameScene::Initialize()
 
 	// 과자 생성 (테스트)
 	SpawnWorldItem(25, XMFLOAT3{1, 0, 1});
+	SpawnWorldItem(24, XMFLOAT3{2, 0, 1});
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -61,6 +62,16 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
 		if (itemFinder) {
 			itemFinder->RegisterTreasures(treasures);
+		}
+	}
+
+	// 싱글 드롭 콜백 등록
+	if (my_player) {
+		auto inv = my_player->GetInventory();
+		if (inv) {
+			inv->SetDropCallback([this](std::shared_ptr<CItem> item) {
+				DropItemAtPlayerFeet(item);
+				});
 		}
 	}
 
@@ -264,11 +275,30 @@ void CGameScene::Enter()
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
 
-		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
 		if (itemFinder) {
 			itemFinder->RegisterTreasures(treasures);
 		}
+	}
+}
+
+void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
+{
+	if (!my_player)
+		return;
+
+	XMFLOAT3 pos     = my_player->GetPosition();
+	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
+
+	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
+
+	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
+		TreasureInfo info{ worldId, pos };
+		treasures.push_back(info);
+
+		auto itemFinder = my_player->GetComponent<CItemFinder>();
+		if (itemFinder)
+			itemFinder->RegisterTreasures(treasures);
 	}
 }
 
