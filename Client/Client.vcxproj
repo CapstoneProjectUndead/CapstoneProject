@@ -179,6 +179,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Collider.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="CustomScene.h" />
+    <ClInclude Include="DataManager.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
@@ -267,6 +268,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CustomScene.cpp" />
+    <ClCompile Include="DataManager.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />

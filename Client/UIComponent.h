@@ -3,6 +3,7 @@
 
 class CMaterialComponent;
 class IRenderer;
+class CDataManager;
 
 // UIManager로 관리, 각자의 world_matrix가 존재
 class CUIComponent : public CComponent{
@@ -94,7 +95,6 @@ public:
     void SetFillAmount(float amt) { fill_amount = std::clamp(amt, 0.0f, 1.0f); }
     void SetColor(XMFLOAT4 c);
     void SetMaterial(std::shared_ptr<CMaterialComponent>& m);
-    void SetBindingKey(const std::string& key) { binding_key = key; }
 
     // fill_amount 적용 외에 UIComponent와 유사(UIComponent Update 변경 시 수정 필요)
     virtual void Update(float deltaTime) override;
@@ -103,7 +103,6 @@ public:
     virtual json Serialize() override;
     virtual void Deserialize(const json& j) override;
 protected:
-    std::string binding_key = ""; // ex) "PlayerHP"
     float fill_amount = 1.0f;
     std::shared_ptr<CMaterialComponent> mat_comp;  // 생성 시 heap 0 index 사용
 };
@@ -119,6 +118,7 @@ mainCanvas->AddChild(billboard);
 class CUIBillboard : public CUIImage {
 public:
     CUIBillboard(CObject* obj) :target{obj} {}
+    // 타겟 위치로 Update. 자식의 위치 업데이트도 수행
     virtual void Update(float deltaTime) override;
 
     // 빌보드를 띄울 타겟(말하는 주체)
@@ -131,12 +131,26 @@ private:
 
 class CUIText : public CUIComponent {
 public:
-    void SetText(const std::wstring& text);
-    virtual void Collect(IRenderer* renderer) override;
+    CUIText();
+
     virtual std::string GetShaderName() const override { return "text"; }
+    void SetText(const std::wstring& text);
     void SetBillboard(bool b) { is_billboard = b; }
+    virtual void Collect(IRenderer* renderer) override;
+    virtual void Update(float deltaTime) override;
+    virtual json Serialize() override;
+
+    bool IsFinished() const { return is_finished; }
+    void Skip();
+
+    std::function<void()> onFinished; // 버튼 띄우기용 콜백
 private:
-    std::wstring text{ L"안녕" }; // 서명있는 유니코드로 저장
+    std::wstring full_text{ L"Hi" };
+    std::wstring current_text{}; // 서명있는 유니코드로 저장
+    UINT current_index{};
+    float timer{};
+    float typing_speed{ 5.0f }; // 글자당 속도
+    bool is_finished{true};
     bool is_billboard{};
 };
 
@@ -147,6 +161,11 @@ public:
     virtual void Collect(IRenderer* renderer) override;
 
     virtual json Serialize() override;
+
+    std::function<void()> OnClick;
+    void OnMouseLButtonDown() {
+        if (OnClick) OnClick();
+    }
 private:
     void GetColorByState();
     void UpdateState();
@@ -169,8 +188,23 @@ private:
 class CUIManager
 {
 public:
+    // 특정 이름의 UI를 찾는 기능 (대사 갱신 시 필요)
+    template <typename T>
+    std::shared_ptr<T> FindUI(const std::string& name) {
+        for (auto& canvas : canvases) {
+            auto found = FindRecursive<T>(canvas, name);
+            if (found) return found;
+        }
+        return nullptr;
+    }
+    std::shared_ptr<CDataManager>& GetDataManager() { return data_manager; }
+
     // 새로운 캔버스 생성
     std::shared_ptr<CUICanvas> CreateCanvas();
+    void AddCanvas(std::shared_ptr<CUICanvas>& canvas) {
+        canvases.push_back(canvas);
+    }
+    std::vector<std::shared_ptr<CUICanvas>>& GetCanvases() { return canvases; }
     void Update(float deltaTime);
     void Render(ID3D12GraphicsCommandList* commandList);
     void Collect(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
@@ -178,5 +212,16 @@ public:
     // 마우스 클릭 등의 이벤트 처리
     bool IntersectsMouse();
 private:
+    template <typename T>
+    std::shared_ptr<T> FindRecursive(std::shared_ptr<CUIComponent> parent, const std::string& name) {
+        if (parent->GetName() == name) return std::dynamic_pointer_cast<T>(parent);
+        for (auto& c : parent->GetChildren()) {
+            auto found = FindRecursive<T>(c, name);
+            if (found) return found;
+        }
+        return nullptr;
+    }
+private:
     std::vector<std::shared_ptr<CUICanvas>> canvases;
+    std::shared_ptr<CDataManager> data_manager;
 };

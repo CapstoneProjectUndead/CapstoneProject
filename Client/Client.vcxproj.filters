@@ -96,8 +96,8 @@
     </Filter>
     <Filter Include="Scene\LobbyScene">
       <UniqueIdentifier>{ed533742-19b1-4a68-bfd9-ae48ca646966}</UniqueIdentifier>
-	</Filter>
-	<Filter Include="Object\ItemFinder">
+    </Filter>
+    <Filter Include="Object\ItemFinder">
       <UniqueIdentifier>{73a7f2fb-07a7-474b-bac0-4683ec588d92}</UniqueIdentifier>
     </Filter>
     <Filter Include="Object\Item">
@@ -335,8 +335,8 @@
     </ClInclude>
     <ClInclude Include="UIScene.h">
       <Filter>Scene\UIScene</Filter>
-	</ClInclude>
-	<ClInclude Include="ItemFinder.h">
+    </ClInclude>
+    <ClInclude Include="ItemFinder.h">
       <Filter>Object\ItemFinder</Filter>
     </ClInclude>
     <ClInclude Include="..\External\Common\MapUtils.h">
@@ -353,6 +353,9 @@
     </ClInclude>
     <ClInclude Include="WorldItem.h">
       <Filter>Object\Item\World Item</Filter>
+    </ClInclude>
+    <ClInclude Include="DataManager.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -535,8 +538,8 @@
     </ClCompile>
     <ClCompile Include="UIScene.cpp">
       <Filter>Scene\UIScene</Filter>
-	</ClCompile>
-	<ClCompile Include="ItemFinder.cpp">
+    </ClCompile>
+    <ClCompile Include="ItemFinder.cpp">
       <Filter>Object\ItemFinder</Filter>
     </ClCompile>
     <ClCompile Include="..\External\Common\MapUtils.cpp">
@@ -553,6 +556,9 @@
     </ClCompile>
     <ClCompile Include="WorldItem.cpp">
       <Filter>Object\Item\World Item</Filter>
+    </ClCompile>
+    <ClCompile Include="DataManager.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -5,6 +5,7 @@
 #include "GameFramework.h"
 #include "Object.h"
 #include "KeyManager.h"
+#include "DataManager.h"
 
 CUIComponent::CUIComponent()
     : world_matrix{Matrix4x4::Identity()}
@@ -77,8 +78,13 @@ void CUIComponent::Update(const float deltaTime)
 
     XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
 
+    float depth = 0.1f;
+    if (parent_ui) {
+        // 부모의 월드 행렬에서 Z값을 추출해서 사용
+        depth = parent_ui->GetWorldMatrix()._43 - 0.001f; // 0.001f씩 앞으로
+    }
     // 최종 위치 이동
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
 
     // Scale -> Pivot -> Translation
     XMMATRIX world = matScale * matPivot * matTranslation;
@@ -206,12 +212,6 @@ void CUIImage::SetMaterial(std::shared_ptr<CMaterialComponent>& m)
 
 void CUIImage::Update(float deltaTime)
 {
-    if (!binding_key.empty()) {
-        // 외부 전역 매니저에서 키에 해당하는 0.0 ~ 1.0 값을 가져옴
-        //float value = CDataManager::GetInstance().GetFloat(binding_key);
-        //SetFillAmount(value);
-    }
-
     Rect parentRect = GetParentRect();
 
     float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
@@ -234,8 +234,13 @@ void CUIImage::Update(float deltaTime)
 
     XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
 
+    float depth = 0.1f;
+    if (parent_ui) {
+        // 부모의 월드 행렬에서 Z값을 추출해서 사용
+        depth = parent_ui->GetWorldMatrix()._43 - 0.001f; // 0.001f씩 앞으로
+    }
     // 최종 위치 이동
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
 
     // Scale -> Pivot -> Translation
     XMMATRIX world = matScale * matPivot * matTranslation;
@@ -296,13 +301,24 @@ void CUIBillboard::Update(float deltaTime)
 
         // 자식의 최종 3D 월드 행렬 = 자식 오프셋 * 부모(빌보드) 위치
         c->SetWorldMatrix(Matrix4x4::XMMatrixToFloat4x4(childOffset * parentMat));
+
+        c->Update(deltaTime);
     }
 }
 
 // CUIText
+CUIText::CUIText()
+{
+    name = "Text_Element";
+}
+
 void CUIText::SetText(const std::wstring& t)
 {
-    text = t;
+    full_text = t;       // 전체 대사 저장
+    current_text = L"";  // 출력 텍스트 초기화
+    current_index = 0;
+    timer = 0.0f;
+    is_finished = false; // 다시 타이핑 시작
 }
 
 void CUIText::Collect(IRenderer* renderer)
@@ -311,10 +327,51 @@ void CUIText::Collect(IRenderer* renderer)
 
     auto textRenderer = dynamic_cast<CTextRenderer*>(renderer);
     if (textRenderer) {
-        textRenderer->AddTextInstance(text, world_matrix, color, is_billboard);
+        textRenderer->AddTextInstance(current_text, world_matrix, color, is_billboard);
     }
 }
 
+void CUIText::Update(float deltaTime)
+{
+    // 빌보드의 경우 빌보드에서 위치 Update
+    if(!is_billboard)
+        CUIComponent::Update(deltaTime);
+
+    if (is_finished) {
+        current_text = full_text;
+        return;
+    }
+
+    timer += deltaTime;
+    if (timer >= typing_speed) {
+        if (current_index < full_text.length()) {
+            current_text += full_text[current_index++];
+            timer = 0.0f;
+        }
+        else {
+            is_finished = true;
+            if (onFinished) onFinished(); // 대사 출력 완료 시 콜백
+        }
+    }
+}
+
+json CUIText::Serialize()
+{
+    json j = CUIComponent::Serialize();
+    j["Type"] = "Text";
+    return j;
+}
+
+void CUIText::Skip()
+{ 
+    // 클릭 시 한 번에 다 보여주기
+    current_text = full_text;
+    current_index = (UINT)full_text.length();
+    is_finished = true;
+    if (onFinished) onFinished();
+}
+
+// CUIButton
 CUIButton::CUIButton()
     : CUIImage()
 {
@@ -328,7 +385,6 @@ void CUIButton::Update(float deltaTime)
     CUIComponent::Update(deltaTime);
 }
 
-// CUIButton
 void CUIButton::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
