@@ -33,6 +33,8 @@ public:
 
     void InteractWithReaper();
     void SetupDialogueEvents();
+    // 플레이어가 준비되었는지 체크 후 UI 변경
+    void UpdatePlayerReadyUI();
 private:
     void DrawMenu();
     void DrawRoomLeavePopUp();

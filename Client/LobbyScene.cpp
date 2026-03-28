@@ -68,6 +68,9 @@ void CLobbyScene::Initialize()
 	auto YNCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/YNButton.json");
 	YNCanvas->SetEnable(false);
 	ui_manager->AddCanvas(YNCanvas);
+	// Ready UI
+	auto ReadyCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/PlayerReady.json");
+	ui_manager->AddCanvas(ReadyCanvas);
 
 	SetupDialogueEvents();
 }
@@ -103,6 +106,7 @@ void CLobbyScene::Update(float elapsedTime)
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
+		UpdatePlayerReadyUI();
 	}
 
 	// 테스트 (나중에 지울 것)
@@ -132,7 +136,7 @@ void CLobbyScene::SetupDialogueEvents()
 	auto yesBtn = ui_manager->FindUI<CUIButton>("YesButton");
 	auto noBtn = ui_manager->FindUI<CUIButton>("NoButton");
 
-	// 2. 대사가 끝났을 때 버튼을 보여주는 함수 등록
+	// 대사가 끝났을 때 버튼을 보여주는 함수 등록
 	if (reaperText) {
 		reaperText->onFinished = [YNCanvas, reaperUI]() {
 			if (reaperUI) reaperUI->SetEnable(false);
@@ -140,12 +144,11 @@ void CLobbyScene::SetupDialogueEvents()
 			};
 	}
 
-	// 3. Yes 버튼 클릭 시 다음 씬으로 전환
 	if (yesBtn) {
-		yesBtn->OnClick = [reaperUI, this]() {
+		yesBtn->OnClick = [reaperUI, YNCanvas, this]() {
 			if (reaperUI) reaperUI->SetEnable(false);
+			std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
 			if (!g_is_single) {
-				std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
 				if (!myPlayer->GetIsReady()) {
 					myPlayer->SetIsReady(true);
 					C_Ready readyPkt;
@@ -158,18 +161,40 @@ void CLobbyScene::SetupDialogueEvents()
 			}
 			else
 			{
-				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
+				myPlayer->SetIsReady(true);
+				if (reaperUI) reaperUI->SetEnable(false);
+				if (YNCanvas) YNCanvas->SetEnable(false);
+				//CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 			}
 		};
 	}
 
-	// 4. No 버튼 클릭 시 (예시: 다시 숨기고 대화 종료)
 	if (noBtn) {
 		noBtn->OnClick = [YNCanvas, reaperUI]() {
 			if (reaperUI) reaperUI->SetEnable(false);
 			if (YNCanvas) YNCanvas->SetEnable(false);
 			};
 	}
+}
+
+void CLobbyScene::UpdatePlayerReadyUI()
+{
+	//if (g_is_single) return;
+
+	auto SetReadyUIColor = [this](int playerIdx, bool isReady) {
+		// 이름 규칙: "Ready1", "Ready2", "Ready3"...
+		std::string uiName = "Ready" + std::to_string(playerIdx + 1);
+		auto readyUI = ui_manager->FindUI<CUIImage>(uiName);
+
+		if (readyUI) {
+			XMVECTOR color = isReady ? XMVectorSet(0, 0, 1, 1) : XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
+			XMFLOAT4 finalColor;
+			XMStoreFloat4(&finalColor, color);
+			readyUI->SetColor(finalColor);
+		}
+	};
+
+	SetReadyUIColor(0, my_player->GetIsReady());
 }
 
 void CLobbyScene::Enter()
