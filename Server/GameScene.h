@@ -24,8 +24,8 @@ private:
     void CreateGameScene();
 
 private:
-    std::map<std::string, std::shared_ptr<CObject>> prototypes;
-    vector<MapGenerator::InstanceData>              map_instance_data;
-    std::vector<TreasureInfo>                       treasures;
+    map<string, shared_ptr<CObject>>    prototypes;
+    vector<MapGenerator::InstanceData>  map_instance_data;
+    map<uint32, TreasureInfo>           treasure_map;
 };
 

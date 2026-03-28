@@ -14,17 +14,18 @@ public:
 public:
 	std::vector<TreasureInfo>& GetTreasuerPositions() { return treasures; }
 
-	// ¸Ê µ¥ÀÌÅÍ¿¡¼­ º¸¹° À§Ä¡¸¸ ÃßÃâÇÏ¿© µî·ÏÇÏ´Â ÇÔ¼ö
+	// ë§µ ë°ì´í„°ì—ì„œ ë³´ë¬¼ ìœ„ì¹˜ë§Œ ì¶”ì¶œí•˜ì—¬ ë“±ë¡í•˜ëŠ” í•¨ìˆ˜
 	void RegisterTreasures(const std::vector<MapGenerator::InstanceData>& mapData);
 	void RegisterTreasures(const std::vector<TreasureInfo>& _treasures);
+	void AddTreasure(const TreasureInfo& treasure) { treasures.push_back(treasure); }
 
-	// FÅ°¸¦ ´­·¶À» ¶§ ÁÖº¯(radius ¹İ°æ ³»)¿¡ º¸¹°ÀÌ ÀÖ´ÂÁö Å½»öÇÏ´Â ÇÔ¼ö
-	// ¹İÈ¯°ª: °¡Àå °¡±î¿î º¸¹°±îÁöÀÇ °Å¸® (¾øÀ¸¸é -1.0f ¹İÈ¯)
+	// Fí‚¤ë¥¼ ëˆŒë €ì„ ë•Œ ì£¼ë³€(radius ë°˜ê²½ ë‚´)ì— ë³´ë¬¼ì´ ìˆëŠ”ì§€ íƒìƒ‰í•˜ëŠ” í•¨ìˆ˜
+	// ë°˜í™˜ê°’: ê°€ì¥ ê°€ê¹Œìš´ ë³´ë¬¼ê¹Œì§€ì˜ ê±°ë¦¬ (ì—†ìœ¼ë©´ -1.0f ë°˜í™˜)
 	float SearchNearbyTreasure(const XMFLOAT3& playerPos);
 
 private:
-	std::vector<TreasureInfo>  treasures; // º¸¹° À§Ä¡ Á¤º¸
-	const float				   recog_range = 5.f;  // ´Ù¿ìÂ¡ ÀÎÁö ¹üÀ§
+	std::vector<TreasureInfo>  treasures;  // ë³´ë¬¼ ìœ„ì¹˜ ì •ë³´
+	const float				   recog_range = 5.f;  // ë‹¤ìš°ì§• ì¸ì§€ ë²”ìœ„
 	XMFLOAT3				   closest_treasure_pos;
 };
 

@@ -45,6 +45,10 @@ enum : uint16
 	PKT_S_MAP_END,
 
 	PKT_C_READY,	// 로비씬에서 사신에게 준비 완료 버튼 누름
+
+	PKT_S_SPAWN_ITEM,
+	PKT_S_SPAWN_ITEM_LIST,
+	PKT_C_PICKUP_ITEM,
 };
 
 // Custom Handlers

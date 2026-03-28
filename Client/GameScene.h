@@ -20,16 +20,22 @@ public:
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
 
-    void SpawnWorldItem(int itemID, XMFLOAT3 position);
-
 public:
     // 서버 패킷 처리 관련 함수들
     void Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt);
     void Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEnd& pkt);
+    void Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt) override;
+    virtual void Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt) override;
 
 private:
+    // 싱글용
+    void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
+
+    // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
+    void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position); 
     void ProcessPickup();
 
+private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;
 

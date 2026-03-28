@@ -119,6 +119,7 @@ void CGameScene::ProcessPickup()
 
 		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
 			XMFLOAT3 pos = worldItem->GetPosition();
+			uint32 id = worldItem->GetID();
 			auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
 				[&pos](const TreasureInfo& info) {
 					return info.treasure_pos.x == pos.x &&
@@ -136,7 +137,8 @@ void CGameScene::ProcessPickup()
 	}
 }
 
-void CGameScene::SpawnWorldItem(int itemID, XMFLOAT3 position)
+// 싱글환경
+void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 {
 	auto itemData = ItemFactory::Create(itemID);
 	if (!itemData) 
@@ -168,6 +170,40 @@ void CGameScene::SpawnWorldItem(int itemID, XMFLOAT3 position)
 	item->Initialize(GET_DEVICE, GET_CMD_LIST);
 	AddObject(item, world_item_id_counter);
 	++world_item_id_counter;
+}
+
+// 멀티환경
+void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
+{
+	auto itemData = ItemFactory::Create(itemID);
+	if (!itemData)
+		return;
+
+	std::shared_ptr<CWorldItem> item;
+
+	switch (itemData->GetItemType())
+	{
+	case ITEM_TYPE::EQUIPMENT:
+		break;
+	case ITEM_TYPE::CONSUMABLE:
+		item = std::make_shared<CWorldConsumable>(itemData);
+		break;
+	case ITEM_TYPE::ETC:
+		break;
+	case ITEM_TYPE::TREASURE:
+		item = std::make_shared<CWorldTreasure>(itemData);
+		break;
+	default:
+		break;
+	}
+
+	if (!item)
+		return;
+
+	item->SetPosition(position);
+	item->SetID(itemWorldId);
+	item->Initialize(GET_DEVICE, GET_CMD_LIST);
+	AddObject(item, itemWorldId);
 }
 
 void CGameScene::DrawUI()
@@ -235,10 +271,52 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
-	treasures = factory->GetTreauseres();
+	treasures.clear();
+}
 
-	// 보물 위치에 보물 생성
-	for (auto& treasure : treasures) {
-		SpawnWorldItem(1001, treasure.treasure_pos);
+void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)
+{
+	XMFLOAT3 pos{ pkt.x, pkt.y, pkt.z };
+
+	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
+		TreasureInfo treasure{ pkt.item_world_id, pos };
+		treasures.push_back(treasure);
+
+		if (my_player) {
+			auto itemFinder = my_player->GetComponent<CItemFinder>();
+			if (itemFinder) {
+				itemFinder->AddTreasure(treasure);
+			}
+		}
+	}
+	else {
+		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
+	}
+}
+
+void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt)
+{
+	S_Spawn_Item_List::ItemList itemList = pkt.GetItemList();
+
+	for (uint32 i = 0; i < pkt.item_count; ++i) {
+
+		XMFLOAT3 pos{ itemList[i].x,  itemList[i].y, itemList[i].z};
+
+		if (itemList[i].item_type == ITEM_TYPE::TREASURE) {
+			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
+			TreasureInfo treasure{ itemList[i].item_world_id, pos };
+			treasures.push_back(treasure);
+
+			if (my_player) {
+				auto itemFinder = my_player->GetComponent<CItemFinder>();
+				if (itemFinder) {
+					itemFinder->AddTreasure(treasure);
+				}
+			}
+		}
+		else {
+			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
+		}
 	}
 }

@@ -166,8 +166,8 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\enum.h" />
     <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h" />
     <ClInclude Include="..\External\Common\MapUtils.h" />
-    <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\packet_struct.h" />
+    <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\struct.h" />
     <ClInclude Include="..\External\Common\VariablePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />

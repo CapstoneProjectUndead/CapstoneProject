@@ -159,9 +159,6 @@
     <ClInclude Include="NetworkManager.h">
       <Filter>Network\NetworkManager</Filter>
     </ClInclude>
-    <ClInclude Include="..\External\Common\protocol.h">
-      <Filter>Network\Protocol</Filter>
-    </ClInclude>
     <ClInclude Include="ServerSession.h">
       <Filter>Network\Session</Filter>
     </ClInclude>
@@ -371,6 +368,9 @@
     </ClInclude>
     <ClInclude Include="WorldConsumable.h">
       <Filter>Object\Item\World Item\Consum</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\Common\protocol.h">
+      <Filter>Network\Protocol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

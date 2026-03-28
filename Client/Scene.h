@@ -57,6 +57,8 @@ public:
 	void Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt);
 	void Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt);
 	void Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt);
+	virtual void Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt) {};
+	virtual void Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt) {};
 
 public:
 	// 멤버 변수 set

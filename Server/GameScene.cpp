@@ -98,10 +98,12 @@ void CGameScene::CreateGameScene()
 
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 
-	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	// 맵 데이터를 순회하며 보물 좌표 + ID 부여
+	uint32 treasure_id = 0;
 	for (const auto& inst : instanceData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			treasures.push_back(TreasureInfo{ inst.position });
+			TreasureInfo treasureInfo{ treasure_id++, inst.position };
+			treasure_map[treasureInfo.id] = treasureInfo;
 		}
 	}
 

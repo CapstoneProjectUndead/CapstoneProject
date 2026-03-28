@@ -128,11 +128,21 @@ struct RoomInfo
 
 struct TreasureInfo
 {
-	XMFLOAT3 treasure_pos;
+	uint32         id;
+	XMFLOAT3       treasure_pos;
 	TREASURE_STATE treasure_state;
 
+	TreasureInfo() = default;
+
 	TreasureInfo(const XMFLOAT3 pos)
-		: treasure_pos(pos)
+		: id(0)
+		, treasure_pos(pos)
+		, treasure_state(TREASURE_STATE::Vaild)
+	{}
+
+	TreasureInfo(uint32 _id, const XMFLOAT3 pos)
+		: id(_id)
+		, treasure_pos(pos)
 		, treasure_state(TREASURE_STATE::Vaild)
 	{}
 };
@@ -142,7 +152,7 @@ struct TreasureInfo
 
 struct ItemData 
 {
-	int				item_id;
+	uint16		    item_id;
 	ITEM_TYPE		item_type;
 	ITEM_SUB_TYPE	item_sub_type;
 	std::string		item_name;

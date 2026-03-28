@@ -25,7 +25,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
 bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 {
-	//std::cout << "Á¤ÀÇ µÇÁö ¾ÊÀº ÆĞÅ¶ ID ÀÔ´Ï´Ù!" << std::endl;
+	//std::cout << "ì •ì˜ ë˜ì§€ ì•Šì€ íŒ¨í‚· ID ì…ë‹ˆë‹¤!" << std::endl;
 	assert(nullptr);
 	return false;
 }
@@ -33,7 +33,7 @@ bool Handle_INVALID(std::shared_ptr<Session> session, char* buffer, int32 len)
 bool Handle_S_PING(std::shared_ptr<Session> session, S_Ping& pkt)
 {
 	C_Pong pongPkt;
-	pongPkt.server_send_time = pkt.server_send_time; // ¼­¹ö°¡ º¸³½ ½Ã°£ ±×´ë·Î º¹»ç
+	pongPkt.server_send_time = pkt.server_send_time; // ì„œë²„ê°€ ë³´ë‚¸ ì‹œê°„ ê·¸ëŒ€ë¡œ ë³µì‚¬
 	auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_Pong>(pongPkt);
 	session->DoSend(sendBuffer);
 
@@ -49,7 +49,7 @@ bool Handle_S_PONG(std::shared_ptr<Session> session, S_Pong& pkt)
 
 bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 {
-	// È¸¿ø°¡ÀÔÀº Title Scene¿¡¼­ Ã³¸®
+	// íšŒì›ê°€ì…ì€ Title Sceneì—ì„œ ì²˜ë¦¬
 	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene);
 	titleScene->Handle_S_SignRes(session, pkt);
@@ -59,7 +59,7 @@ bool Handle_S_SIGNRES(std::shared_ptr<Session> session, S_SIGN_RES& pkt)
 
 bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 {
-	// ·Î±×ÀÎÀº Title Scene¿¡¼­ Ã³¸®
+	// ë¡œê·¸ì¸ì€ Title Sceneì—ì„œ ì²˜ë¦¬
 	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene);
 	titleScene->Handle_S_Login(session, pkt);
@@ -69,7 +69,7 @@ bool Handle_S_LOGIN(std::shared_ptr<Session> session, S_LOGIN& pkt)
 
 bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 {
-	// ·Î±×¾Æ¿ôÀº Title Scene¿¡¼­ Ã³¸®
+	// ë¡œê·¸ì•„ì›ƒì€ Title Sceneì—ì„œ ì²˜ë¦¬
 	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene);
 	titleScene->Handle_S_Logout(session, pkt);
@@ -79,12 +79,12 @@ bool Handle_S_LOGOUT(std::shared_ptr<Session> session, S_LOGOUT& pkt)
 
 bool Handle_S_ENTER_ROOM(std::shared_ptr<Session> session, S_EnterRoom& pkt)
 {
-	// ¼­¹ö¿¡¼­ ¹æ ÀÔÀå Çã¶ôÀÌ ¿Ô´Âµ¥, ÀÔÀå ¾ÀÀÌ TitleÀÌ¸é ¾ÈµÈ´Ù. 
-	// Title SceneÀº RoomÀÌ ¾Æ´Ï±â ¶§¹®ÀÌ´Ù.  Title -> [Room](Custom Scene, Lobby Scene, Game Scene) 
+	// ì„œë²„ì—ì„œ ë°© ì…ì¥ í—ˆë½ì´ ì™”ëŠ”ë°, ì…ì¥ ì”¬ì´ Titleì´ë©´ ì•ˆëœë‹¤. 
+	// Title Sceneì€ Roomì´ ì•„ë‹ˆê¸° ë•Œë¬¸ì´ë‹¤.  Title -> [Room](Custom Scene, Lobby Scene, Game Scene) 
 	if (pkt.scene_type == SCENE_TYPE::TITLE)
 		assert(nullptr);
 
-	// ÇÏÁö¸¸ ¹æ ÀÔÀåÀº Title Scene¿¡¼­ Ã³¸®ÇÑ´Ù.
+	// í•˜ì§€ë§Œ ë°© ì…ì¥ì€ Title Sceneì—ì„œ ì²˜ë¦¬í•œë‹¤.
 	CTitleScene* titleScene = CSceneManager::GetInstance().GetTitleScene();
 	assert(titleScene);
 	titleScene->Handle_S_EnterRoom(session, pkt);
@@ -103,12 +103,12 @@ bool Handle_S_ROOMLIST(std::shared_ptr<Session> session, S_Room_List& pkt)
 
 bool Handle_S_SPAWN_PLAYER(std::shared_ptr<Session> session, S_SpawnPlayer& pkt)
 {
-	// ¼­¹ö¿¡¼­ ÇÃ·¹ÀÌ¾î¸¦ spawn ÇÏ¶ó°í Çß´Âµ¥, Title SceneÀÌ¸é ¾ÈµÈ´Ù.
-	// Title ¾ÀÀº ÇÃ·¹ÀÌ ¾ÀÀÌ ¾Æ´Ï´Ù. 
+	// ì„œë²„ì—ì„œ í”Œë ˆì´ì–´ë¥¼ spawn í•˜ë¼ê³  í–ˆëŠ”ë°, Title Sceneì´ë©´ ì•ˆëœë‹¤.
+	// Title ì”¬ì€ í”Œë ˆì´ ì”¬ì´ ì•„ë‹ˆë‹¤. 
 	if (pkt.scene_type == SCENE_TYPE::TITLE)
 		assert(nullptr);
 
-	// ¼­¹ö°¡ Åëº¸ÇÑ Scene¿¡ ÇÃ·¹ÀÌ¾î¸¦ Ãß°¡ÇÑ´Ù.
+	// ì„œë²„ê°€ í†µë³´í•œ Sceneì— í”Œë ˆì´ì–´ë¥¼ ì¶”ê°€í•œë‹¤.
 	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	assert(targetScene);
 	targetScene->Handle_S_Spawn_Player(session, pkt);
@@ -121,7 +121,7 @@ bool Handle_S_PLAYER_LIST(std::shared_ptr<Session> session, S_PLAYER_LIST& pkt)
 	if (pkt.scene_type == SCENE_TYPE::TITLE)
 		assert(nullptr);
 
-	// ¼­¹ö°¡ Åëº¸ÇÑ Scene¿¡ ÇÃ·¹ÀÌ¾îµéÀ» Ãß°¡ÇÑ´Ù.
+	// ì„œë²„ê°€ í†µë³´í•œ Sceneì— í”Œë ˆì´ì–´ë“¤ì„ ì¶”ê°€í•œë‹¤.
 	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	assert(targetScene);
 	targetScene->Handle_S_PLAYER_LIST(pkt);
@@ -146,7 +146,7 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 
 bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt)
 {
-	// Title ¾À°ú Custom ¾À¿¡´Â ÇÃ·¹ÀÌ¾î°¡ ¾ø´Ù.
+	// Title ì”¬ê³¼ Custom ì”¬ì—ëŠ” í”Œë ˆì´ì–´ê°€ ì—†ë‹¤.
 	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
 		assert(nullptr);
 
@@ -168,7 +168,7 @@ bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pk
 
 bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pkt)
 {
-	// Title ¾À°ú Custom ¾À¿¡´Â ¸ó½ºÅÍ°¡ Á¸ÀçÇÒ ¼ö ¾ø´Ù.
+	// Title ì”¬ê³¼ Custom ì”¬ì—ëŠ” ëª¬ìŠ¤í„°ê°€ ì¡´ì¬í•  ìˆ˜ ì—†ë‹¤.
 	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
 		assert(nullptr);
 
@@ -182,7 +182,7 @@ bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pk
 
 bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt)
 {
-	// Title ¾À°ú Custom ¾À¿¡´Â ÇÃ·¹ÀÌ¾î°¡ ¾ø´Ù.
+	// Title ì”¬ê³¼ Custom ì”¬ì—ëŠ” í”Œë ˆì´ì–´ê°€ ì—†ë‹¤.
 	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
 		assert(nullptr);
 
@@ -198,7 +198,7 @@ bool Handle_S_SCENE_CHANGE(std::shared_ptr<Session> session, S_SceneChange& pkt)
 	CScene* currentScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.current_scene].get();
 	assert(currentScene);
 
-	// À¯Àú°¡ ÇöÀç ¼ÓÇÑ SceneÀÌ ¼­¹öÂÊ ±â·Ï°ú ´Ù¸£¸é assert!
+	// ìœ ì €ê°€ í˜„ì¬ ì†í•œ Sceneì´ ì„œë²„ìª½ ê¸°ë¡ê³¼ ë‹¤ë¥´ë©´ assert!
 	auto player = CAST_SS(session)->GetUser()->GetMyPlayer();
 	assert(player->GetCurrentSceneType() == pkt.current_scene);
 
@@ -230,6 +230,70 @@ bool Handle_S_MAP_END(std::shared_ptr<Session> session, S_MapEnd& pkt)
 	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
 	assert(gameScene);
 	gameScene->Handle_S_MapEnd(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_SPAWN_ITEM(std::shared_ptr<Session> session, S_SpawnItem& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_SpawnItem(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_SPAWN_ITEM_LIST(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_SpawnItemList(session, pkt);
 
 	return true;
 }
