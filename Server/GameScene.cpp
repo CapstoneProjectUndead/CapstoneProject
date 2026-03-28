@@ -165,6 +165,8 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 		if (treasure_map.find(pkt.item_world_id) != treasure_map.end()) {
 
 			// (임시) 보물은 등급 테이블에 의해서 계산된 등급의 id가 결정된다. 지금은 그냥 1001.
+			// 지금 서버쪽에서는 시작할 때, 보물 객체를 만들지 않는다.
+			// 클라에서 보물을 주웠다는 패킷이 오면 그때 객체를 만들어서 먹은 유저의 인벤토리에 넣어주고있다.
 			auto item = ItemFactory::Create(1001);
 			auto& player = players[pkt.player_id];
 			player->GetInventory()->AddItem(item);
@@ -189,7 +191,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 			despawnItem.scene_type = scene_type;
 
 			sendBuffer = MAKE_SEND_BUFFER(despawnItem);
-			BroadCast(sendBuffer, pkt.player_id);
+			BroadCast(sendBuffer);
 
 			// 보물 삭제
 			treasure_map.erase(pkt.item_world_id);
@@ -222,7 +224,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 			despawnItem.scene_type = scene_type;
 
 			sendBuffer = MAKE_SEND_BUFFER(despawnItem);
-			BroadCast(sendBuffer, pkt.player_id);
+			BroadCast(sendBuffer);
 
 			items.erase(it);
 		}

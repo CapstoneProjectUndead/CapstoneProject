@@ -384,32 +384,25 @@ void CGameScene::Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_
 void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt)
 {
 	if (pkt.item_type == ITEM_TYPE::TREASURE) {
-
-		auto treasureInfo = std::find_if(treasures.begin(), treasures.end(), [&](const TreasureInfo& info) {
-			return info.id == pkt.item_world_id;
-			});
-
-		if (treasureInfo != treasures.end()) {
-			treasures.erase(treasureInfo);
-
-			if (my_player) {
-				auto itemFinder = my_player->GetComponent<CItemFinder>();
-				if (itemFinder)
-					itemFinder->RegisterTreasures(treasures);
-			}
-		}
-
 		auto treasure = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
 			return obj->GetID() == pkt.item_world_id;
 			});
 
+		if (treasure == objects.end())
+			return;
+
 		auto worldTreasure = static_cast<CWorldTreasure*>(treasure->get());
 		my_player->GetInventory()->AddItem(worldTreasure->GetItem());
-
-		RemoveObject(pkt.item_world_id);
 	}
 	else {
-		// TODO
+		auto item = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+			return obj->GetID() == pkt.item_world_id;
+			});
 
+		if (item == objects.end())
+			return;
+
+		auto worldItem = static_cast<CWorldItem*>(item->get());
+		my_player->GetInventory()->AddItem(worldItem->GetItem());
 	}
 }
