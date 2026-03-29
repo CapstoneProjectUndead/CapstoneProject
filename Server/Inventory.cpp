@@ -7,6 +7,8 @@
 
 CInventory::CInventory(std::shared_ptr<CPlayer> _owner)
 	: owner(_owner)
+	, inventory_id_counter(0)
+	, current_weight(0)
 {
 }
 
@@ -30,20 +32,19 @@ bool CInventory::AddItem(std::shared_ptr<CItem> item)
 		current_weight += item->GetWeight();
 	}
 
-	items.push_back(std::move(item));
+	uint32 id = inventory_id_counter++;
+	item->SetInventoryID(id);   // CItem에 inventory_id 필드 추가
+	items[id] = item;
 
 	return true;
 }
 
-void CInventory::RemoveItem(int itemID)
+void CInventory::RemoveItem(uint32 inventoryId)
 {
-	auto it = std::find_if(items.begin(), items.end(),
-		[itemID](const std::shared_ptr<CItem>& item) {
-			return item->GetItemId() == itemID;
-		});
+	auto it = items.find(inventoryId);
 
 	if (it != items.end()) {
-		current_weight -= (*it)->GetWeight();
+		current_weight -= it->second->GetWeight();
 		items.erase(it);
 	}
 }

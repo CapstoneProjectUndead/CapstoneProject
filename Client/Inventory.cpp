@@ -2,6 +2,7 @@
 #include "Inventory.h"
 #include "ImGuiManager.h"
 #include "MyPlayer.h"
+#include "ServerPacketHandler.h"
 
 #undef max
 #undef min
@@ -15,6 +16,7 @@ CInventory::~CInventory()
 {
 }
 
+// 싱글용
 void CInventory::AddItem(std::shared_ptr<CItem> item)
 {
 	// 보물만 무게에 영향을 준다.
@@ -31,18 +33,34 @@ void CInventory::AddItem(std::shared_ptr<CItem> item)
 		current_weight += item->GetWeight();
 	}
 
-	items.push_back(std::move(item));
+	uint32 id = inventory_id_counter++;
+	item->SetInventoryID(id);
+	items[id] = std::move(item);
 }
 
-void CInventory::RemoveItem(int itemID)
+// 멀티용
+void CInventory::AddItemWithId(std::shared_ptr<CItem> item, uint32 inventoryId)
 {
-	auto it = std::find_if(items.begin(), items.end(),
-		[itemID](const std::shared_ptr<CItem>& item) {
-			return item->GetItemId() == itemID;
-		});
+	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
 
+		if (current_weight >= max_weight)
+			return;
+
+		if (current_weight + item->GetWeight() > max_weight)
+			return;
+
+		current_weight += item->GetWeight();
+	}
+
+	item->SetInventoryID(inventoryId);
+	items[inventoryId] = std::move(item);
+}
+
+void CInventory::RemoveItem(uint32 inventoryId)
+{
+	auto it = items.find(inventoryId);
 	if (it != items.end()) {
-		current_weight -= (*it)->GetWeight();
+		current_weight -= it->second->GetWeight();
 		items.erase(it);
 	}
 }
@@ -121,22 +139,37 @@ void CInventory::BeginDrawInventory()
 		if (droppedOutside) {
 
 			if (g_is_single) {
-				auto it = std::find_if(items.begin(), items.end(), [this](const std::shared_ptr<CItem>& item) {
-					return item.get() == dragged_item;
+				auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
+					return pair.second.get() == dragged_item;
 					});
 
-				if (it != items.end()) {
-					if ((*it)->GetItemType() == ITEM_TYPE::TREASURE)
-						current_weight -= (*it)->GetWeight();
+				if (item != items.end()) {
+					if (item->second->GetItemType() == ITEM_TYPE::TREASURE)
+						current_weight -= item->second->GetWeight();
 
 					if (on_drop_callback)
-						on_drop_callback(*it);
+						on_drop_callback(item->second);
 
-					items.erase(it);
+					items.erase(item);
 				}
 			}
 			else {
-				// TODO: DropPacket 보내기
+				auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
+					return pair.second.get() == dragged_item;
+					});
+
+				if (item != items.end()) {
+					C_DropItem dropPkt;
+					dropPkt.player_id = owner.lock()->GetID();
+					dropPkt.inventory_id = item->first;
+					dropPkt.item_type = item->second->GetItemType();
+					dropPkt.scene_type = owner.lock()->GetCurrentSceneType();
+
+					if (owner.lock()->GetSession()) {
+						auto sendBuffer = MAKE_SEND_BUFFER(dropPkt);
+						owner.lock()->GetSession()->DoSend(sendBuffer);
+					}
+				}
 			}
 		}
 
@@ -259,10 +292,13 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 	float scale = G_RATIO_Y;
 
 	std::vector<CItem*> filtered;
-	for (auto& item : items) {
+	for (auto& [id, item] : items) {
 		if (item->GetItemType() == type)
 			filtered.push_back(item.get());
 	}
+	std::sort(filtered.begin(), filtered.end(), [](CItem* a, CItem* b) {
+		return a->GetInventoryID() < b->GetInventoryID();
+	});
 
 	const int cols    = 4;
 	float     bottomH = 40.0f * scale;
@@ -337,10 +373,13 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 
 	// 현재 탭에 해당하는 아이템 필터링
 	std::vector<CItem*> filtered;
-	for (auto& item : items) {
+	for (auto& [id, item] : items) {
 		if (item->GetItemType() == type)
 			filtered.push_back(item.get());
 	}
+	std::sort(filtered.begin(), filtered.end(), [](CItem* a, CItem* b) {
+		return a->GetInventoryID() < b->GetInventoryID();
+	});
 
 	float bottomH = 40.0f * scale;
 	float rowH    = 70.0f * scale;
@@ -512,7 +551,7 @@ void CInventory::DrawBottomBar()
 
 		// 가방 용량 (오른쪽)
 		char weightBuf[64];
-		snprintf(weightBuf, sizeof(weightBuf), "%.0f  / %.0f", current_weight, max_weight);
+		snprintf(weightBuf, sizeof(weightBuf), "%u  / %u", current_weight, max_weight);
 		std::string weightText = (const char*)u8"가방:  ";
 		weightText += weightBuf;
 		float textW = ImGui::CalcTextSize(weightText.c_str()).x;

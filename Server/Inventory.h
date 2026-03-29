@@ -1,6 +1,6 @@
 #pragma once
 //=================
-// ¼­¹öÂÊ Inventory 
+// Server Inventory 
 //=================
 #include "Item.h"
 #include "ItemManager.h"
@@ -15,18 +15,20 @@ public:
 	~CInventory();
 
 	bool AddItem(std::shared_ptr<CItem> item);
-	void RemoveItem(int itemID);
+	void RemoveItem(uint32 inventoryId);
 
-	float GetCurrentWeight() const { return current_weight; }
-	float GetMaxWeight() const { return max_weight; }
+	uint32 GetCurrentWeight() const { return current_weight; }
+	void  SetCurrentWeight(uint32 weight) { current_weight = weight; }
+
+	uint32 GetMaxWeight() const { return max_weight; }
 	void  UpgradeMaxWeight(float amount) { max_weight += amount; }
 
-	const std::vector<std::shared_ptr<CItem>>& GetItems() const { return items; }
+	const unordered_map<uint32, std::shared_ptr<CItem>>& GetItems() const { return items; }
 
 private:
-	std::weak_ptr<CPlayer>               owner;
-
-	std::vector<std::shared_ptr<CItem>>  items;
-	float                                current_weight = 0.0f;
-	float                                max_weight     = 200.0f;
+	weak_ptr<CPlayer>							   owner;
+	unordered_map<uint32, std::shared_ptr<CItem>>  items;
+	uint32										   inventory_id_counter;
+	uint32										   current_weight;
+	uint32										   max_weight     = 200;
 };

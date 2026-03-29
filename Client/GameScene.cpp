@@ -423,7 +423,7 @@ void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddI
 			return;
 
 		auto worldTreasure = static_cast<CWorldTreasure*>(treasure->get());
-		my_player->GetInventory()->AddItem(worldTreasure->GetItem());
+		my_player->GetInventory()->AddItemWithId(worldTreasure->GetItem(), pkt.inventory_id);
 	}
 	else {
 		auto item = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
@@ -434,6 +434,6 @@ void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddI
 			return;
 
 		auto worldItem = static_cast<CWorldItem*>(item->get());
-		my_player->GetInventory()->AddItem(worldItem->GetItem());
+		my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
 	}
 }

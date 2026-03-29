@@ -19,6 +19,7 @@ public:
 public:
 	// 아이템 도감 번호에 맞는 Item 생성
 	shared_ptr<CItem> CreateItem(uint16 itemId);
+	shared_ptr<CItem> SpawnItem(uint16 itemId, const XMFLOAT3& pos);
 
 	// 조회 (없으면 nullptr)
 	shared_ptr<CItem> FindItem(uint64 worldId);

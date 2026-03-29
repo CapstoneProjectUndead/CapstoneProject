@@ -3,6 +3,7 @@
 
 CItem::CItem(std::shared_ptr<ItemData> data)
 	: base_data(data)
+	, inventory_id(-1)
 {
 }
 

@@ -54,6 +54,7 @@ enum : uint16
 	PKT_C_PICKUP_ITEM,
 	PKT_S_ADD_ITEM,
 	PKT_S_REMOVE_ITEM,
+	PKT_C_DROP_ITEM,
 };
 
 // Custom Handlers

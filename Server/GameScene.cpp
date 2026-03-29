@@ -177,6 +177,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 
 				addItem.item_id = 1001;
 				addItem.item_world_id = pkt.item_world_id;
+				addItem.inventory_id = item->GetInventoryID();
 				addItem.player_id = pkt.player_id;
 				addItem.item_type = ITEM_TYPE::TREASURE;
 				addItem.scene_type = scene_type;
@@ -217,6 +218,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 				S_AddItem addItem;
 				addItem.item_id = itemID;
 				addItem.item_world_id = pkt.item_world_id;
+				addItem.inventory_id = it->GetInventoryID();
 				addItem.player_id = pkt.player_id;
 				addItem.item_type = pkt.item_type;
 				addItem.scene_type = scene_type;
@@ -240,5 +242,28 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 				}
 			}
 		}
+	}
+}
+
+void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt)
+{
+	auto& player = players[pkt.player_id];
+	if (!player)
+		return;
+
+	auto inv = player->GetInventory();
+
+	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+		if (inv) {
+
+			auto item = inv->GetItems().find(pkt.inventory_id);
+
+			if (item != inv->GetItems().end()) {
+				inv->RemoveItem(pkt.inventory_id);
+			}
+		}
+	}
+	else {
+
 	}
 }

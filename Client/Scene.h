@@ -78,7 +78,7 @@ public:
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 	
-	std::shared_ptr<CObjectFactory>& GetFactory() { return factory; };
+	std::shared_ptr<CObjectFactory>&		GetFactory() { return factory; };
 protected:
 	SCENE_TYPE								scene_type;
 

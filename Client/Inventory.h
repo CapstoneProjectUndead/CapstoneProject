@@ -12,14 +12,17 @@ public:
 
 public:
 	void  AddItem(std::shared_ptr<CItem> item);
-	void  RemoveItem(int itemID);
+	void  AddItemWithId(std::shared_ptr<CItem> item, uint32 inventoryId);
+	void  RemoveItem(uint32 inventoryId);
+
+	const std::unordered_map<uint32, std::shared_ptr<CItem>>& GetItems() const { return items; }
 
 	void  ToggleOpen() { is_open = !is_open; }
 	bool  IsOpen() const { return is_open; }
 
-	float GetCurrentWeight() const { return current_weight; }
-	float GetMaxWeight() const { return max_weight; }
-	void  UpgradeMaxWeight(float amount) { max_weight += amount; }
+	uint32 GetCurrentWeight() const { return current_weight; }
+	uint32 GetMaxWeight() const { return max_weight; }
+	void   UpgradeMaxWeight(float amount) { max_weight += amount; }
 
 	void  Draw();
 
@@ -36,9 +39,10 @@ private:
 private:
 	std::weak_ptr<CMyPlayer>             owner;          // 소지금 접근용
 
-	std::vector<std::shared_ptr<CItem>>  items;
-	float                                current_weight = 0.0f;
-	float                                max_weight     = 200.0f; // 기본값, 업그레이드로 증가
+	std::unordered_map<uint32, std::shared_ptr<CItem>>  items;
+	uint32                                              inventory_id_counter = 0;
+	uint32                                              current_weight = 0;
+	uint32                               max_weight = 200; // 기본값, 업그레이드로 증가
 
 	bool                                 is_open        = false;
 	ITEM_TYPE                            active_tab     = ITEM_TYPE::EQUIPMENT;

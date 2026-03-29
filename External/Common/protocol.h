@@ -60,6 +60,7 @@ enum PacketType : uint16_t
 	_C_PICKUP_ITEM,     // 클라 → 서버: 보물 줍기 요청
 	_S_ADD_ITEM,		// 서버 → 클라: 인벤토리에 추가해라
 	_S_REMOVE_ITEM,		// 서버 → 클라: 인벤토리에서 없애라
+	_C_DROP_ITEM,		// 클라 → 서버
 };
 
 #pragma pack (push, 1)
@@ -471,12 +472,13 @@ struct S_AddItem : public PacketHeader
 	uint64 player_id;
 	uint16 item_id;
 	uint32 item_world_id;
+	uint32 inventory_id;
 	ITEM_TYPE item_type;
 	SCENE_TYPE scene_type;
 
 	S_AddItem() : PacketHeader(sizeof(S_AddItem), (UINT)PacketType::_S_ADD_ITEM) {}
 };
-static_assert(sizeof(S_AddItem) == 4 + 16, "S_AddItem size mismatch!");
+static_assert(sizeof(S_AddItem) == 4 + 20, "S_AddItem size mismatch!");
 
 struct S_RemoveItem : public PacketHeader
 {
@@ -487,5 +489,16 @@ struct S_RemoveItem : public PacketHeader
 	S_RemoveItem() : PacketHeader(sizeof(S_RemoveItem), (UINT)PacketType::_S_REMOVE_ITEM) {}
 };
 static_assert(sizeof(S_RemoveItem) == 4 + 11, "S_RemoveItem size mismatch!");
+
+struct C_DropItem : public PacketHeader
+{
+	uint64 player_id;
+	uint32 inventory_id;
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	C_DropItem() : PacketHeader(sizeof(C_DropItem), (UINT)PacketType::_C_DROP_ITEM) {}
+};
+static_assert(sizeof(C_DropItem) == 4 + 14, "C_DropItem size mismatch!");
 
 #pragma pack (pop)

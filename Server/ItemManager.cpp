@@ -26,6 +26,18 @@ shared_ptr<CItem> CItemManager::CreateItem(uint16 itemId)
 	return item;
 }
 
+shared_ptr<CItem> CItemManager::SpawnItem(uint16 itemId, const XMFLOAT3& pos)
+{
+	auto item = ItemFactory::Create(itemId);
+
+	item->SetWorldID(world_id_counter);
+	items[world_id_counter] = item;
+	item->SetPosition(pos);
+	++world_id_counter;
+
+	return item;
+}
+
 shared_ptr<CItem> CItemManager::FindItem(uint64 worldId)
 {
 	auto it = items.find(worldId);
