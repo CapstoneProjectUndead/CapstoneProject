@@ -25,8 +25,10 @@ CLobbyScene::~CLobbyScene()
 {
 }
 
-void CLobbyScene::Start()
+void CLobbyScene::Initialize()
 {
+	CScene::Initialize();
+
 	CreateLobby();
 }
 
@@ -159,13 +161,13 @@ void CLobbyScene::SendPlayerToGameScene()
 				// 보물 위치 및 ID 전송
 				{
 					S_ITEMLIST_WRITE writer(SCENE_TYPE::GAME);
-					auto itemList = writer.ReserveItemList((uint32)gameScene->treasure_map.size());
+					auto itemList = writer.ReserveItemList((uint32)gameScene->item_manager->treasure_map.size());
 
 					uint32 i = 0;
-					for (const auto& [id, treasure] : gameScene->treasure_map) {
+					for (const auto& [id, treasure] : gameScene->item_manager->treasure_map) {
 						itemList[i].item_type     = ITEM_TYPE::TREASURE;
 						itemList[i].item_id       = 1001;
-						itemList[i].item_world_id = treasure.id;
+						itemList[i].item_world_id = treasure.world_id;
 						itemList[i].x             = treasure.treasure_pos.x;
 						itemList[i].y             = treasure.treasure_pos.y;
 						itemList[i].z             = treasure.treasure_pos.z;

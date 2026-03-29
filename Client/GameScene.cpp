@@ -41,7 +41,7 @@ void CGameScene::Initialize()
 		// 보물 위치에 보물 생성
 		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
 		for (auto& treasure : treasures) {
-			SpawnWorldItem(1001, treasure.id, treasure.treasure_pos);
+			SpawnWorldItem(1001, treasure.world_id, treasure.treasure_pos);
 		}
 	}
 
@@ -99,6 +99,46 @@ void CGameScene::Update(float elapsedTime)
 	ProcessPickup();
 }
 
+void CGameScene::DrawUI()
+{
+	if (my_player) {
+		auto& inventory = my_player->GetInventory();
+		assert(inventory);
+		inventory->Draw();
+	}
+}
+
+bool CGameScene::IsUIInputEnabled()
+{
+	bool state = true;
+
+	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
+	assert(scene);
+
+	if (scene->GetSceneType() == SCENE_TYPE::GAME)
+		state = false;
+
+	return state;
+}
+
+void CGameScene::Enter()
+{
+	CScene::Enter();
+
+	BuildObjects(GET_DEVICE, GET_CMD_LIST);
+
+	if (my_player) {
+		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
+		camera->SetTarget(my_player.get());
+
+		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
+		auto itemFinder = my_player->GetComponent<CItemFinder>();
+		if (itemFinder) {
+			itemFinder->RegisterTreasures(treasures);
+		}
+	}
+}
+
 void CGameScene::ProcessPickup()
 {
 	if (!my_player)
@@ -132,9 +172,9 @@ void CGameScene::ProcessPickup()
 
 	// 싱글환경
 	if (g_is_single) {
-		
+
 		auto inv = my_player->GetInventory();
-		if (!inv) 
+		if (!inv)
 			return;
 
 		// 인벤토리에 아이템을 넣는다.
@@ -147,7 +187,7 @@ void CGameScene::ProcessPickup()
 			uint32 id = worldItem->GetID();
 			auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
 				[id](const TreasureInfo& info) {
-					return info.id == id;
+					return info.world_id == id;
 				});
 
 			if (treasure_it != treasures.end())
@@ -164,10 +204,10 @@ void CGameScene::ProcessPickup()
 		// (멀티) 서버에 줍기 요청만 보낸다.
 		// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
 		C_PickupItem pickupPkt;
-		pickupPkt.player_id     = my_player->GetUser()->GetUserID();
+		pickupPkt.player_id = my_player->GetUser()->GetUserID();
 		pickupPkt.item_world_id = worldItem->GetID();
-		pickupPkt.item_type     = worldItem->GetItem()->GetItemType();
-		pickupPkt.scene_type	= my_player->GetCurrentSceneType();
+		pickupPkt.item_type = worldItem->GetItem()->GetItemType();
+		pickupPkt.scene_type = my_player->GetCurrentSceneType();
 
 		auto sendBuffer = MAKE_SEND_BUFFER(pickupPkt);
 		my_player->GetSession()->DoSend(sendBuffer);
@@ -178,7 +218,7 @@ void CGameScene::ProcessPickup()
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 {
 	auto itemData = ItemFactory::Create(itemID);
-	if (!itemData) 
+	if (!itemData)
 		return;
 
 	std::shared_ptr<CWorldItem> item;
@@ -199,7 +239,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 		break;
 	}
 
-	if (!item) 
+	if (!item)
 		return;
 
 	item->SetPosition(position);
@@ -241,45 +281,6 @@ void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 posi
 	item->SetID(itemWorldId);
 	item->Initialize(GET_DEVICE, GET_CMD_LIST);
 	AddObject(item, itemWorldId);
-}
-
-void CGameScene::DrawUI()
-{
-	if (my_player) {
-		auto& inventory = my_player->GetInventory();
-		assert(inventory);
-		inventory->Draw();
-	}
-}
-
-bool CGameScene::IsUIInputEnabled()
-{
-	bool state = true;
-
-	CScene* scene = CSceneManager::GetInstance().GetActiveScene();
-	assert(scene);
-
-	if (scene->GetSceneType() == SCENE_TYPE::GAME)
-		state = false;
-
-	return state;
-}
-
-void CGameScene::Enter()
-{
-	CScene::Enter();
-
-	BuildObjects(GET_DEVICE, GET_CMD_LIST);
-
-	if (my_player) {
-		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
-		camera->SetTarget(my_player.get());
-
-		auto itemFinder = my_player->GetComponent<CItemFinder>();
-		if (itemFinder) {
-			itemFinder->RegisterTreasures(treasures);
-		}
-	}
 }
 
 void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
@@ -385,7 +386,7 @@ void CGameScene::Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_
 	if (pkt.item_type == ITEM_TYPE::TREASURE) {
 
 		auto treasureInfo = std::find_if(treasures.begin(), treasures.end(), [&](const TreasureInfo& info) {
-			return info.id == pkt.item_world_id;
+			return info.world_id == pkt.item_world_id;
 			});
 
 		if (treasureInfo != treasures.end()) {

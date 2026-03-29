@@ -41,19 +41,19 @@ void CRoom::Initialize()
 	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CCustomScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetRoom(shared_from_this());
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetPhysicsManager(physics_manager);
-	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Start();
+	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Initialize();
 
 	// LobbyScene 생성
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->SetRoom(shared_from_this());
 	scenes[(UINT)SCENE_TYPE::LOBBY]->SetPhysicsManager(physics_manager);
-	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
+	scenes[(UINT)SCENE_TYPE::LOBBY]->Initialize();
 
 	// 나중에 여기서 GameScene도 같이 생성
 	scenes[(UINT)SCENE_TYPE::GAME] = make_unique<CGameScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::GAME]->SetRoom(shared_from_this());
 	scenes[(UINT)SCENE_TYPE::GAME]->SetPhysicsManager(physics_manager);
-	scenes[(UINT)SCENE_TYPE::GAME]->Start();
+	scenes[(UINT)SCENE_TYPE::GAME]->Initialize();
 }
 
 void CRoom::Update(const float elapsedTime)

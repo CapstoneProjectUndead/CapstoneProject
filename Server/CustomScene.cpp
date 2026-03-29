@@ -17,8 +17,9 @@ CCustomScene::~CCustomScene()
 {
 }
 
-void CCustomScene::Start()
+void CCustomScene::Initialize()
 {
+	CScene::Initialize();
 }
 
 void CCustomScene::Update(float elapsedTime)

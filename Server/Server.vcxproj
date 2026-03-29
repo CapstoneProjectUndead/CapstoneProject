@@ -179,6 +179,7 @@
     <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemFactory.cpp" />
+    <ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Movement.cpp" />
@@ -236,6 +237,7 @@
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemFactory.h" />
+    <ClInclude Include="ItemManager.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="Monster.h" />

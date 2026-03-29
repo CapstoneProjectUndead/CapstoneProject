@@ -232,7 +232,7 @@ static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
 // 내 플레이어 또는 상대 플레이어를 보낼 때
 struct S_SpawnPlayer : public PacketHeader
 {
-	bool is_my_player;		// �Ʒ� NetPlayerInfo ����ü���� ������, �������� ���⼭ ó���Ѵ�. 
+	bool is_my_player;		// 아래 NetPlayerInfo 구조체에도 있지만, 까먹을까봐 여기서 처리한다. 
 	NetPlayerInfo info;
 	uint32     room_id;
 	SCENE_TYPE scene_type;

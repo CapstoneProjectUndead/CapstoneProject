@@ -10,7 +10,7 @@ public:
     CCustomScene(uint32 roomId);
     ~CCustomScene();
 
-    virtual void Start() override;
+    virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
     virtual void Enter() override;

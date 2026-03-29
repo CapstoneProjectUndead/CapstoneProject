@@ -12,7 +12,7 @@ public:
     CGameScene(uint32 roomId);
     virtual ~CGameScene() override;
 
-    virtual void Start() override;
+    virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
     virtual void Enter() override;
@@ -29,6 +29,5 @@ public:
 private:
     map<string, shared_ptr<CObject>>    prototypes;
     vector<MapGenerator::InstanceData>  map_instance_data;
-    map<uint32, TreasureInfo>           treasure_map;
 };
 

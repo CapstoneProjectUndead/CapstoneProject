@@ -128,20 +128,20 @@ struct RoomInfo
 
 struct TreasureInfo
 {
-	uint32         id;
+	uint32         world_id;
 	XMFLOAT3       treasure_pos;
 	TREASURE_STATE treasure_state;
 
 	TreasureInfo() = default;
 
 	TreasureInfo(const XMFLOAT3 pos)
-		: id(0)
+		: world_id(0)
 		, treasure_pos(pos)
 		, treasure_state(TREASURE_STATE::Vaild)
 	{}
 
-	TreasureInfo(uint32 _id, const XMFLOAT3 pos)
-		: id(_id)
+	TreasureInfo(uint32 id, const XMFLOAT3 pos)
+		: world_id(id)
 		, treasure_pos(pos)
 		, treasure_state(TREASURE_STATE::Vaild)
 	{}

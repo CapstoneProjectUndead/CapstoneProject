@@ -3,6 +3,7 @@
 // ¼­¹öÂÊ Inventory 
 //=================
 #include "Item.h"
+#include "ItemManager.h"
 
 class CPlayer;
 
@@ -13,7 +14,7 @@ public:
 	CInventory(const CInventory&) = delete;
 	~CInventory();
 
-	void AddItem(std::shared_ptr<CItem> item);
+	bool AddItem(std::shared_ptr<CItem> item);
 	void RemoveItem(int itemID);
 
 	float GetCurrentWeight() const { return current_weight; }

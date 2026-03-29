@@ -11,5 +11,8 @@ public:
     ~CWorldTreasure();
 
     virtual void Update(float dt) override;
+
+private:
+    TreasureInfo treasure_info; 
 };
 

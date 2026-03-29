@@ -204,6 +204,9 @@
     <ClCompile Include="ItemFactory.cpp">
       <Filter>Object\Factory</Filter>
     </ClCompile>
+    <ClCompile Include="ItemManager.cpp">
+      <Filter>Object\Item</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -340,6 +343,9 @@
     </ClInclude>
     <ClInclude Include="ItemFactory.h">
       <Filter>Object\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemManager.h">
+      <Filter>Object\Item</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

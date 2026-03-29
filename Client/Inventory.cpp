@@ -119,18 +119,24 @@ void CInventory::BeginDrawInventory()
 		}
 
 		if (droppedOutside) {
-			auto it = std::find_if(items.begin(), items.end(), [this](const std::shared_ptr<CItem>& item) {
-				return item.get() == dragged_item;
-				});
 
-			if (it != items.end()) {
-				if ((*it)->GetItemType() == ITEM_TYPE::TREASURE)
-					current_weight -= (*it)->GetWeight();
+			if (g_is_single) {
+				auto it = std::find_if(items.begin(), items.end(), [this](const std::shared_ptr<CItem>& item) {
+					return item.get() == dragged_item;
+					});
 
-				if (on_drop_callback)
-					on_drop_callback(*it);
+				if (it != items.end()) {
+					if ((*it)->GetItemType() == ITEM_TYPE::TREASURE)
+						current_weight -= (*it)->GetWeight();
 
-				items.erase(it);
+					if (on_drop_callback)
+						on_drop_callback(*it);
+
+					items.erase(it);
+				}
+			}
+			else {
+				// TODO: DropPacket 보내기
 			}
 		}
 

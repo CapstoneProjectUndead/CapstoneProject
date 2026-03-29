@@ -14,23 +14,25 @@ CInventory::~CInventory()
 {
 }
 
-void CInventory::AddItem(std::shared_ptr<CItem> item)
+bool CInventory::AddItem(std::shared_ptr<CItem> item)
 {
 	// 보물만 무게에 영향을 준다.
 	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
 
 		// 이미 꽉 찼다면 return!
 		if (current_weight >= max_weight)
-			return;
+			return false;
 
 		// 이 보물을 추가했을 때 최대 무게를 초과하면 거부
 		if (current_weight + item->GetWeight() > max_weight)
-			return;
+			return false;
 
 		current_weight += item->GetWeight();
 	}
 
 	items.push_back(std::move(item));
+
+	return true;
 }
 
 void CInventory::RemoveItem(int itemID)

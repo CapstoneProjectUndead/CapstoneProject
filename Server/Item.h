@@ -17,8 +17,14 @@ public:
 	const std::string& GetName() const { return base_data->item_name; }
 	const std::string& GetDescription() const { return base_data->description; }
 
+	uint32 GetWorldID() const { return world_id; }
+	void SetWorldID(const uint32 id) { world_id = id; }
+
 protected:
 	const std::shared_ptr<ItemData> base_data;
+
+	// 클라의 CItem과 다르게 서버 CItem 클래스는 world_id를 갖도록 설계했다. 
+	uint32 world_id;
 };
 
 

@@ -26,9 +26,12 @@ CGameScene::~CGameScene()
 
 }
 
-void CGameScene::Start()
+void CGameScene::Initialize()
 {
-	
+	CScene::Initialize();
+
+	item_manager->CreateItem(25);
+	item_manager->CreateItem(24);
 }
 
 void CGameScene::Update(float elapsedTime)
@@ -102,13 +105,7 @@ void CGameScene::CreateGameScene()
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 
 	// 맵 데이터를 순회하며 보물 좌표 + ID 부여
-	uint32 treasure_id = 0;
-	for (const auto& inst : instanceData) {
-		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			TreasureInfo treasureInfo{ treasure_id++, inst.position };
-			treasure_map[treasureInfo.id] = treasureInfo;
-		}
-	}
+	item_manager->SpawnWorldTreasures(instanceData);
 
 	for (auto& inst : instanceData) {
 		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
@@ -162,71 +159,86 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 	if (pkt.item_type == ITEM_TYPE::TREASURE) {
 		
 		// 보물이 있다면
-		if (treasure_map.find(pkt.item_world_id) != treasure_map.end()) {
+		if (item_manager->treasure_map.find(pkt.item_world_id) != item_manager->treasure_map.end()) {
 
 			// (임시) 보물은 등급 테이블에 의해서 계산된 등급의 id가 결정된다. 지금은 그냥 1001.
 			// 지금 서버쪽에서는 시작할 때, 보물 객체를 만들지 않는다.
 			// 클라에서 보물을 주웠다는 패킷이 오면 그때 객체를 만들어서 먹은 유저의 인벤토리에 넣어주고있다.
-			auto item = ItemFactory::Create(1001);
+			auto item = item_manager->CreateItem(1001);
+
+			// 아이템 주운 플레이어
 			auto& player = players[pkt.player_id];
-			player->GetInventory()->AddItem(item);
+			
+			if (player->GetInventory()->AddItem(item)) {
 
-			// 너가 처음 주운 유저다.
-			// S_AddItem 패킷 보낸다.
-			S_AddItem addItem;
+				// 너가 처음 주운 유저다.
+				// S_AddItem 패킷 보낸다.
+				S_AddItem addItem;
 
-			addItem.item_id = 1001;
-			addItem.item_world_id = pkt.item_world_id;
-			addItem.player_id = pkt.player_id;
-			addItem.item_type = ITEM_TYPE::TREASURE;
-			addItem.scene_type = scene_type;
+				addItem.item_id = 1001;
+				addItem.item_world_id = pkt.item_world_id;
+				addItem.player_id = pkt.player_id;
+				addItem.item_type = ITEM_TYPE::TREASURE;
+				addItem.scene_type = scene_type;
 
-			SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
-			session->DoSend(sendBuffer);
+				SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
+				session->DoSend(sendBuffer);
 
-			// S_DeSpawnItem
-			S_DeSpawnItem despawnItem;
-			despawnItem.item_type = ITEM_TYPE::TREASURE;
-			despawnItem.item_world_id = pkt.item_world_id;
-			despawnItem.scene_type = scene_type;
+				// S_DeSpawnItem
+				S_DeSpawnItem despawnItem;
+				despawnItem.item_type = ITEM_TYPE::TREASURE;
+				despawnItem.item_world_id = pkt.item_world_id;
+				despawnItem.scene_type = scene_type;
 
-			sendBuffer = MAKE_SEND_BUFFER(despawnItem);
-			BroadCast(sendBuffer);
+				sendBuffer = MAKE_SEND_BUFFER(despawnItem);
+				BroadCast(sendBuffer);
 
-			// 보물 삭제
-			treasure_map.erase(pkt.item_world_id);
+				// 보물 삭제
+				item_manager->treasure_map.erase(pkt.item_world_id);
+			}
 		}
 	}
 	else {
-		auto it = items.find(pkt.item_world_id);
+		//auto it = items.find(pkt.item_world_id);
+		auto it = item_manager->FindItem(pkt.item_world_id);
 
 		// 너가 처음 주운 유저다.
-		if (it != items.end()) {
+		if (it) {
 
-			// 아이템 도감 번호
-			uint16 itemID = it->second->GetItemId();
+			// 아이템 주운 플레이어
+			auto& player = players[pkt.player_id];
 
-			// S_AddItem 패킷 보낸다.
-			S_AddItem addItem;
-			addItem.item_id = itemID;
-			addItem.item_world_id = pkt.item_world_id;
-			addItem.player_id = pkt.player_id;
-			addItem.item_type = pkt.item_type;
-			addItem.scene_type = scene_type;
+			if (player->GetInventory()->AddItem(it)) {
 
-			SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
-			session->DoSend(sendBuffer);
+				// 아이템 도감 번호
+				uint16 itemID = it->GetItemId();
 
-			// S_DeSpawnItem
-			S_DeSpawnItem despawnItem;
-			despawnItem.item_type = pkt.item_type;
-			despawnItem.item_world_id = pkt.item_world_id;
-			despawnItem.scene_type = scene_type;
+				// S_AddItem 패킷 보낸다.
+				S_AddItem addItem;
+				addItem.item_id = itemID;
+				addItem.item_world_id = pkt.item_world_id;
+				addItem.player_id = pkt.player_id;
+				addItem.item_type = pkt.item_type;
+				addItem.scene_type = scene_type;
 
-			sendBuffer = MAKE_SEND_BUFFER(despawnItem);
-			BroadCast(sendBuffer);
+				SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
+				session->DoSend(sendBuffer);
 
-			items.erase(it);
+				// S_DeSpawnItem
+				S_DeSpawnItem despawnItem;
+				despawnItem.item_type = pkt.item_type;
+				despawnItem.item_world_id = pkt.item_world_id;
+				despawnItem.scene_type = scene_type;
+
+				sendBuffer = MAKE_SEND_BUFFER(despawnItem);
+				BroadCast(sendBuffer);
+
+				if (item_manager->RemoveItem(pkt.item_world_id) == false) {
+					// 디버깅용
+					// 월드 아이디에 문제 없다면 if문 안으로 들어오면 안된다. 
+					assert(nullptr);
+				}
+			}
 		}
 	}
 }

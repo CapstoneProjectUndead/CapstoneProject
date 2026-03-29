@@ -11,7 +11,7 @@ public:
     CLobbyScene(uint32 roomId);
     ~CLobbyScene();
 
-    virtual void Start() override;
+    virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
     virtual void Enter() override;
