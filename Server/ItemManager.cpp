@@ -18,24 +18,19 @@ CItemManager::~CItemManager()
 shared_ptr<CItem> CItemManager::CreateItem(uint16 itemId)
 {
 	auto item = ItemFactory::Create(itemId);
-
-	item->SetWorldID(world_id_counter);
-	items[world_id_counter] = item;
-	++world_id_counter;
-
 	return item;
 }
 
-shared_ptr<CItem> CItemManager::SpawnItem(uint16 itemId, const XMFLOAT3& pos)
+shared_ptr<WorldItem> CItemManager::SpawnItem(uint16 itemId, const XMFLOAT3& pos)
 {
 	auto item = ItemFactory::Create(itemId);
 
-	item->SetWorldID(world_id_counter);
-	items[world_id_counter] = item;
-	item->SetPosition(pos);
+	shared_ptr<WorldItem> worldItem = make_shared<WorldItem>(item, world_id_counter, pos);
+
+	items[world_id_counter] = worldItem;
 	++world_id_counter;
 
-	return item;
+	return worldItem;
 }
 
 shared_ptr<CItem> CItemManager::FindItem(uint64 worldId)
@@ -45,7 +40,7 @@ shared_ptr<CItem> CItemManager::FindItem(uint64 worldId)
 	if (it == items.end())
 		return nullptr;
 
-	return it->second;
+	return it->second->item;
 }
 
 bool CItemManager::RemoveItem(uint64 worldId)
@@ -61,8 +56,9 @@ void CItemManager::SpawnWorldTreasures(const vector<MapGenerator::InstanceData>&
 {
 	for (const auto& inst : instanceData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			TreasureInfo treasureInfo{ world_id_counter++, inst.position };
-			treasure_map[treasureInfo.world_id] = treasureInfo;
+			auto worldTreasure = SpawnItem(1001, inst.position);
+			TreasureInfo treasureInfo{ worldTreasure->world_id, inst.position };
+			treasure_map[worldTreasure->world_id] = treasureInfo;
 		}
 	}
 }

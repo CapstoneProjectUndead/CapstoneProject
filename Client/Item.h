@@ -18,8 +18,8 @@ public:
 	const std::string& GetName() const { return base_data->item_name; }
 	const std::string& GetDescription() const { return base_data->description; }
 
-	uint32 GetInventoryID() const { return inventory_id; }
-	void SetInventoryID(const uint32 id) { inventory_id = id; }
+	uint32	GetInventoryID() const { return inventory_id; }
+	void	SetInventoryID(const uint32 id) { inventory_id = id; }
 
 protected:
 	const std::shared_ptr<ItemData> base_data;

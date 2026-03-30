@@ -30,8 +30,8 @@ void CGameScene::Initialize()
 {
 	CScene::Initialize();
 
-	item_manager->CreateItem(25);
-	item_manager->CreateItem(24);
+	item_manager->SpawnItem(25, XMFLOAT3{1, 0, 1});
+	item_manager->SpawnItem(24, XMFLOAT3{1, 0, 2 });
 }
 
 void CGameScene::Update(float elapsedTime)
@@ -104,7 +104,7 @@ void CGameScene::CreateGameScene()
 
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 
-	// 맵 데이터를 순회하며 보물 좌표 + ID 부여
+	// 맵 데이터를 순회하며 보물 좌표 + ID 부여 + spawn
 	item_manager->SpawnWorldTreasures(instanceData);
 
 	for (auto& inst : instanceData) {
@@ -160,45 +160,14 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 
 		auto& player = players[pkt.player_id];
 
-		// 최초 보물 (treasure_map에 있는 경우)
-		if (item_manager->treasure_map.find(pkt.item_world_id) != item_manager->treasure_map.end()) {
-
-			// (임시) 보물은 등급 테이블에 의해서 계산된 등급의 id가 결정된다. 지금은 그냥 1001.
-			// 지금 서버쪽에서는 시작할 때, 보물 객체를 만들지 않는다.
-		    // 클라에서 보물을 주웠다는 패킷이 오면 그때 객체를 만들어서 먹은 유저의 인벤토리에 넣어주고있다
-			auto treasureItem = item_manager->CreateItem(1001);
-
-			if (player->GetInventory()->AddItem(treasureItem)) {
-
-				S_AddItem addItem;
-				addItem.item_id       = 1001;
-				addItem.item_world_id = pkt.item_world_id;
-				addItem.inventory_id  = treasureItem->GetInventoryID();
-				addItem.player_id     = pkt.player_id;
-				addItem.item_type     = ITEM_TYPE::TREASURE;
-				addItem.scene_type    = scene_type;
-
-				SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
-				session->DoSend(sendBuffer);
-
-				S_DeSpawnItem despawnItem;
-				despawnItem.item_type     = ITEM_TYPE::TREASURE;
-				despawnItem.item_world_id = pkt.item_world_id;
-				despawnItem.scene_type    = scene_type;
-
-				sendBuffer = MAKE_SEND_BUFFER(despawnItem);
-				BroadCast(sendBuffer);
-
-				item_manager->treasure_map.erase(pkt.item_world_id);
-			}
-		}
-		// 드롭 후 재스폰된 보물 (items map에 있는 경우)
-		else if (auto it = item_manager->FindItem(pkt.item_world_id)) {
+		if (auto it = item_manager->FindItem(pkt.item_world_id)) {
 
 			if (player->GetInventory()->AddItem(it)) {
 
+				// TODO: 어떤 보물이 떳는지 확률 계산해서, 결정된 보물 ID를 사용해야한다.
+
 				S_AddItem addItem;
-				addItem.item_id       = it->GetItemId();
+				addItem.item_id       = it->GetItemId();  // 이 부분은 나중에 수정되어야 한다.
 				addItem.item_world_id = pkt.item_world_id;
 				addItem.inventory_id  = it->GetInventoryID();
 				addItem.player_id     = pkt.player_id;
@@ -216,6 +185,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 				sendBuffer = MAKE_SEND_BUFFER(despawnItem);
 				BroadCast(sendBuffer);
 
+				item_manager->treasure_map.erase(pkt.item_world_id); // 초기 보물이면 제거, 재드롭이면 no-op
 				item_manager->RemoveItem(pkt.item_world_id);
 			}
 		}
@@ -230,6 +200,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 			// 아이템 주운 플레이어
 			auto& player = players[pkt.player_id];
 
+			// 주운 플레이어의 인벤토리에 아이템을 등록
 			if (player->GetInventory()->AddItem(it)) {
 
 				// 아이템 도감 번호
@@ -256,6 +227,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 				sendBuffer = MAKE_SEND_BUFFER(despawnItem);
 				BroadCast(sendBuffer);
 
+				// 필드에서 플레이어가 주운 아이템 삭제
 				if (item_manager->RemoveItem(pkt.item_world_id) == false) {
 					// 디버깅용
 					// 월드 아이디에 문제 없다면 if문 안으로 들어오면 안된다. 
@@ -277,13 +249,17 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 	if (pkt.item_type == ITEM_TYPE::TREASURE) {
 
 		if (inv) {
+
+			// 플레이어 인벤토리에 아이템 검색
 			auto item = inv->GetItems().find(pkt.inventory_id);
 
+			// 아이템이 존재한다면
 			if (item != inv->GetItems().end()) {
 
 				uint16 itemId       = item->second->GetItemId();
 				uint32 inventoryId  = item->second->GetInventoryID();
 
+				// 인벤토리에서 아이템 제거
 				if (inv->RemoveItem(pkt.inventory_id)) {
 
 					// 인벤토리 제거 패킷 → 드롭한 플레이어에게
@@ -304,7 +280,7 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 
 					S_SpawnItem spawnItemPkt;
 					spawnItemPkt.item_id       = itemId;
-					spawnItemPkt.item_world_id = spawnedItem->GetWorldID();
+					spawnItemPkt.item_world_id = spawnedItem->world_id;
 					spawnItemPkt.item_type     = ITEM_TYPE::TREASURE;
 					spawnItemPkt.scene_type    = scene_type;
 					spawnItemPkt.x             = pos.x;
@@ -349,7 +325,7 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 
 					S_SpawnItem spawnItemPkt;
 					spawnItemPkt.item_id       = itemId;
-					spawnItemPkt.item_world_id = spawnedItem->GetWorldID();
+					spawnItemPkt.item_world_id = spawnedItem->world_id;
 					spawnItemPkt.item_type     = pkt.item_type;
 					spawnItemPkt.scene_type    = scene_type;
 					spawnItemPkt.x             = pos.x;

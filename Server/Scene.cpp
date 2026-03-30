@@ -242,14 +242,14 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 		auto itemList = writer.ReserveItemList((uint32)item_manager->GetItems().size());
 
 		uint32 i = 0;
-		for (const auto& [id, item] : item_manager->GetItems()) {
+		for (const auto& [id, worldItem] : item_manager->GetItems()) {
 
-			itemList[i].item_type = item->GetItemType();
-			itemList[i].item_id = item->GetItemId();
-			itemList[i].item_world_id = item->GetWorldID();
-			itemList[i].x = 1;
-			itemList[i].y = 0;
-			itemList[i].z = 1;
+			itemList[i].item_type = worldItem->item->GetItemType();
+			itemList[i].item_id = worldItem->item->GetItemId();
+			itemList[i].item_world_id = worldItem->world_id;
+			itemList[i].x = worldItem->position.x;
+			itemList[i].y = worldItem->position.y;
+			itemList[i].z = worldItem->position.z;
 			++i;
 		}
 

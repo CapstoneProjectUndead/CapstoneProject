@@ -2,10 +2,23 @@
 #include <MapGenerator/MapGenerator.h>
 
 //==============================
-// º¸¹°µµ ItemManager¿¡¼­ °ü¸®ÇÑ´Ù.
+// ë³´ë¬¼ë„ ItemManagerì—ì„œ ê´€ë¦¬í•œë‹¤.
 //==============================
 
 class CItem;
+
+struct WorldItem
+{
+	shared_ptr<CItem>	item;
+	uint32				world_id;
+	XMFLOAT3			position;
+
+	WorldItem(shared_ptr<CItem> _item, const uint32 id, const XMFLOAT3& pos)
+		: item(_item)
+		, world_id(id)
+		, position(pos)
+	{ }
+};
 
 class CItemManager
 {
@@ -17,27 +30,27 @@ public:
 	~CItemManager();
 
 public:
-	// ¾ÆÀÌÅÛ µµ°¨ ¹øÈ£¿¡ ¸Â´Â Item »ı¼º
+	// ì•„ì´í…œ ë„ê° ë²ˆí˜¸ì— ë§ëŠ” Item ìƒì„±
 	shared_ptr<CItem> CreateItem(uint16 itemId);
-	shared_ptr<CItem> SpawnItem(uint16 itemId, const XMFLOAT3& pos);
+	shared_ptr<WorldItem> SpawnItem(uint16 itemId, const XMFLOAT3& pos);
 
-	// Á¶È¸ (¾øÀ¸¸é nullptr)
+	// ì¡°íšŒ (ì—†ìœ¼ë©´ nullptr)
 	shared_ptr<CItem> FindItem(uint64 worldId);
 
-	// Á¦°Å (ÇÈ¾÷/µğ½ºÆù ½Ã), ¼º°ø ¿©ºÎ ¹İÈ¯
+	// ì œê±° (í”½ì—…/ë””ìŠ¤í° ì‹œ), ì„±ê³µ ì—¬ë¶€ ë°˜í™˜
 	bool RemoveItem(uint64 worldId);
 
-	// ÀüÃ¼ ¸ñ·Ï (´Ê°Ô ÀÔÀåÇÑ ÇÃ·¹ÀÌ¾î¿¡°Ô ½ºÆù ÆĞÅ¶ º¸³¾ ¶§)
-	const unordered_map<uint32, shared_ptr<CItem>>& GetItems() const { return items; }
+	// ì „ì²´ ëª©ë¡ (ëŠ¦ê²Œ ì…ì¥í•œ í”Œë ˆì´ì–´ì—ê²Œ ìŠ¤í° íŒ¨í‚· ë³´ë‚¼ ë•Œ)
+	const unordered_map<uint32, shared_ptr<WorldItem>>& GetItems() const { return items; }
 
 private:
-	// º¸¹° °ü·Ã
+	// ë³´ë¬¼ ê´€ë ¨
 	void SpawnWorldTreasures(const vector<MapGenerator::InstanceData>& instanceData);
 
 private:
 	SCENE_TYPE scene_type;
-	unordered_map<uint32, shared_ptr<CItem>> items;
-	uint32 world_id_counter;  // SpawnItem È£Ãâ ½Ã ÀÚµ¿ Áõ°¡
+	unordered_map<uint32, shared_ptr<WorldItem>> items;
+	uint32 world_id_counter;  // SpawnItem í˜¸ì¶œ ì‹œ ìë™ ì¦ê°€
 
 	map<uint32, TreasureInfo>           treasure_map;
 };
