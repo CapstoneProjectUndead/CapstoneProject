@@ -483,12 +483,13 @@ static_assert(sizeof(S_AddItem) == 4 + 20, "S_AddItem size mismatch!");
 struct S_RemoveItem : public PacketHeader
 {
 	uint64 player_id;
+	uint32 inventory_id;
 	uint16 item_id;
 	SCENE_TYPE scene_type;
 
 	S_RemoveItem() : PacketHeader(sizeof(S_RemoveItem), (UINT)PacketType::_S_REMOVE_ITEM) {}
 };
-static_assert(sizeof(S_RemoveItem) == 4 + 11, "S_RemoveItem size mismatch!");
+static_assert(sizeof(S_RemoveItem) == 4 + 15, "S_RemoveItem size mismatch!");
 
 struct C_DropItem : public PacketHeader
 {

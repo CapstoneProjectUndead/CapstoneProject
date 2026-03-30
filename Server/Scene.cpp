@@ -237,6 +237,7 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 	// 3월 29일 추가
 	// 해당 씬에 존재하는 아이템 리스트를 입장한 유저에게 알려준다.
 	if (!item_manager->GetItems().empty()) {
+
 		S_ITEMLIST_WRITE writer(scene_type);
 		auto itemList = writer.ReserveItemList((uint32)item_manager->GetItems().size());
 

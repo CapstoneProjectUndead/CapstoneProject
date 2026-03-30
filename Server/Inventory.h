@@ -15,7 +15,7 @@ public:
 	~CInventory();
 
 	bool AddItem(std::shared_ptr<CItem> item);
-	void RemoveItem(uint32 inventoryId);
+	bool RemoveItem(uint32 inventoryId);
 
 	uint32 GetCurrentWeight() const { return current_weight; }
 	void  SetCurrentWeight(uint32 weight) { current_weight = weight; }

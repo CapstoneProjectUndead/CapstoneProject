@@ -30,6 +30,7 @@ public:
     virtual void Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item_List& pkt) override;
     virtual void Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_DeSpawnItem& pkt) override;
     virtual void Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt) override;
+    virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) override;
 
 private:
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);

@@ -59,8 +59,13 @@ void CInventory::AddItemWithId(std::shared_ptr<CItem> item, uint32 inventoryId)
 void CInventory::RemoveItem(uint32 inventoryId)
 {
 	auto it = items.find(inventoryId);
+
 	if (it != items.end()) {
-		current_weight -= it->second->GetWeight();
+
+		// 보물이면 가방 무게에서 제외
+		if (it->second->GetItemType() == ITEM_TYPE::TREASURE)
+			current_weight -= it->second->GetWeight();
+
 		items.erase(it);
 	}
 }
@@ -291,6 +296,9 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 {
 	float scale = G_RATIO_Y;
 
+	// 기타 탭만 같은 이름 아이템을 묶어서 수량 표시
+	bool stackable = (type == ITEM_TYPE::ETC);
+
 	std::vector<CItem*> filtered;
 	for (auto& [id, item] : items) {
 		if (item->GetItemType() == type)
@@ -299,6 +307,24 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 	std::sort(filtered.begin(), filtered.end(), [](CItem* a, CItem* b) {
 		return a->GetInventoryID() < b->GetInventoryID();
 	});
+
+	// 기타 탭: 이름 기준 그룹화 { 대표 아이템, 수량 }
+	struct GroupedItem { CItem* rep; int count; };
+	std::vector<GroupedItem> grouped;
+	if (stackable) {
+		std::map<std::string, int> nameToIndex;
+		for (CItem* item : filtered) {
+			auto it = nameToIndex.find(item->GetName());
+			if (it == nameToIndex.end()) {
+				nameToIndex[item->GetName()] = (int)grouped.size();
+				grouped.push_back({ item, 1 });
+			} else {
+				grouped[it->second].count++;
+			}
+		}
+	}
+
+	int displayCount = stackable ? (int)grouped.size() : (int)filtered.size();
 
 	const int cols    = 4;
 	float     bottomH = 40.0f * scale;
@@ -315,7 +341,7 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 		float cellSz = (avail - pad * (cols + 1)) / cols;
 
 		int minSlots = cols * 5;
-		int total    = std::max((int)filtered.size(), minSlots);
+		int total    = std::max(displayCount, minSlots);
 		int rows     = (total + cols - 1) / cols;
 
 		ImGui::Dummy(ImVec2(0.0f, pad * 2)); // 상단 여백
@@ -333,14 +359,43 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				dl->AddRectFilled(cellMin, cellMax, IM_COL32(210, 210, 215, 255), rounding);
 				dl->AddRect(cellMin, cellMax,       IM_COL32(170, 170, 175, 255), rounding);
 
-				if (idx < (int)filtered.size()) {
+				CItem* displayItem = nullptr;
+				int    count       = 1;
+
+				if (stackable) {
+					if (idx < (int)grouped.size()) {
+						displayItem = grouped[idx].rep;
+						count       = grouped[idx].count;
+					}
+				} else {
+					if (idx < (int)filtered.size())
+						displayItem = filtered[idx];
+				}
+
+				if (displayItem) {
 
 					// TODO: 실제 아이템 이미지 로드 후 ImGui::Image()로 교체
-					const char* placeholder = filtered[idx]->GetName().c_str();
+					const char* placeholder = displayItem->GetName().c_str();
 					ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
 					ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
 					                     cellMin.y + (cellSz - tSz.y) * 0.5f);
 					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
+
+					// 수량 배지 (기타 탭)
+					if (stackable) {
+						char   countBuf[16];
+						snprintf(countBuf, sizeof(countBuf), "x%d", count);
+						ImFont* font     = ImGui::GetFont();
+						float   fontSize = ImGui::GetFontSize() * 0.85f;
+						ImVec2  cSz      = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, countBuf);
+						float   margin   = 3.0f * scale;
+						ImVec2  cPos     = ImVec2(cellMax.x - cSz.x - margin, cellMax.y - cSz.y - margin);
+						// 반투명 배경
+						dl->AddRectFilled(ImVec2(cPos.x - 2.0f, cPos.y - 1.0f),
+						                  ImVec2(cellMax.x - margin + 2.0f, cellMax.y - margin + 1.0f),
+						                  IM_COL32(0, 0, 0, 150), 3.0f);
+						dl->AddText(font, fontSize, cPos, IM_COL32(255, 255, 255, 255), countBuf);
+					}
 				}
 
 				// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지
@@ -348,10 +403,10 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				snprintf(btnId, sizeof(btnId), "##grid_slot_%d", idx);
 				ImGui::InvisibleButton(btnId, ImVec2(cellSz, cellSz));
 
-				if (idx < (int)filtered.size()) {
+				if (displayItem) {
 					if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
 						is_dragging  = true;
-						dragged_item = filtered[idx];
+						dragged_item = displayItem;
 					}
 				}
 

@@ -296,10 +296,6 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
 		TreasureInfo info{ worldId, pos };
 		treasures.push_back(info);
-
-		auto itemFinder = my_player->GetComponent<CItemFinder>();
-		if (itemFinder)
-			itemFinder->RegisterTreasures(treasures);
 	}
 }
 
@@ -436,4 +432,12 @@ void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddI
 		auto worldItem = static_cast<CWorldItem*>(item->get());
 		my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
 	}
+}
+
+void CGameScene::Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt)
+{
+	if (!my_player)
+		return;
+
+	my_player->GetInventory()->RemoveItem(pkt.inventory_id);
 }

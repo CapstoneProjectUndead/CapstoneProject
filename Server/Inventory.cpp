@@ -39,12 +39,17 @@ bool CInventory::AddItem(std::shared_ptr<CItem> item)
 	return true;
 }
 
-void CInventory::RemoveItem(uint32 inventoryId)
+bool CInventory::RemoveItem(uint32 inventoryId)
 {
 	auto it = items.find(inventoryId);
 
-	if (it != items.end()) {
+	if (it == items.end())
+		return false;
+
+	if (it->second->GetItemType() == ITEM_TYPE::TREASURE)
 		current_weight -= it->second->GetWeight();
-		items.erase(it);
-	}
+
+	items.erase(it);
+
+	return true;
 }
