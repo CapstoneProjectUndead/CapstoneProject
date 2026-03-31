@@ -174,28 +174,33 @@ void CUIScene::RenderInspectorWindow()
 
         // Transform
         if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-            // 위치 조절
-            ImGui::DragFloat2("Pos (Rel)", (float*)&selected_UI->GetRelativePos(), 1.0f);
+            XMFLOAT2 pos = selected_UI->GetRelativePos();
+            XMFLOAT2 size = selected_UI->GetSize();
+            XMFLOAT2 pivot = selected_UI->GetPivot();
+            XMFLOAT2 anchor = selected_UI->GetAnchor();
 
-            // 사이즈 조절
-            if (ImGui::DragFloat2("Size", (float*)&selected_UI->GetSize(), 1.0f)) {
-                // 음수 크기 방지
-                auto& s = selected_UI->GetSize();
-                if (s.x < 0) s.x = 0;
-                if (s.y < 0) s.y = 0;
+            // ImGui UI 출력 및 수정 여부 체크
+            if (ImGui::DragFloat2("Pos (Rel)", (float*)&pos, 1.0f)) {
+                selected_UI->SetRelativePos(pos); // 값이 변하면 Set 호출 -> Invalidate 작동
             }
-
-            ImGui::DragFloat2("Pivot", (float*)&selected_UI->GetPivot(), 0.0f, 1.0f);
-            ImGui::DragFloat2("Anchor", (float*)&selected_UI->GetAnchor(), -1.0f, 1.0f);
+            if (ImGui::DragFloat2("Size", (float*)&size, 1.0f)) {
+                if (size.x < 0) size.x = 0; if (size.y < 0) size.y = 0;
+                selected_UI->SetSize(size);
+            }
+            if (ImGui::DragFloat2("Pivot", (float*)&pivot, 0.01f, 0.0f, 1.0f)) {
+                selected_UI->SetPivot(pivot);
+            }
+            if (ImGui::DragFloat2("Anchor", (float*)&anchor, 0.01f, -1.0f, 1.0f)) {
+                selected_UI->SetAnchor(anchor);
+            }
         }
 
-        // Style
         if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::ColorEdit4("Color", (float*)&selected_UI->GetColor());
+            XMFLOAT4 col = selected_UI->GetColor();
+            if (ImGui::ColorEdit4("Color", (float*)&col)) {
+                selected_UI->SetColor(col);
+            }
         }
-    }
-    else {
-        ImGui::Text("Select an item in Hierarchy\nto see properties.");
     }
 
     ImGui::End();
@@ -250,10 +255,13 @@ void CUIScene::HandleUIDragging()
     // 3. ImGui가 마우스를 점유하지 않았을 때 (게임 뷰포트 클릭 시)
     if (selected_UI && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && !ImGui::GetIO().WantCaptureMouse) {
         ImVec2 delta = ImGui::GetIO().MouseDelta;
-        auto& pos = selected_UI->GetRelativePos();
 
+        // Getter로 값을 가져와서 계산 후 Setter로 주입
+        XMFLOAT2 pos = selected_UI->GetRelativePos();
         pos.x += delta.x;
         pos.y += delta.y;
+
+        selected_UI->SetRelativePos(pos); // 여기서 Invalidate가 일어남
     }
 }
 

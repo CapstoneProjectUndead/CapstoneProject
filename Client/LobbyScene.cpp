@@ -144,11 +144,12 @@ void CLobbyScene::SetupDialogueEvents()
 			};
 	}
 
+	// 버튼 콜백 함수 등록
 	if (yesBtn) {
 		yesBtn->OnClick = [reaperUI, YNCanvas, this]() {
 			if (reaperUI) reaperUI->SetEnable(false);
-			std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
 			if (!g_is_single) {
+				std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
 				if (!myPlayer->GetIsReady()) {
 					myPlayer->SetIsReady(true);
 					C_Ready readyPkt;
@@ -159,12 +160,10 @@ void CLobbyScene::SetupDialogueEvents()
 					}
 				}
 			}
-			else
-			{
-				myPlayer->SetIsReady(true);
+			else {
 				if (reaperUI) reaperUI->SetEnable(false);
 				if (YNCanvas) YNCanvas->SetEnable(false);
-				//CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 			}
 		};
 	}
@@ -179,7 +178,7 @@ void CLobbyScene::SetupDialogueEvents()
 
 void CLobbyScene::UpdatePlayerReadyUI()
 {
-	//if (g_is_single) return;
+	if (g_is_single) return;
 
 	auto SetReadyUIColor = [this](int playerIdx, bool isReady) {
 		// 이름 규칙: "Ready1", "Ready2", "Ready3"...
