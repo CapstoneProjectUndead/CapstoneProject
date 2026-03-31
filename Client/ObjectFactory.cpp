@@ -18,6 +18,7 @@
 #include "ItemFinder.h"
 #include "MapUtils.h"
 #include "Inventory.h"
+#include "QuickSlot.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
@@ -432,6 +433,11 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	// Inventory 추가
 	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);
 	player->SetInventory(inventory);
+
+	// QuickSlot 추가
+	auto quickSlot = std::make_shared<CQuickSlot>();
+	inventory->SetQuickSlot(quickSlot);
+	player->SetQuickSlot(quickSlot);
 
 	return player;
 }

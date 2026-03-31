@@ -2,6 +2,7 @@
 #include "Item.h"
 
 class CMyPlayer;
+class CQuickSlot;
 
 class CInventory
 {
@@ -27,6 +28,7 @@ public:
 	void  Draw();
 
 	void  SetDropCallback(std::function<void(std::shared_ptr<CItem>)> cb) { on_drop_callback = cb; }
+	void  SetQuickSlot(std::shared_ptr<CQuickSlot> qs) { quick_slot = qs; }
 
 private:
 	void BeginDrawInventory();
@@ -52,4 +54,5 @@ private:
 	bool                                 is_dragging    = false;
 
 	std::function<void(std::shared_ptr<CItem>)> on_drop_callback;
+	std::shared_ptr<CQuickSlot>                 quick_slot;
 };

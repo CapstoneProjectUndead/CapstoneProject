@@ -12,6 +12,7 @@
 #include "ItemFinder.h"
 #include "NetworkManager.h"
 #include "Inventory.h"
+#include "QuickSlot.h"
 #include "WorldItem.h"
 #include "ItemFactory.h"
 #include "WorldTreasure.h"
@@ -105,6 +106,10 @@ void CGameScene::DrawUI()
 		auto& inventory = my_player->GetInventory();
 		assert(inventory);
 		inventory->Draw();
+
+		auto quick_slot = my_player->GetQuickSlot();
+		if (quick_slot)
+			quick_slot->Draw();
 	}
 }
 

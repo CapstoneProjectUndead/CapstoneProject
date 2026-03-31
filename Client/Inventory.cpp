@@ -3,6 +3,7 @@
 #include "ImGuiManager.h"
 #include "MyPlayer.h"
 #include "ServerPacketHandler.h"
+#include "QuickSlot.h"
 
 #undef max
 #undef min
@@ -65,6 +66,10 @@ void CInventory::RemoveItem(uint32 inventoryId)
 		// 보물이면 가방 무게에서 제외
 		if (it->second->GetItemType() == ITEM_TYPE::TREASURE)
 			current_weight -= it->second->GetWeight();
+
+		// 퀵슬롯에 등록된 아이템이면 슬롯 비움
+		if (quick_slot)
+			quick_slot->OnItemRemovedFromInventory(inventoryId);
 
 		items.erase(it);
 	}
@@ -143,36 +148,48 @@ void CInventory::BeginDrawInventory()
 
 		if (droppedOutside) {
 
-			if (g_is_single) {
-				auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
-					return pair.second.get() == dragged_item;
-					});
-
-				if (item != items.end()) {
-					if (item->second->GetItemType() == ITEM_TYPE::TREASURE)
-						current_weight -= item->second->GetWeight();
-
-					if (on_drop_callback)
-						on_drop_callback(item->second);
-
-					items.erase(item);
-				}
+			// 퀵슬롯 위에 드롭한 경우: 등록만 하고 인벤토리에서는 제거하지 않음
+			bool handled_by_quickslot = false;
+			if (quick_slot) {
+				ImVec2 mp = ImGui::GetMousePos();
+				handled_by_quickslot = quick_slot->TryDropOnSlot(dragged_item, mp);
 			}
-			else {
-				auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
-					return pair.second.get() == dragged_item;
-					});
 
-				if (item != items.end()) {
-					C_DropItem dropPkt;
-					dropPkt.player_id = owner.lock()->GetID();
-					dropPkt.inventory_id = item->first;
-					dropPkt.item_type = item->second->GetItemType();
-					dropPkt.scene_type = owner.lock()->GetCurrentSceneType();
+			if (!handled_by_quickslot) {
+				if (g_is_single) {
+					auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
+						return pair.second.get() == dragged_item;
+						});
 
-					if (owner.lock()->GetSession()) {
-						auto sendBuffer = MAKE_SEND_BUFFER(dropPkt);
-						owner.lock()->GetSession()->DoSend(sendBuffer);
+					if (item != items.end()) {
+						if (item->second->GetItemType() == ITEM_TYPE::TREASURE)
+							current_weight -= item->second->GetWeight();
+
+						if (on_drop_callback)
+							on_drop_callback(item->second);
+
+						if (quick_slot)
+							quick_slot->OnItemRemovedFromInventory(item->first);
+
+						items.erase(item);
+					}
+				}
+				else {
+					auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
+						return pair.second.get() == dragged_item;
+						});
+
+					if (item != items.end()) {
+						C_DropItem dropPkt;
+						dropPkt.player_id = owner.lock()->GetID();
+						dropPkt.inventory_id = item->first;
+						dropPkt.item_type = item->second->GetItemType();
+						dropPkt.scene_type = owner.lock()->GetCurrentSceneType();
+
+						if (owner.lock()->GetSession()) {
+							auto sendBuffer = MAKE_SEND_BUFFER(dropPkt);
+							owner.lock()->GetSession()->DoSend(sendBuffer);
+						}
 					}
 				}
 			}

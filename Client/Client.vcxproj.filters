@@ -124,6 +124,9 @@
     <Filter Include="Object\Item\World Item\Treasure">
       <UniqueIdentifier>{0aff41c6-dc81-49a2-9818-292cf08198cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="QuickSlot">
+      <UniqueIdentifier>{28fa96f2-b7ba-4f34-95e3-4ef5b5c67aa0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -372,6 +375,9 @@
     <ClInclude Include="..\External\Common\protocol.h">
       <Filter>Network\Protocol</Filter>
     </ClInclude>
+    <ClInclude Include="QuickSlot.h">
+      <Filter>QuickSlot</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -577,6 +583,9 @@
     </ClCompile>
     <ClCompile Include="WorldConsumable.cpp">
       <Filter>Object\Item\World Item\Consum</Filter>
+    </ClCompile>
+    <ClCompile Include="QuickSlot.cpp">
+      <Filter>QuickSlot</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

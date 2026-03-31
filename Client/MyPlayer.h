@@ -13,6 +13,7 @@ struct ClientFrameHistory
 
 class CUser;
 class CInventory;
+class CQuickSlot;
 
 class CMyPlayer :
     public CPlayer
@@ -45,8 +46,11 @@ public:
     bool GetIsReady() const { return is_ready; }
     void SetIsReady(bool ready) { is_ready = ready; }
 
-    std::shared_ptr<CInventory> GetInventory() const { return inventory; }
+    std::shared_ptr<CInventory> GetInventory()  const { return inventory; }
     void                        SetInventory(std::shared_ptr<CInventory> inven) { inventory = inven; }
+
+    std::shared_ptr<CQuickSlot> GetQuickSlot()  const { return quick_slot; }
+    void                        SetQuickSlot(std::shared_ptr<CQuickSlot> qs)  { quick_slot = qs; }
 
     uint64 GetGold() const { return gold; }
     void   SetGold(uint64 amount) { gold = amount; }
@@ -87,6 +91,7 @@ private:
     XMFLOAT3                          server_velocity{};
 
     std::shared_ptr<CInventory>       inventory;
+    std::shared_ptr<CQuickSlot>       quick_slot;
     uint64                            gold;      // 소지금
 
     bool                              is_ready;

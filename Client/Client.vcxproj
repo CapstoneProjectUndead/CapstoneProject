@@ -194,6 +194,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Inventory.h" />
+    <ClInclude Include="QuickSlot.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemFactory.h" />
     <ClInclude Include="ItemFinder.h" />
@@ -283,6 +284,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="QuickSlot.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemFactory.cpp" />
     <ClCompile Include="ItemFinder.cpp" />
