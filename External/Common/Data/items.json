@@ -261,7 +261,7 @@
         "price": 180,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "신선한 브로콜리!"
     },
     {
         "item_id": 23,
@@ -275,7 +275,7 @@
         "price": 250,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "20초간 화면이 누래짐"
     },
     {
         "item_id": 24,
@@ -289,7 +289,7 @@
         "price": 120,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "사용시 바나나 껍질 아이템 획득"
     },
     {
         "item_id": 25,
@@ -303,7 +303,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "맛있는 과자! 섭취 시 펑 터지는 소리가 난다."
     },
     {
         "item_id": 26,
@@ -415,7 +415,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "맛있는 솜사탕! 섭취 시 30초간 점프 높이가 증가한다!"
     },
     {
         "item_id": 34,
@@ -429,7 +429,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "맛있는 아이스크림! 섭취 시 10초간 이동 속도가 증가한다!"
     },
     {
         "item_id": 35,
@@ -471,7 +471,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "맛있는 젤리빈! 5초간 채굴 속도가 증가한다!"
     },
     {
         "item_id": 38,
@@ -527,7 +527,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "사용 후 보조 아이템 컵 획득한다."
     },
     {
         "item_id": 42,
@@ -541,7 +541,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "누군가 먹다 남긴 케이크이다. 섭취 시 10초간 이동속도 증가!"
     },
     {
         "item_id": 43,
@@ -583,7 +583,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "상한 생선… 냄새가 끔찍하다…"
     },
     {
         "item_id": 46,
@@ -608,7 +608,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "낙하 속도 감소, 낙하 데미지 무효"
     },
     {
         "item_id": 48,
@@ -619,7 +619,7 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "적 몬스터가 최우선으로 반응"
     },
     {
         "item_id": 49,
@@ -630,7 +630,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "몬스터 머리에 씌워지며 시야 차단! (유령 몬스터에는 사용 불가!)"
     },
     {
         "item_id": 50,
@@ -641,7 +641,7 @@
         "price": 60,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "밟으면 미끄러지며 스턴(2초)"
     },
     {
         "item_id": 51,
@@ -652,7 +652,7 @@
         "price": 40,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "누군가 버린 구멍난 양말이다."
     },
     {
         "item_id": 52,
@@ -663,7 +663,7 @@
         "price": 90,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "끈쩍한 슬라임… 만지면 기분이 이상하다"
     },
     {
         "item_id": 53,
@@ -674,7 +674,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "흔들면 돈이 나올지도..?!"
     },
     {
         "item_id": 54,
@@ -685,7 +685,7 @@
         "price": 30,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "랜덤한 메모를 출력한다."
     },
     {
         "item_id": 55,
@@ -696,7 +696,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "밝은 대상의 이동속도를 7초간 감소시킨다."
     },
     {
         "item_id": 56,
@@ -707,7 +707,7 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "덫에 걸리면 5초간 움직이지 못한다!"
     },
     {
         "item_id": 1000,

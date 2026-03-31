@@ -49,6 +49,8 @@ void CGameScene::Initialize()
 	// 과자 생성 (테스트)
 	SpawnWorldItem(25, XMFLOAT3{1, 0, 1});
 	SpawnWorldItem(24, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(45, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(5, XMFLOAT3{2, 0, 1});
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

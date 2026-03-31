@@ -37,6 +37,7 @@ private:
 	void DrawItemTable(ITEM_TYPE type);          // 보물 탭 - 이름/무게 테이블
 	void DrawItemGrid(ITEM_TYPE type);           // 장비/회복/기타 탭 - 이미지 격자
 	void DrawBottomBar();                        // 하단 용량 + 소지금 바
+	void DrawItemTooltip(CItem* item);           // 아이템 툴팁
 
 private:
 	std::weak_ptr<CMyPlayer>             owner;          // 소지금 접근용

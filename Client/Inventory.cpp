@@ -425,6 +425,8 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 						is_dragging  = true;
 						dragged_item = displayItem;
 					}
+					if (!is_dragging && ImGui::IsItemHovered())
+						DrawItemTooltip(displayItem);
 				}
 
 				if (col < cols - 1)
@@ -516,6 +518,8 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 							is_dragging  = true;
 							dragged_item = filtered[i];
 						}
+						if (!is_dragging && ImGui::IsItemHovered())
+							DrawItemTooltip(filtered[i]);
 					}
 				}
 
@@ -579,6 +583,126 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 	}
 	ImGui::EndChild();
 	ImGui::PopStyleColor(); // ChildBg
+}
+
+void CInventory::DrawItemTooltip(CItem* item)
+{
+	float scale    = G_RATIO_Y;
+	float imgSz    = 70.0f * scale;
+	float padX     = 12.0f * scale;
+	float padY     = 8.0f  * scale;
+	float rounding = 6.0f  * scale;
+	float descW    = 180.0f * scale;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 12.0f * scale);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,  ImVec2(padX, padY));
+	ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.17f, 0.17f, 0.18f, 0.93f));
+
+	if (ImGui::BeginTooltip()) {
+
+		ImGui::SetWindowFontScale(scale);
+
+		// ── 1. 아이템 이름 (가운데 정렬, 볼드) ─────────────────────
+		if (CImGuiManager::bold_font)
+			ImGui::PushFont(CImGuiManager::bold_font);
+
+		const char* name   = item->GetName().c_str();
+		float       totalW = imgSz + padX + descW;
+		float       nameW  = ImGui::CalcTextSize(name).x;
+		ImGui::SetCursorPosX(padX + (totalW - nameW) * 0.5f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+		ImGui::Text("%s", name);
+		ImGui::PopStyleColor();
+
+		if (CImGuiManager::bold_font)
+			ImGui::PopFont();
+
+		// ── 2. 구분선 ────────────────────────────────────────────
+		ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.55f, 0.55f, 0.58f, 0.7f));
+		ImGui::Separator();
+		ImGui::PopStyleColor();
+
+		ImGui::Dummy(ImVec2(0.0f, padY * 0.3f));
+
+		// ── 3. 이미지 셀 | 설명 텍스트 ────────────────────────────
+		ImDrawList* dl = ImGui::GetWindowDrawList();
+
+		// 왼쪽: 이미지 셀
+		ImGui::BeginGroup();
+		{
+			ImVec2 imgMin = ImGui::GetCursorScreenPos();
+			ImVec2 imgMax = ImVec2(imgMin.x + imgSz, imgMin.y + imgSz);
+			dl->AddRectFilled(imgMin, imgMax, IM_COL32(210, 210, 215, 255), rounding);
+			dl->AddRect(imgMin, imgMax, IM_COL32(170, 170, 175, 255), rounding);
+
+			// TODO: 실제 텍스처 로드 후 ImGui::Image()로 교체
+			ImVec2 ptSz = ImGui::CalcTextSize("[img]");
+			dl->AddText(ImVec2(imgMin.x + (imgSz - ptSz.x) * 0.5f,
+			                   imgMin.y + (imgSz - ptSz.y) * 0.5f),
+			            IM_COL32(100, 100, 100, 255), "[img]");
+
+			ImGui::Dummy(ImVec2(imgSz, imgSz));
+		}
+		ImGui::EndGroup();
+
+		ImGui::SameLine(0.0f, padX);
+
+		// 오른쪽: 타입별 정보
+		ImGui::BeginGroup();
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.88f, 0.88f, 0.88f, 1.0f));
+			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + descW);
+
+			auto* tool = dynamic_cast<CTool*>(item);
+			if (tool) {
+				// 도구: 내구도 표시
+				uint32 cur = tool->GetCurrentDurability();
+				uint32 max = tool->GetMaxDurability();
+				float  ratio = (max > 0) ? (float)cur / (float)max : 0.0f;
+
+				// 내구도 레이블
+				const char* durLabel = (const char*)u8"내구도";
+				ImGui::TextUnformatted(durLabel);
+
+				// 수치 텍스트
+				char durBuf[32];
+				snprintf(durBuf, sizeof(durBuf), "%u / %u", cur, max);
+				ImGui::TextUnformatted(durBuf);
+
+				// 내구도 바 (색상: 높으면 초록, 낮으면 빨강)
+				ImVec4 barColor = (ratio > 0.5f) ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f)
+				                : (ratio > 0.25f) ? ImVec4(0.9f, 0.7f, 0.1f, 1.0f)
+				                                 : ImVec4(0.9f, 0.2f, 0.2f, 1.0f);
+
+				ImVec2 barMin = ImGui::GetCursorScreenPos();
+				ImVec2 barMax = ImVec2(barMin.x + descW, barMin.y + 10.0f * scale);
+				dl->AddRectFilled(barMin, barMax, IM_COL32(80, 80, 85, 255), 3.0f * scale);
+				dl->AddRectFilled(barMin,
+				                  ImVec2(barMin.x + descW * ratio, barMax.y),
+				                  ImGui::ColorConvertFloat4ToU32(barColor), 3.0f * scale);
+				dl->AddRect(barMin, barMax, IM_COL32(120, 120, 125, 200), 3.0f * scale);
+				ImGui::Dummy(ImVec2(descW, 10.0f * scale));
+			}
+			else {
+				// 무기 / 소비 / 기타 / 보물: description
+				const std::string& desc = item->GetDescription();
+				if (!desc.empty())
+					ImGui::TextWrapped("%s", desc.c_str());
+			}
+
+			ImGui::PopTextWrapPos();
+			ImGui::PopStyleColor();
+		}
+		ImGui::EndGroup();
+
+		ImGui::Dummy(ImVec2(totalW + padX * 2.0f, 0.0f)); // 최소 너비 확보
+
+		ImGui::SetWindowFontScale(1.0f);
+		ImGui::EndTooltip();
+	}
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
 }
 
 void CInventory::DrawBottomBar()

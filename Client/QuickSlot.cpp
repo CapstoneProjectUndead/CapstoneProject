@@ -110,7 +110,7 @@ void CQuickSlot::DrawSlotCells(float cellSz, float pad, float scale)
 		// 우클릭으로 슬롯 등록 해제
 		if (slots[i].has_item &&
 		    ImGui::IsItemHovered() &&
-		    ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+		    ImGui::IsMouseClicked(ImGuiMouseButton_Right)) 
 		{
 			slots[i] = SlotEntry{};
 		}
