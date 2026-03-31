@@ -21,6 +21,7 @@ public:
 private:
     void RenderHierarchyWindow();
     void DrawHierarchyNode(std::shared_ptr<CUIComponent> node);
+    std::string OpenFileDialog();
     void RenderInspectorWindow();
     void RenderToolbar();
     void HandleUIDragging();

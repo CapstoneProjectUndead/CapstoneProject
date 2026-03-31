@@ -10,6 +10,7 @@
 #include "MyPlayer.h"
 #include "SceneManager.h"
 #include "DataManager.h"
+#include <commdlg.h> // Windows 파일 탐색기용
 
 CUIScene::CUIScene()
 	:CScene(SCENE_TYPE::UI)
@@ -145,6 +146,32 @@ void CUIScene::DrawHierarchyNode(std::shared_ptr<CUIComponent> node)
     }
 }
 
+std::string CUIScene::OpenFileDialog()
+{
+    char fileName[MAX_PATH] = "";
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = "DDS Files (*.dds)\0*.dds\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFile = fileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+    ofn.lpstrDefExt = "dds";
+
+    if (GetOpenFileNameA(&ofn)) {
+        // 전체 경로에서 파일 이름만 추출 (예: C:/Project/Texture/hero.dds -> hero)
+        std::string fullPath = fileName;
+        size_t lastSlash = fullPath.find_last_of("\\/");
+        size_t lastDot = fullPath.find_last_of(".");
+
+        if (lastSlash == std::string::npos) lastSlash = -1;
+        return fullPath.substr(lastSlash + 1, lastDot - lastSlash - 1);
+    }
+    return "";
+}
+
 void CUIScene::RenderInspectorWindow()
 {
     // 창이 항상 보이도록 설정
@@ -196,6 +223,32 @@ void CUIScene::RenderInspectorWindow()
         }
 
         if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
+            auto imageUI = std::dynamic_pointer_cast<CUIImage>(selected_UI);
+            if (imageUI) {
+                ImGui::Text("Texture: %s", imageUI->GetTextureName().c_str());
+                ImGui::SameLine();
+
+                // [ 찾아보기 ] 버튼 추가
+                if (ImGui::Button("Search...")) {
+                    std::string fileName = OpenFileDialog();
+                    if (!fileName.empty()) {
+                        imageUI->SetTextureName(fileName);
+
+                        auto& shaders = CSceneManager::GetInstance().GetShaders();
+
+                        // 현재 UI의 셰이더 이름으로 힙 매니저를 가져옴
+                        auto heapManager = shaders[imageUI->GetShaderName()]->GetHeapManager();
+
+                        std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
+                        m->SetMaterial(factory->GetMaterial(heapManager, fileName));
+
+                        imageUI->SetMaterial(m);
+                        imageUI->Invalidate(); // 변경 사항 반영
+                    }
+                }
+            }
+
+            // 색상 변경 등 기존 로직
             XMFLOAT4 col = selected_UI->GetColor();
             if (ImGui::ColorEdit4("Color", (float*)&col)) {
                 selected_UI->SetColor(col);

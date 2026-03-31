@@ -35,6 +35,7 @@
                         100.0,
                         100.0
                     ],
+                    "Text": "Hi",
                     "Type": "Text"
                 }
             ],
@@ -58,6 +59,7 @@
                 1500.0,
                 300.0
             ],
+            "TextureName": "white",
             "Type": "Image"
         }
     ],

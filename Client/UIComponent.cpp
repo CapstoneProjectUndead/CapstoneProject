@@ -268,6 +268,7 @@ json CUIImage::Serialize()
     json j = CUIComponent::Serialize();
     j["Type"] = "Image";
     j["FillAmount"] = fill_amount;
+    j["TextureName"] = texture_name;
     return j;
 }
 
@@ -275,6 +276,7 @@ void CUIImage::Deserialize(const json& j)
 {
     CUIComponent::Deserialize(j);
     if (j.contains("FillAmount")) fill_amount = j["FillAmount"];
+    if (j.contains("TextureName")) texture_name = j["TextureName"];
 }
 
 // CUIBillboard

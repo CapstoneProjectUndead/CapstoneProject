@@ -114,9 +114,13 @@ public:
 
     virtual json Serialize() override;
     virtual void Deserialize(const json& j) override;
+
+    void SetTextureName(const std::string& name) { texture_name = name; }
+    const std::string& GetTextureName() const { return texture_name; }
 protected:
     float fill_amount = 1.0f;
     std::shared_ptr<CMaterialComponent> mat_comp;  // 생성 시 heap 0 index 사용
+    std::string texture_name{ "white" }; // 텍스처 파일 이름 저장(load/save 용)
 };
 
 /*

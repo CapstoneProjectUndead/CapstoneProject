@@ -51,7 +51,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		my_player->SetPosition(3.0f, 1.0f, -3.0f);
+		my_player->SetPosition(0.f, 1.0f, 0.f);
 		auto m = my_player->GetComponent<CMovementComponent>();
 		m->is_fly = true;
 	}

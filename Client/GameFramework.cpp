@@ -287,24 +287,21 @@ void CGameFramework::BuildObjects()
 
 	// 모든 씬 객체 생성
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE] = std::make_unique<CTitleScene>();
-	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE]->Initialize();
-
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY] = std::make_unique<CLobbyScene>();
-	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->Initialize();
-
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS] = std::make_unique<CCustomScene>();
-	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS]->Initialize();
-
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME] = std::make_unique<CGameScene>();
-	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME]->Initialize();
-
 	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI] = std::make_unique<CUIScene>();
-	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI]->Initialize();
 
 	// 시작 Scene은 항상 TitleScene 이지만,
 	// 해당 Scene 작업을 위해서, 여기서 바꾸면 된다.
 	CScene* activeScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE].get();
 	CSceneManager::GetInstance().SetActiveScene(activeScene);
+
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::TITLE]->Initialize();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->Initialize();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS]->Initialize();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME]->Initialize();
+	CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::UI]->Initialize();
 
 	// 서버와 연결 체크
 	// 서버와 연결되지 않았다면 Scene에서 생성할 오브젝트들 생성

@@ -1,6 +1,9 @@
 ﻿#include "stdafx.h"
 #include "DataManager.h"
 #include "UIComponent.h"
+#include "SceneManager.h"
+#include "Shader.h"
+#include "ObjectFactory.h"
 
 void CDataManager::LoadScripts(const std::string& filePath)
 {
@@ -84,6 +87,19 @@ void CDataManager::LoadRecursive(std::shared_ptr<CUIComponent> parent, const jso
 
     // 데이터 세팅
     newUI->Deserialize(data);
+
+    // 이미지면 텍스처 적용
+    if (type == "Image") {
+        auto imageUI = dynamic_pointer_cast<CUIImage>(newUI);
+
+        auto& shaders = CSceneManager::GetInstance().GetShaders();
+        auto& factory = CSceneManager::GetInstance().GetActiveScene()->GetFactory();
+
+        auto heapManager = shaders[imageUI->GetShaderName()]->GetHeapManager();
+        std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
+        m->SetMaterial(factory->GetMaterial(heapManager, imageUI->GetTextureName()));
+        imageUI->SetMaterial(m);
+    }
 
     // 계층 구조 연결
     parent->AddChild(newUI);
