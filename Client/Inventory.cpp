@@ -155,7 +155,7 @@ void CInventory::BeginDrawInventory()
 				handled_by_quickslot = quick_slot->TryDropOnSlot(dragged_item, mp);
 			}
 
-			if (!handled_by_quickslot) {
+			if (!handled_by_quickslot && dragged_item->GetItemType() != ITEM_TYPE::TREASURE) {
 				if (g_is_single) {
 					auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
 						return pair.second.get() == dragged_item;
@@ -497,8 +497,21 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 					ImVec2 slotMax = ImVec2(slotMin.x + slotSz,  slotMin.y + slotSz);
 
 					ImDrawList* dl = ImGui::GetWindowDrawList();
+					// 보물 등급별 테두리 색상
+					ImU32 borderColor = IM_COL32(170, 170, 175, 255); // 기본 회색
+					if (i < (int)filtered.size()) {
+						CTreasure* treasure = static_cast<CTreasure*>(filtered[i]);
+						switch (treasure->GetGrade()) {
+						case TREASURE_GRADE::COMMON:   borderColor = IM_COL32(160, 160, 160, 255); break; // 회색
+						case TREASURE_GRADE::UNCOMMON: borderColor = IM_COL32( 80, 200,  80, 255); break; // 초록
+						case TREASURE_GRADE::RARE:     borderColor = IM_COL32( 80, 140, 255, 255); break; // 파랑
+						case TREASURE_GRADE::EPIC:     borderColor = IM_COL32(180,  80, 255, 255); break; // 보라
+						case TREASURE_GRADE::LEGENDARY:borderColor = IM_COL32(255, 165,   0, 255); break; // 주황/금
+						}
+					}
+
 					dl->AddRectFilled(slotMin, slotMax, IM_COL32(210, 210, 215, 255), rounding); // 연한 회색 채우기
-					dl->AddRect(slotMin, slotMax,       IM_COL32(170, 170, 175, 255), rounding); // 테두리
+					dl->AddRect(slotMin, slotMax, borderColor, rounding, 0, 2.0f * scale);       // 등급별 테두리
 
 					if (i < (int)filtered.size()) {
 

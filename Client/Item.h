@@ -94,6 +94,8 @@ public:
 	CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade, uint32 _price);
 	virtual ~CTreasure() override;
 
+	TREASURE_GRADE GetGrade() const { return grade; }
+
 private:
 	const uint32		 price;
 	const TREASURE_GRADE grade;
