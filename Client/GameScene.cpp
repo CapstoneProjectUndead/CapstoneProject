@@ -11,16 +11,20 @@
 
 #include "ItemFinder.h"
 #include "NetworkManager.h"
-#include "Inventory.h"
-#include "QuickSlot.h"
-#include "WorldItem.h"
-#include "ItemFactory.h"
-#include "WorldTreasure.h"
-#include "WorldConsumable.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
 
 #include "KeyManager.h"
+
+#include "Inventory.h"
+#include "QuickSlot.h"
+#include "WorldItem.h"
+#include "ItemFactory.h"
+#include "WorldTool.h"			// (장비)파밍 도구
+#include "WorldWeapon.h"		// (장비)무기
+#include "WorldConsumable.h"	// 소비
+#include "WorldOther.h"			// 기타
+#include "WorldTreasure.h"		// 보물
 
 
 CGameScene::CGameScene()
@@ -42,15 +46,16 @@ void CGameScene::Initialize()
 		// 보물 위치에 보물 생성
 		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
 		for (auto& treasure : treasures) {
-			SpawnWorldItem(1001, treasure.world_id, treasure.treasure_pos);
+			SpawnWorldItem(110, treasure.world_id, treasure.treasure_pos);
 		}
 	}
 
-	// 과자 생성 (테스트)
+	// 아이템 생성 (테스트)
 	SpawnWorldItem(25, XMFLOAT3{1, 0, 1});
 	SpawnWorldItem(24, XMFLOAT3{2, 0, 1});
 	SpawnWorldItem(45, XMFLOAT3{2, 0, 1});
 	SpawnWorldItem(5, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(1, XMFLOAT3{2, 0, 1});
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -224,70 +229,95 @@ void CGameScene::ProcessPickup()
 // 싱글환경
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 {
-	auto itemData = ItemFactory::Create(itemID);
-	if (!itemData)
+	auto item = ItemFactory::Create(itemID);
+	if (!item)
 		return;
 
-	std::shared_ptr<CWorldItem> item;
+	std::shared_ptr<CWorldItem> worldItem;
 
-	switch (itemData->GetItemType())
+	switch (item->GetItemType())
 	{
 	case ITEM_TYPE::EQUIPMENT:
+		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+			worldItem = std::make_shared<CWorldWeapon>(item);
+		else
+			worldItem = std::make_shared<CWorldTool>(item);
 		break;
 	case ITEM_TYPE::CONSUMABLE:
-		item = std::make_shared<CWorldConsumable>(itemData);
+		worldItem = std::make_shared<CWorldConsumable>(item);
 		break;
 	case ITEM_TYPE::ETC:
+		worldItem = std::make_shared<CWorldOther>(item);
 		break;
 	case ITEM_TYPE::TREASURE:
-		item = std::make_shared<CWorldTreasure>(itemData);
+		worldItem = std::make_shared<CWorldTreasure>(item);
 		break;
 	default:
 		break;
 	}
 
-	if (!item)
+	if (!worldItem)
 		return;
 
-	item->SetPosition(position);
-	item->SetID(world_item_id_counter);
-	item->Initialize(GET_DEVICE, GET_CMD_LIST);
-	AddObject(item, world_item_id_counter);
+	// 아이템의 위치
+	worldItem->SetPosition(position);
+
+	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
+	worldItem->SetID(world_item_id_counter);
+
+	// 초기화
+	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	// Scene의 objects 컨테이너에 추가
+	AddObject(worldItem, world_item_id_counter);
+
 	++world_item_id_counter;
 }
 
 // 멀티환경
 void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
 {
-	auto itemData = ItemFactory::Create(itemID);
-	if (!itemData)
+	auto item = ItemFactory::Create(itemID);
+	if (!item)
 		return;
 
-	std::shared_ptr<CWorldItem> item;
+	std::shared_ptr<CWorldItem> worldItem;
 
-	switch (itemData->GetItemType())
+	switch (item->GetItemType())
 	{
 	case ITEM_TYPE::EQUIPMENT:
+		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+			worldItem = std::make_shared<CWorldWeapon>(item);
+		else
+			worldItem = std::make_shared<CWorldTool>(item);
 		break;
 	case ITEM_TYPE::CONSUMABLE:
-		item = std::make_shared<CWorldConsumable>(itemData);
+		worldItem = std::make_shared<CWorldConsumable>(item);
 		break;
 	case ITEM_TYPE::ETC:
+		worldItem = std::make_shared<CWorldOther>(item);
 		break;
 	case ITEM_TYPE::TREASURE:
-		item = std::make_shared<CWorldTreasure>(itemData);
+		worldItem = std::make_shared<CWorldTreasure>(item);
 		break;
 	default:
 		break;
 	}
 
-	if (!item)
+	if (!worldItem)
 		return;
 
-	item->SetPosition(position);
-	item->SetID(itemWorldId);
-	item->Initialize(GET_DEVICE, GET_CMD_LIST);
-	AddObject(item, itemWorldId);
+	// 아이템의 위치
+	worldItem->SetPosition(position);
+
+	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
+	worldItem->SetID(itemWorldId);
+
+	// 초기화
+	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	// Scene의 objects 컨테이너에 추가
+	AddObject(worldItem, itemWorldId);
 }
 
 void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
@@ -296,6 +326,7 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 		return;
 
 	XMFLOAT3 pos     = my_player->GetPosition();
+	pos.y			 = max(pos.y, 0.0f);
 	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
 
 	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
@@ -367,6 +398,7 @@ void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item
 
 		if (itemList[i].item_type == ITEM_TYPE::TREASURE) {
 
+			// 아마 나중에 이부분은 삭제할 수도 있다. 보물 파밍 메커니즘 상의
 			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
 			TreasureInfo treasure{ itemList[i].item_world_id, pos };
 			treasures.push_back(treasure);

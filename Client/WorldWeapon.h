@@ -1,13 +1,12 @@
 #pragma once
 #include "WorldItem.h"
 
-class CWorldConsumable :
+class CWorldWeapon :
     public CWorldItem
 {
 public:
-public:
-    CWorldConsumable(std::shared_ptr<CItem> item);
-    ~CWorldConsumable();
+    CWorldWeapon(std::shared_ptr<CItem> item);
+    ~CWorldWeapon();
 
     virtual void Update(float dt) override;
 };

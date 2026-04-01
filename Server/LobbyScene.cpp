@@ -166,7 +166,7 @@ void CLobbyScene::SendPlayerToGameScene()
 					uint32 i = 0;
 					for (const auto& [id, treasure] : gameScene->item_manager->treasure_map) {
 						itemList[i].item_type     = ITEM_TYPE::TREASURE;
-						itemList[i].item_id       = 1001;
+						itemList[i].item_id       = 110;
 						itemList[i].item_world_id = treasure.world_id;
 						itemList[i].x             = treasure.treasure_pos.x;
 						itemList[i].y             = treasure.treasure_pos.y;

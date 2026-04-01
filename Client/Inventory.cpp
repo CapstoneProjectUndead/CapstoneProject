@@ -587,6 +587,9 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 
 void CInventory::DrawItemTooltip(CItem* item)
 {
+	if (!item)
+		return;
+
 	float scale    = G_RATIO_Y;
 	float imgSz    = 70.0f * scale;
 	float padX     = 12.0f * scale;

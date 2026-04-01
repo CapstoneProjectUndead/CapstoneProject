@@ -56,7 +56,7 @@ void CItemManager::SpawnWorldTreasures(const vector<MapGenerator::InstanceData>&
 {
 	for (const auto& inst : instanceData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			auto worldTreasure = SpawnItem(1001, inst.position);
+			auto worldTreasure = SpawnItem(110, inst.position);
 			TreasureInfo treasureInfo{ worldTreasure->world_id, inst.position };
 			treasure_map[worldTreasure->world_id] = treasureInfo;
 		}

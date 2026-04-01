@@ -378,6 +378,15 @@
     <ClInclude Include="QuickSlot.h">
       <Filter>QuickSlot</Filter>
     </ClInclude>
+    <ClInclude Include="WorldOther.h">
+      <Filter>Object\Item\World Item\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldTool.h">
+      <Filter>Object\Item\World Item\Equip</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldWeapon.h">
+      <Filter>Object\Item\World Item\Equip</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -586,6 +595,15 @@
     </ClCompile>
     <ClCompile Include="QuickSlot.cpp">
       <Filter>QuickSlot</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldOther.cpp">
+      <Filter>Object\Item\World Item\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldTool.cpp">
+      <Filter>Object\Item\World Item\Equip</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldWeapon.cpp">
+      <Filter>Object\Item\World Item\Equip</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

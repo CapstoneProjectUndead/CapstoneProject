@@ -68,8 +68,9 @@ COther::~COther()
 }
 
 // 보물
-CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade)
+CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade, uint32 _price)
 	: CItem(data)
+	, price(_price)
 	, grade(_grade)
 {
 }

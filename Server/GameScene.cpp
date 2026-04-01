@@ -30,8 +30,11 @@ void CGameScene::Initialize()
 {
 	CScene::Initialize();
 
-	item_manager->SpawnItem(25, XMFLOAT3{1, 0, 1});
-	item_manager->SpawnItem(24, XMFLOAT3{1, 0, 2 });
+	item_manager->SpawnItem(25, XMFLOAT3{ 1, 0, 1 });
+	item_manager->SpawnItem(24, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(45, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(5, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(1, XMFLOAT3{ 2, 0, 1 });
 }
 
 void CGameScene::Update(float elapsedTime)

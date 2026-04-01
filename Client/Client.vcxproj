@@ -248,7 +248,10 @@ call ClientCopy.bat</Command>
     <ClInclude Include="User.h" />
     <ClInclude Include="WorldConsumable.h" />
     <ClInclude Include="WorldItem.h" />
+    <ClInclude Include="WorldOther.h" />
+    <ClInclude Include="WorldTool.h" />
     <ClInclude Include="WorldTreasure.h" />
+    <ClInclude Include="WorldWeapon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
@@ -338,7 +341,10 @@ call ClientCopy.bat</Command>
     <ClCompile Include="User.cpp" />
     <ClCompile Include="WorldConsumable.cpp" />
     <ClCompile Include="WorldItem.cpp" />
+    <ClCompile Include="WorldOther.cpp" />
+    <ClCompile Include="WorldTool.cpp" />
     <ClCompile Include="WorldTreasure.cpp" />
+    <ClCompile Include="WorldWeapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />

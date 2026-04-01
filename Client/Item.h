@@ -13,6 +13,7 @@ public:
 	// UI에서 쉽게 가져다 쓸 수 있도록 Getter 제공
 	int                GetItemId() const { return base_data->item_id; }
 	ITEM_TYPE          GetItemType() const { return base_data->item_type; }
+	ITEM_SUB_TYPE	   GetSubType() const { return base_data->item_sub_type; }
 	float              GetWeight() const { return base_data->weight; }
 	const std::string& GetIconPath() const { return base_data->icon_path; }
 	const std::string& GetName() const { return base_data->item_name; }
@@ -33,8 +34,6 @@ class CEquipment : public CItem
 public:
 	CEquipment(const std::shared_ptr<ItemData> data);
 	virtual ~CEquipment() = 0;
-
-	ITEM_SUB_TYPE GetSubType() const { return base_data->item_sub_type; }
 };
 
 // 파밍 도구 (내구도 있음)
@@ -92,9 +91,10 @@ private:
 class CTreasure : public CItem
 {
 public:
-	CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade);
+	CTreasure::CTreasure(const std::shared_ptr<ItemData> data, TREASURE_GRADE _grade, uint32 _price);
 	virtual ~CTreasure() override;
 
 private:
+	const uint32		 price;
 	const TREASURE_GRADE grade;
 };

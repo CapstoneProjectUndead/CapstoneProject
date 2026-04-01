@@ -1,7 +1,7 @@
 #include "pch.h"
-//================
+//==================
 // 서버쪽 ItemFactory
-//================
+//==================
 #include "ItemFactory.h"
 #include "Item.h"
 #include <nlohmann/json.hpp>
@@ -68,14 +68,14 @@ namespace ItemFactory
 
 		switch (e.base.item_type) {
 		case ITEM_TYPE::EQUIPMENT:
-			if (e.base.item_sub_type >= ITEM_SUB_TYPE::BAT)
+			if (e.base.item_sub_type >= ITEM_SUB_TYPE::WEAPON)
 				return std::make_shared<CWeapon>(data);
 			else
 				return std::make_shared<CTool>(data, e.max_durability);
 		case ITEM_TYPE::CONSUMABLE:
 			return std::make_shared<CConsumable>(data, e.heal_amount, e.energy_amount, e.effect_amount);
 		case ITEM_TYPE::TREASURE:
-			return std::make_shared<CTreasure>(data, e.grade);
+			return std::make_shared<CTreasure>(data, e.grade, e.base.price);
 		case ITEM_TYPE::ETC:
 			return std::make_shared<COther>(data);
 		default:

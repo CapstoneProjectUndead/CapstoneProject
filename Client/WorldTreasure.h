@@ -7,7 +7,7 @@ class CWorldTreasure :
     public CWorldItem
 {
 public:
-    CWorldTreasure(std::shared_ptr<CItem> _item);
+    CWorldTreasure(std::shared_ptr<CItem> item);
     ~CWorldTreasure();
 
     virtual void Update(float dt) override;

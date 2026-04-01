@@ -1,13 +1,12 @@
 #pragma once
 #include "WorldItem.h"
 
-class CWorldConsumable :
+class CWorldTool :
     public CWorldItem
 {
 public:
-public:
-    CWorldConsumable(std::shared_ptr<CItem> item);
-    ~CWorldConsumable();
+    CWorldTool(std::shared_ptr<CItem> item);
+    ~CWorldTool();
 
     virtual void Update(float dt) override;
 };
