@@ -51,7 +51,7 @@ void CQuickSlot::Draw()
 	// 1~4 key: select slot
 	KEY keys[SLOT_COUNT] = { KEY::_1, KEY::_2, KEY::_3, KEY::_4 };
 	for (int i = 0; i < SLOT_COUNT; i++) {
-		if (KEY_TAP(keys[i]))
+		if (KEY_TAP(keys[i]) && slots[i].has_item)
 			selected_slot = i;
 	}
 }
@@ -110,9 +110,11 @@ void CQuickSlot::DrawSlotCells(float cellSz, float pad, float scale)
 		// 우클릭으로 슬롯 등록 해제
 		if (slots[i].has_item &&
 		    ImGui::IsItemHovered() &&
-		    ImGui::IsMouseClicked(ImGuiMouseButton_Right)) 
+		    ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 		{
 			slots[i] = SlotEntry{};
+			if (selected_slot == i)
+				selected_slot = -1;
 		}
 	}
 }
@@ -122,12 +124,19 @@ bool CQuickSlot::TryDropOnSlot(CItem* item, ImVec2 mousePos)
 	if (!item)
 		return false;
 
-	// 보물타입은 return!
-	if (item->GetItemType() == ITEM_TYPE::TREASURE)
-		return false;
-
 	if (slot_sz_cache <= 0.0f)
 		return false;
+
+	// 보물 타입은 퀵슬롯 영역 위에 드롭 시 등록 없이 true 반환 (버리기 방지)
+	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
+		for (int i = 0; i < SLOT_COUNT; i++) {
+			ImVec2 br = ImVec2(slot_tl[i].x + slot_sz_cache, slot_tl[i].y + slot_sz_cache);
+			if (mousePos.x >= slot_tl[i].x && mousePos.x <= br.x &&
+			    mousePos.y >= slot_tl[i].y && mousePos.y <= br.y)
+				return true;
+		}
+		return false;
+	}
 
 	for (int i = 0; i < SLOT_COUNT; i++) {
 		ImVec2 br = ImVec2(slot_tl[i].x + slot_sz_cache, slot_tl[i].y + slot_sz_cache);
@@ -158,6 +167,8 @@ void CQuickSlot::OnItemRemovedFromInventory(uint32 inventoryId)
 	for (int i = 0; i < SLOT_COUNT; i++) {
 		if (slots[i].has_item && slots[i].inv_id == inventoryId) {
 			slots[i] = SlotEntry{};
+			if (selected_slot == i)
+				selected_slot = -1;
 		}
 	}
 }

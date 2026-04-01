@@ -155,7 +155,7 @@ void CInventory::BeginDrawInventory()
 				handled_by_quickslot = quick_slot->TryDropOnSlot(dragged_item, mp);
 			}
 
-			if (!handled_by_quickslot && dragged_item->GetItemType() != ITEM_TYPE::TREASURE) {
+			if (!handled_by_quickslot) {
 				if (g_is_single) {
 					auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
 						return pair.second.get() == dragged_item;
@@ -531,7 +531,7 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 							is_dragging  = true;
 							dragged_item = filtered[i];
 						}
-						if (!is_dragging && ImGui::IsItemHovered())
+						if (!is_dragging && ImGui::IsItemHovered() && type != ITEM_TYPE::TREASURE)
 							DrawItemTooltip(filtered[i]);
 					}
 				}
