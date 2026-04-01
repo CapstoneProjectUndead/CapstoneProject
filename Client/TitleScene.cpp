@@ -145,15 +145,24 @@ void CTitleScene::DrawTitle()
         ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
     );
 
-    if (CImGuiManager::vineritc_font) {
+    if (CImGuiManager::creepster_font) {
         float fontSize = 270.0f * G_RATIO_Y;
-        ImFont* font = CImGuiManager::vineritc_font;
+        ImFont* font = CImGuiManager::creepster_font;
         ImVec2 textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, "UNDEAD");
         ImVec2 pos = ImVec2(
             (screenSize.x - textSize.x) * 0.5f,
             screenSize.y * 0.3f - textSize.y * 0.5f
         );
-        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, pos, IM_COL32(204, 0, 0, 255), "UNDEAD");
+        // 보라 그림자 6겹 (멀수록 어둡고 투명)
+        float s = G_RATIO_Y;
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 22.0f * s, pos.y + 22.0f * s), IM_COL32( 60, 20,  90,  80), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 18.0f * s, pos.y + 18.0f * s), IM_COL32( 80, 30, 110, 100), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 14.0f * s, pos.y + 14.0f * s), IM_COL32(100, 40, 140, 130), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 10.0f * s, pos.y + 10.0f * s), IM_COL32(130, 60, 170, 155), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x +  6.0f * s, pos.y +  6.0f * s), IM_COL32(155, 80, 200, 180), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x +  3.0f * s, pos.y +  3.0f * s), IM_COL32(180, 100, 220, 210), "UNDEAD");
+        // 초록 메인 텍스트
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, pos, IM_COL32(100, 220, 80, 255), "UNDEAD");
     }
 }
 

@@ -16,6 +16,7 @@ bool CImGuiManager::need_reset_focus = false;
 ImFont* CImGuiManager::vineritc_font = nullptr;
 ImFont* CImGuiManager::elephnt_font = nullptr;
 ImFont* CImGuiManager::bold_font = nullptr;
+ImFont* CImGuiManager::creepster_font = nullptr;
 
 CImGuiManager::CImGuiManager()
 {
@@ -28,21 +29,22 @@ CImGuiManager::~CImGuiManager()
 
 void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat)
 {
-    // 1. ImGui ÄÁÅØ½ºÆ® »ı¼º
+    // 1. ImGui ì»¨í…ìŠ¤íŠ¸ ìƒì„±
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsLight();
 
-    // ÆùÆ® ·Îµå
+    // í°íŠ¸ ë¡œë“œ
     io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     vineritc_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
     elephnt_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
     bold_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgunbd.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+    creepster_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\Creepster-Regular.ttf", 270.0f);
 
     io.Fonts->Build();
 
-    // Win32 & DX12 ÃÊ±âÈ­
+    // Win32 & DX12 ì´ˆê¸°í™”
     ImGui_ImplWin32_Init(hwnd);
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
@@ -64,7 +66,7 @@ void CImGuiManager::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // ÇØ»óµµ°¡ 0ÀÏ ¶§´Â ImGui Update¸¦ ÇÏÁö ¾Ê´Â´Ù.
+    // í•´ìƒë„ê°€ 0ì¼ ë•ŒëŠ” ImGui Updateë¥¼ í•˜ì§€ ì•ŠëŠ”ë‹¤.
     if (ImGui::GetIO().DisplaySize.x <= 0.0f || ImGui::GetIO().DisplaySize.y <= 0.0f)
         return;
 
@@ -124,7 +126,7 @@ void CImGuiManager::EnableIME(HWND hwnd)
 void CImGuiManager::ClearFocus(HWND hwnd)
 {
     need_reset_focus = true;
-    DisableIME(hwnd); // Áï½Ã Â÷´Ü
+    DisableIME(hwnd); // ì¦‰ì‹œ ì°¨ë‹¨
 }
 
 void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indicator_radius, const ImVec4& main_color, const ImVec4& backdrop_color, const int circle_count, const float speed)
@@ -161,43 +163,43 @@ void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indica
 
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size)
 {
-    // 1. ÇöÀç Ä¿¼­ À§Ä¡(¹öÆ°ÀÌ ±×·ÁÁú À§Ä¡)¸¦ ÀúÀåÇØµÓ´Ï´Ù.
+    // 1. í˜„ì¬ ì»¤ì„œ ìœ„ì¹˜(ë²„íŠ¼ì´ ê·¸ë ¤ì§ˆ ìœ„ì¹˜)ë¥¼ ì €ì¥í•´ë‘¡ë‹ˆë‹¤.
     ImVec2 p = ImGui::GetCursorPos();
 
-    // 2. [1Ãş] ÀÌ¹ÌÁö¸¦ ±×¸³´Ï´Ù.
-    // ÅØ½ºÃ³°¡ ÀÖÀ¸¸é ±×¸®°í, ¾øÀ¸¸é(0ÀÌ¸é) ±×³É ºó °ø°£¸¸ Â÷ÁöÇÏ°Ô µÓ´Ï´Ù.
+    // 2. [1ì¸µ] ì´ë¯¸ì§€ë¥¼ ê·¸ë¦½ë‹ˆë‹¤.
+    // í…ìŠ¤ì²˜ê°€ ìˆìœ¼ë©´ ê·¸ë¦¬ê³ , ì—†ìœ¼ë©´(0ì´ë©´) ê·¸ëƒ¥ ë¹ˆ ê³µê°„ë§Œ ì°¨ì§€í•˜ê²Œ ë‘¡ë‹ˆë‹¤.
     if (texturePtr != 0) {
         ImGui::Image((ImTextureID)texturePtr, size);
     }
     else {
-        // ÀÌ¹ÌÁö°¡ ¾ÆÁ÷ ·Îµå ¾È µÆÀ» ¶§¸¦ ´ëºñÇØ Åõ¸í ¹Ú½º Ã³¸®
+        // ì´ë¯¸ì§€ê°€ ì•„ì§ ë¡œë“œ ì•ˆ ëì„ ë•Œë¥¼ ëŒ€ë¹„í•´ íˆ¬ëª… ë°•ìŠ¤ ì²˜ë¦¬
         ImGui::Dummy(size);
     }
 
-    // 3. [2Ãş] Ä¿¼­¸¦ ´Ù½Ã ¾Æ±î ÀúÀåÇÑ À§Ä¡(ÀÌ¹ÌÁö ½ÃÀÛÁ¡)·Î µÇµ¹¸³´Ï´Ù.
-    // ÀÌ°É ¾È ÇÏ¸é ¹öÆ°ÀÌ ÀÌ¹ÌÁö ¾Æ·¡¿¡ ±×·ÁÁı´Ï´Ù.
+    // 3. [2ì¸µ] ì»¤ì„œë¥¼ ë‹¤ì‹œ ì•„ê¹Œ ì €ì¥í•œ ìœ„ì¹˜(ì´ë¯¸ì§€ ì‹œì‘ì )ë¡œ ë˜ëŒë¦½ë‹ˆë‹¤.
+    // ì´ê±¸ ì•ˆ í•˜ë©´ ë²„íŠ¼ì´ ì´ë¯¸ì§€ ì•„ë˜ì— ê·¸ë ¤ì§‘ë‹ˆë‹¤.
     ImGui::SetCursorPos(p);
 
-    // 4. [3Ãş] Åõ¸í ¹öÆ°À» ±×¸³´Ï´Ù.
-    // ¹è°æ»öÀ» Åõ¸í(Alpha=0)ÇÏ°Ô ÇØ¼­ µÚ¿¡ ÀÖ´Â ÀÌ¹ÌÁö°¡ º¸ÀÌ°Ô ÇÕ´Ï´Ù.
+    // 4. [3ì¸µ] íˆ¬ëª… ë²„íŠ¼ì„ ê·¸ë¦½ë‹ˆë‹¤.
+    // ë°°ê²½ìƒ‰ì„ íˆ¬ëª…(Alpha=0)í•˜ê²Œ í•´ì„œ ë’¤ì— ìˆëŠ” ì´ë¯¸ì§€ê°€ ë³´ì´ê²Œ í•©ë‹ˆë‹¤.
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
-    // ¸¶¿ì½º ¿Ã·ÈÀ» ¶§ »ìÂ¦ ÇÏ¾é°Ô ºû³ª°Ô (Highlight È¿°ú)
+    // ë§ˆìš°ìŠ¤ ì˜¬ë ¸ì„ ë•Œ ì‚´ì§ í•˜ì–—ê²Œ ë¹›ë‚˜ê²Œ (Highlight íš¨ê³¼)
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.2f));
 
-    // ´­·¶À» ¶§ Á» ´õ ÁøÇÏ°Ô
+    // ëˆŒë €ì„ ë•Œ ì¢€ ë” ì§„í•˜ê²Œ
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.4f));
 
-    // ½ÇÁ¦ ¹öÆ° »ı¼º (ÀÌ¸§°ú Å©±â´Â ±×´ë·Î Àü´Ş)
+    // ì‹¤ì œ ë²„íŠ¼ ìƒì„± (ì´ë¦„ê³¼ í¬ê¸°ëŠ” ê·¸ëŒ€ë¡œ ì „ë‹¬)
     bool clicked = ImGui::Button(label, size);
 
-    // ½ºÅ¸ÀÏ º¹±¸
+    // ìŠ¤íƒ€ì¼ ë³µêµ¬
     ImGui::PopStyleColor(3);
 
-    return clicked; // Å¬¸¯ ¿©ºÎ ¹İÈ¯
+    return clicked; // í´ë¦­ ì—¬ë¶€ ë°˜í™˜
 }
 
-// ÇïÆÛ ÇÔ¼ö ±¸Çö
+// í—¬í¼ í•¨ìˆ˜ êµ¬í˜„
 std::string CP949ToUTF8(const std::string& strCP949)
 {
     if (strCP949.empty()) return "";
@@ -218,14 +220,14 @@ std::string UTF8ToCP949(const std::string& utf8Str)
     if (utf8Str.empty()) 
         return "";
 
-    // 1. UTF-8 -> Unicode (WideChar) º¯È¯
-    // ÇÊ¿äÇÑ ¹öÆÛ Å©±â °è»ê
+    // 1. UTF-8 -> Unicode (WideChar) ë³€í™˜
+    // í•„ìš”í•œ ë²„í¼ í¬ê¸° ê³„ì‚°
     int nLen = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), NULL, 0);
     std::wstring wstr(nLen, 0);
     MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), &wstr[0], nLen);
 
-    // 2. Unicode -> CP949 (ANSI) º¯È¯
-    // 949´Â ÇÑ±¹¾î ÄÚµå ÆäÀÌÁöÀÔ´Ï´Ù.
+    // 2. Unicode -> CP949 (ANSI) ë³€í™˜
+    // 949ëŠ” í•œêµ­ì–´ ì½”ë“œ í˜ì´ì§€ì…ë‹ˆë‹¤.
     int nLen2 = WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
     std::string strCP949(nLen2, 0);
     WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), &strCP949[0], nLen2, NULL, NULL);
