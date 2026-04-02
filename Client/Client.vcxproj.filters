@@ -127,6 +127,9 @@
     <Filter Include="QuickSlot">
       <UniqueIdentifier>{28fa96f2-b7ba-4f34-95e3-4ef5b5c67aa0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ResourceManager">
+      <UniqueIdentifier>{d848fd9d-ccfb-451b-a00c-0e009ed4558b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -387,6 +390,9 @@
     <ClInclude Include="WorldWeapon.h">
       <Filter>Object\Item\World Item\Equip</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -604,6 +610,9 @@
     </ClCompile>
     <ClCompile Include="WorldWeapon.cpp">
       <Filter>Object\Item\World Item\Equip</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>ResourceManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

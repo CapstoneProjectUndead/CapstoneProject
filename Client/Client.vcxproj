@@ -185,6 +185,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="HumanMonster.h" />
     <ClInclude Include="IdleState.h" />
     <ClInclude Include="ImGuiManager.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
     <ClInclude Include="ImGui\imgui_impl_dx12.h" />
@@ -279,6 +280,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="HumanMonster.cpp" />
     <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />

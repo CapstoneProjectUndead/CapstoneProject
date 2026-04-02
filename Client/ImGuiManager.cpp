@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "ImGuiManager.h"
+#include <WICTextureLoader.h>
+#include "d3dx12.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
 #include "ServerSession.h"
@@ -27,7 +29,7 @@ CImGuiManager::~CImGuiManager()
     Release();
 }
 
-void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat)
+void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* cmdQueue, int numFramesInFlight, DXGI_FORMAT rtvFormat)
 {
     // 1. ImGui 컨텍스트 생성
     IMGUI_CHECKVERSION();
@@ -42,22 +44,152 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight,
     bold_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgunbd.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     creepster_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\Creepster-Regular.ttf", 270.0f);
 
-    io.Fonts->Build();
-
-    // Win32 & DX12 초기화
+    // Win32 초기화
     ImGui_ImplWin32_Init(hwnd);
 
+    // SRV 힙 생성 (64슬롯: 폰트 1개 + 유저 텍스처 최대 63개)
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    desc.NumDescriptors = 1;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = MAX_DESCRIPTORS;
+    desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&srv_desc_heap));
 
-    ImGui_ImplDX12_Init(device, numFramesInFlight,
-        rtvFormat,
-        srv_desc_heap,
-        srv_desc_heap->GetCPUDescriptorHandleForHeapStart(),
-        srv_desc_heap->GetGPUDescriptorHandleForHeapStart());
+    descriptor_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    next_slot = 0;
+
+    // DX12 백엔드 초기화 (새 API: CommandQueue + 슬롯 할당 콜백 사용)
+    ImGui_ImplDX12_InitInfo initInfo = {};
+    initInfo.Device           = device;
+    initInfo.CommandQueue     = cmdQueue;
+    initInfo.NumFramesInFlight = numFramesInFlight;
+    initInfo.RTVFormat        = rtvFormat;
+    initInfo.SrvDescriptorHeap = srv_desc_heap;
+
+    // ImGui 폰트 텍스처용 슬롯 할당 콜백 (캡처 없는 람다 → 함수 포인터로 변환 가능)
+    initInfo.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* cpu, D3D12_GPU_DESCRIPTOR_HANDLE* gpu) {
+        CImGuiManager::GetInstance().AllocDescriptor(cpu, gpu);
+    };
+
+    initInfo.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE) {
+        // 단순 선형 할당 방식 — 개별 슬롯 해제 불필요
+    };
+
+    ImGui_ImplDX12_Init(&initInfo);
+}
+
+void CImGuiManager::AllocDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpu, D3D12_GPU_DESCRIPTOR_HANDLE* gpu)
+{
+    *cpu = GetCPUHandle(next_slot);
+    *gpu = GetGPUHandle(next_slot);
+    next_slot++;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CImGuiManager::GetCPUHandle(UINT index) const
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = srv_desc_heap->GetCPUDescriptorHandleForHeapStart();
+    handle.ptr += index * descriptor_size;
+    return handle;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE CImGuiManager::GetGPUHandle(UINT index) const
+{
+    D3D12_GPU_DESCRIPTOR_HANDLE handle = srv_desc_heap->GetGPUDescriptorHandleForHeapStart();
+    handle.ptr += index * descriptor_size;
+    return handle;
+}
+
+void CImGuiManager::LoadTexture(ID3D12Device* device, ID3D12CommandQueue* cmdQueue,
+                                 const std::string& name, const std::wstring& path)
+{
+    if (textures.count(name))
+        return; // 중복 로드 방지
+
+    // WIC는 COM 기반 — 초기화가 안 된 상태면 첫 로드가 E_NOINTERFACE로 실패함
+    HRESULT res = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    assert(SUCCEEDED(res) && "CoInitializeEx Failed");
+
+    // 1. WIC로 PNG 디코딩 + D3D12 리소스 헤더 생성 (CPU 단계)
+    ComPtr<ID3D12Resource> resource;
+    std::unique_ptr<uint8_t[]> decodedData;
+    D3D12_SUBRESOURCE_DATA subresourceData;
+
+    HRESULT hr = DirectX::LoadWICTextureFromFileEx(
+        device, path.c_str(),
+        0,
+        D3D12_RESOURCE_FLAG_NONE,
+        DirectX::WIC_LOADER_FORCE_RGBA32,
+        resource.GetAddressOf(),
+        decodedData, subresourceData);
+
+    if (FAILED(hr))
+        return;
+
+    // 2. 업로드 버퍼 생성
+    const UINT64 bufferSize = GetRequiredIntermediateSize(resource.Get(), 0, 1);
+
+    CD3DX12_HEAP_PROPERTIES uploadHeap(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC   bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
+    ComPtr<ID3D12Resource> uploadBuffer;
+    hr = device->CreateCommittedResource(
+        &uploadHeap, D3D12_HEAP_FLAG_NONE,
+        &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr, IID_PPV_ARGS(&uploadBuffer));
+
+    if (FAILED(hr))
+        return;
+
+    // 3. 임시 커맨드 리스트로 GPU에 업로드
+    ComPtr<ID3D12CommandAllocator>    tempAlloc;
+    ComPtr<ID3D12GraphicsCommandList> tempList;
+    device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&tempAlloc));
+    device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, tempAlloc.Get(), nullptr, IID_PPV_ARGS(&tempList));
+
+    UpdateSubresources(tempList.Get(), resource.Get(), uploadBuffer.Get(), 0, 0, 1, &subresourceData);
+
+    // 업로드 완료 후 픽셀 셰이더 읽기 상태로 전환
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        resource.Get(),
+        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    tempList->ResourceBarrier(1, &barrier);
+    tempList->Close();
+
+    ID3D12CommandList* cmdLists[] = { tempList.Get() };
+    cmdQueue->ExecuteCommandLists(1, cmdLists);
+
+    // GPU 업로드 완료 대기
+    ComPtr<ID3D12Fence> uploadFence;
+    device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence));
+    HANDLE fenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    cmdQueue->Signal(uploadFence.Get(), 1);
+    uploadFence->SetEventOnCompletion(1, fenceEvent);
+    WaitForSingleObject(fenceEvent, INFINITE);
+    CloseHandle(fenceEvent);
+
+    // 4. SRV 생성 및 힙 슬롯에 등록
+    UINT slot = next_slot++;
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format                  = resource->GetDesc().Format;
+    srvDesc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels     = resource->GetDesc().MipLevels;
+    device->CreateShaderResourceView(resource.Get(), &srvDesc, GetCPUHandle(slot));
+
+    UITexture uiTex;
+    uiTex.resource = resource;
+    uiTex.tex_id   = (ImTextureID)GetGPUHandle(slot).ptr;
+    textures[name] = std::move(uiTex);
+}
+
+ImTextureID CImGuiManager::GetTexture(const std::string& name) const
+{
+    auto it = textures.find(name);
+    if (it == textures.end())
+        return 0;
+
+    return it->second.tex_id;
 }
 
 void CImGuiManager::Update()

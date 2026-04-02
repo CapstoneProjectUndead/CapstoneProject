@@ -7,8 +7,8 @@
 #include <imm.h>
 #pragma comment(lib, "imm32.lib")
 
-// ���� �Լ� 
-// ����: (�ؽ�ó �ڵ�(ptr), ��ư �ؽ�Ʈ, ��ư ũ��)
+// 헬퍼 함수 
+// 인자: (텍스처 핸들(ptr), 버튼 텍스트, 버튼 크기)
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size);
 std::string CP949ToUTF8(const std::string& strCP949);
 std::string UTF8ToCP949(const std::string& utf8Str);
@@ -36,10 +36,18 @@ public:
     static bool need_reset_focus;
 
 public:
-    void Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat);
+    void Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* cmdQueue, int numFramesInFlight, DXGI_FORMAT rtvFormat);
     void Update();
     void Render(ID3D12GraphicsCommandList* cmdList);
     void Release();
+
+    // 4월 3일 추가
+    // PNG/JPG 등 WIC 포맷 텍스처를 ImGui 힙에 로드. name은 이후 GetTexture()로 참조할 키.
+    void LoadTexture(ID3D12Device* device, ID3D12CommandQueue* cmdQueue,
+                     const std::string& name, const std::wstring& path);
+
+    // 로드된 텍스처의 ImTextureID 반환. 없으면 0.
+    ImTextureID GetTexture(const std::string& name) const;
 
     static void ResetIMEState(HWND hwnd);
     static void DisableIME(HWND hwnd);
@@ -53,6 +61,23 @@ public:
 
 private:
     ID3D12DescriptorHeap*   srv_desc_heap = nullptr;
-    static HIMC             default_IMC; // IME �ڵ� ����
-    
+    static HIMC             default_IMC; // IME 핸들 저장
+
+    // 4월 3일 추가
+    // 유저 텍스처 힙 관리
+    static const UINT       MAX_DESCRIPTORS = 64;
+    UINT                    descriptor_size = 0;
+    UINT                    next_slot       = 0;
+
+    struct UITexture 
+    {
+        ComPtr<ID3D12Resource> resource;
+        ImTextureID            tex_id = 0;
+    };
+
+    std::unordered_map<std::string, UITexture> textures;
+
+    void                          AllocDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpu, D3D12_GPU_DESCRIPTOR_HANDLE* gpu);
+    D3D12_CPU_DESCRIPTOR_HANDLE   GetCPUHandle(UINT index) const;
+    D3D12_GPU_DESCRIPTOR_HANDLE   GetGPUHandle(UINT index) const;
 };

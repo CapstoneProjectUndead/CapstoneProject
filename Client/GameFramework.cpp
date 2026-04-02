@@ -13,6 +13,7 @@
 #include "LobbyScene.h"
 
 #include "ImGuiManager.h"
+#include "ResourceManager.h"
 #include "TitleScene.h"
 #include "CustomScene.h"
 #include "GameScene.h"
@@ -61,7 +62,10 @@ bool CGameFramework::OnCreate()
 	// ImGuiManager 초기화
 	// bufferCount: 더블 버퍼링이면 2, 트리플이면 3 (SwapchainDesc 확인 필요)
 	// format: 보통 DXGI_FORMAT_R8G8B8A8_UNORM
-	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
+	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, GET_CMD_QUEUE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+	// 텍스처 로드
+	CResourceManager::GetInstance().LoadAll(d3d_device.Get(), command_queue.Get());
 
 	graphics_memory = std::make_unique<GraphicsMemory>(d3d_device.Get());
 
