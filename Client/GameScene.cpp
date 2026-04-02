@@ -105,11 +105,11 @@ void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 
+	ProcessPickup();
+
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	};
-
-	ProcessPickup();
 }
 
 void CGameScene::DrawUI()
