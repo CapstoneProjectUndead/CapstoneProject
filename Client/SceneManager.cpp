@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
@@ -39,6 +39,10 @@ void CSceneManager::Init(ID3D12Device* device)
 		auto instRenderer = std::make_unique<CInstRenderer>();
 		instRenderer->Initialize(device, 5000);
 		renderers["inst"] = std::move(instRenderer);
+
+		auto aniRenderer = std::make_unique<CAniRenderer>();
+		aniRenderer->Initialize(device, 100);
+		renderers["skinning"] = std::move(aniRenderer);
 
 		auto uiRenderer = std::make_unique<CUIRenderer>();
 		uiRenderer->Initialize(device, 100);

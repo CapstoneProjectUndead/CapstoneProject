@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Shader.h"
 #include "Object.h"
 #include "GeometryLoader.h"
@@ -337,7 +337,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	rootParameters[3].Descriptor.RegisterSpace = 1;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// finalBoneTransforms
+	// gAnimBuffer
 	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	rootParameters[4].Descriptor.ShaderRegister = 1;
 	rootParameters[4].Descriptor.RegisterSpace = 1;

@@ -318,9 +318,6 @@
     <ClInclude Include="Animator.h">
       <Filter>Component\Animation</Filter>
     </ClInclude>
-    <ClInclude Include="SkinnedData.h">
-      <Filter>Component\Animation</Filter>
-    </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Component\Rendering</Filter>
     </ClInclude>
@@ -356,6 +353,12 @@
     </ClInclude>
     <ClInclude Include="DataManager.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationManager.h">
+      <Filter>Component\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUBufferStruct.h">
+      <Filter>Component\Rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -521,9 +524,6 @@
     <ClCompile Include="Animator.cpp">
       <Filter>Component\Animation</Filter>
     </ClCompile>
-    <ClCompile Include="SkinnedData.cpp">
-      <Filter>Component\Animation</Filter>
-    </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>Component\Rendering</Filter>
     </ClCompile>
@@ -559,6 +559,12 @@
     </ClCompile>
     <ClCompile Include="DataManager.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationManager.cpp">
+      <Filter>Component\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUBufferStruct.cpp">
+      <Filter>Component\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

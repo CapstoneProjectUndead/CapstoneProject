@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
 
@@ -249,7 +249,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 				obj->SetComponent(copyCollider);
 				CPhysicsManager::GetInstance().SetCollider(copyCollider);
 			}
-			obj->SetShdaer("inst");
+			obj->SetShader("inst");
 
 			objects.push_back(obj);
 		}
@@ -285,7 +285,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 		XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 		XMStoreFloat4x4(&obj->world_matrix, world);
 
-		obj->SetShdaer("inst");
+		obj->SetShader("inst");
 
 		objects.push_back(obj);
 	}
@@ -350,11 +350,9 @@ void CObjectFactory::InitializeCharacterComponents(std::shared_ptr<CCharacter> c
 	// 애니메이터 설정
 	if (!animFileName.empty()) {
 		auto animator = std::make_shared<CAnimatorComponent>();
-		animator->Initialize(modelFileName, animFileName);
 		character->SetComponent(animator);
 	}
 
-	character->SetShdaer("inst");
 	character->Initialize(GET_DEVICE, GET_CMD_LIST);
 }
 
@@ -376,6 +374,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
+
 		// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 		auto CreateUnit = [&](const std::string& texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
@@ -433,11 +432,12 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 		}
 	};
 
+	character->SetShader("skinning");
 	InitializeCharacterComponents(
 		character,
 		heapManager,
 		fileName,
-		"../Modeling/undead_ani.bin",
+		"../Modeling/undead_ani_baking.bin",
 		undeadProcessor,
 		true
 	);
@@ -475,6 +475,7 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 		undeadProcessor
 	);
 
+	character->SetShader("inst");
 	return character;
 }
 

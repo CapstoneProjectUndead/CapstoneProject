@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "AnimationManager.h"
 
 class BinaryReader {
 public:

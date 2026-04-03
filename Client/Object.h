@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CComponent;
 class CShader;
@@ -48,7 +48,7 @@ public:
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }
-	void SetShdaer(const std::string& name) { shader_name = name; }
+	void SetShader(const std::string& name) { shader_name = name; }
 	std::string GetShader() const { return shader_name; }
 
 	XMFLOAT3 GetVelocity() { return velocity; }

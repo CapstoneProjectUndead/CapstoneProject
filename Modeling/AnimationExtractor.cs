@@ -54,7 +54,7 @@ public class BinaryModelExporter : EditorWindow
 
         CacheBindPoseWorld(smr.bones);
 
-        WriteAnimationData(assetPath, root, smr.bones);
+        WriteBakedAnimationClip(assetPath, root, smr.bones);
 
         bw.Close();
         Debug.Log("Export 완료: " + savePath);
@@ -68,6 +68,57 @@ public class BinaryModelExporter : EditorWindow
         bindWorld = new Matrix4x4[bones.Length];
         for (int i = 0; i < bones.Length; i++)
             bindWorld[i] = bones[i].localToWorldMatrix;
+    }
+
+    // boneMatrix baking(60fps 고정)
+    void WriteBakedAnimationClip(string assetPath, Transform root, Transform[] bones)
+    {
+        Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+        List<AnimationClip> clips = new List<AnimationClip>();
+
+        foreach (var a in allAssets)
+        {
+            if (a is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+                clips.Add(clip);
+        }
+
+        WriteInteger("<AnimationClipCount>:", clips.Count);
+
+        // SkinnedMeshRenderer에서 BindPose(Offset Matrices) 가져오기
+        SkinnedMeshRenderer smr = fbxAsset.GetComponentInChildren<SkinnedMeshRenderer>();
+        Matrix4x4[] bindPoses = smr.sharedMesh.bindposes;
+
+        foreach (var clip in clips)
+        {
+            WriteString("<AnimationClip>:", clip.name);
+
+            float fps = 60.0f;
+            int totalFrames = Mathf.CeilToInt(clip.length * fps) + 1;
+
+            WriteFloat("<ClipLength>:", clip.length);
+            WriteInteger("<TotalFrames>:", totalFrames);
+
+            for (int f = 0; f < totalFrames; f++)
+            {
+                float time = f * (1.0f / fps);
+                // 유니티 엔진이 해당 시간의 애니메이션 상태를 샘플링하도록 강제함
+                clip.SampleAnimation(fbxAsset, time);
+
+                //모든 본에 대해 최종 행렬 계산 및 기록
+                for (int i = 0; i < bones.Length; i++)
+                {
+                    // Root의 역행렬을 곱해 캐릭터 로컬 좌표계로 변환 (World -> Root Local)
+                    Matrix4x4 rootInv = fbxAsset.transform.worldToLocalMatrix;
+                    // 애니메이션된 본의 월드 행렬
+                    Matrix4x4 animWorld = bones[i].localToWorldMatrix;
+
+                    // 최종 행렬 = RootLocal * AnimWorld * OffsetMatrix(BindPose)
+                    Matrix4x4 finalMatrix = rootInv * animWorld * bindPoses[i];
+
+                    WriteMatrix(finalMatrix);
+                }
+            }
+        }
     }
 
     void WriteAnimationData(string assetPath, Transform root, Transform[] bones)
@@ -242,10 +293,11 @@ public class BinaryModelExporter : EditorWindow
 
     void WriteMatrix(Matrix4x4 m)
     {
-        bw.Write(m.m00); bw.Write(m.m10); bw.Write(m.m20); bw.Write(m.m30);
-        bw.Write(m.m01); bw.Write(m.m11); bw.Write(m.m21); bw.Write(m.m31);
-        bw.Write(m.m02); bw.Write(m.m12); bw.Write(m.m22); bw.Write(m.m32);
-        bw.Write(m.m03); bw.Write(m.m13); bw.Write(m.m23); bw.Write(m.m33);
+        // Row 순서대로
+        bw.Write(m.m00); bw.Write(m.m01); bw.Write(m.m02); bw.Write(m.m03);
+        bw.Write(m.m10); bw.Write(m.m11); bw.Write(m.m12); bw.Write(m.m13);
+        bw.Write(m.m20); bw.Write(m.m21); bw.Write(m.m22); bw.Write(m.m23);
+        bw.Write(m.m30); bw.Write(m.m31); bw.Write(m.m32); bw.Write(m.m33);
     }
 
     void WriteMatrixes(string header, Matrix4x4[] arr)

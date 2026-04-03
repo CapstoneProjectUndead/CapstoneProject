@@ -1,22 +1,15 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Animator.h"
-#include "GeometryLoader.h"
 #include "Object.h"
-#include "Movement.h"
 #include "Player.h"
 #include "Monster.h"
+#include "Movement.h"
+#include "AnimationManager.h"
+#include "GPUBufferStruct.h"
 
 CAnimatorComponent::CAnimatorComponent()
-	: head_position{&skinned.head_position }
+	: head_position{nullptr}
 {
-}
-
-// animator
-void CAnimatorComponent::Initialize(const std::string& charName, const std::string& AniName)
-{
-	CGeometryLoader::SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
-	auto animData = CGeometryLoader::LoadAnimations(AniName, skeleton.bone_names.size());
-	skinned.Set(skeleton.parent_index, skeleton.inverse_bind_pose, animData);
 }
 
 void CAnimatorComponent::Play(const std::string& name)
@@ -25,6 +18,23 @@ void CAnimatorComponent::Play(const std::string& name)
 		current_animation = name;
 		current_time = 0.0f;
 	}
+}
+
+AnimationData CAnimatorComponent::GetAnimationData()
+{
+	AnimationData data{};
+
+	// AnimationManager를 통해 현재 재생 중인 클립의 정보를 가져옴
+	auto& clip = CAnimationManager::GetInstance().GetClip(current_animation);
+
+	data.start_offset = clip.start_matrix_offset;
+	data.bone_count = clip.bone_count; // 혹은 미리 저장된 본 개수
+
+	// 60FPS 고정 샘플링이므로 현재 시간 기반 프레임 계산
+	uint32_t totalFrames = clip.total_frames;
+	data.cur_frame = (uint32_t)(current_time * 60.0f) % totalFrames;
+
+	return data;
 }
 
 void CAnimatorComponent::Update(float deltaTime)
@@ -52,16 +62,9 @@ void CAnimatorComponent::Update(float deltaTime)
 
 	current_time += deltaTime;
 
-	float start = skinned.GetClipStartTime(current_animation);
-	float end = skinned.GetClipEndTime(current_animation);
-
 	// 루프 처리
-	if (current_time > end)
-		current_time = start;
-
-	// 본 행렬 계산
-	final_transforms.resize(skinned.BoneCount());
-	skinned.GetFinalTransforms(current_animation, current_time, final_transforms, owner->pitch);
+	/*if (current_time > end)
+		current_time = start;*/
 }
 
 void CAnimatorComponent::UpdatePlayerAnimation()

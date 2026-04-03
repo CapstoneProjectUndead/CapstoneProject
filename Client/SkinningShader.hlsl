@@ -45,7 +45,7 @@ struct VS_OUTPUT
     float3 position_world : POSITION;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD;
-    nointerpolation uint mat_idx : MATINDEX;
+    nointerpolation uint instanceID : INSTANCEID;
 };
 
 struct MaterialData
@@ -56,15 +56,22 @@ struct MaterialData
     uint tex_idx;
 };
 
+struct AnimationData
+{
+    uint start_offset; // 클립 시작 위치
+    uint cur_frame; // 현재 프레임
+    uint bone_count; // 캐릭터의 본 개수
+};
+
 struct InstanceData
 {
     float4x4 world_matrix;
     MaterialData material;
-    uint bone_offset; // 이 인스턴스의 본 행렬들이 시작되는 위치 (Index)
+    AnimationData animation;
 };
 
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
-StructuredBuffer<float4x4> gFinalBoneTransforms : register(t1, space1);
+StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 
 Texture2D texDiffuse[50] : register(t0);
 SamplerState sample : register(s0);
@@ -76,11 +83,11 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     // inst Data Load
     InstanceData instData = gInstanceData[instanceID];
     float4x4 finalWorld = instData.world_matrix;
-    output.mat_idx = instData.material.tex_idx;
+    output.instanceID = instanceID;
 #ifdef SKINNED
-    uint offset = instData.bone_offset;
-    
-    float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    // boneIdx = 해당 클립의 시작점 (anim_start_offset) + 현재 프레임까지 건너뛰기 (cur_frame * bone_count) + 그 안에서 내 뼈의 번호 (input.bone_indices[i])
+    uint frameBaseOffset = instData.animation.start_offset + (instData.animation.cur_frame * instData.animation.bone_count);
+    float weights[4];
     weights[0] = input.bone_weights.x;
     weights[1] = input.bone_weights.y;
     weights[2] = input.bone_weights.z;
@@ -88,12 +95,15 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 
     float3 posL = float3(0.0f, 0.0f, 0.0f);
     float3 normalL = float3(0.0f, 0.0f, 0.0f);
+
     for (int i = 0; i < 4; ++i)
     {
-        // gFinalBoneTransforms[offset + 본_인덱스] 로 접근!
-        uint boneIdx = offset + input.bone_indices[i];
-        posL += weights[i] * mul(float4(input.position, 1.0f), gFinalBoneTransforms[boneIdx]).xyz;
-        normalL += weights[i] * mul(input.normal, (float3x3) gFinalBoneTransforms[boneIdx]);
+        // 최종 행렬 인덱스 계산
+        uint boneIdx = frameBaseOffset + input.bone_indices[i];
+        float4x4 boneMatrix = gAnimBuffer[boneIdx];
+
+        posL += weights[i] * mul(float4(input.position, 1.0f), boneMatrix).xyz;
+        normalL += weights[i] * mul(input.normal, (float3x3) boneMatrix);
     }
     
     input.position = posL;
@@ -110,10 +120,9 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     return output;
 }
 
-
 float4 PSMain(VS_OUTPUT input) : SV_TARGET
 {
-    MaterialData instMat = gInstanceData[input.mat_idx].material;
+    MaterialData instMat = gInstanceData[input.instanceID].material;
     // texture
     float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex) * instMat.albedo;
 

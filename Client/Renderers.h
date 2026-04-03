@@ -1,33 +1,9 @@
-﻿#pragma once
-#include "Material.h"
+#pragma once
+#include "GPUBufferStruct.h"
 
 class CMesh;
 class CRectangleMesh;
 class CBillboardMesh;
-
-// GPU에 넘겨줄 배열 구조체
-struct InstCB {
-    XMFLOAT4X4 world_matrix;
-    MaterialData material;
-    //UINT bone_offset;
-};
-
-struct UIInstCB {
-    XMFLOAT4X4 world_matrix; // UI의 위치, 크기, 회전이 담긴 행렬
-    MaterialData material;
-};
-
-struct BillboardInstCB {
-    XMFLOAT4X4 world_matrix;
-    MaterialData material;
-};
-
-struct TextInst {
-    std::wstring text;
-    XMFLOAT4X4 world_matrix;
-    XMFLOAT4 color;
-    bool is_billboard;
-};
 
 /*
 template은 컨테이너에 사용 불가
@@ -42,6 +18,7 @@ public:
     virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic) {};
     // white texture 사용(사용 시 힙 0번에 tex set)
     virtual void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) {};
+    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, AnimationData aniData) {};
 };
 
 template<typename T>
@@ -76,6 +53,12 @@ protected:
 
 class CInstRenderer : public CRenderer<InstCB> {
 public:
+    void Render(ID3D12GraphicsCommandList* cmdList) override;
+};
+
+class CAniRenderer : public CRenderer<AniCB> {
+public:
+    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, AnimationData aniData) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 };
 

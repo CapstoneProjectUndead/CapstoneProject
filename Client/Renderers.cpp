@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Renderers.h"
 #include "GameFramework.h"
 #include "Mesh.h"
@@ -6,6 +6,7 @@
 #include "SceneManager.h"
 #include "Camera.h"
 #include "ResourceUploadBatch.h"
+#include "AnimationManager.h"
 //#include <pix.h>    // PIX 디버깅용
 
 template<typename T>
@@ -79,7 +80,6 @@ inline void CRenderer<T>::RenderBatches(ID3D12GraphicsCommandList* commandList, 
         key->Render(commandList, count);
         currentOffset += count;
     }
-
     dynamic_batches.clear();
 }
 
@@ -124,6 +124,34 @@ inline void CRenderer<T>::AddInstance(CMesh* mesh, const XMFLOAT4 color, const X
 // CInstRenderer
 void CInstRenderer::Render(ID3D12GraphicsCommandList* cmdList)
 {
+    RenderBatches(cmdList, 3);
+}
+
+// CAniRenderer
+void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, AnimationData aniData)
+{
+    AniCB data;
+    if (material)
+        data.material = material->GetMaterial()->GetMaterialData();
+    else {
+        data.material = MaterialData{};
+        data.material.albedo = { 1, 1, 0, 1 };
+        data.material.tex_idx = 0;  // texture는 white
+    }
+    data.ani_data = aniData;
+
+    XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
+    XMMATRIX rotation = XMMatrixRotationY(XM_PI); // 180도
+    XMStoreFloat4x4(&data.world_matrix, rotation * worldT);
+
+    dynamic_batches[mesh].push_back(data);
+}
+
+void CAniRenderer::Render(ID3D12GraphicsCommandList* cmdList)
+{
+    auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
+
+    cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
     RenderBatches(cmdList, 3);
 }
 
@@ -226,10 +254,8 @@ void CTextRenderer::Render(ID3D12GraphicsCommandList* cmdList)
             default_font->DrawString(sprite_batch.get(), item.text.c_str(), pos, XMLoadFloat4(&item.color));
         }
     }
-    sprite_batch->End();
 
     // 3D 빌보드용 렌더링
-    sprite_batch->Begin(cmdList, SpriteSortMode_Deferred);
     for (auto& item : textes) {
         if (item.is_billboard) {
             // 3D 월드 좌표 추출
@@ -278,3 +304,4 @@ void CTextRenderer::Render(ID3D12GraphicsCommandList* cmdList)
 template class CRenderer<InstCB>;
 template class CRenderer<UIInstCB>;
 template class CRenderer<BillboardInstCB>;
+template class CRenderer<AniCB>;

@@ -18,6 +18,7 @@
 #include "GameFramework.h"
 
 #include "Movement.h"	// 나중에 삭제
+#include "AnimationManager.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -82,6 +83,10 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		my_player->GetComponent<CMovementComponent>()->is_fly = true;
+		{
+			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char.bin", "../Modeling/undead_ani_baking.bin");
+			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
+		}
 	}
 
 	if (!camera) {

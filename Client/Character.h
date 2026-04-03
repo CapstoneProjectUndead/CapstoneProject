@@ -1,6 +1,5 @@
-﻿#pragma once
+#pragma once
 #include "Object.h"
-#include "SkinnedData.h"
 
 class CMaterialComponent;
 class CMeshComponent;
