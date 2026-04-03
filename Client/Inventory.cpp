@@ -671,25 +671,44 @@ void CInventory::DrawItemTooltip(CItem* item)
 
 			auto* tool = dynamic_cast<CTool*>(item);
 			if (tool) {
-				// 도구: 내구도 표시
+				// 도구: 설명 표시
+				// 도구: 설명 표시
+				const std::string& desc = tool->GetDescription();
+				if (!desc.empty()) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.78f, 0.88f, 1.0f, 0.92f));
+					ImGui::TextWrapped("%s", desc.c_str());
+					ImGui::PopStyleColor();
+
+					ImGui::Dummy(ImVec2(0.0f, 3.0f * scale));
+					ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.45f, 0.45f, 0.50f, 0.5f));
+					ImGui::Separator();
+					ImGui::PopStyleColor();
+					ImGui::Dummy(ImVec2(0.0f, 4.0f * scale));
+				}
+
+				// 내구도 표시
 				uint32 cur = tool->GetCurrentDurability();
 				uint32 max = tool->GetMaxDurability();
 				float  ratio = (max > 0) ? (float)cur / (float)max : 0.0f;
 
-				// 내구도 레이블
-				const char* durLabel = (const char*)u8"내구도";
-				ImGui::TextUnformatted(durLabel);
-
-				// 수치 텍스트
-				char durBuf[32];
-				snprintf(durBuf, sizeof(durBuf), "%u / %u", cur, max);
-				ImGui::TextUnformatted(durBuf);
-
-				// 내구도 바 (색상: 높으면 초록, 낮으면 빨강)
+				// 내구도 바 색상 (높으면 초록, 낙으면 빨강)
 				ImVec4 barColor = (ratio > 0.5f) ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f)
 				                : (ratio > 0.25f) ? ImVec4(0.9f, 0.7f, 0.1f, 1.0f)
 				                                 : ImVec4(0.9f, 0.2f, 0.2f, 1.0f);
 
+				// 내구도 레이블 (황금색)
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.88f, 0.72f, 0.35f, 1.0f));
+				ImGui::TextUnformatted((const char*)u8"내구도");
+				ImGui::PopStyleColor();
+
+				// 수치 텍스트 (내구도 바 색상과 동일)
+				char durBuf[32];
+				snprintf(durBuf, sizeof(durBuf), "%u / %u", cur, max);
+				ImGui::PushStyleColor(ImGuiCol_Text, barColor);
+				ImGui::TextUnformatted(durBuf);
+				ImGui::PopStyleColor();
+
+				// 내구도 바
 				ImVec2 barMin = ImGui::GetCursorScreenPos();
 				ImVec2 barMax = ImVec2(barMin.x + descW, barMin.y + 10.0f * scale);
 				dl->AddRectFilled(barMin, barMax, IM_COL32(80, 80, 85, 255), 3.0f * scale);

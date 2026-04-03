@@ -9,7 +9,7 @@
         "price": 200,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "사용된 세월이 느껴지는 삽."
     },
     {
         "item_id": 2,
@@ -21,7 +21,7 @@
         "price": 400,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "평범한 삽."
     },
     {
         "item_id": 3,
@@ -33,7 +33,7 @@
         "price": 600,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "무엇이든 파낼 수 있을 것 같은 예리한 삽."
     },
     {
         "item_id": 4,
@@ -45,7 +45,7 @@
         "price": 900,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "오래 쓸 수 있을 것 같은 튼튼한 삽."
     },
     {
         "item_id": 5,
@@ -57,7 +57,7 @@
         "price": 300,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "사용된 세월이 느껴지는 도끼."
     },
     {
         "item_id": 6,
@@ -69,7 +69,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "평범한 도끼."
     },
     {
         "item_id": 7,
@@ -81,7 +81,7 @@
         "price": 800,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "무엇이든 베어낼 수 있을 것 같은 예리한 도끼."
     },
     {
         "item_id": 8,
@@ -93,7 +93,7 @@
         "price": 1200,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "오래 쓸 수 있을 것 같은 튼튼한 도끼."
     },
     {
         "item_id": 9,
@@ -105,7 +105,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "사용된 세월이 느껴지는 곡괭이."
     },
     {
         "item_id": 10,
@@ -117,7 +117,7 @@
         "price": 600,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "평범한 곡괭이."
     },
     {
         "item_id": 11,
@@ -129,7 +129,7 @@
         "price": 1000,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "무엇이든 캐낼 수 있을 것 같은 예리한 곡괭이."
     },
     {
         "item_id": 12,
@@ -141,7 +141,7 @@
         "price": 1500,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "오래 쓸 수 있을 것 같은 튼튼한 곡괭이."
     },
     {
         "item_id": 13,
@@ -153,7 +153,7 @@
         "price": 100000,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "쓸모가 많은 전동 드릴."
     },
     {
         "item_id": 14,
@@ -164,7 +164,7 @@
         "price": 300,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "공 말고 다른 것도 쳐낼 수 있다."
     },
     {
         "item_id": 15,
@@ -175,7 +175,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "**뿅뿅**"
     },
     {
         "item_id": 16,
@@ -186,7 +186,7 @@
         "price": 200,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "줄에 걸리면 꽤나 아프다."
     },
     {
         "item_id": 17,
@@ -197,7 +197,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "마법을 쓸 수 있는 지팡이."
     },
     {
         "item_id": 18,
@@ -208,7 +208,7 @@
         "price": 400,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "살상 능력은 없는 장난감 총."
     },
     {
         "item_id": 19,
@@ -219,7 +219,7 @@
         "price": 250,
         "max_stack": 1,
         "is_throwable": true,
-        "description": ""
+        "description": "날카롭지 않아 안전하다."
     },
     {
         "item_id": 20,
@@ -233,7 +233,7 @@
         "price": 300,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "익지 않은 생고기."
     },
     {
         "item_id": 21,
@@ -247,7 +247,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "차갑고 딱딱한 냉동 만두."
     },
     {
         "item_id": 22,
@@ -261,7 +261,7 @@
         "price": 180,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "신선한 브로콜리!"
+        "description": "신선한 브로콜리."
     },
     {
         "item_id": 23,
@@ -275,7 +275,7 @@
         "price": 250,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "20초간 화면이 누래짐"
+        "description": "썩 좋지 않은 냄새가 풍긴다…."
     },
     {
         "item_id": 24,
@@ -289,7 +289,7 @@
         "price": 120,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "사용시 바나나 껍질 아이템 획득"
+        "description": "잘 익은 바나나. 껍질은 아무 데나 버리지 말자."
     },
     {
         "item_id": 25,
@@ -303,7 +303,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "맛있는 과자! 섭취 시 펑 터지는 소리가 난다."
+        "description": "질소로 빵빵하게 포장된 감자칩 과자."
     },
     {
         "item_id": 26,
@@ -317,7 +317,7 @@
         "price": 50,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "하얗게 곰팡이가 피어 있다."
     },
     {
         "item_id": 27,
@@ -331,7 +331,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "귀여운 새싹이 보인다."
     },
     {
         "item_id": 28,
@@ -345,7 +345,7 @@
         "price": 30,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "하얗게 곰팡이가 피어 있다."
     },
     {
         "item_id": 29,
@@ -359,7 +359,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "새것 같은 달콤한 초콜릿."
     },
     {
         "item_id": 30,
@@ -373,7 +373,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "딸기 맛."
     },
     {
         "item_id": 31,
@@ -387,7 +387,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "오렌지 과즙 100%"
     },
     {
         "item_id": 32,
@@ -401,7 +401,7 @@
         "price": 220,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "놀이공원에 온 기분이 든다."
     },
     {
         "item_id": 33,
@@ -415,7 +415,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "맛있는 솜사탕! 섭취 시 30초간 점프 높이가 증가한다!"
+        "description": "후후 불면 날아가는 솜사탕. 몸이 가벼워질 것 같다."
     },
     {
         "item_id": 34,
@@ -429,7 +429,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "맛있는 아이스크림! 섭취 시 10초간 이동 속도가 증가한다!"
+        "description": "머리가 아플 정도로 차디찬 아이스크림."
     },
     {
         "item_id": 35,
@@ -443,7 +443,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "귀여운 캐릭터 빵. 띠부 씰과 곰팡이 포함."
     },
     {
         "item_id": 36,
@@ -457,7 +457,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "누군가 먹다 남긴 치즈맛 나쵸."
     },
     {
         "item_id": 37,
@@ -471,7 +471,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "맛있는 젤리빈! 5초간 채굴 속도가 증가한다!"
+        "description": "콩 모양 젤리. 먹으면 마법 같은 맛이 난다."
     },
     {
         "item_id": 38,
@@ -485,7 +485,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "상한 치킨. 한입 먹힌 흔적이 있다."
     },
     {
         "item_id": 39,
@@ -499,7 +499,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "곰팡이 핀 치즈."
     },
     {
         "item_id": 40,
@@ -513,7 +513,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "맛있어 보이는 요거트. 시큼한 냄새가 난다."
     },
     {
         "item_id": 41,
@@ -527,7 +527,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "사용 후 보조 아이템 컵 획득한다."
+        "description": "누군가 마시던 핫초코."
     },
     {
         "item_id": 42,
@@ -541,7 +541,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "누군가 먹다 남긴 케이크이다. 섭취 시 10초간 이동속도 증가!"
+        "description": "누군가 먹다 남긴 조각 케이크! 발걸음이 빨라질 만큼 맛있다!"
     },
     {
         "item_id": 43,
@@ -555,7 +555,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "과자… 조금 남았다."
     },
     {
         "item_id": 44,
@@ -569,7 +569,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "한 조각 반이 들어 있다."
     },
     {
         "item_id": 45,
@@ -583,7 +583,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "상한 생선… 냄새가 끔찍하다…"
+        "description": "상한 생선… 냄새가 끔찍하다."
     },
     {
         "item_id": 46,
@@ -597,7 +597,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": ""
+        "description": "유통기한 임박 할인' 스티커가 붙어 있다."
     },
     {
         "item_id": 47,
@@ -608,7 +608,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "낙하 속도 감소, 낙하 데미지 무효"
+        "description": "몸이 가벼워진다."
     },
     {
         "item_id": 48,
@@ -619,7 +619,7 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "적 몬스터가 최우선으로 반응"
+        "description": "요란한 소리를 낼 수 있다."
     },
     {
         "item_id": 49,
@@ -630,7 +630,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "몬스터 머리에 씌워지며 시야 차단! (유령 몬스터에는 사용 불가!)"
+        "description": "머리에 씌울 수 있을 것 같다."
     },
     {
         "item_id": 50,
@@ -641,7 +641,7 @@
         "price": 60,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "밟으면 미끄러지며 스턴(2초)"
+        "description": "밟고 미끄러지지 않게 조심!"
     },
     {
         "item_id": 51,
@@ -652,7 +652,7 @@
         "price": 40,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "누군가 버린 구멍난 양말이다."
+        "description": "구멍이 뚫려서 버려진 걸까?"
     },
     {
         "item_id": 52,
@@ -663,7 +663,7 @@
         "price": 90,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "끈쩍한 슬라임… 만지면 기분이 이상하다"
+        "description": "끈적한 슬라임. 쓸데는 없다."
     },
     {
         "item_id": 53,
@@ -674,7 +674,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "흔들면 돈이 나올지도..?!"
+        "description": "흔들면 짤랑짤랑 소리가 난다."
     },
     {
         "item_id": 54,
@@ -685,7 +685,7 @@
         "price": 30,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "랜덤한 메모를 출력한다."
+        "description": "누군가 남긴 메모."
     },
     {
         "item_id": 55,
@@ -696,7 +696,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "밝은 대상의 이동속도를 7초간 감소시킨다."
+        "description": "끈적한 거미줄. 닿으면 느려질 것 같다."
     },
     {
         "item_id": 56,
@@ -707,7 +707,7 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
-        "description": "덫에 걸리면 5초간 움직이지 못한다!"
+        "description": "**유령에게도 효과 있음**"
     },
     {
         "item_id": 57,

@@ -56,6 +56,11 @@ void CGameScene::Initialize()
 	SpawnWorldItem(45, XMFLOAT3{2, 0, 1});
 	SpawnWorldItem(5, XMFLOAT3{2, 0, 1});
 	SpawnWorldItem(1, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(17, XMFLOAT3{2, 0, 1});
+
+	SpawnWorldItem(47, XMFLOAT3{ 2, 0, 1 });
+	SpawnWorldItem(47, XMFLOAT3{ 2, 0, 1 });
+	SpawnWorldItem(48, XMFLOAT3{ 2, 0, 1 });
 	
 	SpawnWorldItem(57, XMFLOAT3{2, 0, 1});
 	SpawnWorldItem(77, XMFLOAT3{2, 0, 1});
