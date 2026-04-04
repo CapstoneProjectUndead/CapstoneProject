@@ -8,9 +8,13 @@ struct InstCB {
 };
 
 struct AnimationData {
-    uint32_t start_offset; // 클립 시작 위치
-    uint32_t cur_frame;         // 현재 프레임
-    uint32_t bone_count;        // 캐릭터의 본 개수
+    uint32_t start_offset_A;
+    uint32_t cur_frame_A;
+    uint32_t start_offset_B;
+    uint32_t cur_frame_B;
+    uint32_t bone_count;
+    int mask_id;
+    float    blend_weight;
 };
 
 struct AniCB {

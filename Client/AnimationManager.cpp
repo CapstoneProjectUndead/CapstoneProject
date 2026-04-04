@@ -1,12 +1,45 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "AnimationManager.h"
 #include "GeometryLoader.h"
 
+void CAnimationManager::SetRecursiveWeight(int boneIdx, float weight, std::vector<float>& maskWeights, const CGeometryLoader::SkeletonData& skeleton)
+{
+    if (boneIdx < 0 || boneIdx >= maskWeights.size()) return;
+
+    // 현재 본의 가중치 설정
+    maskWeights[boneIdx] = weight;
+
+    // 모든 본을 순회하며 현재 본을 부모로 가진 자식들을 찾아 재귀 호출
+    for (size_t i = 0; i < skeleton.parent_index.size(); ++i) {
+        if (skeleton.parent_index[i] == boneIdx) {
+            SetRecursiveWeight((int)i, weight, maskWeights, skeleton);
+        }
+    }
+}
+
+// 상반신 마스크 생성 함수
+BoneMask CAnimationManager::CreateUpperBodyMask(const CGeometryLoader::SkeletonData& skeleton)
+{
+    uint32_t boneCount = (uint32_t)skeleton.bone_names.size();
+    BoneMask mask;
+    mask.name = "UpperBody";
+    mask.weights.resize(boneCount, 0.0f); // 기본값은 0.0 (영향 없음)
+
+    // spine 아래 가중치 1로 설정
+    int spineIdx = skeleton.GetBoneIndex("spine");
+    if (spineIdx != -1) {
+        SetRecursiveWeight(spineIdx, 1.0f, mask.weights, skeleton);
+    }
+
+    return mask;
+}
 void CAnimationManager::Initialize(const std::string& charName, const std::string& AniName)
 {
     // load skeletonData
     CGeometryLoader::SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
     uint32_t boneCount = (uint32_t)skeleton.bone_names.size();
+
+    bone_masks.push_back(CreateUpperBodyMask(skeleton));
 
     // load animation(boneMatrixes)
     animations = CGeometryLoader::LoadAnimations(AniName, boneCount);
@@ -60,6 +93,41 @@ void CAnimationManager::CreateAnimationTexture(ID3D12Device* device, ID3D12Graph
     for (auto& [name, clip] : animations) {
         clip.ClearGPUMemory();
     }
+}
+
+void CAnimationManager::CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle)
+{
+    if (bone_masks.empty()) return;
+
+    std::vector<float> totalWeight;
+    for (auto& mask : bone_masks)
+    {
+        totalWeight.insert(totalWeight.end(), mask.weights.begin(), mask.weights.end());
+    }
+
+    UINT totalBytes = (UINT)(totalWeight.size() * sizeof(float));
+
+    mask_buffer = CreateBufferResource(
+        device,
+        cmdList,
+        totalWeight.data(),
+        totalBytes,
+        D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+        mask_upload_buffer.GetAddressOf()
+    );
+
+    // SRV 생성
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Buffer.FirstElement = 0;
+    srvDesc.Buffer.NumElements = (UINT)totalWeight.size();
+    srvDesc.Buffer.StructureByteStride = sizeof(float);
+    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+    device->CreateShaderResourceView(mask_buffer.Get(), &srvDesc, cpuDescriptorHandle);
 }
 
 XMVECTOR CAnimationManager::GetBoneWorldPos( const std::string& clipName, float currentTime, int boneIdx)

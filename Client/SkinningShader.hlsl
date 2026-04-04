@@ -58,9 +58,16 @@ struct MaterialData
 
 struct AnimationData
 {
-    uint start_offset; // 클립 시작 위치
-    uint cur_frame; // 현재 프레임
-    uint bone_count; // 캐릭터의 본 개수
+    // 첫 번째 애니메이션 정보
+    uint start_offset_A;
+    uint cur_frame_A;
+    // 두 번째 애니메이션 정보
+    uint start_offset_B;
+    uint cur_frame_B;
+    
+    uint bone_count;
+    int mask_id;
+    float blend_weight; // 0.0이면 A, 1.0이면 B
 };
 
 struct InstanceData
@@ -72,6 +79,10 @@ struct InstanceData
 
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
+
+// 본별 마스크 정보를 담는 버퍼 (미리 CPU에서 넘겨줌)
+// 예: 0번~10번 본은 0.0(하반신), 11번~20번 본은 1.0(상반신)
+StructuredBuffer<float> gBoneMasks : register(t2, space1);
 
 Texture2D texDiffuse[50] : register(t0);
 SamplerState sample : register(s0);
@@ -86,7 +97,13 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     output.instanceID = instanceID;
 #ifdef SKINNED
     // boneIdx = 해당 클립의 시작점 (anim_start_offset) + 현재 프레임까지 건너뛰기 (cur_frame * bone_count) + 그 안에서 내 뼈의 번호 (input.bone_indices[i])
-    uint frameBaseOffset = instData.animation.start_offset + (instData.animation.cur_frame * instData.animation.bone_count);
+    uint frameBaseA = instData.animation.start_offset_A + (instData.animation.cur_frame_A * instData.animation.bone_count);
+    uint frameBaseB = instData.animation.start_offset_B + (instData.animation.cur_frame_B * instData.animation.bone_count);
+    float alpha = instData.animation.blend_weight;
+
+    int maskID = instData.animation.mask_id;
+    uint boneCount = instData.animation.bone_count;
+    
     float weights[4];
     weights[0] = input.bone_weights.x;
     weights[1] = input.bone_weights.y;
@@ -95,15 +112,28 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 
     float3 posL = float3(0.0f, 0.0f, 0.0f);
     float3 normalL = float3(0.0f, 0.0f, 0.0f);
-
+    
     for (int i = 0; i < 4; ++i)
     {
-        // 최종 행렬 인덱스 계산
-        uint boneIdx = frameBaseOffset + input.bone_indices[i];
-        float4x4 boneMatrix = gAnimBuffer[boneIdx];
+        uint boneIdx = input.bone_indices[i];
+        
+        float maskWeight = 1.0f;
+        if (maskID >= 0)
+        {
+            uint maskIdx = (uint) maskID * boneCount + boneIdx;
+            maskWeight = gBoneMasks[maskIdx];
+        }
+        
+        // 최종 가중치 = 레이어 자체의 블렌드 수치 * 본별 마스크 수치
+        float finalWeight = alpha * maskWeight;
+        
+        float4x4 matA = gAnimBuffer[frameBaseA + boneIdx];
+        float4x4 matB = gAnimBuffer[frameBaseB + boneIdx];
+    
+        float4x4 blendedMatrix = lerp(matA, matB, finalWeight);
 
-        posL += weights[i] * mul(float4(input.position, 1.0f), boneMatrix).xyz;
-        normalL += weights[i] * mul(input.normal, (float3x3) boneMatrix);
+        posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
+        normalL += weights[i] * mul(input.normal, (float3x3) blendedMatrix);
     }
     
     input.position = posL;

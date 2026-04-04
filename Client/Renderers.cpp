@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Renderers.h"
 #include "GameFramework.h"
 #include "Mesh.h"
@@ -149,8 +149,10 @@ void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const 
 void CAniRenderer::Render(ID3D12GraphicsCommandList* cmdList)
 {
     auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
+    auto maskBuffer = CAnimationManager::GetInstance().GetMaskBuffer();
 
     cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(5, maskBuffer->GetGPUVirtualAddress());
     RenderBatches(cmdList, 3);
 }
 

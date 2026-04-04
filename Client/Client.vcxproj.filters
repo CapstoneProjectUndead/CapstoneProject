@@ -360,6 +360,9 @@
     <ClInclude Include="GPUBufferStruct.h">
       <Filter>Component\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationController.h">
+      <Filter>Component\Animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -565,6 +568,9 @@
     </ClCompile>
     <ClCompile Include="GPUBufferStruct.cpp">
       <Filter>Component\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationController.cpp">
+      <Filter>Component\Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
