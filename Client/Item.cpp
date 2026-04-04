@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Item.h"
+#include "MyPlayer.h"
 
 CItem::CItem(std::shared_ptr<ItemData> data)
 	: base_data(data)
@@ -34,6 +35,10 @@ CTool::~CTool()
 {
 }
 
+void CTool::Equip(CMyPlayer* player)
+{
+}
+
 // 무기
 CWeapon::CWeapon(const std::shared_ptr<ItemData> data)
 	: CEquipment(data)
@@ -44,17 +49,43 @@ CWeapon::~CWeapon()
 {
 }
 
+void CWeapon::Equip(CMyPlayer* player)
+{
+}
+
 // 소비(회복템)
-CConsumable::CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount)
+CConsumable::CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount, const float buffDuration)
 	: CItem(data)
 	, heal_amount(healAmount)
 	, energy_amount(energyAmount)
 	, effect_amount(effectAmount)
+	, buff_duration(buffDuration)
 {
 }
 
 CConsumable::~CConsumable()
 {
+}
+
+bool CConsumable::Use(CMyPlayer* player)
+{
+	if (!player) 
+		return false;
+
+	if (heal_amount > 0)
+		player->SetHp(min(player->GetHp() + heal_amount, player->GetMaxHp()));
+
+	if (energy_amount > 0)
+		player->SetStamina(min(player->GetStamina() + energy_amount, player->GetMaxStamina()));
+
+	if (effect_amount > 0) {
+		Buff buff;
+		buff.duration        = buff_duration;
+		buff.miningSpeedMult = 1.f + effect_amount / 100.f;
+		player->AddBuff(buff);
+	}
+
+	return true;
 }
 
 // 기타(예능 아이템)
@@ -65,6 +96,26 @@ COther::COther(const std::shared_ptr<ItemData> data)
 
 COther::~COther()
 {
+}
+
+bool COther::Use(CMyPlayer* player)
+{
+	switch (GetSubType())
+	{
+	case ITEM_SUB_TYPE::NONE_EFFECT:
+		return false;
+		break;
+	case ITEM_SUB_TYPE::AGGRO:
+		break;
+	case ITEM_SUB_TYPE::UTIL:
+		break;
+	case ITEM_SUB_TYPE::TRAP:
+		break;
+	default:
+		break;
+	}
+
+	return false;
 }
 
 // 보물

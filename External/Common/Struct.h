@@ -15,6 +15,22 @@ struct InputData
 	bool space = false;
 };
 
+struct PlayerStat
+{
+	uint32 hp;
+	uint32 stamina;
+	uint16 miningSpeed;
+
+	const uint32 maxHp = 1000;
+	const uint32 maxStamina = 1000;
+};
+
+struct Buff
+{
+	float duration;        // 남은 시간 (초)
+	float miningSpeedMult; // 채굴 속도 배율 (50% 증가)
+};
+
 struct PlayerInfo
 {
 	// 서버가 처리 완료한 이 플레이어의 마지막 시퀀스 번호

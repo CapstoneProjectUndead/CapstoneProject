@@ -120,10 +120,13 @@ void CGameScene::Update(float elapsedTime)
 void CGameScene::DrawUI()
 {
 	if (my_player) {
-		auto& inventory = my_player->GetInventory();
-		assert(inventory);
-		inventory->Draw();
 
+		// 인벤토리
+		auto inventory = my_player->GetInventory();
+		if (inventory);
+			inventory->Draw();
+
+		// 퀵슬롯
 		auto quick_slot = my_player->GetQuickSlot();
 		if (quick_slot)
 			quick_slot->Draw();

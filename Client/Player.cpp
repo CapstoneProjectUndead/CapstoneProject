@@ -21,9 +21,25 @@ CPlayer::CPlayer()
 
 void CPlayer::Update(float elapsedTime)
 {
+    UpdateBuffs(elapsedTime);
     PreUpdate(elapsedTime);
 
     CCharacter::Update(elapsedTime);
+}
+
+void CPlayer::AddBuff(const Buff& buff)
+{
+    buffs.push_back(buff);
+}
+
+void CPlayer::UpdateBuffs(float elapsedTime)
+{
+    for (auto& buff : buffs)
+        buff.duration -= elapsedTime;
+
+    buffs.erase(
+        std::remove_if(buffs.begin(), buffs.end(), [](const Buff& b) { return b.duration <= 0.f; }),
+        buffs.end());
 }
 
 void CPlayer::PreUpdate(float elapsedTime)

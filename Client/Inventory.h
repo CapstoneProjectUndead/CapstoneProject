@@ -45,14 +45,14 @@ private:
 	std::unordered_map<uint32, std::shared_ptr<CItem>>  items;
 	uint32                                              inventory_id_counter = 0;
 	uint32                                              current_weight = 0;
-	uint32                               max_weight = 200; // 기본값, 업그레이드로 증가
+	uint32												max_weight = 200; // 기본값, 업그레이드로 증가
 
-	bool                                 is_open        = false;
-	ITEM_TYPE                            active_tab     = ITEM_TYPE::EQUIPMENT;
+	bool												is_open        = false;
+	ITEM_TYPE											active_tab     = ITEM_TYPE::EQUIPMENT;
 
 	// 드래그 상태
-	CItem*                               dragged_item   = nullptr;
-	bool                                 is_dragging    = false;
+	CItem*												dragged_item   = nullptr;
+	bool												is_dragging    = false;
 
 	std::function<void(std::shared_ptr<CItem>)> on_drop_callback;
 	std::shared_ptr<CQuickSlot>                 quick_slot;

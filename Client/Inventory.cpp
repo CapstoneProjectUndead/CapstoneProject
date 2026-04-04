@@ -425,8 +425,31 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 						is_dragging  = true;
 						dragged_item = displayItem;
 					}
+
 					if (!is_dragging && ImGui::IsItemHovered())
 						DrawItemTooltip(displayItem);
+
+					// 아이템 더블클릭 시
+					if (type != ITEM_TYPE::TREASURE
+						&& ImGui::IsItemHovered()
+						&& ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+
+						auto player = owner.lock();
+						if (!player)
+							return;
+
+						// 장비는 장착
+						if (type == ITEM_TYPE::EQUIPMENT) {
+							auto equip = static_cast<CEquipment*>(displayItem);
+							equip->Equip(player.get());
+						}
+						else {
+							// 아이템은 사용
+							if (displayItem->Use(player.get())) {
+								RemoveItem(displayItem->GetInventoryID());
+							}
+						}
+					}
 				}
 
 				if (col < cols - 1)

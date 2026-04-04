@@ -3,11 +3,15 @@
 // Inventory에 사용될 Item 클래스
 //==============================
 
+class CMyPlayer;
+
 class CItem
 {
 public:
 	CItem(std::shared_ptr<ItemData> data);
 	virtual ~CItem() = 0;
+
+	virtual bool Use(CMyPlayer* player) { return false; }
 
 public:
 	// UI에서 쉽게 가져다 쓸 수 있도록 Getter 제공
@@ -34,6 +38,8 @@ class CEquipment : public CItem
 public:
 	CEquipment(const std::shared_ptr<ItemData> data);
 	virtual ~CEquipment() = 0;
+
+	virtual void Equip(CMyPlayer* player) = 0;
 };
 
 // 파밍 도구 (내구도 있음)
@@ -43,6 +49,9 @@ public:
 	CTool(const std::shared_ptr<ItemData> data, const uint32 maxDur);
 	virtual ~CTool() override;
 
+	virtual void Equip(CMyPlayer* player) override;
+
+public:
 	uint32 GetCurrentDurability() const { return current_durability; }
 	uint32 GetMaxDurability() const { return max_durability; }
 
@@ -57,15 +66,20 @@ class CWeapon : public CEquipment
 public:
 	CWeapon(const std::shared_ptr<ItemData> data);
 	virtual ~CWeapon() override;
+
+	virtual void Equip(CMyPlayer* player) override;
 };
 
 // 소비(회복템)
 class CConsumable : public CItem
 {
 public:
-	CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount);
+	CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount, const float buffDuration);
 	virtual ~CConsumable() override;
 
+	virtual bool Use(CMyPlayer* player);
+
+public:
 	uint32 GetHealAmount()   const { return heal_amount; }
 	uint32 GetEnergyAmount() const { return energy_amount; }
 	uint32 GetEffectAmount() const { return effect_amount; }
@@ -74,6 +88,7 @@ private:
 	const uint32 heal_amount;
 	const uint32 energy_amount;
 	const uint32 effect_amount;
+	const float  buff_duration;
 };
 
 // 기타(예능 아이템)
@@ -82,6 +97,8 @@ class COther : public CItem
 public:
 	COther(const std::shared_ptr<ItemData> data);
 	virtual ~COther() override;
+
+	virtual bool Use(CMyPlayer* player);
 
 private:
 	
