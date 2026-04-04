@@ -7,6 +7,8 @@
 #include "Monster.h"
 #include "PhysicsManager.h"
 #include "Collider.h"
+#include "ItemManager.h"
+#include "Item.h"
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -29,6 +31,11 @@ CScene::CScene(SCENE_TYPE type, uint32 roomId)
 CScene::~CScene()
 {
 	
+}
+
+void CScene::Initialize()
+{
+	item_manager = std::make_unique<CItemManager>(scene_type);
 }
 
 void CScene::Update(const float elapsedTime)
@@ -224,6 +231,30 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 			auto sendBuffer = MAKE_SEND_BUFFER(spawnMonsterPkt);
 			if (player->GetUser()->GetSession())
 				player->GetUser()->GetSession()->DoSend(sendBuffer);
+		}
+	}
+
+	// 3월 29일 추가
+	// 해당 씬에 존재하는 아이템 리스트를 입장한 유저에게 알려준다.
+	if (!item_manager->GetItems().empty()) {
+
+		S_ITEMLIST_WRITE writer(scene_type);
+		auto itemList = writer.ReserveItemList((uint32)item_manager->GetItems().size());
+
+		uint32 i = 0;
+		for (const auto& [id, worldItem] : item_manager->GetItems()) {
+
+			itemList[i].item_type = worldItem->item->GetItemType();
+			itemList[i].item_id = worldItem->item->GetItemId();
+			itemList[i].item_world_id = worldItem->world_id;
+			itemList[i].x = worldItem->position.x;
+			itemList[i].y = worldItem->position.y;
+			itemList[i].z = worldItem->position.z;
+			++i;
+		}
+
+		if (player->GetSession()) {
+			player->GetSession()->DoSend(writer.CloseAndReturn());
 		}
 	}
 }

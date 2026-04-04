@@ -11,11 +11,20 @@
 
 #include "ItemFinder.h"
 #include "NetworkManager.h"
-#include "Inventory.h"
-#include "WorldItem.h"
-#include "ItemFactory.h"
+#include "ServerPacketHandler.h"
+#include "User.h"
 
 #include "KeyManager.h"
+
+#include "Inventory.h"
+#include "QuickSlot.h"
+#include "WorldItem.h"
+#include "ItemFactory.h"
+#include "WorldTool.h"			// (장비)파밍 도구
+#include "WorldWeapon.h"		// (장비)무기
+#include "WorldConsumable.h"	// 소비
+#include "WorldOther.h"			// 기타
+#include "WorldTreasure.h"		// 보물
 
 
 CGameScene::CGameScene()
@@ -35,10 +44,28 @@ void CGameScene::Initialize()
 		treasures = factory->GetTreauseres();
 
 		// 보물 위치에 보물 생성
+		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
 		for (auto& treasure : treasures) {
-			SpawnWorldItem(1000, treasure.treasure_pos);
+			SpawnWorldItem(110, treasure.world_id, treasure.treasure_pos);
 		}
 	}
+
+	// 아이템 생성 (테스트)
+	SpawnWorldItem(25, XMFLOAT3{1, 0, 1});
+	SpawnWorldItem(24, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(45, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(5, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(1, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(17, XMFLOAT3{2, 0, 1});
+
+	SpawnWorldItem(47, XMFLOAT3{ 2, 0, 1 });
+	SpawnWorldItem(47, XMFLOAT3{ 2, 0, 1 });
+	SpawnWorldItem(48, XMFLOAT3{ 2, 0, 1 });
+	
+	SpawnWorldItem(57, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(77, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(91, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(100, XMFLOAT3{2, 0, 1});
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -53,6 +80,16 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
 		if (itemFinder) {
 			itemFinder->RegisterTreasures(treasures);
+		}
+	}
+
+	// 싱글 드롭 콜백 등록
+	if (my_player) {
+		auto inv = my_player->GetInventory();
+		if (inv) {
+			inv->SetDropCallback([this](std::shared_ptr<CItem> item) {
+				DropItemAtPlayerFeet(item);
+				});
 		}
 	}
 
@@ -73,81 +110,26 @@ void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 
+	ProcessPickup();
+
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
 	};
-
-	ProcessPickup();
-}
-
-void CGameScene::ProcessPickup()
-{
-	if (!my_player)
-		return;
-
-	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) != KEY_STATE::TAP)
-		return;
-
-	XMFLOAT3 player_pos = my_player->GetPosition();
-
-	std::vector<std::shared_ptr<CObject>> worldItems;;
-	for (auto& obj : objects) {
-		if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
-			worldItems.push_back(obj);
-		}
-	}
-
-	auto it = std::find_if(worldItems.begin(), worldItems.end(),
-		[&](const std::shared_ptr<CObject>& item) {
-			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), player_pos);
-			return Vector3::Length(diff) <= PICKUP_RANGE;
-		});
-
-	if (it == worldItems.end())
-		return;
-
-	auto inv = my_player->GetInventory();
-	if (inv) {
-		auto worldItem = static_cast<CWorldItem*>(it->get());
-		inv->AddItem(worldItem->GetItem());
-
-		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
-			XMFLOAT3 pos = worldItem->GetPosition();
-			auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
-				[&pos](const TreasureInfo& info) {
-					return info.treasure_pos.x == pos.x &&
-					       info.treasure_pos.y == pos.y &&
-					       info.treasure_pos.z == pos.z;
-				});
-
-			if (treasure_it != treasures.end())
-				treasures.erase(treasure_it);
-
-			my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
-		}
-
-		RemoveObject(worldItem->GetID());
-	}
-}
-
-void CGameScene::SpawnWorldItem(int itemID, XMFLOAT3 position)
-{
-	auto itemData = ItemFactory::Create(itemID);
-
-	auto item = std::make_shared<CWorldItem>(itemData);
-	item->SetPosition(position);
-	item->SetID(world_item_id_counter);
-	item->Initialize(GET_DEVICE, GET_CMD_LIST);
-	AddObject(item, world_item_id_counter);
-	++world_item_id_counter;
 }
 
 void CGameScene::DrawUI()
 {
 	if (my_player) {
-		auto& inventory = my_player->GetInventory();
-		assert(inventory);
-		inventory->Draw();
+
+		// 인벤토리
+		auto inventory = my_player->GetInventory();
+		if (inventory);
+			inventory->Draw();
+
+		// 퀵슬롯
+		auto quick_slot = my_player->GetQuickSlot();
+		if (quick_slot)
+			quick_slot->Draw();
 	}
 }
 
@@ -182,6 +164,192 @@ void CGameScene::Enter()
 	}
 }
 
+void CGameScene::ProcessPickup()
+{
+	if (!my_player)
+		return;
+
+	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) != KEY_STATE::TAP)
+		return;
+
+	XMFLOAT3 playerPos = my_player->GetPosition();
+
+	// Objects에는 플레이어, 몬스터, 맵 오브젝트, 아이템 모두 들어있다.
+	// 여기서 아이템만 필터링한다.
+	std::vector<std::shared_ptr<CObject>> worldItems;
+	for (auto& obj : objects) {
+		if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
+			worldItems.push_back(obj);
+		}
+	}
+
+	// 플레이어 근처에 있는 아이템을 찾는다.
+	auto it = std::find_if(worldItems.begin(), worldItems.end(),
+		[&](const std::shared_ptr<CObject>& item) {
+			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), playerPos);
+			return Vector3::Length(diff) <= PICKUP_RANGE;
+		});
+
+	if (it == worldItems.end())
+		return;
+
+	auto worldItem = static_cast<CWorldItem*>(it->get());
+
+	// 싱글환경
+	if (g_is_single) {
+
+		auto inv = my_player->GetInventory();
+		if (!inv)
+			return;
+
+		// 인벤토리에 아이템을 넣는다.
+		inv->AddItem(worldItem->GetItem());
+
+		// 보물이라면 
+		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
+
+			// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
+			uint32 id = worldItem->GetID();
+			auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
+				[id](const TreasureInfo& info) {
+					return info.world_id == id;
+				});
+
+			if (treasure_it != treasures.end())
+				treasures.erase(treasure_it);
+
+			// 다우징로드에 있는 보물 컨테이너 갱신
+			// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
+			my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+		}
+
+		RemoveObject(worldItem->GetID());
+	}
+	else {
+		// (멀티) 서버에 줍기 요청만 보낸다.
+		// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
+		C_PickupItem pickupPkt;
+		pickupPkt.player_id = my_player->GetUser()->GetUserID();
+		pickupPkt.item_world_id = worldItem->GetID();
+		pickupPkt.item_type = worldItem->GetItem()->GetItemType();
+		pickupPkt.scene_type = my_player->GetCurrentSceneType();
+
+		auto sendBuffer = MAKE_SEND_BUFFER(pickupPkt);
+		my_player->GetSession()->DoSend(sendBuffer);
+	}
+}
+
+// 싱글환경
+void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
+{
+	auto item = ItemFactory::Create(itemID);
+	if (!item)
+		return;
+
+	std::shared_ptr<CWorldItem> worldItem;
+
+	switch (item->GetItemType())
+	{
+	case ITEM_TYPE::EQUIPMENT:
+		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+			worldItem = std::make_shared<CWorldWeapon>(item);
+		else
+			worldItem = std::make_shared<CWorldTool>(item);
+		break;
+	case ITEM_TYPE::CONSUMABLE:
+		worldItem = std::make_shared<CWorldConsumable>(item);
+		break;
+	case ITEM_TYPE::ETC:
+		worldItem = std::make_shared<CWorldOther>(item);
+		break;
+	case ITEM_TYPE::TREASURE:
+		worldItem = std::make_shared<CWorldTreasure>(item);
+		break;
+	default:
+		break;
+	}
+
+	if (!worldItem)
+		return;
+
+	// 아이템의 위치
+	worldItem->SetPosition(position);
+
+	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
+	worldItem->SetID(world_item_id_counter);
+
+	// 초기화
+	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	// Scene의 objects 컨테이너에 추가
+	AddObject(worldItem, world_item_id_counter);
+
+	++world_item_id_counter;
+}
+
+// 멀티환경
+void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
+{
+	auto item = ItemFactory::Create(itemID);
+	if (!item)
+		return;
+
+	std::shared_ptr<CWorldItem> worldItem;
+
+	switch (item->GetItemType())
+	{
+	case ITEM_TYPE::EQUIPMENT:
+		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+			worldItem = std::make_shared<CWorldWeapon>(item);
+		else
+			worldItem = std::make_shared<CWorldTool>(item);
+		break;
+	case ITEM_TYPE::CONSUMABLE:
+		worldItem = std::make_shared<CWorldConsumable>(item);
+		break;
+	case ITEM_TYPE::ETC:
+		worldItem = std::make_shared<CWorldOther>(item);
+		break;
+	case ITEM_TYPE::TREASURE:
+		worldItem = std::make_shared<CWorldTreasure>(item);
+		break;
+	default:
+		break;
+	}
+
+	if (!worldItem)
+		return;
+
+	// 아이템의 위치
+	worldItem->SetPosition(position);
+
+	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
+	worldItem->SetID(itemWorldId);
+
+	// 초기화
+	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
+
+	// Scene의 objects 컨테이너에 추가
+	AddObject(worldItem, itemWorldId);
+}
+
+void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
+{
+	if (!my_player)
+		return;
+
+	XMFLOAT3 pos     = my_player->GetPosition();
+	pos.y			 = max(pos.y, 0.0f);
+	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
+
+	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
+
+	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
+		TreasureInfo info{ worldId, pos };
+		treasures.push_back(info);
+	}
+}
+
 void CGameScene::Exit()
 {
 	CScene::Exit();
@@ -207,10 +375,121 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
-	treasures = factory->GetTreauseres();
+	treasures.clear();
+}
 
-	// 보물 위치에 보물 생성
-	for (auto& treasure : treasures) {
-		SpawnWorldItem(1000, treasure.treasure_pos);
+void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)
+{
+	XMFLOAT3 pos{ pkt.x, pkt.y, pkt.z };
+
+	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+
+		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
+		TreasureInfo treasure{ pkt.item_world_id, pos };
+		treasures.push_back(treasure);
+
+		if (my_player) {
+			auto itemFinder = my_player->GetComponent<CItemFinder>();
+			if (itemFinder) {
+				itemFinder->AddTreasure(treasure);
+			}
+		}
 	}
+	else {
+		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
+	}
+}
+
+// 아이템 리스트 (가변인자)
+void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item_List& pkt)
+{
+	S_Item_List::ItemList itemList = pkt.GetItemList();
+
+	for (uint32 i = 0; i < pkt.item_count; ++i) {
+
+		XMFLOAT3 pos{ itemList[i].x,  itemList[i].y, itemList[i].z};
+
+		if (itemList[i].item_type == ITEM_TYPE::TREASURE) {
+
+			// 아마 나중에 이부분은 삭제할 수도 있다. 보물 파밍 메커니즘 상의
+			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
+			TreasureInfo treasure{ itemList[i].item_world_id, pos };
+			treasures.push_back(treasure);
+
+			if (my_player) {
+				auto itemFinder = my_player->GetComponent<CItemFinder>();
+				if (itemFinder) {
+					itemFinder->AddTreasure(treasure);
+				}
+			}
+		}
+		else {
+			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
+		}
+	}
+}
+
+void CGameScene::Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_DeSpawnItem& pkt)
+{
+	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+
+		auto treasureInfo = std::find_if(treasures.begin(), treasures.end(), [&](const TreasureInfo& info) {
+			return info.world_id == pkt.item_world_id;
+			});
+
+		if (treasureInfo != treasures.end()) {
+			treasures.erase(treasureInfo);
+
+			if (my_player) {
+				auto itemFinder = my_player->GetComponent<CItemFinder>();
+				if (itemFinder)
+					itemFinder->RegisterTreasures(treasures);
+			}
+		}
+
+		RemoveObject(pkt.item_world_id);
+	}
+	else {
+		auto it = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+			return obj->GetID() == pkt.item_world_id;
+			});
+
+		if (it != objects.end()) {
+			RemoveObject(pkt.item_world_id);
+		}
+	}
+}
+
+void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt)
+{
+	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+		auto treasure = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+			return obj->GetID() == pkt.item_world_id;
+			});
+
+		if (treasure == objects.end())
+			return;
+
+		auto worldTreasure = static_cast<CWorldTreasure*>(treasure->get());
+		my_player->GetInventory()->AddItemWithId(worldTreasure->GetItem(), pkt.inventory_id);
+	}
+	else {
+		auto item = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+			return obj->GetID() == pkt.item_world_id;
+			});
+
+		if (item == objects.end())
+			return;
+
+		auto worldItem = static_cast<CWorldItem*>(item->get());
+		my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
+	}
+}
+
+void CGameScene::Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt)
+{
+	if (!my_player)
+		return;
+
+	my_player->GetInventory()->RemoveItem(pkt.inventory_id);
 }

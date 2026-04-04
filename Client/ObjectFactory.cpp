@@ -18,6 +18,7 @@
 #include "ItemFinder.h"
 #include "MapUtils.h"
 #include "Inventory.h"
+#include "QuickSlot.h"
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
@@ -202,10 +203,12 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
 
-	// 맵 데이터를 순회하며 보물 좌표만 빼오기
+	// 맵 데이터를 순회하며 보물 좌표 + ID 부여
+	treasures.clear();
+	uint32 treasure_id = 0;
 	for (const auto& inst : instData) {
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			treasures.push_back(TreasureInfo{ inst.position });
+			treasures.push_back(TreasureInfo{ treasure_id++, inst.position });
 		}
 	}
 
@@ -260,14 +263,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 
 	std::vector<std::shared_ptr<CObject>> objects;
 
-	// 맵 데이터를 순회하며 보물 좌표만 빼오기
-	treasures.clear();
-	for (const auto& inst : instanceData) {
-		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			treasures.push_back(TreasureInfo{ inst.position });
-		}
-	}
-
 	for (const auto& inst : instanceData) {
 
 		std::string meshName = GetVariantFileName(inst.model);
@@ -281,6 +276,14 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 
 		XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 		XMStoreFloat4x4(&obj->world_matrix, world);
+
+		// MeshRendererComponent 생성 (CreateGameScene과 동일하게)
+		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+		RenderUnit unit;
+		unit.mesh = meshComp;
+		unit.material = matComp;
+		meshRenderer->SetRenderUnit(unit);
+		obj->SetComponent(meshRenderer);
 
 		obj->SetShdaer("inst");
 
@@ -431,10 +434,10 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);
 	player->SetInventory(inventory);
 
-	// 테스트! (꼭 지울 것)
-	ItemFactory::LoadFromJson("Data/items.json");
-	//inventory->AddItem(ItemFactory::Create(100));
-	//inventory->AddItem(ItemFactory::Create(1000));
+	// QuickSlot 추가
+	auto quickSlot = std::make_shared<CQuickSlot>();
+	inventory->SetQuickSlot(quickSlot);
+	player->SetQuickSlot(quickSlot);
 
 	return player;
 }

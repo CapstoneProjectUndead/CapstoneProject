@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "ImGuiManager.h"
+#include <WICTextureLoader.h>
+#include "d3dx12.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
 #include "ServerSession.h"
@@ -16,6 +18,7 @@ bool CImGuiManager::need_reset_focus = false;
 ImFont* CImGuiManager::vineritc_font = nullptr;
 ImFont* CImGuiManager::elephnt_font = nullptr;
 ImFont* CImGuiManager::bold_font = nullptr;
+ImFont* CImGuiManager::creepster_font = nullptr;
 
 CImGuiManager::CImGuiManager()
 {
@@ -26,36 +29,167 @@ CImGuiManager::~CImGuiManager()
     Release();
 }
 
-void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat)
+void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* cmdQueue, int numFramesInFlight, DXGI_FORMAT rtvFormat)
 {
-    // 1. ImGui ÄÁÅØ½ºÆ® »ı¼º
+    // 1. ImGui ì»¨í…ìŠ¤íŠ¸ ìƒì„±
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsLight();
 
-    // ÆùÆ® ·Îµå
+    // í°íŠ¸ ë¡œë“œ
     io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     vineritc_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
     elephnt_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
     bold_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgunbd.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+    creepster_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/Creepster-Regular.ttf", 270.0f);
 
-    io.Fonts->Build();
-
-    // Win32 & DX12 ÃÊ±âÈ­
+    // Win32 ì´ˆê¸°í™”
     ImGui_ImplWin32_Init(hwnd);
 
+    // SRV í™ ìƒì„± (64ìŠ¬ë¡¯: í°íŠ¸ 1ê°œ + ìœ ì € í…ìŠ¤ì²˜ ìµœëŒ€ 63ê°œ)
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    desc.NumDescriptors = 1;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = MAX_DESCRIPTORS;
+    desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&srv_desc_heap));
 
-    ImGui_ImplDX12_Init(device, numFramesInFlight,
-        rtvFormat,
-        srv_desc_heap,
-        srv_desc_heap->GetCPUDescriptorHandleForHeapStart(),
-        srv_desc_heap->GetGPUDescriptorHandleForHeapStart());
+    descriptor_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    next_slot = 0;
+
+    // DX12 ë°±ì—”ë“œ ì´ˆê¸°í™” (ìƒˆ API: CommandQueue + ìŠ¬ë¡¯ í• ë‹¹ ì½œë°± ì‚¬ìš©)
+    ImGui_ImplDX12_InitInfo initInfo = {};
+    initInfo.Device           = device;
+    initInfo.CommandQueue     = cmdQueue;
+    initInfo.NumFramesInFlight = numFramesInFlight;
+    initInfo.RTVFormat        = rtvFormat;
+    initInfo.SrvDescriptorHeap = srv_desc_heap;
+
+    // ImGui í°íŠ¸ í…ìŠ¤ì²˜ìš© ìŠ¬ë¡¯ í• ë‹¹ ì½œë°± (ìº¡ì²˜ ì—†ëŠ” ëŒë‹¤ â†’ í•¨ìˆ˜ í¬ì¸í„°ë¡œ ë³€í™˜ ê°€ëŠ¥)
+    initInfo.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* cpu, D3D12_GPU_DESCRIPTOR_HANDLE* gpu) {
+        CImGuiManager::GetInstance().AllocDescriptor(cpu, gpu);
+    };
+
+    initInfo.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE) {
+        // ë‹¨ìˆœ ì„ í˜• í• ë‹¹ ë°©ì‹ â€” ê°œë³„ ìŠ¬ë¡¯ í•´ì œ ë¶ˆí•„ìš”
+    };
+
+    ImGui_ImplDX12_Init(&initInfo);
+}
+
+void CImGuiManager::AllocDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpu, D3D12_GPU_DESCRIPTOR_HANDLE* gpu)
+{
+    *cpu = GetCPUHandle(next_slot);
+    *gpu = GetGPUHandle(next_slot);
+    next_slot++;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CImGuiManager::GetCPUHandle(UINT index) const
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = srv_desc_heap->GetCPUDescriptorHandleForHeapStart();
+    handle.ptr += index * descriptor_size;
+    return handle;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE CImGuiManager::GetGPUHandle(UINT index) const
+{
+    D3D12_GPU_DESCRIPTOR_HANDLE handle = srv_desc_heap->GetGPUDescriptorHandleForHeapStart();
+    handle.ptr += index * descriptor_size;
+    return handle;
+}
+
+void CImGuiManager::LoadTexture(ID3D12Device* device, ID3D12CommandQueue* cmdQueue,
+                                 const std::string& name, const std::wstring& path)
+{
+    if (textures.count(name))
+        return; // ì¤‘ë³µ ë¡œë“œ ë°©ì§€
+
+    // WICëŠ” COM ê¸°ë°˜ â€” ì´ˆê¸°í™”ê°€ ì•ˆ ëœ ìƒíƒœë©´ ì²« ë¡œë“œê°€ E_NOINTERFACEë¡œ ì‹¤íŒ¨í•¨
+    HRESULT res = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    assert(SUCCEEDED(res) && "CoInitializeEx Failed");
+
+    // 1. WICë¡œ PNG ë””ì½”ë”© + D3D12 ë¦¬ì†ŒìŠ¤ í—¤ë” ìƒì„± (CPU ë‹¨ê³„)
+    ComPtr<ID3D12Resource> resource;
+    std::unique_ptr<uint8_t[]> decodedData;
+    D3D12_SUBRESOURCE_DATA subresourceData;
+
+    HRESULT hr = DirectX::LoadWICTextureFromFileEx(
+        device, path.c_str(),
+        0,
+        D3D12_RESOURCE_FLAG_NONE,
+        DirectX::WIC_LOADER_FORCE_RGBA32,
+        resource.GetAddressOf(),
+        decodedData, subresourceData);
+
+    if (FAILED(hr))
+        return;
+
+    // 2. ì—…ë¡œë“œ ë²„í¼ ìƒì„±
+    const UINT64 bufferSize = GetRequiredIntermediateSize(resource.Get(), 0, 1);
+
+    CD3DX12_HEAP_PROPERTIES uploadHeap(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC   bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
+    ComPtr<ID3D12Resource> uploadBuffer;
+    hr = device->CreateCommittedResource(
+        &uploadHeap, D3D12_HEAP_FLAG_NONE,
+        &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr, IID_PPV_ARGS(&uploadBuffer));
+
+    if (FAILED(hr))
+        return;
+
+    // 3. ì„ì‹œ ì»¤ë§¨ë“œ ë¦¬ìŠ¤íŠ¸ë¡œ GPUì— ì—…ë¡œë“œ
+    ComPtr<ID3D12CommandAllocator>    tempAlloc;
+    ComPtr<ID3D12GraphicsCommandList> tempList;
+    device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&tempAlloc));
+    device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, tempAlloc.Get(), nullptr, IID_PPV_ARGS(&tempList));
+
+    UpdateSubresources(tempList.Get(), resource.Get(), uploadBuffer.Get(), 0, 0, 1, &subresourceData);
+
+    // ì—…ë¡œë“œ ì™„ë£Œ í›„ í”½ì…€ ì…°ì´ë” ì½ê¸° ìƒíƒœë¡œ ì „í™˜
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        resource.Get(),
+        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    tempList->ResourceBarrier(1, &barrier);
+    tempList->Close();
+
+    ID3D12CommandList* cmdLists[] = { tempList.Get() };
+    cmdQueue->ExecuteCommandLists(1, cmdLists);
+
+    // GPU ì—…ë¡œë“œ ì™„ë£Œ ëŒ€ê¸°
+    ComPtr<ID3D12Fence> uploadFence;
+    device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence));
+    HANDLE fenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    cmdQueue->Signal(uploadFence.Get(), 1);
+    uploadFence->SetEventOnCompletion(1, fenceEvent);
+    WaitForSingleObject(fenceEvent, INFINITE);
+    CloseHandle(fenceEvent);
+
+    // 4. SRV ìƒì„± ë° í™ ìŠ¬ë¡¯ì— ë“±ë¡
+    UINT slot = next_slot++;
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format                  = resource->GetDesc().Format;
+    srvDesc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels     = resource->GetDesc().MipLevels;
+    device->CreateShaderResourceView(resource.Get(), &srvDesc, GetCPUHandle(slot));
+
+    UITexture uiTex;
+    uiTex.resource = resource;
+    uiTex.tex_id   = (ImTextureID)GetGPUHandle(slot).ptr;
+    textures[name] = std::move(uiTex);
+}
+
+ImTextureID CImGuiManager::GetTexture(const std::string& name) const
+{
+    auto it = textures.find(name);
+    if (it == textures.end())
+        return 0;
+
+    return it->second.tex_id;
 }
 
 void CImGuiManager::Update()
@@ -64,7 +198,7 @@ void CImGuiManager::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // ÇØ»óµµ°¡ 0ÀÏ ¶§´Â ImGui Update¸¦ ÇÏÁö ¾Ê´Â´Ù.
+    // í•´ìƒë„ê°€ 0ì¼ ë•ŒëŠ” ImGui Updateë¥¼ í•˜ì§€ ì•ŠëŠ”ë‹¤.
     if (ImGui::GetIO().DisplaySize.x <= 0.0f || ImGui::GetIO().DisplaySize.y <= 0.0f)
         return;
 
@@ -124,7 +258,7 @@ void CImGuiManager::EnableIME(HWND hwnd)
 void CImGuiManager::ClearFocus(HWND hwnd)
 {
     need_reset_focus = true;
-    DisableIME(hwnd); // Áï½Ã Â÷´Ü
+    DisableIME(hwnd); // ì¦‰ì‹œ ì°¨ë‹¨
 }
 
 void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indicator_radius, const ImVec4& main_color, const ImVec4& backdrop_color, const int circle_count, const float speed)
@@ -161,43 +295,43 @@ void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indica
 
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size)
 {
-    // 1. ÇöÀç Ä¿¼­ À§Ä¡(¹öÆ°ÀÌ ±×·ÁÁú À§Ä¡)¸¦ ÀúÀåÇØµÓ´Ï´Ù.
+    // 1. í˜„ì¬ ì»¤ì„œ ìœ„ì¹˜(ë²„íŠ¼ì´ ê·¸ë ¤ì§ˆ ìœ„ì¹˜)ë¥¼ ì €ì¥í•´ë‘¡ë‹ˆë‹¤.
     ImVec2 p = ImGui::GetCursorPos();
 
-    // 2. [1Ãş] ÀÌ¹ÌÁö¸¦ ±×¸³´Ï´Ù.
-    // ÅØ½ºÃ³°¡ ÀÖÀ¸¸é ±×¸®°í, ¾øÀ¸¸é(0ÀÌ¸é) ±×³É ºó °ø°£¸¸ Â÷ÁöÇÏ°Ô µÓ´Ï´Ù.
+    // 2. [1ì¸µ] ì´ë¯¸ì§€ë¥¼ ê·¸ë¦½ë‹ˆë‹¤.
+    // í…ìŠ¤ì²˜ê°€ ìˆìœ¼ë©´ ê·¸ë¦¬ê³ , ì—†ìœ¼ë©´(0ì´ë©´) ê·¸ëƒ¥ ë¹ˆ ê³µê°„ë§Œ ì°¨ì§€í•˜ê²Œ ë‘¡ë‹ˆë‹¤.
     if (texturePtr != 0) {
         ImGui::Image((ImTextureID)texturePtr, size);
     }
     else {
-        // ÀÌ¹ÌÁö°¡ ¾ÆÁ÷ ·Îµå ¾È µÆÀ» ¶§¸¦ ´ëºñÇØ Åõ¸í ¹Ú½º Ã³¸®
+        // ì´ë¯¸ì§€ê°€ ì•„ì§ ë¡œë“œ ì•ˆ ëì„ ë•Œë¥¼ ëŒ€ë¹„í•´ íˆ¬ëª… ë°•ìŠ¤ ì²˜ë¦¬
         ImGui::Dummy(size);
     }
 
-    // 3. [2Ãş] Ä¿¼­¸¦ ´Ù½Ã ¾Æ±î ÀúÀåÇÑ À§Ä¡(ÀÌ¹ÌÁö ½ÃÀÛÁ¡)·Î µÇµ¹¸³´Ï´Ù.
-    // ÀÌ°É ¾È ÇÏ¸é ¹öÆ°ÀÌ ÀÌ¹ÌÁö ¾Æ·¡¿¡ ±×·ÁÁı´Ï´Ù.
+    // 3. [2ì¸µ] ì»¤ì„œë¥¼ ë‹¤ì‹œ ì•„ê¹Œ ì €ì¥í•œ ìœ„ì¹˜(ì´ë¯¸ì§€ ì‹œì‘ì )ë¡œ ë˜ëŒë¦½ë‹ˆë‹¤.
+    // ì´ê±¸ ì•ˆ í•˜ë©´ ë²„íŠ¼ì´ ì´ë¯¸ì§€ ì•„ë˜ì— ê·¸ë ¤ì§‘ë‹ˆë‹¤.
     ImGui::SetCursorPos(p);
 
-    // 4. [3Ãş] Åõ¸í ¹öÆ°À» ±×¸³´Ï´Ù.
-    // ¹è°æ»öÀ» Åõ¸í(Alpha=0)ÇÏ°Ô ÇØ¼­ µÚ¿¡ ÀÖ´Â ÀÌ¹ÌÁö°¡ º¸ÀÌ°Ô ÇÕ´Ï´Ù.
+    // 4. [3ì¸µ] íˆ¬ëª… ë²„íŠ¼ì„ ê·¸ë¦½ë‹ˆë‹¤.
+    // ë°°ê²½ìƒ‰ì„ íˆ¬ëª…(Alpha=0)í•˜ê²Œ í•´ì„œ ë’¤ì— ìˆëŠ” ì´ë¯¸ì§€ê°€ ë³´ì´ê²Œ í•©ë‹ˆë‹¤.
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
-    // ¸¶¿ì½º ¿Ã·ÈÀ» ¶§ »ìÂ¦ ÇÏ¾é°Ô ºû³ª°Ô (Highlight È¿°ú)
+    // ë§ˆìš°ìŠ¤ ì˜¬ë ¸ì„ ë•Œ ì‚´ì§ í•˜ì–—ê²Œ ë¹›ë‚˜ê²Œ (Highlight íš¨ê³¼)
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.2f));
 
-    // ´­·¶À» ¶§ Á» ´õ ÁøÇÏ°Ô
+    // ëˆŒë €ì„ ë•Œ ì¢€ ë” ì§„í•˜ê²Œ
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.4f));
 
-    // ½ÇÁ¦ ¹öÆ° »ı¼º (ÀÌ¸§°ú Å©±â´Â ±×´ë·Î Àü´Ş)
+    // ì‹¤ì œ ë²„íŠ¼ ìƒì„± (ì´ë¦„ê³¼ í¬ê¸°ëŠ” ê·¸ëŒ€ë¡œ ì „ë‹¬)
     bool clicked = ImGui::Button(label, size);
 
-    // ½ºÅ¸ÀÏ º¹±¸
+    // ìŠ¤íƒ€ì¼ ë³µêµ¬
     ImGui::PopStyleColor(3);
 
-    return clicked; // Å¬¸¯ ¿©ºÎ ¹İÈ¯
+    return clicked; // í´ë¦­ ì—¬ë¶€ ë°˜í™˜
 }
 
-// ÇïÆÛ ÇÔ¼ö ±¸Çö
+// í—¬í¼ í•¨ìˆ˜ êµ¬í˜„
 std::string CP949ToUTF8(const std::string& strCP949)
 {
     if (strCP949.empty()) return "";
@@ -218,14 +352,14 @@ std::string UTF8ToCP949(const std::string& utf8Str)
     if (utf8Str.empty()) 
         return "";
 
-    // 1. UTF-8 -> Unicode (WideChar) º¯È¯
-    // ÇÊ¿äÇÑ ¹öÆÛ Å©±â °è»ê
+    // 1. UTF-8 -> Unicode (WideChar) ë³€í™˜
+    // í•„ìš”í•œ ë²„í¼ í¬ê¸° ê³„ì‚°
     int nLen = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), NULL, 0);
     std::wstring wstr(nLen, 0);
     MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)utf8Str.size(), &wstr[0], nLen);
 
-    // 2. Unicode -> CP949 (ANSI) º¯È¯
-    // 949´Â ÇÑ±¹¾î ÄÚµå ÆäÀÌÁöÀÔ´Ï´Ù.
+    // 2. Unicode -> CP949 (ANSI) ë³€í™˜
+    // 949ëŠ” í•œêµ­ì–´ ì½”ë“œ í˜ì´ì§€ì…ë‹ˆë‹¤.
     int nLen2 = WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
     std::string strCP949(nLen2, 0);
     WideCharToMultiByte(949, 0, wstr.c_str(), (int)wstr.size(), &strCP949[0], nLen2, NULL, NULL);

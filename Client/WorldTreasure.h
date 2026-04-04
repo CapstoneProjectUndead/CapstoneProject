@@ -1,0 +1,18 @@
+#pragma once
+#include "WorldItem.h"
+
+class CItem;
+
+class CWorldTreasure :
+    public CWorldItem
+{
+public:
+    CWorldTreasure(std::shared_ptr<CItem> item);
+    ~CWorldTreasure();
+
+    virtual void Update(float dt) override;
+
+private:
+    TreasureInfo treasure_info; 
+};
+

@@ -37,7 +37,7 @@ void CItemFinder::RegisterTreasures(const std::vector<MapGenerator::InstanceData
 {
     treasures.clear();
 
-    // ¸Ê µ¥ÀÌÅÍ¸¦ ¼øÈ¸ÇÏ¸ç º¸¹°¸¸ Ã£¾Æ º¤ÅÍ¿¡ ÀúÀå
+    // ë§µ ë°ì´í„°ë¥¼ ìˆœíšŒí•˜ë©° ë³´ë¬¼ë§Œ ì°¾ì•„ ë²¡í„°ì— ì €ì¥
     for (const auto& instance : mapData) {
         if (instance.type == MapGenerator::EModelType::TREASURE) {
             treasures.emplace_back(TreasureInfo{ instance.position });
@@ -53,16 +53,16 @@ void CItemFinder::RegisterTreasures(const std::vector<TreasureInfo>& _treasures)
 
 float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos)
 {
-    float minDistance = -1.0f; // ¹ß°ß ¸ø ÇÔÀ» ÀÇ¹Ì
+    float minDistance = -1.0f; // ë°œê²¬ ëª» í•¨ì„ ì˜ë¯¸
 
     for (const auto& treasure : treasures) {
 
-        // À¯È¿ÇÑ »óÅÂ(Vaild)ÀÎ º¸¹°¸¸ °Ë»ç
-        // ÀÌ¹Ì ´©°¡ ÆÄ°í ÀÖ°Å³ª(Occupied), »ç¶óÁø(Invalid) º¸¹°Àº °¨ÁöµÇÁö ¾Ê´Â´Ù.
+        // ìœ íš¨í•œ ìƒíƒœ(Vaild)ì¸ ë³´ë¬¼ë§Œ ê²€ì‚¬
+        // ì´ë¯¸ ëˆ„ê°€ íŒŒê³  ìˆê±°ë‚˜(Occupied), ì‚¬ë¼ì§„(Invalid) ë³´ë¬¼ì€ ê°ì§€ë˜ì§€ ì•ŠëŠ”ë‹¤.
         if (treasure.treasure_state != TREASURE_STATE::Vaild) 
             continue;
 
-        // XZ Æò¸é °Å¸® °è»ê
+        // XZ í‰ë©´ ê±°ë¦¬ ê³„ì‚°
         float dx = treasure.treasure_pos.x - playerPos.x;
         float dz = treasure.treasure_pos.z - playerPos.z;
         float distSq = (dx * dx) + (dz * dz);

@@ -4,10 +4,12 @@
 #include "Job.h"
 #include "User.h"
 #include "ServerObjectFactory.h"
+#include "ItemManager.h"
 
 class CRoom;
 class CMonster;
 class CPhysicsManager;
+class CItem;
 
 class CScene
 {
@@ -19,7 +21,7 @@ public:
 	CScene(SCENE_TYPE type, uint32 roomId);
 	virtual ~CScene();
 
-	virtual void Start() {};
+	virtual void Initialize();
 	virtual void Update(const float elapsedTime);
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
@@ -94,9 +96,12 @@ public:
 	void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
 	void Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt);
 
+	virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) {};
+	virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) {}
+
 protected:
 	map<uint64, shared_ptr<CPlayer>>	players;
-	map<uint64, shared_ptr<CMonster>>   monsters;
+	map<uint64, shared_ptr<CMonster>>	monsters;
 	SCENE_TYPE							scene_type;
 
 	mutex								job_queue_lock;
@@ -110,6 +115,9 @@ protected:
 
 	// Room의 PhysicsManager를 약한 참조
 	weak_ptr<CPhysicsManager>			physics_manager;
+
+	// 아이템 관리 Manager
+	unique_ptr<CItemManager>            item_manager;
 
 private:
 	int									active_player_count;

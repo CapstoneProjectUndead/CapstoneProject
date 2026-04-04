@@ -92,8 +92,8 @@ enum class ITEM_TYPE : uint8_t
 {
 	EQUIPMENT = 0,
 	CONSUMABLE,
+	ETC,
 	TREASURE,
-	ETC
 };
 
 // 소분류: 실제 동작 분기용 (도끼인지, 드릴인지 결정)
@@ -101,28 +101,30 @@ enum class ITEM_SUB_TYPE : uint16_t
 {
 	NONE = 0,
 
-	// Equipment 시리즈 (100번대)
-	EQUIP_AXE = 100,
-	EQUIP_PICKAXE,
-	EQUIP_DRILL,
+	// (Equipment 시리즈)-파밍 도구 시리즈(100번대)
+	TOOL = 100,
 
-	// 회복 아이템 시리즈 (200번대)
-	HEAL_POTION = 200,
-	HEAL_BREAD,
+	// (Equipment 시리즈)-무기 시리즈 (150번대)
+	WEAPON = 150, 
+
+	// 소비 아이템 시리즈 (200번대)
+	HEAL = 200,
+	ENERGY,
+	HEAL_ENERGY,
+	BUFF,
 
 	// 예능 아이템 시리즈 (300번대)
-	BONE = 300,
-
-	// Treasure 시리즈 (400번대)
-	TREASURE_SILVER = 400,
-	TREASURE_GOLD
+	NONE_EFFECT = 300,
+	AGGRO,
+	UTIL,
+	TRAP,
 };
 
 //=========================================================================
 // DB 테이블에 item_type 컬럼과 sub_type 컬럼을 숫자로 저장해두면,
 // 서버가 켜질 때 이 값을 읽어서 바로 Enum으로 캐스팅(static_cast)할 수 있습니다.
 
-//  예: 1(EQUIPMENT), 101(EQUIP_DRILL) -> "아, 이 데이터는 드릴 장비구나!"
+//  예: 1(EQUIPMENT), 100(AXE) -> "아, 이 데이터는 장비이고 파밍 도구이구나."
 //=========================================================================
 
 enum class TREASURE_GRADE : uint8_t

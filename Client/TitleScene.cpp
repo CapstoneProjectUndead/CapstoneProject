@@ -140,20 +140,46 @@ void CTitleScene::DrawTitle()
 
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 
-    // 배경 채우기 
-    ImGui::GetBackgroundDrawList()->AddRectFilled(
-        ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
-    );
+    // 배경 이미지 (없으면 단색 폴백)
+    ImTextureID bgTex = CImGuiManager::GetInstance().GetTexture("bg");
+    if (bgTex) {
+        ImGui::GetBackgroundDrawList()->AddImage(bgTex, ImVec2(0, 0), screenSize);
+    }
+    else {
+        ImGui::GetBackgroundDrawList()->AddRectFilled(
+            ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 1.0f))
+        );
+    }
 
-    if (CImGuiManager::vineritc_font) {
+    // 타이틀 이미지 (없으면 기존 폰트 텍스트 폴백)
+    ImTextureID titleTex = CImGuiManager::GetInstance().GetTexture("title");
+    if (titleTex) {
+        float titleW = 600.0f * G_RATIO_X;
+        float titleH = 200.0f * G_RATIO_Y;
+        float titleX = (screenSize.x - titleW) * 0.5f;
+        float titleY = screenSize.y * 0.3f - titleH * 0.5f;
+        ImGui::GetBackgroundDrawList()->AddImage(
+            titleTex,
+            ImVec2(titleX, titleY),
+            ImVec2(titleX + titleW, titleY + titleH)
+        );
+    }
+    else if (CImGuiManager::creepster_font) {
         float fontSize = 270.0f * G_RATIO_Y;
-        ImFont* font = CImGuiManager::vineritc_font;
+        ImFont* font = CImGuiManager::creepster_font;
         ImVec2 textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, "UNDEAD");
         ImVec2 pos = ImVec2(
             (screenSize.x - textSize.x) * 0.5f,
             screenSize.y * 0.3f - textSize.y * 0.5f
         );
-        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, pos, IM_COL32(204, 0, 0, 255), "UNDEAD");
+        float s = G_RATIO_Y;
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 22.0f * s, pos.y + 22.0f * s), IM_COL32( 60, 20,  90,  80), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 18.0f * s, pos.y + 18.0f * s), IM_COL32( 80, 30, 110, 100), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 14.0f * s, pos.y + 14.0f * s), IM_COL32(100, 40, 140, 130), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x + 10.0f * s, pos.y + 10.0f * s), IM_COL32(130, 60, 170, 155), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x +  6.0f * s, pos.y +  6.0f * s), IM_COL32(155, 80, 200, 180), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, ImVec2(pos.x +  3.0f * s, pos.y +  3.0f * s), IM_COL32(180, 100, 220, 210), "UNDEAD");
+        ImGui::GetBackgroundDrawList()->AddText(font, fontSize, pos, IM_COL32(100, 220, 80, 255), "UNDEAD");
     }
 }
 
@@ -194,19 +220,23 @@ void CTitleScene::DrawTitleMainWindow()
         // ======================================
         if (ui_state == TitleUIState::Main)
         {
-            if (ImGui::Button((const char*)u8"싱글 플레이", btnSize)) {
+            ImTextureID singleTex = CImGuiManager::GetInstance().GetTexture("single");
+            ImTextureID multiTex  = CImGuiManager::GetInstance().GetTexture("multi");
+            ImTextureID exitTex   = CImGuiManager::GetInstance().GetTexture("exit");
+
+            if (ImageButtonWithText((long long)singleTex, "##single", btnSize)) {
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"멀티 플레이", btnSize)) {
-                SetUIState(TitleUIState::MultiSelect); // 상태 변경!
+            if (ImageButtonWithText((long long)multiTex, "##multi", btnSize)) {
+                SetUIState(TitleUIState::MultiSelect);
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"게임 종료", btnSize)) {
+            if (ImageButtonWithText((long long)exitTex, "##exit", btnSize)) {
                 g_run = false;
             }
         }

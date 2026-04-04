@@ -27,6 +27,7 @@ struct PendingInput
 class CUser;
 class CRoom;
 class CollisionInfo;
+class CInventory;
 
 class CPlayer : public CObject
 {
@@ -48,6 +49,9 @@ public:
 	std::weak_ptr<CUser>      GetUserWeak() const { return user; }
 	std::shared_ptr<CUser>    GetUser() const { return user.lock(); }
 	void SetUser(shared_ptr<CUser> _user) { user = _user; }
+
+	std::shared_ptr<CInventory> GetInventory() const { return inventory; }
+	void SetInventory(shared_ptr<CInventory> inven) { inventory = inven; }
 
 	void RecordServerFrameHistory(const ServerFrameHistory& history);
 	bool FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult);
@@ -90,6 +94,8 @@ private:
 	uint8 body_type{};
 	uint8 eyes_type{};
 	uint8 mouth_type{};
+
+	shared_ptr<CInventory>      inventory;
 
 	bool is_ready;
 };

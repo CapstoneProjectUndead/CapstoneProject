@@ -7,7 +7,7 @@ class CWorldItem : public CObject
 {
 public:
 	CWorldItem(std::shared_ptr<CItem> _item);
-	~CWorldItem();
+	virtual ~CWorldItem() = 0;
 
 	virtual void Update(float dt) override;
 

@@ -19,8 +19,9 @@ CTitleScene::~CTitleScene()
 
 }
 
-void CTitleScene::Start()
+void CTitleScene::Initialize()
 {
+	CScene::Initialize();
 }
 
 void CTitleScene::Update(float elapsedTime)

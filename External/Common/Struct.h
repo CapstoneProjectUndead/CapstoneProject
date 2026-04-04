@@ -15,6 +15,22 @@ struct InputData
 	bool space = false;
 };
 
+struct PlayerStat
+{
+	uint32 hp;
+	uint32 stamina;
+	uint16 miningSpeed;
+
+	const uint32 maxHp = 1000;
+	const uint32 maxStamina = 1000;
+};
+
+struct Buff
+{
+	float duration;        // 남은 시간 (초)
+	float miningSpeedMult; // 채굴 속도 배율 (50% 증가)
+};
+
 struct PlayerInfo
 {
 	// 서버가 처리 완료한 이 플레이어의 마지막 시퀀스 번호
@@ -128,11 +144,21 @@ struct RoomInfo
 
 struct TreasureInfo
 {
-	XMFLOAT3 treasure_pos;
+	uint32         world_id;
+	XMFLOAT3       treasure_pos;
 	TREASURE_STATE treasure_state;
 
+	TreasureInfo() = default;
+
 	TreasureInfo(const XMFLOAT3 pos)
-		: treasure_pos(pos)
+		: world_id(0)
+		, treasure_pos(pos)
+		, treasure_state(TREASURE_STATE::Vaild)
+	{}
+
+	TreasureInfo(uint32 id, const XMFLOAT3 pos)
+		: world_id(id)
+		, treasure_pos(pos)
 		, treasure_state(TREASURE_STATE::Vaild)
 	{}
 };
@@ -142,7 +168,7 @@ struct TreasureInfo
 
 struct ItemData 
 {
-	int				item_id;
+	uint16		    item_id;
 	ITEM_TYPE		item_type;
 	ITEM_SUB_TYPE	item_sub_type;
 	std::string		item_name;

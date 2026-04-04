@@ -58,6 +58,12 @@ public:
 	void Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt);
 	void Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt);
 
+	virtual void Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt) {}
+	virtual void Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item_List& pkt) {}
+	virtual void Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_DeSpawnItem& pkt) {}
+	virtual void Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt) {}
+	virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) {}
+
 public:
 	// 멤버 변수 set
 	std::shared_ptr<CMyPlayer>				GetMyPlayer() const { return my_player; }
@@ -72,7 +78,7 @@ public:
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
 	
-	std::shared_ptr<CObjectFactory>& GetFactory() { return factory; };
+	std::shared_ptr<CObjectFactory>&		GetFactory() { return factory; };
 protected:
 	SCENE_TYPE								scene_type;
 

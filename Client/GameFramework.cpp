@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include <filesystem>
 #include "Player.h"
 #include "KeyManager.h"
 #include "NetworkManager.h"
@@ -12,10 +13,12 @@
 #include "LobbyScene.h"
 
 #include "ImGuiManager.h"
+#include "ResourceManager.h"
 #include "TitleScene.h"
 #include "CustomScene.h"
 #include "GameScene.h"
 #include "UIScene.h"
+#include "ItemFactory.h"
 
 extern HWND ghWnd;
 
@@ -44,6 +47,12 @@ bool CGameFramework::OnCreate()
 
 	CSceneManager::GetInstance().Init(d3d_device.Get());
 
+	// 아이템 도감 데이터 읽어오기 (순서 중요! 반드시 씬 초기화 이전에 해야한다.)
+	wchar_t exePath[MAX_PATH];
+	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+	std::filesystem::path jsonPath = std::filesystem::path(exePath).parent_path() / "Data/items.json";
+	ItemFactory::LoadFromJson(jsonPath.string());
+
 	// 렌더링 게임 객체 생성
 	BuildObjects();
 
@@ -53,7 +62,10 @@ bool CGameFramework::OnCreate()
 	// ImGuiManager 초기화
 	// bufferCount: 더블 버퍼링이면 2, 트리플이면 3 (SwapchainDesc 확인 필요)
 	// format: 보통 DXGI_FORMAT_R8G8B8A8_UNORM
-	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
+	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, GET_CMD_QUEUE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+	// 텍스처 로드
+	CResourceManager::GetInstance().LoadAll(d3d_device.Get(), command_queue.Get());
 
 	graphics_memory = std::make_unique<GraphicsMemory>(d3d_device.Get());
 

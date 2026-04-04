@@ -12,7 +12,7 @@ public:
     CGameScene(uint32 roomId);
     virtual ~CGameScene() override;
 
-    virtual void Start() override;
+    virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
     virtual void Enter() override;
@@ -23,9 +23,12 @@ private:
     void LoadGameScene();
     void CreateGameScene();
 
+public:
+    virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;
+    virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) override;
+
 private:
-    std::map<std::string, std::shared_ptr<CObject>> prototypes;
-    vector<MapGenerator::InstanceData>              map_instance_data;
-    std::vector<TreasureInfo>                       treasures;
+    map<string, shared_ptr<CObject>>    prototypes;
+    vector<MapGenerator::InstanceData>  map_instance_data;
 };
 

@@ -2,6 +2,8 @@
 #include "Inventory.h"
 #include "ImGuiManager.h"
 #include "MyPlayer.h"
+#include "ServerPacketHandler.h"
+#include "QuickSlot.h"
 
 #undef max
 #undef min
@@ -15,6 +17,7 @@ CInventory::~CInventory()
 {
 }
 
+// 싱글용
 void CInventory::AddItem(std::shared_ptr<CItem> item)
 {
 	// 보물만 무게에 영향을 준다.
@@ -31,18 +34,43 @@ void CInventory::AddItem(std::shared_ptr<CItem> item)
 		current_weight += item->GetWeight();
 	}
 
-	items.push_back(std::move(item));
+	uint32 id = inventory_id_counter++;
+	item->SetInventoryID(id);
+	items[id] = std::move(item);
 }
 
-void CInventory::RemoveItem(int itemID)
+// 멀티용
+void CInventory::AddItemWithId(std::shared_ptr<CItem> item, uint32 inventoryId)
 {
-	auto it = std::find_if(items.begin(), items.end(),
-		[itemID](const std::shared_ptr<CItem>& item) {
-			return item->GetItemId() == itemID;
-		});
+	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
+
+		if (current_weight >= max_weight)
+			return;
+
+		if (current_weight + item->GetWeight() > max_weight)
+			return;
+
+		current_weight += item->GetWeight();
+	}
+
+	item->SetInventoryID(inventoryId);
+	items[inventoryId] = std::move(item);
+}
+
+void CInventory::RemoveItem(uint32 inventoryId)
+{
+	auto it = items.find(inventoryId);
 
 	if (it != items.end()) {
-		current_weight -= (*it)->GetWeight();
+
+		// 보물이면 가방 무게에서 제외
+		if (it->second->GetItemType() == ITEM_TYPE::TREASURE)
+			current_weight -= it->second->GetWeight();
+
+		// 퀵슬롯에 등록된 아이템이면 슬롯 비움
+		if (quick_slot)
+			quick_slot->OnItemRemovedFromInventory(inventoryId);
+
 		items.erase(it);
 	}
 }
@@ -88,6 +116,88 @@ void CInventory::BeginDrawInventory()
 
 	ImGui::PopStyleColor(); // WindowBg
 	ImGui::PopStyleVar(3);  // WindowPadding, ItemSpacing, WindowRounding
+
+	// 드래그 프리뷰: 마우스 커서 위치에 아이템 ghost 렌더링
+	if (is_dragging && dragged_item) {
+		ImVec2      mousePos = ImGui::GetMousePos();
+		float       ghostSz  = 50.0f * scale;
+		ImVec2      ghostMin = ImVec2(mousePos.x - ghostSz * 0.5f, mousePos.y - ghostSz * 0.5f);
+		ImVec2      ghostMax = ImVec2(mousePos.x + ghostSz * 0.5f, mousePos.y + ghostSz * 0.5f);
+		ImDrawList* dl       = ImGui::GetForegroundDrawList();
+
+		dl->AddRectFilled(ghostMin, ghostMax, IM_COL32(210, 210, 215, 200), 6.0f * scale);
+		dl->AddRect(ghostMin, ghostMax,       IM_COL32(120, 120, 125, 255), 6.0f * scale);
+
+		const char* name = dragged_item->GetName().c_str();
+		ImVec2 tSz = ImGui::CalcTextSize(name);
+		dl->AddText(ImVec2(mousePos.x - tSz.x * 0.5f, mousePos.y - tSz.y * 0.5f),
+		            IM_COL32(30, 30, 30, 255), name);
+	}
+
+	// 마우스 버튼 놓으면 드래그 종료
+	if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) && is_dragging && dragged_item) {
+
+		// 인벤토리 창 밖에서 놓았는지 확인
+		ImGuiWindow* win = ImGui::FindWindowByName("##Inventory");
+		bool droppedOutside = true;
+		if (win) {
+			ImVec2 mp = ImGui::GetMousePos();
+			droppedOutside = !(mp.x >= win->Pos.x && mp.x <= win->Pos.x + win->Size.x &&
+			                   mp.y >= win->Pos.y && mp.y <= win->Pos.y + win->Size.y);
+		}
+
+		if (droppedOutside) {
+
+			// 퀵슬롯 위에 드롭한 경우: 등록만 하고 인벤토리에서는 제거하지 않음
+			bool handled_by_quickslot = false;
+			if (quick_slot) {
+				ImVec2 mp = ImGui::GetMousePos();
+				handled_by_quickslot = quick_slot->TryDropOnSlot(dragged_item, mp);
+			}
+
+			if (!handled_by_quickslot) {
+				if (g_is_single) {
+					auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
+						return pair.second.get() == dragged_item;
+						});
+
+					if (item != items.end()) {
+						if (item->second->GetItemType() == ITEM_TYPE::TREASURE)
+							current_weight -= item->second->GetWeight();
+
+						if (on_drop_callback)
+							on_drop_callback(item->second);
+
+						if (quick_slot)
+							quick_slot->OnItemRemovedFromInventory(item->first);
+
+						items.erase(item);
+					}
+				}
+				else {
+					auto item = std::find_if(items.begin(), items.end(), [this](const std::pair<uint32, std::shared_ptr<CItem>>& pair) {
+						return pair.second.get() == dragged_item;
+						});
+
+					if (item != items.end()) {
+						C_DropItem dropPkt;
+						dropPkt.player_id = owner.lock()->GetID();
+						dropPkt.inventory_id = item->first;
+						dropPkt.item_type = item->second->GetItemType();
+						dropPkt.scene_type = owner.lock()->GetCurrentSceneType();
+
+						if (owner.lock()->GetSession()) {
+							auto sendBuffer = MAKE_SEND_BUFFER(dropPkt);
+							owner.lock()->GetSession()->DoSend(sendBuffer);
+						}
+					}
+				}
+			}
+		}
+
+		is_dragging  = false;
+		dragged_item = nullptr;
+	}
 }
 
 void CInventory::DrawTitleBar(float winW, float titleH)
@@ -151,7 +261,7 @@ void CInventory::DrawTabBar()
 	struct TabInfo { const char* label; ITEM_TYPE type; };
 	TabInfo tabs[4] = {
 		{ (const char*)u8"장비",      ITEM_TYPE::EQUIPMENT  },
-		{ (const char*)u8"회복",      ITEM_TYPE::CONSUMABLE },
+		{ (const char*)u8"소비",      ITEM_TYPE::CONSUMABLE },
 		{ (const char*)u8"기타",      ITEM_TYPE::ETC        },
 		{ (const char*)u8"보물",      ITEM_TYPE::TREASURE   },
 	};
@@ -204,10 +314,15 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 	float scale = G_RATIO_Y;
 
 	std::vector<CItem*> filtered;
-	for (auto& item : items) {
+	for (auto& [id, item] : items) {
 		if (item->GetItemType() == type)
 			filtered.push_back(item.get());
 	}
+	std::sort(filtered.begin(), filtered.end(), [](CItem* a, CItem* b) {
+		return a->GetInventoryID() < b->GetInventoryID();
+	});
+
+	int displayCount = (int)filtered.size();
 
 	const int cols    = 4;
 	float     bottomH = 40.0f * scale;
@@ -224,7 +339,7 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 		float cellSz = (avail - pad * (cols + 1)) / cols;
 
 		int minSlots = cols * 5;
-		int total    = std::max((int)filtered.size(), minSlots);
+		int total    = std::max(displayCount, minSlots);
 		int rows     = (total + cols - 1) / cols;
 
 		ImGui::Dummy(ImVec2(0.0f, pad * 2)); // 상단 여백
@@ -242,24 +357,58 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				dl->AddRectFilled(cellMin, cellMax, IM_COL32(210, 210, 215, 255), rounding);
 				dl->AddRect(cellMin, cellMax,       IM_COL32(170, 170, 175, 255), rounding);
 
-				if (idx < (int)filtered.size()) {
+				CItem* displayItem = nullptr;
+
+				if (idx < (int)filtered.size())
+					displayItem = filtered[idx];
+
+				if (displayItem) {
 
 					// TODO: 실제 아이템 이미지 로드 후 ImGui::Image()로 교체
-					const char* placeholder = "[img]";
+					const char* placeholder = displayItem->GetName().c_str();
 					ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
 					ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
 					                     cellMin.y + (cellSz - tSz.y) * 0.5f);
 					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
 
-					// TODO: 실제 수량으로 교체
-					//char countBuf[16];
-					//snprintf(countBuf, sizeof(countBuf), "%.0f", filtered[idx]->GetWeight());
-					//float lineH = ImGui::GetTextLineHeight();
-					//ImVec2 cPos = ImVec2(cellMin.x + pad, cellMax.y - lineH - pad * 0.5f);
-					//dl->AddText(cPos, IM_COL32(30, 30, 30, 255), countBuf);
 				}
 
-				ImGui::Dummy(ImVec2(cellSz, cellSz));
+				// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지
+				char btnId[32];
+				snprintf(btnId, sizeof(btnId), "##grid_slot_%d", idx);
+				ImGui::InvisibleButton(btnId, ImVec2(cellSz, cellSz));
+
+				if (displayItem) {
+					if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
+						is_dragging  = true;
+						dragged_item = displayItem;
+					}
+
+					if (!is_dragging && ImGui::IsItemHovered())
+						DrawItemTooltip(displayItem);
+
+					// 아이템 더블클릭 시
+					if (type != ITEM_TYPE::TREASURE
+						&& ImGui::IsItemHovered()
+						&& ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+
+						auto player = owner.lock();
+						if (!player)
+							return;
+
+						// 장비는 장착
+						if (type == ITEM_TYPE::EQUIPMENT) {
+							auto equip = static_cast<CEquipment*>(displayItem);
+							equip->Equip(player.get());
+						}
+						else {
+							// 아이템은 사용
+							if (displayItem->Use(player.get())) {
+								RemoveItem(displayItem->GetInventoryID());
+							}
+						}
+					}
+				}
 
 				if (col < cols - 1)
 					ImGui::SameLine(0.0f, pad);
@@ -279,10 +428,13 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 
 	// 현재 탭에 해당하는 아이템 필터링
 	std::vector<CItem*> filtered;
-	for (auto& item : items) {
+	for (auto& [id, item] : items) {
 		if (item->GetItemType() == type)
 			filtered.push_back(item.get());
 	}
+	std::sort(filtered.begin(), filtered.end(), [](CItem* a, CItem* b) {
+		return a->GetInventoryID() < b->GetInventoryID();
+	});
 
 	float bottomH = 40.0f * scale;
 	float rowH    = 70.0f * scale;
@@ -326,8 +478,21 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 					ImVec2 slotMax = ImVec2(slotMin.x + slotSz,  slotMin.y + slotSz);
 
 					ImDrawList* dl = ImGui::GetWindowDrawList();
+					// 보물 등급별 테두리 색상
+					ImU32 borderColor = IM_COL32(170, 170, 175, 255); // 기본 회색
+					if (i < (int)filtered.size()) {
+						CTreasure* treasure = static_cast<CTreasure*>(filtered[i]);
+						switch (treasure->GetGrade()) {
+						case TREASURE_GRADE::COMMON:   borderColor = IM_COL32(160, 160, 160, 255); break; // 회색
+						case TREASURE_GRADE::UNCOMMON: borderColor = IM_COL32( 80, 200,  80, 255); break; // 초록
+						case TREASURE_GRADE::RARE:     borderColor = IM_COL32( 80, 140, 255, 255); break; // 파랑
+						case TREASURE_GRADE::EPIC:     borderColor = IM_COL32(180,  80, 255, 255); break; // 보라
+						case TREASURE_GRADE::LEGENDARY:borderColor = IM_COL32(255, 165,   0, 255); break; // 주황/금
+						}
+					}
+
 					dl->AddRectFilled(slotMin, slotMax, IM_COL32(210, 210, 215, 255), rounding); // 연한 회색 채우기
-					dl->AddRect(slotMin, slotMax,       IM_COL32(170, 170, 175, 255), rounding); // 테두리
+					dl->AddRect(slotMin, slotMax, borderColor, rounding, 0, 2.0f * scale);       // 등급별 테두리
 
 					if (i < (int)filtered.size()) {
 
@@ -337,7 +502,19 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 						dl->AddText(textPos, IM_COL32(100, 100, 100, 255), "[img]");
 					}
 
-					ImGui::Dummy(ImVec2(imgColW, rowH)); // 셀 공간 확보
+					// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지
+					char btnId[32];
+					snprintf(btnId, sizeof(btnId), "##table_slot_%d", i);
+					ImGui::InvisibleButton(btnId, ImVec2(imgColW, rowH));
+
+					if (i < (int)filtered.size()) {
+						if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
+							is_dragging  = true;
+							dragged_item = filtered[i];
+						}
+						if (!is_dragging && ImGui::IsItemHovered() && type != ITEM_TYPE::TREASURE)
+							DrawItemTooltip(filtered[i]);
+					}
 				}
 
 				// 아이템 이름 셀
@@ -402,6 +579,148 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 	ImGui::PopStyleColor(); // ChildBg
 }
 
+void CInventory::DrawItemTooltip(CItem* item)
+{
+	if (!item)
+		return;
+
+	float scale    = G_RATIO_Y;
+	float imgSz    = 70.0f * scale;
+	float padX     = 12.0f * scale;
+	float padY     = 8.0f  * scale;
+	float rounding = 6.0f  * scale;
+	float descW    = 180.0f * scale;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 12.0f * scale);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,  ImVec2(padX, padY));
+	ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.17f, 0.17f, 0.18f, 0.93f));
+
+	if (ImGui::BeginTooltip()) {
+
+		ImGui::SetWindowFontScale(scale);
+
+		// ── 1. 아이템 이름 (가운데 정렬, 볼드) ─────────────────────
+		if (CImGuiManager::bold_font)
+			ImGui::PushFont(CImGuiManager::bold_font);
+
+		const char* name   = item->GetName().c_str();
+		float       totalW = imgSz + padX + descW;
+		float       nameW  = ImGui::CalcTextSize(name).x;
+		ImGui::SetCursorPosX(padX + (totalW - nameW) * 0.5f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+		ImGui::Text("%s", name);
+		ImGui::PopStyleColor();
+
+		if (CImGuiManager::bold_font)
+			ImGui::PopFont();
+
+		// ── 2. 구분선 ────────────────────────────────────────────
+		ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.55f, 0.55f, 0.58f, 0.7f));
+		ImGui::Separator();
+		ImGui::PopStyleColor();
+
+		ImGui::Dummy(ImVec2(0.0f, padY * 0.3f));
+
+		// ── 3. 이미지 셀 | 설명 텍스트 ────────────────────────────
+		ImDrawList* dl = ImGui::GetWindowDrawList();
+
+		// 왼쪽: 이미지 셀
+		ImGui::BeginGroup();
+		{
+			ImVec2 imgMin = ImGui::GetCursorScreenPos();
+			ImVec2 imgMax = ImVec2(imgMin.x + imgSz, imgMin.y + imgSz);
+			dl->AddRectFilled(imgMin, imgMax, IM_COL32(210, 210, 215, 255), rounding);
+			dl->AddRect(imgMin, imgMax, IM_COL32(170, 170, 175, 255), rounding);
+
+			// TODO: 실제 텍스처 로드 후 ImGui::Image()로 교체
+			ImVec2 ptSz = ImGui::CalcTextSize("[img]");
+			dl->AddText(ImVec2(imgMin.x + (imgSz - ptSz.x) * 0.5f,
+			                   imgMin.y + (imgSz - ptSz.y) * 0.5f),
+			            IM_COL32(100, 100, 100, 255), "[img]");
+
+			ImGui::Dummy(ImVec2(imgSz, imgSz));
+		}
+		ImGui::EndGroup();
+
+		ImGui::SameLine(0.0f, padX);
+
+		// 오른쪽: 타입별 정보
+		ImGui::BeginGroup();
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.88f, 0.88f, 0.88f, 1.0f));
+			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + descW);
+
+			auto* tool = dynamic_cast<CTool*>(item);
+			if (tool) {
+				// 도구: 설명 표시
+				// 도구: 설명 표시
+				const std::string& desc = tool->GetDescription();
+				if (!desc.empty()) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.78f, 0.88f, 1.0f, 0.92f));
+					ImGui::TextWrapped("%s", desc.c_str());
+					ImGui::PopStyleColor();
+
+					ImGui::Dummy(ImVec2(0.0f, 3.0f * scale));
+					ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.45f, 0.45f, 0.50f, 0.5f));
+					ImGui::Separator();
+					ImGui::PopStyleColor();
+					ImGui::Dummy(ImVec2(0.0f, 4.0f * scale));
+				}
+
+				// 내구도 표시
+				uint32 cur = tool->GetCurrentDurability();
+				uint32 max = tool->GetMaxDurability();
+				float  ratio = (max > 0) ? (float)cur / (float)max : 0.0f;
+
+				// 내구도 바 색상 (높으면 초록, 낙으면 빨강)
+				ImVec4 barColor = (ratio > 0.5f) ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f)
+				                : (ratio > 0.25f) ? ImVec4(0.9f, 0.7f, 0.1f, 1.0f)
+				                                 : ImVec4(0.9f, 0.2f, 0.2f, 1.0f);
+
+				// 내구도 레이블 (황금색)
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.88f, 0.72f, 0.35f, 1.0f));
+				ImGui::TextUnformatted((const char*)u8"내구도");
+				ImGui::PopStyleColor();
+
+				// 수치 텍스트 (내구도 바 색상과 동일)
+				char durBuf[32];
+				snprintf(durBuf, sizeof(durBuf), "%u / %u", cur, max);
+				ImGui::PushStyleColor(ImGuiCol_Text, barColor);
+				ImGui::TextUnformatted(durBuf);
+				ImGui::PopStyleColor();
+
+				// 내구도 바
+				ImVec2 barMin = ImGui::GetCursorScreenPos();
+				ImVec2 barMax = ImVec2(barMin.x + descW, barMin.y + 10.0f * scale);
+				dl->AddRectFilled(barMin, barMax, IM_COL32(80, 80, 85, 255), 3.0f * scale);
+				dl->AddRectFilled(barMin,
+				                  ImVec2(barMin.x + descW * ratio, barMax.y),
+				                  ImGui::ColorConvertFloat4ToU32(barColor), 3.0f * scale);
+				dl->AddRect(barMin, barMax, IM_COL32(120, 120, 125, 200), 3.0f * scale);
+				ImGui::Dummy(ImVec2(descW, 10.0f * scale));
+			}
+			else {
+				// 무기 / 소비 / 기타 / 보물: description
+				const std::string& desc = item->GetDescription();
+				if (!desc.empty())
+					ImGui::TextWrapped("%s", desc.c_str());
+			}
+
+			ImGui::PopTextWrapPos();
+			ImGui::PopStyleColor();
+		}
+		ImGui::EndGroup();
+
+		ImGui::Dummy(ImVec2(totalW + padX * 2.0f, 0.0f)); // 최소 너비 확보
+
+		ImGui::SetWindowFontScale(1.0f);
+		ImGui::EndTooltip();
+	}
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+}
+
 void CInventory::DrawBottomBar()
 {
 	float scale = G_RATIO_Y;
@@ -444,7 +763,7 @@ void CInventory::DrawBottomBar()
 
 		// 가방 용량 (오른쪽)
 		char weightBuf[64];
-		snprintf(weightBuf, sizeof(weightBuf), "%.0f  / %.0f", current_weight, max_weight);
+		snprintf(weightBuf, sizeof(weightBuf), "%u  / %u", current_weight, max_weight);
 		std::string weightText = (const char*)u8"가방:  ";
 		weightText += weightBuf;
 		float textW = ImGui::CalcTextSize(weightText.c_str()).x;

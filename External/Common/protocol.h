@@ -1,6 +1,6 @@
-#pragma once
+ï»¿#pragma once
 //==================================
-// **** Å¬¶ó/¼­¹ö °ø¿ë Çì´õ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µìš© í—¤ë” íŒŒì¼ ****
 //==================================
 
 #include <ServerEngine/PacketUtils.h>
@@ -38,7 +38,7 @@ enum PacketType : uint16_t
 	_S_PLAYER_LIST,
 	_S_REMOVE_PLAYER,
 
-	_C_PLAYER_INPUT,	// ¼­¹ö ±ÇÀ§ ¹æ½Ä + Å¬¶ó ¿¹Ãø ÀÌµ¿
+	_C_PLAYER_INPUT,	// ì„œë²„ ê¶Œìœ„ ë°©ì‹ + í´ë¼ ì˜ˆì¸¡ ì´ë™
 	_S_PLAYER_MOVE,
 
 	_C_CUSTOM_SELECT,
@@ -52,7 +52,15 @@ enum PacketType : uint16_t
 	_S_MAP_DATA,
 	_S_MAP_END,
 
-	_C_READY,	// ·Îºñ¾À¿¡¼­ »ç½Å¿¡°Ô ÁØºñ ¿Ï·á ¹öÆ° ´©¸§
+	_C_READY,	// ë¡œë¹„ì”¬ì—ì„œ ì‚¬ì‹ ì—ê²Œ ì¤€ë¹„ ì™„ë£Œ ë²„íŠ¼ ëˆ„ë¦„
+
+	_S_SPAWN_ITEM,      // ì„œë²„ â†’ í´ë¼: ì›”ë“œì— ë³´ë¬¼ ìƒì„±
+	_S_SPAWN_ITEM_LIST,
+	_S_DESPAWN_ITEM,
+	_C_PICKUP_ITEM,     // í´ë¼ â†’ ì„œë²„: ë³´ë¬¼ ì¤ê¸° ìš”ì²­
+	_S_ADD_ITEM,		// ì„œë²„ â†’ í´ë¼: ì¸ë²¤í† ë¦¬ì— ì¶”ê°€í•´ë¼
+	_S_REMOVE_ITEM,		// ì„œë²„ â†’ í´ë¼: ì¸ë²¤í† ë¦¬ì—ì„œ ì—†ì• ë¼
+	_C_DROP_ITEM,		// í´ë¼ â†’ ì„œë²„
 };
 
 #pragma pack (push, 1)
@@ -68,7 +76,7 @@ struct PktDummy : public PacketHeader
 static_assert(sizeof(PktDummy) == 4 + 8, "PktDummy size mismatch!");
 
 //=============================
-// ¼­¹ö RTT ÃøÁ¤
+// ì„œë²„ RTT ì¸¡ì •
 struct S_Ping : public PacketHeader
 {
 	float server_send_time;
@@ -78,14 +86,14 @@ struct S_Ping : public PacketHeader
 
 struct C_Pong : public PacketHeader
 {
-	float server_send_time; // ±×´ë·Î ¹İ»ç
+	float server_send_time; // ê·¸ëŒ€ë¡œ ë°˜ì‚¬
 
 	C_Pong() : PacketHeader(sizeof(C_Pong), (UINT)PacketType::_C_PONG) {}
 };
 //=============================
 
 //=============================
-// Å¬¶ó clock sync (½Ã°£ ¸ÂÃß±â)
+// í´ë¼ clock sync (ì‹œê°„ ë§ì¶”ê¸°)
 struct C_Ping : public PacketHeader
 {
 	float clientTime;
@@ -95,8 +103,8 @@ struct C_Ping : public PacketHeader
 
 struct S_Pong : public PacketHeader
 {
-	float clientTime; // ±×´ë·Î ¹İ»ç
-	float serverTime; // ¼­¹ö°¡ ÂïÀº ½Ã°£
+	float clientTime; // ê·¸ëŒ€ë¡œ ë°˜ì‚¬
+	float serverTime; // ì„œë²„ê°€ ì°ì€ ì‹œê°„
 
 	S_Pong() : PacketHeader(sizeof(S_Pong), (UINT)PacketType::_S_PONG) {}
 };
@@ -197,8 +205,8 @@ struct S_EnterRoom : public PacketHeader
 };
 static_assert(sizeof(S_EnterRoom) == 4 + 6, "S_EnterRoom size mismatch!");
 
-// °¡º¯±æÀÌ ÆĞÅ¶
-// ¿©·¯ ¹æ Á¤º¸¸¦ ÆĞÅ¶¿¡ ´ã¾Æ¼­ º¸³½´Ù.
+// ê°€ë³€ê¸¸ì´ íŒ¨í‚·
+// ì—¬ëŸ¬ ë°© ì •ë³´ë¥¼ íŒ¨í‚·ì— ë‹´ì•„ì„œ ë³´ë‚¸ë‹¤.
 struct S_Room_List : public PacketHeader
 {
 	struct Room
@@ -222,10 +230,10 @@ struct S_Room_List : public PacketHeader
 };
 static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
 
-// ³» ÇÃ·¹ÀÌ¾î ¶Ç´Â »ó´ë ÇÃ·¹ÀÌ¾î¸¦ º¸³¾ ¶§
+// ë‚´ í”Œë ˆì´ì–´ ë˜ëŠ” ìƒëŒ€ í”Œë ˆì´ì–´ë¥¼ ë³´ë‚¼ ë•Œ
 struct S_SpawnPlayer : public PacketHeader
 {
-	bool is_my_player;		// ¾Æ·¡ NetPlayerInfo ±¸Á¶Ã¼¿¡µµ ÀÖÁö¸¸, ±î¸ÔÀ»±îºÁ ¿©±â¼­ Ã³¸®ÇÑ´Ù. 
+	bool is_my_player;		// ì•„ë˜ NetPlayerInfo êµ¬ì¡°ì²´ì—ë„ ìˆì§€ë§Œ, ê¹Œë¨¹ì„ê¹Œë´ ì—¬ê¸°ì„œ ì²˜ë¦¬í•œë‹¤. 
 	NetPlayerInfo info;
 	uint32     room_id;
 	SCENE_TYPE scene_type;
@@ -234,8 +242,8 @@ struct S_SpawnPlayer : public PacketHeader
 };
 static_assert(sizeof(S_SpawnPlayer) == 4 + 65, "S_SpawnPlayer size mismatch!");
 
-// °¡º¯ÀÎÀÚ ÆĞÅ¶
-// ¿©·¯ À¯Àú¸¦ ÆĞÅ¶¿¡ ´ã¾Æ¼­ º¸³½´Ù.
+// ê°€ë³€ì¸ì íŒ¨í‚·
+// ì—¬ëŸ¬ ìœ ì €ë¥¼ íŒ¨í‚·ì— ë‹´ì•„ì„œ ë³´ë‚¸ë‹¤.
 struct S_PLAYER_LIST : public PacketHeader
 {
 	struct Player
@@ -281,14 +289,14 @@ struct S_RemovePlayer : public PacketHeader
 };
 static_assert(sizeof(S_RemovePlayer) == 4 + 9, "S_RemovePlayer size mismatch!");
 
-// ¼­¹ö ±ÇÇÑ + Å¬¶ó ¿¹Ãø
+// ì„œë²„ ê¶Œí•œ + í´ë¼ ì˜ˆì¸¡
 struct C_Input : public PacketHeader
 {
-	uint64			seq_num;	// Å¬¶óÀÌ¾ğÆ®°¡ ÀÚÃ¼ÀûÀ¸·Î 1¾¿ ¿Ã¸®´Â ¹øÈ£
+	uint64			seq_num;	// í´ë¼ì´ì–¸íŠ¸ê°€ ìì²´ì ìœ¼ë¡œ 1ì”© ì˜¬ë¦¬ëŠ” ë²ˆí˜¸
 	NetPlayerInfo	info;
 	uint32			room_id;
 	SCENE_TYPE		scene_type;
-	float           duration;   // Å¬¶óÀÌ¾ğÆ®°¡ ÀÌ ÀÔ·ÂÀ» À¯ÁöÇÑ ½Ã°£
+	float           duration;    // í´ë¼ì´ì–¸íŠ¸ê°€ ì´ ì…ë ¥ì„ ìœ ì§€í•œ ì‹œê°„
 
 	C_Input() : PacketHeader(sizeof(C_Input), (UINT)PacketType::_C_PLAYER_INPUT)
 		, duration(0.0f)
@@ -347,7 +355,7 @@ static_assert(sizeof(S_SceneChange) == 4 + 10, "S_SceneChange size mismatch!");
 
 struct S_SpawnMonster : public PacketHeader
 {
-	NetMonsterInfo info;    // 53¹ÙÀÌÆ®
+	NetMonsterInfo info;    
 	uint32         room_id;
 	SCENE_TYPE     scene_type;
 
@@ -373,11 +381,11 @@ static_assert(sizeof(S_MapStart) == 4, "S_MapStart size mismatch!");
 
 struct S_MapData : public PacketHeader
 {
-	//uint16    chunk_index;  // ¸î ¹øÂ° Á¶°¢ÀÎÁö (0, 1, 2...)
-	//uint16    total_chunks; // ÃÑ ¸î Á¶°¢ÀÎÁö (82°³ µî)
+	//uint16    chunk_index;  // ëª‡ ë²ˆì§¸ ì¡°ê°ì¸ì§€ (0, 1, 2...)
+	//uint16    total_chunks; // ì´ ëª‡ ì¡°ê°ì¸ì§€ (82ê°œ ë“±)
 
-	uint16    data_count;    // ÀÌ¹ø ÆĞÅ¶¿¡ ´ã±ä ±¸Á¶Ã¼ °³¼ö
-	NetPacket::InstanceData data[60];   // 17¹ÙÀÌÆ® ±¸Á¶Ã¼ x 60
+	uint16    data_count;    // ì´ë²ˆ íŒ¨í‚·ì— ë‹´ê¸´ êµ¬ì¡°ì²´ ê°œìˆ˜
+	NetPacket::InstanceData data[60];   // 17ë°”ì´íŠ¸ êµ¬ì¡°ì²´ x 60
 
 	S_MapData() : PacketHeader(sizeof(S_MapData), _S_MAP_DATA) {}
 };
@@ -396,5 +404,102 @@ struct C_Ready : public PacketHeader
 	C_Ready() : PacketHeader(sizeof(C_Ready), _C_READY) {}
 };
 static_assert(sizeof(C_Ready) == 4 + 8, "C_Ready size mismatch!");
+
+// ì„œë²„ â†’ í´ë¼: ì›”ë“œì— ë³´ë¬¼ ìƒì„± (ìœ„ì¹˜ + ê³ ìœ  ID)
+struct S_SpawnItem : public PacketHeader
+{
+	uint16 item_id;        // ì•„ì´í…œ ë„ê° ë²ˆí˜¸
+	uint32 item_world_id;  // ì˜¤ë¸Œì íŠ¸ ê³ ìœ  ID
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+	float  x, y, z;
+
+	S_SpawnItem() : PacketHeader(sizeof(S_SpawnItem), (UINT)PacketType::_S_SPAWN_ITEM) {}
+};
+static_assert(sizeof(S_SpawnItem) == 4 + 20, "S_SpawnItem size mismatch!");
+
+struct S_Item_List : public PacketHeader
+{
+	struct Item
+	{
+		ITEM_TYPE   item_type;
+		uint16		item_id;
+		uint32		item_world_id;
+		float		x, y, z;
+	};
+
+	uint32		buff_offset;
+	uint32      item_count;
+	SCENE_TYPE	scene_type;
+
+	S_Item_List(int32 count) : PacketHeader(sizeof(S_Item_List), (UINT)PacketType::_S_SPAWN_ITEM_LIST) {}
+
+	using ItemList = PacketList<S_Item_List::Item>;
+
+	ItemList GetItemList()
+	{
+		BYTE* data = reinterpret_cast<BYTE*>(this);
+		data += buff_offset;
+		return ItemList(reinterpret_cast<Item*>(data), item_count);
+	}
+};
+static_assert(sizeof(S_Item_List) == 4 + 9, "S_Spawn_Item_List size mismatch!");
+
+struct S_DeSpawnItem : public PacketHeader
+{
+	uint32 item_world_id;  // ì˜¤ë¸Œì íŠ¸ ê³ ìœ  ID
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	S_DeSpawnItem() : PacketHeader(sizeof(S_DeSpawnItem), (UINT)PacketType::_S_DESPAWN_ITEM) {}
+};
+static_assert(sizeof(S_DeSpawnItem) == 4 + 6, "S_DeSpawnItem size mismatch!");
+
+// í´ë¼ â†’ ì„œë²„: ë³´ë¬¼ ì¤ê¸° ìš”ì²­
+struct C_PickupItem : public PacketHeader
+{
+	uint64 player_id;
+	uint32 item_world_id; 
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	C_PickupItem() : PacketHeader(sizeof(C_PickupItem), (UINT)PacketType::_C_PICKUP_ITEM) {}
+};
+static_assert(sizeof(C_PickupItem) == 4 + 14, "C_PickupItem size mismatch!");
+
+struct S_AddItem : public PacketHeader
+{
+	uint64 player_id;
+	uint16 item_id;
+	uint32 item_world_id;
+	uint32 inventory_id;
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	S_AddItem() : PacketHeader(sizeof(S_AddItem), (UINT)PacketType::_S_ADD_ITEM) {}
+};
+static_assert(sizeof(S_AddItem) == 4 + 20, "S_AddItem size mismatch!");
+
+struct S_RemoveItem : public PacketHeader
+{
+	uint64 player_id;
+	uint32 inventory_id;
+	uint16 item_id;
+	SCENE_TYPE scene_type;
+
+	S_RemoveItem() : PacketHeader(sizeof(S_RemoveItem), (UINT)PacketType::_S_REMOVE_ITEM) {}
+};
+static_assert(sizeof(S_RemoveItem) == 4 + 15, "S_RemoveItem size mismatch!");
+
+struct C_DropItem : public PacketHeader
+{
+	uint64 player_id;
+	uint32 inventory_id;
+	ITEM_TYPE item_type;
+	SCENE_TYPE scene_type;
+
+	C_DropItem() : PacketHeader(sizeof(C_DropItem), (UINT)PacketType::_C_DROP_ITEM) {}
+};
+static_assert(sizeof(C_DropItem) == 4 + 14, "C_DropItem size mismatch!");
 
 #pragma pack (pop)

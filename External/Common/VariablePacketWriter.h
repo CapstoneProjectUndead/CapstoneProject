@@ -1,9 +1,9 @@
 #pragma once
 //==================================
-// **** Å¬¶ó/¼­¹ö °ø¿ë Çì´õ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µìš© í—¤ë” íŒŒì¼ ****
 //==================================
 
-// ¾ÕÀ¸·Î °¡º¯±æÀÌ ÆĞÅ¶Àº ¿©±â¼­ Ã³¸®ÇÑ´Ù.
+// ì•ìœ¼ë¡œ ê°€ë³€ê¸¸ì´ íŒ¨í‚·ì€ ì—¬ê¸°ì„œ ì²˜ë¦¬í•œë‹¤.
 
 template<typename T>
 class S_WRITE
@@ -11,7 +11,7 @@ class S_WRITE
 public:
 	SendBufferRef CloseAndReturn()
 	{
-		// ÆĞÅ¶ »çÀÌÁî °è»ê
+		// íŒ¨í‚· ì‚¬ì´ì¦ˆ ê³„ì‚°
 		pkt->SetPacketSize(bw.WriteSize());
 
 		sendBuffer->Close(bw.WriteSize());
@@ -19,7 +19,7 @@ public:
 	}
 
 protected:
-	T*				pkt = nullptr;
+	T* pkt = nullptr;
 	SendBufferRef	sendBuffer;
 	BufferWriter	bw;
 };
@@ -31,8 +31,8 @@ public:
 	using User = S_PLAYER_LIST::Player;
 	using UserList = PacketList<S_PLAYER_LIST::Player>;
 
-	// °íÁ¤µÈ ºÎºĞµéÀº »ı¼ºÀÚ ÀÎÀÚ·Î ¹Ş¾Æ¼­
-	// »ı¼ºÀÚ ³»ºÎ¿¡¼­ Á÷·ÄÈ­ÇÑ´Ù. 
+	// ê³ ì •ëœ ë¶€ë¶„ë“¤ì€ ìƒì„±ì ì¸ìë¡œ ë°›ì•„ì„œ
+	// ìƒì„±ì ë‚´ë¶€ì—ì„œ ì§ë ¬í™”í•œë‹¤. 
 	S_PLAYERLIST_WRITE()
 	{
 		//_sendBuffer = GSendBufferManager->Open(4096);
@@ -81,8 +81,8 @@ public:
 	using Room = S_Room_List::Room;
 	using RoomList = PacketList<S_Room_List::Room>;
 
-	// °íÁ¤µÈ ºÎºĞµéÀº »ı¼ºÀÚ ÀÎÀÚ·Î ¹Ş¾Æ¼­
-	// »ı¼ºÀÚ ³»ºÎ¿¡¼­ Á÷·ÄÈ­ÇÑ´Ù. 
+	// ê³ ì •ëœ ë¶€ë¶„ë“¤ì€ ìƒì„±ì ì¸ìë¡œ ë°›ì•„ì„œ
+	// ìƒì„±ì ë‚´ë¶€ì—ì„œ ì§ë ¬í™”í•œë‹¤. 
 	S_ROOMLIST_WRITE()
 	{
 		sendBuffer = std::make_shared<SendBuffer>(4096);
@@ -99,5 +99,30 @@ public:
 		pkt->buff_offset = (uint64)firstRoomList - (uint64)pkt;
 		pkt->room_count = roomCount;
 		return RoomList(firstRoomList, roomCount);
+	}
+};
+
+class S_ITEMLIST_WRITE : public S_WRITE<S_Item_List>
+{
+public:
+	using Item = S_Item_List::Item;
+	using ItemList = PacketList<S_Item_List::Item>;
+
+	S_ITEMLIST_WRITE(SCENE_TYPE sceneType)
+	{
+		sendBuffer = std::make_shared<SendBuffer>(4096);
+		bw = BufferWriter(sendBuffer->Buffer(), 4096);
+
+		pkt = bw.Reserve<S_Item_List>(1);
+		pkt->SetPacketType((UINT)PacketType::_S_SPAWN_ITEM_LIST);
+		pkt->scene_type = sceneType;
+	}
+
+	ItemList ReserveItemList(uint32 itemCount)
+	{
+		S_Item_List::Item* firstItem = bw.Reserve<S_Item_List::Item>(itemCount);
+		pkt->buff_offset = (uint64)firstItem - (uint64)pkt;
+		pkt->item_count = itemCount;
+		return ItemList(firstItem, itemCount);
 	}
 };

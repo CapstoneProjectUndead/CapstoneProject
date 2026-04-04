@@ -25,8 +25,10 @@ CLobbyScene::~CLobbyScene()
 {
 }
 
-void CLobbyScene::Start()
+void CLobbyScene::Initialize()
 {
+	CScene::Initialize();
+
 	CreateLobby();
 }
 
@@ -154,6 +156,27 @@ void CLobbyScene::SendPlayerToGameScene()
 				sendBuffer = MAKE_SEND_BUFFER(mapEndtpkt);
 				if (session) {
 					session->DoSend(sendBuffer);
+				}
+
+				// 보물 위치 및 ID 전송
+				{
+					S_ITEMLIST_WRITE writer(SCENE_TYPE::GAME);
+					auto itemList = writer.ReserveItemList((uint32)gameScene->item_manager->treasure_map.size());
+
+					uint32 i = 0;
+					for (const auto& [id, treasure] : gameScene->item_manager->treasure_map) {
+						itemList[i].item_type     = ITEM_TYPE::TREASURE;
+						itemList[i].item_id       = 110;
+						itemList[i].item_world_id = treasure.world_id;
+						itemList[i].x             = treasure.treasure_pos.x;
+						itemList[i].y             = treasure.treasure_pos.y;
+						itemList[i].z             = treasure.treasure_pos.z;
+						++i;
+					}
+
+					if (session) {
+						session->DoSend(writer.CloseAndReturn());
+					}
 				}
 			}
 		}

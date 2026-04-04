@@ -76,6 +76,15 @@
     <Filter Include="MapGenerator">
       <UniqueIdentifier>{d21bd492-99e6-4668-ab0c-ccf6900e6c25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Item">
+      <UniqueIdentifier>{2e021bc4-c82d-485c-a290-8eb69e56e033}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inventory">
+      <UniqueIdentifier>{6e0ae11d-a44e-4c17-813c-1d04dbd9eff4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Factory">
+      <UniqueIdentifier>{8d37c926-cf9c-4c3b-8864-326c6f3c6825}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -174,9 +183,6 @@
     <ClCompile Include="HumanMonster.cpp">
       <Filter>Object\Monster</Filter>
     </ClCompile>
-    <ClCompile Include="ServerObjectFactory.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
       <Filter>MapGenerator</Filter>
     </ClCompile>
@@ -185,6 +191,21 @@
     </ClCompile>
     <ClCompile Include="..\External\Common\MapUtils.cpp">
       <Filter>MapGenerator</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Object\Item</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerObjectFactory.cpp">
+      <Filter>Object\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemFactory.cpp">
+      <Filter>Object\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemManager.cpp">
+      <Filter>Object\Item</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -299,9 +320,6 @@
     <ClInclude Include="HumanMonster.h">
       <Filter>Object\Monster</Filter>
     </ClInclude>
-    <ClInclude Include="ServerObjectFactory.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="AIStates.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -313,6 +331,21 @@
     </ClInclude>
     <ClInclude Include="..\External\Common\MapUtils.h">
       <Filter>MapGenerator</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Object\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerObjectFactory.h">
+      <Filter>Object\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemFactory.h">
+      <Filter>Object\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemManager.h">
+      <Filter>Object\Item</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

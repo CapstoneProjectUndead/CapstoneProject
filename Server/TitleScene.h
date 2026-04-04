@@ -10,7 +10,7 @@ public:
     CTitleScene();
     ~CTitleScene();
 
-    virtual void Start() override;
+    virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
     void EnterUser(shared_ptr<CUser> user);

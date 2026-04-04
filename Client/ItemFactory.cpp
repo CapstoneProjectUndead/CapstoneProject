@@ -11,6 +11,9 @@ namespace ItemFactory
 		ItemData       base;
 		uint32         max_durability = 0;
 		uint32         heal_amount    = 0;
+		uint32         energy_amount  = 0;
+		uint32         effect_amount  = 0;
+		float          buff_duration  = 0.f;
 		TREASURE_GRADE grade          = TREASURE_GRADE::COMMON;
 	};
 
@@ -42,8 +45,11 @@ namespace ItemFactory
 			entry.base.is_throwable  = e.value("is_throwable", false);
 
 			entry.max_durability = static_cast<uint32>(e.value("max_durability", 0));
-			entry.heal_amount    = static_cast<uint32>(e.value("heal_amount", 0));
-			entry.grade          = static_cast<TREASURE_GRADE>(e.value("grade", 0));
+			entry.heal_amount    = static_cast<uint32>(e.value("heal_amount",    0));
+			entry.energy_amount  = static_cast<uint32>(e.value("energy_amount",  0));
+			entry.effect_amount  = static_cast<uint32>(e.value("effect_amount",  0));
+			entry.buff_duration  = e.value("duration", 0.f);
+			entry.grade          = static_cast<TREASURE_GRADE>(e.value("grade",  0));
 
 			item_db[entry.base.item_id] = std::move(entry);
 		}
@@ -62,13 +68,16 @@ namespace ItemFactory
 
 		switch (e.base.item_type) {
 		case ITEM_TYPE::EQUIPMENT:
-			return std::make_shared<CEquipment>(data, e.max_durability);
+			if (e.base.item_sub_type >= ITEM_SUB_TYPE::WEAPON)
+				return std::make_shared<CWeapon>(data);
+			else
+				return std::make_shared<CTool>(data, e.max_durability);
 		case ITEM_TYPE::CONSUMABLE:
-			return std::make_shared<CCunsumable>(data, e.heal_amount);
+			return std::make_shared<CConsumable>(data, e.heal_amount, e.energy_amount, e.effect_amount, e.buff_duration);
 		case ITEM_TYPE::TREASURE:
-			return std::make_shared<CTreasure>(data, e.grade);
+			return std::make_shared<CTreasure>(data, e.grade, e.base.price);
 		case ITEM_TYPE::ETC:
-			return std::make_shared<COtherItem>(data);
+			return std::make_shared<COther>(data);
 		default:
 			return nullptr;
 		}

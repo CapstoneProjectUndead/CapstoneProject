@@ -25,7 +25,7 @@ void CSceneManager::Initialize()
 	scenes[(UINT)SCENE_TYPE::LOBBY]->Start();
 #else
 	title_scene = make_unique<CTitleScene>();
-	title_scene->Start();
+	title_scene->Initialize();
 #endif
 }
 

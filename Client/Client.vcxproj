@@ -166,10 +166,10 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\enum.h" />
     <ClInclude Include="..\External\Common\MapGenerator\MapGenerator.h" />
     <ClInclude Include="..\External\Common\MapUtils.h" />
-    <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\packet_struct.h" />
+    <ClInclude Include="..\External\Common\protocol.h" />
     <ClInclude Include="..\External\Common\struct.h" />
-    <ClInclude Include="..\External\Common\VarialbePacketWriter.h" />
+    <ClInclude Include="..\External\Common\VariablePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />
     <ClInclude Include="AIStates.h" />
     <ClInclude Include="Animator.h" />
@@ -185,6 +185,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="HumanMonster.h" />
     <ClInclude Include="IdleState.h" />
     <ClInclude Include="ImGuiManager.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
     <ClInclude Include="ImGui\imgui_impl_dx12.h" />
@@ -194,6 +195,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Inventory.h" />
+    <ClInclude Include="QuickSlot.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemFactory.h" />
     <ClInclude Include="ItemFinder.h" />
@@ -245,7 +247,12 @@ call ClientCopy.bat</Command>
     <ClInclude Include="UIComponent.h" />
     <ClInclude Include="UIScene.h" />
     <ClInclude Include="User.h" />
+    <ClInclude Include="WorldConsumable.h" />
     <ClInclude Include="WorldItem.h" />
+    <ClInclude Include="WorldOther.h" />
+    <ClInclude Include="WorldTool.h" />
+    <ClInclude Include="WorldTreasure.h" />
+    <ClInclude Include="WorldWeapon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\External\Common\MapGenerator\MapGenerator.cpp">
@@ -273,6 +280,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="HumanMonster.cpp" />
     <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -281,6 +289,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="QuickSlot.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemFactory.cpp" />
     <ClCompile Include="ItemFinder.cpp" />
@@ -332,7 +341,12 @@ call ClientCopy.bat</Command>
     <ClCompile Include="UIComponent.cpp" />
     <ClCompile Include="UIScene.cpp" />
     <ClCompile Include="User.cpp" />
+    <ClCompile Include="WorldConsumable.cpp" />
     <ClCompile Include="WorldItem.cpp" />
+    <ClCompile Include="WorldOther.cpp" />
+    <ClCompile Include="WorldTool.cpp" />
+    <ClCompile Include="WorldTreasure.cpp" />
+    <ClCompile Include="WorldWeapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />
