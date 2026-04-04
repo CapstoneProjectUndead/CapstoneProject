@@ -313,9 +313,6 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 {
 	float scale = G_RATIO_Y;
 
-	// 기타 탭만 같은 이름 아이템을 묶어서 수량 표시
-	bool stackable = (type == ITEM_TYPE::ETC);
-
 	std::vector<CItem*> filtered;
 	for (auto& [id, item] : items) {
 		if (item->GetItemType() == type)
@@ -325,23 +322,7 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 		return a->GetInventoryID() < b->GetInventoryID();
 	});
 
-	// 기타 탭: 이름 기준 그룹화 { 대표 아이템, 수량 }
-	struct GroupedItem { CItem* rep; int count; };
-	std::vector<GroupedItem> grouped;
-	if (stackable) {
-		std::map<std::string, int> nameToIndex;
-		for (CItem* item : filtered) {
-			auto it = nameToIndex.find(item->GetName());
-			if (it == nameToIndex.end()) {
-				nameToIndex[item->GetName()] = (int)grouped.size();
-				grouped.push_back({ item, 1 });
-			} else {
-				grouped[it->second].count++;
-			}
-		}
-	}
-
-	int displayCount = stackable ? (int)grouped.size() : (int)filtered.size();
+	int displayCount = (int)filtered.size();
 
 	const int cols    = 4;
 	float     bottomH = 40.0f * scale;
@@ -377,17 +358,9 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				dl->AddRect(cellMin, cellMax,       IM_COL32(170, 170, 175, 255), rounding);
 
 				CItem* displayItem = nullptr;
-				int    count       = 1;
 
-				if (stackable) {
-					if (idx < (int)grouped.size()) {
-						displayItem = grouped[idx].rep;
-						count       = grouped[idx].count;
-					}
-				} else {
-					if (idx < (int)filtered.size())
-						displayItem = filtered[idx];
-				}
+				if (idx < (int)filtered.size())
+					displayItem = filtered[idx];
 
 				if (displayItem) {
 
@@ -398,21 +371,6 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 					                     cellMin.y + (cellSz - tSz.y) * 0.5f);
 					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
 
-					// 수량 배지 (기타 탭)
-					if (stackable) {
-						char   countBuf[16];
-						snprintf(countBuf, sizeof(countBuf), "x%d", count);
-						ImFont* font     = ImGui::GetFont();
-						float   fontSize = ImGui::GetFontSize() * 0.85f;
-						ImVec2  cSz      = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, countBuf);
-						float   margin   = 3.0f * scale;
-						ImVec2  cPos     = ImVec2(cellMax.x - cSz.x - margin, cellMax.y - cSz.y - margin);
-						// 반투명 배경
-						dl->AddRectFilled(ImVec2(cPos.x - 2.0f, cPos.y - 1.0f),
-						                  ImVec2(cellMax.x - margin + 2.0f, cellMax.y - margin + 1.0f),
-						                  IM_COL32(0, 0, 0, 150), 3.0f);
-						dl->AddText(font, fontSize, cPos, IM_COL32(255, 255, 255, 255), countBuf);
-					}
 				}
 
 				// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지
