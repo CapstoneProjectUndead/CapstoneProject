@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Renderers.h"
 #include "GameFramework.h"
 #include "Mesh.h"
@@ -141,8 +141,7 @@ void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const 
     data.ani_data = aniData;
 
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
-    XMMATRIX rotation = XMMatrixRotationY(XM_PI); // 180도
-    XMStoreFloat4x4(&data.world_matrix, rotation * worldT);
+    XMStoreFloat4x4(&data.world_matrix, worldT);
 
     dynamic_batches[mesh].push_back(data);
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Character.h"
 
 class CCamera;
@@ -30,7 +30,7 @@ public:
 	uint32 GetRoomID() const { return room_id; }
 	void SetRoomID(const uint32 id) { room_id = id; }
 
-	XMFLOAT3 GetHeadPosition() const override;
+	XMVECTOR GetHeadPosition() const override;
 
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);

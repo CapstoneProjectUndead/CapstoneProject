@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GeometryLoader.h"
 
 using namespace CGeometryLoader;
@@ -92,24 +92,32 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
         if (!br.FindTag("<AnimationClip>:")) break;
         std::string clipName = br.ReadName();
 
-        // <ClipLength>:
         if (!br.FindTag("<ClipLength>:")) break;
         float clipLength = br.Read<float>();
 
         // <TotalFrames>: (유니티에서 구운 총 프레임 수)
         if (!br.FindTag("<TotalFrames>:")) break;
         int totalFrames = br.Read<int>();
-
         AnimationClip clip;
         clip.name = clipName;
         clip.clip_length = clipLength;
         clip.total_frames = totalFrames;
+        clip.bone_count = (uint32_t)boneCount;
 
-        // 행렬 데이터 읽기
         int totalMatrixCount = totalFrames * boneCount;
-        clip.baked_matrices.resize(totalMatrixCount);
+        clip.baked_matrices.reserve(totalMatrixCount);
+        clip.toRoot_matrices.reserve(totalMatrixCount);
 
-        file.read(reinterpret_cast<char*>(clip.baked_matrices.data()), sizeof(XMFLOAT4X4) * totalMatrixCount);
+        // 유니티에서 [Final, ToRoot] 한 쌍씩 썼으므로 반복문으로 읽음
+        for (int i = 0; i < totalMatrixCount; ++i)
+        {
+            XMFLOAT4X4 finalMat, toRootMat;
+            file.read(reinterpret_cast<char*>(&finalMat), sizeof(XMFLOAT4X4));
+            file.read(reinterpret_cast<char*>(&toRootMat), sizeof(XMFLOAT4X4));
+
+            clip.baked_matrices.push_back(finalMat);
+            clip.toRoot_matrices.push_back(toRootMat);
+        }
 
         animations.emplace(clipName, std::move(clip));
     }
@@ -160,6 +168,11 @@ CGeometryLoader::SkeletonData CGeometryLoader::LoadSkeleton(const std::string& f
         }
     }
     br.FindTag("</Skeleton>");
+
+    for (int i = 0; i < (int)skel.bone_names.size(); ++i)
+    {
+        skel.bone_name_to_index[skel.bone_names[i]] = i;
+    }
 
     return skel;
 }

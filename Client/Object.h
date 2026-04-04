@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CComponent;
 class CShader;
@@ -44,7 +44,7 @@ public:
 	virtual void OnCollect(IRenderer* renderer);
 
 	//
-	virtual XMFLOAT3 GetHeadPosition() const { return position; };
+	virtual XMVECTOR GetHeadPosition() const { return XMLoadFloat3(&position); };
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }

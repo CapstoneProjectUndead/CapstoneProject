@@ -42,22 +42,9 @@ void CLobbyScene::Initialize()
 	// UI 생성
 	// billboard 생성 후 manager에 등록
 	auto mainCanvas = ui_manager->CreateCanvas();
-	std::shared_ptr<CUIBillboard> billboard;
 	auto repeaper = factory->CreateReaper(heapManager);
-	billboard = std::make_shared<CUIBillboard>(repeaper.get());
-	mainCanvas->AddChild(billboard);
 
 	objects.push_back(repeaper);
-
-	// Material 설정
-	std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
-	m->SetMaterial(factory->GetMaterial(shaders["billboard"]->GetHeapManager(), "speech_bubble"));
-	billboard->SetMaterial(m);
-
-	// billboardtext
-	auto billboardText = std::make_shared<CUIText>();
-	billboardText->SetBillboard(true);
-	billboard->AddChild(billboardText);
 
 	// LoadData
 	ui_manager->GetDataManager()->LoadScripts("../Modeling/UI/Reaper.json");
@@ -82,7 +69,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		my_player->GetComponent<CMovementComponent>()->is_fly = true;
+		//my_player->GetComponent<CMovementComponent>()->is_fly = true;
 		{
 			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char.bin", "../Modeling/undead_ani_baking.bin");
 			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));

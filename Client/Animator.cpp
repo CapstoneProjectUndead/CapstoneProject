@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "Object.h"
 #include "Player.h"
@@ -8,7 +8,6 @@
 #include "GPUBufferStruct.h"
 
 CAnimatorComponent::CAnimatorComponent()
-	: head_position{nullptr}
 {
 }
 
@@ -18,6 +17,21 @@ void CAnimatorComponent::Play(const std::string& name)
 		current_animation = name;
 		current_time = 0.0f;
 	}
+}
+
+XMVECTOR CAnimatorComponent::GetHeadPosition()
+{
+	auto& clip = CAnimationManager::GetInstance().GetClip(current_animation);
+
+	if (clip.head_bone_idx == -1) return XMVECTOR{};
+
+	XMVECTOR headPos = CAnimationManager::GetInstance().GetBoneWorldPos(
+		current_animation,
+		current_time,
+		clip.head_bone_idx
+	);
+
+	return headPos;
 }
 
 AnimationData CAnimatorComponent::GetAnimationData()

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.IO;
@@ -104,6 +104,8 @@ public class BinaryModelExporter : EditorWindow
                 // 유니티 엔진이 해당 시간의 애니메이션 상태를 샘플링하도록 강제함
                 clip.SampleAnimation(fbxAsset, time);
 
+                Matrix4x4 rotation180 = Matrix4x4.Rotate(Quaternion.Euler(0, 180, 0));
+
                 //모든 본에 대해 최종 행렬 계산 및 기록
                 for (int i = 0; i < bones.Length; i++)
                 {
@@ -112,10 +114,14 @@ public class BinaryModelExporter : EditorWindow
                     // 애니메이션된 본의 월드 행렬
                     Matrix4x4 animWorld = bones[i].localToWorldMatrix;
 
-                    // 최종 행렬 = RootLocal * AnimWorld * OffsetMatrix(BindPose)
-                    Matrix4x4 finalMatrix = rootInv * animWorld * bindPoses[i];
+                    // cpu에서 bone 위치를 찾기 위해 저장
+                    Matrix4x4 toRootMatrix = rotation180 * (rootInv * animWorld);
 
-                    WriteMatrix(finalMatrix);
+                    // 최종 행렬 = RootLocal * AnimWorld * OffsetMatrix(BindPose)
+                    Matrix4x4 finalMatrix = toRootMatrix * bindPoses[i];
+
+                    WriteMatrix(finalMatrix);   // gpu
+                    WriteMatrix(toRootMatrix);  // cpu 소켓용
                 }
             }
         }
@@ -293,11 +299,12 @@ public class BinaryModelExporter : EditorWindow
 
     void WriteMatrix(Matrix4x4 m)
     {
-        // Row 순서대로
+        // Row major
         bw.Write(m.m00); bw.Write(m.m01); bw.Write(m.m02); bw.Write(m.m03);
         bw.Write(m.m10); bw.Write(m.m11); bw.Write(m.m12); bw.Write(m.m13);
         bw.Write(m.m20); bw.Write(m.m21); bw.Write(m.m22); bw.Write(m.m23);
         bw.Write(m.m30); bw.Write(m.m31); bw.Write(m.m32); bw.Write(m.m33);
+
     }
 
     void WriteMatrixes(string header, Matrix4x4[] arr)
