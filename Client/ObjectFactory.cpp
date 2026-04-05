@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
 
@@ -174,6 +174,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		}
 		}
 
+		// 디버깅용으로 저장
+		obj->name = children->name;
+
 		obj->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 		objects.push_back(std::move(obj));
@@ -249,7 +252,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 				obj->SetComponent(copyCollider);
 				CPhysicsManager::GetInstance().SetCollider(copyCollider);
 			}
-			obj->SetShdaer("inst");
+			obj->SetShader("inst");
 
 			objects.push_back(obj);
 		}
@@ -285,17 +288,80 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 		meshRenderer->SetRenderUnit(unit);
 		obj->SetComponent(meshRenderer);
 
-		obj->SetShdaer("inst");
+		obj->SetShader("inst");
 
 		objects.push_back(obj);
 	}
 	return objects;
 }
 
+void CObjectFactory::InitializeCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager,
+	const std::string& modelFileName, const std::string& animFileName,
+	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, bool isPlayer)
+{
+	auto frameRoot = CGeometryLoader::LoadGeometry(modelFileName);
+	if (!frameRoot) return;
+
+	// Renderer 및 기초 컴포넌트 설정
+	auto renderer = std::make_shared<CMeshRendererComponent>();
+	character->SetComponent(renderer);
+
+	BoundingBox totalBounds;
+	bool firstBounds = true;
+
+	// 메쉬 노드 순회 및 파츠 처리
+	for (const auto& child : frameRoot->childrens) {
+		if (child->mesh.positions.empty()) continue;
+		character->world_matrix = child->localMatrix;
+
+		// Bounds 계산
+		if (firstBounds) { totalBounds = child->mesh.bounds; firstBounds = false; }
+		else { BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds); }
+
+		// 공통 MeshComponent 생성
+		auto meshComp = std::make_shared<CMeshComponent>();
+		character->SetComponent(meshComp);
+		if(isPlayer)
+			meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
+		else
+			meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, child);
+
+		// 모델마다 다른 상세 로직(머티리얼, 특정 파츠 분류)은 외부에서 주입받은 함수로 처리
+		if (partProcessor) {
+			partProcessor(child.get(), meshComp, renderer);
+		}
+	}
+
+	// Collider 설정 (싱글 전용)
+	if (g_is_single) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
+		auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+
+		CollisionFilter filter;
+		if (isPlayer)
+			filter.category = EColLayer::PLAYER;
+		else
+			filter.category = EColLayer::OBJECT;
+
+		filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+		collider->SetFillter(filter);
+
+		character->SetComponent(collider);
+		CPhysicsManager::GetInstance().SetCollider(collider);
+	}
+
+	// 애니메이터 설정
+	if (!animFileName.empty()) {
+		auto animator = std::make_shared<CAnimatorComponent>();
+		character->SetComponent(animator);
+	}
+
+	character->Initialize(GET_DEVICE, GET_CMD_LIST);
+}
+
 void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
@@ -309,50 +375,25 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 		matManager.LoadMaterial(name, tex);
 	}
 
-	// Mesh 로드 + totalBounds 계산
-	BoundingBox totalBounds;
-	bool firstBounds = true;
+	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+		std::shared_ptr<CMeshRendererComponent> renderer) {
 
-	// MeshRendererComponent 생성
-	auto renderer = std::make_shared<CMeshRendererComponent>();
-	character->SetComponent(renderer);
-
-	for (const auto& child : frameRoot->childrens) {
-		if (child->mesh.positions.empty())
-			continue;
-		// bounds merge
-		if (firstBounds) {
-			totalBounds = child->mesh.bounds;
-			firstBounds = false;
-		}
-		else {
-			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
-		}
-
-		// mesh component
-		auto meshComp = std::make_shared<CMeshComponent>();
-		character->SetComponent(meshComp);
-		meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
-
-		// material 생성 후 renderer->SetRenderUnit 수행
-		auto CreateUnit = [&](std::string texName) {
+		// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
+		auto CreateUnit = [&](const std::string& texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
 			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 			auto mat = matManager.GetMaterial(texName, tex);
 			matComp->SetMaterial(mat);
 			character->SetComponent(matComp);
 
-			RenderUnit unit;
-			unit.mesh = meshComp.get();
-			unit.material = matComp.get();
+			RenderUnit unit{ meshComp.get(), matComp.get() };
 			renderer->SetRenderUnit(unit);
-
-			return matComp; // 나중에 껐다 켜기 위해 반환
-		};
+			return matComp;
+			};
 
 		// 0: dog, 1: cat, 2: buddy
 		// 처음에 강아지만 enable true
-		switch (stringToUndeadMeshName(child->name)) {
+		switch (stringToUndeadMeshName(node->name)) {
 		case UndeadMeshName::body:
 			character->body_materials[0] = CreateUnit(resourceNames[0]);
 			character->body_materials[1] = CreateUnit(resourceNames[1]);
@@ -392,28 +433,53 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 			character->mouth_material[2]->SetEnable(false);
 			break;
 		}
-	}
+	};
 
-	// ColliderComponent 생성/ filter 설정
-	if (g_is_single) {
-		std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-		auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-		CollisionFilter filter;
-		filter.category = EColLayer::PLAYER;
-		filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-		collider->SetFillter(filter);
-		character->SetComponent(collider);
-		CPhysicsManager::GetInstance().SetCollider(collider);
-	}
+	character->SetShader("skinning");
+	InitializeCharacterComponents(
+		character,
+		heapManager,
+		fileName,
+		"../Modeling/undead_ani_baking.bin",
+		undeadProcessor,
+		true
+	);
+}
 
-	// Animator
-	auto animator = std::make_shared<CAnimatorComponent>();
+std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
+{
+	std::shared_ptr<CCharacter> character = std::make_shared<CCharacter>(OBJECT_TYPE::STATIC_OBJECT);
 
-	animator->Initialize(fileName, "../Modeling/undead_ani.bin");
-	character->SetComponent(animator);
-	character->SetShdaer("inst");	// 임시 설정
+	std::string fileName{ "../Modeling/Reaper.bin" };
 
-	character->Initialize(GET_DEVICE, GET_CMD_LIST);
+	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+		std::shared_ptr<CMeshRendererComponent> renderer) {
+			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
+			auto CreateUnit = [&](const std::string& texName) {
+				auto matComp = std::make_shared<CMaterialComponent>();
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
+				auto mat = matManager.GetMaterial(texName, tex);
+				matComp->SetMaterial(mat);
+				character->SetComponent(matComp);
+
+				RenderUnit unit{ meshComp.get(), matComp.get() };
+				renderer->SetRenderUnit(unit);
+				return matComp;
+				};
+
+			CreateUnit(node->mesh.materials[0].albedoMap);
+		};
+
+	InitializeCharacterComponents(
+		character,
+		heapManager,
+		fileName,
+		"",
+		undeadProcessor
+	);
+
+	character->SetShader("inst");
+	return character;
 }
 
 std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager* heapManager)
@@ -429,6 +495,7 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	// 다우징 로드 component 추가
 	auto itemFinder = std::make_shared<CItemFinder>();
 	player->SetComponent(itemFinder);
+	itemFinder->SetEnable(false);
 
 	// Inventory 추가
 	std::shared_ptr<CInventory> inventory = std::make_shared<CInventory>(player);

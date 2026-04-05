@@ -32,7 +32,7 @@ public:
 	uint32 GetRoomID() const { return room_id; }
 	void SetRoomID(const uint32 id) { room_id = id; }
 
-	XMFLOAT3 GetHeadPosition() const override;
+	XMVECTOR GetHeadPosition() const override;
 
 public:
 	// 캐릭터 스텟 관련 함수들

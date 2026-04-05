@@ -5,6 +5,7 @@
 #include "GameFramework.h"
 #include "Object.h"
 #include "KeyManager.h"
+#include "DataManager.h"
 
 CUIComponent::CUIComponent()
     : world_matrix{Matrix4x4::Identity()}
@@ -16,10 +17,10 @@ json CUIComponent::Serialize()
     json j;
     j["Type"] = "Base"; // 하위 클래스에서 오버라이드
     j["Name"] = name;
-    j["RelativePos"] = { relative_pos.x, relative_pos.y };
-    j["Size"] = { size.x, size.y };
-    j["Pivot"] = { pivot.x, pivot.y };
-    j["Anchor"] = { anchor.x, anchor.y };
+    j["RelativePos"] = { transform.relative_pos.x, transform.relative_pos.y };
+    j["Size"] = { transform.size.x, transform.size.y };
+    j["Pivot"] = { transform.pivot.x, transform.pivot.y };
+    j["Anchor"] = { transform.anchor.x, transform.anchor.y };
     j["Color"] = { color.x, color.y, color.z, color.w };
 
     j["Children"] = json::array();
@@ -32,10 +33,10 @@ json CUIComponent::Serialize()
 void CUIComponent::Deserialize(const json& j)
 {
     name = j["Name"];
-    relative_pos = { j["RelativePos"][0], j["RelativePos"][1] };
-    size = { j["Size"][0], j["Size"][1] };
-    pivot = { j["Pivot"][0], j["Pivot"][1] };
-    anchor = { j["Anchor"][0], j["Anchor"][1] };
+    transform.relative_pos = { j["RelativePos"][0], j["RelativePos"][1] };
+    transform.size = { j["Size"][0], j["Size"][1] };
+    transform.pivot = { j["Pivot"][0], j["Pivot"][1] };
+    transform.anchor = { j["Anchor"][0], j["Anchor"][1] };
     color = { j["Color"][0], j["Color"][1], j["Color"][2], j["Color"][3] };
 }
 
@@ -50,39 +51,53 @@ bool CUIComponent::Rect::Intersects(const Rect& other) const
         top > other.bottom || bottom < other.top);
 }
 
-void CUIComponent::Update(const float deltaTime)
+void CUIComponent::Invalidate()
+{
+    if (is_dirty) return;
+    is_dirty = true;
+    for (auto& c : child) {
+        c->Invalidate();
+    }
+}
+
+// 2. 공통 행렬 계산 로직
+void CUIComponent::CalculateWorldMatrix()
 {
     Rect parentRect = GetParentRect();
 
-    // 기준점(Anchor + Relative) 계산
-    float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
-    float anchorY = parentRect.top + (parentRect.Height() * (1.0f - anchor.y) * 0.5f);
+    float anchorX = parentRect.left + (parentRect.Width() * (transform.anchor.x + 1.0f) * 0.5f);
+    float anchorY = parentRect.top + (parentRect.Height() * (1.0f - transform.anchor.y) * 0.5f);
+    float finalX = anchorX + transform.relative_pos.x;
+    float finalY = anchorY + transform.relative_pos.y;
 
-    float finalX = anchorX + relative_pos.x;
-    float finalY = anchorY + relative_pos.y;
+    float depth = 0.1f;
+    if (parent_ui) {
+        depth = parent_ui->GetWorldMatrix()._43 - 0.001f;
+    }
 
-    // 판정용 Rect 갱신 (피벗 반영)
-    // pivot == 0: left -> finalX가 되고, pivot == 1: right -> finalX
-    rect.left = finalX - (pivot.x * size.x);
-    rect.top = finalY - (pivot.y * size.y);
-    rect.right = rect.left + size.x;
-    rect.bottom = rect.top + size.y;
-
-    // Scale 생성
-    XMMATRIX matScale = XMMatrixScaling(size.x, size.y, 1.0f);
-
-    // Pivot 보정
-    float pivotOffsetX = (0.5f - pivot.x) * size.x;
-    float pivotOffsetY = (0.5f - pivot.y) * size.y;
-
+    XMMATRIX matScale = XMMatrixScaling(transform.size.x, transform.size.y, 1.0f);
+    float pivotOffsetX = (0.5f - transform.pivot.x) * transform.size.x;
+    float pivotOffsetY = (0.5f - transform.pivot.y) * transform.size.y;
     XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
 
-    // 최종 위치 이동
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
+    XMStoreFloat4x4(&world_matrix, matScale * matPivot * matTranslation);
 
-    // Scale -> Pivot -> Translation
-    XMMATRIX world = matScale * matPivot * matTranslation;
-    XMStoreFloat4x4(&world_matrix, world);
+    // 판정용 Rect 갱신
+    rect.left = finalX - (transform.pivot.x * transform.size.x);
+    rect.top = finalY - (transform.pivot.y * transform.size.y);
+    rect.right = rect.left + transform.size.x;
+    rect.bottom = rect.top + transform.size.y;
+}
+
+void CUIComponent::Update(const float deltaTime)
+{
+    if (!is_enable) return;
+
+    if (is_dirty) {
+        CalculateWorldMatrix();
+        is_dirty = false;
+    }
 
     for (auto& c : child) {
         c->Update(deltaTime);
@@ -101,6 +116,8 @@ void CUIComponent::Render(ID3D12GraphicsCommandList* commandList)
 
 void CUIComponent::Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers)
 {
+    if (!is_enable) return;
+
     std::string shaderKey = GetShaderName(); // 아래 3번 참고
     auto it = renderers.find(shaderKey);
 
@@ -124,10 +141,6 @@ void CUIComponent::Collect(IRenderer* renderer)
     if (!is_enable) return;
 
     renderer->AddInstance(nullptr, color, world_matrix, true);
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 CUIComponent::Rect CUIComponent::GetParentRect()
@@ -146,30 +159,25 @@ CUIComponent::Rect CUIComponent::GetParentRect()
 // CUICanvas
 CUICanvas::CUICanvas()
 {
-    anchor = { 0.0f, 0.0f };
-    pivot = { 0.5f, 0.5f };
-    relative_pos = { 0.0f, 0.0f };
+    transform.anchor = { 0.0f, 0.0f };
+    transform.pivot = { 0.0f, 0.0f };
+    transform.relative_pos = { 0.0f, 0.0f };
 
     float sw = static_cast<float>(GET_CLIENT_WIDTH);
     float sh = static_cast<float>(GET_CLIENT_HEIGHT);
-    size = { sw, sh };
+    transform.size = { sw, sh };
 }
 
-void CUICanvas::Update(float deltaTime)
+void CUICanvas::CalculateWorldMatrix()
 {
     Rect parentRect = GetParentRect();
-
-    size.x = parentRect.right;
-    size.y = parentRect.bottom;
+    transform.size.x = parentRect.right;
+    transform.size.y = parentRect.bottom;
 
     rect.left = 0;
     rect.top = 0;
-    rect.right = size.x;
-    rect.bottom = size.y;
-
-    for (auto& c : child) {
-        c->Update(deltaTime);
-    }
+    rect.right = transform.size.x;
+    rect.bottom = transform.size.y;
 }
 
 bool CUICanvas::IntersectsMouse(float x, float y)
@@ -181,6 +189,11 @@ bool CUICanvas::IntersectsMouse(float x, float y)
         }
     }
     return false;
+}
+
+CUIManager::CUIManager()
+    : data_manager{std::make_shared<CDataManager>()}
+{
 }
 
 std::shared_ptr<CUICanvas> CUIManager::CreateCanvas()
@@ -208,46 +221,38 @@ void CUIImage::SetMaterial(std::shared_ptr<CMaterialComponent>& m)
     mat_comp = m;
 }
 
-void CUIImage::Update(float deltaTime)
+void CUIImage::CalculateWorldMatrix()
 {
-    if (!binding_key.empty()) {
-        // 외부 전역 매니저에서 키에 해당하는 0.0 ~ 1.0 값을 가져옴
-        //float value = CDataManager::GetInstance().GetFloat(binding_key);
-        //SetFillAmount(value);
-    }
-
     Rect parentRect = GetParentRect();
 
-    float anchorX = parentRect.left + (parentRect.Width() * (anchor.x + 1.0f) * 0.5f);
-    float anchorY = parentRect.top + (parentRect.Height() * (1.0f - anchor.y) * 0.5f);
+    // 위치 계산 (기존과 동일)
+    float anchorX = parentRect.left + (parentRect.Width() * (transform.anchor.x + 1.0f) * 0.5f);
+    float anchorY = parentRect.top + (parentRect.Height() * (1.0f - transform.anchor.y) * 0.5f);
+    float finalX = anchorX + transform.relative_pos.x;
+    float finalY = anchorY + transform.relative_pos.y;
 
-    float finalX = anchorX + relative_pos.x;
-    float finalY = anchorY + relative_pos.y;
+    // Depth 설정 (이 부분이 핵심)
+    float depth = 0.1f; // 기본값 (0.0 ~ 1.0 사이, 카메라에 가까울수록 작은 값인 경우 기준)
+    if (parent_ui) {
+        // 부모보다 무조건 0.01f만큼 앞으로 (Z값이 작아짐)
+        depth = parent_ui->GetWorldMatrix()._43 - 0.001f;
+    }
 
-    rect.left = finalX - (pivot.x * size.x);
-    rect.top = finalY - (pivot.y * size.y);
-    rect.right = rect.left + size.x;
-    rect.bottom = rect.top + size.y;
-
-    // Scale 생성
-    XMMATRIX matScale = XMMatrixScaling(size.x * fill_amount, size.y, 1.0f);
-
-    // Pivot 보정
-    float pivotOffsetX = (0.5f - pivot.x) * size.x;
-    float pivotOffsetY = (0.5f - pivot.y) * size.y;
-
+    // 행렬 생성
+    XMMATRIX matScale = XMMatrixScaling(transform.size.x * fill_amount, transform.size.y, 1.0f);
+    float pivotOffsetX = (0.5f - transform.pivot.x) * transform.size.x;
+    float pivotOffsetY = (0.5f - transform.pivot.y) * transform.size.y;
     XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
 
-    // 최종 위치 이동
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
-
-    // Scale -> Pivot -> Translation
     XMMATRIX world = matScale * matPivot * matTranslation;
     XMStoreFloat4x4(&world_matrix, world);
-    
-    for (auto& c : child) {
-        c->Update(deltaTime);
-    }
+
+    // 판정용 Rect 갱신
+    rect.left = finalX - (transform.pivot.x * transform.size.x);
+    rect.top = finalY - (transform.pivot.y * transform.size.y);
+    rect.right = rect.left + transform.size.x;
+    rect.bottom = rect.top + transform.size.y;
 }
 
 void CUIImage::Collect(IRenderer* renderer)
@@ -256,10 +261,6 @@ void CUIImage::Collect(IRenderer* renderer)
 
     mat_comp->GetMaterial()->material.albedo = color;
     renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 json CUIImage::Serialize()
@@ -267,6 +268,7 @@ json CUIImage::Serialize()
     json j = CUIComponent::Serialize();
     j["Type"] = "Image";
     j["FillAmount"] = fill_amount;
+    j["TextureName"] = texture_name;
     return j;
 }
 
@@ -274,6 +276,7 @@ void CUIImage::Deserialize(const json& j)
 {
     CUIComponent::Deserialize(j);
     if (j.contains("FillAmount")) fill_amount = j["FillAmount"];
+    if (j.contains("TextureName")) texture_name = j["TextureName"];
 }
 
 // CUIBillboard
@@ -284,20 +287,44 @@ void CUIBillboard::SetTarget(CObject* obj)
 
 void CUIBillboard::Update(float deltaTime)
 {
-    if (target) {
-        // 타겟(플레이어 등)의 월드 위치 + 오프셋
-        XMVECTOR targetPos = XMLoadFloat3(&target->position);
-        XMVECTOR finalPos = targetPos + XMLoadFloat3(&offset);
+    if (!target) return;
 
-        // GS에서 사용할 수 있게 world_matrix의 이동 행렬만 생성
-        XMStoreFloat4x4(&world_matrix, XMMatrixTranslationFromVector(finalPos));
+    // 빌보드의 기준 3D 위치 계산
+    XMVECTOR targetPos = XMLoadFloat3(&target->position);
+    XMVECTOR finalPos = targetPos + XMLoadFloat3(&offset);
+
+    // 빌보드 본인의 행렬 갱신
+    XMStoreFloat4x4(&world_matrix, XMMatrixTranslationFromVector(finalPos));
+
+    // 자식들 업데이트
+    for (auto& c : child) {
+        XMMATRIX parentMat = XMLoadFloat4x4(&world_matrix);
+        XMMATRIX childOffset = XMMatrixTranslation(
+            c->GetRelativePos().x * 0.01f,
+            c->GetRelativePos().y * 0.01f,
+            -0.01f // 글자가 말풍선보다 살짝 카메라 앞에 오도록 Z값 조절
+        );
+
+        // 자식의 최종 3D 월드 행렬 = 자식 오프셋 * 부모(빌보드) 위치
+        c->SetWorldMatrix(Matrix4x4::XMMatrixToFloat4x4(childOffset * parentMat));
+
+        c->Update(deltaTime);
     }
 }
 
 // CUIText
+CUIText::CUIText()
+{
+    name = "Text_Element";
+}
+
 void CUIText::SetText(const std::wstring& t)
 {
-    text = t;
+    full_text = t;       // 전체 대사 저장
+    current_text = L"";  // 출력 텍스트 초기화
+    current_index = 0;
+    timer = 0.0f;
+    is_finished = false; // 다시 타이핑 시작
 }
 
 void CUIText::Collect(IRenderer* renderer)
@@ -306,14 +333,58 @@ void CUIText::Collect(IRenderer* renderer)
 
     auto textRenderer = dynamic_cast<CTextRenderer*>(renderer);
     if (textRenderer) {
-        textRenderer->AddTextInstance(text, world_matrix, color, is_billboard);
-    }
-
-    for (auto& c : child) {
-        c->Collect(renderer);
+        textRenderer->AddTextInstance(current_text, world_matrix, color, is_billboard);
     }
 }
 
+void CUIText::Update(float deltaTime)
+{
+    // 빌보드의 경우 빌보드에서 위치 Update
+    if(!is_billboard)
+        CUIComponent::Update(deltaTime);
+
+    if (is_finished) {
+        current_text = full_text;
+        return;
+    }
+
+    timer += deltaTime;
+    if (timer >= typing_speed) {
+        if (current_index < full_text.length()) {
+            current_text += full_text[current_index++];
+            timer = 0.0f;
+        }
+        else {
+            is_finished = true;
+            if (onFinished) onFinished(); // 대사 출력 완료 시 콜백
+        }
+    }
+}
+
+json CUIText::Serialize()
+{
+    json j = CUIComponent::Serialize();
+    j["Type"] = "Text";
+    j["Text"] = WstringToUtf8(full_text);
+    return j;
+}
+
+void CUIText::Deserialize(const json& j)
+{
+    CUIComponent::Deserialize(j);
+    if (j.contains("Text")) full_text = Utf8ToWstring(j["Text"]);
+}
+
+void CUIText::Skip()
+{ 
+    // 클릭 시 한 번에 다 보여주기
+    current_text = full_text;
+    current_index = (UINT)full_text.length();
+    is_finished = true;
+    if (onFinished) onFinished();
+}
+
+// CUIButton
 CUIButton::CUIButton()
     : CUIImage()
 {
@@ -327,7 +398,6 @@ void CUIButton::Update(float deltaTime)
     CUIComponent::Update(deltaTime);
 }
 
-// CUIButton
 void CUIButton::Collect(IRenderer* renderer)
 {
     if (!is_enable) return;
@@ -335,10 +405,6 @@ void CUIButton::Collect(IRenderer* renderer)
     GetColorByState();
     mat_comp->GetMaterial()->material.albedo = color;
     renderer->AddInstance(nullptr, color, world_matrix, false);
-
-    for (auto& c : child) {
-        c->Collect(renderer);
-    }
 }
 
 json CUIButton::Serialize()
@@ -373,6 +439,7 @@ void CUIButton::UpdateState()
     if (KEY_PRESSED(KEY::LBTN)) {
         if(rect.IsPointInside(mouseDelta.x, mouseDelta.y)) {
             state = EButtonState::Pressed;
+            OnMouseLButtonDown();
         }
     }
     else {
@@ -383,6 +450,46 @@ void CUIButton::UpdateState()
             state = EButtonState::Normal;
         }
     }
+}
+
+// CUIDowsingArrow
+void CUIDowsingArrow::CalculateWorldMatrix()
+{
+    float angle = *target_angle;
+
+    float orbitRadius = 250.0f;
+
+    // 원 위에 위치
+    transform.relative_pos.x = sinf(angle) * orbitRadius;
+    transform.relative_pos.y = -cosf(angle) * orbitRadius;
+
+    Rect parentRect = GetParentRect();
+    float anchorX = parentRect.left + (parentRect.Width() * (transform.anchor.x + 1.0f) * 0.5f);
+    float anchorY = parentRect.top + (parentRect.Height() * (1.0f - transform.anchor.y) * 0.5f);
+
+    float finalX = anchorX + transform.relative_pos.x;
+    float finalY = anchorY + transform.relative_pos.y;
+
+    // 행렬 조립
+    XMMATRIX matScale = XMMatrixScaling(transform.size.x, transform.size.y, 1.0f);
+    XMMATRIX matRot = XMMatrixRotationZ(angle);
+
+    // 피벗 (중심 회전)
+    float pivotOffsetX = (0.5f - transform.pivot.x) * transform.size.x;
+    float pivotOffsetY = (0.5f - transform.pivot.y) * transform.size.y;
+    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
+
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
+
+    XMMATRIX world = matScale * matRot * matPivot * matTranslation;
+    XMStoreFloat4x4(&world_matrix, world);
+}
+
+void CUIDowsingArrow::Update(float deltaTime)
+{
+    if (!is_enable) return;
+    Invalidate();
+    CUIImage::Update(deltaTime);
 }
 
 // CUIManager
@@ -418,3 +525,4 @@ bool CUIManager::IntersectsMouse()
     }
     return false;
 }
+

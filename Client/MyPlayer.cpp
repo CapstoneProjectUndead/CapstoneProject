@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "MyPlayer.h"
 #include "Timer.h"
 #include "KeyManager.h"
@@ -11,6 +11,7 @@
 #include "PhysicsManager.h"
 #include "Inventory.h"
 #include "ImGuiManager.h"
+#include "ItemFinder.h"
 
 #undef min
 #undef max
@@ -39,6 +40,12 @@ void CMyPlayer::Update(float elapsedTime)
 	// "E" 키를 누르면 인벤토리를 열고/닫기
 	if (KEY_TAP(KEY::E)) {
 		inventory->ToggleOpen();
+	}
+
+	if (KEY_TAP(KEY::F)) {
+		auto itemFinder = GetComponent<CItemFinder>();
+		if (itemFinder)
+			itemFinder->Toggle();
 	}
 
 	CPlayer::Update(elapsedTime);

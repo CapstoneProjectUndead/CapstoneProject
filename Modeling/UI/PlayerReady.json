@@ -1,0 +1,171 @@
+{
+    "Anchor": [
+        1.0,
+        1.0
+    ],
+    "Children": [
+        {
+            "Anchor": [
+                1.0,
+                1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        1.0,
+                        1.0
+                    ],
+                    "Children": [
+                        {
+                            "Anchor": [
+                                1.0,
+                                1.0
+                            ],
+                            "Children": [
+                                {
+                                    "Anchor": [
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "Children": [],
+                                    "Color": [
+                                        0.9240924119949341,
+                                        0.0,
+                                        0.0,
+                                        1.0
+                                    ],
+                                    "FillAmount": 1.0,
+                                    "Name": "Ready4",
+                                    "Pivot": [
+                                        1.0,
+                                        0.0
+                                    ],
+                                    "RelativePos": [
+                                        0.0,
+                                        50.0
+                                    ],
+                                    "Size": [
+                                        30.0,
+                                        30.0
+                                    ],
+                                    "Type": "Image"
+                                }
+                            ],
+                            "Color": [
+                                0.9240924119949341,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                            "FillAmount": 1.0,
+                            "Name": "Ready3",
+                            "Pivot": [
+                                1.0,
+                                0.0
+                            ],
+                            "RelativePos": [
+                                0.0,
+                                50.0
+                            ],
+                            "Size": [
+                                30.0,
+                                30.0
+                            ],
+                            "Type": "Image"
+                        }
+                    ],
+                    "Color": [
+                        0.9240924119949341,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "FillAmount": 1.0,
+                    "Name": "Ready2",
+                    "Pivot": [
+                        1.0,
+                        0.0
+                    ],
+                    "RelativePos": [
+                        0.0,
+                        50.0
+                    ],
+                    "Size": [
+                        30.0,
+                        30.0
+                    ],
+                    "Type": "Image"
+                }
+            ],
+            "Color": [
+                1.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "Ready1",
+            "Pivot": [
+                1.0,
+                0.0
+            ],
+            "RelativePos": [
+                -30.0,
+                20.0
+            ],
+            "Size": [
+                30.0,
+                30.0
+            ],
+            "Type": "Image"
+        },
+        {
+            "Anchor": [
+                1.0,
+                1.0
+            ],
+            "Children": [],
+            "Color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "Base",
+            "Pivot": [
+                1.0,
+                0.0
+            ],
+            "RelativePos": [
+                0.0,
+                0.0
+            ],
+            "Size": [
+                100.0,
+                250.0
+            ],
+            "Type": "Image"
+        }
+    ],
+    "Color": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "Name": "ReadyCanvas",
+    "Pivot": [
+        0.0,
+        0.0
+    ],
+    "RelativePos": [
+        657.0,
+        -340.0
+    ],
+    "Size": [
+        1920.0,
+        1080.0
+    ],
+    "Type": "Base"
+}

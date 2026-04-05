@@ -62,10 +62,10 @@ void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
         interpolation_deq.pop_front();
 }
 
-XMFLOAT3 CPlayer::GetHeadPosition() const
+XMVECTOR CPlayer::GetHeadPosition() const
 {
     auto* animator = GetComponent<CAnimatorComponent>();
-    if (!animator) return position;
+    if (!animator) return XMLoadFloat3(&position);
 
     return animator->GetHeadPosition();
 }

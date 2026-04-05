@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Shader.h"
 #include "Object.h"
 #include "GeometryLoader.h"
@@ -312,7 +312,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	descriptorRanges.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
-	D3D12_ROOT_PARAMETER rootParameters[5];
+	D3D12_ROOT_PARAMETER rootParameters[6];
 	// CameraInfo
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -337,11 +337,17 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	rootParameters[3].Descriptor.RegisterSpace = 1;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// finalBoneTransforms
+	// gAnimBuffer
 	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	rootParameters[4].Descriptor.ShaderRegister = 1;
 	rootParameters[4].Descriptor.RegisterSpace = 1;
 	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// gBoneMasks
+	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParameters[5].Descriptor.ShaderRegister = 2;
+	rootParameters[5].Descriptor.RegisterSpace = 1;
+	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	// static sampler
 	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
@@ -412,7 +418,7 @@ D3D12_RASTERIZER_DESC CUIShader::CreateRasterizerState()
 	rasterizerDesc.DepthBias = 0;
 	rasterizerDesc.DepthBiasClamp = 0.0f;
 	rasterizerDesc.SlopeScaledDepthBias = 0.0f;
-	rasterizerDesc.DepthClipEnable = TRUE;
+	rasterizerDesc.DepthClipEnable = FALSE;
 	rasterizerDesc.MultisampleEnable = FALSE;
 	rasterizerDesc.AntialiasedLineEnable = FALSE;
 	rasterizerDesc.ForcedSampleCount = 0;

@@ -26,6 +26,8 @@
 #include "WorldOther.h"			// 기타
 #include "WorldTreasure.h"		// 보물
 
+#include "UIComponent.h"
+#include "Movement.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -38,8 +40,11 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	
+
 	if (objects.empty()) {
-		CDescriptorHeapManager* heapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
+		CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
 
@@ -74,13 +79,27 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		my_player->SetPosition(0.0f, 2.0f, 0.0f);
+		auto m = my_player->GetComponent<CMovementComponent>();
+		m->is_fly = true;
+	}
 
-		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
-		auto itemFinder = my_player->GetComponent<CItemFinder>();
-		if (itemFinder) {
-			itemFinder->RegisterTreasures(treasures);
-		}
+	// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
+	auto itemFinder = my_player->GetComponent<CItemFinder>();
+	if (itemFinder) {
+		itemFinder->RegisterTreasures(treasures);
+
+		auto shaders = CSceneManager::GetInstance().GetShaders();
+		auto mainCanvas = ui_manager->CreateCanvas();
+		auto dowsingUI = std::make_shared<CUIDowsingArrow>(&itemFinder->angle);
+		mainCanvas->AddChild(dowsingUI);
+		dowsingUI->SetSize({ 64.0f, 64.0f });
+		dowsingUI->SetEnable(false);
+		// Material 설정
+		std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
+		m->SetMaterial(factory->GetMaterial(shaders["ui"]->GetHeapManager(), "finder_arrow"));
+		dowsingUI->SetMaterial(m);
+
+		my_player->SetComponent(dowsingUI);
 	}
 
 	// 싱글 드롭 콜백 등록
@@ -155,6 +174,7 @@ void CGameScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
+		my_player->SetPosition(0.f, 1.0f, 0.f);
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
 		auto itemFinder = my_player->GetComponent<CItemFinder>();

@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "Collider.h"
 #include "Renderers.h"
+#include "Animator.h"
 
 void CMeshComponent::SetMesh(std::shared_ptr<CMesh>& m)
 {
@@ -45,11 +46,21 @@ void CMeshRendererComponent::Collect(IRenderer* renderer, bool isStatic)
 {
 	if (!owner) return;
 
+	auto animator = owner->GetComponent<CAnimatorComponent>();
+	AnimationData aniData;
+	if (animator)
+		aniData = animator->GetAnimationData();
+
 	for (auto& unit : render_units) {
 		if (!unit.mesh->is_enable) continue;
 		if (unit.material && !unit.material->is_enable) continue;
 
-		renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix, isStatic);
+		if (animator) {
+			// 애니메이터로부터 현재 프레임 정보를 가져옴
+			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix, aniData);
+		}
+		else
+			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix, isStatic);
 #ifdef DEBUG
 		auto collider = owner->GetComponents<CColliderComponent>();
 		for (auto c : collider)

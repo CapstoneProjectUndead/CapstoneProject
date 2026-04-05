@@ -1,0 +1,86 @@
+{
+    "Anchor": [
+        0.0,
+        0.0
+    ],
+    "Children": [
+        {
+            "Anchor": [
+                0.0,
+                -1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        0.0,
+                        0.0
+                    ],
+                    "Children": [],
+                    "Color": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "Name": "ReaperText",
+                    "Pivot": [
+                        0.5,
+                        0.5
+                    ],
+                    "RelativePos": [
+                        -700.0,
+                        -105.0
+                    ],
+                    "Size": [
+                        100.0,
+                        100.0
+                    ],
+                    "Text": "Hi",
+                    "Type": "Text"
+                }
+            ],
+            "Color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "ReaperSpeechBox",
+            "Pivot": [
+                0.5,
+                0.5
+            ],
+            "RelativePos": [
+                -1.0,
+                -200.0
+            ],
+            "Size": [
+                1500.0,
+                300.0
+            ],
+            "TextureName": "white",
+            "Type": "Image"
+        }
+    ],
+    "Color": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "Name": "ReaperSpeechCanvas",
+    "Pivot": [
+        0.0,
+        0.0
+    ],
+    "RelativePos": [
+        0.0,
+        0.0
+    ],
+    "Size": [
+        1920.0,
+        1080.0
+    ],
+    "Type": "Base"
+}

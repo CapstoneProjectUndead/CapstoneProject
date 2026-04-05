@@ -12,6 +12,8 @@ class CPlayer;
 class CMyPlayer;
 class CMonster;
 class CHumanMonster;
+class CMeshComponent;
+class CMeshRendererComponent;
 namespace CGeometryLoader {
 	struct FrameNode;
 }
@@ -23,20 +25,25 @@ public:
 	~CObjectFactory() = default;
 	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
 	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
+	// MovementComp Set
+	void SetComponent(std::shared_ptr<CPlayer>& player);
+	// Lobby
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	// GameScene 모델 파츠 load
 	void LoadGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
-	// Initialize 호출 X
+	// Character
+	void InitializeCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, const std::string& animFileName,
+		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, bool isPlayer = false);
 	void CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
+	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMonster> CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
-	void SetComponent(std::shared_ptr<CPlayer>& player);
 
+	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
-
 private:
 	enum class UndeadMeshName {
 		body,

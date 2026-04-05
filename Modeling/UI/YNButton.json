@@ -1,0 +1,142 @@
+{
+    "Anchor": [
+        0.0,
+        0.0
+    ],
+    "Children": [
+        {
+            "Anchor": [
+                -1.0,
+                -1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        0.0,
+                        0.0
+                    ],
+                    "Children": [],
+                    "Color": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "Name": "Yes",
+                    "Pivot": [
+                        0.5,
+                        0.5
+                    ],
+                    "RelativePos": [
+                        -15.0,
+                        -20.0
+                    ],
+                    "Size": [
+                        100.0,
+                        100.0
+                    ],
+                    "Text": "응",
+                    "Type": "Text"
+                }
+            ],
+            "Color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "YesButton",
+            "Pivot": [
+                0.0,
+                0.5
+            ],
+            "RelativePos": [
+                350.0,
+                -300.0
+            ],
+            "Size": [
+                300.0,
+                150.0
+            ],
+            "Type": "Button"
+        },
+        {
+            "Anchor": [
+                1.0,
+                -1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        0.0,
+                        0.0
+                    ],
+                    "Children": [],
+                    "Color": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "Name": "No",
+                    "Pivot": [
+                        0.5,
+                        0.5
+                    ],
+                    "RelativePos": [
+                        -30.0,
+                        -20.0
+                    ],
+                    "Size": [
+                        100.0,
+                        100.0
+                    ],
+                    "Text": "아니",
+                    "Type": "Text"
+                }
+            ],
+            "Color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "NoButton",
+            "Pivot": [
+                1.0,
+                0.5
+            ],
+            "RelativePos": [
+                -350.0,
+                -300.0
+            ],
+            "Size": [
+                300.0,
+                150.0
+            ],
+            "Type": "Button"
+        }
+    ],
+    "Color": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "Name": "YNCanvas",
+    "Pivot": [
+        0.5,
+        0.5
+    ],
+    "RelativePos": [
+        0.0,
+        0.0
+    ],
+    "Size": [
+        1920.0,
+        1080.0
+    ],
+    "Type": "Base"
+}

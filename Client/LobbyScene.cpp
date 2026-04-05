@@ -1,18 +1,23 @@
 ﻿#include "stdafx.h"
 #include "LobbyScene.h"
-#include "MyPlayer.h"
-#include "Camera.h"
-#include "Shader.h"
-#include "GameFramework.h"
-#include "ObjectFactory.h"
+#include "CustomScene.h"
 #include "SceneManager.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
+
+#include "HumanMonster.h"
+#include "MyPlayer.h"
+#include "Camera.h"
+#include "Shader.h"
+#include "ObjectFactory.h"
+#include "UIComponent.h"
+#include "DataManager.h"
+
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
-#include "Movement.h"
-#include "CustomScene.h"
-#include "HumanMonster.h"
+#include "GameFramework.h"
+
+#include "Movement.h"	// 나중에 삭제
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -25,10 +30,35 @@ CLobbyScene::~CLobbyScene()
 
 void CLobbyScene::Initialize()
 {
+	CScene::Initialize();
+
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 	if (objects.empty()) {
-		CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
-		objects = factory->CreateLobby(staticHeapManager);
+		objects = factory->CreateLobby(heapManager);
 	}
+
+	// UI 생성
+	auto mainCanvas = ui_manager->CreateCanvas();
+	auto repeaper = factory->CreateReaper(heapManager);
+
+	objects.push_back(repeaper);
+
+	// LoadData
+	ui_manager->GetDataManager()->LoadScripts("../Modeling/UI/Reaper.json");
+	// 대사 UI
+	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
+	reaperCanvas->SetEnable(false);
+	ui_manager->AddCanvas(reaperCanvas);
+	// 버튼 ui
+	auto YNCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/YNButton.json");
+	YNCanvas->SetEnable(false);
+	ui_manager->AddCanvas(YNCanvas);
+	// Ready UI
+	auto ReadyCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/PlayerReady.json");
+	ui_manager->AddCanvas(ReadyCanvas);
+
+	SetupDialogueEvents();
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -37,6 +67,8 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
+		//my_player->GetComponent<CMovementComponent>()->is_fly = true;
+		
 	}
 
 	if (!camera) {
@@ -50,21 +82,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
 	}
-	// test 용 삭제X
-	{
-		/*std::ifstream bin("../Modeling/undead_char.bin", std::ios::binary);
-		std::ofstream txt("../Modeling/char.txt");
-
-		char ch;
-		while (bin.get(ch)) {
-			if (
-				ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || (ch >= 'A' && ch <= 'Z') ||
-		 (ch >= 'a' && ch <= 'z') || ch == '<' || ch == '>' || ch == '/' )
-			{
-				txt << ch;
-			}
-		}*/
-	}
 }
 
 void CLobbyScene::Update(float elapsedTime)
@@ -76,26 +93,95 @@ void CLobbyScene::Update(float elapsedTime)
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
+		UpdatePlayerReadyUI();
 	}
 
 	// 테스트 (나중에 지울 것)
 	if (KEY_TAP(KEY::P)) {
+		InteractWithReaper();
+	}
+}
 
-		if (!g_is_single) {
-			if (!my_player->GetIsReady()) {
-				my_player->SetIsReady(true);
-				C_Ready readyPkt;
-				readyPkt.player_id = my_player->GetID();
-				if (auto session = my_player->GetSession()) {
-					auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
-					session->DoSend(sendBuffer);
+void CLobbyScene::InteractWithReaper()
+{
+	std::wstring msg = ui_manager->GetDataManager()->GetDialogue("Reaper", "Ask_Exit");
+
+	// 찾은 대사를 UI 텍스트 컴포넌트에 전달
+	auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
+	if (reaperUI) {
+		reaperUI->SetEnable(true);
+		auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
+		reaperText->SetText(msg);
+		reaperText->Skip();	// 디버깅을 위해 스킵
+	}
+}
+
+void CLobbyScene::SetupDialogueEvents()
+{
+	auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
+	auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
+	auto YNCanvas = ui_manager->FindUI<CUICanvas>("YNCanvas");
+	auto yesBtn = ui_manager->FindUI<CUIButton>("YesButton");
+	auto noBtn = ui_manager->FindUI<CUIButton>("NoButton");
+
+	// 대사가 끝났을 때 버튼을 보여주는 함수 등록
+	if (reaperText) {
+		reaperText->onFinished = [YNCanvas, reaperUI]() {
+			if (reaperUI) reaperUI->SetEnable(false);
+			if (YNCanvas) YNCanvas->SetEnable(true);
+			};
+	}
+
+	// 버튼 콜백 함수 등록
+	if (yesBtn) {
+		yesBtn->OnClick = [reaperUI, YNCanvas, this]() {
+			if (reaperUI) reaperUI->SetEnable(false);
+			if (!g_is_single) {
+				std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
+				if (!myPlayer->GetIsReady()) {
+					myPlayer->SetIsReady(true);
+					C_Ready readyPkt;
+					readyPkt.player_id = myPlayer->GetID();
+					if (auto session = myPlayer->GetSession()) {
+						auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
+						session->DoSend(sendBuffer);
+					}
 				}
 			}
-		}
-		else {
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
-		}
+			else {
+				if (reaperUI) reaperUI->SetEnable(false);
+				if (YNCanvas) YNCanvas->SetEnable(false);
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
+			}
+		};
 	}
+
+	if (noBtn) {
+		noBtn->OnClick = [YNCanvas, reaperUI]() {
+			if (reaperUI) reaperUI->SetEnable(false);
+			if (YNCanvas) YNCanvas->SetEnable(false);
+			};
+	}
+}
+
+void CLobbyScene::UpdatePlayerReadyUI()
+{
+	if (g_is_single) return;
+
+	auto SetReadyUIColor = [this](int playerIdx, bool isReady) {
+		// 이름 규칙: "Ready1", "Ready2", "Ready3"...
+		std::string uiName = "Ready" + std::to_string(playerIdx + 1);
+		auto readyUI = ui_manager->FindUI<CUIImage>(uiName);
+
+		if (readyUI) {
+			XMVECTOR color = isReady ? XMVectorSet(0, 0, 1, 1) : XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
+			XMFLOAT4 finalColor;
+			XMStoreFloat4(&finalColor, color);
+			readyUI->SetColor(finalColor);
+		}
+	};
+
+	SetReadyUIColor(0, my_player->GetIsReady());
 }
 
 void CLobbyScene::Enter()

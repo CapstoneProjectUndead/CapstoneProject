@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Character.h"
 #include "Animator.h"
 #include "Material.h"

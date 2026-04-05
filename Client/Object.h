@@ -44,11 +44,11 @@ public:
 	virtual void OnCollect(IRenderer* renderer);
 
 	//
-	virtual XMFLOAT3 GetHeadPosition() const { return position; };
+	virtual XMVECTOR GetHeadPosition() const { return XMLoadFloat3(&position); };
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }
-	void SetShdaer(const std::string& name) { shader_name = name; }
+	void SetShader(const std::string& name) { shader_name = name; }
 	std::string GetShader() const { return shader_name; }
 
 	XMFLOAT3 GetVelocity() { return velocity; }

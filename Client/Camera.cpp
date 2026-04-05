@@ -23,7 +23,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	SetScissorRect(0, 0, width, height);
 	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
 	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
-	SetCameraOffset(XMFLOAT3(0.0f, 0.5f, -1.0f));
+	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
 	CreateConstantBuffers(device, commandList);
 }
@@ -203,7 +203,7 @@ void CCamera::Move(const XMFLOAT3 shift)
 void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 {
 	// 캐릭터의 머리 위치를 기준
-	XMVECTOR localEye = XMLoadFloat3(&target_object->GetHeadPosition());
+	XMVECTOR localEye = target_object->GetHeadPosition();
 	XMMATRIX world = XMLoadFloat4x4(&target_object->world_matrix);
 	XMVECTOR worldHeadPos = XMVector3TransformCoord(localEye, world);
 

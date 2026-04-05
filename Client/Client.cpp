@@ -128,8 +128,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     AdjustWindowRect(&rc, dwstyle, FALSE);
 
     // 디버그 콘솔 생성
-    //CreateDebugConsole();
-
+#ifdef DEBUG
+    CreateDebugConsole();
+#endif // DEBUG
     //hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
     ghWnd = CreateWindow(szWindowClass, szTitle, dwstyle,
         CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);

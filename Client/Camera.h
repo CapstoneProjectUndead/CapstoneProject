@@ -57,6 +57,7 @@ public:
 	XMFLOAT4X4 GetViewMatrix() const { return view_matrix; }
 	XMFLOAT4X4 GetProjectionMatrix() const { return projection_matrix; }
 	D3D12_VIEWPORT GetViewPort() const { return viewport; }
+	XMFLOAT3 GetPosition() const { return position; }
 
 	void SetTarget(CObject* object) { target_object = object; }
 	void SetMode(EMode m) { mode = m; }

@@ -1,4 +1,5 @@
-﻿#pragma once
+#pragma once
+#include "AnimationManager.h"
 
 class BinaryReader {
 public:
@@ -145,6 +146,15 @@ namespace CGeometryLoader {
         std::vector<std::string> bone_names;
         std::vector<int> parent_index;          // bone_hierarchy    
         std::vector<XMFLOAT4X4> inverse_bind_pose; // mesh.bindposes
+
+        // 이름으로 인덱스를 빠르게 찾기 위한 맵 (초기화 때 채워줌)
+        std::unordered_map<std::string, int> bone_name_to_index;
+
+        int GetBoneIndex(const std::string& name) const {
+            auto it = bone_name_to_index.find(name);
+            if (it != bone_name_to_index.end()) return it->second;
+            return -1; // 못 찾으면 -1
+        }
     };
 
     struct BoneWeightData

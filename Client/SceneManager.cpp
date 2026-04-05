@@ -5,6 +5,7 @@
 #include "MyPlayer.h"
 #include "Shader.h"
 #include "GameFramework.h"
+#include "AnimationManager.h"
 
 void CSceneManager::Init(ID3D12Device* device)
 {
@@ -19,6 +20,12 @@ void CSceneManager::Init(ID3D12Device* device)
 		// skinning
 		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
 		shader->CreateShader(device);
+		{
+			auto skinningHeapManager = shader->GetHeapManager();
+			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char.bin", "../Modeling/undead_ani_baking.bin");
+			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
+			CAnimationManager::GetInstance().CreateMaskBuffer(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
+		}
 		shaders.emplace("skinning", std::move(shader));
 	}
 	{
@@ -39,6 +46,10 @@ void CSceneManager::Init(ID3D12Device* device)
 		auto instRenderer = std::make_unique<CInstRenderer>();
 		instRenderer->Initialize(device, 5000);
 		renderers["inst"] = std::move(instRenderer);
+
+		auto aniRenderer = std::make_unique<CAniRenderer>();
+		aniRenderer->Initialize(device, 100);
+		renderers["skinning"] = std::move(aniRenderer);
 
 		auto uiRenderer = std::make_unique<CUIRenderer>();
 		uiRenderer->Initialize(device, 100);

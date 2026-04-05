@@ -1,8 +1,77 @@
-﻿#include "stdafx.h"
-#include "SkinnedData.h"
+#include "stdafx.h"
 #include "GeometryLoader.h"
 
 using namespace CGeometryLoader;
+
+//std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(const std::string& filename, int boneCount)
+//{
+//    std::unordered_map<std::string, AnimationClip> animations;
+//
+//    BinaryReader br(filename);
+//    if (!br.Good())
+//        return animations;
+//
+//    std::ifstream& file = br.Stream();
+//    std::string tag;
+//
+//    // <AnimationClipCount>:
+//    br.FindTag("<AnimationClipCount>:");
+//    int clipCount = 0;
+//    file.read((char*)&clipCount, sizeof(int));
+//
+//    for (int c = 0; c < clipCount; ++c)
+//    {
+//        br.FindTag("<AnimationClip>:");
+//        std::string clipName = br.ReadName();
+//
+//        br.FindTag("<ClipLength>:");
+//        float clipLength = 0;
+//        file.read((char*)&clipLength, sizeof(float));
+//
+//        br.FindTag("<KeyframeCount>:");
+//        int keyCount = 0;
+//        file.read((char*)&keyCount, sizeof(int));
+//
+//        AnimationClip clip;
+//        clip.bone_animations.resize(boneCount);
+//
+//        for (int k = 0; k < keyCount; ++k)
+//        {
+//            br.FindTag("<Keyframe>:");
+//            br.FindTag("<Time>:");
+//            float time = 0;
+//            file.read((char*)&time, sizeof(float));
+//
+//            // 모든 bone에 대해 TRS 읽기
+//            for (int b = 0; b < boneCount; ++b)
+//            {
+//                br.FindTag("<Bone>:");
+//                int boneIndex = 0;
+//                file.read((char*)&boneIndex, sizeof(int));
+//
+//                Keyframe key;
+//                key.time_pos = time;
+//
+//                br.FindTag("<T>:");
+//                key.translation = br.Read<XMFLOAT3>();
+//
+//                br.FindTag("<R>:");
+//                key.rotation = br.Read<XMFLOAT4>();
+//
+//                br.FindTag("<S>:");
+//                key.scale = br.Read<XMFLOAT3>();
+//
+//                clip.bone_animations[boneIndex].key_frames.push_back(key);
+//            }
+//
+//            br.FindTag("</Keyframe>");
+//        }
+//
+//        animations.emplace(clipName, clip);
+//    }
+//
+//    return animations;
+//}
 
 std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(const std::string& filename, int boneCount)
 {
@@ -13,62 +82,44 @@ std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(c
         return animations;
 
     std::ifstream& file = br.Stream();
-    std::string tag;
 
-    // <AnimationClipCount>:
-    br.FindTag("<AnimationClipCount>:");
-    int clipCount = 0;
-    file.read((char*)&clipCount, sizeof(int));
+    if (!br.FindTag("<AnimationClipCount>:")) return animations;
+    int clipCount = br.Read<int>();
 
     for (int c = 0; c < clipCount; ++c)
     {
-        br.FindTag("<AnimationClip>:");
+        // <AnimationClip>: (이름)
+        if (!br.FindTag("<AnimationClip>:")) break;
         std::string clipName = br.ReadName();
 
-        br.FindTag("<ClipLength>:");
-        float clipLength = 0;
-        file.read((char*)&clipLength, sizeof(float));
+        if (!br.FindTag("<ClipLength>:")) break;
+        float clipLength = br.Read<float>();
 
-        br.FindTag("<KeyframeCount>:");
-        int keyCount = 0;
-        file.read((char*)&keyCount, sizeof(int));
-
+        // <TotalFrames>: (유니티에서 구운 총 프레임 수)
+        if (!br.FindTag("<TotalFrames>:")) break;
+        int totalFrames = br.Read<int>();
         AnimationClip clip;
-        clip.bone_animations.resize(boneCount);
+        clip.name = clipName;
+        clip.clip_length = clipLength;
+        clip.total_frames = totalFrames;
+        clip.bone_count = (uint32_t)boneCount;
 
-        for (int k = 0; k < keyCount; ++k)
+        int totalMatrixCount = totalFrames * boneCount;
+        clip.baked_matrices.reserve(totalMatrixCount);
+        clip.toRoot_matrices.reserve(totalMatrixCount);
+
+        // 유니티에서 [Final, ToRoot] 한 쌍씩 썼으므로 반복문으로 읽음
+        for (int i = 0; i < totalMatrixCount; ++i)
         {
-            br.FindTag("<Keyframe>:");
-            br.FindTag("<Time>:");
-            float time = 0;
-            file.read((char*)&time, sizeof(float));
+            XMFLOAT4X4 finalMat, toRootMat;
+            file.read(reinterpret_cast<char*>(&finalMat), sizeof(XMFLOAT4X4));
+            file.read(reinterpret_cast<char*>(&toRootMat), sizeof(XMFLOAT4X4));
 
-            // 모든 bone에 대해 TRS 읽기
-            for (int b = 0; b < boneCount; ++b)
-            {
-                br.FindTag("<Bone>:");
-                int boneIndex = 0;
-                file.read((char*)&boneIndex, sizeof(int));
-
-                Keyframe key;
-                key.time_pos = time;
-
-                br.FindTag("<T>:");
-                key.translation = br.Read<XMFLOAT3>();
-
-                br.FindTag("<R>:");
-                key.rotation = br.Read<XMFLOAT4>();
-
-                br.FindTag("<S>:");
-                key.scale = br.Read<XMFLOAT3>();
-
-                clip.bone_animations[boneIndex].key_frames.push_back(key);
-            }
-
-            br.FindTag("</Keyframe>");
+            clip.baked_matrices.push_back(finalMat);
+            clip.toRoot_matrices.push_back(toRootMat);
         }
 
-        animations.emplace(clipName, clip);
+        animations.emplace(clipName, std::move(clip));
     }
 
     return animations;
@@ -117,6 +168,11 @@ CGeometryLoader::SkeletonData CGeometryLoader::LoadSkeleton(const std::string& f
         }
     }
     br.FindTag("</Skeleton>");
+
+    for (int i = 0; i < (int)skel.bone_names.size(); ++i)
+    {
+        skel.bone_name_to_index[skel.bone_names[i]] = i;
+    }
 
     return skel;
 }

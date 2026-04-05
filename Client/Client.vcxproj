@@ -172,6 +172,8 @@ call ClientCopy.bat</Command>
     <ClInclude Include="..\External\Common\VariablePacketWriter.h" />
     <ClInclude Include="AIComponent.h" />
     <ClInclude Include="AIStates.h" />
+    <ClInclude Include="AnimationController.h" />
+    <ClInclude Include="AnimationManager.h" />
     <ClInclude Include="Animator.h" />
     <ClInclude Include="AttackState.h" />
     <ClInclude Include="Camera.h" />
@@ -179,9 +181,11 @@ call ClientCopy.bat</Command>
     <ClInclude Include="Collider.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="CustomScene.h" />
+    <ClInclude Include="DataManager.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
+    <ClInclude Include="GPUBufferStruct.h" />
     <ClInclude Include="HumanMonster.h" />
     <ClInclude Include="IdleState.h" />
     <ClInclude Include="ImGuiManager.h" />
@@ -233,7 +237,6 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ServerSession.h" />
     <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="SkinnedData.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Resource.h" />
@@ -268,15 +271,19 @@ call ClientCopy.bat</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AIComponent.cpp" />
+    <ClCompile Include="AnimationController.cpp" />
+    <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Animator.cpp" />
     <ClCompile Include="AttackState.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CustomScene.cpp" />
+    <ClCompile Include="DataManager.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
+    <ClCompile Include="GPUBufferStruct.cpp" />
     <ClCompile Include="HumanMonster.cpp" />
     <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
@@ -325,7 +332,6 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ServerSession.cpp" />
     <ClCompile Include="ServerSessionManager.cpp" />
     <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="SkinnedData.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

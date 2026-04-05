@@ -1,7 +1,8 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ItemFinder.h"
 #include "KeyManager.h"
 #include "MyPlayer.h"
+#include "UIComponent.h"
 
 CItemFinder::CItemFinder()
     : closest_treasure_pos{}
@@ -18,18 +19,33 @@ void CItemFinder::Initialize()
 
 void CItemFinder::Update(const float deltaTime)
 {
-    if (KEY_PRESSED(KEY::F)) {
-        float res = SearchNearbyTreasure(owner->position);
-        if (res == -1) {
-            int a = 0;
+    float res = SearchNearbyTreasure(owner->position);
+    auto ui = owner->GetComponent<CUIDowsingArrow>();
+
+    if (res == -1) {
+        int a = 0;
+
+        if (ui) {
+            ui->SetEnable(false);
         }
-        else {
-            std::cout << "Player pos: " << owner->GetPosition().x << ", " 
-                << owner->GetPosition().z << std::endl;
+    }
+    else {
+        // player 위치로 투영
+        XMFLOAT3 dirWorld = Vector3::Subtract(closest_treasure_pos, owner->GetPosition());
+        float dx = Vector3::DotProduct(dirWorld, owner->right);
+        float dz = Vector3::DotProduct(dirWorld, owner->look);
+        angle = atan2f(dx, dz);
+
+        if (ui) {
+            ui->SetEnable(true);
+        }
+#ifdef DEBUG
+        std::cout << "Player pos: " << owner->GetPosition().x << ", " 
+            << owner->GetPosition().z << std::endl;
            
-            std::cout << "Treasure pos: " << closest_treasure_pos.x << ", " 
-                << closest_treasure_pos.z << std::endl;
-        }
+        std::cout << "Treasure pos: " << closest_treasure_pos.x << ", " 
+            << closest_treasure_pos.z << std::endl;
+#endif // DEBUG
     }
 }
 
@@ -78,4 +94,14 @@ float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos)
     }
 
     return minDistance;
+}
+
+void CItemFinder::Toggle()
+{
+    SetEnable(!is_enable);
+
+    auto ui = owner->GetComponent<CUIDowsingArrow>();
+    if (ui) {
+        ui->SetEnable(is_enable);
+    }
 }
