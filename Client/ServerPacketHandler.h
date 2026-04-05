@@ -47,6 +47,7 @@ enum : uint16
 	PKT_S_MAP_END,
 
 	PKT_C_READY,	// 로비씬에서 사신에게 준비 완료 버튼 누름
+	PKT_S_READY,
 
 	PKT_S_SPAWN_ITEM,
 	PKT_S_SPAWN_ITEM_LIST,
@@ -82,6 +83,7 @@ bool Handle_S_SPAWN_ITEM_LIST(std::shared_ptr<Session> session, S_Item_List& pkt
 bool Handle_S_DESPAWN_ITEM(std::shared_ptr<Session> session, S_DeSpawnItem& pkt);
 bool Handle_S_ADD_ITEM(std::shared_ptr<Session> session, S_AddItem& pkt);
 bool Handle_S_REMOVE_ITEM(std::shared_ptr<Session> session, S_RemoveItem& pkt);
+bool Handle_S_READY(std::shared_ptr<Session> session, S_Ready& pkt);
 
 class CServerPacketHandler
 {
@@ -114,6 +116,7 @@ public:
 		GPacketHandler[PKT_S_DESPAWN_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_DeSpawnItem>(Handle_S_DESPAWN_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_ADD_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddItem>(Handle_S_ADD_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_REMOVE_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RemoveItem>(Handle_S_REMOVE_ITEM, session, buffer, len); };
+		GPacketHandler[PKT_S_READY] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Ready>(Handle_S_READY, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

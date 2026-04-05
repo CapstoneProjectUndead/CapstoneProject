@@ -268,6 +268,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->ChangeMouth(pkt.info.mouth_type);
 
 		AddObject(otherPlayer, otherPlayer->GetID());
+		player_slot_ids.push_back(otherPlayer->GetID());
 	}
 }
 
@@ -304,6 +305,8 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 
 		// Active Scene에 다른 유저 입장
 		AddObject(otherPlayer, otherPlayer->GetID());
+
+		player_slot_ids.push_back(otherPlayer->GetID());
 	}
 }
 

@@ -68,7 +68,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		//my_player->GetComponent<CMovementComponent>()->is_fly = true;
-		
+
 	}
 
 	if (!camera) {
@@ -166,7 +166,8 @@ void CLobbyScene::SetupDialogueEvents()
 
 void CLobbyScene::UpdatePlayerReadyUI()
 {
-	if (g_is_single) return;
+	if (!g_is_single) 
+		return;
 
 	auto SetReadyUIColor = [this](int playerIdx, bool isReady) {
 		// 이름 규칙: "Ready1", "Ready2", "Ready3"...
@@ -428,4 +429,26 @@ void CLobbyScene::Handle_S_MapStart(std::shared_ptr<Session> session, const S_Ma
 {
 	StartLoading(LoadingType::GenerateMap);
 	paused = true;
+}
+
+void CLobbyScene::Handle_S_Ready(std::shared_ptr<Session> session, const S_Ready& pkt)
+{
+	int slot = -1;
+
+	if (my_player && pkt.player_id == my_player->GetID()) {
+		slot = 1;  // 본인은 항상 Ready1
+	}
+	else {
+		auto it = std::find(player_slot_ids.begin(), player_slot_ids.end(), pkt.player_id);
+		if (it == player_slot_ids.end()) 
+			return;
+
+		slot = (int)std::distance(player_slot_ids.begin(), it) + 2;  // 1-based
+		if (slot < 1 || slot > 4) 
+			return;
+	}
+
+	auto readyUI = ui_manager->FindUI<CUIImage>("Ready" + std::to_string(slot));
+	if (readyUI)
+		readyUI->SetColor(XMFLOAT4{ 0, 0, 1, 1 });
 }

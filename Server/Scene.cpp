@@ -383,6 +383,8 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 {
 	LeaveScene(pkt.user_id);
 
+	--active_player_count;
+
 	// 지금 나간 유저에게도 해당 씬에 있는 유저들을 삭제하라고 알려줘야함.
 	for (auto it : players) {
 		S_RemovePlayer removePkt;

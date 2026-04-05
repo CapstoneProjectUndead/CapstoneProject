@@ -53,6 +53,7 @@ enum PacketType : uint16_t
 	_S_MAP_END,
 
 	_C_READY,	// 로비씬에서 사신에게 준비 완료 버튼 누름
+	_S_READY,
 
 	_S_SPAWN_ITEM,      // 서버 → 클라: 월드에 보물 생성
 	_S_SPAWN_ITEM_LIST,
@@ -404,6 +405,14 @@ struct C_Ready : public PacketHeader
 	C_Ready() : PacketHeader(sizeof(C_Ready), _C_READY) {}
 };
 static_assert(sizeof(C_Ready) == 4 + 8, "C_Ready size mismatch!");
+
+struct S_Ready : public PacketHeader
+{
+	uint64 player_id;
+
+	S_Ready() : PacketHeader(sizeof(S_Ready), _S_READY) {}
+};
+static_assert(sizeof(S_Ready) == 4 + 8, "S_Ready size mismatch!");
 
 // 서버 → 클라: 월드에 보물 생성 (위치 + 고유 ID)
 struct S_SpawnItem : public PacketHeader

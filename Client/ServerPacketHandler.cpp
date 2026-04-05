@@ -393,3 +393,11 @@ bool Handle_S_REMOVE_ITEM(std::shared_ptr<Session> session, S_RemoveItem& pkt)
 
 	return true;
 }
+
+bool Handle_S_READY(std::shared_ptr<Session> session, S_Ready& pkt)
+{
+	CLobbyScene* lobbyScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(lobbyScene);
+	lobbyScene->Handle_S_Ready(session, pkt); 
+	return true;
+}

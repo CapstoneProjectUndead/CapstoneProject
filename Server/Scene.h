@@ -93,7 +93,7 @@ public:
 public:
 	// 서버 권한 + 클라 예측 기반 Move
 	void Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt);
-	void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
+	virtual void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
 	void Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt);
 
 	virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) {};

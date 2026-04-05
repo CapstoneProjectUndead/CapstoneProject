@@ -248,12 +248,30 @@ void CLobbyScene::C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt
 	EnterScene(player);
 }
 
+void CLobbyScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt)
+{
+	CScene::Handle_C_Player_Leave(session, pkt);
+
+	auto iter = players.find(pkt.user_id);
+	if (iter == players.end())
+		return;
+
+	if (iter->second->GetIsReady()) {
+		--player_ready_cnt;
+	}
+}
+
 void CLobbyScene::Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt)
 {
 	auto iter = players.find(pkt.player_id);
 	assert(iter != players.end());
 	iter->second->SetIsReady(true);
 	++player_ready_cnt;
+
+	S_Ready readyPkt;
+	readyPkt.player_id = pkt.player_id;
+	auto sendBuffer = MAKE_SEND_BUFFER(readyPkt);
+	BroadCast(sendBuffer);
 }
 
 CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)

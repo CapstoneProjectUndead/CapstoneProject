@@ -91,4 +91,7 @@ protected:
 	std::unique_ptr<CLightManager> light;
 	std::shared_ptr<CObjectFactory> factory;
 	std::shared_ptr<CUIManager> ui_manager;
+
+	// 4월 15일 추가. 
+	std::vector<uint64>						player_slot_ids;
 };

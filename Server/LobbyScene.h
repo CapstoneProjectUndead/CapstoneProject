@@ -26,7 +26,8 @@ public:
     void C_Enter_Player(shared_ptr<Session> session, const C_LOGIN& pkt);
     //=================
 
-    void Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt);
+    virtual void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt) override;
+    void         Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt);
 
 private:
     enum class LobbyMeshName {

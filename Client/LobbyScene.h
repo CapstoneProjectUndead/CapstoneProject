@@ -1,11 +1,10 @@
 ﻿#pragma once
 #include "Scene.h"
 
-// ���� UI ȭ�� ���� (�� ���� �ϳ��� ����)
 enum class LobbyUIState
 {
-    None,    // UI ���� (�ΰ��� ��)
-    Menu,    // ESC ������ �ɼ� �޴� ��.           
+    None,    // UI 
+    Menu,    // ESC          
 };
 
 class CLobbyScene :
@@ -43,6 +42,7 @@ private:
 public:
     // 서버 패킷 처리 관련 함수들
     void Handle_S_MapStart(std::shared_ptr<Session> session, const S_MapStart& pkt);
+    void Handle_S_Ready(std::shared_ptr<Session> session, const S_Ready& pkt);
 
 private:
     LobbyUIState ui_state = LobbyUIState::None;
