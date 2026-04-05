@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //==================================
 // **** 클라/서버 공동 참조 파일 ****
 //==================================
@@ -12,17 +12,22 @@ namespace MapGenerator
         VILLAGE_ROAD,       // 마을(상점) 구역의 일반 길
 
         WALL,
+        VILLAGE_WALL,
+        PARK_WALL,
 
         //  Buildings
         WAREHOUSE, STORE,
         DOOR,
         CORNER_DOOR,    // HOUSE_WALL_CORNER과 방향 같음
 
-        // Building Wall Types (WareHouse, Store 공용)
+        // Building Wall Types
         HOUSE_INNTER,    // 건물 내부 바닥
         HOUSE_WALL_STRAIGHT, // 일자 벽
         HOUSE_WALL_CORNER,   // 모서리 벽
         HOUSE_WALL_EMPTY,    // 벽X
+
+        STORE_WALL_CORNER,   // 모서리 벽
+        STORE_WALL_EMPTY,    // 벽X
 
         // Props
         KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW, UNKNOWN
