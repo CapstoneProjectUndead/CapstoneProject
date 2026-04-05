@@ -17,26 +17,35 @@ class CMeshRendererComponent;
 namespace CGeometryLoader {
 	struct FrameNode;
 }
+enum EColLayer : uint32_t;
 
 class CObjectFactory
 {
 public:
 	CObjectFactory() = default;
 	~CObjectFactory() = default;
+public:
 	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
-	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
+	// init component(공통 컴포넌트 구성 초기화 헬퍼 함수)
+	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName = "inst");
+	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, const std::string& animFileName,
+		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, bool isPlayer = false);
+	// concave는 따로 생성 필요
+	void AddCollider(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask);
 	// MovementComp Set
 	void SetComponent(std::shared_ptr<CPlayer>& player);
+
+	// Create Map
+	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
 	// Lobby
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	// GameScene 모델 파츠 load
 	void LoadGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
-	// Character
-	void InitializeCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, const std::string& animFileName,
-		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, bool isPlayer = false);
+	// Create character
 	void CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
+	void CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
@@ -66,9 +75,10 @@ private:
 	};
 
 
+	// string to enum mapping
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);
-
+private:
 	CMaterialManager matManager;
 	CTextureManager texManager;
 	std::map<std::string, std::shared_ptr<CObject>> prototypes;
