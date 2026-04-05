@@ -220,13 +220,23 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
 {
 	if (!prototypes.empty()) return;
+	{
+		std::string fileName{ "../Modeling/all_map.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	std::string fileName{ "../Modeling/all_map.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+		LoadFrameNode(heapManager, prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(heapManager, prototypes, children);
+		}
+	}
+	{
+		std::string fileName{ "../Modeling/all_map_2.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	LoadFrameNode(heapManager, prototypes, frameRoot);
-	for (const auto& children : frameRoot->childrens) {
-		LoadFrameNode(heapManager, prototypes, children);
+		LoadFrameNode(heapManager, prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(heapManager, prototypes, children);
+		}
 	}
 }
 
@@ -326,9 +336,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 	return objects;
 }
 
-void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char_0308.bin" };
+
+	CreateDowsingrod(character, heapManager);
 
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
@@ -419,6 +431,9 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 void CObjectFactory::CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+
 }
 
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
@@ -505,7 +520,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = std::make_shared<CHumanMonster>();
-		CreateUndeadCharacter(monster, heapManager);
+		//CreateUndeadCharacter(monster, heapManager);
 	}
 	break;
 	case MON_TYPE::ANIMAL_MONSTER:

@@ -396,9 +396,6 @@ void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_S
 
 	auto monster = factory->CreateMonster(skinningHeapManager, type, scene_type);
 	monster->SetID(info.monster_id);
-	monster->ChangeModelSet(1);
-	monster->ChangeEyes(2);
-	monster->ChangeMouth(0);
 	monster->SetPosition(0.f, 0.1f, -1.5f);
 	monster->SetOriginPos({ 0.f, 0.1f, -1.5f });
 	AddObject(monster, info.monster_id);
