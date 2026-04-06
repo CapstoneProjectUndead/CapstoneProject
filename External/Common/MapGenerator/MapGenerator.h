@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //==================================
 // **** 클라/서버 공동 참조 파일 ****
 //==================================
@@ -12,17 +12,22 @@ namespace MapGenerator
         VILLAGE_ROAD,       // 마을(상점) 구역의 일반 길
 
         WALL,
+        VILLAGE_WALL,
+        PARK_WALL,
 
         //  Buildings
         WAREHOUSE, STORE,
         DOOR,
         CORNER_DOOR,    // HOUSE_WALL_CORNER과 방향 같음
 
-        // Building Wall Types (WareHouse, Store 공용)
+        // Building Wall Types
         HOUSE_INNTER,    // 건물 내부 바닥
         HOUSE_WALL_STRAIGHT, // 일자 벽
         HOUSE_WALL_CORNER,   // 모서리 벽
         HOUSE_WALL_EMPTY,    // 벽X
+
+        STORE_WALL_CORNER,   // 모서리 벽
+        STORE_WALL_EMPTY,    // 벽X
 
         // Props
         KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW, UNKNOWN
@@ -73,15 +78,27 @@ namespace MapGenerator
     static int dx[] = { 0, 0, -2, 2 };
     static int dy[] = { -2, 2, 0, 0 };
 
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+
     bool IsValid(int x, int y);
+    int GetBuildingMask(int x, int y, bool isHouse);
+    // house/store corner,empty,straight 설정
     void RefineBuildingTiles();
-    bool IsBuilding(int x, int y);
+    bool IsHouseBuilding(int x, int y);
+    bool IsStoreBuilding(int x, int y);
     bool TryPlaceDoor(int cx, int cy, int size);
     bool IsSpaceForTree(int x, int y);
 
+    // 테마 적용
+    void ApplyAreaTheme(int halfHeight);
+    float CalculateRotation(int x, int y, EModelType type);
+
+    // 문 앞 길이 미로와 연결될 수 있도록
     void CarveMaze(int startX, int startY);
     void CreateOpenSpaces(int numSpaces);
 
+    void PlaceStructures(float areaRatio, int halfHeight);
     void PlaceSmallKiosk(int cx, int cy);
     void PlaceMediumStore(int cx, int cy);
     void PlaceLargeWarehouse(int cx, int cy);

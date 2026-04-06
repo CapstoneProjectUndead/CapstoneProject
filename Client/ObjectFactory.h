@@ -46,7 +46,7 @@ public:
 	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
 	// Create character
-	void CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
+	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
 	void CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);

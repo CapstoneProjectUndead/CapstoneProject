@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 // Server쪽 GameScene
 #include "GameScene.h"
 #include "Player.h"
@@ -100,12 +100,25 @@ void CGameScene::LoadGameScene()
 	if (!prototypes.empty()) 
 		return;
 
-	std::string fileName{ "../Modeling/all_map.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+	CMapAssetManager::GetInstance().initialize();
+	if (!prototypes.empty()) return;
+	{
+		std::string fileName{ "../Modeling/all_map.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	LoadFrameNode(prototypes, frameRoot);
-	for (const auto& children : frameRoot->childrens) {
-		LoadFrameNode(prototypes, children);
+		LoadFrameNode(prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(prototypes, children);
+		}
+	}
+	{
+		std::string fileName{ "../Modeling/all_map_2.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(prototypes, children);
+		}
 	}
 }
 
@@ -120,13 +133,11 @@ void CGameScene::CreateGameScene()
 	item_manager->SpawnWorldTreasures(instanceData);
 
 	for (auto& inst : instanceData) {
-		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
+		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type);
+		for (const std::string& name : meshNames) {
+			if (!prototypes.contains(name)) continue;
 
-			EModelVariant model = PickRandomVariant(typeName);
-			if (model == EModelVariant::NONE) continue;
-
-			std::string meshName = GetVariantFileName(model);
-			if (meshName.empty()) continue;
+			EModelVariant model = CMapAssetManager::GetInstance().GetVariantFromName(name);
 
 			// 오브젝트별 렌더링 데이터를 별도 벡터에 저장 (셀당 여러 오브젝트 지원)
 			MapGenerator::InstanceData rd;
@@ -136,7 +147,7 @@ void CGameScene::CreateGameScene()
 			rd.model = model;
 			map_instance_data.push_back(rd);
 
-			auto proto = prototypes[meshName];
+			auto proto = prototypes[name];
 			auto collider = proto->GetComponent<CColliderComponent>();
 
 			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
@@ -146,16 +157,13 @@ void CGameScene::CreateGameScene()
 			XMStoreFloat4x4(&obj->GetWorldMatrix(), world);
 
 			// collider copy
-			std::string base{ typeName };
-			std::erase_if(base, ::isdigit);
-
-			// boxShape
-			if ((base != "grass" && base != "stone" && collider)) {
-				auto copyCollider = std::make_shared<CColliderComponent>(*collider);
-				copyCollider->owner = obj.get();
-				copyCollider->Update(0.0f);
-				obj->SetComponent(copyCollider);
-				GetPhysicsManager()->SetCollider(copyCollider);
+			if (CMapAssetManager::GetInstance().RequiresCollider(name)) {
+				if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
+					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
+					obj->SetComponent(copyCollider);
+					copyCollider->Update(0.0f);
+					GetPhysicsManager()->SetCollider(copyCollider);
+				}
 			}
 			static_objects.push_back(obj);
 		}

@@ -1,4 +1,4 @@
-#ifdef CLIENT
+ï»¿#ifdef CLIENT
     #include "stdafx.h"
 #else
     #include "pch.h"
@@ -7,18 +7,24 @@
 #include "MapGenerator.h"
 
 //==================================
-// **** Å¬¶ó/¼­¹ö °øµ¿ ÂüÁ¶ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µë™ ì°¸ì¡° íŒŒì¼ ****
 //==================================
 
 using namespace MapGenerator;
 
-// Æ¯Á¤ ·¹ÀÌ¾îÀÇ Å¸ÀÏ Å¸ÀÔÀ» ¾ÈÀüÇÏ°Ô °¡Á®¿È
+// ë²”ìœ„ë¥¼ í¬í•¨í•˜ëŠ” ë‚œìˆ˜ ìƒì„± í—¬í¼ í•¨ìˆ˜
+int GetRandomInt(int min, int max) {
+    std::uniform_int_distribution<int> dis(min, max);
+    return dis(gen);
+}
+
+// íŠ¹ì • ë ˆì´ì–´ì˜ íƒ€ì¼ íƒ€ì…ì„ ì•ˆì „í•˜ê²Œ ê°€ì ¸ì˜´
 EModelType GetTile(ELayer layer, int x, int y) {
     if (!IsValid(x, y)) return EModelType::UNKNOWN;
     return mapGrid[(int)layer][y][x];
 }
 
-// ºôµù ³»ºÎ ¹× ¿Üº® ¹èÄ¡ °øÅë ·ÎÁ÷
+// ë¹Œë”© ë‚´ë¶€ ë° ì™¸ë²½ ë°°ì¹˜ ê³µí†µ ë¡œì§
 void SetBuildingArea(int cx, int cy, int size, EModelType structType) {
     for (int y = cy - size; y <= cy + size; y++) {
         for (int x = cx - size; x <= cx + size; x++) {
@@ -29,40 +35,28 @@ void SetBuildingArea(int cx, int cy, int size, EModelType structType) {
     }
 }
 
-// --- ¸ŞÀÎ API ÇÔ¼ö ---
+// --- ë©”ì¸ API í•¨ìˆ˜ ---
 std::vector<InstanceData> MapGenerator::Generate3DMap() {
-    srand((unsigned int)time(NULL));
     float areaRatio = (WIDTH * HEIGHT) / 5000.0f;
     int halfHeight = HEIGHT / 2;
 
-    // 1. ÃÊ±âÈ­ (º®À¸·Î Ã¤¿ì±â)
+    // ì´ˆê¸°í™” (ë²½ìœ¼ë¡œ ì±„ìš°ê¸°)
     for (int l = 0; l < (int)ELayer::COUNT; l++)
         for (int y = 0; y < HEIGHT; y++)
             for (int x = 0; x < WIDTH; x++)
                 mapGrid[l][y][x] = (l == (int)ELayer::FLOOR) ? EModelType::WALL : EModelType::UNKNOWN;
 
-    // 2. ÁöÇü »ı¼º (¹Ì·Î + ¿ÀÇÂ ½ºÆäÀÌ½º)
+    // ì§€í˜• ìƒì„± (ë¯¸ë¡œ + ì˜¤í”ˆ ìŠ¤í˜ì´ìŠ¤)
     CarveMaze(1, 1);
     CreateOpenSpaces(max(5, (int)(20 * areaRatio)));
 
-    // 3. ±¸¿ª Å×¸¶ Àû¿ë ¹× ±¸Á¶¹° ½ºÆù
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            if (GetTile(ELayer::FLOOR, x, y) == EModelType::ROAD && y > halfHeight)
-                mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
-        }
-    }
+    PlaceStructures(areaRatio, halfHeight);
 
-    // ±¸Á¶¹° ¹èÄ¡ (¹İº¹¹® °£¼ÒÈ­ °¡´ÉÇÏ³ª ¸íÈ®¼ºÀ» À§ÇØ À¯Áö)
-    for (int i = 0; i < max(1, (int)(3 * areaRatio)); i++) PlaceLargeWarehouse(4 + rand() % (WIDTH - 8), halfHeight + rand() % (halfHeight - 10));
-    for (int i = 0; i < max(2, (int)(10 * areaRatio)); i++) PlaceMediumStore(4 + rand() % (WIDTH - 8), halfHeight + rand() % (halfHeight - 5));
-    for (int i = 0; i < max(5, (int)(25 * areaRatio)); i++) PlaceSmallKiosk(4 + rand() % (WIDTH - 8), halfHeight + rand() % (halfHeight - 5));
-    for (int i = 0; i < max(5, (int)(20 * areaRatio)); i++) PlaceParkPlaza(3 + rand() % (WIDTH - 6), 5 + rand() % (halfHeight - 10));
-
+    ApplyAreaTheme(halfHeight);
     PlaceTreasure();
     RefineBuildingTiles();
 
-    // 4. ÀÎ½ºÅÏ½º µ¥ÀÌÅÍ º¯È¯
+    // ì¸ìŠ¤í„´ìŠ¤ ë°ì´í„° ë³€í™˜
     std::vector<InstanceData> instanceList;
     const float TILE_SIZE = 2.0f;
 
@@ -77,24 +71,7 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
                 inst.position = XMFLOAT3(x * TILE_SIZE, l * 0.01f, y * TILE_SIZE);
 
                 if (l == (int)ELayer::STRUCTURE) {
-                    int bMask = 0;
-                    if (IsBuilding(x, y - 1)) bMask |= 1; // »ó
-                    if (IsBuilding(x, y + 1)) bMask |= 2; // ÇÏ
-                    if (IsBuilding(x - 1, y)) bMask |= 4; // ÁÂ
-                    if (IsBuilding(x + 1, y)) bMask |= 8; // ¿ì
-
-                    if (type == EModelType::HOUSE_WALL_STRAIGHT || type == EModelType::DOOR) {
-                        if (!(bMask & 1)) inst.rotationY = 0.0f;
-                        else if (!(bMask & 8)) inst.rotationY = 270.0f;
-                        else if (!(bMask & 2)) inst.rotationY = 180.0f;
-                        else if (!(bMask & 4)) inst.rotationY = 90.0f;
-                    }
-                    else if (type == EModelType::HOUSE_WALL_CORNER || type == EModelType::CORNER_DOOR) {
-                        if ((bMask & 10) == 10)      inst.rotationY = 0.0f;
-                        else if ((bMask & 6) == 6)   inst.rotationY = 270.0f;
-                        else if ((bMask & 5) == 5)   inst.rotationY = 180.0f;
-                        else if ((bMask & 9) == 9)   inst.rotationY = 90.0f;
-                    }
+                    inst.rotationY = CalculateRotation(x, y, type);
                 }
                 instanceList.push_back(inst);
             }
@@ -108,18 +85,77 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
     return instanceList;
 }
 
-// --- ·ÎÁ÷ ÇÔ¼öµé ---
+void MapGenerator::PlaceStructures(float areaRatio, int halfHeight) {
+    for (int i = 0; i < max(1, (int)(3 * areaRatio)); i++)
+        PlaceLargeWarehouse(GetRandomInt(4, WIDTH - 4), GetRandomInt(halfHeight, HEIGHT - 4));
+    for (int i = 0; i < max(2, (int)(10 * areaRatio)); i++)
+        PlaceMediumStore(GetRandomInt(4, WIDTH - 4), GetRandomInt(halfHeight, HEIGHT - 4));
+    for (int i = 0; i < max(5, (int)(20 * areaRatio)); i++)
+        PlaceParkPlaza(GetRandomInt(3, WIDTH - 3), GetRandomInt(5, halfHeight - 5));
+    for (int i = 0; i < max(5, (int)(25 * areaRatio)); i++)
+        PlaceSmallKiosk(GetRandomInt(4, WIDTH - 4), GetRandomInt(halfHeight, HEIGHT - 4));
+}
+
+void MapGenerator::ApplyAreaTheme(int halfHeight) {
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            EModelType& floor = mapGrid[(int)ELayer::FLOOR][y][x];
+            EModelType& structLayer = mapGrid[(int)ELayer::STRUCTURE][y][x];
+
+            if (y > halfHeight) { // ë§ˆì„ êµ¬ì—­
+                if (floor == EModelType::ROAD) floor = EModelType::VILLAGE_ROAD;
+                else if (floor == EModelType::WALL) {
+                    floor = EModelType::VILLAGE_ROAD;
+                    structLayer = EModelType::VILLAGE_WALL;
+                }
+            }
+            else { // ê³µì› êµ¬ì—­
+                if (floor == EModelType::WALL) {
+                    floor = EModelType::ROAD;
+                    structLayer = EModelType::PARK_WALL;
+                }
+            }
+        }
+    }
+}
+
+// êµ¬ì¡°ë¬¼ ë ˆì´ì–´ì˜ íšŒì „ê°’ì„ ê³„ì‚°í•˜ëŠ” ì „ìš© í•¨ìˆ˜
+float MapGenerator::CalculateRotation(int x, int y, EModelType type) {
+    int bMask = GetBuildingMask(x, y, true);
+    int sMask = GetBuildingMask(x, y, false);
+
+    // ì½”ë„ˆí˜• (ì£¼íƒ ì½”ë„ˆ, ìƒì  ì½”ë„ˆ, ì½”ë„ˆ ë¬¸)
+    if (type == EModelType::HOUSE_WALL_CORNER || type == EModelType::STORE_WALL_CORNER || type == EModelType::CORNER_DOOR) {
+        int mask = (type == EModelType::STORE_WALL_CORNER) ? sMask : bMask;
+        if ((mask & 10) == 10) return 0.0f;
+        if ((mask & 6) == 6)   return 270.0f;
+        if ((mask & 5) == 5)   return 180.0f;
+        if ((mask & 9) == 9)   return 90.0f;
+    }
+    // ì§ì„ í˜• (ë²½, ë¬¸)
+    else if (type == EModelType::HOUSE_WALL_STRAIGHT || type == EModelType::DOOR) {
+        if (!(bMask & 1)) return 0.0f;
+        if (!(bMask & 8)) return 270.0f;
+        if (!(bMask & 2)) return 180.0f;
+        if (!(bMask & 4)) return 90.0f;
+    }
+    return 0.0f;
+}
+
+// --- ë¡œì§ í•¨ìˆ˜ë“¤ ---
 bool MapGenerator::TryPlaceDoor(int cx, int cy, int size) {
     struct DoorPos { int x, y; bool isCorner; };
     std::vector<DoorPos> candidates = {
-        {cx, cy - size, false}, {cx, cy + size, false}, {cx - size, cy, false}, {cx + size, cy, false}, // Áß¾Ó
-        {cx - size, cy - size, true}, {cx + size, cy - size, true}, {cx - size, cy + size, true}, {cx + size, cy + size, true} // ÄÚ³Ê
+         {cx, cy - size, false}, {cx, cy + size, false}, {cx - size, cy, false}, {cx + size, cy, false}, // ì¤‘ì•™
+        {cx - size, cy - size, true}, {cx + size, cy - size, true}, {cx - size, cy + size, true}, {cx + size, cy + size, true} // ì½”ë„ˆ
     };
+
+    std::shuffle(candidates.begin(), candidates.end(), gen);
 
     for (auto& cp : candidates) {
         int tx = cp.x, ty = cp.y;
         if (cp.isCorner) {
-            // ÄÚ³Ê ¹® ¸ğµ¨ÀÇ ¿ŞÂÊ ¸é(ÁøÀÔ·Î) °è»ê
+            // ì½”ë„ˆ ë¬¸ ëª¨ë¸ì˜ ì™¼ìª½ ë©´(ì§„ì…ë¡œ) ê³„ì‚°
             if (cp.x < cx && cp.y < cy)      tx -= 1; // NW -> West
             else if (cp.x > cx && cp.y < cy) ty -= 1; // NE -> North
             else if (cp.x < cx && cp.y > cy) ty += 1; // SW -> South
@@ -143,8 +179,24 @@ bool MapGenerator::TryPlaceDoor(int cx, int cy, int size) {
 void MapGenerator::PlaceMediumStore(int cx, int cy) {
     int size = HOUSE_SIZE - 1;
     if (!IsValid(cx - (size + 1), cy - (size + 1)) || !IsValid(cx + size + 1, cy + size + 1)) return;
-    SetBuildingArea(cx, cy, size, EModelType::STORE);
-    TryPlaceDoor(cx, cy, size);
+
+    for (int y = cy - size; y <= cy + size; y++) {
+        for (int x = cx - size; x <= cx + size; x++) {
+            if (mapGrid[(int)ELayer::STRUCTURE][y][x] != EModelType::UNKNOWN) return;
+        }
+    }
+
+    for (int y = cy - size; y <= cy + size; y++) {
+        for (int x = cx - size; x <= cx + size; x++) {
+            mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
+            mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::STORE;
+        }
+    }
+
+    // ìƒì  íƒˆì¶œêµ¬ ì˜ˆì•½
+    if (IsValid(cx + size + 1, cy)) {
+        mapGrid[(int)ELayer::FLOOR][cy][cx + size + 1] = EModelType::ROAD;
+    }
 }
 
 void MapGenerator::PlaceLargeWarehouse(int cx, int cy) {
@@ -161,35 +213,36 @@ bool MapGenerator::IsSpaceForTree(int x, int y) {
 }
 
 void MapGenerator::PlaceParkPlaza(int cx, int cy) {
-    if (!IsValid(cx - 3, cy - 3) || !IsValid(cx + 3, cy + 3)) return;
+    int size = 3;
+    if (!IsValid(cx - size, cy - size) || !IsValid(cx + size, cy + size)) return;
 
-    for (int y = cy - 3; y <= cy + 3; y++)
-        for (int x = cx - 3; x <= cx + 3; x++)
+    for (int y = cy - size; y <= cy + size; y++)
+        for (int x = cx - size; x <= cx + size; x++)
             mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::PARK_GREEN;
 
     mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::BENCH;
-    if (IsSpaceForTree(cx, cy + 2)) mapGrid[(int)ELayer::OBJECT][cy + 2][cx] = EModelType::SEESAW;
+    if (IsSpaceForTree(cx, cy + size - 1)) mapGrid[(int)ELayer::OBJECT][cy + size - 1][cx] = EModelType::SEESAW;
 
-    for (int y = cy - 3; y <= cy + 3; y++) {
-        for (int x = cx - 3; x <= cx + 3; x++) {
+    for (int y = cy - size; y <= cy + size; y++) {
+        for (int x = cx - size; x <= cx + size; x++) {
             if (GetTile(ELayer::OBJECT, x, y) != EModelType::UNKNOWN) continue;
-            bool isEdge = (y == cy - 3 || y == cy + 3 || x == cx - 3 || x == cx + 3);
-            if (isEdge && rand() % 100 < 50) {
+            bool isEdge = (y == cy - size || y == cy + size || x == cx - size || x == cx + size);
+            if (isEdge && GetRandomInt(0, 99) < 50) {
                 mapGrid[(int)ELayer::OBJECT][y][x] = IsSpaceForTree(x, y) ? EModelType::TREE : EModelType::SMALL_BUSH;
             }
-            else if (!isEdge && rand() % 100 < 10) {
+            else if (!isEdge && GetRandomInt(0, 99) < 10) {
                 mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
             }
         }
     }
 }
-// --- ¼ÒÇ° ¹× °Ç¹° ¹èÄ¡ ÇÔ¼ö ---
 
+// --- ì†Œí’ˆ ë° ê±´ë¬¼ ë°°ì¹˜ í•¨ìˆ˜ ---
 void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
     if (!IsValid(cx - 1, cy - 1) || !IsValid(cx + 1, cy + 1)) return;
 
-    // °Ç¹° À§°Å³ª ¹® ¹Ù·Î ¾ÕÀÌ¸é ¼³Ä¡ ¾È ÇÔ (¿©À¯ °ø°£ È®º¸)
-    if (IsBuilding(cx, cy)) return;
+    // ê±´ë¬¼ ìœ„ê±°ë‚˜ ë¬¸ ë°”ë¡œ ì•ì´ë©´ ì„¤ì¹˜ ì•ˆ í•¨ (ì—¬ìœ  ê³µê°„ í™•ë³´)
+    if (IsHouseBuilding(cx, cy)) return;
 
     for (int y = cy - 1; y <= cy + 1; y++) {
         for (int x = cx - 1; x <= cx + 1; x++) {
@@ -198,10 +251,10 @@ void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
         }
     }
 
-    // ¹Ù´ÚÀ» ¸¶À» ±æ·Î ±³Ã¼ÇÏ°í Å°¿À½ºÅ© ¹èÄ¡
+    // ë°”ë‹¥ì„ ë§ˆì„ ê¸¸ë¡œ êµì²´í•˜ê³  í‚¤ì˜¤ìŠ¤í¬ ë°°ì¹˜
     for (int y = cy - 1; y <= cy + 1; y++) {
         for (int x = cx - 1; x <= cx + 1; x++) {
-            if (!IsBuilding(x, y)) mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
+            if (!IsHouseBuilding(x, y)) mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
         }
     }
     mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::KIOSK;
@@ -209,13 +262,13 @@ void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
 
 void MapGenerator::PlaceTreasure() {
     const int BLOCK_SIZE = 10;
-    // ¸ÊÀ» ±¸¿ª(Block)À¸·Î ³ª´²¼­ º¸¹°ÀÌ ÇÑ°÷¿¡ ½ò¸®Áö ¾Ê°Ô ¹èÄ¡
+    // ë§µì„ êµ¬ì—­(Block)ìœ¼ë¡œ ë‚˜ëˆ ì„œ ë³´ë¬¼ì´ í•œê³³ì— ì ë¦¬ì§€ ì•Šê²Œ ë°°ì¹˜
     for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
         for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
-            int count = rand() % 3; // ±¸¿ª´ç ÃÖ´ë 2°³
+            int count = GetRandomInt(0, 2); // êµ¬ì—­ë‹¹ ìµœëŒ€ 2ê°œ
             for (int t = 0; t < count; t++) {
-                int rx = bx + rand() % BLOCK_SIZE;
-                int ry = by + rand() % BLOCK_SIZE;
+                int rx = GetRandomInt(bx, min(bx + BLOCK_SIZE - 1, WIDTH - 1));
+                int ry = GetRandomInt(by, min(by + BLOCK_SIZE - 1, HEIGHT - 1));
 
                 if (!IsValid(rx, ry)) continue;
 
@@ -228,45 +281,82 @@ void MapGenerator::PlaceTreasure() {
     }
 }
 
-// --- À¯Æ¿¸®Æ¼ ¹× ÁöÇü »ı¼º ¾Ë°í¸®Áò ---
-bool MapGenerator::IsBuilding(int x, int y) {
+// --- ìœ í‹¸ë¦¬í‹° ë° ì§€í˜• ìƒì„± ì•Œê³ ë¦¬ì¦˜ ---
+bool MapGenerator::IsHouseBuilding(int x, int y) {
     if (!IsValid(x, y)) return false;
     EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
-    // ¸ğµç °Ç¹° °ü·Ã Å¸ÀÔÀ» Ã¼Å©
+    // ëª¨ë“  ê±´ë¬¼ ê´€ë ¨ íƒ€ì…ì„ ì²´í¬
     return (t == EModelType::WAREHOUSE || t == EModelType::STORE ||
         t == EModelType::DOOR || t == EModelType::CORNER_DOOR ||
         t == EModelType::HOUSE_WALL_CORNER || t == EModelType::HOUSE_WALL_STRAIGHT ||
         t == EModelType::HOUSE_WALL_EMPTY);
 }
 
+bool MapGenerator::IsStoreBuilding(int x, int y) {
+    if (!IsValid(x, y)) return false;
+    EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
+    // ëª¨ë“  ê±´ë¬¼ ê´€ë ¨ íƒ€ì…ì„ ì²´í¬
+    return (t == EModelType::STORE || t == EModelType::STORE_WALL_CORNER || t == EModelType::STORE_WALL_EMPTY);
+}
+
 void MapGenerator::RefineBuildingTiles() {
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             EModelType& current = mapGrid[(int)ELayer::STRUCTURE][y][x];
-            if (current != EModelType::WAREHOUSE && current != EModelType::STORE) continue;
 
-            int mask = 0;
-            if (IsBuilding(x, y - 1)) mask |= 1; // »ó
-            if (IsBuilding(x, y + 1)) mask |= 2; // ÇÏ
-            if (IsBuilding(x - 1, y)) mask |= 4; // ÁÂ
-            if (IsBuilding(x + 1, y)) mask |= 8; // ¿ì
+            // ì°½ê³ (Warehouse) ì²˜ë¦¬
+            if (bool isHouse = current == EModelType::WAREHOUSE) {
+                int mask = GetBuildingMask(x, y, isHouse);
 
-            if (mask == 15) current = EModelType::HOUSE_WALL_EMPTY; // »ç¹æÀÌ °Ç¹°ÀÓ (³»ºÎ º®)
-            else if (mask == 10 || mask == 6 || mask == 5 || mask == 9) current = EModelType::HOUSE_WALL_CORNER;
-            else current = EModelType::HOUSE_WALL_STRAIGHT;
+                if (mask == 15) current = EModelType::HOUSE_WALL_EMPTY;
+                else if (mask == 10 || mask == 6 || mask == 5 || mask == 9) current = EModelType::HOUSE_WALL_CORNER;
+                else current = EModelType::HOUSE_WALL_STRAIGHT;
+            }
+            // ì²œë§‰ ìƒì (Store) ì²˜ë¦¬
+            else if (current == EModelType::STORE) {
+                int mask = GetBuildingMask(x, y, isHouse);
+                // ëª¨ì„œë¦¬ ì²´í¬ (ìƒí•˜ì¢Œìš° ì¤‘ 2ê°œ ë©´ë§Œ ê±´ë¬¼ê³¼ ì ‘í•  ë•Œ = ì½”ë„ˆ)
+                if (mask == 10 || mask == 6 || mask == 5 || mask == 9) {
+                    current = EModelType::STORE_WALL_CORNER;
+                }
+                else {
+                    current = EModelType::STORE_WALL_EMPTY;
+                }
+            }
         }
     }
+}
+
+// í—¬í¼ í•¨ìˆ˜: ì£¼ë³€ 4ë°©í–¥ ê±´ë¬¼ ì—¬ë¶€ ì²´í¬
+int MapGenerator::GetBuildingMask(int x, int y, bool isHouse) {
+    int mask = 0;
+    if (isHouse) {
+        if (IsHouseBuilding(x, y - 1)) mask |= 1; // ìƒ
+        if (IsHouseBuilding(x, y + 1)) mask |= 2; // í•˜
+        if (IsHouseBuilding(x - 1, y)) mask |= 4; // ì¢Œ
+        if (IsHouseBuilding(x + 1, y)) mask |= 8; // ìš°
+    }
+    else {
+        if (IsStoreBuilding(x, y - 1)) mask |= 1; // ìƒ
+        if (IsStoreBuilding(x, y + 1)) mask |= 2; // í•˜
+        if (IsStoreBuilding(x - 1, y)) mask |= 4; // ì¢Œ
+        if (IsStoreBuilding(x + 1, y)) mask |= 8; // ìš°
+    }
+    return mask;
 }
 
 void MapGenerator::CarveMaze(int startX, int startY) {
     std::stack<Cell> s;
     s.push({ startX, startY });
-    mapGrid[(int)ELayer::FLOOR][startY][startX] = EModelType::ROAD;
+
+    // ì‹œì‘ì ì´ ì´ë¯¸ ROAD(ë¬¸ ì•)ë¼ë©´ ê·¸ëŒ€ë¡œ ë‘ê³ , ì•„ë‹ˆë©´ ROADë¡œ ë°”ê¿ˆ
+    if (mapGrid[(int)ELayer::FLOOR][startY][startX] == EModelType::WALL)
+        mapGrid[(int)ELayer::FLOOR][startY][startX] = EModelType::ROAD;
 
     while (!s.empty()) {
         Cell curr = s.top();
         int dirs[] = { 0, 1, 2, 3 };
-        for (int i = 0; i < 4; i++) std::swap(dirs[i], dirs[rand() % 4]);
+        std::shuffle(std::begin(dirs), std::end(dirs), gen);
 
         bool moved = false;
         for (int i = 0; i < 4; i++) {
@@ -274,12 +364,17 @@ void MapGenerator::CarveMaze(int startX, int startY) {
             int ny = curr.y + dy[dirs[i]];
 
             if (IsValid(nx, ny) && mapGrid[(int)ELayer::FLOOR][ny][nx] == EModelType::WALL) {
-                // Áß°£ Å¸ÀÏ°ú ´ë»ó Å¸ÀÏÀ» ¸ğµÎ ±æ·Î ¶ÕÀ½
-                mapGrid[(int)ELayer::FLOOR][curr.y + dy[dirs[i]] / 2][curr.x + dx[dirs[i]] / 2] = EModelType::ROAD;
-                mapGrid[(int)ELayer::FLOOR][ny][nx] = EModelType::ROAD;
-                s.push({ nx, ny });
-                moved = true;
-                break;
+                // ì¤‘ê°„ íƒ€ì¼ë„ ì²´í¬ (ê±´ë¬¼ì„ ê´€í†µí•˜ì§€ ì•Šë„ë¡)
+                int mx = curr.x + dx[dirs[i]] / 2;
+                int my = curr.y + dy[dirs[i]] / 2;
+
+                if (mapGrid[(int)ELayer::STRUCTURE][my][mx] == EModelType::UNKNOWN) {
+                    mapGrid[(int)ELayer::FLOOR][my][mx] = EModelType::ROAD;
+                    mapGrid[(int)ELayer::FLOOR][ny][nx] = EModelType::ROAD;
+                    s.push({ nx, ny });
+                    moved = true;
+                    break;
+                }
             }
         }
         if (!moved) s.pop();
@@ -289,8 +384,10 @@ void MapGenerator::CarveMaze(int startX, int startY) {
 void MapGenerator::CreateOpenSpaces(int numSpaces) {
     std::vector<Rect> builtSpaces;
     for (int i = 0; i < numSpaces; ) {
-        int w = 3 + rand() % 5, h = 3 + rand() % 5;
-        int startX = 2 + rand() % (WIDTH - w - 2), startY = 2 + rand() % (HEIGHT - h - 2);
+        int w = GetRandomInt(3, 7);
+        int h = GetRandomInt(3, 7);
+        int startX = GetRandomInt(2, WIDTH - w - 2);
+        int startY = GetRandomInt(2, HEIGHT - h - 2);
         Rect newSpace = { startX, startY, w, h };
 
         bool overlap = false;

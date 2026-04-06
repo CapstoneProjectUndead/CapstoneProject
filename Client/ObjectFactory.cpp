@@ -225,14 +225,26 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
 {
+	CMapAssetManager::GetInstance().initialize();
+
 	if (!prototypes.empty()) return;
+	{
+		std::string fileName{ "../Modeling/all_map.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	std::string fileName{ "../Modeling/all_map.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+		LoadFrameNode(heapManager, prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(heapManager, prototypes, children);
+		}
+	}
+	{
+		std::string fileName{ "../Modeling/all_map_2.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	LoadFrameNode(heapManager, prototypes, frameRoot);
-	for (const auto& children : frameRoot->childrens) {
-		LoadFrameNode(heapManager, prototypes, children);
+		LoadFrameNode(heapManager, prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(heapManager, prototypes, children);
+		}
 	}
 }
 
@@ -253,15 +265,12 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	}
 
 	for (const auto& inst : instData) {
-		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
+		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type);
+		for (const std::string& name : meshNames) {
+			if (!prototypes.contains(name)) continue;
 
-			EModelVariant model = PickRandomVariant(typeName);
-			if (model == EModelVariant::NONE) 
-				continue;
+			auto proto = prototypes[name];
 
-			std::string meshName = GetVariantFileName(model);
-
-			auto proto = prototypes[meshName];
 			auto meshComp = proto->GetComponent<CMeshComponent>();
 			auto matComp = proto->GetComponent<CMaterialComponent>();
 			auto collider = proto->GetComponent<CColliderComponent>();
@@ -281,13 +290,12 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			obj->SetComponent(meshRenderer);
 
 			// collider copy(잔디, 돌은 필요X)
-			std::string base{ typeName };
-			std::erase_if(base, ::isdigit);
-			// 길이면 boxShape으로 새로 생성
-			if ((base != "grass" && base != "stone" && collider)) {
-				auto copyCollider = std::make_shared<CColliderComponent>(*collider);
-				obj->SetComponent(copyCollider);
-				CPhysicsManager::GetInstance().SetCollider(copyCollider);
+			if (CMapAssetManager::GetInstance().RequiresCollider(name)) {
+				if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
+					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
+					obj->SetComponent(copyCollider);
+					CPhysicsManager::GetInstance().SetCollider(copyCollider);
+				}
 			}
 			obj->SetShader("inst");
 
@@ -304,37 +312,39 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 	std::vector<std::shared_ptr<CObject>> objects;
 
 	for (const auto& inst : instanceData) {
+		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type, inst.model);
+		for (const std::string& name : meshNames) {
+			auto proto = prototypes[name];
+			auto meshComp = proto->GetComponent<CMeshComponent>();
+			auto matComp = proto->GetComponent<CMaterialComponent>();
 
-		std::string meshName = GetVariantFileName(inst.model);
+			// 위치/크기 정보를 행렬로 변환하여 추가
+			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
-		auto proto = prototypes[meshName];
-		auto meshComp = proto->GetComponent<CMeshComponent>();
-		auto matComp = proto->GetComponent<CMaterialComponent>();
+			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
+			XMStoreFloat4x4(&obj->world_matrix, world);
 
-		// 위치/크기 정보를 행렬로 변환하여 추가
-		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+			// MeshRendererComponent 생성 (CreateGameScene과 동일하게)
+			auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+			RenderUnit unit;
+			unit.mesh = meshComp;
+			unit.material = matComp;
+			meshRenderer->SetRenderUnit(unit);
+			obj->SetComponent(meshRenderer);
 
-		XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
-		XMStoreFloat4x4(&obj->world_matrix, world);
+			obj->SetShader("inst");
 
-		// MeshRendererComponent 생성 (CreateGameScene과 동일하게)
-		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-		RenderUnit unit;
-		unit.mesh = meshComp;
-		unit.material = matComp;
-		meshRenderer->SetRenderUnit(unit);
-		obj->SetComponent(meshRenderer);
-
-		obj->SetShader("inst");
-
-		objects.push_back(obj);
+			objects.push_back(obj);
+		}
 	}
 	return objects;
 }
 
-void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/undead_char_0308.bin" };
+
+	CreateDowsingrod(character, heapManager);
 
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
@@ -425,6 +435,9 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CCharacter> character
 void CObjectFactory::CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+
 }
 
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
@@ -511,7 +524,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = std::make_shared<CHumanMonster>();
-		CreateUndeadCharacter(monster, heapManager);
+		//CreateUndeadCharacter(monster, heapManager);
 	}
 	break;
 	case MON_TYPE::ANIMAL_MONSTER:
