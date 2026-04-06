@@ -30,5 +30,6 @@ public:
 private:
     map<string, shared_ptr<CObject>>    prototypes;
     vector<MapGenerator::InstanceData>  map_instance_data;
+    vector<XMFLOAT3>                    monster_spawn_positions;
 };
 

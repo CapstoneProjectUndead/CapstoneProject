@@ -47,6 +47,7 @@ private:
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;
+    std::vector<XMFLOAT3>                    monster_spawn_positions;
 
     static constexpr float  PICKUP_RANGE       = 2.0f;
     static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값

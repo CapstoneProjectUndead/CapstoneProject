@@ -119,6 +119,13 @@ void CGameScene::CreateGameScene()
 	// 맵 데이터를 순회하며 보물 좌표 + ID 부여 + spawn
 	item_manager->SpawnWorldTreasures(instanceData);
 
+	// 몬스터 스폰 위치 추출 (서버만 사용)
+	monster_spawn_positions.clear();
+	for (auto& inst : instanceData) {
+		if (inst.type == MapGenerator::EModelType::MONSTER_HUMAN)
+			monster_spawn_positions.push_back(inst.position);
+	}
+
 	for (auto& inst : instanceData) {
 		for (const std::string& typeName : GameSceneTypeToString(inst.type)) {
 

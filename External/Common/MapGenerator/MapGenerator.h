@@ -25,7 +25,12 @@ namespace MapGenerator
         HOUSE_WALL_EMPTY,    // 벽X
 
         // Props
-        KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW, UNKNOWN
+        KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW,
+
+        // Monster spawn markers (서버 전용 — 클라 렌더링 없음)
+        MONSTER_HUMAN,
+
+        UNKNOWN
     };
     enum class ELayer : int {
         FLOOR = 0,   // 바닥 (ROAD, PARK_GREEN, VILLAGE_ROAD, HOUSE_INNER)
@@ -87,4 +92,5 @@ namespace MapGenerator
     void PlaceLargeWarehouse(int cx, int cy);
     void PlaceParkPlaza(int cx, int cy);
     void PlaceTreasure();
+    void PlaceMonster();
 }

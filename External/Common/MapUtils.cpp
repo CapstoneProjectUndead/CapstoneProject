@@ -1,6 +1,6 @@
 #ifdef CLIENT
 //==================================
-// **** Å¬¶ó/¼­¹ö °øµ¿ ÂüÁ¶ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µë™ ì°¸ì¡° íŒŒì¼ ****
 //==================================
 #include "stdafx.h"
 #else
@@ -17,7 +17,7 @@ std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& t
 		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
 		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
 
-		{ MapGenerator::EModelType::WALL,					{"house_place"} },// ÀÓ½Ã
+		{ MapGenerator::EModelType::WALL,					{"house_place"} },// ì„ì‹œ
 
 		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
 		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
@@ -32,12 +32,13 @@ std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& t
 		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
 		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
 
+		{ MapGenerator::EModelType::MONSTER_HUMAN,			{} }, // server-only marker, no rendering
+
 		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
 	};
 
-
 	auto it = table.find(type);
-	return it->second;
+	return (it != table.end()) ? it->second : std::vector<std::string>{};
 }
 
 std::string GetVariantFileName(EModelVariant variant)
@@ -45,7 +46,7 @@ std::string GetVariantFileName(EModelVariant variant)
 	static const std::unordered_map<EModelVariant, std::string> variantToString = {
 		{ EModelVariant::NONE, "" },
 
-		// --- [°íÁ¤ ¿¡¼Âµé] ---
+		// --- [ê³ ì • ì—ì…‹ë“¤] ---
 		{ EModelVariant::PARK_ROAD, "park_road" },
 		{ EModelVariant::PARK_GREEN, "park_green" },
 		{ EModelVariant::VILLAGE_ROAD, "village_road" },
@@ -91,12 +92,13 @@ std::string GetVariantFileName(EModelVariant variant)
 	};
 
 	auto it = variantToString.find(variant);
+
 	return (it != variantToString.end()) ? it->second : "";
 }
 
 EModelVariant PickRandomVariant(const std::string& key)
 {
-	// 1. ·£´ı Ä«Å×°í¸®ÀÎÁö ¸ÕÀú È®ÀÎ (±âÁ¸ ·ÎÁ÷)
+	// 1. ëœë¤ ì¹´í…Œê³ ë¦¬ì¸ì§€ ë¨¼ì € í™•ì¸ (ê¸°ì¡´ ë¡œì§)
 	static const std::unordered_map<std::string, std::vector<EModelVariant>> categoryTable = {
 		{ "grass", {
 			EModelVariant::GRASS_019, EModelVariant::GRASS_020, EModelVariant::GRASS_021,
@@ -126,7 +128,7 @@ EModelVariant PickRandomVariant(const std::string& key)
 		return list[rand() % list.size()];
 	}
 
-	// 2. ·£´ıÀÌ ¾Æ´Ï¶ó¸é? °íÁ¤ ¸Ş½¬ Å×ÀÌºí¿¡¼­ °Ë»ö!
+	// 2. ëœë¤ì´ ì•„ë‹ˆë¼ë©´? ê³ ì • ë©”ì‰¬ í…Œì´ë¸”ì—ì„œ ê²€ìƒ‰!
 	static const std::unordered_map<std::string, EModelVariant> fixedTable = {
 		{ "park_road", EModelVariant::PARK_ROAD },
 		{ "park_green", EModelVariant::PARK_GREEN },
@@ -146,6 +148,6 @@ EModelVariant PickRandomVariant(const std::string& key)
 		return fixedIt->second;
 	}
 
-	// ¿©±â±îÁö ¿Ô´Âµ¥µµ ¾øÀ¸¸é ÁøÂ¥ ¿¡·¯°Å³ª ºó °ø°£
+	// ì—¬ê¸°ê¹Œì§€ ì™”ëŠ”ë°ë„ ì—†ìœ¼ë©´ ì§„ì§œ ì—ëŸ¬ê±°ë‚˜ ë¹ˆ ê³µê°„
 	return EModelVariant::NONE;
 }

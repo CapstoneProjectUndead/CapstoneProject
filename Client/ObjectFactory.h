@@ -58,6 +58,7 @@ public:
 
 	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
+	std::vector<XMFLOAT3>&    GetMonsterSpawnPositions() { return monster_spawn_positions; }
 private:
 	enum class UndeadMeshName {
 		body,
@@ -92,5 +93,6 @@ private:
 	static uint32 s_monster_id_generator;
 
 	std::vector<TreasureInfo> treasures;
+	std::vector<XMFLOAT3>    monster_spawn_positions;
 };
 

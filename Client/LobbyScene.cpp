@@ -5,7 +5,6 @@
 #include "KeyManager.h"
 #include "ImGuiManager.h"
 
-#include "HumanMonster.h"
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Shader.h"

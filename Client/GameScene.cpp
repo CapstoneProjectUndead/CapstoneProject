@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "ObjectFactory.h"
+#include "HumanMonster.h"
 
 #include "ItemFinder.h"
 #include "NetworkManager.h"
@@ -45,6 +46,7 @@ void CGameScene::Initialize()
 		CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
+		monster_spawn_positions = factory->GetMonsterSpawnPositions();
 
 		// 보물 위치에 보물 생성
 		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
@@ -107,6 +109,20 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			inv->SetDropCallback([this](std::shared_ptr<CItem> item) {
 				DropItemAtPlayerFeet(item);
 				});
+		}
+	}
+
+	// 싱글 전용: 몬스터 스폰
+	if (g_is_single) {
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
+		for (const auto& pos : monster_spawn_positions) {
+			auto monster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, SCENE_TYPE::GAME);
+			if (!monster) 
+				continue;
+
+			monster->SetPosition(pos.x, 0.1f, pos.z);
+			monster->SetOriginPos({ pos.x, 0.1f, pos.z });
+			AddObject(monster, monster->GetID());
 		}
 	}
 
