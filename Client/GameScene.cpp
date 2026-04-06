@@ -81,6 +81,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		auto m = my_player->GetComponent<CMovementComponent>();
 		m->is_fly = true;
+		my_player->SetPosition(1.f, 5.0f, 1.f);
 	}
 
 	// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
@@ -147,6 +148,11 @@ void CGameScene::Update(float elapsedTime)
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
+		// 디버깅용 임시 설정
+		if (KEY_PRESSED(KEY::U)) {
+			CMovementComponent* m = my_player->GetComponent<CMovementComponent>();
+			m->is_fly = !m->is_fly;
+		}
 	};
 }
 
@@ -188,7 +194,8 @@ void CGameScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
-		my_player->SetPosition(0.f, 1.0f, 0.f);
+		if(g_is_single)
+			my_player->SetPosition(1.f, 5.0f, 1.f);	// Lobby 위치 그대로 가져오는 거 방지
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
 		auto itemFinder = my_player->GetComponent<CItemFinder>();

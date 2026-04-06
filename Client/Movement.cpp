@@ -35,6 +35,13 @@ void CMovementComponent::ClampSpeed()
 	}
 }
 
+void CMovementComponent::ClampY()
+{
+    if (owner->position.y < -10.0f) {
+        owner->SetPosition(1.f, 5.0f, 1.f); // 초기위치로 이동(임시 설정)
+    }
+}
+
 void CMovementComponent::Slide(const XMFLOAT3& normal)
 {
     XMVECTOR v = XMLoadFloat3(&owner->velocity);
@@ -111,6 +118,8 @@ void CMovementComponent::Update(const float deltaTime)
 
     // 최종 위치 적용
     XMStoreFloat3(&owner->position, finalPos);
+
+    ClampY();
 }
 
 XMVECTOR CMovementComponent::CalculatePlatform(float dt)

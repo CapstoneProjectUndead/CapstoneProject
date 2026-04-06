@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GeometryLoader.h"
 
 using namespace CGeometryLoader;
@@ -242,7 +242,7 @@ void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>&
             // --- Textures ---
             else if (br.IsTag(tag, "<AlbedoMap>:")) {
                 mat.albedoMap = br.ReadName();
-                if (mat.albedoMap == "null") mat.albedoMap.clear();
+                if (mat.albedoMap == "null") mat.albedoMap = "white";
             }
             else if (br.IsTag(tag, "<SpecularMap>:")) {
                 mat.specularMap = br.ReadName();

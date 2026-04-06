@@ -8,146 +8,138 @@
 #endif
 
 #include "MapUtils.h"
+using namespace MapGenerator;
 
-std::vector<std::string> GameSceneTypeToString(const MapGenerator::EModelType& type)
+void CMapAssetManager::initialize()
 {
-	static const std::unordered_map<MapGenerator::EModelType, std::vector<std::string>> table = {
-		{ MapGenerator::EModelType::ROAD,					{"park_road", "stone"} },
-		{ MapGenerator::EModelType::PARK_GREEN,				{"park_green", "grass"} },
-		{ MapGenerator::EModelType::VILLAGE_ROAD,			{"village_road"} },
-		{ MapGenerator::EModelType::HOUSE_INNTER,			{"house_place"} },
+    // EModelVariant -> 파일명 매핑 (id_to_file)
+    // 고정 에셋
+    id_to_file[EModelVariant::PARK_ROAD] = "park_road";
+    id_to_file[EModelVariant::PARK_GREEN] = "park_green";
+    id_to_file[EModelVariant::VILLAGE_ROAD] = "village_road";
+    id_to_file[EModelVariant::HOUSE_PLACE] = "house_place";
+    id_to_file[EModelVariant::WALL_1002] = "wall_1002";
+    id_to_file[EModelVariant::WALL_2001] = "wall_2001";
+    id_to_file[EModelVariant::WALL_1003] = "wall_1003";
+    id_to_file[EModelVariant::WALL_1_DOOR001] = "wall_1_door001";
+    id_to_file[EModelVariant::WALL_2_DOOR001] = "wall_2_door001";
+    id_to_file[EModelVariant::VENDING_MACHINE_001] = "vending_machine001";
+    id_to_file[EModelVariant::SEESAW_001] = "seesaw001";
+    id_to_file[EModelVariant::VILLAGE_WALL] = "village_wall";
+    id_to_file[EModelVariant::PARK_WALL] = "park_wall";
+    id_to_file[EModelVariant::TENT_CLOTH] = "tent_cloth";
+    id_to_file[EModelVariant::TENT_CORNER_CLOTH] = "tent_corner_cloth";
+    id_to_file[EModelVariant::TENT_CORNER] = "tent_corner";
 
-		{ MapGenerator::EModelType::WALL,					{"house_place"} },// 임시
+    // Grass (ID 반복문 처리)
+    for (int i = 19; i <= 37; ++i) {
+        EModelVariant var = static_cast<EModelVariant>(static_cast<int>(EModelVariant::GRASS_019) + (i - 19));
+        std::string name = "grass0" + std::to_string(i);
+        id_to_file[var] = name;
+    }
 
-		{ MapGenerator::EModelType::HOUSE_WALL_CORNER,		{"wall_2001"} },
-		{ MapGenerator::EModelType::HOUSE_WALL_STRAIGHT,	{"wall_1002"} },
-		{ MapGenerator::EModelType::HOUSE_WALL_EMPTY,		{"wall_1003"} },
-		{ MapGenerator::EModelType::DOOR,					{"wall_1_door001"} },
-		{ MapGenerator::EModelType::CORNER_DOOR,			{"wall_2_door001"} },
+    // Stone (ID 반복문 처리)
+    for (int i = 11; i <= 24; ++i) {
+        EModelVariant var = static_cast<EModelVariant>(static_cast<int>(EModelVariant::STONE_011) + (i - 11));
+        std::string name = "stone0" + std::to_string(i);
+        id_to_file[var] = name;
+    }
 
-		{ MapGenerator::EModelType::KIOSK,					{"vending_machine001"} },
-		{ MapGenerator::EModelType::TREE,					{"tree"} },
-		{ MapGenerator::EModelType::TREASURE,				{"trashcan"} },
-		{ MapGenerator::EModelType::BENCH,					{"park_bench"} },
-		{ MapGenerator::EModelType::SMALL_BUSH,				{"small_bush"} },
-		{ MapGenerator::EModelType::SEESAW,					{"seesaw001"} },
+    // Props
+    id_to_file[EModelVariant::PARK_BENCH_002] = "park_bench002";
+    id_to_file[EModelVariant::PARK_BENCH_003] = "park_bench003";
+    id_to_file[EModelVariant::SMALL_BUSH_001] = "small_bush001";
+    id_to_file[EModelVariant::SMALL_BUSH_002] = "small_bush002";
+    id_to_file[EModelVariant::TREE_002] = "tree002";
+    id_to_file[EModelVariant::PINETREE] = "pinetree";
+    id_to_file[EModelVariant::TRASHCAN_001] = "trashcan001";
+    id_to_file[EModelVariant::TRASHCAN_002] = "trashcan002";
 
-		{ MapGenerator::EModelType::MONSTER_HUMAN,			{} }, // server-only marker, no rendering
+    // 카테고리별 랜덤 풀 설정 (추가 장식물용 - 파일명 기반)
+    random_pools["grass"] = { "grass019", "grass020", "grass021", "grass022", "grass023", "grass024", "grass025",
+        "grass026", "grass027", "grass028", "grass029", "grass030", "grass031", "grass032", "grass033", "grass034", "grass035", "grass036", "grass037" };
+    random_pools["stone"] = { "stone011", "stone012", "stone013", "stone014", "stone015", "stone016", "stone017",
+        "stone018", "stone019", "stone020", "stone021", "stone022", "stone023", "stone024" };
+    random_pools["tree"] = { "tree002", "pinetree" };
+    random_pools["bench"] = { "park_bench002", "park_bench003" };
+    random_pools["bush"] = { "small_bush001", "small_bush002" };
+    random_pools["trashcan"] = { "trashcan001", "trashcan002" };
 
-		{ MapGenerator::EModelType::UNKNOWN,				{"park_road"} },
-	};
+    // 모델 타입별 메쉬 매핑 (EModelType -> {EModelVariant 후보들(실제 모델 enum), 추가 풀 키})
+    asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {"stone"} };
+    asset_table[EModelType::PARK_GREEN] = { {EModelVariant::PARK_GREEN}, {"grass"} };
+    asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {} };
+    asset_table[EModelType::WALL] = { {EModelVariant::PARK_WALL}, {} };
+    asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
+    asset_table[EModelType::VILLAGE_WALL] = { {EModelVariant::VILLAGE_WALL}, {} };
+    asset_table[EModelType::HOUSE_INNTER] = { {EModelVariant::HOUSE_PLACE}, {} };
+    asset_table[EModelType::HOUSE_WALL_STRAIGHT] = { {EModelVariant::WALL_1002}, {} };
+    asset_table[EModelType::HOUSE_WALL_CORNER] = { {EModelVariant::WALL_2001}, {} };
+    asset_table[EModelType::HOUSE_WALL_EMPTY] = { {EModelVariant::WALL_1003}, {} };
+    asset_table[EModelType::DOOR] = { {EModelVariant::WALL_1_DOOR001}, {} };
+    asset_table[EModelType::CORNER_DOOR] = { {EModelVariant::WALL_2_DOOR001}, {} };
+    asset_table[EModelType::KIOSK] = { {EModelVariant::VENDING_MACHINE_001}, {} };
+    asset_table[EModelType::TREE] = { {}, {"tree"} };
+    asset_table[EModelType::BENCH] = { {}, {"bench"} };
+    asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
+    asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
+    asset_table[EModelType::TREASURE] = { {}, {"trashcan"} };
 
-	auto it = table.find(type);
-	return (it != table.end()) ? it->second : std::vector<std::string>{};
+    // 천막 상점 관련
+    asset_table[EModelType::STORE_WALL_EMPTY] = { {EModelVariant::TENT_CLOTH}, {} };
+    asset_table[EModelType::STORE_WALL_CORNER] = { {EModelVariant::TENT_CORNER_CLOTH, EModelVariant::TENT_CORNER}, {} };
+
+    // 서버 전용 마커 (렌더링 없음)
+    asset_table[EModelType::MONSTER_HUMAN] = { {}, {} };
+
+    // 콜라이더 제외 키워드 설정
+    no_collider_set = { "grass", "stone" };
 }
 
-std::string GetVariantFileName(EModelVariant variant)
+std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelVariant serverModelId)
 {
-	static const std::unordered_map<EModelVariant, std::string> variantToString = {
-		{ EModelVariant::NONE, "" },
+    std::vector<std::string> results;
 
-		// --- [고정 에셋들] ---
-		{ EModelVariant::PARK_ROAD, "park_road" },
-		{ EModelVariant::PARK_GREEN, "park_green" },
-		{ EModelVariant::VILLAGE_ROAD, "village_road" },
-		{ EModelVariant::HOUSE_PLACE, "house_place" },
-		{ EModelVariant::WALL_1002, "wall_1002" },
-		{ EModelVariant::WALL_2001, "wall_2001" },
-		{ EModelVariant::WALL_1003, "wall_1003" },
-		{ EModelVariant::WALL_1_DOOR001, "wall_1_door001" },
-		{ EModelVariant::WALL_2_DOOR001, "wall_2_door001" },
-		{ EModelVariant::VENDING_MACHINE_001, "vending_machine001" },
-		{ EModelVariant::SEESAW_001, "seesaw001" },
+    // 메인 모델 결정
+    if (serverModelId != EModelVariant::NONE) {
+        // 서버에서 준 ID가 있으면 우선 사용
+        if (id_to_file.contains(serverModelId)) {
+            results.push_back(id_to_file[serverModelId]);
+        }
+    }
+    else if (asset_table.contains(type)) {
+        // 서버 ID가 없으면(싱글) main 전부 생성
+        const auto& main_pool = asset_table[type].main_variants;
+        if (!main_pool.empty()) {
+            for (auto& main : main_pool) {
+                results.push_back(id_to_file[main]);
+            }
+        }
+        // 추가 장식물(Extra) 결정
+        for (const auto& pool_key : asset_table[type].extra_pools) {
+            if (random_pools.contains(pool_key)) {
+                const auto& pool = random_pools[pool_key];
+                results.push_back(pool[rand() % pool.size()]);
+            }
+        }
+    }
 
-		// Grass
-		{ EModelVariant::GRASS_019, "grass019" }, { EModelVariant::GRASS_020, "grass020" },
-		{ EModelVariant::GRASS_021, "grass021" }, { EModelVariant::GRASS_022, "grass022" },
-		{ EModelVariant::GRASS_023, "grass023" }, { EModelVariant::GRASS_024, "grass024" },
-		{ EModelVariant::GRASS_025, "grass025" }, { EModelVariant::GRASS_026, "grass026" },
-		{ EModelVariant::GRASS_027, "grass027" }, { EModelVariant::GRASS_028, "grass028" },
-		{ EModelVariant::GRASS_029, "grass029" }, { EModelVariant::GRASS_030, "grass030" },
-		{ EModelVariant::GRASS_031, "grass031" }, { EModelVariant::GRASS_032, "grass032" },
-		{ EModelVariant::GRASS_033, "grass033" }, { EModelVariant::GRASS_034, "grass034" },
-		{ EModelVariant::GRASS_035, "grass035" }, { EModelVariant::GRASS_036, "grass036" },
-		{ EModelVariant::GRASS_037, "grass037" },
-
-		// Stone
-		{ EModelVariant::STONE_011, "stone011" }, { EModelVariant::STONE_012, "stone012" },
-		{ EModelVariant::STONE_013, "stone013" }, { EModelVariant::STONE_014, "stone014" },
-		{ EModelVariant::STONE_015, "stone015" }, { EModelVariant::STONE_016, "stone016" },
-		{ EModelVariant::STONE_017, "stone017" }, { EModelVariant::STONE_018, "stone018" },
-		{ EModelVariant::STONE_019, "stone019" }, { EModelVariant::STONE_020, "stone020" },
-		{ EModelVariant::STONE_021, "stone021" }, { EModelVariant::STONE_022, "stone022" },
-		{ EModelVariant::STONE_023, "stone023" }, { EModelVariant::STONE_024, "stone024" },
-
-		// Props
-		{ EModelVariant::PARK_BENCH_002, "park_bench002" },
-		{ EModelVariant::PARK_BENCH_003, "park_bench003" },
-		{ EModelVariant::SMALL_BUSH_001, "small_bush001" },
-		{ EModelVariant::SMALL_BUSH_002, "small_bush002" },
-		{ EModelVariant::TREE_002, "tree002" },
-		{ EModelVariant::PINETREE, "pinetree" },
-		{ EModelVariant::TRASHCAN_001, "trashcan001" },
-		{ EModelVariant::TRASHCAN_002, "trashcan002" }
-	};
-
-	auto it = variantToString.find(variant);
-
-	return (it != variantToString.end()) ? it->second : "";
+    return results;
 }
 
-EModelVariant PickRandomVariant(const std::string& key)
+bool CMapAssetManager::RequiresCollider(const std::string& meshName)
 {
-	// 1. 랜덤 카테고리인지 먼저 확인 (기존 로직)
-	static const std::unordered_map<std::string, std::vector<EModelVariant>> categoryTable = {
-		{ "grass", {
-			EModelVariant::GRASS_019, EModelVariant::GRASS_020, EModelVariant::GRASS_021,
-			EModelVariant::GRASS_022, EModelVariant::GRASS_023, EModelVariant::GRASS_024,
-			EModelVariant::GRASS_025, EModelVariant::GRASS_026, EModelVariant::GRASS_027,
-			EModelVariant::GRASS_028, EModelVariant::GRASS_029, EModelVariant::GRASS_030,
-			EModelVariant::GRASS_031, EModelVariant::GRASS_032, EModelVariant::GRASS_033,
-			EModelVariant::GRASS_034, EModelVariant::GRASS_035, EModelVariant::GRASS_036,
-			EModelVariant::GRASS_037, EModelVariant::NONE
-		}},
-		{ "stone", {
-			EModelVariant::STONE_011, EModelVariant::STONE_012, EModelVariant::STONE_013,
-			EModelVariant::STONE_014, EModelVariant::STONE_015, EModelVariant::STONE_016,
-			EModelVariant::STONE_017, EModelVariant::STONE_018, EModelVariant::STONE_019,
-			EModelVariant::STONE_020, EModelVariant::STONE_021, EModelVariant::STONE_022,
-			EModelVariant::STONE_023, EModelVariant::STONE_024, EModelVariant::NONE
-		}},
-		{ "park_bench", { EModelVariant::PARK_BENCH_002, EModelVariant::PARK_BENCH_003 }},
-		{ "small_bush", { EModelVariant::SMALL_BUSH_001, EModelVariant::SMALL_BUSH_002 }},
-		{ "tree",       { EModelVariant::TREE_002,       EModelVariant::PINETREE }},
-		{ "trashcan",   { EModelVariant::TRASHCAN_001,   EModelVariant::TRASHCAN_002 }},
-	};
+    for (const auto& keyword : no_collider_set) {
+        if (meshName.find(keyword) != std::string::npos) return false;
+    }
 
-	auto it = categoryTable.find(key);
-	if (it != categoryTable.end()) {
-		const auto& list = it->second;
-		return list[rand() % list.size()];
-	}
+    return true;
+}
 
-	// 2. 랜덤이 아니라면? 고정 메쉬 테이블에서 검색!
-	static const std::unordered_map<std::string, EModelVariant> fixedTable = {
-		{ "park_road", EModelVariant::PARK_ROAD },
-		{ "park_green", EModelVariant::PARK_GREEN },
-		{ "village_road", EModelVariant::VILLAGE_ROAD },
-		{ "house_place", EModelVariant::HOUSE_PLACE },
-		{ "wall_1002", EModelVariant::WALL_1002 },
-		{ "wall_2001", EModelVariant::WALL_2001 },
-		{ "wall_1003", EModelVariant::WALL_1003 },
-		{ "wall_1_door001", EModelVariant::WALL_1_DOOR001 },
-		{ "wall_2_door001", EModelVariant::WALL_2_DOOR001 },
-		{ "vending_machine001", EModelVariant::VENDING_MACHINE_001 },
-		{ "seesaw001", EModelVariant::SEESAW_001 }
-	};
-
-	auto fixedIt = fixedTable.find(key);
-	if (fixedIt != fixedTable.end()) {
-		return fixedIt->second;
-	}
-
-	// 여기까지 왔는데도 없으면 진짜 에러거나 빈 공간
-	return EModelVariant::NONE;
+EModelVariant CMapAssetManager::GetVariantFromName(const std::string& meshName)
+{
+    for (auto const& [variant, name] : id_to_file) {
+        if (name == meshName) return variant;
+    }
+    return EModelVariant::NONE;
 }
