@@ -47,6 +47,7 @@
 #include <functional>
 #include <fstream>
 #include <unordered_map>
+#include <random>
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;

@@ -25,11 +25,11 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::WALL_2_DOOR001] = "wall_2_door001";
     id_to_file[EModelVariant::VENDING_MACHINE_001] = "vending_machine001";
     id_to_file[EModelVariant::SEESAW_001] = "seesaw001";
-    //id_to_file[EModelVariant::VILLAGE_WALL] = "village_wall";
-    //id_to_file[EModelVariant::PARK_WALL] = "park_wall";
-    //id_to_file[EModelVariant::TENT_CLOTH] = "tent_cloth";
-    //id_to_file[EModelVariant::TENT_CORNER_CLOTH] = "tent_corner_cloth";
-    //id_to_file[EModelVariant::TENT_CORNER] = "tent_corner";
+    id_to_file[EModelVariant::VILLAGE_WALL] = "village_wall";
+    id_to_file[EModelVariant::PARK_WALL] = "park_wall";
+    id_to_file[EModelVariant::TENT_CLOTH] = "tent_cloth";
+    id_to_file[EModelVariant::TENT_CORNER_CLOTH] = "tent_corner_cloth";
+    id_to_file[EModelVariant::TENT_CORNER] = "tent_corner";
 
     // Grass (ID 반복문 처리)
     for (int i = 19; i <= 37; ++i) {
@@ -69,8 +69,9 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {"stone"} };
     asset_table[EModelType::PARK_GREEN] = { {EModelVariant::PARK_GREEN}, {"grass"} };
     asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {} };
-    asset_table[EModelType::WALL] = { {EModelVariant::VILLAGE_WALL}, {} };
-    //asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
+    asset_table[EModelType::WALL] = { {EModelVariant::PARK_WALL}, {} };
+    asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
+    asset_table[EModelType::VILLAGE_WALL] = { {EModelVariant::VILLAGE_WALL}, {} };
     asset_table[EModelType::HOUSE_INNTER] = { {EModelVariant::HOUSE_PLACE}, {} };
     asset_table[EModelType::HOUSE_WALL_STRAIGHT] = { {EModelVariant::WALL_1002}, {} };
     asset_table[EModelType::HOUSE_WALL_CORNER] = { {EModelVariant::WALL_2001}, {} };
@@ -78,16 +79,15 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::DOOR] = { {EModelVariant::WALL_1_DOOR001}, {} };
     asset_table[EModelType::CORNER_DOOR] = { {EModelVariant::WALL_2_DOOR001}, {} };
     asset_table[EModelType::KIOSK] = { {EModelVariant::VENDING_MACHINE_001}, {} };
-    asset_table[EModelType::TREE] = { {EModelVariant::TREE_002, EModelVariant::PINETREE}, {} };
-    asset_table[EModelType::BENCH] = { {EModelVariant::PARK_BENCH_002, EModelVariant::PARK_BENCH_003}, {} };
-    asset_table[EModelType::SMALL_BUSH] = { {EModelVariant::SMALL_BUSH_001, EModelVariant::SMALL_BUSH_002}, {} };
+    asset_table[EModelType::TREE] = { {}, {"tree"} };
+    asset_table[EModelType::BENCH] = { {}, {"bench"} };
+    asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
-    asset_table[EModelType::TREASURE] = { {EModelVariant::TRASHCAN_001, EModelVariant::TRASHCAN_002}, {} };
+    asset_table[EModelType::TREASURE] = { {}, {"trashcan"} };
 
-    //// 천막 상점 관련
-    //asset_table[EModelType::STORE_WALL_CORNER] = { {EModelVariant::TENT_CLOTH}, {} };
-    //asset_table[EModelType::STORE_WALL_EMPTY] = { {EModelVariant::TENT_CORNER_CLOTH, EModelVariant::TENT_CORNER}, {} };
-
+    // 천막 상점 관련
+    asset_table[EModelType::STORE_WALL_EMPTY] = { {EModelVariant::TENT_CLOTH}, {} };
+    asset_table[EModelType::STORE_WALL_CORNER] = { {EModelVariant::TENT_CORNER_CLOTH, EModelVariant::TENT_CORNER}, {} };
 
     // 콜라이더 제외 키워드 설정
     no_collider_set = { "grass", "stone" };
@@ -105,11 +105,12 @@ std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelV
         }
     }
     else if (asset_table.contains(type)) {
-        // 서버 ID가 없으면(싱글) 타입별 후보군에서 랜덤 선택
+        // 서버 ID가 없으면(싱글) main 전부 생성
         const auto& main_pool = asset_table[type].main_variants;
         if (!main_pool.empty()) {
-            EModelVariant picked = main_pool[rand() % main_pool.size()];
-            results.push_back(id_to_file[picked]);
+            for (auto& main : main_pool) {
+                results.push_back(id_to_file[main]);
+            }
         }
         // 추가 장식물(Extra) 결정
         for (const auto& pool_key : asset_table[type].extra_pools) {

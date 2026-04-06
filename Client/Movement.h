@@ -31,6 +31,8 @@ public:
 
 	// 최대 속도 제한
 	void ClampSpeed();
+	// Y 위치 제한(무한 낙하 방지)
+	void ClampY();
 	void SetSpeed(const float otherSpeed) { speed = otherSpeed; }
 	float GetSpeed() const { return speed; }
 

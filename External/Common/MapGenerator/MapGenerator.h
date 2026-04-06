@@ -78,15 +78,27 @@ namespace MapGenerator
     static int dx[] = { 0, 0, -2, 2 };
     static int dy[] = { -2, 2, 0, 0 };
 
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+
     bool IsValid(int x, int y);
+    int GetBuildingMask(int x, int y, bool isHouse);
+    // house/store corner,empty,straight 설정
     void RefineBuildingTiles();
-    bool IsBuilding(int x, int y);
+    bool IsHouseBuilding(int x, int y);
+    bool IsStoreBuilding(int x, int y);
     bool TryPlaceDoor(int cx, int cy, int size);
     bool IsSpaceForTree(int x, int y);
 
+    // 테마 적용
+    void ApplyAreaTheme(int halfHeight);
+    float CalculateRotation(int x, int y, EModelType type);
+
+    // 문 앞 길이 미로와 연결될 수 있도록
     void CarveMaze(int startX, int startY);
     void CreateOpenSpaces(int numSpaces);
 
+    void PlaceStructures(float areaRatio, int halfHeight);
     void PlaceSmallKiosk(int cx, int cy);
     void PlaceMediumStore(int cx, int cy);
     void PlaceLargeWarehouse(int cx, int cy);
