@@ -1,6 +1,12 @@
 ﻿#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
+#include "WorldItem.h"
+#include "WorldWeapon.h"
+#include "WorldTool.h"
+#include "WorldConsumable.h"
+#include "WorldOther.h"
+#include "WorldTreasure.h"
 
 // Component
 #include "MeshComponent.inl"
@@ -551,6 +557,41 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	}
 
 	return monster;
+}
+
+std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDescriptorHeapManager* heapManager)
+{
+	auto item = ItemFactory::Create(itemID);
+	if (!item)
+		return nullptr;
+
+	std::shared_ptr<CWorldItem> worldItem;
+
+	switch (item->GetItemType())
+	{
+	case ITEM_TYPE::EQUIPMENT:
+		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+			worldItem = std::make_shared<CWorldWeapon>(item);
+		else
+			worldItem = std::make_shared<CWorldTool>(item);
+		break;
+	case ITEM_TYPE::CONSUMABLE:
+		worldItem = std::make_shared<CWorldConsumable>(item);
+		break;
+	case ITEM_TYPE::ETC:
+		worldItem = std::make_shared<CWorldOther>(item);
+		break;
+	case ITEM_TYPE::TREASURE:
+		worldItem = std::make_shared<CWorldTreasure>(item);
+		break;
+	default:
+		return nullptr;
+	}
+
+	// TODO: 렌더링 컴포넌트 설정 (아이템 렌더링 작업은 여기서 진행하면 됩니다)
+
+
+	return worldItem;
 }
 
 // string to enum mapping

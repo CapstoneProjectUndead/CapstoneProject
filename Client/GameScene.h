@@ -33,14 +33,16 @@ public:
     virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) override;
 
 private:
-    void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
-
     // 싱글용
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
 
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
-    void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position); 
+    void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position);
+
+    // 플레이어 아이템 줍기
     void ProcessPickup();
+
+    void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
 
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;

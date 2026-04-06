@@ -19,7 +19,6 @@
 #include "Inventory.h"
 #include "QuickSlot.h"
 #include "WorldItem.h"
-#include "ItemFactory.h"
 #include "WorldTool.h"			// (장비)파밍 도구
 #include "WorldWeapon.h"		// (장비)무기
 #include "WorldConsumable.h"	// 소비
@@ -41,7 +40,6 @@ CGameScene::~CGameScene()
 void CGameScene::Initialize()
 {
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	
 
 	if (objects.empty()) {
 		CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
@@ -262,44 +260,20 @@ void CGameScene::ProcessPickup()
 // 싱글환경
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 {
-	auto item = ItemFactory::Create(itemID);
-	if (!item)
-		return;
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 
-	std::shared_ptr<CWorldItem> worldItem;
-
-	switch (item->GetItemType())
-	{
-	case ITEM_TYPE::EQUIPMENT:
-		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
-			worldItem = std::make_shared<CWorldWeapon>(item);
-		else
-			worldItem = std::make_shared<CWorldTool>(item);
-		break;
-	case ITEM_TYPE::CONSUMABLE:
-		worldItem = std::make_shared<CWorldConsumable>(item);
-		break;
-	case ITEM_TYPE::ETC:
-		worldItem = std::make_shared<CWorldOther>(item);
-		break;
-	case ITEM_TYPE::TREASURE:
-		worldItem = std::make_shared<CWorldTreasure>(item);
-		break;
-	default:
-		break;
-	}
-
+	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
 		return;
+
+	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	// 아이템의 위치
 	worldItem->SetPosition(position);
 
 	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
 	worldItem->SetID(world_item_id_counter);
-
-	// 초기화
-	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	// Scene의 objects 컨테이너에 추가
 	AddObject(worldItem, world_item_id_counter);
@@ -310,44 +284,20 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 // 멀티환경
 void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
 {
-	auto item = ItemFactory::Create(itemID);
-	if (!item)
-		return;
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 
-	std::shared_ptr<CWorldItem> worldItem;
-
-	switch (item->GetItemType())
-	{
-	case ITEM_TYPE::EQUIPMENT:
-		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
-			worldItem = std::make_shared<CWorldWeapon>(item);
-		else
-			worldItem = std::make_shared<CWorldTool>(item);
-		break;
-	case ITEM_TYPE::CONSUMABLE:
-		worldItem = std::make_shared<CWorldConsumable>(item);
-		break;
-	case ITEM_TYPE::ETC:
-		worldItem = std::make_shared<CWorldOther>(item);
-		break;
-	case ITEM_TYPE::TREASURE:
-		worldItem = std::make_shared<CWorldTreasure>(item);
-		break;
-	default:
-		break;
-	}
-
+	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
 		return;
+
+	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	// 아이템의 위치
 	worldItem->SetPosition(position);
 
 	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
 	worldItem->SetID(itemWorldId);
-
-	// 초기화
-	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
 
 	// Scene의 objects 컨테이너에 추가
 	AddObject(worldItem, itemWorldId);

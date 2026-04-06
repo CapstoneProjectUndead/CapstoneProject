@@ -14,6 +14,8 @@ class CMonster;
 class CHumanMonster;
 class CMeshComponent;
 class CMeshRendererComponent;
+class CWorldItem;
+
 namespace CGeometryLoader {
 	struct FrameNode;
 }
@@ -50,6 +52,9 @@ public:
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMonster> CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
+
+	// WorldItem 생성
+	std::shared_ptr<CWorldItem> CreateWorldItem(uint16 itemID, CDescriptorHeapManager* heapManager);
 
 	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
