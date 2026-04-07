@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "Object.h"
 #include "Player.h"
@@ -9,14 +9,13 @@
 
 CAnimatorComponent::CAnimatorComponent()
 {
-	layers.resize(3);
+	layers.resize(2);
 	layers[0].mask_id = -1; // 베이스는 전체
 	layers[1].mask_id = 0;
-	layers[2].mask_id = 1;
 
-	//PlayAction("Ganga_expect");
-	CharacterAnimSet playerSet = { "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" };
-	Init(playerSet);
+	//PlayAction("Ganga_search");
+	/*CharacterAnimSet playerSet = { "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" };
+	Init(playerSet);*/
 }
 
 void CAnimatorComponent::Init(const CharacterAnimSet& animSet)

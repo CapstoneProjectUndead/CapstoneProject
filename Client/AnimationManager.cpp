@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "AnimationManager.h"
 #include "GeometryLoader.h"
 
@@ -33,6 +33,7 @@ BoneMask CAnimationManager::CreateUpperBodyMask(const CGeometryLoader::SkeletonD
 
     return mask;
 }
+
 void CAnimationManager::Initialize(const std::string& charName, const std::string& AniName)
 {
     // load skeletonData
@@ -42,13 +43,12 @@ void CAnimationManager::Initialize(const std::string& charName, const std::strin
     bone_masks.push_back(CreateUpperBodyMask(skeleton));
 
     // load animation(boneMatrixes)
-    animations = CGeometryLoader::LoadAnimations(AniName, boneCount);
-
-    // 로드된 모든 클립에 bone_count 정보 기입
-    for (auto& [name, clip] : animations)
+    auto newAnimations = CGeometryLoader::LoadAnimations(AniName, boneCount);
+    for (auto& [name, clip] : newAnimations)
     {
         clip.bone_count = boneCount;
         clip.head_bone_idx = skeleton.GetBoneIndex("head");
+        animations[name] = std::move(clip);
     }
 }
 
