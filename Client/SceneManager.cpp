@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
@@ -24,7 +24,7 @@ void CSceneManager::Init(ID3D12Device* device)
 			auto skinningHeapManager = shader->GetHeapManager();
 			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char.bin", "../Modeling/undead_ani_baking.bin");
 			CAnimationManager::GetInstance().Initialize("../Modeling/Human_monster.bin", "../Modeling/Human_monster_ani.bin");
-			CAnimationManager::GetInstance().Initialize("../Modeling/Ghost.bin", "../Modeling/Ghost_ani.bin");
+			CAnimationManager::GetInstance().Initialize("../Modeling/Ghost3.bin", "../Modeling/Ghost3_ani.bin");
 			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
 			CAnimationManager::GetInstance().CreateMaskBuffer(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
 		}

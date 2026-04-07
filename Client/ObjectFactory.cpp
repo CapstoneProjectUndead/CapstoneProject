@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
 #include "WorldItem.h"
@@ -36,6 +36,7 @@ std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(CDescriptorHeapManager* h
 	return mat;
 }
 
+// mesh/material component set
 void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName)
 {
 	if (!node || node->mesh.positions.empty()) return;
@@ -476,7 +477,7 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 
 void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
-	std::string fileName{ "../Modeling/Ghost.bin" };
+	std::string fileName{ "../Modeling/Ghost3.bin" };
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
@@ -669,8 +670,7 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 	}
 
 	// TODO: 렌더링 컴포넌트 설정 (아이템 렌더링 작업은 여기서 진행하면 됩니다)
-
-
+	
 	return worldItem;
 }
 
