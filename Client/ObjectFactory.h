@@ -15,6 +15,7 @@ class CHumanMonster;
 class CMeshComponent;
 class CMeshRendererComponent;
 class CWorldItem;
+struct CharacterAnimSet;
 
 namespace CGeometryLoader {
 	struct FrameNode;
@@ -30,8 +31,9 @@ public:
 	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
 	// init component(공통 컴포넌트 구성 초기화 헬퍼 함수)
 	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName = "inst");
-	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, const std::string& animFileName,
-		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, bool isPlayer = false);
+	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, 
+		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
+		CharacterAnimSet aniSet, bool isPlayer);
 	// concave는 따로 생성 필요
 	void AddCollider(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask);
 	// MovementComp Set
@@ -45,10 +47,13 @@ public:
 	void LoadGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
-	// Create character
+	// Load model
 	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
 	void CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
+	void CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
+	void CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
+	// Create character
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CMonster> CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);

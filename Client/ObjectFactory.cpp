@@ -67,9 +67,9 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 	obj->SetShader(shaderName);
 }
 
-void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager,
-	const std::string& modelFileName, const std::string& animFileName,
-	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, bool isPlayer)
+void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
+	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
+	CharacterAnimSet aniSet, bool isPlayer)
 {
 	auto frameRoot = CGeometryLoader::LoadGeometry(modelFileName);
 	if (!frameRoot) return;
@@ -93,10 +93,10 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 		// 공통 MeshComponent 생성
 		auto meshComp = std::make_shared<CMeshComponent>();
 		character->SetComponent(meshComp);
-		if (isPlayer)
-			meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
-		else
+		if (aniSet.idle.empty())	// 애니메이션 있으면 무조건 skinnedVertex
 			meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, child);
+		else
+			meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
 
 		// 모델마다 다른 상세 로직(머티리얼, 특정 파츠 분류)은 외부에서 주입받은 함수로 처리
 		if (partProcessor) {
@@ -113,7 +113,7 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 		if (isPlayer)
 			filter.category = EColLayer::PLAYER;
 		else
-			filter.category = EColLayer::OBJECT;
+			filter.category = EColLayer::CHARACTER;
 
 		filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
 		collider->SetFillter(filter);
@@ -123,8 +123,9 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	}
 
 	// 애니메이터 설정
-	if (!animFileName.empty()) {
+	if (!aniSet.idle.empty()) {
 		auto animator = std::make_shared<CAnimatorComponent>();
+		animator->Init(aniSet);
 		character->SetComponent(animator);
 	}
 
@@ -426,8 +427,8 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		character,
 		heapManager,
 		fileName,
-		"../Modeling/undead_ani_baking.bin",
 		undeadProcessor,
+		{ "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" },
 		true
 	);
 }
@@ -438,6 +439,72 @@ void CObjectFactory::CreateDowsingrod(std::shared_ptr<CCharacter> character, CDe
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 
+}
+
+void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+{
+	std::string fileName{ "../Modeling/Human_monster.bin" };
+
+	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+		std::shared_ptr<CMeshRendererComponent> renderer) {
+			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
+			auto CreateUnit = [&](const std::string& texName) {
+				auto matComp = std::make_shared<CMaterialComponent>();
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
+				auto mat = matManager.GetMaterial(texName, tex);
+				matComp->SetMaterial(mat);
+				character->SetComponent(matComp);
+
+				RenderUnit unit{ meshComp.get(), matComp.get() };
+				renderer->SetRenderUnit(unit);
+				};
+
+			CreateUnit(node->mesh.materials[0].albedoMap);
+		};
+
+	InitCharacterComponents(
+		character,
+		heapManager,
+		fileName,
+		undeadProcessor,
+		{ "Human_monster_idle", "Human_monster_walk", "Human_monster_run", "Human_monster_attack" },
+		false
+	);
+
+	character->SetShader("skinning");
+}
+
+void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+{
+	std::string fileName{ "../Modeling/Ghost.bin" };
+
+	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+		std::shared_ptr<CMeshRendererComponent> renderer) {
+			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
+			auto CreateUnit = [&](const std::string& texName) {
+				auto matComp = std::make_shared<CMaterialComponent>();
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
+				auto mat = matManager.GetMaterial(texName, tex);
+				matComp->SetMaterial(mat);
+				character->SetComponent(matComp);
+
+				RenderUnit unit{ meshComp.get(), matComp.get() };
+				renderer->SetRenderUnit(unit);
+				};
+
+			CreateUnit(node->mesh.materials[0].albedoMap);
+		};
+
+	InitCharacterComponents(
+		character,
+		heapManager,
+		fileName,
+		undeadProcessor,
+		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
+		false
+	);
+
+	character->SetShader("skinning");
 }
 
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
@@ -458,7 +525,6 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 
 				RenderUnit unit{ meshComp.get(), matComp.get() };
 				renderer->SetRenderUnit(unit);
-				return matComp;
 				};
 
 			CreateUnit(node->mesh.materials[0].albedoMap);
@@ -468,8 +534,9 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 		character,
 		heapManager,
 		fileName,
-		"",
-		undeadProcessor
+		undeadProcessor,
+		{},
+		false
 	);
 
 	character->SetShader("inst");
@@ -524,7 +591,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = std::make_shared<CHumanMonster>();
-		//CreateUndeadCharacter(monster, heapManager);
+		CreateHumanCharacter(monster, heapManager);
 	}
 	break;
 	case MON_TYPE::ANIMAL_MONSTER:
