@@ -22,7 +22,8 @@ enum EColLayer : uint32_t {
 
     // 미리 정의된 조합 (편의용)
     ENVIRONMENT = GROUND | WALL,
-    ALL_SOLID = GROUND | WALL | OBJECT
+    ALL_SOLID = GROUND | WALL | OBJECT | CHARACTER,
+    ALL_MOB = PLAYER | CHARACTER
 };
 
 // 충돌 체크 알고리즘

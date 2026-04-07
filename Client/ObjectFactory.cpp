@@ -170,10 +170,10 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 		bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
 
 		if (!node->collider.positions.empty()) {
-			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::PLAYER);
+			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
 		}
 		else if (isRoad) {
-			AddCollider(obj, node, EColLayer::GROUND, EColLayer::PLAYER);
+			AddCollider(obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
 		}
 	}
 
@@ -206,14 +206,14 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			}
 			break;
 			case LobbyMeshName::Floor:
-				AddCollider(obj, children, EColLayer::GROUND, EColLayer::PLAYER);
+				AddCollider(obj, children, EColLayer::GROUND, EColLayer::ALL_MOB);
 				break;
 			case LobbyMeshName::GroundPipe:
-				AddCollider(obj, children, EColLayer::OBJECT, EColLayer::PLAYER);
+				AddCollider(obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);
 				break;
 			case LobbyMeshName::Unknown:
 				if (!children->collider.positions.empty())
-					AddCollider(obj, children, EColLayer::OBJECT, EColLayer::PLAYER);
+					AddCollider(obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);
 				break;
 			}
 		}
