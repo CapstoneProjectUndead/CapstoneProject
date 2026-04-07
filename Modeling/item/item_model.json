@@ -1,0 +1,22 @@
+{
+    "item_models": {
+	"5": { "model": "Equip_ax"},
+	"9": { "model": "Equip_pick"},
+	"14": { "model": "Equip_bat"},
+	"15": { "model": "Equip_squeaky_hammer"},
+	"17": { "model": "Equip_magicwand"},
+	"19": { "model": "Equip_toysword"},
+
+        "20": { "model": "Food_meat" },
+        "21": { "model": "Food_frozen_dumplings" },
+        "22": { "model": "Food_broccoli" },
+        "23": { "model": "Food_durian" },
+        "24": { "model": "Food_banana" },
+        "25": { "model": "Food_snack" },
+        "26": { "model": "Food_mandarin" },
+        "27": { "model": "Food_potato" },
+        "29": { "model": "Food_chocolate" },
+        "30": { "model": "Food_candy" },
+        "31": { "model": "Food_orange_juice" }
+    }
+}

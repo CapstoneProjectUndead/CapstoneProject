@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Material.h"
 #include "Texture.h"
 
@@ -44,6 +44,8 @@ public:
 	// Lobby
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	// GameScene 모델 파츠 load
+	// Collider Component는 별도로 설정 필요
+	void CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY);
 	void LoadGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
@@ -53,6 +55,7 @@ public:
 	void CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	void CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
+
 	// Create character
 	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
@@ -60,6 +63,8 @@ public:
 
 	// WorldItem 생성
 	std::shared_ptr<CWorldItem> CreateWorldItem(uint16 itemID, CDescriptorHeapManager* heapManager);
+	// 미리 prototypes에 적재
+	void LoadItemFrame(CDescriptorHeapManager* heapManager);
 
 	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
@@ -91,7 +96,7 @@ private:
 private:
 	CMaterialManager matManager;
 	CTextureManager texManager;
-	std::map<std::string, std::shared_ptr<CObject>> prototypes;
+	std::map<std::string, std::shared_ptr<CObject>> prototypes;	// gameScene, item model 적재(CopyFromPrototype로 복사해서 사용)
 
 	// 싱글모드에서만 의미있다.
 	static uint32 s_monster_id_generator;

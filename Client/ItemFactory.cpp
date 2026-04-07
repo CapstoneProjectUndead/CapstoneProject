@@ -18,6 +18,38 @@ namespace ItemFactory
 	};
 
 	static std::unordered_map<int, ItemEntry> item_db;
+	static std::unordered_map<int, std::string> item_model_map;
+
+	void LoadModelMap(const std::string& path)
+	{
+		std::ifstream file(path);
+		if (!file.is_open()) {
+			::OutputDebugStringA(("[ItemFactory] 파일을 열 수 없음: " + path + "\n").c_str());
+			return;
+		}
+
+		nlohmann::json j;
+		file >> j;
+
+		// "item_models" 키가 있는지 먼저 확인
+		if (j.contains("item_models")) {
+			auto& models = j["item_models"];
+
+			for (auto& [id, info] : models.items()) {
+				int itemId = std::stoi(id);
+				std::string modelName = info["model"];
+				item_model_map[itemId] = modelName;
+			}
+		}
+	}
+
+	std::string GetModelName(int itemId)
+	{
+		if (item_model_map.find(itemId) != item_model_map.end()) {
+			return item_model_map[itemId];
+		}
+		return "";
+	}
 
 	void LoadFromJson(const std::string& path)
 	{

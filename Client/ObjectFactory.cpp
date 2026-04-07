@@ -225,6 +225,37 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 	return objects;
 }
 
+void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY)
+{
+	auto it = prototypes.find(name);
+	if (it == prototypes.end()) {
+		return;
+	}
+
+	auto proto = it->second;
+
+	obj->name = name; // 디버깅용 이름 복사
+
+	// Transform 계산
+	XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);
+	XMStoreFloat4x4(&obj->world_matrix, world);
+
+	// Renderer 및 Mesh/Material 설정
+	auto meshComp = proto->GetComponent<CMeshComponent>();
+	auto matComp = proto->GetComponent<CMaterialComponent>();
+
+	if (meshComp && matComp) {
+		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+		RenderUnit unit;
+		unit.mesh = meshComp;
+		unit.material = matComp;
+		meshRenderer->SetRenderUnit(unit);
+		obj->SetComponent(meshRenderer);
+	}
+
+	obj->SetShader("inst");
+}
+
 void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
 {
 	CMapAssetManager::GetInstance().initialize();
@@ -270,26 +301,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type);
 		for (const std::string& name : meshNames) {
 			if (!prototypes.contains(name)) continue;
-
 			auto proto = prototypes[name];
-
-			auto meshComp = proto->GetComponent<CMeshComponent>();
-			auto matComp = proto->GetComponent<CMaterialComponent>();
-			auto collider = proto->GetComponent<CColliderComponent>();
-			auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-
-			// 위치/크기 정보를 행렬로 변환하여 추가
 			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 
-			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
-			XMStoreFloat4x4(&obj->world_matrix, world);
-
-			RenderUnit unit;
-			unit.mesh = meshComp;
-			unit.material = matComp;
-			meshRenderer->SetRenderUnit(unit);
-			
-			obj->SetComponent(meshRenderer);
+			auto collider = proto->GetComponent<CColliderComponent>();
 
 			// collider copy(잔디, 돌은 필요X)
 			if (CMapAssetManager::GetInstance().RequiresCollider(name)) {
@@ -299,7 +315,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 					CPhysicsManager::GetInstance().SetCollider(copyCollider);
 				}
 			}
-			obj->SetShader("inst");
 
 			objects.push_back(obj);
 		}
@@ -317,24 +332,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type, inst.model);
 		for (const std::string& name : meshNames) {
 			auto proto = prototypes[name];
-			auto meshComp = proto->GetComponent<CMeshComponent>();
-			auto matComp = proto->GetComponent<CMaterialComponent>();
-
-			// 위치/크기 정보를 행렬로 변환하여 추가
 			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-
-			XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
-			XMStoreFloat4x4(&obj->world_matrix, world);
-
-			// MeshRendererComponent 생성 (CreateGameScene과 동일하게)
-			auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-			RenderUnit unit;
-			unit.mesh = meshComp;
-			unit.material = matComp;
-			meshRenderer->SetRenderUnit(unit);
-			obj->SetComponent(meshRenderer);
-
-			obj->SetShader("inst");
+			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 
 			objects.push_back(obj);
 		}
@@ -669,9 +668,32 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 		return nullptr;
 	}
 
-	// TODO: 렌더링 컴포넌트 설정 (아이템 렌더링 작업은 여기서 진행하면 됩니다)
-	
+	// 렌더링 컴포넌트 설정
+	std::string modelName = ItemFactory::GetModelName(item->GetItemId());
+	CopyFromPrototype(worldItem, modelName, {}, {});
+
 	return worldItem;
+}
+
+void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
+{
+	auto LoadNode = [this, heapManager](const std::string fileName) {
+			auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+			if (!frameRoot) return;
+
+			LoadFrameNode(heapManager, prototypes, frameRoot);
+			for (const auto& children : frameRoot->childrens) {
+				LoadFrameNode(heapManager, prototypes, children);
+			}
+		};
+	{
+		std::string fileName{ "../Modeling/Food_1.bin" };
+		LoadNode(fileName);
+	}
+	{
+		std::string fileName{ "../Modeling/Equip_1.bin" };
+		LoadNode(fileName);
+	}
 }
 
 // string to enum mapping
