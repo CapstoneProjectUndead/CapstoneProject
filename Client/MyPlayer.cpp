@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "MyPlayer.h"
 #include "Timer.h"
 #include "KeyManager.h"
@@ -144,6 +144,7 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 	currentInput.s = KEY_PRESSED(KEY::S);
 	currentInput.d = KEY_PRESSED(KEY::D);
 	currentInput.space = KEY_PRESSED(KEY::SPACE);
+	currentInput.shift = KEY_PRESSED(KEY::LSHIFT);
 }
 
 void CMyPlayer::ProcessRotation()
@@ -175,12 +176,23 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 		if (auto move = GetComponent<CMovementComponent>())
 			move->Jump();
 	}
-
 	// 상태 update
-	if (dir.x == 0 && dir.z == 0)
+	bool isMoving = (dir.x != 0 || dir.z != 0);
+
+	if (!isMoving) {
 		state = PLAYER_STATE::IDLE;
-	else
-		state = PLAYER_STATE::WALK;
+	}
+	else {
+		if (auto move = GetComponent<CMovementComponent>())
+		if (input.shift) {
+			state = PLAYER_STATE::RUN;
+			move->Run();
+		}
+		else {
+			state = PLAYER_STATE::WALK;
+			move->UnRun();
+		}
+	}
 
 	if (dir.x != 0 || dir.z != 0) {
 		if (auto move = GetComponent<CMovementComponent>())
