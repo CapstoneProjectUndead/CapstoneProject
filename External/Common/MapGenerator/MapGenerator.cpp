@@ -278,7 +278,7 @@ void MapGenerator::PlaceMonster()
         int cx = center.x, cy = center.y;
         bool placed = false;
 
-        // Try to place in front of the store door (outside)
+        // 상점 문 앞(바깥쪽)에 배치 시도
         for (int dy = -(size + 1); dy <= (size + 1) && !placed; dy++) {
             for (int dx = -(size + 1); dx <= (size + 1) && !placed; dx++) {
                 int sx = cx + dx, sy = cy + dy;
@@ -302,13 +302,13 @@ void MapGenerator::PlaceMonster()
             }
         }
 
-        // Fallback: place inside the store (HOUSE_INNTER tile near center)
+        // 상점 내부에 배치 (중심 근처의 VILLAGE_ROAD 타일)
         if (!placed) {
             for (int dy = -size; dy <= size && !placed; dy++) {
                 for (int dx = -size; dx <= size && !placed; dx++) {
                     int sx = cx + dx, sy = cy + dy;
                     if (!IsValid(sx, sy)) continue;
-                    if (GetTile(ELayer::FLOOR, sx, sy) != EModelType::HOUSE_INNTER) continue;
+                    if (GetTile(ELayer::FLOOR, sx, sy) != EModelType::VILLAGE_ROAD) continue;
                     if (GetTile(ELayer::OBJECT, sx, sy) != EModelType::UNKNOWN) continue;
 
                     mapGrid[(int)ELayer::OBJECT][sy][sx] = EModelType::MONSTER_HUMAN;
