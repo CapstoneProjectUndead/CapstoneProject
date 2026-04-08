@@ -182,3 +182,13 @@ struct ItemData
 	float           weight;			// 무게
 	bool            is_throwable;	// 던질 수 있는지.
 };
+
+// animation 임계값
+namespace AnimationThres
+{
+	static constexpr float IdleToWalk = 0.35f;
+	static constexpr float WalkToIdle = 0.20f;
+
+	static constexpr float WalkToRun = 0.80f;
+	static constexpr float RunToWalk = 0.65f;
+}

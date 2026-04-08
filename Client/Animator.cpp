@@ -14,8 +14,6 @@ CAnimatorComponent::CAnimatorComponent()
 	layers[1].mask_id = 0;
 
 	//PlayAction("Ganga_search");
-	/*CharacterAnimSet playerSet = { "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" };
-	Init(playerSet);*/
 }
 
 void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
@@ -28,24 +26,60 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	controller.AddState({ "RunState", animSet.run });
 
 	// 전이 규칙
-	AddLocomotionTransitions("IdleState", "WalkState", "RunState");
+	if(g_is_single)
+		AddLocomotionTransitions("IdleState", "WalkState", "RunState");
+	else
+		AddLocomotionTransServer("IdleState", "WalkState", "RunState");
+
 }
 
 void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run)
 {
-	// 히스테리시스 적용
-	const float idleToWalkThres = 0.35f; // 정지에서 걷기 시작 (높게)
-	const float walkToIdleThres = 0.20f; // 걷다가 정지 (낮게)
-
-	const float walkToRunThres = 0.80f;
-	const float runToWalkThres = 0.65f;
-
+	
 	// Idle -> Walk
 	Transition i2w;
 	i2w.to_state = walk;
 	i2w.duration = 0.2f;
-	i2w.condition = [this, idleToWalkThres]() {
-		return Vector3::Length(owner->velocity) > idleToWalkThres;
+	i2w.condition = [this]() { return Vector3::Length(owner->velocity) > AnimationThres::IdleToWalk; };
+	controller.AddTransition(idle, i2w);
+
+	// Walk -> Idle
+	Transition w2i;
+	w2i.to_state = idle;
+	w2i.duration = 0.2f;
+	w2i.condition = [this]() { return Vector3::Length(owner->velocity) < AnimationThres::WalkToIdle; };
+	controller.AddTransition(walk, w2i);
+
+	// Walk -> Run
+	Transition w2r;
+	w2r.to_state = run;
+	w2r.duration = 0.2f;
+	w2r.condition = [this]() { return Vector3::Length(owner->velocity) > AnimationThres::WalkToRun; };
+	controller.AddTransition(walk, w2r);
+
+	// Run -> Walk
+	Transition r2w;
+	r2w.to_state = walk;
+	r2w.duration = 0.2f;
+	r2w.condition = [this]() { return Vector3::Length(owner->velocity) < AnimationThres::RunToWalk; };
+	controller.AddTransition(run, r2w);
+}
+
+void CAnimatorComponent::AddLocomotionTransServer(const std::string& idle, const std::string& walk, const std::string& run)
+{
+	// Idle -> Walk
+	Transition i2w;
+	i2w.to_state = walk;
+	i2w.duration = 0.2f;
+	i2w.condition = [this]() {
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::WALK;
+		}
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
+			AI_STATE s = static_cast<CMonster*>(owner)->GetAIState();
+			return s == AI_STATE::MONSTER_PATROL;
+		}
+		return false;
 		};
 	controller.AddTransition(idle, i2w);
 
@@ -53,8 +87,14 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	Transition w2i;
 	w2i.to_state = idle;
 	w2i.duration = 0.2f;
-	w2i.condition = [this, walkToIdleThres]() {
-		return Vector3::Length(owner->velocity) < walkToIdleThres;
+	w2i.condition = [this]() {
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::IDLE;
+		}
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
+			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
+		}
+		return false;
 		};
 	controller.AddTransition(walk, w2i);
 
@@ -62,14 +102,30 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	Transition w2r;
 	w2r.to_state = run;
 	w2r.duration = 0.2f;
-	w2r.condition = [this, walkToRunThres]() { return Vector3::Length(owner->velocity) > walkToRunThres; };
+	w2r.condition = [this]() {
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
+		}
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
+			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
+		}
+		return false;
+		};
 	controller.AddTransition(walk, w2r);
 
 	// Run -> Walk
 	Transition r2w;
 	r2w.to_state = walk;
 	r2w.duration = 0.2f;
-	r2w.condition = [this, runToWalkThres]() { return Vector3::Length(owner->velocity) < runToWalkThres; };
+	r2w.condition = [this]() {
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::WALK;
+		}
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
+			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_PATROL;
+		}
+		return false;
+		};
 	controller.AddTransition(run, r2w);
 }
 
@@ -177,83 +233,5 @@ void CAnimatorComponent::Update(float deltaTime)
 	if (layers[0].current_clip != newBase) {
 		layers[0].current_clip = newBase;
 		layers[0].start_time = current_time; // 베이스도 바뀔 때마다 0초부터 재생되게 함
-	}
-
-	// 타입이 플레이어? or 몬스터?
-	OBJECT_TYPE type = owner->GetObjectType();
-
-	switch (type)
-	{
-	case OBJECT_TYPE::PLAYER:
-		UpdatePlayerAnimation();
-		break;
-	case OBJECT_TYPE::MONSTER:
-		UpdateMonsterAnimation();
-		break;
-	default:
-		break;
-	}
-}
-
-void CAnimatorComponent::UpdatePlayerAnimation()
-{
-	auto player = static_cast<CPlayer*>(owner);
-	if (player == nullptr)
-		return;
-
-	// 내 플레이어
-	if (player->GetIsMyPlayer()) {
-		/*auto move = owner->GetComponent<CMovementComponent>();
-		float speed = 0.0f;
-
-		if (move)
-			speed = Vector3::Length(owner->velocity);
-
-		if (speed < 0.3f)
-			Play("Ganga_idle");
-		else
-			Play("Ganga_walk");*/
-	}
-	// 상대 플레이어
-	// 상대 플레이어는 속도가 아니라 서버가 알려준 state 상태로 판단하다.
-	else {
-		/*if (player->GetState() == PLAYER_STATE::IDLE)
-			Play("Ganga_idle");
-		else if (player->GetState() == PLAYER_STATE::WALK)
-			Play("Ganga_walk");*/
-	}
-}
-
-void CAnimatorComponent::UpdateMonsterAnimation()
-{
-	auto monster = static_cast<CMonster*>(owner);
-
-	MON_TYPE type = monster->GetMonsterType();
-	AI_STATE state = monster->GetAIState();
-
-	switch (type)
-	{
-	case MON_TYPE::HUMAN_MONSTER:
-	{
-		/*if (state == AI_STATE::MONSTER_IDLE) {
-			Play("Ganga_idle");
-		}
-		else if (state == AI_STATE::MONSTER_PATROL) {
-			Play("Ganga_walk");
-		}
-		else if (state == AI_STATE::MONSTER_TRACE) {
-			Play("Ganga_walk");
-		}
-		else if (state == AI_STATE::MONSTER_ATTACK) {
-			Play("Ganga_walk");
-		}*/
-	}
-	break;
-	case MON_TYPE::ANIMAL_MONSTER:
-		break;
-	case MON_TYPE::GHOST:
-		break;
-	default:
-		break;
 	}
 }
