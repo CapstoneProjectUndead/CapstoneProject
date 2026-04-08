@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Component.h"
 
 class CObject;
@@ -28,6 +28,8 @@ public:
 	void Slide(const XMFLOAT3& normal);
 	void Slide(const XMVECTOR& normal);
 	void Jump();
+	void Run() { speed = run_speed; }
+	void UnRun() { speed = walk_speed; }
 
 	// 최대 속도 제한
 	void ClampSpeed();
@@ -41,6 +43,8 @@ public:
 
 	bool is_fly{ false }; // 무적 모드(디버깅용)
 private:
-	float speed{ 10.0f };
-	float max_speed{ 30.0f };
+	const float walk_speed{ 10.0f };
+	const float max_speed{ 50.0f };
+	const float run_speed{ 30.0f };
+	float speed{ walk_speed };
 };

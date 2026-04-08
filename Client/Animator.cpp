@@ -13,7 +13,7 @@ CAnimatorComponent::CAnimatorComponent()
 	layers[0].mask_id = -1; // 베이스는 전체
 	layers[1].mask_id = 0;
 
-	//PlayAction("Ganga_search");
+	//PlayAction("Jump");
 }
 
 void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
@@ -26,46 +26,10 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	controller.AddState({ "RunState", animSet.run });
 
 	// 전이 규칙
-	if(g_is_single)
-		AddLocomotionTransitions("IdleState", "WalkState", "RunState");
-	else
-		AddLocomotionTransServer("IdleState", "WalkState", "RunState");
-
+	AddLocomotionTransitions("IdleState", "WalkState", "RunState");
 }
 
 void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run)
-{
-	
-	// Idle -> Walk
-	Transition i2w;
-	i2w.to_state = walk;
-	i2w.duration = 0.2f;
-	i2w.condition = [this]() { return Vector3::Length(owner->velocity) > AnimationThres::IdleToWalk; };
-	controller.AddTransition(idle, i2w);
-
-	// Walk -> Idle
-	Transition w2i;
-	w2i.to_state = idle;
-	w2i.duration = 0.2f;
-	w2i.condition = [this]() { return Vector3::Length(owner->velocity) < AnimationThres::WalkToIdle; };
-	controller.AddTransition(walk, w2i);
-
-	// Walk -> Run
-	Transition w2r;
-	w2r.to_state = run;
-	w2r.duration = 0.2f;
-	w2r.condition = [this]() { return Vector3::Length(owner->velocity) > AnimationThres::WalkToRun; };
-	controller.AddTransition(walk, w2r);
-
-	// Run -> Walk
-	Transition r2w;
-	r2w.to_state = walk;
-	r2w.duration = 0.2f;
-	r2w.condition = [this]() { return Vector3::Length(owner->velocity) < AnimationThres::RunToWalk; };
-	controller.AddTransition(run, r2w);
-}
-
-void CAnimatorComponent::AddLocomotionTransServer(const std::string& idle, const std::string& walk, const std::string& run)
 {
 	// Idle -> Walk
 	Transition i2w;

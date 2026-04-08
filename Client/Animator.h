@@ -25,7 +25,6 @@ public:
 	CAnimatorComponent();
 	void CAnimatorComponent::Init(const CharacterAnimSet& animSet);
 	void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run);
-	void CAnimatorComponent::AddLocomotionTransServer(const std::string& idle, const std::string& walk, const std::string& run);
 
 	// layer 1
 	void PlayAction(const std::string& clipName);
