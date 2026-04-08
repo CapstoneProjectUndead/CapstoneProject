@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "PhysicsManager.h"
@@ -53,24 +53,42 @@ void CGameScene::Initialize()
 		for (auto& treasure : treasures) {
 			SpawnWorldItem(110, treasure.world_id, treasure.treasure_pos);
 		}
+
+		factory->LoadItemFrame(heapManager);
 	}
 
 	// 아이템 생성 (테스트)
-	SpawnWorldItem(25, XMFLOAT3{1, 0, 1});
-	SpawnWorldItem(24, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(45, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(5, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(1, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(17, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(5, XMFLOAT3{-1, 2, -1});
+	SpawnWorldItem(9, XMFLOAT3{-1, 2, -2});
+	SpawnWorldItem(14, XMFLOAT3{-1, 2, -3});
+	SpawnWorldItem(15, XMFLOAT3{-1, 2, -4});
+	SpawnWorldItem(17, XMFLOAT3{-2, 2, -1});
+	SpawnWorldItem(19, XMFLOAT3{-2, 2, -2});
 
-	SpawnWorldItem(47, XMFLOAT3{ 2, 0, 1 });
-	SpawnWorldItem(47, XMFLOAT3{ 2, 0, 1 });
-	SpawnWorldItem(48, XMFLOAT3{ 2, 0, 1 });
+	SpawnWorldItem(20, XMFLOAT3{1, 2, 1});
+	SpawnWorldItem(21, XMFLOAT3{1, 2, 2});
+	SpawnWorldItem(22, XMFLOAT3{1, 2, 3});
+	SpawnWorldItem(23, XMFLOAT3{1, 2, 4});
+	SpawnWorldItem(24, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(25, XMFLOAT3{2, 2, 2});
+	SpawnWorldItem(26, XMFLOAT3{2, 2, 3});
+	SpawnWorldItem(27, XMFLOAT3{2, 2, 4});
+	SpawnWorldItem(29, XMFLOAT3{3, 2, 1});
+	SpawnWorldItem(30, XMFLOAT3{3, 2, 2});
+	SpawnWorldItem(31, XMFLOAT3{3, 2, 3});
+	/*SpawnWorldItem(45, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(5, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(1, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(17, XMFLOAT3{2, 2, 1});
+
+	SpawnWorldItem(47, XMFLOAT3{ 2, 2, 1 });
+	SpawnWorldItem(47, XMFLOAT3{ 2, 2, 1 });
+	SpawnWorldItem(48, XMFLOAT3{ 2, 2, 1 });
 	
-	SpawnWorldItem(57, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(77, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(91, XMFLOAT3{2, 0, 1});
-	SpawnWorldItem(100, XMFLOAT3{2, 0, 1});
+	SpawnWorldItem(57, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(77, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(91, XMFLOAT3{2, 2, 1});
+	SpawnWorldItem(100, XMFLOAT3{2, 2, 1});*/
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -81,7 +99,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		auto m = my_player->GetComponent<CMovementComponent>();
 		m->is_fly = true;
-		my_player->SetPosition(1.f, 5.0f, 1.f);
+		my_player->SetPosition(1.f, 2.0f, 1.f);
 	}
 
 	// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.

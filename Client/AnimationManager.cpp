@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "AnimationManager.h"
 #include "GeometryLoader.h"
 
@@ -27,9 +27,8 @@ BoneMask CAnimationManager::CreateUpperBodyMask(const CGeometryLoader::SkeletonD
 
     // spine 아래 가중치 1로 설정
     int spineIdx = skeleton.GetBoneIndex("spine");
-    if (spineIdx != -1) {
+    if (spineIdx != -1)
         SetRecursiveWeight(spineIdx, 1.0f, mask.weights, skeleton);
-    }
 
     return mask;
 }
@@ -128,6 +127,13 @@ void CAnimationManager::CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCom
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
     device->CreateShaderResourceView(mask_buffer.Get(), &srvDesc, cpuDescriptorHandle);
+
+    for (auto& mask : bone_masks) {
+        mask.name.clear();
+        mask.name.shrink_to_fit();
+        mask.weights.clear();
+        mask.weights.shrink_to_fit();
+    }
 }
 
 XMVECTOR CAnimationManager::GetBoneWorldPos( const std::string& clipName, float currentTime, int boneIdx)

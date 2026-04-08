@@ -52,6 +52,7 @@ bool CGameFramework::OnCreate()
 	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
 	std::filesystem::path jsonPath = std::filesystem::path(exePath).parent_path() / "Data/items.json";
 	ItemFactory::LoadFromJson(jsonPath.string());
+	ItemFactory::LoadModelMap("../Modeling/item/item_model.json");
 
 	// 렌더링 게임 객체 생성
 	BuildObjects();

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Animator.h"
 #include "Object.h"
 #include "Player.h"
@@ -24,11 +24,11 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 
 	// 상태 등록
 	controller.AddState({ "IdleState", animSet.idle });
-	controller.AddState({ "MoveState", animSet.walk });
+	controller.AddState({ "WalkState", animSet.walk });
 	controller.AddState({ "RunState", animSet.run });
 
-	// 전이 규칙 (중복 코드를 줄이기 위해 내부 함수 활용 가능)
-	AddLocomotionTransitions("IdleState", "MoveState", "RunState");
+	// 전이 규칙
+	AddLocomotionTransitions("IdleState", "WalkState", "RunState");
 }
 
 void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run)
@@ -78,7 +78,7 @@ void CAnimatorComponent::PlayAction(const std::string& clipName)
 	if (layers[1].current_clip == clipName) return;
 
 	layers[1].current_clip = clipName;
-	// 현재 흐르고 있는 전체 시간을 '시작 시간'으로 박제!
+	// 현재 흐르고 있는 전체 시간을 시작 시간으로
 	layers[1].start_time = current_time;
 	layers[1].weight = 0.0f;
 }
@@ -203,7 +203,6 @@ void CAnimatorComponent::UpdatePlayerAnimation()
 
 	// 내 플레이어
 	if (player->GetIsMyPlayer()) {
-
 		/*auto move = owner->GetComponent<CMovementComponent>();
 		float speed = 0.0f;
 
