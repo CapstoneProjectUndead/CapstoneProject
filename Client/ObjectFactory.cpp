@@ -19,6 +19,7 @@
 #include "GameFramework.h"
 #include "MyPlayer.h"
 #include "HumanMonster.h"
+#include "Ghost.h"
 #include "AIComponent.h"
 #include "AIStates.h"
 #include "ItemFinder.h"
@@ -600,12 +601,13 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	break;
 	case MON_TYPE::ANIMAL_MONSTER:
 	{
-
+		
 	}
 		break;
 	case MON_TYPE::GHOST:
 	{
-
+		monster = std::make_shared<CGhost>();
+		CreateGhostCharacter(monster, heapManager);
 	}
 		break;
 	default:

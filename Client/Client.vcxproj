@@ -185,6 +185,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
+    <ClInclude Include="Ghost.h" />
     <ClInclude Include="GPUBufferStruct.h" />
     <ClInclude Include="HumanMonster.h" />
     <ClInclude Include="IdleState.h" />
@@ -283,6 +284,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />
+    <ClCompile Include="Ghost.cpp" />
     <ClCompile Include="GPUBufferStruct.cpp" />
     <ClCompile Include="HumanMonster.cpp" />
     <ClCompile Include="IdleState.cpp" />

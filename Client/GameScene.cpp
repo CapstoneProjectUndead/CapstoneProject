@@ -9,6 +9,7 @@
 #include "Shader.h"
 #include "ObjectFactory.h"
 #include "HumanMonster.h"
+#include "Ghost.h"
 
 #include "ItemFinder.h"
 #include "NetworkManager.h"
@@ -135,7 +136,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (g_is_single) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		for (const auto& pos : monster_spawn_positions) {
-			auto monster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, SCENE_TYPE::GAME);
+			auto monster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
 			if (!monster) 
 				continue;
 
