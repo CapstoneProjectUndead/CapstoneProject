@@ -13,11 +13,40 @@ CAnimatorComponent::CAnimatorComponent()
 	layers[0].mask_id = -1; // 베이스는 전체
 	layers[1].mask_id = 0;
 
-	//PlayAction("Jump");
+	//PlayAction("Ganga_search");
 }
 
 void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 {
+	OBJECT_TYPE objType = owner->GetObjectType();
+	uint8_t subType = 0;
+
+	switch (objType) {
+	case OBJECT_TYPE::PLAYER:
+	{
+		sockets.resize(SOCKET_TYPE::COUNT);
+		int headIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "head");
+		Socket headSocket{ headIdx, Matrix4x4::Identity() };
+		sockets[HEAD] = headSocket;
+
+		int rHandIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "handR");
+		Socket rHandSocket{ rHandIdx, Matrix4x4::Identity() };
+		sockets[HAND_R] = rHandSocket;
+	}
+		break;
+	case OBJECT_TYPE::MONSTER:
+	{
+		sockets.resize(SOCKET_TYPE::HAND_R);
+		uint8_t monType = static_cast<uint8_t>(static_cast<CMonster*>(owner)->GetMonsterType());
+		int idx = CAnimationManager::GetInstance().GetBoneIndex(objType, monType, "handR");
+		Socket socket{ idx, Matrix4x4::Identity() };
+		sockets[HAND_R] = socket;
+	}
+		break;
+	default:
+		break;
+	}
+
 	anim_set = animSet;
 
 	// 상태 등록
@@ -105,15 +134,32 @@ void CAnimatorComponent::PlayAction(const std::string& clipName)
 
 XMVECTOR CAnimatorComponent::GetHeadPosition()
 {
+	int boneIndex = sockets[HEAD].bone_index;
+	if (boneIndex == -1) return XMVECTOR{};
+
 	// 현재 실제로 베이스 레이어에서 재생 중인 클립을 가져옴
 	std::string activeClip = layers[0].current_clip;
 	if (activeClip.empty()) return XMVECTOR{};
 
-	auto& clip = CAnimationManager::GetInstance().GetClip(activeClip);
-	if (clip.head_bone_idx == -1) return XMVECTOR{};
-
 	float relativeTime = current_time - layers[0].start_time;
-	return CAnimationManager::GetInstance().GetBoneWorldPos(activeClip, relativeTime, clip.head_bone_idx);
+	XMMATRIX matrix = CAnimationManager::GetInstance().GetBoneSocketMatrix(activeClip, relativeTime, boneIndex);
+	return matrix.r[3];
+}
+
+XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
+{
+	XMMATRIX worldMatrix = XMLoadFloat4x4(&owner->world_matrix);
+	if (static_cast<size_t>(type) >= sockets.size()) return worldMatrix;
+
+	// 인덱스가 유효한지 확인
+	const auto& socket = sockets[type];
+	if (socket.bone_index == -1) return worldMatrix;
+
+	// 행렬 계산
+	float relativeTime = current_time - layers[0].start_time;
+	XMMATRIX localMat = CAnimationManager::GetInstance().GetBoneSocketMatrix(layers[0].current_clip, relativeTime, socket.bone_index);
+	
+	return XMLoadFloat4x4(&socket.local_offset) * localMat * worldMatrix;
 }
 
 void CAnimatorComponent::UpdateLayerWeights(float deltaTime)
@@ -180,9 +226,6 @@ AnimationData CAnimatorComponent::GetAnimationData()
 
 void CAnimatorComponent::Update(float deltaTime)
 {
-	if (current_animation.empty())
-		return;
-
 	if (owner == nullptr)
 		return;
 

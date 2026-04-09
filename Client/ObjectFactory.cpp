@@ -126,8 +126,8 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	// 애니메이터 설정
 	if (!aniSet.idle.empty()) {
 		auto animator = std::make_shared<CAnimatorComponent>();
-		animator->Init(aniSet);
 		character->SetComponent(animator);
+		animator->Init(aniSet);
 	}
 
 	character->Initialize(GET_DEVICE, GET_CMD_LIST);
