@@ -45,6 +45,7 @@ void CAnimationManager::Initialize(const std::string& charName, const std::strin
     {
         bone_indices[key]["head"] = skeleton.GetBoneIndex("head");
         bone_indices[key]["handR"] = skeleton.GetBoneIndex("handR");
+        bone_indices[key]["handL"] = skeleton.GetBoneIndex("handL");
     }
         break;
     case OBJECT_TYPE::MONSTER:

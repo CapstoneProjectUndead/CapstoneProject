@@ -16,12 +16,22 @@ CAnimatorComponent::CAnimatorComponent()
 	layers.resize(2);
 	layers[0].mask_id = -1; // 베이스는 전체
 	layers[1].mask_id = 0;
-
-	//PlayAction("Ganga_search");
 }
 
 void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 {
+	// animation state 등록
+	anim_set = animSet;
+
+	// 상태 등록
+	controller.AddState({ "IdleState", animSet.idle });
+	controller.AddState({ "WalkState", animSet.walk });
+	controller.AddState({ "RunState", animSet.run });
+
+	// 전이 규칙
+	AddLocomotionTransitions("IdleState", "WalkState", "RunState");
+
+	// socket 등록
 	OBJECT_TYPE objType = owner->GetObjectType();
 	uint8_t subType = 0;
 
@@ -38,6 +48,43 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(XMConvertToRadians(-90.0), XMConvertToRadians(0.0f), XMConvertToRadians(90.0f));
 		Socket rHandSocket{ rHandIdx,rotMat };
 		sockets[HAND_R] = rHandSocket;
+
+		// 다우징 로드 소켓
+		{
+			constexpr float scaleValue{ 0.005757076 };
+			XMMATRIX scaleMat{ XMMatrixScaling(scaleValue, scaleValue, scaleValue) };
+			XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(XMConvertToRadians(90.0), XMConvertToRadians(0.0f), XMConvertToRadians(180.0f));
+			XMMATRIX finalMat = scaleMat * rotMat;
+			int lHandIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "handL");
+			// 손에 직선으로 위치
+			Socket lHandSocket{ lHandIdx, finalMat };
+			sockets[HAND_ROD_L] = lHandSocket;
+
+			int rHandIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "handR");
+			// 손에 직선으로 위치
+			Socket rHandSocket{ rHandIdx, finalMat };
+			sockets[HAND_ROD_R] = rHandSocket;
+		}
+
+		// dig state(action으로도 가능)
+		controller.AddState({ "DigState", "Dig"});
+		Transition i2d;
+		i2d.to_state = "DigState";
+		i2d.duration = 0.2f;
+		i2d.condition = [this]() {
+			return false;
+			//return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+			};
+		controller.AddTransition("IdleState", i2d);
+
+		Transition d2i;
+		d2i.to_state = "IdleState";
+		d2i.duration = 0.2f;
+		d2i.condition = [this]() {
+			return false;
+			//return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG;
+			};
+		controller.AddTransition("DigState", d2i);
 	}
 		break;
 	case OBJECT_TYPE::MONSTER:
@@ -50,19 +97,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		sockets[HAND_R] = socket;
 	}
 		break;
-	default:
-		break;
 	}
-
-	anim_set = animSet;
-
-	// 상태 등록
-	controller.AddState({ "IdleState", animSet.idle });
-	controller.AddState({ "WalkState", animSet.walk });
-	controller.AddState({ "RunState", animSet.run });
-
-	// 전이 규칙
-	AddLocomotionTransitions("IdleState", "WalkState", "RunState");
 }
 
 void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run)
@@ -162,23 +197,45 @@ XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 	const auto& socket = sockets[type];
 	if (socket.bone_index == -1) return worldMatrix;
 
-	// 행렬 계산
-	float relativeTime = current_time - layers[0].start_time;
-	XMMATRIX localMat = CAnimationManager::GetInstance().GetBoneSocketMatrix(layers[0].current_clip, relativeTime, socket.bone_index);
+	auto& manager = CAnimationManager::GetInstance();
+
+	// 행렬 계산(base + action)
+	// Layer 0 (Base)
+	float relTime0 = current_time - layers[0].start_time;
+	XMMATRIX mat0 = manager.GetBoneSocketMatrix(layers[0].current_clip, relTime0, socket.bone_index);
+
+	XMMATRIX finalLocalMat = mat0;
+
+	// Layer 1 (Action)이 재생 중이라면 블렌딩
+	if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
+		float relTime1 = current_time - layers[1].start_time;
+		XMMATRIX mat1 = manager.GetBoneSocketMatrix(layers[1].current_clip, relTime1, socket.bone_index);
+		// Simple Blending
+		finalLocalMat = mat0 * (1.0f - layers[1].weight) + mat1 * layers[1].weight;
+	}
 	
-	return socket.local_offset * localMat * worldMatrix;
+	return socket.local_offset * finalLocalMat * worldMatrix;
 }
 
-void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID)
+void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName)
 {
 	if (itemID == -1) return;
 
 	auto& cache = render_cache[type];
 
-	// 아이템이 바뀌었을 때만 load(아이템 외의 모델은 필요 시 추가)
+	// 아이템이 바뀌었을 때만 load
 	if (cache.last_item_id != itemID && itemID > 0) {
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
 		
+		if (proto) {
+			cache.mesh = proto->GetComponent<CMeshComponent>();
+			cache.mat = proto->GetComponent<CMaterialComponent>();
+			cache.last_item_id = itemID;
+		}
+	}
+	else if (cache.last_item_id != itemID && NULL == itemID) {	// item이 아니면 modelName 사용
+		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(modelName);
+
 		if (proto) {
 			cache.mesh = proto->GetComponent<CMeshComponent>();
 			cache.mat = proto->GetComponent<CMaterialComponent>();

@@ -46,8 +46,20 @@ void CMyPlayer::Update(float elapsedTime)
 
 	if (KEY_TAP(KEY::F)) {
 		auto itemFinder = GetComponent<CItemFinder>();
-		if (itemFinder)
+		if (itemFinder) {
 			itemFinder->Toggle();
+			// 애니메이션 호출
+			if (itemFinder->is_enable) {
+				auto animator = GetComponent<CAnimatorComponent>();
+				if (animator)
+					animator->PlayAction("Ganga_search");
+			}
+			else {
+				auto animator = GetComponent<CAnimatorComponent>();
+				if (animator)
+					animator->PlayAction("");
+			}
+		}
 	}
 
 	CPlayer::Update(elapsedTime);
@@ -65,6 +77,12 @@ void CMyPlayer::OnCollect(IRenderer* renderer)
 	auto animator = GetComponent<CAnimatorComponent>();
 	if (animator) {
 		animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
+
+		auto itemFinder = GetComponent<CItemFinder>();
+		if (itemFinder && itemFinder->is_enable) {
+			animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
+			animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
+		}
 	}
 }
 

@@ -47,16 +47,18 @@ public:
 	enum SOCKET_TYPE : unsigned int {
 		HEAD,
 		HAND_R,
+		HAND_ROD_R,	// 다우징로드 소켓
+		HAND_ROD_L,
 		COUNT
 	};
 	struct Socket {
 		int bone_index{-1};			// 연결될 본의 인덱스
 		XMMATRIX local_offset{XMMatrixIdentity()};	// bone 위치에서의 offset(붙어있게 하려면 0으로)
 	};
-	XMVECTOR GetHeadPosition();	// 카메라 오프셋(=local_offset)이 있기 때문에 따로 연산 수행
+	XMVECTOR GetHeadPosition();	// 카메라 오프셋(=local_offset)이 있기 때문에 따로 연산 수행. base 애니메이션만 적용
 	XMMATRIX GetSocketMatrix(SOCKET_TYPE type);
 	// 현재 씬의 factory의 prototypes에 존재하는 mesh/material을 캐싱. itemID > 0이면 아이템 정보임
-	void RenderSocketModel(SOCKET_TYPE type, int itemID);
+	void RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName = "");
 private:
 	float current_time{};
 	std::vector<AnimLayer> layers;
