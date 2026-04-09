@@ -68,6 +68,12 @@ public:
 
 	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
+
+	// 외부 참조용
+	std::shared_ptr<CObject> GetPrototype(const std::string& name) {
+		auto it = prototypes.find(name);
+		return (it != prototypes.end()) ? it->second : nullptr;
+	}
 private:
 	enum class UndeadMeshName {
 		body,

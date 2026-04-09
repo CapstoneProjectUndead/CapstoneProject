@@ -1,17 +1,19 @@
 #include "stdafx.h"
 #include "MyPlayer.h"
-#include "Timer.h"
 #include "KeyManager.h"
+#include "ImGuiManager.h"
+
 #include "ServerPacketHandler.h"
 #include "NetworkManager.h"
-#include "Movement.h"
 #include "NetworkClockManager.h"
 #include "User.h"
-#include "Collider.h"
-#include "PhysicsManager.h"
+
 #include "Inventory.h"
-#include "ImGuiManager.h"
 #include "ItemFinder.h"
+#include "QuickSlot.h"
+
+#include "Movement.h"
+#include "Animator.h"
 
 #undef min
 #undef max
@@ -54,6 +56,16 @@ void CMyPlayer::Update(float elapsedTime)
 void CMyPlayer::PreUpdate(float elapsedTime)
 {
 	ServerAuthorityMove(elapsedTime);
+}
+
+void CMyPlayer::OnCollect(IRenderer* renderer)
+{
+	CObject::OnCollect(renderer);
+
+	auto animator = GetComponent<CAnimatorComponent>();
+	if (animator) {
+		animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
+	}
 }
 
 void CMyPlayer::ProcessInput()

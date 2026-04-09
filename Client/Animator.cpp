@@ -1,11 +1,15 @@
 #include "stdafx.h"
 #include "Animator.h"
-#include "Object.h"
 #include "Player.h"
 #include "Monster.h"
-#include "Movement.h"
 #include "AnimationManager.h"
 #include "GPUBufferStruct.h"
+
+#include "SceneManager.h"
+#include "ObjectFactory.h"
+#include "MeshRenderer.h"
+
+#include "ItemFactory.h"
 
 CAnimatorComponent::CAnimatorComponent()
 {
@@ -26,11 +30,13 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	{
 		sockets.resize(SOCKET_TYPE::COUNT);
 		int headIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "head");
-		Socket headSocket{ headIdx, Matrix4x4::Identity() };
+		Socket headSocket{ headIdx, XMMatrixIdentity() };
 		sockets[HEAD] = headSocket;
 
 		int rHandIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "handR");
-		Socket rHandSocket{ rHandIdx, Matrix4x4::Identity() };
+		// 손에 직선으로 위치
+		XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(XMConvertToRadians(-90.0), XMConvertToRadians(0.0f), XMConvertToRadians(90.0f));
+		Socket rHandSocket{ rHandIdx,rotMat };
 		sockets[HAND_R] = rHandSocket;
 	}
 		break;
@@ -39,7 +45,8 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		sockets.resize(SOCKET_TYPE::HAND_R);
 		uint8_t monType = static_cast<uint8_t>(static_cast<CMonster*>(owner)->GetMonsterType());
 		int idx = CAnimationManager::GetInstance().GetBoneIndex(objType, monType, "handR");
-		Socket socket{ idx, Matrix4x4::Identity() };
+		XMMATRIX rotation = XMMatrixRotationY(XMConvertToRadians(90.0f));
+		Socket socket{ idx, rotation };
 		sockets[HAND_R] = socket;
 	}
 		break;
@@ -159,7 +166,31 @@ XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 	float relativeTime = current_time - layers[0].start_time;
 	XMMATRIX localMat = CAnimationManager::GetInstance().GetBoneSocketMatrix(layers[0].current_clip, relativeTime, socket.bone_index);
 	
-	return XMLoadFloat4x4(&socket.local_offset) * localMat * worldMatrix;
+	return socket.local_offset * localMat * worldMatrix;
+}
+
+void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID)
+{
+	if (itemID == -1) return;
+
+	auto& cache = render_cache[type];
+
+	// 아이템이 바뀌었을 때만 load(아이템 외의 모델은 필요 시 추가)
+	if (cache.last_item_id != itemID && itemID > 0) {
+		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
+		
+		if (proto) {
+			cache.mesh = proto->GetComponent<CMeshComponent>();
+			cache.mat = proto->GetComponent<CMaterialComponent>();
+			cache.last_item_id = itemID;
+		}
+	}
+
+	// material은 없을 수 있음
+	if (cache.mesh) {
+		XMMATRIX socketMat = GetSocketMatrix(type);
+		CSceneManager::GetInstance().GetRanderers()["inst"]->AddInstance(cache.mesh->GetMesh().get(), cache.mat, Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
+	}
 }
 
 void CAnimatorComponent::UpdateLayerWeights(float deltaTime)
