@@ -335,9 +335,12 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 					}
 
 					// 월드에 스폰 → 전체 브로드캐스트
-					XMFLOAT3 pos         = player->GetPosition();
-					pos.y                = max(pos.y, 0.0f);
-					auto     spawnedItem = item_manager->SpawnItem(itemId, pos);
+					XMFLOAT3 pos      = player->GetPosition();
+					float    yawRad   = XMConvertToRadians(player->GetYaw());
+					pos.x            += sinf(yawRad) * 0.4f;
+					pos.z            += cosf(yawRad) * 0.4f;
+					pos.y             = max(pos.y, 0.0f);
+					auto spawnedItem  = item_manager->SpawnItem(itemId, pos);
 
 					S_SpawnItem spawnItemPkt;
 					spawnItemPkt.item_id       = itemId;
@@ -381,9 +384,12 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 					}
 
 					// 월드에 스폰 → 전체 브로드캐스트
-					XMFLOAT3 pos       = player->GetPosition();
-					pos.y              = max(pos.y, 0.0f);
-					auto     spawnedItem = item_manager->SpawnItem(itemId, pos);
+					XMFLOAT3 pos      = player->GetPosition();
+					float    yawRad   = XMConvertToRadians(player->GetYaw());
+					pos.x            += sinf(yawRad) * 0.4f;
+					pos.z            += cosf(yawRad) * 0.4f;
+					pos.y             = max(pos.y, 0.0f);
+					auto spawnedItem  = item_manager->SpawnItem(itemId, pos);
 
 					S_SpawnItem spawnItemPkt;
 					spawnItemPkt.item_id       = itemId;

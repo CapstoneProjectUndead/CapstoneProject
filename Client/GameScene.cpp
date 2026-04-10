@@ -350,8 +350,11 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	if (!my_player)
 		return;
 
-	XMFLOAT3 pos     = my_player->GetPosition();
-	pos.y			 = max(pos.y, 0.0f);
+	XMFLOAT3 pos    = my_player->GetPosition();
+	float    yawRad = XMConvertToRadians(my_player->GetYaw());
+	pos.x          += sinf(yawRad) * 0.4f;
+	pos.z          += cosf(yawRad) * 0.4f;
+	pos.y           = max(pos.y, 0.0f);
 	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
 
 	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
