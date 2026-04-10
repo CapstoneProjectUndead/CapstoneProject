@@ -35,6 +35,7 @@ public:
 	// owner 사용하기 때문에 owner Set 후 호출
 	void Init(const CharacterAnimSet& animSet);
 	void AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run);
+	void PlayerSetState(const std::string& idle, const std::string& walk, const std::string& run);
 
 	// layer 1
 	void PlayAction(const std::string& clipName);

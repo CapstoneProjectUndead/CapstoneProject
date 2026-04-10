@@ -24,12 +24,13 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	anim_set = animSet;
 
 	// 상태 등록
-	controller.AddState({ "IdleState", animSet.idle });
-	controller.AddState({ "WalkState", animSet.walk });
-	controller.AddState({ "RunState", animSet.run });
+	std::string idle{ "IdleState" }, walk{ "WalkState" }, run{ "RunState" };
+	controller.AddState({ idle, animSet.idle });
+	controller.AddState({ walk, animSet.walk });
+	controller.AddState({ run, animSet.run });
 
 	// 전이 규칙
-	AddLocomotionTransitions("IdleState", "WalkState", "RunState");
+	AddLocomotionTransitions(idle, walk, run);
 
 	// socket 등록
 	OBJECT_TYPE objType = owner->GetObjectType();
@@ -65,26 +66,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			Socket rHandSocket{ rHandIdx, finalMat };
 			sockets[HAND_ROD_R] = rHandSocket;
 		}
-
-		// dig state(action으로도 가능)
-		controller.AddState({ "DigState", "Dig"});
-		Transition i2d;
-		i2d.to_state = "DigState";
-		i2d.duration = 0.2f;
-		i2d.condition = [this]() {
-			return false;
-			//return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
-			};
-		controller.AddTransition("IdleState", i2d);
-
-		Transition d2i;
-		d2i.to_state = "IdleState";
-		d2i.duration = 0.2f;
-		d2i.condition = [this]() {
-			return false;
-			//return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG;
-			};
-		controller.AddTransition("DigState", d2i);
+		PlayerSetState(idle, walk, run);
 	}
 		break;
 	case OBJECT_TYPE::MONSTER:
@@ -162,6 +144,81 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 		return false;
 		};
 	controller.AddTransition(run, r2w);
+}
+
+void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::string& walk, const std::string& run)
+{
+	// dig state(action으로도 가능)
+	controller.AddState({ "DigState", "Dig" });
+	Transition i2d;
+	i2d.to_state = "DigState";
+	i2d.duration = 0.2f;
+	i2d.condition = [this]() {
+		return false;
+		//return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		};
+	controller.AddTransition(idle, i2d);
+
+	Transition d2i;
+	d2i.to_state = idle;
+	d2i.duration = 0.2f;
+	d2i.condition = [this]() {
+		return false;
+		//return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG;
+		};
+	controller.AddTransition("DigState", d2i);
+
+	// jump state
+	std::string jump{ "JumpState" };
+	controller.AddState({ jump, "Jump" });
+
+	Transition i2j;
+	i2j.to_state = jump;
+	i2j.duration = 0.2f;
+	i2j.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::JUMP;
+		};
+	controller.AddTransition(idle, i2j);
+
+	Transition w2j;
+	w2j.to_state = jump;
+	w2j.duration = 0.2f;
+	w2j.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::JUMP;
+		};
+	controller.AddTransition(walk, w2j);
+
+	Transition r2j;
+	r2j.to_state = jump;
+	r2j.duration = 0.2f;
+	r2j.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::JUMP;
+		};
+	controller.AddTransition(run, r2j);
+
+	Transition j2i;
+	j2i.to_state = idle;
+	j2i.duration = 0.2f;
+	j2i.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
+		};
+	controller.AddTransition(jump, j2i);
+
+	Transition j2w;
+	j2w.to_state = walk;
+	j2w.duration = 0.2f;
+	j2w.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
+		};
+	controller.AddTransition(jump, j2w);
+
+	Transition j2r;
+	j2r.to_state = run;
+	j2r.duration = 0.2f;
+	j2r.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
+		};
+	controller.AddTransition(jump, j2r);
 }
 
 void CAnimatorComponent::PlayAction(const std::string& clipName)
