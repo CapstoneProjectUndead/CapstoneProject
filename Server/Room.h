@@ -50,9 +50,9 @@ private:
 /*
 struct RoomInfo
 {
-	uint16	room_id;	// ¹æ ID
-	char	room_name[ROOM_NAME_MAX]; // 100ÀÚ
+	uint16	room_id;	// ë°© ID
+	char	room_name[ROOM_NAME_MAX]; // 100ì
 	uint16	current_player_count;
-	bool	is_game_start;	// °ÔÀÓÀÌ ÀÌ¹Ì ½ÃÀÛµÈ ¹æÀÎÁö
+	bool	is_game_start;	// ê²Œì„ì´ ì´ë¯¸ ì‹œì‘ëœ ë°©ì¸ì§€
 };
 */

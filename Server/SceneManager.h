@@ -1,5 +1,5 @@
 #pragma once
-// ¼­¹öÂÊ SceneManager
+// ì„œë²„ìª½ SceneManager
 
 #include "Scene.h"
 

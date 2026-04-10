@@ -164,7 +164,7 @@ namespace Vector3
 		return(false);
 	}
 
-	// Ãß°¡ÇÑ ÄÚµå
+	// ì¶”ê°€í•œ ì½”ë“œ
 	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float duration, float interpSpeed)
 	{
 		if (interpSpeed <= 0.f)
@@ -185,7 +185,7 @@ namespace Vector3
 	{
 		XMFLOAT3 xmf3Result;
 
-		// XMVectorLerp(V0, V1, t) : V0¿Í V1 »çÀÌ¸¦ t(0.0~1.0) ºñÀ²·Î º¸°£
+		// XMVectorLerp(V0, V1, t) : V0ì™€ V1 ì‚¬ì´ë¥¼ t(0.0~1.0) ë¹„ìœ¨ë¡œ ë³´ê°„
 		XMVECTOR v0 = XMLoadFloat3(&xmf3Vector1);
 		XMVECTOR v1 = XMLoadFloat3(&xmf3Vector2);
 		XMStoreFloat3(&xmf3Result, XMVectorLerp(v0, v1, fPercent));
@@ -194,7 +194,7 @@ namespace Vector3
 	}
 }
 
-//4Â÷¿ø º¤ÅÍÀÇ ¿¬»ê
+//4ì°¨ì› ë²¡í„°ì˜ ì—°ì‚°
 namespace Vector4
 {
 	inline XMFLOAT4 Add(XMFLOAT4& xmf4Vector1, XMFLOAT4& xmf4Vector2)

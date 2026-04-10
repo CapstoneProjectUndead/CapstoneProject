@@ -20,10 +20,10 @@ void CDBManager::Init()
     //const string name = "root";
     //const string password = "projectuser~";
     //
-    //// µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¿¬°áÇÕ´Ï´Ù.
+    //// ë°ì´í„°ë² ì´ìŠ¤ì— ì—°ê²°í•©ë‹ˆë‹¤.
     //conn.reset(driver->connect(server, name, password));
     //
-    //// µ¥ÀÌÅÍº£ÀÌ½º ÀÛ¾÷À» ¼öÇàÇÕ´Ï´Ù.
+    //// ë°ì´í„°ë² ì´ìŠ¤ ì‘ì—…ì„ ìˆ˜í–‰í•©ë‹ˆë‹¤.
     //conn->setSchema("mydatabase");
 
 
@@ -35,28 +35,28 @@ void CDBManager::Init()
     props["password"] = "projectuser~";
     props["CLIENT_MULTI_STATEMENTS"] = true;
 
-    // **°¡Àå Áß¿ä: UTF-8 »ç¿ë ¸í½Ã**
+    // **ê°€ì¥ ì¤‘ìš”: UTF-8 ì‚¬ìš© ëª…ì‹œ**
     props["characterEncoding"] = "utf8mb4";
     props["useUnicode"] = true;
 
     conn.reset(driver->connect(props));
 
-    // µ¥ÀÌÅÍº£ÀÌ½º ÀÛ¾÷À» ¼öÇàÇÕ´Ï´Ù.
+    // ë°ì´í„°ë² ì´ìŠ¤ ì‘ì—…ì„ ìˆ˜í–‰í•©ë‹ˆë‹¤.
     conn->setSchema("mydatabase");
 
-    // ±×·¡µµ È¤½Ã ¸ğ¸£´Ï±î ÇÑ¹ø ´õ
+    // ê·¸ë˜ë„ í˜¹ì‹œ ëª¨ë¥´ë‹ˆê¹Œ í•œë²ˆ ë”
     std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     stmt->execute("SET NAMES utf8mb4");
 }
 
 std::string to_utf8(const std::string& ansi)
 {
-    // CP949 ¡æ UTF-16
+    // CP949 â†’ UTF-16
     int wlen = MultiByteToWideChar(CP_ACP, 0, ansi.c_str(), -1, NULL, 0);
     std::wstring wstr(wlen, 0);
     MultiByteToWideChar(CP_ACP, 0, ansi.c_str(), -1, &wstr[0], wlen);
 
-    // UTF-16 ¡æ UTF-8
+    // UTF-16 â†’ UTF-8
     int u8len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
     std::string u8str(u8len, 0);
     WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &u8str[0], u8len, NULL, NULL);
@@ -66,12 +66,12 @@ std::string to_utf8(const std::string& ansi)
 
 std::string to_ansi(const std::string& utf8)
 {
-    // UTF-8 ¡æ UTF-16
+    // UTF-8 â†’ UTF-16
     int wlen = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, NULL, 0);
     std::wstring wstr(wlen, 0);
     MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, &wstr[0], wlen);
 
-    // UTF-16 ¡æ CP949 (ANSI)
+    // UTF-16 â†’ CP949 (ANSI)
     int alen = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
     std::string astr(alen, 0);
     WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &astr[0], alen, NULL, NULL);

@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ macro
+// Serverìª½ macro
 
 #define CON CDBManager::GetInstance().GetCon()
 #define MAKE_SEND_BUFFER(pkt) CClientPacketHandler::MakeSendBuffer(pkt);

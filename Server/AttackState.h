@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ AttackState
+// Serverìª½ AttackState
 #include "State.h"
 
 class CAttackState :

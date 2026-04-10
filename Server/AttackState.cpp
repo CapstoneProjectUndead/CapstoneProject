@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ AttackState
+// Serverìª½ AttackState
 #include "AttackState.h"
 #include "AIComponent.h"
 #include "Monster.h"
@@ -38,7 +38,7 @@ void CAttackState::Enter()
 	{
 	case OBJECT_TYPE::MONSTER:
 	{
-		// ¸ó½ºÅÍ¿¡°Ô °ø°İ »óÅÂ ÁøÀÔÀ» ¾Ë¸²
+		// ëª¬ìŠ¤í„°ì—ê²Œ ê³µê²© ìƒíƒœ ì§„ì…ì„ ì•Œë¦¼
 		auto monster = static_cast<CMonster*>(GetAI()->GetOwner());
 		monster->SetAIState(AI_STATE::MONSTER_ATTACK);
 		monster->OnAttackEnter();

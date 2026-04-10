@@ -30,7 +30,7 @@ enum : uint16
 	PKT_S_PLAYER_LIST,
 	PKT_S_REMOVE_PLAYER,
 
-	PKT_C_PLAYER_INPUT,	// ¼­¹ö ±ÇÀ§ ¹æ½Ä + Å¬¶ó ¿¹Ãø ÀÌµ¿
+	PKT_C_PLAYER_INPUT,	// ì„œë²„ ê¶Œìœ„ ë°©ì‹ + í´ë¼ ì˜ˆì¸¡ ì´ë™
 	PKT_S_MOVE,
 
 	PKT_C_CUSTOM_SELECT,
@@ -44,7 +44,7 @@ enum : uint16
 	PKT_S_MAP_DATA,
 	PKT_S_MAP_END,
 
-	PKT_C_READY,	// ·Îºñ¾À¿¡¼­ »ç½Å¿¡°Ô ÁØºñ ¿Ï·á ¹öÆ° ´©¸§
+	PKT_C_READY,	// ë¡œë¹„ì”¬ì—ì„œ ì‚¬ì‹ ì—ê²Œ ì¤€ë¹„ ì™„ë£Œ ë²„íŠ¼ ëˆ„ë¦„
 	PKT_S_READY,
 
 	PKT_S_SPAWN_ITEM,

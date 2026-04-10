@@ -18,7 +18,7 @@ CClientSession::~CClientSession()
 
 void CClientSession::OnConnected()
 {
-	cout << "ClientSession Á¢¼Ó ¼º°ø!" << endl;
+	cout << "ClientSession ì ‘ì† ì„±ê³µ!" << endl;
 }
 
 void CClientSession::OnDisconnected()
@@ -41,11 +41,11 @@ void CClientSession::OnDisconnected()
 		}
 	}
 #else
-	// User¸¦ ClientSession¿¡¼­µµ °ü¸®ÇÏ°í (ref Áõ°¡)
-	// Title ¾À¿¡¼­µµ °ü¸®ÇÏ°í ÀÖ´Ù. (ref Áõ°¡)
+	// Userë¥¼ ClientSessionì—ì„œë„ ê´€ë¦¬í•˜ê³  (ref ì¦ê°€)
+	// Title ì”¬ì—ì„œë„ ê´€ë¦¬í•˜ê³  ìˆë‹¤. (ref ì¦ê°€)
 
 	if (user) {
-		// Title ¾À¿¡¼­ User ÂüÁ¶ ²÷±â (ref °¨¼Ò)
+		// Title ì”¬ì—ì„œ User ì°¸ì¡° ëŠê¸° (ref ê°ì†Œ)
 		CSceneManager::GetInstance().GetTitleScene()->LeaveUser(user->GetUserID());
 
 		auto player = user->GetPlayer();
@@ -55,8 +55,8 @@ void CClientSession::OnDisconnected()
 			CRoomManager::GetInstance().LeaveAndCleanupRoom(GetSessionRef(), leavePkt);
 		}
 
-		// ClientSession¿¡¼­ User ÂüÁ¶ ²÷±â (ref °¨¼Ò)
-		// ¿©±â¼­ User ¼Ò¸ê. (¸Ş¸ğ¸® ´©¼öx)
+		// ClientSessionì—ì„œ User ì°¸ì¡° ëŠê¸° (ref ê°ì†Œ)
+		// ì—¬ê¸°ì„œ User ì†Œë©¸. (ë©”ëª¨ë¦¬ ëˆ„ìˆ˜x)
 		user = nullptr;
 	}
 

@@ -1,5 +1,5 @@
 #include "pch.h"
-// ¼­¹öÂÊ TitleScene
+// ì„œë²„ìª½ TitleScene
 #include "TitleScene.h"
 #include "Player.h"
 #include "RoomManager.h"
@@ -65,12 +65,12 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 		pstmt->setString(2, pw);
 		pstmt->setString(3, username);
 
-		// INSERT´Â executeUpdate() »ç¿ë
+		// INSERTëŠ” executeUpdate() ì‚¬ìš©
 		int affected = pstmt->executeUpdate();
 
 		if (affected == 0) {
-			// INSERT µÆ¾î¾ß ÇÏ´Âµ¥, 0Çà ¿µÇâ ¡æ ºñÁ¤»ó
-			cout << "[DB] INSERT ½ÇÆĞ: 0Çà ¿µÇâ\n";
+			// INSERT ëì–´ì•¼ í•˜ëŠ”ë°, 0í–‰ ì˜í–¥ â†’ ë¹„ì •ìƒ
+			cout << "[DB] INSERT ì‹¤íŒ¨: 0í–‰ ì˜í–¥\n";
 
 			{
 				S_SIGN_RES failPkt;
@@ -81,7 +81,7 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 
 			return;
 		}
-		// È¸¿ø °¡ÀÔ ¼º°ø
+		// íšŒì› ê°€ì… ì„±ê³µ
 		else {
 			S_SIGN_RES successPkt;
 			successPkt.success = true;
@@ -91,7 +91,7 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 
 	}
 	catch (sql::SQLException& e) {
-		cout << "[DB] SQL ¿¹¿Ü ¹ß»ı\n";
+		cout << "[DB] SQL ì˜ˆì™¸ ë°œìƒ\n";
 		cout << "  Error: " << e.what() << "\n";
 		cout << "  Code:  " << e.getErrorCode() << "\n";
 		cout << "  State: " << e.getSQLStateCStr() << "\n";
@@ -103,27 +103,27 @@ void CTitleScene::Handle_C_SignUp(shared_ptr<Session> session, const C_SIGNUP& p
 			session->DoSend(sendBuffer);
 		}
 
-		return;  // DB ¿¡·¯ Ã³¸®
+		return;  // DB ì—ëŸ¬ ì²˜ë¦¬
 	}
 }
 
 void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt)
 {
-	// À¯Àú ·Î±×ÀÎ Ã³¸®
+	// ìœ ì € ë¡œê·¸ì¸ ì²˜ë¦¬
 	{
-		// CUser »ı¼º (»ı¼ºÀÚ ¾È¿¡¼­ ID¹ß±Ş)
+		// CUser ìƒì„± (ìƒì„±ì ì•ˆì—ì„œ IDë°œê¸‰)
 		shared_ptr<CUser> user = make_shared<CUser>();
 
-		// sessionÀÌ À¯Àú¸¦ µé°íÀÖ´Â´Ù. RefCount Áõ°¡
+		// sessionì´ ìœ ì €ë¥¼ ë“¤ê³ ìˆëŠ”ë‹¤. RefCount ì¦ê°€
 		CAST_CS(session)->SetUser(user);
 
-		// À¯Àúµµ ÀÚ½ÅÀÇ ¼¼¼ÇÀ» µé°í ÀÖ´Â´Ù. (¾àÇÑ ÂüÁ¶. RefCount Áõ°¡ x)
+		// ìœ ì €ë„ ìì‹ ì˜ ì„¸ì…˜ì„ ë“¤ê³  ìˆëŠ”ë‹¤. (ì•½í•œ ì°¸ì¡°. RefCount ì¦ê°€ x)
 		user->SetSession(session);
 
-		// CUser ÄÁÅ×ÀÌ³Ê¿¡ ÀúÀå
+		// CUser ì»¨í…Œì´ë„ˆì— ì €ì¥
 		EnterUser(user);
 
-		// Å¬¶óÇÑÅ× ID¿Í ÇÔ²² ·Î±×ÀÎ Çã¶ô ÆĞÅ¶À» º¸³½´Ù. (S_LOGIN)
+		// í´ë¼í•œí…Œ IDì™€ í•¨ê»˜ ë¡œê·¸ì¸ í—ˆë½ íŒ¨í‚·ì„ ë³´ë‚¸ë‹¤. (S_LOGIN)
 		S_LOGIN loginPkt;
 		loginPkt.success = true;
 		loginPkt.user_id = user->GetUserID();
@@ -131,13 +131,13 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 		session->DoSend(sendBuffer);
 	}
 
-	// Áö±İ ·Î±×ÀÎÇÑ À¯Àú´Â ·ë ¸ÅÄª È­¸éÀ¸·Î °¡°ÔµÈ´Ù.
-	// ±×·¯¸é ÇöÀç ÀÔÀå °¡´ÉÇÑ ¹æ ¸ñ·ÏÀ» ¾Ë·ÁÁà¾ßÇÑ´Ù.
+	// ì§€ê¸ˆ ë¡œê·¸ì¸í•œ ìœ ì €ëŠ” ë£¸ ë§¤ì¹­ í™”ë©´ìœ¼ë¡œ ê°€ê²Œëœë‹¤.
+	// ê·¸ëŸ¬ë©´ í˜„ì¬ ì…ì¥ ê°€ëŠ¥í•œ ë°© ëª©ë¡ì„ ì•Œë ¤ì¤˜ì•¼í•œë‹¤.
 	CRoomManager::GetInstance().SendRoomList(session);
 
 	//{
-	//	// DB¿¡ ÇØ´ç À¯ÀúÀÇ ID°¡ ÀÖ´ÂÁö È®ÀÎ
-	//	string inputId = pkt.id; // ¼­¹ö°¡ ¹ŞÀº id
+	//	// DBì— í•´ë‹¹ ìœ ì €ì˜ IDê°€ ìˆëŠ”ì§€ í™•ì¸
+	//	string inputId = pkt.id; // ì„œë²„ê°€ ë°›ì€ id
 	//
 	//	try {
 	//		std::unique_ptr<sql::PreparedStatement> pstmt(CON->prepareStatement(
@@ -148,33 +148,33 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 	//		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
 	//
 	//		if (res->next()) {
-	//			// row°¡ existence ¡æ ÇØ´ç id°¡ DB¿¡ Á¸ÀçÇÔ
+	//			// rowê°€ existence â†’ í•´ë‹¹ idê°€ DBì— ì¡´ì¬í•¨
 	//			string id = res->getString("id");
 	//			std::string pw = res->getString("password");
 	//			std::string name = res->getString("name");
 	//
-	//			// ºñ¹Ğ¹øÈ£ °Ë»ç
+	//			// ë¹„ë°€ë²ˆí˜¸ ê²€ì‚¬
 	//			if (to_utf8(pkt.password) == pw) {
 	//
-	//				// CUser »ı¼º (»ı¼ºÀÚ ¾È¿¡¼­ ID¹ß±Ş)
-	//				// DB¶û °ü·Ã ¾ø´Â ID
-	//				// ¼­¹ö°¡ map ÀÚ·á±¸Á¶¿¡¼­ °ü¸®ÇÏ±â
-	//				// À§ÇØ µû·Î ¹ß±Ş ÇÏ´Â IDÀÌ´Ù. 
+	//				// CUser ìƒì„± (ìƒì„±ì ì•ˆì—ì„œ IDë°œê¸‰)
+	//				// DBë‘ ê´€ë ¨ ì—†ëŠ” ID
+	//				// ì„œë²„ê°€ map ìë£Œêµ¬ì¡°ì—ì„œ ê´€ë¦¬í•˜ê¸°
+	//				// ìœ„í•´ ë”°ë¡œ ë°œê¸‰ í•˜ëŠ” IDì´ë‹¤. 
 	//				shared_ptr<CUser> user = make_shared<CUser>();
 	//
-	//				// À¯Àú ÀÌ¸§ ºÎ¿©
+	//				// ìœ ì € ì´ë¦„ ë¶€ì—¬
 	//				user->SetName(to_ansi(name));
 	//
-	//				// ¼¼¼ÇÀÌ User ÂüÁ¶ RefCount Áõ°¡
+	//				// ì„¸ì…˜ì´ User ì°¸ì¡° RefCount ì¦ê°€
 	//				CAST_CS(session)->SetUser(user);
 	//
-	//				// À¯Àúµµ ÀÚ½ÅÀÇ ¼¼¼ÇÀ» µé°í ÀÖ´Â´Ù. (weak ÂüÁ¶)
+	//				// ìœ ì €ë„ ìì‹ ì˜ ì„¸ì…˜ì„ ë“¤ê³  ìˆëŠ”ë‹¤. (weak ì°¸ì¡°)
 	//				user->SetSession(session);
 	//
-	//				// CUser ÄÁÅ×ÀÌ³Ê¿¡ ÀúÀå
+	//				// CUser ì»¨í…Œì´ë„ˆì— ì €ì¥
 	//				EnterUser(user);
 	//
-	//				// ·Î±×ÀÎ Çã¶ô ÆĞÅ¶ »ı¼º
+	//				// ë¡œê·¸ì¸ í—ˆë½ íŒ¨í‚· ìƒì„±
 	//				S_LOGIN loginPkt;
 	//				loginPkt.success = true;
 	//				loginPkt.user_id = user->GetUserID();
@@ -182,13 +182,13 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 	//
 	//				SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
 	//
-	//				// ÇöÀç À¯Àú¿¡°Ô ÀÔÀå Çã¶ô ÆĞÅ¶À» º¸³½´Ù
+	//				// í˜„ì¬ ìœ ì €ì—ê²Œ ì…ì¥ í—ˆë½ íŒ¨í‚·ì„ ë³´ë‚¸ë‹¤
 	//				session->DoSend(sendBuffer);
 	//
 	//			}
 	//			else {
-	//				// À¯Àú°¡ Àß¸øµÈ ºñ¹Ğ¹øÈ£¸¦
-	//				// ½á¼­ ·Î±×ÀÎ ½ÇÆĞ
+	//				// ìœ ì €ê°€ ì˜ëª»ëœ ë¹„ë°€ë²ˆí˜¸ë¥¼
+	//				// ì¨ì„œ ë¡œê·¸ì¸ ì‹¤íŒ¨
 	//				S_LOGIN failPkt;
 	//				failPkt.success = false;
 	//				SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(failPkt);
@@ -196,9 +196,9 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 	//			}
 	//		}
 	//		else {
-	//			// next()°¡ false ¡æ row ¾øÀ½ ¡æ ÇØ´ç id Á¸Àç X
-	//			// client ÇÑÅ× ÇØ´ç ID¸¦ °¡Áø À¯Àú´Â ¾ø´Ù°í ¾Ë¸°´Ù.
-	//			// S_LOGIN_FAIL ÆĞÅ¶À» º¸³½´Ù. 
+	//			// next()ê°€ false â†’ row ì—†ìŒ â†’ í•´ë‹¹ id ì¡´ì¬ X
+	//			// client í•œí…Œ í•´ë‹¹ IDë¥¼ ê°€ì§„ ìœ ì €ëŠ” ì—†ë‹¤ê³  ì•Œë¦°ë‹¤.
+	//			// S_LOGIN_FAIL íŒ¨í‚·ì„ ë³´ë‚¸ë‹¤. 
 	//
 	//			S_LOGIN failPkt;
 	//			failPkt.success = false;
@@ -208,12 +208,12 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 	//	}
 	//	catch (sql::SQLException& e) {
 	//
-	//		cout << "[DB] SQL ¿¹¿Ü ¹ß»ı\n";
+	//		cout << "[DB] SQL ì˜ˆì™¸ ë°œìƒ\n";
 	//		cout << "  Error: " << e.what() << "\n";
 	//		cout << "  Code:  " << e.getErrorCode() << "\n";
 	//		cout << "  State: " << e.getSQLStateCStr() << "\n";
 	//
-	//		return;  // DB ¿¡·¯ Ã³¸®
+	//		return;  // DB ì—ëŸ¬ ì²˜ë¦¬
 	//	}
 	//}
 }

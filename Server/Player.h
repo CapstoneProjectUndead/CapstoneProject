@@ -1,12 +1,12 @@
 #pragma once
-// ServerÂÊ Player
+// Serverìª½ Player
 
 #include "Object.h"
 
 struct ServerFrameHistory
 {
 	uint64		 seq_num;
-	InputData	 input;
+	InputData	 input{false, false, false, false, false, false};
 	XMFLOAT3	 position;
 	PLAYER_STATE state;
 	float		 timestamp; 
@@ -59,13 +59,13 @@ public:
 	deque<ServerFrameHistory>& GetFrameHistoryDeq() { return server_history_deq; }
 	void PushInput(const PendingInput& input) { input_queue.push_back(input); }
 
-	// Å¬¶óÀÇ ÇÎ ÃøÁ¤
+	// í´ë¼ì˜ í•‘ ì¸¡ì •
 	void  SendPing();
 	float GetLastPingSendTime() const { return dt_ping_accumulator; };
 	void  SetLastPingSendTime(float elapsedTime) { dt_ping_accumulator = elapsedTime; };
 	void  UpdatePing(float newRtt)
 	{
-		// ±Ş°İÇÑ º¯È­¸¦ ¸·±â À§ÇØ ±âÁ¸ °ª°ú ¼¯À½ (º¸Åë 9:1 ºñÀ²)
+		// ê¸‰ê²©í•œ ë³€í™”ë¥¼ ë§‰ê¸° ìœ„í•´ ê¸°ì¡´ ê°’ê³¼ ì„ìŒ (ë³´í†µ 9:1 ë¹„ìœ¨)
 		ping = (ping * 0.9f) + (newRtt * 0.1f);
 	}
 
@@ -90,7 +90,7 @@ private:
 	deque<PendingInput>			input_queue;
 	deque<ServerFrameHistory>	server_history_deq;
 
-	// Ä¿½ºÅÍ¸¶ÀÌÂ¡
+	// ì»¤ìŠ¤í„°ë§ˆì´ì§•
 	uint8 body_type{};
 	uint8 eyes_type{};
 	uint8 mouth_type{};

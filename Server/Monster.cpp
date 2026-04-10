@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ Monster
+// Serverìª½ Monster
 #include "Monster.h"
 #include "Scene.h"
 #include "Room.h"
@@ -40,7 +40,7 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
         auto& players = scene->GetPlayers();
 
         shared_ptr<CPlayer> nearest_player = nullptr;
-        float min_dist_sq = FLT_MAX; // ÃÖ¼Ò °Å¸®¸¦ Ã£±â À§ÇØ float ÃÖ´ë°ªÀ¸·Î ÃÊ±âÈ­
+        float min_dist_sq = FLT_MAX; // ìµœì†Œ ê±°ë¦¬ë¥¼ ì°¾ê¸° ìœ„í•´ float ìµœëŒ€ê°’ìœ¼ë¡œ ì´ˆê¸°í™”
 
         for (const auto& pair : players) {
 
@@ -48,14 +48,14 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
             if (!player)
                 continue;
 
-            // Ãß°¡ Á¶°Ç: ÇÃ·¹ÀÌ¾î°¡ Á×¾ú°Å³ª ¿¬°áÀÌ ²÷±ä »óÅÂ¶ó¸é ¹«½Ã
+            // ì¶”ê°€ ì¡°ê±´: í”Œë ˆì´ì–´ê°€ ì£½ì—ˆê±°ë‚˜ ì—°ê²°ì´ ëŠê¸´ ìƒíƒœë¼ë©´ ë¬´ì‹œ
             if (player->GetState() == PLAYER_STATE::DEAD)
                 continue;
 
-            // MathHelper¸¦ È°¿ëÇØ Á÷°üÀûÀ¸·Î µÎ ÁÂÇ¥ÀÇ Â÷ÀÌ º¤ÅÍ¸¦ ±¸ÇÔ
+            // MathHelperë¥¼ í™œìš©í•´ ì§ê´€ì ìœ¼ë¡œ ë‘ ì¢Œí‘œì˜ ì°¨ì´ ë²¡í„°ë¥¼ êµ¬í•¨
             XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);
 
-            // Vector3::Distance ´ë½Å Á÷Á¢ Á¦°öÇÕÀ» ±¸ÇØ ·çÆ® ¿¬»ê(sqrt) ¿À¹öÇìµå ¹æÁö
+            // Vector3::Distance ëŒ€ì‹  ì§ì ‘ ì œê³±í•©ì„ êµ¬í•´ ë£¨íŠ¸ ì—°ì‚°(sqrt) ì˜¤ë²„í—¤ë“œ ë°©ì§€
             float dist_sq = (dir.x * dir.x) + (dir.y * dir.y) + (dir.z * dir.z);
 
             if (dist_sq < min_dist_sq) {

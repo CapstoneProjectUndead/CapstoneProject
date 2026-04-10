@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "User.h"
-// ServerÂÊ User
+// Serverìª½ User
 
 atomic<uint64> CUser::s_userid_generator = 1;
 

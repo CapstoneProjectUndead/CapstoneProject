@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ TraceState
+// Serverìª½ TraceState
 #include "State.h"
 
 class CTraceState :

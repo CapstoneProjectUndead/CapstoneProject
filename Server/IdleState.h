@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ IdleState
+// Serverìª½ IdleState
 #include "State.h"
 
 class CIdleState :

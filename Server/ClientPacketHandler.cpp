@@ -17,7 +17,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
 bool Handle_INVALID(shared_ptr<Session> session, char* buffer, int32 len)
 {
-	cout << "Á¤ÀÇ µÇÁö ¾ÊÀº ÆÐÅ¶ ID ÀÔ´Ï´Ù!" << endl;
+	cout << "ì •ì˜ ë˜ì§€ ì•Šì€ íŒ¨í‚· ID ìž…ë‹ˆë‹¤!" << endl;
 	assert(nullptr);
 	return false;
 }
@@ -39,10 +39,10 @@ bool Handle_C_PONG(shared_ptr<Session> session, C_Pong& pkt)
 	if (!user)
 		return true;
 
-	// ÇöÀç ½Ã°£ - ÆÐÅ¶¿¡ ´ã°Ü µ¹¾Æ¿Â 'º¸³Â´ø ½Ã°£'
+	// í˜„ìž¬ ì‹œê°„ - íŒ¨í‚·ì— ë‹´ê²¨ ëŒì•„ì˜¨ 'ë³´ëƒˆë˜ ì‹œê°„'
 	float rtt = g_server_total_time - pkt.server_send_time;
 
-	// ³Ê¹« Æ¢´Â °ª ¹æÁö¸¦ À§ÇÑ º¸Á¤ (Moving Average)
+	// ë„ˆë¬´ íŠ€ëŠ” ê°’ ë°©ì§€ë¥¼ ìœ„í•œ ë³´ì • (Moving Average)
 	user->GetPlayer()->UpdatePing(rtt);
 
 	return true;
@@ -180,7 +180,7 @@ bool Handle_C_SCENE_CHANGE(std::shared_ptr<Session> session, C_SceneChange& pkt)
 	CScene* currentScene = room->GetScenes()[(UINT)pkt.current_scene].get();
 	assert(currentScene);
 
-	// À¯Àú°¡ ÇöÀç ¼ÓÇÑ SceneÀÌ ¼­¹öÂÊ ±â·Ï°ú ´Ù¸£¸é assert!
+	// ìœ ì €ê°€ í˜„ìž¬ ì†í•œ Sceneì´ ì„œë²„ìª½ ê¸°ë¡ê³¼ ë‹¤ë¥´ë©´ assert!
 	auto player = CAST_CS(session)->GetUser()->GetPlayer();
 	assert(player->GetCurrentSceneType() == pkt.current_scene);
 

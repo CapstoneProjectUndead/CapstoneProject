@@ -1,6 +1,6 @@
 #pragma once
 //==================
-// ¼­¹öÂÊ ItemFactory
+// ì„œë²„ìª½ ItemFactory
 //==================
 
 class CItem;

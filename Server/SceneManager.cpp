@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "SceneManager.h"
-// ¼­¹öÂÊ SceneManager
+// ì„œë²„ìª½ SceneManager
 
 #include "TitleScene.h"
 #include "LobbyScene.h"
@@ -39,7 +39,7 @@ void CSceneManager::Update(const float elapsedTime)
 			scene->Update(elapsedTime);
 	}
 #else
-	// TitleSceneÀº Ç×»ó Update
+	// TitleSceneì€ í•­ìƒ Update
 	title_scene->Update(elapsedTime);
 #endif
 
@@ -55,7 +55,7 @@ void CSceneManager::SendResults()
 			scene->SendResults();
 	}
 #else
-	// TitleSceneÀº Ç×»ó °á°úÀü¼Û
+	// TitleSceneì€ í•­ìƒ ê²°ê³¼ì „ì†¡
 	title_scene->SendResults();
 #endif
 

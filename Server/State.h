@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ State
+// Serverìª½ State
 
 class CObject;
 class CAIComponent;

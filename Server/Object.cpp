@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ Object
+// Serverìª½ Object
 #include "Object.h"
 #include "Component.h"
 
@@ -76,7 +76,7 @@ void CObject::UpdateLookRightFromYaw()
 
 	look = Vector3::Normalize(look);
 
-	// Y-up ±âÁØ Right º¤ÅÍ
+	// Y-up ê¸°ì¤€ Right ë²¡í„°
 	right = XMFLOAT3(
 		look.z,
 		0.0f,

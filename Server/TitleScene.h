@@ -1,5 +1,5 @@
 #pragma once
-// ¼­¹öÂÊ TitleScene
+// ì„œë²„ìª½ TitleScene
 #include "Scene.h"
 
 

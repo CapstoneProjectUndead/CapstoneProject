@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ Ghost
+// Serverìª½ Ghost
 #include "Monster.h"
 
 class CGhost :

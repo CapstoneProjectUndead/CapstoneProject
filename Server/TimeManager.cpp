@@ -4,7 +4,7 @@
 void CTimeManager::Init()
 {
 	::QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&frequency));
-	::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&prev_count)); // CPU ≈¨∑∞
+	::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&prev_count)); // CPU ÌÅ¥Îü≠
 }
 
 void CTimeManager::Update()

@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ HumanMonster
+// Serverìª½ HumanMonster
 #include "Monster.h"
 
 class CPlayer;

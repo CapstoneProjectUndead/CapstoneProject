@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ Monster
+// Serverìª½ Monster
 #include "Object.h"
 
 class CPlayer;
@@ -14,19 +14,19 @@ public:
 
     virtual void Update(float elapsedTime) override;
 
-    // AI ¼ø¼ö °¡»ó ÇÔ¼ö (¹İµå½Ã ±¸Çö)
+    // AI ìˆœìˆ˜ ê°€ìƒ í•¨ìˆ˜ (ë°˜ë“œì‹œ êµ¬í˜„)
     virtual void OnIdleMove(float elapsedTime) = 0;
     virtual void OnPatrolMove(float elapsedTime) = 0;
     virtual void OnTraceMove(float elapsedTime) = 0;
     virtual void OnAttackMove(float elapsedTime) = 0;
 
-    // AI Enter (ÁøÀÔ ½Ã - ÇÊ¿äÇÑ ¾Öµé¸¸ ¿À¹ö¶óÀÌµùÇÏ°Ô)
+    // AI Enter (ì§„ì… ì‹œ - í•„ìš”í•œ ì• ë“¤ë§Œ ì˜¤ë²„ë¼ì´ë”©í•˜ê²Œ)
     virtual void OnIdleEnter() {}
     virtual void OnPatrolEnter() {}
     virtual void OnTraceEnter() {}
     virtual void OnAttackEnter() {}
 
-    // AI Exit (Å»Ãâ ½Ã - ÇÊ¿äÇÑ ¾Öµé¸¸ ¿À¹ö¶óÀÌµùÇÏ°Ô)
+    // AI Exit (íƒˆì¶œ ì‹œ - í•„ìš”í•œ ì• ë“¤ë§Œ ì˜¤ë²„ë¼ì´ë”©í•˜ê²Œ)
     virtual void OnIdleExit() {}
     virtual void OnPatrolExit() {}
     virtual void OnTraceExit() {}
@@ -68,16 +68,16 @@ protected:
 
     std::shared_ptr<CPlayer> target_player;
 
-    float idle_timer;   // ½¯ ¶§ ¾²´Â Å¸ÀÌ¸Ó
-    float patrol_timer; // ¼øÂûÇÒ ¶§ ¾²´Â Å¸ÀÌ¸Ó
-    float attack_timer; // °ø°İ »óÅÂ¿¡¼­ ½Ã°£À» Àê Å¸ÀÌ¸Ó
+    float idle_timer;   // ì‰´ ë•Œ ì“°ëŠ” íƒ€ì´ë¨¸
+    float patrol_timer; // ìˆœì°°í•  ë•Œ ì“°ëŠ” íƒ€ì´ë¨¸
+    float attack_timer; // ê³µê²© ìƒíƒœì—ì„œ ì‹œê°„ì„ ì´ íƒ€ì´ë¨¸
     float turn_timer;
 
-    const float recog_range = 1.2f; // ÀÎÁö ¹üÀ§
-    float fov_angle = 120.f; // ½Ã¾ß°¢
-    float cos_threshold = 0.f; // ¹Ì¸® °è»êµÈ ÄÚ»çÀÎ ÀÓ°è°ª
+    const float recog_range = 1.2f; // ì¸ì§€ ë²”ìœ„
+    float fov_angle = 120.f; // ì‹œì•¼ê°
+    float cos_threshold = 0.f; // ë¯¸ë¦¬ ê³„ì‚°ëœ ì½”ì‚¬ì¸ ì„ê³„ê°’
 
-    const float attack_range = 0.5f; // °ø°İ ¹üÀ§
-    const float trace_speed = 0.4f;  // Ãß°İ ¼Óµµ
+    const float attack_range = 0.5f; // ê³µê²© ë²”ìœ„
+    const float trace_speed = 0.4f;  // ì¶”ê²© ì†ë„
 };
 

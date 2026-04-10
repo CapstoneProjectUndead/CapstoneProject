@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ PatrolState
+// Serverìª½ PatrolState
 #include "State.h"
 
 class CPatrolState :

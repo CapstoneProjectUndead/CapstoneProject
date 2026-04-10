@@ -34,22 +34,22 @@ CRoom::~CRoom()
 
 void CRoom::Initialize()
 {
-	// PhysicsManager »ı¼º
+	// PhysicsManager ìƒì„±
 	physics_manager = make_shared<CPhysicsManager>();
 
-	// CCustomScene »ı¼º
+	// CCustomScene ìƒì„±
 	scenes[(UINT)SCENE_TYPE::CUSTOMS] = make_unique<CCustomScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetRoom(shared_from_this());
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->SetPhysicsManager(physics_manager);
 	scenes[(UINT)SCENE_TYPE::CUSTOMS]->Initialize();
 
-	// LobbyScene »ı¼º
+	// LobbyScene ìƒì„±
 	scenes[(UINT)SCENE_TYPE::LOBBY] = make_unique<CLobbyScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->SetRoom(shared_from_this());
 	scenes[(UINT)SCENE_TYPE::LOBBY]->SetPhysicsManager(physics_manager);
 	scenes[(UINT)SCENE_TYPE::LOBBY]->Initialize();
 
-	// ³ªÁß¿¡ ¿©±â¼­ GameSceneµµ °°ÀÌ »ı¼º
+	// ë‚˜ì¤‘ì— ì—¬ê¸°ì„œ GameSceneë„ ê°™ì´ ìƒì„±
 	scenes[(UINT)SCENE_TYPE::GAME] = make_unique<CGameScene>(room_info.room_id);
 	scenes[(UINT)SCENE_TYPE::GAME]->SetRoom(shared_from_this());
 	scenes[(UINT)SCENE_TYPE::GAME]->SetPhysicsManager(physics_manager);
@@ -92,11 +92,11 @@ bool CRoom::IsValid()
 {
 	RoomInfo info = GetRoomInfo();
 
-	// ¹æ ÀÎ¿øÀÌ ²Ë Ã¡À¸¸é false
+	// ë°© ì¸ì›ì´ ê½‰ ì°¼ìœ¼ë©´ false
 	if (info.current_player_count >= ROOM_MAX_PLAYER)
 		return false;
 
-	// °ÔÀÓÀÌ ½ÃÀÛµÈ ¹æÀÌ¸é false
+	// ê²Œì„ì´ ì‹œì‘ëœ ë°©ì´ë©´ false
 	if (info.is_game_start)
 		return false;
 	

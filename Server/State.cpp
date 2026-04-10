@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ State
+// Serverìª½ State
 #include "State.h"
 
 CState::CState(AI_STATE _state)

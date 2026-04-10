@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ CGameFramework
+// Serverìª½ CGameFramework
 #include "GameFramework.h"
 #include "SceneManager.h"
 #include "RoomManager.h"
@@ -29,18 +29,18 @@ void CGameFramework::Init()
 
 void CGameFramework::Update(const float elapsedTime)
 {
-    // Title Scene ÇÏ³ª Update
+    // Title Scene í•˜ë‚˜ Update
     CSceneManager::GetInstance().Update(elapsedTime);
 
-    // Room ¾È¿¡ ÀÖ´Â ¾ÀµéÀ» Update
+    // Room ì•ˆì— ìˆëŠ” ì”¬ë“¤ì„ Update
     CRoomManager::GetInstance().Update(elapsedTime);
 }
 
 void CGameFramework::SendResults()
 {
-    // Title Scene ÇÏ³ª SendResults
+    // Title Scene í•˜ë‚˜ SendResults
     CSceneManager::GetInstance().SendResults();
 
-    // Room ¾È¿¡ ÀÖ´Â ¾ÀµéÀ» SendResults
+    // Room ì•ˆì— ìˆëŠ” ì”¬ë“¤ì„ SendResults
     CRoomManager::GetInstance().SendResults();
 }

@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ Player
+// Serverìª½ Player
 #include "Player.h"
 #include "Collider.h"
 #include "Movement.h"
@@ -32,7 +32,7 @@ void CPlayer::Update(const float elapsedTime)
 {
     last_simulated_time = static_cast<float>(g_server_total_time);
 
-    // È¸Àü Update
+    // íšŒì „ Update
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
     ProcessInputQueue(elapsedTime);
@@ -42,19 +42,19 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 {
     if (!input_queue.empty())
     {
-        // ½×ÀÎ ÆĞÅ¶ÀÌ ÀÖ´Ù¸é, °¢ ÆĞÅ¶¸¶´Ù ½Ã¹Ä·¹ÀÌ¼ÇÀ» µ¹¸²
+        // ìŒ“ì¸ íŒ¨í‚·ì´ ìˆë‹¤ë©´, ê° íŒ¨í‚·ë§ˆë‹¤ ì‹œë®¬ë ˆì´ì…˜ì„ ëŒë¦¼
         while (!input_queue.empty())
         {
             PendingInput pending = input_queue.front();
             input_queue.pop_front();
 
-            // (°¡¼Ó -> ¼ÓµµÁ¦ÇÑ -> ÀÌµ¿ -> °¨¼Ó)
+            // (ê°€ì† -> ì†ë„ì œí•œ -> ì´ë™ -> ê°ì†)
             SimulateMove(pending.input, elapsedTime);
 
-            // ¼­¹ö°¡ ÇØ´ç ½ÃÄö½º³Ñ¹öÀÇ Å¬¶ó ÀÔ·ÂÀ» Ã³¸®Çß´Ù.
+            // ì„œë²„ê°€ í•´ë‹¹ ì‹œí€€ìŠ¤ë„˜ë²„ì˜ í´ë¼ ì…ë ¥ì„ ì²˜ë¦¬í–ˆë‹¤.
             last_processed_seq = pending.seq_num;
 
-            // ÀåºÎ ±â·Ï 
+            // ì¥ë¶€ ê¸°ë¡ 
             ServerFrameHistory frame{};
             frame.input = pending.input;
             frame.seq_num = last_processed_seq;
@@ -69,14 +69,14 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
     }
     else
     {
-        // ÀÔ·ÂÀÌ ¾ø¾îµµ ¸¶Âû/Áß·Â °è»êÀ» À§ÇØ 1È¸ ¾÷µ¥ÀÌÆ®
-        InputData emptyInput{ false, false, false, false };
+        // ì…ë ¥ì´ ì—†ì–´ë„ ë§ˆì°°/ì¤‘ë ¥ ê³„ì‚°ì„ ìœ„í•´ 1íšŒ ì—…ë°ì´íŠ¸
+        InputData emptyInput{ false, false, false, false, false, false };
         SimulateMove(emptyInput, elapsedTime);
 
         if (last_simulated_time < g_server_total_time)
             last_simulated_time = static_cast<float>(g_server_total_time);
 
-        // ÀåºÎ ±â·Ï 
+        // ì¥ë¶€ ê¸°ë¡ 
         ServerFrameHistory frame{};
         frame.input = emptyInput;
         frame.seq_num = last_processed_seq;
@@ -91,7 +91,7 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
 {
     // --------------------
-    // ÀÔ·Â Ã³¸® ¹× ¹æÇâ °è»ê
+    // ì…ë ¥ ì²˜ë¦¬ ë° ë°©í–¥ ê³„ì‚°
     // --------------------
     XMFLOAT3 dir{ 0.f, 0.f, 0.f };
     if (input.w) dir.z++;
@@ -99,21 +99,31 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
     if (input.a) dir.x--;
     if (input.d) dir.x++;
 
-    // Á¡ÇÁ
+    // ì í”„
     if (input.space) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Jump();
     }
 
-    // »óÅÂ °»½Å
-    if (dir.x == 0 && dir.z == 0) {
+    // ìƒíƒœ ê°±ì‹ 
+    bool isMoving = (dir.x != 0 || dir.z != 0);
+    if (!isMoving) {
         state = PLAYER_STATE::IDLE;
     }
     else {
-        state = PLAYER_STATE::WALK;
+        if (auto move = GetComponent<CMovementComponent>()) {
+            if (input.shift) {
+                state = PLAYER_STATE::RUN;
+                move->Run();
+            }
+            else {
+                state = PLAYER_STATE::WALK;
+                move->UnRun();
+            }
+        }
     }
 
-    // Á¡ÇÁ 
+    // ì í”„
     if (velocity.y > 0) {
         state = PLAYER_STATE::WALK;
     }
@@ -123,7 +133,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
             move->Move(dir, elapsedTime);
     }
 
-    // Movement¿Í Collider Update
+    // Movementì™€ Collider Update
     CObject::Update(elapsedTime);
 }
 
@@ -135,12 +145,12 @@ void CPlayer::RecordServerFrameHistory(const ServerFrameHistory& history)
 		server_history_deq.pop_front();
 }
 
-// ³ªÁß¿¡ À¯Àú°£ÀÇ Ãæµ¹ Ã³¸®¸¦ ÇÒ °æ¿ì »ç¿ëµÉ ÇÔ¼ö.
+// ë‚˜ì¤‘ì— ìœ ì €ê°„ì˜ ì¶©ëŒ ì²˜ë¦¬ë¥¼ í•  ê²½ìš° ì‚¬ìš©ë  í•¨ìˆ˜.
 bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 {
     if (server_history_deq.empty()) return false;
 
-    // 1. ¹üÀ§¸¦ ¹ş¾î³­ ¿äÃ» Ã³¸® (³Ê¹« ¿À·¡µÆ°Å³ª ³Ê¹« ÃÖ½ÅÀÎ °æ¿ì)
+    // 1. ë²”ìœ„ë¥¼ ë²—ì–´ë‚œ ìš”ì²­ ì²˜ë¦¬ (ë„ˆë¬´ ì˜¤ë˜ëê±°ë‚˜ ë„ˆë¬´ ìµœì‹ ì¸ ê²½ìš°)
     if (targetTime <= server_history_deq.front().timestamp)
     {
         outResult = server_history_deq.front();
@@ -152,7 +162,7 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
         return true;
     }
 
-    // 2. ÀÌÁø Å½»öÀ¸·Î targetTimeº¸´Ù Å©°Å³ª °°Àº Ã¹ ¹øÂ° ¿ø¼Ò Ã£±â
+    // 2. ì´ì§„ íƒìƒ‰ìœ¼ë¡œ targetTimeë³´ë‹¤ í¬ê±°ë‚˜ ê°™ì€ ì²« ë²ˆì§¸ ì›ì†Œ ì°¾ê¸°
     auto it = std::lower_bound(server_history_deq.begin(), server_history_deq.end(), targetTime,
         [](const ServerFrameHistory& frame, float time) {
             return frame.timestamp < time;
@@ -164,21 +174,21 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
         return true;
     }
 
-    // 3. targetTimeÀ» »çÀÌ¿¡ µĞ µÎ ÇÁ·¹ÀÓ È®º¸ (it´Â B, it-1Àº A)
+    // 3. targetTimeì„ ì‚¬ì´ì— ë‘” ë‘ í”„ë ˆì„ í™•ë³´ (itëŠ” B, it-1ì€ A)
     const ServerFrameHistory& frameB = *it;
     const ServerFrameHistory& frameA = *(std::prev(it));
 
-    // 4. µÎ ÁöÁ¡ »çÀÌ¸¦ º¸°£ÇÏ¿© "±×¶§ ±× ¼ø°£"ÀÇ ÁÂÇ¥ °è»ê
+    // 4. ë‘ ì§€ì  ì‚¬ì´ë¥¼ ë³´ê°„í•˜ì—¬ "ê·¸ë•Œ ê·¸ ìˆœê°„"ì˜ ì¢Œí‘œ ê³„ì‚°
     float timeDiff = frameB.timestamp - frameA.timestamp;
     float alpha = 0.0f;
     if (timeDiff > 0.0f)
         alpha = (targetTime - frameA.timestamp) / timeDiff;
 
-    // °á°ú Á¶¸³
+    // ê²°ê³¼ ì¡°ë¦½
     outResult.timestamp = targetTime;
     outResult.position = Vector3::Lerp(frameA.position, frameB.position, alpha);
 
-    // »óÅÂ³ª ÀÔ·Â°ªÀº º¸°£ÀÌ ºÒ°¡´ÉÇÏ¹Ç·Î ÀÌÀü ÇÁ·¹ÀÓ(A)ÀÇ °ÍÀ» µû¸§
+    // ìƒíƒœë‚˜ ì…ë ¥ê°’ì€ ë³´ê°„ì´ ë¶ˆê°€ëŠ¥í•˜ë¯€ë¡œ ì´ì „ í”„ë ˆì„(A)ì˜ ê²ƒì„ ë”°ë¦„
     outResult.state = frameA.state;
     outResult.seq_num = frameA.seq_num;
 
@@ -188,7 +198,7 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 void CPlayer::SendPing()
 {
     S_Ping pingPkt;
-    pingPkt.server_send_time = g_server_total_time; // ÇöÀç ¼­¹ö ´©Àû ½Ã°£
+    pingPkt.server_send_time = g_server_total_time; // í˜„ì¬ ì„œë²„ ëˆ„ì  ì‹œê°„
 
     if (session.lock()) {
         auto sendBuffer = CClientPacketHandler::MakeSendBuffer<S_Ping>(pingPkt);

@@ -1,5 +1,5 @@
 #pragma once
-// ServerÂÊ Object
+// Serverìª½ Object
 
 class CPlayer;
 class Session;
@@ -83,7 +83,7 @@ public:
     float                   GetLastSimulatedTime() const { return last_simulated_time; }
 
     //=================================
-    // È¸Àü ÇÔ¼ö (Å×½ºÆ®)
+    // íšŒì „ í•¨ìˆ˜ (í…ŒìŠ¤íŠ¸)
     void SetYaw(float _yaw);
     void SetYawPitch(float yawDeg, float pitchDeg);
     void UpdateWorldMatrix();
@@ -93,16 +93,16 @@ public:
 protected:
     weak_ptr<CUser>                     user;
     weak_ptr<CRoom>			            room;
-    uint32						        room_id; // ¿ÀºêÁ§Æ®°¡ Á¸ÀçÇÏ´Â ¹æÀÇ ID
+    uint32						        room_id; // ì˜¤ë¸Œì íŠ¸ê°€ ì¡´ì¬í•˜ëŠ” ë°©ì˜ ID
     weak_ptr<Session>                   session;
     uint64                              obj_id;
     OBJECT_TYPE                         obj_type;
-    SCENE_TYPE					        current_scene_type; // ÇöÀç ¿ÀºêÁ§Æ®°¡ ¼ÓÇÑ ¾À (¹æÀÌ ¾ÀÀ» Æ÷ÇÔÇÏ°í ÀÖ´Â ±¸Á¶)
+    SCENE_TYPE					        current_scene_type; // í˜„ì¬ ì˜¤ë¸Œì íŠ¸ê°€ ì†í•œ ì”¬ (ë°©ì´ ì”¬ì„ í¬í•¨í•˜ê³  ìˆëŠ” êµ¬ì¡°)
     float						        last_simulated_time;
 
     XMFLOAT4X4                          world_matrix;
 
-    // world_matrix ³»ºÎ ¸Ş¸ğ¸®¸¦ Á÷Á¢ ÂüÁ¶
+    // world_matrix ë‚´ë¶€ ë©”ëª¨ë¦¬ë¥¼ ì§ì ‘ ì°¸ì¡°
     XMFLOAT3& right    =    *(XMFLOAT3*)&world_matrix._11;
     XMFLOAT3& up       =    *(XMFLOAT3*)&world_matrix._21;
     XMFLOAT3& look     =    *(XMFLOAT3*)&world_matrix._31;
@@ -116,7 +116,7 @@ protected:
     float                               jump_power{ 5.0f };
 
 
-    // È¸ÀüÀ» ÄõÅÍ´Ï¾ğ ¹æ½ÄÀ¸·Î ÇÏ±â À§ÇÑ ¸â¹ö º¯¼ö Ãß°¡
+    // íšŒì „ì„ ì¿¼í„°ë‹ˆì–¸ ë°©ì‹ìœ¼ë¡œ í•˜ê¸° ìœ„í•œ ë©¤ë²„ ë³€ìˆ˜ ì¶”ê°€
     XMFLOAT4	                        orientation = { 0.f, 0.f, 0.f, 1.f };
     float		                        yaw = 0.f;
     float		                        pitch = 0.f;
