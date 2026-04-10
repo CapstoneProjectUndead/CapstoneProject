@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "Inventory.h"
 #include "HumanMonster.h"
+#include "Ghost.h"
 #include "AIComponent.h"
 #include "AIStates.h"
 
@@ -28,22 +29,22 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType,
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
 	InitializeCharacter(player, physicsManager);
 
-	// À¯Àú¸¦ ¾àÇÑ ÂüÁ¶ (refcount Áõ°¡x)
+	// ìœ ì €ë¥¼ ì•½í•œ ì°¸ì¡° (refcount ì¦ê°€x)
 	player->SetUser(user);
 
-	// (ÇÃ·¹ÀÌ¾î ID = À¯Àú ID)
+	// (í”Œë ˆì´ì–´ ID = ìœ ì € ID)
 	player->SetID(user->GetUserID());
 
-	// ¼¼¼Çµµ ¾àÇÑ ÂüÁ¶ (refcount Áõ°¡x)
+	// ì„¸ì…˜ë„ ì•½í•œ ì°¸ì¡° (refcount ì¦ê°€x)
 	player->SetSession(user->GetSession());
 
-	// ÇÃ·¹ÀÌ¾î°¡ ¼ÓÇÑ scene ¼³Á¤
+	// í”Œë ˆì´ì–´ê°€ ì†í•œ scene ì„¤ì •
 	player->SetCurrentSceneType(sceneType);
 
-	// À¯Àú°¡ ÀÚ½ÅÀÇ ÇÃ·¹ÀÌ¾î¸¦ ÂüÁ¶ (refcount Áõ°¡)
+	// ìœ ì €ê°€ ìì‹ ì˜ í”Œë ˆì´ì–´ë¥¼ ì°¸ì¡° (refcount ì¦ê°€)
 	user->SetPlayer(player);
 
-	// ÀÎº¥Åä¸® »ı¼º
+	// ì¸ë²¤í† ë¦¬ ìƒì„±
 	shared_ptr<CInventory> inventory = make_shared<CInventory>(player);
 	player->SetInventory(inventory);
 
@@ -55,32 +56,32 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, sha
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
 	InitializeCharacter(player, physicsManager);
 
-	// À¯Àú¸¦ ¾àÇÑ ÂüÁ¶ (refcount Áõ°¡x)
+	// ìœ ì €ë¥¼ ì•½í•œ ì°¸ì¡° (refcount ì¦ê°€x)
 	player->SetUser(user);
 
-	// (ÇÃ·¹ÀÌ¾î ID = À¯Àú ID)
+	// (í”Œë ˆì´ì–´ ID = ìœ ì € ID)
 	player->SetID(user->GetUserID());
 
-	// ¼¼¼Çµµ ¾àÇÑ ÂüÁ¶ (refcount Áõ°¡x)
+	// ì„¸ì…˜ë„ ì•½í•œ ì°¸ì¡° (refcount ì¦ê°€x)
 	player->SetSession(user->GetSession());
 
-	// ÇÃ·¹ÀÌ¾î°¡ ¼ÓÇÑ scene ¼³Á¤
+	// í”Œë ˆì´ì–´ê°€ ì†í•œ scene ì„¤ì •
 	player->SetCurrentSceneType(sceneType);
 
-	// À¯Àú°¡ ÀÚ½ÅÀÇ ÇÃ·¹ÀÌ¾î¸¦ ÂüÁ¶ (refcount Áõ°¡)
+	// ìœ ì €ê°€ ìì‹ ì˜ í”Œë ˆì´ì–´ë¥¼ ì°¸ì¡° (refcount ì¦ê°€)
 	user->SetPlayer(player);
 
-	// Áö±İ ÇÃ·¹ÀÌ¾î°¡ ¼ÓÇÑ ¹æ
+	// ì§€ê¸ˆ í”Œë ˆì´ì–´ê°€ ì†í•œ ë°©
 	player->SetRoom(room);
 
-	// Áö±İ ÇÃ·¹ÀÌ¾î°¡ ¼ÓÇÑ ¹æID
+	// ì§€ê¸ˆ í”Œë ˆì´ì–´ê°€ ì†í•œ ë°©ID
 	player->SetRoomID(room->GetRoomID());
 
-	// ÀÎº¥Åä¸® »ı¼º
+	// ì¸ë²¤í† ë¦¬ ìƒì„±
 	shared_ptr<CInventory> inventory = make_shared<CInventory>(player);
 	player->SetInventory(inventory);
 
-	// ¹æ ÀÎ¿ø ¼ö Áõ°¡
+	// ë°© ì¸ì› ìˆ˜ ì¦ê°€
 	room->PlayerEnter();
 
 	return player;
@@ -90,7 +91,7 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 {
 	shared_ptr<CMonster> monster;
 
-	// AI »ı¼º
+	// AI ìƒì„±
 	auto AIComp = std::make_shared<CAIComponent>();
 
 	switch (monType)
@@ -98,43 +99,47 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = make_shared<CHumanMonster>();
-		InitializeCharacter(monster, physicsManager);
+		InitializeHumanMonster(monster, physicsManager);
 	}
 		break;
 	case MON_TYPE::ANIMAL_MONSTER:
 		break;
 	case MON_TYPE::GHOST:
+	{
+		monster = make_shared<CGhost>();
+		InitializeGhost(monster, physicsManager);
+	}
 		break;
 	default:
 		return nullptr;
 		break;
 	}
 
-	// monster ¿ÀºêÁ§Æ® ID ¼³Á¤
+	// monster ì˜¤ë¸Œì íŠ¸ ID ì„¤ì •
 	uint32 id = monster_id_generator.fetch_add(1);
 	monster->SetID(id);
 
-	// monster°¡ ¼ÓÇÑ scene
+	// monsterê°€ ì†í•œ scene
 	monster->SetCurrentSceneType(sceneType);
 
-	// IDLE, PATROL, TRACE, ATTACK »óÅÂ´Â ¸ğµç ¸ó½ºÅÍ°¡ °øÅëÀ¸·Î °¡Áø´Ù.
+	// IDLE, PATROL, TRACE, ATTACK ìƒíƒœëŠ” ëª¨ë“  ëª¬ìŠ¤í„°ê°€ ê³µí†µìœ¼ë¡œ ê°€ì§„ë‹¤.
 	AIComp->AddState(std::make_shared<CIdleState>());
 	AIComp->AddState(std::make_shared<CPatrolState>());
 	AIComp->AddState(std::make_shared<CTraceState>());
 	AIComp->AddState(std::make_shared<CAttackState>());
 
-	// Ç×»ó IDLE ·Î ½ÃÀÛ.
+	// í•­ìƒ IDLE ë¡œ ì‹œì‘.
 	AIComp->SetState(AI_STATE::MONSTER_IDLE);
 
-	// AI ÄÄÆ÷³ÍÆ® Monster¿¡ µî·Ï
+	// AI ì»´í¬ë„ŒíŠ¸ Monsterì— ë“±ë¡
 	monster->SetComponent(AIComp);
 
-	// Movement ÄÄÆ÷³ÍÆ® Ãß°¡. (¼ø¼­°¡ Áß¿ä. AI -> Movement ¼ø¼­·Î °¡¾ßÇÔ.)
+	// Movement ì»´í¬ë„ŒíŠ¸ ì¶”ê°€. (ìˆœì„œê°€ ì¤‘ìš”. AI -> Movement ìˆœì„œë¡œ ê°€ì•¼í•¨.)
 	shared_ptr<CMovementComponent> movementComponent = std::make_shared<CMovementComponent>();
 	movementComponent->SetPhysicsManager(physicsManager);
 	monster->SetComponent(movementComponent);
 
-	// Monster°¡ ¼ÓÇÑ Room 
+	// Monsterê°€ ì†í•œ Room 
 	monster->SetRoom(room);
 	monster->SetRoomID(room->GetRoomID());
 
@@ -144,25 +149,25 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	// -------------------------------------
-	// ÇÃ·¹ÀÌ¾î¿¡°Ô MovementComponent ´Ş¾ÆÁÖ±â
+	// í”Œë ˆì´ì–´ì—ê²Œ MovementComponent ë‹¬ì•„ì£¼ê¸°
 	// -------------------------------------
 	if (object->GetObjectType() == OBJECT_TYPE::PLAYER) {
 
 		shared_ptr<CMovementComponent> movementComponent = std::make_shared<CMovementComponent>();
 
-		// 3¿ù 21ÀÏ (Ãß°¡) MovementComponent´Â physics_manager¸¦ µé°íÀÖ´Â°Ô ÆíÇÏ´Ù. ±×·¡¼­ ¿©±â¼­ Ãß°¡ÇÑ´Ù.
+		// 3ì›” 21ì¼ (ì¶”ê°€) MovementComponentëŠ” physics_managerë¥¼ ë“¤ê³ ìˆëŠ”ê²Œ í¸í•˜ë‹¤. ê·¸ë˜ì„œ ì—¬ê¸°ì„œ ì¶”ê°€í•œë‹¤.
 		movementComponent->SetPhysicsManager(physicsManager);
 
 		object->SetComponent(movementComponent);
 	}
 
 	// -----------------------------------
-	// ÇÃ·¹ÀÌ¾î¿¡°Ô Ãæµ¹Ã¼(Collider) ´Ş¾ÆÁÖ±â
+	// í”Œë ˆì´ì–´ì—ê²Œ ì¶©ëŒì²´(Collider) ë‹¬ì•„ì£¼ê¸°
 	// -----------------------------------
 	std::string fileName{ "../Modeling/undead_char.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	// Mesh ·Îµå + totalBounds °è»ê
+	// Mesh ë¡œë“œ + totalBounds ê³„ì‚°
 	BoundingBox totalBounds;
 	bool firstBounds = true;
 
@@ -179,11 +184,77 @@ void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object, share
 		}
 	}
 
-	// ColliderComponent »ı¼º/ filter ¼³Á¤
+	// ColliderComponent ìƒì„±/ filter ì„¤ì •
 	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
 	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
 	CollisionFilter filter;
 	filter.category = EColLayer::PLAYER;
+	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+	collider->SetFillter(filter);
+	object->SetComponent(collider);
+	physicsManager->SetCollider(collider);
+
+	object->UpdateWorldMatrix();
+	collider->Update(0.0f);
+}
+
+void CServerObjectFactory::InitializeHumanMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
+{
+	std::string fileName{ "../Modeling/Human_monster.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+	BoundingBox totalBounds;
+	bool firstBounds = true;
+
+	for (const auto& child : frameRoot->childrens) {
+		if (child->mesh.positions.empty())
+			continue;
+		if (firstBounds) {
+			totalBounds = child->mesh.bounds;
+			firstBounds = false;
+		}
+		else {
+			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
+		}
+	}
+
+	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
+	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+	CollisionFilter filter;
+	filter.category = EColLayer::CHARACTER;
+	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
+	collider->SetFillter(filter);
+	object->SetComponent(collider);
+	physicsManager->SetCollider(collider);
+
+	object->UpdateWorldMatrix();
+	collider->Update(0.0f);
+}
+
+void CServerObjectFactory::InitializeGhost(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
+{
+	std::string fileName{ "../Modeling/Ghost3.bin" };
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+	BoundingBox totalBounds;
+	bool firstBounds = true;
+
+	for (const auto& child : frameRoot->childrens) {
+		if (child->mesh.positions.empty())
+			continue;
+		if (firstBounds) {
+			totalBounds = child->mesh.bounds;
+			firstBounds = false;
+		}
+		else {
+			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
+		}
+	}
+
+	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
+	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
+	CollisionFilter filter;
+	filter.category = EColLayer::CHARACTER;
 	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
 	collider->SetFillter(filter);
 	object->SetComponent(collider);

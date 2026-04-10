@@ -274,6 +274,22 @@ void MapGenerator::PlaceMonster()
     const int ndx[] = { 0, 0, -1, 1 };
     const int ndy[] = { -1, 1,  0, 0 };
 
+    // Ghost: 미로 길(ROAD) 타일에 구역별로 1마리씩 배치
+    const int BLOCK_SIZE = 15;
+    for (int by = 0; by < HEIGHT / 2; by += BLOCK_SIZE) {
+        for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
+            for (int attempt = 0; attempt < 20; attempt++) {
+                int rx = GetRandomInt(bx, min(bx + BLOCK_SIZE - 1, WIDTH - 1));
+                int ry = GetRandomInt(by, min(by + BLOCK_SIZE - 1, HEIGHT / 2 - 1));
+                if (!IsValid(rx, ry)) continue;
+                if (GetTile(ELayer::FLOOR, rx, ry) != EModelType::ROAD) continue;
+                if (GetTile(ELayer::OBJECT, rx, ry) != EModelType::UNKNOWN) continue;
+                mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::MONSTER_GHOST;
+                break;
+            }
+        }
+    }
+
     for (const Cell& center : g_store_centers) {
         int cx = center.x, cy = center.y;
         bool placed = false;

@@ -13,8 +13,8 @@ public:
     virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
-    virtual void Enter() override;
-    virtual void Exit() override;
+    virtual void OnSceneActivate() override;
+    virtual void OnSceneDeactivate() override;
 
 public:
     void C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt);

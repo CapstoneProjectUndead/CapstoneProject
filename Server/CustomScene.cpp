@@ -1,5 +1,5 @@
 #include "pch.h"
-// ServerÂÊ CustomScene
+// Serverìª½ CustomScene
 #include "CustomScene.h"
 #include "LobbyScene.h"
 #include "Player.h"
@@ -27,14 +27,14 @@ void CCustomScene::Update(float elapsedTime)
 	CScene::Update(elapsedTime);
 }
 
-void CCustomScene::Enter()
+void CCustomScene::OnSceneActivate()
 {
-	CScene::Enter();
+	CScene::OnSceneActivate();
 }
 
-void CCustomScene::Exit()
+void CCustomScene::OnSceneDeactivate()
 {
-	CScene::Exit();
+	CScene::OnSceneDeactivate();
 }
 
 void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt)
@@ -45,9 +45,9 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 	auto room = user->GetRoom();
 	assert(room);
 
-	// 3¿ù 19ÀÏ Ãß°¡
-	// ¹æ¿¡ ÀÖ´ø ±âÁ¸ ÇÃ·¹ÀÌ¾îµéÀÌ »ç½Å¿¡°Ô ¸»À» °É¾î¼­ ÁØºñ¿Ï·áÇÏ¸é GameSceneÀ¸·Î ³Ñ¾î°£´Ù.
-	// ±× Âû³ª¿¡ »õ·Î¿î À¯Àú°¡ µé¾î¿Â´Ù¸é ÀÔÀåÀ» ¸·¾Æ¾ßÇÑ´Ù.
+	// 3ì›” 19ì¼ ì¶”ê°€
+	// ë°©ì— ìˆë˜ ê¸°ì¡´ í”Œë ˆì´ì–´ë“¤ì´ ì‚¬ì‹ ì—ê²Œ ë§ì„ ê±¸ì–´ì„œ ì¤€ë¹„ì™„ë£Œí•˜ë©´ GameSceneìœ¼ë¡œ ë„˜ì–´ê°„ë‹¤.
+	// ê·¸ ì°°ë‚˜ì— ìƒˆë¡œìš´ ìœ ì €ê°€ ë“¤ì–´ì˜¨ë‹¤ë©´ ì…ì¥ì„ ë§‰ì•„ì•¼í•œë‹¤.
 	if (room->GetIsGameStart()) {
 		S_EnterRoom enterPkt;
 		enterPkt.success = false;
@@ -59,13 +59,13 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 		return;
 	}
 
-	// Player »ı¼º (ÇÃ·¹ÀÌ¾î ID = À¯Àú ID)
+	// Player ìƒì„± (í”Œë ˆì´ì–´ ID = ìœ ì € ID)
 	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room, GetPhysicsManager());
 
-	// Custom Scene¿¡´Â º°µµ·Î EnterScene ÇÏÁö ¾Êµµ·Ï °áÁ¤.
+	// Custom Sceneì—ëŠ” ë³„ë„ë¡œ EnterScene í•˜ì§€ ì•Šë„ë¡ ê²°ì •.
 
-	// S_SpawnPlayer ÆĞÅ¶
-	// Áö±İ ¹æ¿¡ ÀÔÀåÇÑ À¯Àú¿¡°Ô ÇÃ·¹ÀÌ¾î »ı¼º Çã¶ô
+	// S_SpawnPlayer íŒ¨í‚·
+	// ì§€ê¸ˆ ë°©ì— ì…ì¥í•œ ìœ ì €ì—ê²Œ í”Œë ˆì´ì–´ ìƒì„± í—ˆë½
 	{
 		S_SpawnPlayer spawnPkt;
 		spawnPkt.room_id = player->GetRoomID();
@@ -83,8 +83,8 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 			user->GetSession()->DoSend(sendBuffer);
 	}
 
-	// S_Enter_Room ÆĞÅ¶
-	// ÀÔÀå Çã¶ô.
+	// S_Enter_Room íŒ¨í‚·
+	// ì…ì¥ í—ˆë½.
 	{
 		S_EnterRoom enterPkt;
 		enterPkt.success = true;
@@ -109,13 +109,13 @@ void CCustomScene::C_Handle_Custom_Select(shared_ptr<Session> session, const C_C
 		CLobbyScene* lobbyScene = (CLobbyScene*)r->GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
 		assert(lobbyScene && lobbyScene->GetSceneType() == SCENE_TYPE::LOBBY);
 
-		// ÇÃ·¹ÀÌ¾î¸¦ Lobby SceneÀ¸·Î ÀÌµ¿
-		// À¯Àú Scene¿¡ ÀÔÀå
-		// EnterScene ¿¡¼­ À¯ÀúµéÀÇ ÀÔÀå Á¤º¸µéÀ» ´Ù Ã³¸®ÇÏµµ·Ï ¼öÁ¤. (26. 2. 25)
+		// í”Œë ˆì´ì–´ë¥¼ Lobby Sceneìœ¼ë¡œ ì´ë™
+		// ìœ ì € Sceneì— ì…ì¥
+		// EnterScene ì—ì„œ ìœ ì €ë“¤ì˜ ì…ì¥ ì •ë³´ë“¤ì„ ë‹¤ ì²˜ë¦¬í•˜ë„ë¡ ìˆ˜ì •. (26. 2. 25)
 		ChangeScene(player, SCENE_TYPE::LOBBY);
 
-		// À¯Àú¿¡°Ô Ä¿½ºÅÍ¸¶ÀÌÂ¡ ¿Ï·áµÇ¾ú°í,
-		// Lobby SceneÀ¸·Î ¾À ÀüÈ¯ÇÏ¶ó°í ¾Ë·ÁÁÖ±â
+		// ìœ ì €ì—ê²Œ ì»¤ìŠ¤í„°ë§ˆì´ì§• ì™„ë£Œë˜ì—ˆê³ ,
+		// Lobby Sceneìœ¼ë¡œ ì”¬ ì „í™˜í•˜ë¼ê³  ì•Œë ¤ì£¼ê¸°
 		S_CustomSelect pkt;
 		auto sendBuffer = MAKE_SEND_BUFFER(pkt);
 		session->DoSend(sendBuffer);

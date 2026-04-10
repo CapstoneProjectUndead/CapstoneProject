@@ -15,8 +15,8 @@ public:
     virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
-    virtual void Enter() override;
-    virtual void Exit() override;
+    virtual void OnSceneActivate() override;
+    virtual void OnSceneDeactivate() override;
 
 private:
     void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
@@ -30,6 +30,7 @@ public:
 private:
     map<string, shared_ptr<CObject>>    prototypes;
     vector<MapGenerator::InstanceData>  map_instance_data;
-    vector<XMFLOAT3>                    monster_spawn_positions;
+    vector<XMFLOAT3>                    humanMonster_spawn_positions;
+    vector<XMFLOAT3>                    ghost_spawn_positions;
 };
 

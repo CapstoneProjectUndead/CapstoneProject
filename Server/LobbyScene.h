@@ -9,13 +9,13 @@ class CLobbyScene :
 {
 public:
     CLobbyScene(uint32 roomId);
-    ~CLobbyScene();
+    virtual ~CLobbyScene() override;
 
     virtual void Initialize() override;
     virtual void Update(float elapsedTime) override;
 
-    virtual void Enter() override;
-    virtual void Exit() override;
+    virtual void OnSceneActivate() override;
+    virtual void OnSceneDeactivate() override;
 
 public:
     void CheckReady();
@@ -44,7 +44,5 @@ private:
 
 private:
     int  player_ready_cnt;
-    int  monster_cnt = 0;
-    const int max_monster_cnt = 1;
 };
 

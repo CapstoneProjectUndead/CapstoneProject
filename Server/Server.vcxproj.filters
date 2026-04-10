@@ -207,6 +207,9 @@
     <ClCompile Include="ItemManager.cpp">
       <Filter>Object\Item</Filter>
     </ClCompile>
+    <ClCompile Include="Ghost.cpp">
+      <Filter>Object\Monster</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -346,6 +349,9 @@
     </ClInclude>
     <ClInclude Include="ItemManager.h">
       <Filter>Object\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="Ghost.h">
+      <Filter>Object\Monster</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -16,6 +16,7 @@ CScene::CScene(SCENE_TYPE type)
 	, room_id(-1)
 	, active_player_count(0)
 	, dt_ping_accumulator(0.0f)
+	, monster_cnt(0)
 {
 
 }
@@ -25,12 +26,13 @@ CScene::CScene(SCENE_TYPE type, uint32 roomId)
 	, room_id(roomId)
 	, active_player_count(0)
 	, dt_ping_accumulator(0.0f)
+	, monster_cnt(0)
 {
 }
 
 CScene::~CScene()
 {
-	
+	int a = 0;
 }
 
 void CScene::Initialize()
@@ -80,7 +82,7 @@ void CScene::SendPlayersResult()
 			S_PlayerMove movePkt;
 
 			movePkt.last_seq_num = player->GetLastSequence();
-			movePkt.info.player_id = player->GetID(); // "������ �÷��̾�"�� ID
+			movePkt.info.player_id = player->GetID(); 
 			movePkt.scene_type = player->GetCurrentSceneType();
 
 			movePkt.info.x = player->GetPosition().x;
@@ -182,6 +184,7 @@ void CScene::BroadCast(SendBufferRef sendBuffer, uint64 exceptID)
 void CScene::AddMonster(shared_ptr<CMonster> monster)
 {
 	monsters[monster->GetID()] = monster;
+	++monster_cnt;
 }
 
 void CScene::SimulatePlayers(const float elapsedTime)
@@ -272,7 +275,7 @@ void CScene::LeaveScene(uint64 playerId)
 	BroadCast(sendBuffer);
 }
 
-void CScene::Enter()
+void CScene::OnSceneActivate()
 {
 	if (scene_type != SCENE_TYPE::TITLE && scene_type != SCENE_TYPE::CUSTOMS) {
 
@@ -282,6 +285,9 @@ void CScene::Enter()
 		if (active_player_count > 1)
 			return;
 
+		// GameScene은 CreateGameScene()에서 충돌체를 생성과 동시에 PhysicsManager에 등록하므로
+		// 여기서 다시 등록하면 중복 등록된다.
+		// Lobby 등 다른 씬은 Create 시점에 static_objects에만 저장하므로 여기서 등록한다.
 		if (scene_type != SCENE_TYPE::GAME) {
 			for (const auto& obj : static_objects) {
 				CColliderComponent* col = obj->GetComponent<CColliderComponent>();
@@ -293,7 +299,7 @@ void CScene::Enter()
 	}
 }
 
-void CScene::Exit()
+void CScene::OnSceneDeactivate()
 {
 	if (scene_type != SCENE_TYPE::TITLE && scene_type != SCENE_TYPE::CUSTOMS) {
 
@@ -424,13 +430,13 @@ void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneCha
 void CScene::ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType)
 {
 	// 기존 씬에서 처리할 것들 처리
-	Exit();
+	OnSceneDeactivate();
 
 	auto room = player->GetRoom();
 	CScene* targetScene = room->GetScenes()[(UINT)targetSceneType].get();
 
 	// 입장할 씬에 입장 전 처리할 것들 처리
-	targetScene->Enter();
+	targetScene->OnSceneActivate();
 
 	if (targetSceneType == SCENE_TYPE::CUSTOMS) {
 		player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);

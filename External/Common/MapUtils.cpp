@@ -91,6 +91,7 @@ void CMapAssetManager::initialize()
 
     // 서버 전용 마커 (렌더링 없음)
     asset_table[EModelType::MONSTER_HUMAN] = { {}, {} };
+    asset_table[EModelType::MONSTER_GHOST] = { {}, {} };
 
     // 콜라이더 제외 키워드 설정
     no_collider_set = { "grass", "stone" };

@@ -34,6 +34,7 @@ namespace MapGenerator
 
         // Monster spawn markers (서버 전용 — 클라 렌더링 없음)
         MONSTER_HUMAN,
+        MONSTER_GHOST,
 
         UNKNOWN
     };

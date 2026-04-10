@@ -291,14 +291,21 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 
 	// 맵 데이터를 순회하며 보물 좌표 + ID 부여, 몬스터 스폰 위치 추출
 	treasures.clear();
-	monster_spawn_positions.clear();
+	humanMonster_spawn_positions.clear();
+	ghost_spawn_positions.clear();
+
 	uint32 treasure_id = 0;
+
 	for (const auto& inst : instData) {
+
 		if (inst.type == MapGenerator::EModelType::TREASURE) {
 			treasures.push_back(TreasureInfo{ treasure_id++, inst.position });
 		}
 		else if (inst.type == MapGenerator::EModelType::MONSTER_HUMAN) {
-			monster_spawn_positions.push_back(inst.position);
+			humanMonster_spawn_positions.push_back(inst.position);
+		}
+		else if (inst.type == MapGenerator::EModelType::MONSTER_GHOST) {
+			ghost_spawn_positions.push_back(inst.position);
 		}
 	}
 

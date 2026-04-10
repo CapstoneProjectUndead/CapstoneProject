@@ -7,7 +7,6 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "GeometryLoader.h"
-#include "HumanMonster.h"
 #include "ServerObjectFactory.h"
 #include "GameScene.h"
 
@@ -39,27 +38,14 @@ void CLobbyScene::Update(float elapsedTime)
 	CheckReady();
 }
 
-void CLobbyScene::Enter()
+void CLobbyScene::OnSceneActivate()
 {
-	CScene::Enter();
-
-	// (임시)
-	// 몬스터는 1 마리만 스폰
-	//if (monster_cnt < max_monster_cnt) {
-	//	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
-	//	humanMonster->SetPosition(0.f, 0.1f, -1.5f);
-	//	humanMonster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-	//	AddMonster(humanMonster);
-	//	++monster_cnt;
-	//}
+	CScene::OnSceneActivate();
 }
 
-void CLobbyScene::Exit()
+void CLobbyScene::OnSceneDeactivate()
 {
-	CScene::Exit();
-
-	monsters.clear();
-	--monster_cnt;
+	CScene::OnSceneDeactivate();
 }
 
 void CLobbyScene::CheckReady()

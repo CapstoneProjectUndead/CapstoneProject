@@ -8,6 +8,7 @@
 #include "PhysicsManager.h"
 #include "GeometryLoader.h"
 #include "HumanMonster.h"
+#include "Ghost.h"
 #include "ServerObjectFactory.h"
 #include "MapUtils.h"
 #include "Item.h"
@@ -51,14 +52,42 @@ void CGameScene::Update(float elapsedTime)
 	CScene::Update(elapsedTime);
 }
 
-void CGameScene::Enter()
+void CGameScene::OnSceneActivate()
 {
-	CScene::Enter();
+	CScene::OnSceneActivate();
+
+	// 첫 번째 플레이어 입장 시에만 몬스터 스폰
+	// active_player_count는 CScene::OnSceneActivate()에서 증가하므로 > 1이면 이미 스폰된 상태
+	if (active_player_count > 1)
+		return;
+
+	for (const auto& pos : humanMonster_spawn_positions) {
+		shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
+		if (!humanMonster)
+			continue;
+
+		humanMonster->SetPosition(pos.x, 0.1f, pos.z);
+		humanMonster->SetOriginPos({ pos.x, 0.1f, pos.z });
+		AddMonster(humanMonster);
+	}
+
+	for (const auto& pos : ghost_spawn_positions) {
+		shared_ptr<CGhost> ghost = static_pointer_cast<CGhost>(CServerObjectFactory::CreateMonster(MON_TYPE::GHOST, scene_type, GetRoom(), GetPhysicsManager()));
+		if (!ghost)
+			continue;
+
+		ghost->SetPosition(pos.x, 0.1f, pos.z);
+		ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
+		AddMonster(ghost);
+	}
 }
 
-void CGameScene::Exit()
+void CGameScene::OnSceneDeactivate()
 {
-	CScene::Exit();
+	CScene::OnSceneDeactivate();
+
+	monsters.clear();
+	monster_cnt = 0;
 }
  
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
@@ -72,7 +101,7 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		CollisionFilter filter;
 		filter.category = EColLayer::OBJECT;
-		filter.mask = EColLayer::PLAYER;
+		filter.mask = EColLayer::PLAYER | EColLayer::CHARACTER;
 		collider->SetFillter(filter);
 		obj->SetComponent(collider);
 		};
@@ -87,7 +116,7 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 		auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		CollisionFilter filter;
 		filter.category = EColLayer::GROUND;
-		filter.mask = EColLayer::PLAYER;
+		filter.mask = EColLayer::PLAYER | EColLayer::CHARACTER;
 		boxCollider->SetFillter(filter);
 		obj->SetComponent(boxCollider);
 	}
@@ -133,10 +162,14 @@ void CGameScene::CreateGameScene()
 	item_manager->SpawnWorldTreasures(instanceData);
 
 	// 몬스터 스폰 위치 추출 (서버만 사용)
-	monster_spawn_positions.clear();
+	humanMonster_spawn_positions.clear();
+	ghost_spawn_positions.clear();
+
 	for (auto& inst : instanceData) {
 		if (inst.type == MapGenerator::EModelType::MONSTER_HUMAN)
-			monster_spawn_positions.push_back(inst.position);
+			humanMonster_spawn_positions.push_back(inst.position);
+		else if (inst.type == MapGenerator::EModelType::MONSTER_GHOST)
+			ghost_spawn_positions.push_back(inst.position);
 	}
 
 	for (auto& inst : instanceData) {

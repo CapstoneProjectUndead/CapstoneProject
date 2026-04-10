@@ -26,8 +26,8 @@ public:
 	virtual void EnterScene(shared_ptr<CPlayer> player);
 	virtual void LeaveScene(uint64 playerId);
 
-	virtual void Enter();
-	virtual void Exit();
+	virtual void OnSceneActivate();
+	virtual void OnSceneDeactivate();
 
 	void SendResults();
 	void SendPlayersResult();
@@ -119,8 +119,10 @@ protected:
 	// 아이템 관리 Manager
 	unique_ptr<CItemManager>            item_manager;
 
+	uint16								active_player_count;
+	uint32								monster_cnt;
+
 private:
-	int									active_player_count;
 	float								dt_ping_accumulator;
 };
 

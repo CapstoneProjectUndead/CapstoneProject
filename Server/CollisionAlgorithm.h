@@ -18,11 +18,13 @@ enum EColLayer : uint32_t {
     WALL = 1 << 1,      // 고정된 벽
     OBJECT = 1 << 2,    // 상자 등 동적 오브젝트
     PLAYER = 1 << 3,    // 플레이어
-    TRIGGER = 1 << 4,   // 이벤트 구역 (물리 충돌 X, 겹침만 O)
+    CHARACTER = 1 << 4, // 플레이어와 상호 작용 가능한 캐릭터
+    TRIGGER = 1 << 5,   // 이벤트 구역 (물리 충돌 X, 겹침만 O)
 
     // 미리 정의된 조합 (편의용)
     ENVIRONMENT = GROUND | WALL,
-    ALL_SOLID = GROUND | WALL | OBJECT
+    ALL_SOLID = GROUND | WALL | OBJECT | CHARACTER,
+    ALL_MOB = PLAYER | CHARACTER
 };
 
 // 충돌 체크 알고리즘

@@ -47,7 +47,9 @@ void CGameScene::Initialize()
 		CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
 		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
-		monster_spawn_positions = factory->GetMonsterSpawnPositions();
+
+		humanMonster_spawn_positions = factory->GetHumanMonsterSpawnPositions();
+		ghost_spawn_positions = factory->GetGhostSpawnPositions();
 
 		// 보물 위치에 보물 생성
 		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
@@ -77,19 +79,6 @@ void CGameScene::Initialize()
 	SpawnWorldItem(29, XMFLOAT3{3, 2, 1});
 	SpawnWorldItem(30, XMFLOAT3{3, 2, 2});
 	SpawnWorldItem(31, XMFLOAT3{3, 2, 3});
-	/*SpawnWorldItem(45, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(5, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(1, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(17, XMFLOAT3{2, 2, 1});
-
-	SpawnWorldItem(47, XMFLOAT3{ 2, 2, 1 });
-	SpawnWorldItem(47, XMFLOAT3{ 2, 2, 1 });
-	SpawnWorldItem(48, XMFLOAT3{ 2, 2, 1 });
-	
-	SpawnWorldItem(57, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(77, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(91, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(100, XMFLOAT3{2, 2, 1});*/
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -135,14 +124,25 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	// 싱글 전용: 몬스터 스폰
 	if (g_is_single) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
-		for (const auto& pos : monster_spawn_positions) {
-			auto monster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
-			if (!monster) 
+
+		for (const auto& pos : humanMonster_spawn_positions) {
+			auto humanMonster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
+			if (!humanMonster)
 				continue;
 
-			monster->SetPosition(pos.x, 0.1f, pos.z);
-			monster->SetOriginPos({ pos.x, 0.1f, pos.z });
-			AddObject(monster, monster->GetID());
+			humanMonster->SetPosition(pos.x, 0.1f, pos.z);
+			humanMonster->SetOriginPos({ pos.x, 0.1f, pos.z });
+			AddObject(humanMonster, humanMonster->GetID());
+		}
+
+		for (const auto& pos : ghost_spawn_positions) {
+			auto ghost = factory->CreateMonster(skinningHeapManager, MON_TYPE::GHOST, scene_type);
+			if (!ghost)
+				continue;
+
+			ghost->SetPosition(pos.x, 0.1f, pos.z);
+			ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
+			AddObject(ghost, ghost->GetID());
 		}
 	}
 
@@ -384,6 +384,10 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 		return obj->GetObjectType() == OBJECT_TYPE::STATIC_OBJECT;
 		}),
 		objects.end());
+
+	// 몬스터 spawn 위치들 모두 clear
+	humanMonster_spawn_positions.clear();
+	ghost_spawn_positions.clear();
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);

@@ -390,18 +390,19 @@ void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_R
 
 void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt)
 {
-	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* skinningHeapManager{
+			CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 	
-	CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
-
+	uint32 monsterId = pkt.info.monster_id;
 	MON_TYPE type = pkt.info.monster_type;
 	NetMonsterInfo info = pkt.info;
-
+	XMFLOAT3 pos{ pkt.info.x, pkt.info.y, pkt.info.z };
+	
 	auto monster = factory->CreateMonster(skinningHeapManager, type, scene_type);
-	monster->SetID(info.monster_id);
-	monster->SetPosition(0.f, 0.1f, -1.5f);
-	monster->SetOriginPos({ 0.f, 0.1f, -1.5f });
-	AddObject(monster, info.monster_id);
+	monster->SetID(monsterId);
+	monster->SetPosition(pos);
+	monster->SetOriginPos(pos);
+	AddObject(monster, monsterId);
 }
 
 void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt)
