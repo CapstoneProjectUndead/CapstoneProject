@@ -51,7 +51,6 @@ public:
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
 	// Load model
 	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
-	void CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	void CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	void CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
@@ -70,6 +69,12 @@ public:
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
 	std::vector<XMFLOAT3>&    GetHumanMonsterSpawnPositions() { return humanMonster_spawn_positions; }
 	std::vector<XMFLOAT3>&    GetGhostSpawnPositions() { return ghost_spawn_positions; }
+
+	// 외부 참조용
+	std::shared_ptr<CObject> GetPrototype(const std::string& name) {
+		auto it = prototypes.find(name);
+		return (it != prototypes.end()) ? it->second : nullptr;
+	}
 private:
 	enum class UndeadMeshName {
 		body,

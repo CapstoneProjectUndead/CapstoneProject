@@ -24,6 +24,7 @@ public:
 
     virtual void Update(float elapsedTime) override;
     inline void PreUpdate(float elapsedTime);
+    virtual void OnCollect(IRenderer* renderer) override;
 
 public:
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }

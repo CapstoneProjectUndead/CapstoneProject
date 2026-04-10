@@ -1,11 +1,10 @@
 #include "stdafx.h"
-#include "Shader.h"
-#include "Texture.h"
-#include "Camera.h"
 #include "Object.h"
-#include "MeshRenderer.h"
-#include "Material.h"
+
+#include "Camera.h"
 #include "UIComponent.h"
+
+#include "MeshRenderer.h"
 #include "Renderers.h"
 
 CObject::CObject(OBJECT_TYPE type)
@@ -24,7 +23,7 @@ void CObject::ReleaseUploadBuffer()
 {
 	// 정점 버퍼를 위한 업로드 버퍼를 소멸시킨다.
 	for (auto& component : components)
-		if(component->is_enable)
+		if (component->is_enable)
 			component->ReleaseUploadBuffer();
 }
 
@@ -55,10 +54,10 @@ void CObject::Render(ID3D12GraphicsCommandList* commandList)
 
 void CObject::OnCollect(IRenderer* renderer)
 {
-	auto meshRenderers = GetComponents<CMeshRendererComponent>();
+	auto meshRenderer = GetComponent<CMeshRendererComponent>();
 	bool isStatic = (obj_type == OBJECT_TYPE::STATIC_OBJECT);
 
-	for (auto& meshRenderer : meshRenderers) {
+	if (meshRenderer) {
 		// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
 		meshRenderer->Collect(renderer, isStatic);
 	}

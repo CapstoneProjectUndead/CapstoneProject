@@ -8,6 +8,7 @@ struct SlotEntry
     uint32      inv_id = 0;
     std::string name;
     ITEM_TYPE   type = ITEM_TYPE::ETC;
+    int item_id = -1;       // 아이템 종류 ID(Rendering 시 인자로 넘겨주기 위해 필요)
 };
 
 
@@ -25,7 +26,7 @@ public:
     void OnItemRemovedFromInventory(uint32 inventoryId);
 
     int  GetSelectedSlot() const { return selected_slot; } // 0-based, -1 = none
-
+    int GetSelectedItemId() const;
 private:
     void DrawSlotCells(float cellSz, float pad, float scale);
 
