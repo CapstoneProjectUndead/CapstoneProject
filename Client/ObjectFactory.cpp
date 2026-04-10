@@ -127,8 +127,8 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	// 애니메이터 설정
 	if (!aniSet.idle.empty()) {
 		auto animator = std::make_shared<CAnimatorComponent>();
-		animator->Init(aniSet);
 		character->SetComponent(animator);
+		animator->Init(aniSet);
 	}
 
 	character->Initialize(GET_DEVICE, GET_CMD_LIST);
@@ -357,8 +357,6 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 {
 	std::string fileName{ "../Modeling/undead_char_0308.bin" };
 
-	CreateDowsingrod(character, heapManager);
-
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
 		"body_ganga", "body_nyao", "body_toto",
@@ -443,14 +441,6 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		{ "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" },
 		true
 	);
-}
-
-void CObjectFactory::CreateDowsingrod(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
-{
-	std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-
-
 }
 
 void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
@@ -705,6 +695,14 @@ void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
 	}
 	{
 		std::string fileName{ "../Modeling/Equip_1.bin" };
+		LoadNode(fileName);
+	}
+	{
+		std::string fileName{ "../Modeling/shovel_0307.bin" };
+		LoadNode(fileName);
+	}
+	{
+		std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
 		LoadNode(fileName);
 	}
 }

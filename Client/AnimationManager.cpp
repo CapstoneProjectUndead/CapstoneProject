@@ -33,11 +33,27 @@ BoneMask CAnimationManager::CreateUpperBodyMask(const CGeometryLoader::SkeletonD
     return mask;
 }
 
-void CAnimationManager::Initialize(const std::string& charName, const std::string& AniName)
+void CAnimationManager::Initialize(const std::string& charName, const std::string& AniName, OBJECT_TYPE objType, uint8_t subType)
 {
     // load skeletonData
     CGeometryLoader::SkeletonData skeleton = CGeometryLoader::LoadSkeleton(charName);
     uint32_t boneCount = (uint32_t)skeleton.bone_names.size();
+
+    ModelKey key{ objType, subType };
+    switch (objType) {
+    case OBJECT_TYPE::PLAYER:
+    {
+        bone_indices[key]["head"] = skeleton.GetBoneIndex("head");
+        bone_indices[key]["handR"] = skeleton.GetBoneIndex("handR");
+        bone_indices[key]["handL"] = skeleton.GetBoneIndex("handL");
+    }
+        break;
+    case OBJECT_TYPE::MONSTER:
+    {
+        bone_indices[key]["handR"] = skeleton.GetBoneIndex("handR");
+    }
+        break;
+    }
 
     bone_masks.push_back(CreateUpperBodyMask(skeleton));
 
@@ -46,7 +62,6 @@ void CAnimationManager::Initialize(const std::string& charName, const std::strin
     for (auto& [name, clip] : newAnimations)
     {
         clip.bone_count = boneCount;
-        clip.head_bone_idx = skeleton.GetBoneIndex("head");
         animations[name] = std::move(clip);
     }
 }
@@ -136,10 +151,10 @@ void CAnimationManager::CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCom
     }
 }
 
-XMVECTOR CAnimationManager::GetBoneWorldPos( const std::string& clipName, float currentTime, int boneIdx)
+XMMATRIX CAnimationManager::GetBoneSocketMatrix(const std::string& clipName, float currentTime, int boneIdx)
 {
     auto it = animations.find(clipName);
-    if (it == animations.end() || boneIdx < 0) return XMVECTOR{};
+    if (it == animations.end() || boneIdx < 0) return XMMatrixIdentity();
 
     AnimationClip& clip = it->second;
 
@@ -172,7 +187,5 @@ XMVECTOR CAnimationManager::GetBoneWorldPos( const std::string& clipName, float 
     // 보간된 로컬(ToRoot) 행렬 완성
     XMMATRIX interpolatedToRoot = XMMatrixAffineTransformation(S, XMVectorZero(), R, T);
 
-    XMVECTOR finalPos = interpolatedToRoot.r[3];
-
-    return finalPos;
+    return interpolatedToRoot;
 }

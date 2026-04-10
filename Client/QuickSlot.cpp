@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "QuickSlot.h"
 #include "KeyManager.h"
 
@@ -8,6 +8,17 @@ CQuickSlot::CQuickSlot()
 
 CQuickSlot::~CQuickSlot()
 {
+}
+
+int CQuickSlot::GetSelectedItemId() const
+{
+	if (selected_slot < 0 || selected_slot >= SLOT_COUNT)
+		return -1;
+
+	if (!slots[selected_slot].has_item)
+		return -1;
+
+	return slots[selected_slot].item_id;
 }
 
 void CQuickSlot::Draw()
@@ -155,6 +166,7 @@ bool CQuickSlot::TryDropOnSlot(CItem* item, ImVec2 mousePos)
 			slots[i].inv_id   = invId;
 			slots[i].name     = item->GetName();
 			slots[i].type     = item->GetItemType();
+			slots[i].item_id = item->GetItemId();
 			return true;
 		}
 	}

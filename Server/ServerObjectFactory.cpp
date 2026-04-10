@@ -164,7 +164,7 @@ void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object, share
 	// -----------------------------------
 	// 플레이어에게 충돌체(Collider) 달아주기
 	// -----------------------------------
-	std::string fileName{ "../Modeling/undead_char.bin" };
+	std::string fileName{ "../Modeling/undead_char_0308.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	// Mesh 로드 + totalBounds 계산
