@@ -166,15 +166,18 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
 
                 state = PLAYER_STATE::IDLE;
 
-                if (frameA->state == PLAYER_STATE::WALK)
+                if (frameA->state == PLAYER_STATE::WALK || frameA->state == PLAYER_STATE::RUN)
                     state = frameA->state;
-                if (frameB->state == PLAYER_STATE::WALK)
+                if (frameB->state == PLAYER_STATE::WALK || frameB->state == PLAYER_STATE::RUN)
                     state = frameB->state;
 
                 nextPos = position;
             }
             else {
-                state = PLAYER_STATE::WALK;
+                if (frameA->state == PLAYER_STATE::RUN)
+                    state = PLAYER_STATE::RUN;
+                else
+                    state = PLAYER_STATE::WALK;
             }
 
             // 위치 이동

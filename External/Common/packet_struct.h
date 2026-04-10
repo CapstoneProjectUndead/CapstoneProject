@@ -34,6 +34,7 @@ struct NetPlayerInfo
 	bool			s = false;
 	bool			d = false;
 	bool			space = false;
+	bool			shift = false;
 	bool            is_grounded = true;
 
 	float			x, y, z;
@@ -77,6 +78,8 @@ struct NetPlayerInfo
 		, s(other.s)
 		, d(other.d)
 		, space(other.space)
+		, shift(other.shift)
+		, is_grounded(other.is_grounded)
 		, x(other.x)
 		, y(other.y)
 		, z(other.z)
@@ -89,7 +92,7 @@ struct NetPlayerInfo
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 59, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 60, "NetObjectInfo size mismatch!");
 
 struct NetMonsterInfo
 {

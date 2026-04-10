@@ -14,6 +14,15 @@ struct InputData
 	bool d = false;
 	bool space = false;
 	bool shift = false;
+
+	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift)
+		: w(_w)
+		, a(_a)
+		, s(_s)
+		, d(_d)
+		, space(_space)
+		, shift(_shift)
+	{ }
 };
 
 struct PlayerStat
@@ -39,7 +48,7 @@ struct PlayerInfo
 	uint32			id;
 
 	// 서버권위 방식) InputData는 서버권위 방식에서 필요한 데이터이다.
-	InputData		input;
+	InputData		input{false, false, false, false, false, false};
 	bool            is_grounded = true;
 
 	float			x, y, z;	// 좌표
@@ -61,6 +70,7 @@ struct PlayerInfo
 		, yaw{}
 		, pitch{}
 		, roll{}
+		, input{ false, false, false, false, false, false }
 	{
 	}
 
@@ -74,6 +84,7 @@ struct PlayerInfo
 		, yaw{}
 		, pitch{}
 		, roll{}
+		, input{ false, false, false, false, false, false }
 	{
 	}
 

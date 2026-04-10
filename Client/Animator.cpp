@@ -91,6 +91,28 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 		return false;
 		};
 	controller.AddTransition(run, r2w);
+
+	// Idle -> Run
+	Transition i2r;
+	i2r.to_state = run;
+	i2r.duration = 0.2f;
+	i2r.condition = [this]() {
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
+		return false;
+		};
+	controller.AddTransition(idle, i2r);
+
+	// Run -> Idle
+	Transition r2i;
+	r2i.to_state = idle;
+	r2i.duration = 0.2f;
+	r2i.condition = [this]() {
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::IDLE;
+		return false;
+		};
+	controller.AddTransition(run, r2i);
 }
 
 void CAnimatorComponent::PlayAction(const std::string& clipName)

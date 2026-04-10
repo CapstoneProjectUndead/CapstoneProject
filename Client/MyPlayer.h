@@ -5,7 +5,7 @@ struct ClientFrameHistory
 {
     uint64       seq_num;
     float        duration;
-    InputData    input;
+    InputData    input{ false, false, false, false, false, false };
     XMFLOAT3     predicted_pos; // 내가 예측했던 결과 좌표
     XMFLOAT3     predicted_velocity;
     PLAYER_STATE state;

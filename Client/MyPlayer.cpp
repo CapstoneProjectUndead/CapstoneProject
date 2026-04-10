@@ -20,6 +20,7 @@ CMyPlayer::CMyPlayer()
 	: CPlayer()
 	, gold(0)
 	, is_ready(false)
+	, current_input{ false, false, false, false, false, false }
 {
     is_my_player = true;
 }
@@ -108,7 +109,10 @@ void CMyPlayer::InterpolateMyPlayer(float elapsedTime)
 
 	// 거리에 따른 기본 상태 결정
 	if (distSq > thresholdSq) {
-		state = PLAYER_STATE::WALK;
+		if (current_input.shift)
+			state = PLAYER_STATE::RUN;
+		else
+			state = PLAYER_STATE::WALK;
 	}
 	else {
 		state = PLAYER_STATE::IDLE;
@@ -248,6 +252,7 @@ void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 	inputPkt.info.s = input.s;
 	inputPkt.info.d = input.d;
 	inputPkt.info.space = input.space;
+	inputPkt.info.shift = input.shift;
 		
 	inputPkt.info.yaw = yaw;
 	inputPkt.info.pitch = pitch;
