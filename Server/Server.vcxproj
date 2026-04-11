@@ -206,7 +206,6 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="LobbyScene.cpp" />
     <ClCompile Include="ServerObjectFactory.cpp" />
-    <ClCompile Include="SkinnedData.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="TitleScene.cpp" />
@@ -260,7 +259,6 @@
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="LobbyScene.h" />
     <ClInclude Include="ServerObjectFactory.h" />
-    <ClInclude Include="SkinnedData.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="TitleScene.h" />

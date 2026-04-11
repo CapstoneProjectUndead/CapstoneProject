@@ -153,9 +153,6 @@
     <ClCompile Include="CustomScene.cpp">
       <Filter>Scene\CustomScene</Filter>
     </ClCompile>
-    <ClCompile Include="SkinnedData.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="Movement.cpp">
       <Filter>Component</Filter>
     </ClCompile>
@@ -292,9 +289,6 @@
     </ClInclude>
     <ClInclude Include="CustomScene.h">
       <Filter>Scene\CustomScene</Filter>
-    </ClInclude>
-    <ClInclude Include="SkinnedData.h">
-      <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Movement.h">
       <Filter>Component</Filter>

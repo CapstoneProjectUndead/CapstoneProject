@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 // Server쪽 GameScene
 #include "Scene.h"
 #include "GeometryLoader.h"
@@ -19,7 +19,7 @@ public:
     virtual void OnSceneDeactivate() override;
 
 private:
-    void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node);
+    void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
     void LoadGameScene();
     void CreateGameScene();
 

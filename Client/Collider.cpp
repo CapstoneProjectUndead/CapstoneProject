@@ -2,21 +2,26 @@
 #include "Collider.h"
 #include "Object.h"
 #include "Mesh.h"
+#ifdef DEBUG
 #include "GameFramework.h"  // 디버깅 시에 필요
+#endif
 #include "MeshRenderer.h"
 
-CBoxShape::CBoxShape(XMFLOAT3 extents, XMFLOAT3& p)
+CBoxShape::CBoxShape(XMFLOAT3 extents, XMFLOAT3 p)
 {
     local.Center = p;
     local.Extents = extents;
     world = local;
+#ifdef DEBUG
     debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
+#endif
 };
 
 void CBoxShape::Render()
 {
 #ifdef DEBUG
-    debug->Render(GET_CMD_LIST);
+    if(debug)
+        debug->Render(GET_CMD_LIST);
 #endif
 }
 
@@ -27,11 +32,13 @@ void CBoxShape::Update(const XMMATRIX& worldMatrix)
 }
 
 // sphere
-CSphereShape::CSphereShape(float r, XMFLOAT3& p)
+CSphereShape::CSphereShape(float r, XMFLOAT3 p)
 {
     local.Radius = r;
     local.Center = p;
+#ifdef DEBUG
     debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
+#endif
 }
 
 CSphereShape::CSphereShape(XMFLOAT3& extents, XMFLOAT3& p)
@@ -40,13 +47,16 @@ CSphereShape::CSphereShape(XMFLOAT3& extents, XMFLOAT3& p)
 
     XMVECTOR vExtents = XMLoadFloat3(&extents);
     local.Radius = XMVectorGetX(XMVector3Length(vExtents));
+#ifdef DEBUG
     debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
+#endif
 }
 
 void CSphereShape::Render()
 {
 #ifdef DEBUG
-    debug->Render(GET_CMD_LIST);
+    if (debug)
+        debug->Render(GET_CMD_LIST);
 #endif
 }
 
@@ -55,7 +65,53 @@ void CSphereShape::Update(const XMMATRIX& worldMatrix)
     local.Transform(world, worldMatrix);
 }
 
-CConvexMeshShape::CConvexMeshShape(std::vector<XMFLOAT3>& vertice)
+CCapsuleShape::CCapsuleShape(float r, float h, int dir, XMFLOAT3 p)
+    : radius(r), height(h), direction(dir), center(p)
+{
+}
+
+void CCapsuleShape::Update(const XMMATRIX& worldMatrix)
+{
+    XMVECTOR vCenter = XMLoadFloat3(&center);
+    world_center = XMVector3TransformCoord(vCenter, worldMatrix);
+
+    // 축 벡터 설정 (방향에 따라)
+    XMVECTOR axis = XMVectorZero();
+    if (direction == 0) axis = XMVectorSet(1, 0, 0, 0); // X
+    else if (direction == 1) axis = XMVectorSet(0, 1, 0, 0); // Y
+    else axis = XMVectorSet(0, 0, 1, 0); // Z
+
+    // 회전 적용
+    world_axis = XMVector3Normalize(XMVector3TransformNormal(axis, worldMatrix));
+    world_half_height = (height - (radius * 2.0f)) * 0.5f;
+}
+
+XMVECTOR CCapsuleShape::GetSupport(XMVECTOR direction) const
+{
+    // 캡슐의 중심에서 반만큼 떨어진 두 점(A, B)을 계산
+    XMVECTOR A = world_center + world_axis * world_half_height;
+    XMVECTOR B = world_center - world_axis * world_half_height;
+
+    // 점 A와 B 중 방향(direction)과 내적이 더 큰 쪽을 선택
+    float dotA = XMVectorGetX(XMVector3Dot(A, direction));
+    float dotB = XMVectorGetX(XMVector3Dot(B, direction));
+
+    XMVECTOR bestPoint = (dotA > dotB) ? A : B;
+
+    // 선택된 점에 방향 벡터 방향으로 반지름만큼 더함
+    return bestPoint + XMVector3Normalize(direction) * radius;
+}
+
+void CCapsuleShape::Render()
+{
+#ifdef DEBUG
+    if (debug)
+        debug->Render(GET_CMD_LIST);
+#endif
+}
+
+// Convex
+CConvexMeshShape::CConvexMeshShape(std::vector<XMFLOAT3> vertice)
 {
     local.reserve(vertice.size());
     local = vertice;
@@ -249,7 +305,9 @@ int CConcaveMeshShape::BuildBVHRecursive(std::vector<int>& indices, int start, i
 CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
     : shape{ std::move(otherShape) }, local_aabb{ otherBox }, world_aabb{otherBox}
 {
+#ifdef DEBUG
     debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local_aabb.Extents, local_aabb.Center);
+#endif
 }
 
 CColliderComponent::CColliderComponent(const CColliderComponent& other)

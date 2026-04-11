@@ -46,7 +46,7 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 	auto meshComp = std::make_shared<CMeshComponent>();
 	obj->SetComponent(meshComp);
 	meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
-	obj->world_matrix = node->localMatrix;
+	obj->world_matrix = node->local_matrix;
 
 	// MaterialComponent
 	auto matComp = std::make_shared<CMaterialComponent>();
@@ -69,6 +69,34 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 	obj->SetShader(shaderName);
 }
 
+void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
+	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer)
+{
+	// Collider 설정
+	if (g_is_single) {
+		EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
+		EColLayer mask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND);
+		AddCollider(character, node, category, mask);
+	}
+
+	if (node->mesh.positions.empty()) return;
+	character->world_matrix = node->local_matrix;
+
+	// MeshComponent 생성 및 설정
+	auto meshComp = std::make_shared<CMeshComponent>();
+	character->SetComponent(meshComp);
+
+	if (aniSet.idle.empty())
+		meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
+	else
+		meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, node);
+
+	// 파츠 처리 (머티리얼 등)
+	if (partProcessor) {
+		partProcessor(node.get(), meshComp, renderer);
+	}
+}
+
 void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
 	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
 	CharacterAnimSet aniSet, bool isPlayer)
@@ -80,50 +108,13 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	auto renderer = std::make_shared<CMeshRendererComponent>();
 	character->SetComponent(renderer);
 
-	BoundingBox totalBounds;
-	bool firstBounds = true;
-
 	// 메쉬 노드 순회 및 파츠 처리
+	ProcessNode(character, frameRoot, renderer, partProcessor, aniSet, isPlayer);
+	// 자식 노드 순회 처리
 	for (const auto& child : frameRoot->childrens) {
-		if (child->mesh.positions.empty()) continue;
-		character->world_matrix = child->localMatrix;
-
-		// Bounds 계산
-		if (firstBounds) { totalBounds = child->mesh.bounds; firstBounds = false; }
-		else { BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds); }
-
-		// 공통 MeshComponent 생성
-		auto meshComp = std::make_shared<CMeshComponent>();
-		character->SetComponent(meshComp);
-		if (aniSet.idle.empty())	// 애니메이션 있으면 무조건 skinnedVertex
-			meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, child);
-		else
-			meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, child);
-
-		// 모델마다 다른 상세 로직(머티리얼, 특정 파츠 분류)은 외부에서 주입받은 함수로 처리
-		if (partProcessor) {
-			partProcessor(child.get(), meshComp, renderer);
-		}
+		ProcessNode(character, child, renderer, partProcessor, aniSet, isPlayer);
 	}
-
-	// Collider 설정 (싱글 전용)
-	if (g_is_single) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-		auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-
-		CollisionFilter filter;
-		if (isPlayer)
-			filter.category = EColLayer::PLAYER;
-		else
-			filter.category = EColLayer::CHARACTER;
-
-		filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-		collider->SetFillter(filter);
-
-		character->SetComponent(collider);
-		CPhysicsManager::GetInstance().SetCollider(collider);
-	}
-
+	
 	// 애니메이터 설정
 	if (!aniSet.idle.empty()) {
 		auto animator = std::make_shared<CAnimatorComponent>();
@@ -138,20 +129,43 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 {
 	if (!g_is_single || !node) return;
 
-	std::unique_ptr<CColliderShape> shape;
-
-	// 데이터가 있으면 Convex, 없으면 Bounds 기반 Box (Road 등)
-	if (!node->collider.positions.empty()) {
-		shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
+	// Mesh Collider
+	if (!node->mesh_colliders.empty()) {
+		for (const auto& mc : node->mesh_colliders) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(mc.positions);
+			auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+			collider->SetFillter({ category, mask });
+			obj->SetComponent(collider);
+			CPhysicsManager::GetInstance().SetCollider(collider);
+		}
 	}
-	else {
-		shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
+
+	// Box Colliders
+	for (const auto& box : node->box_colliders) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(box.size, box.center);
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		collider->SetFillter({ category, mask });
+		obj->SetComponent(collider);
+		CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 
-	auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
-	collider->SetFillter({ category, mask });
-	obj->SetComponent(collider);
-	CPhysicsManager::GetInstance().SetCollider(collider);
+	// Sphere Colliders
+	for (const auto& sphere : node->sphere_colliders) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(sphere.radius, sphere.center);
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		collider->SetFillter({ category, mask });
+		obj->SetComponent(collider);
+		CPhysicsManager::GetInstance().SetCollider(collider);
+	}
+
+	// Capsule Colliders
+	for (const auto& cap : node->capsule_colliders) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CCapsuleShape>(cap.radius, cap.height, cap.direction, cap.center);
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		collider->SetFillter({ category, mask });
+		obj->SetComponent(collider);
+		CPhysicsManager::GetInstance().SetCollider(collider);
+	}
 }
 
 void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
@@ -161,8 +175,6 @@ void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
 
 void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
-	if (node->mesh.positions.empty()) return;
-
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
 	InitStaticComponents(obj, heapManager, node);
@@ -174,11 +186,11 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	if (g_is_single) {
 		bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
 
-		if (!node->collider.positions.empty()) {
-			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
-		}
-		else if (isRoad) {
+		if (isRoad) {
 			AddCollider(obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
+		}
+		else {
+			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
 		}
 	}
 
@@ -189,11 +201,9 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHeapManager* heapManager)
 {
 	std::vector<std::shared_ptr<CObject>> objects;
-
 	std::string fileName{ "../Modeling/lobby_0305.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	// CreateLobby 내부 루프 일부
 	for (const auto& children : frameRoot->childrens) {
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 		InitStaticComponents(obj, heapManager, children);
@@ -206,29 +216,23 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 			switch (stringToLobbyMeshName(children->name)) {
 			case LobbyMeshName::Wall:
 			{
-				std::unique_ptr<CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
-				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
-				collider->SetFillter({ EColLayer::WALL, EColLayer::PLAYER });
-				obj->SetComponent(collider);
-				CPhysicsManager::GetInstance().SetCollider(collider);
+				if (!children->mesh_colliders.empty()) {
+					std::unique_ptr<CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->mesh_colliders[0].positions, children->mesh_colliders[0].indices);
+					auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+					collider->SetFillter({ EColLayer::WALL, EColLayer::ALL_MOB });
+					obj->SetComponent(collider);
+					CPhysicsManager::GetInstance().SetCollider(collider);
+				}
 			}
 			break;
-			case LobbyMeshName::Floor:
-				AddCollider(obj, children, EColLayer::GROUND, EColLayer::ALL_MOB);
-				break;
-			case LobbyMeshName::GroundPipe:
+			default:
 				AddCollider(obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);
-				break;
-			case LobbyMeshName::Unknown:
-				if (!children->collider.positions.empty())
-					AddCollider(obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);
 				break;
 			}
 		}
 		obj->Initialize(GET_DEVICE, GET_CMD_LIST);
 		objects.push_back(std::move(obj));
 	}
-
 	return objects;
 }
 
@@ -240,7 +244,6 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	}
 
 	auto proto = it->second;
-
 	obj->name = name; // 디버깅용 이름 복사
 
 	// Transform 계산
@@ -739,8 +742,6 @@ CObjectFactory::LobbyMeshName CObjectFactory::stringToLobbyMeshName(const std::s
 {
 	static const std::unordered_map<std::string, LobbyMeshName> table = {
 		{"Wall", LobbyMeshName::Wall},
-		{"Floor", LobbyMeshName::Floor},
-		{"GroundPipe", LobbyMeshName::GroundPipe},
 	};
 
 	auto it = table.find(str);

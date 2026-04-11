@@ -344,20 +344,51 @@ std::unique_ptr<FrameNode> CGeometryLoader::LoadFrame(BinaryReader& br)
         return nullptr;
 
     auto node = std::make_unique<FrameNode>();
-
     node->name = br.ReadName();
 
     std::string tag;
-
     while (br.ReadTag(tag)) {
         if (br.IsTag(tag, "<Transform>:")) {
-            node->localMatrix = br.Read<XMFLOAT4X4>();
+            node->local_matrix = br.Read<XMFLOAT4X4>();
         }
         else if (br.IsTag(tag, "<Mesh>:")) {
             node->mesh = LoadMesh(br);
         }
-        else if (br.IsTag(tag, "<ColliderMesh>:")) {
-            node->collider = LoadMeshCollider(br);
+        else if (br.IsTag(tag, "<BoxCount>:")) {
+            int count = br.Read<int>();
+            for (int i = 0; i < count; ++i) {
+                PrimitiveCollider col;
+                col.center = br.Read<XMFLOAT3>();
+                col.size = br.Read<XMFLOAT3>();
+                col.size = Vector3::ScalarProduct(col.size, 0.5);
+                node->box_colliders.push_back(col);
+            }
+        }
+        else if (br.IsTag(tag, "<SphereCount>:")) {
+            int count = br.Read<int>();
+            for (int i = 0; i < count; ++i) {
+                PrimitiveCollider col;
+                col.center = br.Read<XMFLOAT3>();
+                col.radius = br.Read<float>();
+                node->sphere_colliders.push_back(col);
+            }
+        }
+        else if (br.IsTag(tag, "<CapsuleCount>:")) {
+            int count = br.Read<int>();
+            for (int i = 0; i < count; ++i) {
+                PrimitiveCollider col;
+                col.center = br.Read<XMFLOAT3>();
+                col.radius = br.Read<float>();
+                col.height = br.Read<float>();
+                col.direction = br.Read<int>();
+                node->capsule_colliders.push_back(col);
+            }
+        }
+        else if (br.IsTag(tag, "<MeshColCount>:")) {
+            int count = br.Read<int>();
+            for (int i = 0; i < count; ++i) {
+                node->mesh_colliders.push_back(LoadMeshCollider(br));
+            }
         }
         else if (br.IsTag(tag, "<Children>:")) {
             int childCount = br.Read<int>();

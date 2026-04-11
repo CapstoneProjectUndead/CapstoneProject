@@ -25,7 +25,7 @@ protected:
 // obb 기반
 class CBoxShape : public CColliderShape {
 public:
-    CBoxShape(XMFLOAT3 extents, XMFLOAT3& p = XMFLOAT3{});
+    CBoxShape(XMFLOAT3 extents, XMFLOAT3 p = XMFLOAT3{});
     std::unique_ptr<CColliderShape> CBoxShape::Clone() const {
         return std::make_unique<CBoxShape>(*this);
     }
@@ -44,7 +44,7 @@ private:
 
 class CSphereShape : public CColliderShape {
 public:
-    CSphereShape(float r, XMFLOAT3& p = XMFLOAT3{});
+    CSphereShape(float r, XMFLOAT3 p = XMFLOAT3{});
     CSphereShape(XMFLOAT3& extents, XMFLOAT3& p = XMFLOAT3{});
     std::unique_ptr<CColliderShape> CSphereShape::Clone() const {
         return std::make_unique<CSphereShape>(*this);
@@ -62,13 +62,38 @@ private:
     BoundingSphere world{};
 };
 
+class CCapsuleShape : public CColliderShape {
+public:
+    // radius: 반지름, height: 전체 길이, direction: 0=X, 1=Y, 2=Z
+    CCapsuleShape(float radius, float height, int direction, XMFLOAT3 p = XMFLOAT3{});
+
+    std::unique_ptr<CColliderShape> Clone() const override {
+        return std::make_unique<CCapsuleShape>(*this);
+    }
+
+    void Render() override;
+    void Update(const XMMATRIX& worldMatrix) override;
+
+    XMVECTOR GetSupport(XMVECTOR direction) const override;
+private:
+    float radius;
+    float height;
+    int direction; // 0:X, 1:Y, 2:Z
+    XMFLOAT3 center;
+
+    // GJK 연산을 위한 월드 공간 데이터
+    XMVECTOR world_center;
+    XMVECTOR world_axis;
+    float world_half_height;
+};
+
 /*
 * 속이 찬 오브젝트(볼록)에 사용
 */
 class CConvexMeshShape : public CColliderShape
 {
 public:
-    CConvexMeshShape(std::vector<XMFLOAT3>& vertice);
+    CConvexMeshShape(std::vector<XMFLOAT3> vertice);
     std::unique_ptr<CColliderShape> CConvexMeshShape::Clone() const {
         return std::make_unique<CConvexMeshShape>(*this);
     }

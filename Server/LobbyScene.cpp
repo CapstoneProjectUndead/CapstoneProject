@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 // Server쪽 LobbyScene
 #include "LobbyScene.h"
 #include "Player.h"
@@ -264,8 +264,6 @@ CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string&
 {
 	static const std::unordered_map<std::string, LobbyMeshName> table = {
 		{"Wall", LobbyMeshName::Wall},
-		{"Floor", LobbyMeshName::Floor},
-		{"GroundPipe", LobbyMeshName::GroundPipe},
 	};
 
 	auto it = table.find(str);
@@ -283,24 +281,9 @@ void CLobbyScene::CreateLobby()
 	}
 
 	for (const auto& children : frameRoot->childrens) {
-
-		if (children->mesh.positions.empty() && children->collider.positions.empty())
-			continue;
-
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 		obj->SetCurrentSceneType(scene_type);
-		obj->world_matrix = children->localMatrix;
-
-		BoundingBox realBounds = children->mesh.bounds;
-
-		if (children->mesh.positions.empty() && !children->collider.positions.empty()) {
-			BoundingBox::CreateFromPoints(realBounds, children->collider.positions.size(), children->collider.positions.data(), sizeof(XMFLOAT3));
-		}
-
-		if (realBounds.Extents.y < 0.1f) {
-			realBounds.Extents.y = 0.1f;
-		}
-		// =========================================================
+		obj->world_matrix = children->local_matrix;
 
 		CollisionFilter filter;
 		filter.category = EColLayer::OBJECT;
@@ -309,60 +292,19 @@ void CLobbyScene::CreateLobby()
 		switch (stringToLobbyMeshName(children->name)) {
 		case LobbyMeshName::Wall:
 		{
-			std::unique_ptr< CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->collider.positions, children->collider.indices);
-			// children->mesh.bounds realBounds!
-			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
-			CollisionFilter filter;
-			filter.category = EColLayer::WALL;
-			filter.mask = EColLayer::PLAYER;
-			collider->SetFillter(filter);
-
-			collider->owner = obj.get();
-			collider->Update(0.0f);
-			obj->SetComponent(collider);
-			break;
+			if (!children->mesh_colliders.empty()) {
+				std::unique_ptr<CColliderShape> shape = std::make_unique<CConcaveMeshShape>(children->mesh_colliders[0].positions, children->mesh_colliders[0].indices);
+				auto collider = std::make_shared<CColliderComponent>(shape, children->mesh.bounds);
+				collider->SetFillter({ EColLayer::WALL, EColLayer::ALL_MOB });
+				obj->SetComponent(collider);
+				collider->Update(0.0f);
+				GetPhysicsManager()->SetCollider(collider);
+			}
 		}
-		case LobbyMeshName::Floor:
-		{
-			// children->mesh.bounds realBounds
-			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
-			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
-			CollisionFilter filter;
-			filter.category = EColLayer::GROUND;
-			filter.mask = EColLayer::PLAYER;
-			boxCollider->SetFillter(filter);
-
-			boxCollider->owner = obj.get();
-			boxCollider->Update(0.0f);
-			obj->SetComponent(boxCollider);
+		break;
+		default:
+			CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);
 			break;
-		}
-		case LobbyMeshName::GroundPipe:
-		{
-			// children->mesh.bounds realBounds
-			std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(realBounds.Extents, realBounds.Center);
-			auto boxCollider = std::make_shared<CColliderComponent>(shape, realBounds);
-			boxCollider->SetFillter(filter);
-
-			boxCollider->owner = obj.get();
-			boxCollider->Update(0.0f);
-			obj->SetComponent(boxCollider);
-			break;
-		}
-		case LobbyMeshName::Unknown:
-		{
-			if (children->collider.positions.empty()) break;
-			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(children->collider.positions);
-			// children->mesh.bounds realBounds!
-			auto collider = std::make_shared<CColliderComponent>(shape, realBounds);
-			collider->SetFillter(filter);
-
-			collider->owner = obj.get();
-			collider->Update(0.0f);
-			obj->SetComponent(collider);
-			break;
-		}
-
 		}
 
 		static_objects.push_back(obj);
