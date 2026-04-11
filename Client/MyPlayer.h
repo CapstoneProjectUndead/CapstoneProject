@@ -96,5 +96,7 @@ private:
     uint64                            gold;      // 소지금
 
     bool                              is_ready;
+
+    float grounded_timer{ 0.1 };
 };
 

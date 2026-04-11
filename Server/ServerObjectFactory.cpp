@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "ServerObjectFactory.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
@@ -27,7 +27,7 @@ CServerObjectFactory::~CServerObjectFactory()
 shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user, shared_ptr<CPhysicsManager> physicsManager)
 {
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
-	InitializeCharacter(player, physicsManager);
+	InitializeUndeadCharacter(player, physicsManager);
 
 	// 유저를 약한 참조 (refcount 증가x)
 	player->SetUser(user);
@@ -54,7 +54,7 @@ shared_ptr<CPlayer> CServerObjectFactory::CreatePlayerTest(SCENE_TYPE sceneType,
 shared_ptr<CPlayer> CServerObjectFactory::CreatePlayer(SCENE_TYPE sceneType, shared_ptr<Session> session, shared_ptr<CUser> user, shared_ptr<CRoom> room, shared_ptr<CPhysicsManager> physicsManager)
 {
 	shared_ptr<CPlayer> player = make_shared<CPlayer>();
-	InitializeCharacter(player, physicsManager);
+	InitializeUndeadCharacter(player, physicsManager);
 
 	// 유저를 약한 참조 (refcount 증가x)
 	player->SetUser(user);
@@ -146,7 +146,17 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	return monster;
 }
 
-void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
+void CServerObjectFactory::InitializeCharacter(const std::string& fileName, shared_ptr<CObject>& object, shared_ptr<CPhysicsManager>& physicsManager, bool isPlayer)
+{
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+	ProcessNode(physicsManager, object, frameRoot, isPlayer);
+	for (const auto& child : frameRoot->childrens) {
+		ProcessNode(physicsManager, object, child, isPlayer);
+	}
+}
+
+void CServerObjectFactory::InitializeUndeadCharacter(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	// -------------------------------------
 	// 플레이어에게 MovementComponent 달아주기
@@ -165,101 +175,71 @@ void CServerObjectFactory::InitializeCharacter(shared_ptr<CObject> object, share
 	// 플레이어에게 충돌체(Collider) 달아주기
 	// -----------------------------------
 	std::string fileName{ "../Modeling/undead_char_0308.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-
-	// Mesh 로드 + totalBounds 계산
-	BoundingBox totalBounds;
-	bool firstBounds = true;
-
-	for (const auto& child : frameRoot->childrens) {
-		if (child->mesh.positions.empty())
-			continue;
-		// bounds merge
-		if (firstBounds) {
-			totalBounds = child->mesh.bounds;
-			firstBounds = false;
-		}
-		else {
-			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
-		}
-	}
-
-	// ColliderComponent 생성/ filter 설정
-	std::unique_ptr< CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::PLAYER;
-	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-	collider->SetFillter(filter);
-	object->SetComponent(collider);
-	physicsManager->SetCollider(collider);
-
-	object->UpdateWorldMatrix();
-	collider->Update(0.0f);
+	InitializeCharacter(fileName, object, physicsManager, true);
 }
 
 void CServerObjectFactory::InitializeHumanMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	std::string fileName{ "../Modeling/Human_monster.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-
-	BoundingBox totalBounds;
-	bool firstBounds = true;
-
-	for (const auto& child : frameRoot->childrens) {
-		if (child->mesh.positions.empty())
-			continue;
-		if (firstBounds) {
-			totalBounds = child->mesh.bounds;
-			firstBounds = false;
-		}
-		else {
-			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
-		}
-	}
-
-	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::CHARACTER;
-	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-	collider->SetFillter(filter);
-	object->SetComponent(collider);
-	physicsManager->SetCollider(collider);
-
-	object->UpdateWorldMatrix();
-	collider->Update(0.0f);
+	InitializeCharacter(fileName, object, physicsManager, false);
 }
 
 void CServerObjectFactory::InitializeGhost(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	std::string fileName{ "../Modeling/Ghost3.bin" };
-	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+	InitializeCharacter(fileName, object, physicsManager, false);
+}
 
-	BoundingBox totalBounds;
-	bool firstBounds = true;
+void CServerObjectFactory::ProcessNode(shared_ptr<CPhysicsManager> physicsManager, shared_ptr<CObject>& object, const std::unique_ptr<CGeometryLoader::FrameNode>& node, bool isPlayer)
+{
+	EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
+	EColLayer mask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND);
+	AddCollider(physicsManager, object, node, category, mask);
+}
 
-	for (const auto& child : frameRoot->childrens) {
-		if (child->mesh.positions.empty())
-			continue;
-		if (firstBounds) {
-			totalBounds = child->mesh.bounds;
-			firstBounds = false;
-		}
-		else {
-			BoundingBox::CreateMerged(totalBounds, totalBounds, child->mesh.bounds);
+void CServerObjectFactory::AddCollider(shared_ptr<CPhysicsManager> physicsManager, std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask)
+{
+	if (!node) return;
+
+	// Mesh Collider
+	if (!node->mesh_colliders.empty()) {
+		for (const auto& mc : node->mesh_colliders) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(mc.positions);
+			auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+			collider->SetFillter({ category, mask });
+			obj->SetComponent(collider);
+			collider->Update(0.0f);
+			physicsManager->SetCollider(collider);
 		}
 	}
 
-	std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(totalBounds.Extents.y, totalBounds.Center);
-	auto collider = std::make_shared<CColliderComponent>(shape, totalBounds);
-	CollisionFilter filter;
-	filter.category = EColLayer::CHARACTER;
-	filter.mask = EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND;
-	collider->SetFillter(filter);
-	object->SetComponent(collider);
-	physicsManager->SetCollider(collider);
+	// Box Colliders
+	for (const auto& box : node->box_colliders) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(box.size, box.center);
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		collider->SetFillter({ category, mask });
+		obj->SetComponent(collider);
+		collider->Update(0.0f);
+		physicsManager->SetCollider(collider);
+	}
 
-	object->UpdateWorldMatrix();
-	collider->Update(0.0f);
+	// Sphere Colliders
+	for (const auto& sphere : node->sphere_colliders) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CSphereShape>(sphere.radius, sphere.center);
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		collider->SetFillter({ category, mask });
+		obj->SetComponent(collider);
+		collider->Update(0.0f);
+		physicsManager->SetCollider(collider);
+	}
+
+	// Capsule Colliders
+	for (const auto& cap : node->capsule_colliders) {
+		std::unique_ptr<CColliderShape> shape = std::make_unique<CCapsuleShape>(cap.radius, cap.height, cap.direction, cap.center);
+		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+		collider->SetFillter({ category, mask });
+		obj->SetComponent(collider);
+		collider->Update(0.0f);
+		physicsManager->SetCollider(collider);
+	}
 }

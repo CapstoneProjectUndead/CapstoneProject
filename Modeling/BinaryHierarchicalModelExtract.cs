@@ -1,4 +1,4 @@
-//#define _WITH_SKINNED_BONES_ANIMATION
+﻿//#define _WITH_SKINNED_BONES_ANIMATION
 
 using System.Collections;
 using System.Collections.Generic;
@@ -479,8 +479,6 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
 
     void WriteColliderMeshInfo(Mesh colliderMesh)
     {
-        WriteString("<ColliderMesh>:");
-
         WriteInteger(colliderMesh.vertexCount);
 
         if ((colliderMesh.vertices != null) && (colliderMesh.vertices.Length > 0)) WriteVectors("<Positions>:", colliderMesh.vertices);
@@ -492,8 +490,47 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
             int[] indices = colliderMesh.GetTriangles(i);
             WriteIntegers("<SubMesh>:", i, indices);
         }
+    }
 
-        WriteString("</ColliderMesh>");
+    void WriteColliders(Transform t)
+    {
+        // Box Colliders
+        BoxCollider[] boxes = t.GetComponents<BoxCollider>();
+        WriteInteger("<BoxCount>:", boxes.Length);
+        foreach (var box in boxes)
+        {
+            WriteVector(box.center);
+            WriteVector(box.size);
+        }
+
+        // Sphere Colliders
+        SphereCollider[] spheres = t.GetComponents<SphereCollider>();
+        WriteInteger("<SphereCount>:", spheres.Length);
+        foreach (var sphere in spheres)
+        {
+            WriteVector(sphere.center);
+            binaryWriter.Write(sphere.radius);
+        }
+
+        // Capsule Colliders
+        CapsuleCollider[] capsules = t.GetComponents<CapsuleCollider>();
+        WriteInteger("<CapsuleCount>:", capsules.Length);
+        foreach (var capsule in capsules)
+        {
+            WriteVector(capsule.center);
+            binaryWriter.Write(capsule.radius);
+            binaryWriter.Write(capsule.height);
+            binaryWriter.Write(capsule.direction);
+        }
+
+        // Mesh Collider (보통 하나만 쓰지만 동일하게 적용)
+        MeshCollider[] meshCols = t.GetComponents<MeshCollider>();
+        WriteInteger("<MeshColCount>:", meshCols.Length);
+        foreach (var meshCol in meshCols)
+        {
+            if (meshCol.sharedMesh != null)
+                WriteColliderMeshInfo(meshCol.sharedMesh);
+        }
     }
 
     void WriteMaterials(Material[] materials)
@@ -617,11 +654,8 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
         {
             WriteMeshInfo(mesh, renderer);
         }
-        MeshCollider collider = t.GetComponent<MeshCollider>();
-        if (collider != null && collider.sharedMesh != null)
-        {
-            WriteColliderMeshInfo(collider.sharedMesh);
-        }
+
+        WriteColliders(t);
 
         WriteInteger("<Children>:", t.childCount);
         for (int i = 0; i < t.childCount; i++)

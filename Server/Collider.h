@@ -1,19 +1,17 @@
-#pragma once
-// Server쪽 Collider
+﻿#pragma once
 #include "Component.h"
 #include "CollisionAlgorithm.h"
 
-class CMesh;
 class CBoxShape;
 class CSphereShape;
 
 class CColliderShape {
 public:
+    CColliderShape() = default;
     virtual ~CColliderShape() = default;
+    virtual std::unique_ptr<CColliderShape> Clone() const = 0;
 
     virtual void Update(const XMMATRIX& worldMatrix) = 0;
-
-    virtual std::unique_ptr<CColliderShape> Clone() const = 0;
 
     // GJK 특정 방향으로 가장 먼 월드 좌표 점 반환
     virtual XMVECTOR GetSupport(XMVECTOR direction) const = 0;
@@ -22,15 +20,8 @@ public:
 // obb 기반
 class CBoxShape : public CColliderShape {
 public:
-    CBoxShape(const XMFLOAT3& extents, const XMFLOAT3& p);
-
-    CBoxShape(const BoundingBox& box) {
-        local.Center = box.Center;
-        local.Extents = box.Extents;
-        local.Orientation = XMFLOAT4(0.f, 0.f, 0.f, 1.f); // 회전 없는 기본 상태
-    }
-
-    std::unique_ptr<CColliderShape> Clone() const {
+    CBoxShape(XMFLOAT3 extents, XMFLOAT3 p = XMFLOAT3{});
+    std::unique_ptr<CColliderShape> CBoxShape::Clone() const {
         return std::make_unique<CBoxShape>(*this);
     }
 
@@ -47,10 +38,9 @@ private:
 
 class CSphereShape : public CColliderShape {
 public:
-    CSphereShape(float r, XMFLOAT3& p);
-    CSphereShape(XMFLOAT3& extents, const XMFLOAT3& p = XMFLOAT3{});
-
-    std::unique_ptr<CColliderShape> Clone() const {
+    CSphereShape(float r, XMFLOAT3 p = XMFLOAT3{});
+    CSphereShape(XMFLOAT3& extents, XMFLOAT3 p = XMFLOAT3{});
+    std::unique_ptr<CColliderShape> CSphereShape::Clone() const {
         return std::make_unique<CSphereShape>(*this);
     }
 
@@ -65,15 +55,38 @@ private:
     BoundingSphere world{};
 };
 
+class CCapsuleShape : public CColliderShape {
+public:
+    // radius: 반지름, height: 전체 길이, direction: 0=X, 1=Y, 2=Z
+    CCapsuleShape(float radius, float height, int direction, XMFLOAT3 p = XMFLOAT3{});
+
+    std::unique_ptr<CColliderShape> Clone() const override {
+        return std::make_unique<CCapsuleShape>(*this);
+    }
+
+    void Update(const XMMATRIX& worldMatrix) override;
+
+    XMVECTOR GetSupport(XMVECTOR direction) const override;
+private:
+    float radius;
+    float height;
+    int direction; // 0:X, 1:Y, 2:Z
+    XMFLOAT3 center;
+
+    // GJK 연산을 위한 월드 공간 데이터
+    XMVECTOR world_center;
+    XMVECTOR world_axis;
+    float world_half_height;
+};
+
 /*
 * 속이 찬 오브젝트(볼록)에 사용
 */
 class CConvexMeshShape : public CColliderShape
 {
 public:
-    CConvexMeshShape(std::vector<XMFLOAT3>& vertice);
-
-    std::unique_ptr<CColliderShape> Clone() const {
+    CConvexMeshShape(std::vector<XMFLOAT3> vertice);
+    std::unique_ptr<CColliderShape> CConvexMeshShape::Clone() const {
         return std::make_unique<CConvexMeshShape>(*this);
     }
 
@@ -92,7 +105,7 @@ private:
 class CTriangleShape : public CColliderShape {
 public:
     CTriangleShape() = default;
-    std::unique_ptr<CColliderShape> Clone() const {
+    std::unique_ptr<CColliderShape> CTriangleShape::Clone() const {
         return std::make_unique<CTriangleShape>(*this);
     }
 
@@ -123,10 +136,8 @@ public:
         std::array<XMFLOAT3, 3> v;
         BoundingBox aabb;
     };
-
     CConcaveMeshShape(const std::vector<XMFLOAT3>& vertices, const std::vector<uint32_t>& indices);
-    
-    std::unique_ptr<CColliderShape> Clone() const {
+    std::unique_ptr<CColliderShape> CConcaveMeshShape::Clone() const {
         return std::make_unique<CConcaveMeshShape>(*this);
     }
 
@@ -163,7 +174,7 @@ struct CollisionFilter {
 class CColliderComponent : public CComponent
 {
 public:
-    CColliderComponent(std::unique_ptr< CColliderShape>& otherShape, const BoundingBox& otherBox);
+    CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox);
     ~CColliderComponent() = default;
     CColliderComponent(const CColliderComponent& other);
 
@@ -173,7 +184,6 @@ public:
     BoundingBox GetWorldAABB() const { return world_aabb; }
 
     void Update(const float deltaTime) override;
-
     bool Intersects(const CColliderComponent* other);
 private:
     friend class CPhysicsManager;
@@ -181,5 +191,4 @@ private:
     BoundingBox local_aabb{};
     BoundingBox world_aabb{};   // for broad phase
     CollisionFilter filter;
-    std::shared_ptr<CMesh> debug;
 };

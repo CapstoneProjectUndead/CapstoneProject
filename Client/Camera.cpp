@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -21,7 +21,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
-	GenerateProjectionMatrix(0.01f, 500.0f, (float)width / (float)height, 90.0f);
+	GenerateProjectionMatrix(0.01f, 30.0f, (float)width / (float)height, 90.0f);
 	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
 	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
@@ -251,4 +251,17 @@ void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 	}
 
 	GenerateViewMatrix();
+
+	UpdateFrustum();
+}
+
+void CCamera::UpdateFrustum()
+{
+	// 투영 행렬로부터 절두체 생성
+	XMMATRIX proj = XMLoadFloat4x4(&projection_matrix);
+	BoundingFrustum::CreateFromMatrix(default_frustum, proj);
+
+	// 뷰 행렬의 역행렬(World Space 변환)을 사용하여 월드 좌표계 절두체로 변환
+	XMMATRIX viewInv = XMMatrixInverse(nullptr, XMLoadFloat4x4(&view_matrix));
+	default_frustum.Transform(frustum, viewInv);
 }

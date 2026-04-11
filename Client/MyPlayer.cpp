@@ -207,38 +207,49 @@ void CMyPlayer::ProcessRotation()
 	}
 }
 
+
 void CMyPlayer::PredictMove(const InputData& input, float dt)
 {
+	auto move = GetComponent<CMovementComponent>();
+	if (!move || current_scene_type == SCENE_TYPE::CUSTOMS) return;
+	
+	// 키 처리
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
 	if (input.w) dir.z++;
 	if (input.s) dir.z--;
 	if (input.a) dir.x--;
 	if (input.d) dir.x++;
 	if (input.space) {
-		if (auto move = GetComponent<CMovementComponent>())
-			move->Jump();
+		move->Jump();
 	}
+
 	// 상태 update
 	bool isMoving = (dir.x != 0 || dir.z != 0);
 
-	if (!isMoving) {
-		state = PLAYER_STATE::IDLE;
-	}
-	else {
-		if (auto move = GetComponent<CMovementComponent>())
-		if (input.shift) {
-			state = PLAYER_STATE::RUN;
-			move->Run();
+	// 움찔거리는 거 방지
+	grounded_timer = is_grounded ? 0.1f : (grounded_timer - dt);
+
+	if (grounded_timer > 0.0f) {
+		if (!isMoving) {
+			state = PLAYER_STATE::IDLE;
 		}
 		else {
-			state = PLAYER_STATE::WALK;
-			move->UnRun();
+			if (input.shift) {
+				state = PLAYER_STATE::RUN;
+				move->Run();
+			}
+			else {
+				state = PLAYER_STATE::WALK;
+				move->UnRun();
+			}
 		}
+	}
+	else {
+		state = PLAYER_STATE::JUMP; // 확실히 공중일 때만 점프 상태
 	}
 
 	if (dir.x != 0 || dir.z != 0) {
-		if (auto move = GetComponent<CMovementComponent>())
-			move->Move(dir, dt);
+		move->Move(dir, dt);
 	}
 }
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "AnimationManager.h"
 
 class BinaryReader {
@@ -184,6 +184,14 @@ namespace CGeometryLoader {
         std::string detailNormalMap;
     };
 
+    struct PrimitiveCollider {
+        XMFLOAT3 center{};
+        XMFLOAT3 size{};       // Box용
+        float radius{};        // Sphere/Capsule용
+        float height{};        // Capsule용
+        int direction{};       // Capsule용
+    };
+
     struct MeshCollider
     {
         std::vector<XMFLOAT3> positions;
@@ -208,9 +216,12 @@ namespace CGeometryLoader {
     struct FrameNode
     {
         std::string name;
-        XMFLOAT4X4 localMatrix;
+        XMFLOAT4X4 local_matrix;
         Mesh mesh;
-        MeshCollider collider;
+        std::vector<MeshCollider> mesh_colliders;
+        std::vector<PrimitiveCollider> box_colliders;
+        std::vector<PrimitiveCollider> sphere_colliders;
+        std::vector<PrimitiveCollider> capsule_colliders;
         std::vector<std::unique_ptr<FrameNode>> childrens;
     };
 

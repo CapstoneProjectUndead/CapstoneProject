@@ -90,35 +90,18 @@ void CGameScene::OnSceneDeactivate()
 	monster_cnt = 0;
 }
  
-void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<FrameNode>& node)
+void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
-	if (node->mesh.positions.empty()) return;
-
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-	obj->GetWorldMatrix() = node->localMatrix;
+	obj->GetWorldMatrix() = node->local_matrix;
 
-	auto SetColliderComp = [&node, obj](std::unique_ptr<CColliderShape>& shape) {
-		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
-		CollisionFilter filter;
-		filter.category = EColLayer::OBJECT;
-		filter.mask = EColLayer::PLAYER | EColLayer::CHARACTER;
-		collider->SetFillter(filter);
-		obj->SetComponent(collider);
-		};
-	// ColliderComponent 
-	bool isRoad = node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place";
-	if (!node->collider.positions.empty()) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CConvexMeshShape>(node->collider.positions);
-		SetColliderComp(shape);
+	bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
+
+	if (isRoad) {
+		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
 	}
-	else if (isRoad) {
-		std::unique_ptr<CColliderShape> shape = std::make_unique<CBoxShape>(node->mesh.bounds.Extents, node->mesh.bounds.Center);
-		auto boxCollider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
-		CollisionFilter filter;
-		filter.category = EColLayer::GROUND;
-		filter.mask = EColLayer::PLAYER | EColLayer::CHARACTER;
-		boxCollider->SetFillter(filter);
-		obj->SetComponent(boxCollider);
+	else {
+		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
 	}
 
 	objects.emplace(node->name, std::move(obj));

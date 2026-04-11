@@ -1,10 +1,14 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "MeshRenderer.h"
 #include "Mesh.h"
 #include "Object.h"
 #include "Collider.h"
 #include "Renderers.h"
 #include "Animator.h"
+#ifdef DEBUG
+#include "GameFramework.h"
+#endif // DEBUG
+
 
 void CMeshComponent::SetMesh(std::shared_ptr<CMesh>& m)
 {
@@ -64,7 +68,7 @@ void CMeshRendererComponent::Collect(IRenderer* renderer, bool isStatic)
 #ifdef DEBUG
 		auto collider = owner->GetComponents<CColliderComponent>();
 		for (auto c : collider)
-			c->Render(commandList);
+			c->Render(GET_CMD_LIST);
 #endif
 	}
 }

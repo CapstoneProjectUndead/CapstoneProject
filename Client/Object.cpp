@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 
 #include "Camera.h"
@@ -127,6 +127,8 @@ void CObject::Update(const float elapsedTime)
 		if (component->is_enable)
 			component->Update(elapsedTime);
 	}
+
+	local_sphere.Transform(world_sphere, XMLoadFloat4x4(&world_matrix));
 }
 
 void CObject::Animate(float elapsedTime, CCamera* camera)
@@ -139,4 +141,10 @@ void CObject::Animate(float elapsedTime, CCamera* camera)
 
 	XMMATRIX world = rotY * trans;
 	XMStoreFloat4x4(&world_matrix, world);
+}
+
+bool CObject::IsVisible(const BoundingFrustum& frustum)
+{
+	// DirectX의 내장 함수 사용 (가장 효율적)
+	return frustum.Intersects(world_sphere);
 }

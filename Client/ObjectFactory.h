@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Material.h"
 #include "Texture.h"
 
@@ -31,6 +31,8 @@ public:
 	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
 	// init component(공통 컴포넌트 구성 초기화 헬퍼 함수)
 	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName = "inst");
+	void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
+		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer);
 	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, 
 		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
 		CharacterAnimSet aniSet, bool isPlayer);
@@ -91,8 +93,6 @@ private:
 
 	enum class LobbyMeshName {
 		Wall,
-		Floor,
-		GroundPipe,
 		Unknown
 	};
 
