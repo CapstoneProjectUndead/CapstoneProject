@@ -62,6 +62,8 @@ enum PacketType : uint16_t
 	_S_ADD_ITEM,		// 서버 → 클라: 인벤토리에 추가해라
 	_S_REMOVE_ITEM,		// 서버 → 클라: 인벤토리에서 없애라
 	_C_DROP_ITEM,		// 클라 → 서버
+	_C_EQUIP_ITEM,
+	_S_EQUIP_ITEM,
 };
 
 #pragma pack (push, 1)
@@ -510,5 +512,26 @@ struct C_DropItem : public PacketHeader
 	C_DropItem() : PacketHeader(sizeof(C_DropItem), (UINT)PacketType::_C_DROP_ITEM) {}
 };
 static_assert(sizeof(C_DropItem) == 4 + 14, "C_DropItem size mismatch!");
+
+struct C_EquipItem : public PacketHeader
+{
+	uint64 player_id;
+	uint32 inventory_id; 
+	uint16 item_id;	// 아이템 도감번호
+	SCENE_TYPE scene_type;
+
+	C_EquipItem() : PacketHeader(sizeof(C_EquipItem), (UINT)PacketType::_C_EQUIP_ITEM) {}
+};
+static_assert(sizeof(C_EquipItem) == 4 + 15, "C_EquipItem size mismatch!");
+
+struct S_EquipItem : public PacketHeader
+{
+	uint64 player_id;
+	uint16 item_id;	// 아이템 도감번호
+	SCENE_TYPE scene_type;
+
+	S_EquipItem() : PacketHeader(sizeof(S_EquipItem), (UINT)PacketType::_S_EQUIP_ITEM) {}
+};
+static_assert(sizeof(S_EquipItem) == 4 + 11, "S_EquipItem size mismatch!");
 
 #pragma pack (pop)

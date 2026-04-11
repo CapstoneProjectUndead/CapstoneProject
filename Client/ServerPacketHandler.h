@@ -56,6 +56,8 @@ enum : uint16
 	PKT_S_ADD_ITEM,
 	PKT_S_REMOVE_ITEM,
 	PKT_C_DROP_ITEM,
+	PKT_C_EQUIP_ITEM,
+	PKT_S_EQUIP_ITEM,
 };
 
 // Custom Handlers
@@ -84,6 +86,7 @@ bool Handle_S_DESPAWN_ITEM(std::shared_ptr<Session> session, S_DeSpawnItem& pkt)
 bool Handle_S_ADD_ITEM(std::shared_ptr<Session> session, S_AddItem& pkt);
 bool Handle_S_REMOVE_ITEM(std::shared_ptr<Session> session, S_RemoveItem& pkt);
 bool Handle_S_READY(std::shared_ptr<Session> session, S_Ready& pkt);
+bool Handle_S_EQUIP_ITEM(std::shared_ptr<Session> session, S_EquipItem& pkt);
 
 class CServerPacketHandler
 {
@@ -117,6 +120,7 @@ public:
 		GPacketHandler[PKT_S_ADD_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddItem>(Handle_S_ADD_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_REMOVE_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RemoveItem>(Handle_S_REMOVE_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_READY] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Ready>(Handle_S_READY, session, buffer, len); };
+		GPacketHandler[PKT_S_EQUIP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_EquipItem>(Handle_S_EQUIP_ITEM, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

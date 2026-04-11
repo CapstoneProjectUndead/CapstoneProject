@@ -55,6 +55,11 @@ namespace ItemFactory
 		}
 	}
 
+	bool IsValid(int itemID)
+	{
+		return item_db.find(itemID) != item_db.end();
+	}
+
 	std::shared_ptr<CItem> Create(int itemID)
 	{
 		auto it = item_db.find(itemID);

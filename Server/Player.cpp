@@ -14,6 +14,7 @@ CPlayer::CPlayer()
     , ping(0.0f)
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
+    , equipped_item_id(0)
     , is_ready(false)
 {
 

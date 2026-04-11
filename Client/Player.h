@@ -19,6 +19,7 @@ public:
 	CPlayer();
 	virtual void Update(float elapsedTime) override;
 	void PreUpdate(float elapsedTime);
+	virtual void OnCollect(IRenderer* renderer) override;
 
 public:
 	void SetState(const PLAYER_STATE _state) { state = _state; }
@@ -70,6 +71,9 @@ public:
 	std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
 	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
 	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
+
+	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
+
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
@@ -89,6 +93,7 @@ protected:
 	std::deque<OpponentFrameHistory> interpolation_deq;
 	std::vector<Buff>                buffs;
 
+	uint16							 equipped_item_id{ 0 };
 	PlayerStat stat;
 };
 

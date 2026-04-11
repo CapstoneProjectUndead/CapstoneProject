@@ -54,6 +54,8 @@ enum : uint16
 	PKT_S_ADD_ITEM,
 	PKT_S_REMOVE_ITEM,
 	PKT_C_DROP_ITEM,
+	PKT_C_EQUIP_ITEM,
+	PKT_S_EQUIP_ITEM,
 };
 
 // Custom Handlers
@@ -73,6 +75,7 @@ bool Handle_C_SCENE_CHANGE(std::shared_ptr<Session> session, C_SceneChange& pkt)
 bool Handle_C_READY(std::shared_ptr<Session> session, C_Ready& pkt);
 bool Handle_C_PICKUP_ITEM(std::shared_ptr<Session> session, C_PickupItem& pkt);
 bool Handle_C_DROP_ITEM(std::shared_ptr<Session> session, C_DropItem& pkt);
+bool Handle_C_EQUIP_ITEM(std::shared_ptr<Session> session, C_EquipItem& pkt);
 
 class CClientPacketHandler
 {
@@ -97,6 +100,7 @@ public:
 		GPacketHandler[PKT_C_READY] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_Ready>(Handle_C_READY, session, buffer, len); };
 		GPacketHandler[PKT_C_PICKUP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_PickupItem>(Handle_C_PICKUP_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_C_DROP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_DropItem>(Handle_C_DROP_ITEM, session, buffer, len); };
+		GPacketHandler[PKT_C_EQUIP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_EquipItem>(Handle_C_EQUIP_ITEM, session, buffer, len); };
 	}
 
 	static bool HandlePacket(shared_ptr<Session> session, char* buffer, int32 len)

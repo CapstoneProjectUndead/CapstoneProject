@@ -214,11 +214,13 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 {
 	// 지금 서버 구조가 게임 로직은 싱글 스레드로 돌리고 있다.
 	// 그래서 클라의 C_Pickup_Item 패킷 처리를 오는 순서대로 처리하기 때문에
-	// 먼저 들어온 유저가 아이템을 소유한다.
+	// 먼저 Pickup_Item 패킷 들어온 유저가 아이템을 소유한다.
 
 	if (pkt.item_type == ITEM_TYPE::TREASURE) {
 
 		auto& player = players[pkt.player_id];
+		if (!player)
+			return;
 
 		if (auto it = item_manager->FindItem(pkt.item_world_id)) {
 
@@ -402,8 +404,45 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 
 					auto sendBuffer = MAKE_SEND_BUFFER(spawnItemPkt);
 					BroadCast(sendBuffer);
+
+					// 드롭한 아이템이 장착 중이었으면 해제 브로드캐스트
+					if (player->GetEquippedItemId() == itemId) {
+						player->SetEquippedItemId(0);
+						S_EquipItem unequipPkt;
+						unequipPkt.player_id  = player->GetID();
+						unequipPkt.item_id    = 0;
+						unequipPkt.scene_type = scene_type;
+						auto unequipBuffer = MAKE_SEND_BUFFER(unequipPkt);
+						BroadCast(unequipBuffer);
+					}
 				}
 			}
 		}
 	}
+}
+
+void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt)
+{
+	auto& player = players[pkt.player_id];
+	if (!player)
+		return;
+
+	auto inventory = player->GetInventory();
+	if (!inventory)
+		return;
+
+	auto& items = inventory->GetItems();
+	auto iter = items.find(pkt.inventory_id);
+	if (iter == items.end())
+		return;
+
+	player->SetEquippedItemId(pkt.item_id);
+	
+	S_EquipItem equipPkt;
+	equipPkt.player_id = pkt.player_id;
+	equipPkt.item_id = pkt.item_id;
+	equipPkt.scene_type = scene_type;
+
+	auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+	BroadCast(sendBuffer);
 }

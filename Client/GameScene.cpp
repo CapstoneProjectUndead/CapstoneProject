@@ -29,6 +29,7 @@
 
 #include "UIComponent.h"
 #include "Movement.h"
+#include "Animator.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -511,4 +512,21 @@ void CGameScene::Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_R
 		return;
 
 	my_player->GetInventory()->RemoveItem(pkt.inventory_id);
+}
+
+void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt)
+{
+	if (my_player->GetID() == pkt.player_id) {
+		my_player->SetEquippedItemId(pkt.item_id);
+	}
+	else {
+		auto& indexMap = GetIDIndex();
+		auto it = indexMap.find(pkt.player_id);
+		if (it == indexMap.end()) 
+			return;
+
+		auto player = std::dynamic_pointer_cast<CPlayer>(objects[it->second]);
+		if (player)
+			player->SetEquippedItemId(pkt.item_id);
+	}
 }

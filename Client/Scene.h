@@ -63,6 +63,7 @@ public:
 	virtual void Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_DeSpawnItem& pkt) {}
 	virtual void Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt) {}
 	virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) {}
+	virtual void Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt) {};
 
 public:
 	// 멤버 변수 set

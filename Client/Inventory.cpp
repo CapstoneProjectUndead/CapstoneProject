@@ -60,19 +60,18 @@ void CInventory::AddItemWithId(std::shared_ptr<CItem> item, uint32 inventoryId)
 void CInventory::RemoveItem(uint32 inventoryId)
 {
 	auto it = items.find(inventoryId);
+	if (it == items.end())
+		return;
 
-	if (it != items.end()) {
+	// 보물이면 가방 무게에서 제외
+	if (it->second->GetItemType() == ITEM_TYPE::TREASURE)
+		current_weight -= it->second->GetWeight();
 
-		// 보물이면 가방 무게에서 제외
-		if (it->second->GetItemType() == ITEM_TYPE::TREASURE)
-			current_weight -= it->second->GetWeight();
+	// 퀵슬롯에 등록된 아이템이면 슬롯 비움
+	if (quick_slot)
+		quick_slot->OnItemRemovedFromInventory(inventoryId);
 
-		// 퀵슬롯에 등록된 아이템이면 슬롯 비움
-		if (quick_slot)
-			quick_slot->OnItemRemovedFromInventory(inventoryId);
-
-		items.erase(it);
-	}
+	items.erase(it);
 }
 
 void CInventory::Draw()
