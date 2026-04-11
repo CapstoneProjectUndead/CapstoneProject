@@ -8,6 +8,7 @@
 
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
+    /*
     // 플레이어가 Custom Scene에 있으면 return
     if (owner->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
         return;
@@ -23,16 +24,34 @@ void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 
     // 가속도 적용: velocity += accel * speed * deltaTime
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
+    */
+
+    if (owner->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS) return;
+
+    // [추가] 땅에 있을 때만 조작이 가능하도록 함
+    if (!owner->is_grounded) return;
+
+    XMFLOAT3 accel{};
+    if (direction.z > 0) accel = Vector3::Add(accel, owner->look);
+    if (direction.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->look, -1));
+    if (direction.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->right, -1));
+    if (direction.x > 0) accel = Vector3::Add(accel, owner->right);
+
+    accel = Vector3::Normalize(accel);
+
+    // 지상일 때만 속도를 즉시 결정
+    owner->velocity.x = accel.x * speed;
+    owner->velocity.z = accel.z * speed;
 }
 
 void CMovementComponent::ClampSpeed()
 {
     float lenXZ = sqrtf(owner->velocity.x * owner->velocity.x + owner->velocity.z * owner->velocity.z);
-	if (lenXZ > max_speed) {
-		float ratio = max_speed / lenXZ;
-		owner->velocity.x *= ratio;
-		owner->velocity.z *= ratio;
-	}
+    if (lenXZ > max_speed) {
+        float ratio = max_speed / lenXZ;
+        owner->velocity.x *= ratio;
+        owner->velocity.z *= ratio;
+    }
 }
 
 void CMovementComponent::ClampY()
@@ -72,6 +91,54 @@ void CMovementComponent::Jump()
     }
 }
 
+void CMovementComponent::Update(const float deltaTime)
+{
+    if (owner == nullptr) return;
+
+    // 1. 관성 없애기 및 지상 상태 속도 제어
+    if (owner->is_grounded)
+    {
+        // [중요] 지상에 있으면 중력으로 누적된 수직 속도를 0으로 초기화해서 바닥을 뚫으려는 시도를 막음
+        if (owner->velocity.y < 0) owner->velocity.y = 0.0f;
+
+        bool isMoving = (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('S') & 0x8000) ||
+            (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('D') & 0x8000);
+
+        if (!isMoving) {
+            owner->velocity.x = 0.0f;
+            owner->velocity.z = 0.0f;
+        }
+    }
+
+    if (is_fly) {
+        CPhysicsManager::GetInstance().ApplyFriction(owner, deltaTime);
+        owner->position = Vector3::Add(owner->position, owner->velocity);
+        return;
+    }
+
+    // 2. 중력 적용 (여기서 groundSeparation은 바닥에서 캐릭터를 살짝 띄워주는 보정값임)
+    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+
+    // 3. 이동량 계산 (바닥 보정값 적용)
+    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
+
+    // 4. [중요] 수평 이동량만 따로 계산 (수직 이동은 중력이 알아서 하게 둠)
+    // 수평 속도와 수직 속도를 합쳐서 이동량을 구함
+    XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
+
+    // 5. 충돌 해결 (여기서 바닥이나 벽에 걸리는 걸 처리)
+    ResolveCollisions(finalPos, internalMotion, deltaTime);
+
+    ClampSpeed();
+
+    // 6. 최종 위치 적용
+    XMStoreFloat3(&owner->position, finalPos);
+
+    ClampY();
+}
+
+
+/*
 void CMovementComponent::Update(const float deltaTime)
 {
     if (owner == nullptr)
@@ -122,6 +189,8 @@ void CMovementComponent::Update(const float deltaTime)
     ClampY();
 }
 
+
+*/
 XMVECTOR CMovementComponent::CalculatePlatform(float dt)
 {
     CollisionInfo info{};

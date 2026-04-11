@@ -103,7 +103,7 @@ protected:
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;
 
-	float jump_power{ 5.0f };
+	float jump_power{ 4.0f };
 	bool is_grounded{};
 	float friction{ 9.0f };
 
