@@ -49,9 +49,9 @@ public:
 	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
 
 private:
-	const float walk_speed{ 10.0f };
-	const float max_speed{ 50.0f };
-	const float run_speed{ 30.0f };
+	const float walk_speed{ 2.5f };
+	const float max_speed{ 5.0f };
+	const float run_speed{ 5.0f };
 	float speed{ walk_speed };
 
 	weak_ptr<CPhysicsManager> physics_manager;

@@ -113,7 +113,7 @@ protected:
 
     XMFLOAT3                            velocity{};
     float                               friction{ 9.0f };
-    float                               jump_power{ 5.0f };
+    float                               jump_power{ 4.0f };
 
 
     // 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가
