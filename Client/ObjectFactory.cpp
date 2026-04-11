@@ -569,6 +569,9 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	inventory->SetQuickSlot(quickSlot);
 	player->SetQuickSlot(quickSlot);
 
+	// 약한 참조
+	quickSlot->SetOwner(player);
+
 	return player;
 }
 

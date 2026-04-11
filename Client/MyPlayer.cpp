@@ -77,7 +77,15 @@ void CMyPlayer::OnCollect(IRenderer* renderer)
 
 	auto animator = GetComponent<CAnimatorComponent>();
 	if (animator) {
-		animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
+		// 싱글 모드일 때는 바로 장착
+		if (g_is_single) {
+			animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
+		}
+		else {
+			// 멀티 모드에서는 서버의 허락을 받는다.
+			if (equipped_item_id != 0)
+				animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
+		}
 
 		auto itemFinder = GetComponent<CItemFinder>();
 		if (itemFinder && itemFinder->is_enable) {

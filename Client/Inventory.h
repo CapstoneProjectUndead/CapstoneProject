@@ -40,7 +40,7 @@ private:
 	void DrawItemTooltip(CItem* item);           // 아이템 툴팁
 
 private:
-	std::weak_ptr<CMyPlayer>             owner;          // 소지금 접근용
+	std::weak_ptr<CMyPlayer>							owner;          // 소지금 접근용
 
 	std::unordered_map<uint32, std::shared_ptr<CItem>>  items;
 	uint32                                              inventory_id_counter = 0;

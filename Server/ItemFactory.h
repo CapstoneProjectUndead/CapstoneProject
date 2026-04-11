@@ -9,4 +9,5 @@ namespace ItemFactory
 {
 	void LoadFromJson(const std::string& path);
 	std::shared_ptr<CItem> Create(int itemID);
+	bool IsValid(int itemID);
 }

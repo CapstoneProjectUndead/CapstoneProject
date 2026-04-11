@@ -72,12 +72,15 @@ bool CConsumable::Use(CMyPlayer* player)
 	if (!player) 
 		return false;
 
+	// 이 소비템이 hp를 올려주는 효과가 있다면
 	if (heal_amount > 0)
 		player->SetHp(min(player->GetHp() + heal_amount, player->GetMaxHp()));
 
+	// 이 소비템이 기력을 올려주는 효과가 있다면
 	if (energy_amount > 0)
 		player->SetStamina(min(player->GetStamina() + energy_amount, player->GetMaxStamina()));
 
+	// 이 소비템이 버프 효과가 있다면
 	if (effect_amount > 0) {
 		Buff buff;
 		buff.duration        = buff_duration;

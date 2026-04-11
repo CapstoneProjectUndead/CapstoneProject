@@ -81,6 +81,9 @@ public:
 	bool GetIsReady() const { return is_ready; }
 	void SetIsReady(bool ready) { is_ready = ready; }
 
+	uint16 GetEquippedItemId() const { return equipped_item_id; }
+	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
+
 private:
 	weak_ptr<CUser>				user;
 	uint64						last_processed_seq;
@@ -97,6 +100,7 @@ private:
 
 	shared_ptr<CInventory>      inventory;
 
+	uint16 equipped_item_id;  // 0 = 맨손
 	bool is_ready;
 };
 

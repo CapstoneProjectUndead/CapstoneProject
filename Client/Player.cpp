@@ -54,6 +54,17 @@ void CPlayer::PreUpdate(float elapsedTime)
     }
 }
 
+void CPlayer::OnCollect(IRenderer* renderer)
+{
+    CObject::OnCollect(renderer);
+
+    auto animator = GetComponent<CAnimatorComponent>();
+    if (animator) {
+        if (equipped_item_id != 0)
+            animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
+    }
+}
+
 void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
 {
     interpolation_deq.push_back(state);

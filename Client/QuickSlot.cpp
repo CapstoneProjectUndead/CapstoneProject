@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "QuickSlot.h"
 #include "KeyManager.h"
+#include "MyPlayer.h"
+#include "ServerPacketHandler.h"
 
 CQuickSlot::CQuickSlot()
 {
@@ -62,8 +64,23 @@ void CQuickSlot::Draw()
 	// 1~4 key: select slot
 	KEY keys[SLOT_COUNT] = { KEY::_1, KEY::_2, KEY::_3, KEY::_4 };
 	for (int i = 0; i < SLOT_COUNT; i++) {
-		if (KEY_TAP(keys[i]) && slots[i].has_item)
+		if (KEY_TAP(keys[i]) && slots[i].has_item) {
 			selected_slot = i;
+
+			// C_EquipItem 패킷
+			if (!g_is_single) {
+				if (auto player = owner.lock()) {
+					C_EquipItem equipItemPkt;
+					equipItemPkt.item_id = slots[i].item_id;
+					equipItemPkt.inventory_id = slots[i].inv_id;
+					equipItemPkt.player_id = player->GetID();
+					equipItemPkt.scene_type = player->GetCurrentSceneType();
+
+					auto sendBuffer = MAKE_SEND_BUFFER(equipItemPkt);
+					player->GetSession()->DoSend(sendBuffer);
+				}
+			}
+		}
 	}
 }
 
@@ -179,8 +196,14 @@ void CQuickSlot::OnItemRemovedFromInventory(uint32 inventoryId)
 	for (int i = 0; i < SLOT_COUNT; i++) {
 		if (slots[i].has_item && slots[i].inv_id == inventoryId) {
 			slots[i] = SlotEntry{};
-			if (selected_slot == i)
+			if (selected_slot == i) {
 				selected_slot = -1;
+
+				if (!g_is_single) {
+					if (auto player = owner.lock())
+						player->SetEquippedItemId(0);
+				}
+			}
 		}
 	}
 }
