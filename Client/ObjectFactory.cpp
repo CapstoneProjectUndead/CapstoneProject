@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
 #include "WorldItem.h"
@@ -167,6 +167,9 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 
 	InitStaticComponents(obj, heapManager, node);
 
+	float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&node->mesh.bounds.Extents))) * 1.5f;
+	obj->SetBoundingSphere(node->mesh.bounds.Center, radius);
+
 	// 싱글일 때만 collider 생성(멀티면 서버에서 생성)
 	if (g_is_single) {
 		bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
@@ -196,6 +199,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 		InitStaticComponents(obj, heapManager, children);
 
 		// Lobby 특화 Collider 로직
+		float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&children->mesh.bounds.Extents))) * 1.5f;
+		obj->SetBoundingSphere(children->mesh.bounds.Center, radius);
+
 		if (g_is_single) {
 			switch (stringToLobbyMeshName(children->name)) {
 			case LobbyMeshName::Wall:
@@ -316,6 +322,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			auto proto = prototypes[name];
 			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
+
+			// 컬링을 위한 sphere
+			obj->SetBoundingSphere(proto->GetBoundingSphere());
 
 			auto collider = proto->GetComponent<CColliderComponent>();
 

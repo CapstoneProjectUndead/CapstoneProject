@@ -37,12 +37,17 @@ public:
 	virtual void Update(const float);
 	virtual void Rotate(float pitch, float yaw, float roll);
 
+	// 절두체 컬링 확인
+	bool IsVisible(const BoundingFrustum& frustum);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList* );
 	// RenderCallback을 호출
 	virtual void OnCollect(IRenderer* renderer);
-
+	
+	void SetBoundingSphere(const XMFLOAT3& center, float radius) { local_sphere.Center = center; local_sphere.Radius = radius; };
+	void SetBoundingSphere(const BoundingSphere& sphere) { local_sphere = sphere; };
+	BoundingSphere GetBoundingSphere() const { return local_sphere; };
 	//
 	virtual XMVECTOR GetHeadPosition() const { return XMLoadFloat3(&position); };
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
@@ -106,6 +111,10 @@ protected:
 	XMFLOAT4	orientation = { 0.f, 0.f, 0.f, 1.f };
 	float		yaw = 0.f;
 	float		pitch = 0.f;
+
+	// 절두체 컬링을 위한 Bounding
+	BoundingSphere local_sphere;
+	BoundingSphere world_sphere;
 };
 
 template<typename T>

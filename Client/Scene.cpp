@@ -68,16 +68,22 @@ void CScene::Update(float elapsedTime)
 
 void CScene::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (camera) camera->SetViewportsAndScissorRects(commandList);
+	BoundingFrustum frustum;
+	if (camera) {
+		camera->SetViewportsAndScissorRects(commandList);
+		frustum = camera->GetFrustum();
+	}
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
 	// Collect Phase
 	// 3D 객체들 수집
 	for (const auto& obj : objects) {
-		auto it = renderers.find(obj->GetShader());
-		if (it != renderers.end()) {
-			obj->OnCollect(it->second.get());
+		if (obj->IsVisible(frustum)) {
+			auto it = renderers.find(obj->GetShader());
+			if (it != renderers.end()) {
+				obj->OnCollect(it->second.get());
+			}
 		}
 	}
 

@@ -61,6 +61,9 @@ public:
 
 	void SetTarget(CObject* object) { target_object = object; }
 	void SetMode(EMode m) { mode = m; }
+
+	void UpdateFrustum();
+	BoundingFrustum GetFrustum() const { return frustum; }
 protected:
 	EMode mode{ EMode::THIRD_PERSON };
 
@@ -85,4 +88,7 @@ protected:
 	XMFLOAT3 look_at{};
 
 	CObject* target_object{};	// 소유X, 참조용
+
+	BoundingFrustum default_frustum;
+	BoundingFrustum frustum;
 };
