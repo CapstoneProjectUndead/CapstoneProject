@@ -110,6 +110,8 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
     bool isMoving = (dir.x != 0 || dir.z != 0);
     if (!isMoving) {
         state = PLAYER_STATE::IDLE;
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
     }
     else {
         if (auto move = GetComponent<CMovementComponent>()) {

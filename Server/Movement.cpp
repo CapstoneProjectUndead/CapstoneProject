@@ -97,14 +97,6 @@ void CMovementComponent::Update(const float deltaTime)
     {
         // [중요] 지상에 있으면 중력으로 누적된 수직 속도를 0으로 초기화해서 바닥을 뚫으려는 시도를 막음
         if (owner->velocity.y < 0) owner->velocity.y = 0.0f;
-
-        bool isMoving = (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('S') & 0x8000) ||
-            (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('D') & 0x8000);
-
-        if (!isMoving) {
-            owner->velocity.x = 0.0f;
-            owner->velocity.z = 0.0f;
-        }
     }
 
     // 2. 중력 적용 (여기서 groundSeparation은 바닥에서 캐릭터를 살짝 띄워주는 보정값임)

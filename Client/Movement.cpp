@@ -82,45 +82,54 @@ void CMovementComponent::Update(const float deltaTime)
 {
     if (owner == nullptr) return;
 
-    // 1. 관성 없애기 및 지상 상태 속도 제어
+    // 1. 관성 제거 및 로컬 플레이어 브레이크 로직
     if (owner->is_grounded)
     {
-        // [중요] 지상에 있으면 중력으로 누적된 수직 속도를 0으로 초기화해서 바닥을 뚫으려는 시도를 막음
+        // 바닥을 뚫으려는 수직 속도 초기화 (버벅임 방지 핵심)
         if (owner->velocity.y < 0) owner->velocity.y = 0.0f;
 
-        bool isMoving = (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('S') & 0x8000) ||
-            (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('D') & 0x8000);
+        // [멀티플레이어 대응] 이 객체가 '나(로컬 플레이어)'인지 확인
+        // 프로젝트 구조에 따라 CMyPlayer 혹은 is_my_player 변수를 확인해
+        bool isLocalPlayer = false;
+        if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+            CPlayer* p = static_cast<CPlayer*>(owner);
+            if (p->GetIsMyPlayer()) isLocalPlayer = true;
+        }
 
-        if (!isMoving) {
-            owner->velocity.x = 0.0f;
-            owner->velocity.z = 0.0f;
+        if (isLocalPlayer)
+        {
+            // 내가 조종 중일 때만 내 키보드 상태를 체크해서 멈춤 처리
+            bool isMoving = (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('S') & 0x8000) ||
+                (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('D') & 0x8000);
+
+            if (!isMoving) {
+                owner->velocity.x = 0.0f;
+                owner->velocity.z = 0.0f;
+            }
         }
     }
 
+    // --- 아래는 기존 물리 엔진 로직 (건드리지 않음) ---
     if (is_fly) {
         CPhysicsManager::GetInstance().ApplyFriction(owner, deltaTime);
         owner->position = Vector3::Add(owner->position, owner->velocity);
         return;
     }
 
-    // 2. 중력 적용 (여기서 groundSeparation은 바닥에서 캐릭터를 살짝 띄워주는 보정값임)
+    // 중력 및 바닥 보정
     XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
-
-    // 3. 이동량 계산 (바닥 보정값 적용)
     XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
 
-    // 4. [중요] 수평 이동량만 따로 계산 (수직 이동은 중력이 알아서 하게 둠)
-    // 수평 속도와 수직 속도를 합쳐서 이동량을 구함
+    // 이동량 계산
     XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
 
-    // 5. 충돌 해결 (여기서 바닥이나 벽에 걸리는 걸 처리)
+    // 충돌 처리 (벽 슬라이딩, 턱 오르기)
     ResolveCollisions(finalPos, internalMotion, deltaTime);
 
     ClampSpeed();
 
-    // 6. 최종 위치 적용
+    // 최종 위치 적용
     XMStoreFloat3(&owner->position, finalPos);
-
     ClampY();
 }
 
