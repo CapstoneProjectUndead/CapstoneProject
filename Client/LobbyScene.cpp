@@ -45,14 +45,14 @@ void CLobbyScene::Initialize()
 
 	// LoadData
 	ui_manager->GetDataManager()->LoadScripts("../Modeling/UI/Reaper.json");
-	// 대사 UI
-	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
-	reaperCanvas->SetEnable(false);
-	ui_manager->AddCanvas(reaperCanvas);
 	// 버튼 ui
 	auto YNCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/YNButton.json");
 	YNCanvas->SetEnable(false);
 	ui_manager->AddCanvas(YNCanvas);
+	// 대사 UI
+	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
+	reaperCanvas->SetEnable(false);
+	ui_manager->AddCanvas(reaperCanvas);
 	// Ready UI
 	auto ReadyCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/PlayerReady.json");
 	ui_manager->AddCanvas(ReadyCanvas);
@@ -96,8 +96,16 @@ void CLobbyScene::Update(float elapsedTime)
 	}
 
 	// 테스트 (나중에 지울 것)
-	if (KEY_TAP(KEY::P)) {
+	if (KEY_TAP(KEY::C)) {
 		InteractWithReaper();
+	}
+
+	if (KEY_PRESSED(KEY::LBTN)) {
+		auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
+		if (reaperUI->is_enable) {
+			auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
+			reaperText->Skip();	// 디버깅을 위해 스킵
+		}
 	}
 }
 
@@ -111,7 +119,6 @@ void CLobbyScene::InteractWithReaper()
 		reaperUI->SetEnable(true);
 		auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
 		reaperText->SetText(msg);
-		reaperText->Skip();	// 디버깅을 위해 스킵
 	}
 }
 
@@ -126,7 +133,6 @@ void CLobbyScene::SetupDialogueEvents()
 	// 대사가 끝났을 때 버튼을 보여주는 함수 등록
 	if (reaperText) {
 		reaperText->onFinished = [YNCanvas, reaperUI]() {
-			if (reaperUI) reaperUI->SetEnable(false);
 			if (YNCanvas) YNCanvas->SetEnable(true);
 			};
 	}
