@@ -397,7 +397,6 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
-	treasures.clear();
 }
 
 void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)
@@ -409,13 +408,6 @@ void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_Sp
 		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
 		TreasureInfo treasure{ pkt.item_world_id, pos };
 		treasures.push_back(treasure);
-
-		if (my_player) {
-			auto itemFinder = my_player->GetComponent<CItemFinder>();
-			if (itemFinder) {
-				itemFinder->AddTreasure(treasure);
-			}
-		}
 	}
 	else {
 		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
@@ -437,13 +429,6 @@ void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item
 			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
 			TreasureInfo treasure{ itemList[i].item_world_id, pos };
 			treasures.push_back(treasure);
-
-			if (my_player) {
-				auto itemFinder = my_player->GetComponent<CItemFinder>();
-				if (itemFinder) {
-					itemFinder->AddTreasure(treasure);
-				}
-			}
 		}
 		else {
 			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);

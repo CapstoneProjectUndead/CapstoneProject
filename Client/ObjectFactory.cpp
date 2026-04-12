@@ -352,6 +352,10 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 {
 	if (prototypes.empty()) LoadGameScene(heapManager);
 
+	treasures.clear();
+	humanMonster_spawn_positions.clear();
+	ghost_spawn_positions.clear();
+
 	std::vector<std::shared_ptr<CObject>> objects;
 
 	for (const auto& inst : instanceData) {

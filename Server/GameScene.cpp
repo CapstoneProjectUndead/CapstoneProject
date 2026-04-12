@@ -31,20 +31,20 @@ void CGameScene::Initialize()
 {
 	CScene::Initialize();
 
-	item_manager->SpawnItem(25, XMFLOAT3{ 1, 0, 1 });
-	item_manager->SpawnItem(24, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(45, XMFLOAT3{ 2, 0, 1 });
+	// 장비(무기, 도구)
 	item_manager->SpawnItem(5, XMFLOAT3{ 2, 0, 1 });
 	item_manager->SpawnItem(1, XMFLOAT3{ 2, 0, 1 });
 	item_manager->SpawnItem(17, XMFLOAT3{ 2, 0, 1 });
 
-	item_manager->SpawnItem(47, XMFLOAT3{ 2, 0, 1 });
+	// 소비
+	item_manager->SpawnItem(25, XMFLOAT3{ 1, 0, 1 });
+	item_manager->SpawnItem(24, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(45, XMFLOAT3{ 2, 0, 1 });
+
+	// 기타
 	item_manager->SpawnItem(47, XMFLOAT3{ 2, 0, 1 });
 	item_manager->SpawnItem(48, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(57, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(77, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(91, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(100, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(49, XMFLOAT3{ 2, 0, 1 });
 }
 
 void CGameScene::Update(float elapsedTime)
