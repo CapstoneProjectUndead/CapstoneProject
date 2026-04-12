@@ -20,9 +20,9 @@ void CWorldItem::Update(float dt)
 	CObject::Update(dt);
 
 	// 아이템이 Y축으로 천천히 회전
-	spin_angle += SPIN_SPEED * dt;
-	if (spin_angle >= 360.0f)
-		spin_angle -= 360.0f;
-
-	Rotate(0.0f, spin_angle, 0.0f);
+	//spin_angle += SPIN_SPEED * dt;
+	//if (spin_angle >= 360.0f)
+	//	spin_angle -= 360.0f;
+	//
+	//Rotate(0.0f, spin_angle, 0.0f);
 }
