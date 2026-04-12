@@ -89,7 +89,7 @@ void CDataManager::LoadRecursive(std::shared_ptr<CUIComponent> parent, const jso
     newUI->Deserialize(data);
 
     // 이미지면 텍스처 적용
-    if (type == "Image") {
+    if (type == "Image" || type == "Button") {
         auto imageUI = dynamic_pointer_cast<CUIImage>(newUI);
 
         auto& shaders = CSceneManager::GetInstance().GetShaders();

@@ -370,7 +370,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 
 void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
 {
-	std::string fileName{ "../Modeling/undead_char_0308.bin" };
+	std::string fileName{ "../Modeling/undead_char_0412.bin" };
 
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
@@ -708,15 +708,11 @@ void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
 			}
 		};
 	{
-		std::string fileName{ "../Modeling/Equip_0411.bin" };
+		std::string fileName{ "../Modeling/Equip_0412.bin" };
 		LoadNode(fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/Food_0411.bin" };
-		LoadNode(fileName);
-	}
-	{
-		std::string fileName{ "../Modeling/shovel_0307.bin" };
 		LoadNode(fileName);
 	}
 	{

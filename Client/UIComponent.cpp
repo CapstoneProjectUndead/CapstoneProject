@@ -403,8 +403,9 @@ void CUIButton::Collect(IRenderer* renderer)
     if (!is_enable) return;
 
     GetColorByState();
+    // 머티리얼의 albedo를 버튼 상태 색상으로 업데이트
     mat_comp->GetMaterial()->material.albedo = color;
-    renderer->AddInstance(nullptr, color, world_matrix, false);
+    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
 }
 
 json CUIButton::Serialize()
