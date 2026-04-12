@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "PhysicsManager.h"
@@ -80,6 +80,7 @@ void CGameScene::Initialize()
 	SpawnWorldItem(29, XMFLOAT3{3, 2, 1});
 	SpawnWorldItem(30, XMFLOAT3{3, 2, 2});
 	SpawnWorldItem(31, XMFLOAT3{3, 2, 3});
+	SpawnWorldItem(40, XMFLOAT3{3, 2, 4});
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -310,7 +311,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 	if (!worldItem)
 		return;
 
-	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
+	worldItem->Initialize();
 
 	// 아이템의 위치
 	worldItem->SetPosition(position);
@@ -334,7 +335,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 posi
 	if (!worldItem)
 		return;
 
-	worldItem->Initialize(GET_DEVICE, GET_CMD_LIST);
+	worldItem->Initialize();
 
 	// 아이템의 위치
 	worldItem->SetPosition(position);

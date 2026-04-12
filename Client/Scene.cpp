@@ -49,7 +49,8 @@ void CScene::AnimateObjects(float elapsedTime)
 	}
 
 	for (const auto& obj : objects) {
-		obj->Update(elapsedTime);
+		if(obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
+			obj->Update(elapsedTime);
 	}
 }
 

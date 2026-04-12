@@ -23,7 +23,7 @@ public:
 
 	void ReleaseUploadBuffer();
 	// 항상 값 초기화 후 마지막에 호출
-	virtual void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	virtual void Initialize();
 
 	//set
 	void SetComponent(std::shared_ptr<CComponent> component);
