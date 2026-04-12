@@ -33,18 +33,21 @@ void CGameScene::Initialize()
 
 	// 장비(무기, 도구)
 	item_manager->SpawnItem(5, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(1, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(17, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(9, XMFLOAT3{ 2, 0, 1.2 });
+	item_manager->SpawnItem(14, XMFLOAT3{ 2, 0, 1.3 });
+	item_manager->SpawnItem(15, XMFLOAT3{ 2, 0, 1.4 });
+	item_manager->SpawnItem(17, XMFLOAT3{ 2, 0, 1.5 });
+	item_manager->SpawnItem(19, XMFLOAT3{ 2, 0, 1.6 });
 
 	// 소비
-	item_manager->SpawnItem(25, XMFLOAT3{ 1, 0, 1 });
-	item_manager->SpawnItem(24, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(45, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(25, XMFLOAT3{ 2.1, 0, 1.4 });
+	item_manager->SpawnItem(24, XMFLOAT3{ 2.1, 0, 1.5 });
+	item_manager->SpawnItem(45, XMFLOAT3{ 2.1, 0, 1.6 });
 
 	// 기타
-	item_manager->SpawnItem(47, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(48, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(49, XMFLOAT3{ 2, 0, 1 });
+	item_manager->SpawnItem(47, XMFLOAT3{ 2.2, 0, 1.7 });
+	item_manager->SpawnItem(48, XMFLOAT3{ 2.2, 0, 1.8 });
+	item_manager->SpawnItem(49, XMFLOAT3{ 2.2, 0, 1.9 });
 }
 
 void CGameScene::Update(float elapsedTime)
