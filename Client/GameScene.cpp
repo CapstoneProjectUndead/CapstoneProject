@@ -263,28 +263,29 @@ void CGameScene::ProcessPickup()
 		if (!inv)
 			return;
 
-		// 인벤토리에 아이템을 넣는다.
-		inv->AddItem(worldItem->GetItem());
-
 		// 보물이라면 
 		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
 
-			// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
-			uint32 id = worldItem->GetID();
-			auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
-				[id](const TreasureInfo& info) {
-					return info.world_id == id;
-				});
+			// 아이템 줍기 시도
+			if (inv->AddItem(worldItem->GetItem())) {
 
-			if (treasure_it != treasures.end())
-				treasures.erase(treasure_it);
+				// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
+				uint32 id = worldItem->GetID();
+				auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
+					[id](const TreasureInfo& info) {
+						return info.world_id == id;
+					});
 
-			// 다우징로드에 있는 보물 컨테이너 갱신
-			// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
-			my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+				if (treasure_it != treasures.end())
+					treasures.erase(treasure_it);
+
+				// 다우징로드에 있는 보물 컨테이너 갱신
+				// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
+				my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+
+				RemoveObject(worldItem->GetID());
+			}
 		}
-
-		RemoveObject(worldItem->GetID());
 	}
 	else {
 		// (멀티) 서버에 줍기 요청만 보낸다.
@@ -359,11 +360,6 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
 
 	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
-
-	if (item->GetItemType() == ITEM_TYPE::TREASURE) {
-		TreasureInfo info{ worldId, pos };
-		treasures.push_back(info);
-	}
 }
 
 void CGameScene::Exit()
@@ -389,7 +385,8 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 		}),
 		objects.end());
 
-	// 몬스터 spawn 위치들 모두 clear
+	// 보물 & 몬스터 spawn 위치들 모두 clear
+	treasures.clear();
 	humanMonster_spawn_positions.clear();
 	ghost_spawn_positions.clear();
 

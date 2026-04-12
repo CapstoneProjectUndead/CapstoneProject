@@ -12,7 +12,7 @@ public:
 	~CInventory();
 
 public:
-	void  AddItem(std::shared_ptr<CItem> item);
+	bool  AddItem(std::shared_ptr<CItem> item);
 	void  AddItemWithId(std::shared_ptr<CItem> item, uint32 inventoryId);
 	void  RemoveItem(uint32 inventoryId);
 
