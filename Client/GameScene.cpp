@@ -287,6 +287,10 @@ void CGameScene::ProcessPickup()
 				RemoveObject(worldItem->GetID());
 			}
 		}
+		else {
+			inv->AddItem(worldItem->GetItem());
+			RemoveObject(worldItem->GetID());
+		}
 	}
 	else {
 		// (멀티) 서버에 줍기 요청만 보낸다.
