@@ -135,6 +135,7 @@ void CLobbyScene::SetupDialogueEvents()
 	if (yesBtn) {
 		yesBtn->OnClick = [reaperUI, YNCanvas, this]() {
 			if (reaperUI) reaperUI->SetEnable(false);
+			if (YNCanvas) YNCanvas->SetEnable(false);
 			if (!g_is_single) {
 				std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
 				if (!myPlayer->GetIsReady()) {
@@ -148,8 +149,6 @@ void CLobbyScene::SetupDialogueEvents()
 				}
 			}
 			else {
-				if (reaperUI) reaperUI->SetEnable(false);
-				if (YNCanvas) YNCanvas->SetEnable(false);
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 			}
 		};

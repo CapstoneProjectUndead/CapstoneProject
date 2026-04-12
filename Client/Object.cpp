@@ -13,10 +13,9 @@ CObject::CObject(OBJECT_TYPE type)
 	XMStoreFloat4x4(&world_matrix, XMMatrixIdentity());
 }
 
-void CObject::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+void CObject::Initialize()
 {
-	CreateConstantBuffers(device, commandList);
-
+	Update(0.0f);
 }
 
 void CObject::ReleaseUploadBuffer()

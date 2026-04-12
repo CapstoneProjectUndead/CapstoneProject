@@ -9,19 +9,6 @@
 void CMovementComponent::Move(const XMFLOAT3 direction, float deltaTime)
 {
     /*
-    // 플레이어가 Custom Scene에 있으면 return
-    if (owner->GetCurrentSceneType() == SCENE_TYPE::CUSTOMS)
-        return;
-
-    XMFLOAT3 accel{};
-
-    if (direction.z > 0) accel = Vector3::Add(accel, owner->look);
-    if (direction.z < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->look, -1));
-    if (direction.x < 0) accel = Vector3::Add(accel, Vector3::ScalarProduct(owner->right, -1));
-    if (direction.x > 0) accel = Vector3::Add(accel, owner->right);
-
-    accel = Vector3::Normalize(accel);
-
     // 가속도 적용: velocity += accel * speed * deltaTime
     owner->velocity = Vector3::Add(owner->velocity, Vector3::ScalarProduct(accel, speed * deltaTime));
     */
