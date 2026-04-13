@@ -13,8 +13,10 @@ double       g_server_total_time = 0.0f;
 
 int main()
 {
-    setlocale(LC_ALL, "");
-    std::wcout.imbue(std::locale(""));
+    SetConsoleOutputCP(CP_UTF8);
+
+    //setlocale(LC_ALL, "");
+    //std::wcout.imbue(std::locale(""));
 
     // 클라이언트로부터 받은 패킷을 처리하는 
     // 헬퍼 클래스를 초기화

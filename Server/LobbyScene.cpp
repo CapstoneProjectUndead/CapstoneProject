@@ -263,7 +263,9 @@ void CLobbyScene::Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt
 CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)
 {
 	static const std::unordered_map<std::string, LobbyMeshName> table = {
-		{"Wall", LobbyMeshName::Wall},
+		{"Wall",        LobbyMeshName::Wall},
+		{"Floor",       LobbyMeshName::Floor},
+		{"GroundPipe",  LobbyMeshName::GroundPipe},
 	};
 
 	auto it = table.find(str);
@@ -302,6 +304,10 @@ void CLobbyScene::CreateLobby()
 			}
 		}
 		break;
+		case LobbyMeshName::Floor:
+		case LobbyMeshName::GroundPipe:
+			CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, children, EColLayer::GROUND, EColLayer::ALL_MOB);
+			break;
 		default:
 			CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);
 			break;

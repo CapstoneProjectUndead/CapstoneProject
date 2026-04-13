@@ -7,6 +7,7 @@
 // Server
 
 #pragma once
+#pragma execution_character_set("utf-8")
 
 //#define SCENE_TEST
 //#define LOBBY_SCENE_TEST
