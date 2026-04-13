@@ -71,6 +71,9 @@ void CMovementComponent::Jump()
 
 void CMovementComponent::Update(const float deltaTime)
 {
+    if (owner == nullptr) 
+        return;
+
     OBJECT_TYPE type = owner->GetObjectType();
 
     switch (type)
@@ -89,8 +92,6 @@ void CMovementComponent::Update(const float deltaTime)
     default:
         break;
     }
-
-    if (owner == nullptr) return;
 
     // 1. 관성 없애기 및 지상 상태 속도 제어
     if (owner->is_grounded)

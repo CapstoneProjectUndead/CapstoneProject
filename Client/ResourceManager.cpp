@@ -4,10 +4,10 @@
 
 void CResourceManager::LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
 {
-    // ≈∏¿Ã∆≤ æ¿ ∞¸∑√ ≈ÿΩ∫√≥ ∑ŒµÂ
+    // ÌÉÄÏù¥ÌãÄ Ïî¨ Í¥ÄÎ†® ÌÖçÏä§Ï≤ò Î°úÎìú
     LoadTitleSceneTextures(device, cmdQueue);
 
-    // ∞‘¿” æ¿ ∞¸∑√ ≈ÿΩ∫√≥ ∑ŒµÂ
+    // Í≤åÏûÑ Ïî¨ Í¥ÄÎ†® ÌÖçÏä§Ï≤ò Î°úÎìú
     LoadGameSceneTextures(device, cmdQueue);
 }
 
@@ -22,5 +22,40 @@ void CResourceManager::LoadTitleSceneTextures(ID3D12Device* device, ID3D12Comman
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
 {
+    // Ïû•ÎπÑ ÏïÑÏù¥ÌÖú Ïù¥ÎØ∏ÏßÄ
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_shovel",         L"../Modeling/item/image/Equip_shovel.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_ax",             L"../Modeling/item/image/Equip_ax.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_pick",           L"../Modeling/item/image/Equip_pick.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_bat",            L"../Modeling/item/image/Equip_bat.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_squeaky_hammer", L"../Modeling/item/image/Equip_squeaky_hammer.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_magicwand",      L"../Modeling/item/image/Equip_magicwand.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_toysword",       L"../Modeling/item/image/Equip_toysword.png");
 
+    // ÏùåÏãù/ÏÜåÎπÑ ÏïÑÏù¥ÌÖú Ïù¥ÎØ∏ÏßÄ
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_meat",             L"../Modeling/item/image/Food_meat.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_frozen_dumplings", L"../Modeling/item/image/Food_frozen_dumplings.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_broccoli",         L"../Modeling/item/image/Food_broccoli.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_durian",           L"../Modeling/item/image/Food_durian.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_banana",           L"../Modeling/item/image/Food_banana.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_snack",            L"../Modeling/item/image/Food_snack.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_mandarin",         L"../Modeling/item/image/Food_mandarin.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_potato",           L"../Modeling/item/image/Food_potato.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_chocolate",        L"../Modeling/item/image/Food_chocolate.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_candy",            L"../Modeling/item/image/Food_candy.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_orange_juice",     L"../Modeling/item/image/Food_orange_juice.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_churros",          L"../Modeling/item/image/Food_churros.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_candyfluff",       L"../Modeling/item/image/Food_candyfluff.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_icecream",         L"../Modeling/item/image/Food_icecream.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_melonpan",         L"../Modeling/item/image/Food_melonpan.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_Nachos",           L"../Modeling/item/image/Food_Nachos.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_jellybean",        L"../Modeling/item/image/Food_jellybean.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_drumstick",        L"../Modeling/item/image/Food_drumstick.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_cheese",           L"../Modeling/item/image/Food_cheese.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_yogurt",           L"../Modeling/item/image/Food_yogurt.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_cocoa",            L"../Modeling/item/image/Food_cocoa.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_cake",             L"../Modeling/item/image/Food_cake.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_snackbox",         L"../Modeling/item/image/Food_snackbox.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_pizza",            L"../Modeling/item/image/Food_pizza.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_fish",             L"../Modeling/item/image/Food_fish.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_lunch",            L"../Modeling/item/image/Food_lunch.png");
 }
