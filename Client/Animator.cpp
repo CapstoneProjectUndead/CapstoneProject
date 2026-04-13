@@ -77,6 +77,48 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		XMMATRIX rotation = XMMatrixRotationY(XMConvertToRadians(90.0f));
 		Socket socket{ idx, rotation };
 		sockets[HAND_R] = socket;
+
+		// Attack 상태 등록 및 전이 추가
+		if (!animSet.action.empty()) {
+			std::string attack{ "AttackState" };
+			controller.AddState({ attack, animSet.action });
+
+			// Run → Attack
+			Transition r2a;
+			r2a.to_state = attack;
+			r2a.duration = 0.1f;
+			r2a.condition = [this]() {
+				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_ATTACK;
+			};
+			controller.AddTransition(run, r2a);
+
+			// Idle → Attack (엣지 케이스)
+			Transition i2a;
+			i2a.to_state = attack;
+			i2a.duration = 0.1f;
+			i2a.condition = [this]() {
+				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_ATTACK;
+			};
+			controller.AddTransition(idle, i2a);
+
+			// Attack → Run
+			Transition a2r;
+			a2r.to_state = run;
+			a2r.duration = 0.2f;
+			a2r.condition = [this]() {
+				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
+			};
+			controller.AddTransition(attack, a2r);
+
+			// Attack → Idle
+			Transition a2i;
+			a2i.to_state = idle;
+			a2i.duration = 0.2f;
+			a2i.condition = [this]() {
+				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
+			};
+			controller.AddTransition(attack, a2i);
+		}
 	}
 		break;
 	}
@@ -152,6 +194,8 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	i2r.condition = [this]() {
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
 			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER)
+			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
 		return false;
 		};
 	controller.AddTransition(idle, i2r);
@@ -163,6 +207,8 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	r2i.condition = [this]() {
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
 			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::IDLE;
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER)
+			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
 		return false;
 		};
 	controller.AddTransition(run, r2i);

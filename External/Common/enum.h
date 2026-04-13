@@ -39,7 +39,7 @@ enum class MON_TYPE : uint8_t
 	GHOST
 };
 
-enum class AI_STATE
+enum class AI_STATE // 어떤 애니메이션을 재생할지 결정한다.
 {
 	MONSTER_IDLE,
 	MONSTER_PATROL,

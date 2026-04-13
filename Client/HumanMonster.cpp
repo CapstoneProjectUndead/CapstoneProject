@@ -65,7 +65,7 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
     if (distToOrigin > 0.1f) {
 
-        // 플레이어가 초기 위치로 복귀하는 동안에는 걷는 애니메이션이 나와야한다.
+        // 몬스터가 초기 위치로 복귀하는 동안에는 걷는 애니메이션이 나와야한다.
         AI_state = AI_STATE::MONSTER_PATROL;
 
         // 초기 자리를 향해 방향 틀기
@@ -181,13 +181,13 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
     float dist = Vector3::Length(dirVec);
 
     // 상태 전환 (State Transition) 판단
-    // 조건 A: 타겟이 인식 범위(0.5f) 밖으로 도망갔을 때 -> 추적 포기
+    // 조건 A: 타겟이 인식 범위 밖으로 도망갔을 때 -> 추적 포기
     if (dist > recog_range) {
         target_player = nullptr; // 타겟 초기화
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-    // 조건 B: 타겟이 공격 범위(0.2f) 안으로 들어왔을 때 -> 공격 시작!
+    // 조건 B: 타겟이 공격 범위 안으로 들어왔을 때 -> 공격 시작!
     else if (dist <= 0.2f) {
         AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
         return;
