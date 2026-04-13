@@ -22,7 +22,7 @@
         "price": 400,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_shovel",
+        "icon_path": "",
         "description": "평범한 삽."
     },
     {
@@ -35,7 +35,7 @@
         "price": 600,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_shovel",
+        "icon_path": "",
         "description": "무엇이든 파낼 수 있을 것 같은 예리한 삽."
     },
     {
@@ -48,7 +48,7 @@
         "price": 900,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_shovel",
+        "icon_path": "",
         "description": "오래 쓸 수 있을 것 같은 튼튼한 삽."
     },
     {
@@ -74,7 +74,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_ax",
+        "icon_path": "",
         "description": "평범한 도끼."
     },
     {
@@ -87,7 +87,7 @@
         "price": 800,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_ax",
+        "icon_path": "",
         "description": "무엇이든 베어낼 수 있을 것 같은 예리한 도끼."
     },
     {
@@ -100,7 +100,7 @@
         "price": 1200,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_ax",
+        "icon_path": "",
         "description": "오래 쓸 수 있을 것 같은 튼튼한 도끼."
     },
     {
@@ -126,7 +126,7 @@
         "price": 600,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_pick",
+        "icon_path": "",
         "description": "평범한 곡괭이."
     },
     {
@@ -139,7 +139,7 @@
         "price": 1000,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_pick",
+        "icon_path": "",
         "description": "무엇이든 캐낼 수 있을 것 같은 예리한 곡괭이."
     },
     {
@@ -152,7 +152,7 @@
         "price": 1500,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "Equip_pick",
+        "icon_path": "",
         "description": "오래 쓸 수 있을 것 같은 튼튼한 곡괭이."
     },
     {
@@ -363,21 +363,6 @@
     {
         "item_id": 28,
         "item_type": 1,
-        "item_sub_type": 200,
-        "item_name": "곰팡이 식빵",
-        "weight": 1.0,
-        "heal_amount": 5,
-        "energy_amount": 0,
-        "effect_amount": 0,
-        "price": 30,
-        "max_stack": 99,
-        "is_throwable": true,
-        "icon_path": "",
-        "description": "하얗게 곰팡이가 피어 있다."
-    },
-    {
-        "item_id": 29,
-        "item_type": 1,
         "item_sub_type": 202,
         "item_name": "초콜릿",
         "weight": 1.0,
@@ -391,7 +376,7 @@
         "description": "새것 같은 달콤한 초콜릿."
     },
     {
-        "item_id": 30,
+        "item_id": 29,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "눈알 사탕",
@@ -406,7 +391,7 @@
         "description": "딸기 맛."
     },
     {
-        "item_id": 31,
+        "item_id": 30,
         "item_type": 1,
         "item_sub_type": 201,
         "item_name": "오렌지 주스",
@@ -421,7 +406,7 @@
         "description": "오렌지 과즙 100%"
     },
     {
-        "item_id": 32,
+        "item_id": 31,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "추로스",
@@ -436,7 +421,7 @@
         "description": "놀이공원에 온 기분이 든다."
     },
     {
-        "item_id": 33,
+        "item_id": 32,
         "item_type": 1,
         "item_sub_type": 203,
         "item_name": "솜사탕",
@@ -452,7 +437,7 @@
         "description": "후후 불면 날아가는 솜사탕. 몸이 가벼워질 것 같다."
     },
     {
-        "item_id": 34,
+        "item_id": 33,
         "item_type": 1,
         "item_sub_type": 203,
         "item_name": "아이스크림",
@@ -468,7 +453,7 @@
         "description": "머리가 아플 정도로 차디찬 아이스크림."
     },
     {
-        "item_id": 35,
+        "item_id": 34,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "곰팡이 캐릭터 빵",
@@ -483,7 +468,7 @@
         "description": "귀여운 캐릭터 빵. 띠부 씰과 곰팡이 포함."
     },
     {
-        "item_id": 36,
+        "item_id": 35,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "먹다 남은 나쵸",
@@ -498,7 +483,7 @@
         "description": "누군가 먹다 남긴 치즈맛 나쵸."
     },
     {
-        "item_id": 37,
+        "item_id": 36,
         "item_type": 1,
         "item_sub_type": 203,
         "item_name": "젤리빈",
@@ -514,7 +499,7 @@
         "description": "콩 모양 젤리. 먹으면 마법 같은 맛이 난다."
     },
     {
-        "item_id": 38,
+        "item_id": 37,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "상한닭다리",
@@ -529,7 +514,7 @@
         "description": "상한 치킨. 한입 먹힌 흔적이 있다."
     },
     {
-        "item_id": 39,
+        "item_id": 38,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "곰팡이 치즈",
@@ -544,7 +529,7 @@
         "description": "곰팡이 핀 치즈."
     },
     {
-        "item_id": 40,
+        "item_id": 39,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "상한 요거트",
@@ -559,7 +544,7 @@
         "description": "맛있어 보이는 요거트. 시큼한 냄새가 난다."
     },
     {
-        "item_id": 41,
+        "item_id": 40,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "남긴 핫초코",
@@ -574,7 +559,7 @@
         "description": "누군가 마시던 핫초코."
     },
     {
-        "item_id": 42,
+        "item_id": 41,
         "item_type": 1,
         "item_sub_type": 203,
         "item_name": "남긴 케이크",
@@ -590,7 +575,7 @@
         "description": "누군가 먹다 남긴 조각 케이크! 발걸음이 빨라질 만큼 맛있다!"
     },
     {
-        "item_id": 43,
+        "item_id": 42,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "조금 남은 과자",
@@ -605,7 +590,7 @@
         "description": "과자… 조금 남았다."
     },
     {
-        "item_id": 44,
+        "item_id": 43,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "피자 박스",
@@ -620,7 +605,7 @@
         "description": "한 조각 반이 들어 있다."
     },
     {
-        "item_id": 45,
+        "item_id": 44,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "상한 생선",
@@ -635,7 +620,7 @@
         "description": "상한 생선… 냄새가 끔찍하다."
     },
     {
-        "item_id": 46,
+        "item_id": 45,
         "item_type": 1,
         "item_sub_type": 202,
         "item_name": "남긴 도시락",
@@ -650,7 +635,7 @@
         "description": "유통기한 임박 할인' 스티커가 붙어 있다."
     },
     {
-        "item_id": 47,
+        "item_id": 46,
         "item_type": 2,
         "item_sub_type": 302,
         "item_name": "풍선",
@@ -662,7 +647,7 @@
         "description": "몸이 가벼워진다."
     },
     {
-        "item_id": 48,
+        "item_id": 47,
         "item_type": 2,
         "item_sub_type": 301,
         "item_name": "부부젤라",
@@ -674,7 +659,7 @@
         "description": "요란한 소리를 낼 수 있다."
     },
     {
-        "item_id": 49,
+        "item_id": 48,
         "item_type": 2,
         "item_sub_type": 301,
         "item_name": "양동이",
@@ -686,7 +671,7 @@
         "description": "머리에 씌울 수 있을 것 같다."
     },
     {
-        "item_id": 50,
+        "item_id": 49,
         "item_type": 2,
         "item_sub_type": 303,
         "item_name": "바나나 껍질",
@@ -698,7 +683,7 @@
         "description": "밟고 미끄러지지 않게 조심!"
     },
     {
-        "item_id": 51,
+        "item_id": 50,
         "item_type": 2,
         "item_sub_type": 300,
         "item_name": "구멍난 양말",
@@ -710,7 +695,7 @@
         "description": "구멍이 뚫려서 버려진 걸까?"
     },
     {
-        "item_id": 52,
+        "item_id": 51,
         "item_type": 2,
         "item_sub_type": 300,
         "item_name": "끈적 슬라임",
@@ -722,7 +707,7 @@
         "description": "끈적한 슬라임. 쓸데는 없다."
     },
     {
-        "item_id": 53,
+        "item_id": 52,
         "item_type": 2,
         "item_sub_type": 300,
         "item_name": "저금통",
@@ -734,7 +719,7 @@
         "description": "흔들면 짤랑짤랑 소리가 난다."
     },
     {
-        "item_id": 54,
+        "item_id": 53,
         "item_type": 2,
         "item_sub_type": 300,
         "item_name": "메모지",
@@ -746,7 +731,7 @@
         "description": "누군가 남긴 메모."
     },
     {
-        "item_id": 55,
+        "item_id": 54,
         "item_type": 2,
         "item_sub_type": 303,
         "item_name": "거미줄",
@@ -758,7 +743,7 @@
         "description": "끈적한 거미줄. 닿으면 느려질 것 같다."
     },
     {
-        "item_id": 56,
+        "item_id": 55,
         "item_type": 2,
         "item_sub_type": 303,
         "item_name": "덫",
@@ -766,11 +751,12 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
+        "duration": 5.0,
         "icon_path": "",
         "description": "**유령에게도 효과 있음**"
     },
     {
-        "item_id": 57,
+        "item_id": 56,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "녹슨 동전",
@@ -783,7 +769,7 @@
         "description": ""
     },
     {
-        "item_id": 58,
+        "item_id": 57,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "유리 구슬",
@@ -796,7 +782,7 @@
         "description": ""
     },
     {
-        "item_id": 59,
+        "item_id": 58,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "오래된 숟가락",
@@ -809,7 +795,7 @@
         "description": ""
     },
     {
-        "item_id": 60,
+        "item_id": 59,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "빈 물병",
@@ -822,7 +808,7 @@
         "description": ""
     },
     {
-        "item_id": 61,
+        "item_id": 60,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "조개 껍데기",
@@ -835,7 +821,7 @@
         "description": ""
     },
     {
-        "item_id": 62,
+        "item_id": 61,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "지도 조각",
@@ -848,7 +834,7 @@
         "description": ""
     },
     {
-        "item_id": 63,
+        "item_id": 62,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "목각 인형",
@@ -861,7 +847,7 @@
         "description": ""
     },
     {
-        "item_id": 64,
+        "item_id": 63,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "종이 비행기",
@@ -874,7 +860,7 @@
         "description": ""
     },
     {
-        "item_id": 65,
+        "item_id": 64,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "병뚜껑",
@@ -887,7 +873,7 @@
         "description": ""
     },
     {
-        "item_id": 66,
+        "item_id": 65,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "테니스 공",
@@ -900,7 +886,7 @@
         "description": ""
     },
     {
-        "item_id": 67,
+        "item_id": 66,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "고장난 세탁기",
@@ -913,7 +899,7 @@
         "description": ""
     },
     {
-        "item_id": 68,
+        "item_id": 67,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "망가진 자전거",
@@ -926,7 +912,7 @@
         "description": ""
     },
     {
-        "item_id": 69,
+        "item_id": 68,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "생선 뼈",
@@ -939,7 +925,7 @@
         "description": ""
     },
     {
-        "item_id": 70,
+        "item_id": 69,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "나무 단추",
@@ -952,7 +938,7 @@
         "description": ""
     },
     {
-        "item_id": 71,
+        "item_id": 70,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "빈 깡통",
@@ -965,7 +951,7 @@
         "description": ""
     },
     {
-        "item_id": 72,
+        "item_id": 71,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "벽돌",
@@ -978,7 +964,7 @@
         "description": ""
     },
     {
-        "item_id": 73,
+        "item_id": 72,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "금 간 접시",
@@ -991,7 +977,7 @@
         "description": ""
     },
     {
-        "item_id": 74,
+        "item_id": 73,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "낡은 부츠",
@@ -1004,7 +990,7 @@
         "description": ""
     },
     {
-        "item_id": 75,
+        "item_id": 74,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "고장난 시계",
@@ -1017,7 +1003,7 @@
         "description": ""
     },
     {
-        "item_id": 76,
+        "item_id": 75,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "구리 반지",
@@ -1030,7 +1016,7 @@
         "description": ""
     },
     {
-        "item_id": 77,
+        "item_id": 76,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "비단 손수건",
@@ -1043,7 +1029,7 @@
         "description": ""
     },
     {
-        "item_id": 78,
+        "item_id": 77,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "진주 귀걸이",
@@ -1056,7 +1042,7 @@
         "description": ""
     },
     {
-        "item_id": 79,
+        "item_id": 78,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "황동 촛대",
@@ -1069,7 +1055,7 @@
         "description": ""
     },
     {
-        "item_id": 80,
+        "item_id": 79,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "자수정 조각",
@@ -1082,7 +1068,7 @@
         "description": ""
     },
     {
-        "item_id": 81,
+        "item_id": 80,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "고대 점토판",
@@ -1095,7 +1081,7 @@
         "description": ""
     },
     {
-        "item_id": 82,
+        "item_id": 81,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "청동 거울",
@@ -1108,7 +1094,7 @@
         "description": ""
     },
     {
-        "item_id": 83,
+        "item_id": 82,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "프릴 리본",
@@ -1121,7 +1107,7 @@
         "description": ""
     },
     {
-        "item_id": 84,
+        "item_id": 83,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "가죽 벨트",
@@ -1134,7 +1120,7 @@
         "description": ""
     },
     {
-        "item_id": 85,
+        "item_id": 84,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "도자기 화병",
@@ -1147,7 +1133,7 @@
         "description": ""
     },
     {
-        "item_id": 86,
+        "item_id": 85,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "오크통",
@@ -1160,7 +1146,7 @@
         "description": ""
     },
     {
-        "item_id": 87,
+        "item_id": 86,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "복싱 글러브",
@@ -1173,7 +1159,7 @@
         "description": ""
     },
     {
-        "item_id": 88,
+        "item_id": 87,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "차 열쇠",
@@ -1186,7 +1172,7 @@
         "description": ""
     },
     {
-        "item_id": 89,
+        "item_id": 88,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "명품 가방",
@@ -1199,7 +1185,7 @@
         "description": ""
     },
     {
-        "item_id": 90,
+        "item_id": 89,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "여행 가방",
@@ -1212,7 +1198,7 @@
         "description": ""
     },
     {
-        "item_id": 91,
+        "item_id": 90,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "은 반지",
@@ -1225,7 +1211,7 @@
         "description": ""
     },
     {
-        "item_id": 92,
+        "item_id": 91,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "에메랄드 귀걸이",
@@ -1238,7 +1224,7 @@
         "description": ""
     },
     {
-        "item_id": 93,
+        "item_id": 92,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "수정 해골",
@@ -1251,7 +1237,7 @@
         "description": ""
     },
     {
-        "item_id": 94,
+        "item_id": 93,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "바이킹 투구",
@@ -1264,7 +1250,7 @@
         "description": ""
     },
     {
-        "item_id": 95,
+        "item_id": 94,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "무사의 검",
@@ -1277,7 +1263,7 @@
         "description": ""
     },
     {
-        "item_id": 96,
+        "item_id": 95,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "옥 팔찌",
@@ -1290,7 +1276,7 @@
         "description": ""
     },
     {
-        "item_id": 97,
+        "item_id": 96,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "보물 지도",
@@ -1303,7 +1289,7 @@
         "description": ""
     },
     {
-        "item_id": 98,
+        "item_id": 97,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "기사 갑옷",
@@ -1316,7 +1302,7 @@
         "description": ""
     },
     {
-        "item_id": 99,
+        "item_id": 98,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "골동품 타자기",
@@ -1329,7 +1315,7 @@
         "description": ""
     },
     {
-        "item_id": 100,
+        "item_id": 99,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "다이아몬드 반지",
@@ -1342,7 +1328,7 @@
         "description": ""
     },
     {
-        "item_id": 101,
+        "item_id": 100,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "유니콘 뿔",
@@ -1355,7 +1341,7 @@
         "description": ""
     },
     {
-        "item_id": 102,
+        "item_id": 101,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "황금 성배",
@@ -1368,7 +1354,7 @@
         "description": ""
     },
     {
-        "item_id": 103,
+        "item_id": 102,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "공룡 알 화석",
@@ -1381,7 +1367,7 @@
         "description": ""
     },
     {
-        "item_id": 104,
+        "item_id": 103,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "운석 파편",
@@ -1394,7 +1380,7 @@
         "description": ""
     },
     {
-        "item_id": 105,
+        "item_id": 104,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "저주받은 토템",
@@ -1407,7 +1393,7 @@
         "description": ""
     },
     {
-        "item_id": 106,
+        "item_id": 105,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "금괴 상자",
@@ -1420,7 +1406,7 @@
         "description": ""
     },
     {
-        "item_id": 107,
+        "item_id": 106,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "불사조의 깃털",
@@ -1433,7 +1419,7 @@
         "description": ""
     },
     {
-        "item_id": 108,
+        "item_id": 107,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "바다의 심장",
@@ -1446,7 +1432,7 @@
         "description": ""
     },
     {
-        "item_id": 109,
+        "item_id": 108,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "엑스칼리버",
@@ -1459,7 +1445,7 @@
         "description": ""
     },
     {
-        "item_id": 110,
+        "item_id": 109,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "황제의 옥좌",
@@ -1472,7 +1458,7 @@
         "description": ""
     },
     {
-        "item_id": 111,
+        "item_id": 110,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "현자의 돌",
