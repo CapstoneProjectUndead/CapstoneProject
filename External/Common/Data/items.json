@@ -9,6 +9,7 @@
         "price": 200,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_shovel",
         "description": "사용된 세월이 느껴지는 삽."
     },
     {
@@ -21,6 +22,7 @@
         "price": 400,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_shovel",
         "description": "평범한 삽."
     },
     {
@@ -33,6 +35,7 @@
         "price": 600,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_shovel",
         "description": "무엇이든 파낼 수 있을 것 같은 예리한 삽."
     },
     {
@@ -45,6 +48,7 @@
         "price": 900,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_shovel",
         "description": "오래 쓸 수 있을 것 같은 튼튼한 삽."
     },
     {
@@ -57,6 +61,7 @@
         "price": 300,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_ax",
         "description": "사용된 세월이 느껴지는 도끼."
     },
     {
@@ -69,6 +74,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_ax",
         "description": "평범한 도끼."
     },
     {
@@ -81,6 +87,7 @@
         "price": 800,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_ax",
         "description": "무엇이든 베어낼 수 있을 것 같은 예리한 도끼."
     },
     {
@@ -93,6 +100,7 @@
         "price": 1200,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_ax",
         "description": "오래 쓸 수 있을 것 같은 튼튼한 도끼."
     },
     {
@@ -105,6 +113,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_pick",
         "description": "사용된 세월이 느껴지는 곡괭이."
     },
     {
@@ -117,6 +126,7 @@
         "price": 600,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_pick",
         "description": "평범한 곡괭이."
     },
     {
@@ -129,6 +139,7 @@
         "price": 1000,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_pick",
         "description": "무엇이든 캐낼 수 있을 것 같은 예리한 곡괭이."
     },
     {
@@ -141,6 +152,7 @@
         "price": 1500,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_pick",
         "description": "오래 쓸 수 있을 것 같은 튼튼한 곡괭이."
     },
     {
@@ -153,6 +165,7 @@
         "price": 100000,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": "쓸모가 많은 전동 드릴."
     },
     {
@@ -164,6 +177,7 @@
         "price": 300,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_bat",
         "description": "공 말고 다른 것도 쳐낼 수 있다."
     },
     {
@@ -175,6 +189,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_squeaky_hammer",
         "description": "**뿅뿅**"
     },
     {
@@ -186,6 +201,7 @@
         "price": 200,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": "줄에 걸리면 꽤나 아프다."
     },
     {
@@ -197,6 +213,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_magicwand",
         "description": "마법을 쓸 수 있는 지팡이."
     },
     {
@@ -208,6 +225,7 @@
         "price": 400,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": "살상 능력은 없는 장난감 총."
     },
     {
@@ -219,6 +237,7 @@
         "price": 250,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "Equip_toysword",
         "description": "날카롭지 않아 안전하다."
     },
     {
@@ -233,6 +252,7 @@
         "price": 300,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_meat",
         "description": "익지 않은 생고기."
     },
     {
@@ -247,6 +267,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_frozen_dumplings",
         "description": "차갑고 딱딱한 냉동 만두."
     },
     {
@@ -261,6 +282,7 @@
         "price": 180,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_broccoli",
         "description": "신선한 브로콜리."
     },
     {
@@ -275,6 +297,7 @@
         "price": 250,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_durian",
         "description": "썩 좋지 않은 냄새가 풍긴다…."
     },
     {
@@ -289,6 +312,7 @@
         "price": 120,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_banana",
         "description": "잘 익은 바나나. 껍질은 아무 데나 버리지 말자."
     },
     {
@@ -303,6 +327,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_snack",
         "description": "질소로 빵빵하게 포장된 감자칩 과자."
     },
     {
@@ -317,6 +342,7 @@
         "price": 50,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_mandarin",
         "description": "하얗게 곰팡이가 피어 있다."
     },
     {
@@ -331,6 +357,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_potato",
         "description": "귀여운 새싹이 보인다."
     },
     {
@@ -345,6 +372,7 @@
         "price": 30,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "하얗게 곰팡이가 피어 있다."
     },
     {
@@ -359,6 +387,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_chocolate",
         "description": "새것 같은 달콤한 초콜릿."
     },
     {
@@ -373,6 +402,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_candy",
         "description": "딸기 맛."
     },
     {
@@ -387,6 +417,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_orange_juice",
         "description": "오렌지 과즙 100%"
     },
     {
@@ -401,6 +432,7 @@
         "price": 220,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_churros",
         "description": "놀이공원에 온 기분이 든다."
     },
     {
@@ -416,6 +448,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_candyfluff",
         "description": "후후 불면 날아가는 솜사탕. 몸이 가벼워질 것 같다."
     },
     {
@@ -431,6 +464,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_icecream",
         "description": "머리가 아플 정도로 차디찬 아이스크림."
     },
     {
@@ -445,6 +479,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_melonpan",
         "description": "귀여운 캐릭터 빵. 띠부 씰과 곰팡이 포함."
     },
     {
@@ -459,6 +494,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_Nachos",
         "description": "누군가 먹다 남긴 치즈맛 나쵸."
     },
     {
@@ -474,6 +510,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_jellybean",
         "description": "콩 모양 젤리. 먹으면 마법 같은 맛이 난다."
     },
     {
@@ -488,6 +525,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_drumstick",
         "description": "상한 치킨. 한입 먹힌 흔적이 있다."
     },
     {
@@ -502,6 +540,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_cheese",
         "description": "곰팡이 핀 치즈."
     },
     {
@@ -516,6 +555,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_yogurt",
         "description": "맛있어 보이는 요거트. 시큼한 냄새가 난다."
     },
     {
@@ -530,6 +570,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_cocoa",
         "description": "누군가 마시던 핫초코."
     },
     {
@@ -545,6 +586,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_cake",
         "description": "누군가 먹다 남긴 조각 케이크! 발걸음이 빨라질 만큼 맛있다!"
     },
     {
@@ -559,6 +601,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_snackbox",
         "description": "과자… 조금 남았다."
     },
     {
@@ -573,6 +616,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_pizza",
         "description": "한 조각 반이 들어 있다."
     },
     {
@@ -587,6 +631,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_fish",
         "description": "상한 생선… 냄새가 끔찍하다."
     },
     {
@@ -601,6 +646,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "Food_lunch",
         "description": "유통기한 임박 할인' 스티커가 붙어 있다."
     },
     {
@@ -612,6 +658,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "몸이 가벼워진다."
     },
     {
@@ -623,6 +670,7 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "요란한 소리를 낼 수 있다."
     },
     {
@@ -634,6 +682,7 @@
         "price": 100,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "머리에 씌울 수 있을 것 같다."
     },
     {
@@ -645,6 +694,7 @@
         "price": 60,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "밟고 미끄러지지 않게 조심!"
     },
     {
@@ -656,6 +706,7 @@
         "price": 40,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "구멍이 뚫려서 버려진 걸까?"
     },
     {
@@ -667,6 +718,7 @@
         "price": 90,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "끈적한 슬라임. 쓸데는 없다."
     },
     {
@@ -678,6 +730,7 @@
         "price": 200,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "흔들면 짤랑짤랑 소리가 난다."
     },
     {
@@ -689,6 +742,7 @@
         "price": 30,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "누군가 남긴 메모."
     },
     {
@@ -700,6 +754,7 @@
         "price": 80,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "끈적한 거미줄. 닿으면 느려질 것 같다."
     },
     {
@@ -711,6 +766,7 @@
         "price": 150,
         "max_stack": 99,
         "is_throwable": true,
+        "icon_path": "",
         "description": "**유령에게도 효과 있음**"
     },
     {
@@ -723,6 +779,7 @@
         "price": 10,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -735,6 +792,7 @@
         "price": 18,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -747,6 +805,7 @@
         "price": 26,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -759,6 +818,7 @@
         "price": 17,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -771,6 +831,7 @@
         "price": 25,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -783,6 +844,7 @@
         "price": 20,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -795,6 +857,7 @@
         "price": 120,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -807,6 +870,7 @@
         "price": 3,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -819,6 +883,7 @@
         "price": 16,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -831,6 +896,7 @@
         "price": 26,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -843,6 +909,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -855,6 +922,7 @@
         "price": 240,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -867,6 +935,7 @@
         "price": 2,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -879,6 +948,7 @@
         "price": 8,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -891,6 +961,7 @@
         "price": 7,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -903,6 +974,7 @@
         "price": 50,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -915,6 +987,7 @@
         "price": 35,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -927,6 +1000,7 @@
         "price": 25,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -939,6 +1013,7 @@
         "price": 150,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -951,6 +1026,7 @@
         "price": 120,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -963,6 +1039,7 @@
         "price": 100,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -975,6 +1052,7 @@
         "price": 150,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -987,6 +1065,7 @@
         "price": 620,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -999,6 +1078,7 @@
         "price": 360,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1011,6 +1091,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1023,6 +1104,7 @@
         "price": 440,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1035,6 +1117,7 @@
         "price": 170,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1047,6 +1130,7 @@
         "price": 270,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1059,6 +1143,7 @@
         "price": 530,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1071,6 +1156,7 @@
         "price": 720,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1083,6 +1169,7 @@
         "price": 300,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1095,6 +1182,7 @@
         "price": 360,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1107,6 +1195,7 @@
         "price": 520,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1119,6 +1208,7 @@
         "price": 710,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1131,6 +1221,7 @@
         "price": 300,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1143,6 +1234,7 @@
         "price": 340,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1155,6 +1247,7 @@
         "price": 2400,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1167,6 +1260,7 @@
         "price": 1400,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1179,6 +1273,7 @@
         "price": 1800,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1191,6 +1286,7 @@
         "price": 700,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1203,6 +1299,7 @@
         "price": 240,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1215,6 +1312,7 @@
         "price": 2950,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1227,6 +1325,7 @@
         "price": 1350,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1239,6 +1338,7 @@
         "price": 1500,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1251,6 +1351,7 @@
         "price": 5000,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1263,6 +1364,7 @@
         "price": 4520,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1275,6 +1377,7 @@
         "price": 9800,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1287,6 +1390,7 @@
         "price": 12000,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1299,6 +1403,7 @@
         "price": 7500,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1311,6 +1416,7 @@
         "price": 19520,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1323,6 +1429,7 @@
         "price": 1000,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1335,6 +1442,7 @@
         "price": 37200,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1347,6 +1455,7 @@
         "price": 42890,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1359,6 +1468,7 @@
         "price": 132460,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     },
     {
@@ -1371,6 +1481,7 @@
         "price": 52520,
         "max_stack": 1,
         "is_throwable": true,
+        "icon_path": "",
         "description": ""
     }
 ]

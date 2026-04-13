@@ -131,10 +131,18 @@ void CInventory::BeginDrawInventory()
 		dl->AddRectFilled(ghostMin, ghostMax, IM_COL32(210, 210, 215, 200), 6.0f * scale);
 		dl->AddRect(ghostMin, ghostMax,       IM_COL32(120, 120, 125, 255), 6.0f * scale);
 
-		const char* name = dragged_item->GetName().c_str();
-		ImVec2 tSz = ImGui::CalcTextSize(name);
-		dl->AddText(ImVec2(mousePos.x - tSz.x * 0.5f, mousePos.y - tSz.y * 0.5f),
-		            IM_COL32(30, 30, 30, 255), name);
+		const std::string& ghostIconKey = dragged_item->GetIconPath();
+		ImTextureID ghostTex = ghostIconKey.empty() ? 0 : CImGuiManager::GetInstance().GetTexture(ghostIconKey);
+
+		if (ghostTex) {
+			dl->AddImage(ghostTex, ghostMin, ghostMax);
+		}
+		else {
+			const char* name = dragged_item->GetName().c_str();
+			ImVec2 tSz = ImGui::CalcTextSize(name);
+			dl->AddText(ImVec2(mousePos.x - tSz.x * 0.5f, mousePos.y - tSz.y * 0.5f),
+			            IM_COL32(30, 30, 30, 255), name);
+		}
 	}
 
 	// 마우스 버튼 놓으면 드래그 종료
@@ -367,12 +375,22 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 
 				if (displayItem) {
 
-					// TODO: 실제 아이템 이미지 로드 후 ImGui::Image()로 교체
-					const char* placeholder = displayItem->GetName().c_str();
-					ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
-					ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
-					                     cellMin.y + (cellSz - tSz.y) * 0.5f);
-					dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
+					const std::string& iconKey = displayItem->GetIconPath();
+					ImTextureID tex = iconKey.empty() ? 0 : CImGuiManager::GetInstance().GetTexture(iconKey);
+
+					if (tex) {
+						float pad2 = 4.0f * scale;
+						ImVec2 imgMin = ImVec2(cellMin.x + pad2, cellMin.y + pad2);
+						ImVec2 imgMax = ImVec2(cellMax.x - pad2, cellMax.y - pad2);
+						dl->AddImage(tex, imgMin, imgMax);
+					}
+					else {
+						const char* placeholder = displayItem->GetName().c_str();
+						ImVec2 tSz  = ImGui::CalcTextSize(placeholder);
+						ImVec2 tPos = ImVec2(cellMin.x + (cellSz - tSz.x) * 0.5f,
+						                     cellMin.y + (cellSz - tSz.y) * 0.5f);
+						dl->AddText(tPos, IM_COL32(100, 100, 100, 255), placeholder);
+					}
 
 				}
 
@@ -635,11 +653,13 @@ void CInventory::DrawItemTooltip(CItem* item)
 			dl->AddRectFilled(imgMin, imgMax, IM_COL32(210, 210, 215, 255), rounding);
 			dl->AddRect(imgMin, imgMax, IM_COL32(170, 170, 175, 255), rounding);
 
-			// TODO: 실제 텍스처 로드 후 ImGui::Image()로 교체
-			ImVec2 ptSz = ImGui::CalcTextSize("[img]");
-			dl->AddText(ImVec2(imgMin.x + (imgSz - ptSz.x) * 0.5f,
-			                   imgMin.y + (imgSz - ptSz.y) * 0.5f),
-			            IM_COL32(100, 100, 100, 255), "[img]");
+			const std::string& iconKey = item->GetIconPath();
+			ImTextureID tex = iconKey.empty() ? 0 : CImGuiManager::GetInstance().GetTexture(iconKey);
+			if (tex) {
+				float   ip   = 4.0f * scale;
+				dl->AddImage(tex, ImVec2(imgMin.x + ip, imgMin.y + ip),
+				                  ImVec2(imgMax.x - ip, imgMax.y - ip));
+			}
 
 			ImGui::Dummy(ImVec2(imgSz, imgSz));
 		}

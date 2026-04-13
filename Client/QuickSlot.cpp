@@ -119,14 +119,25 @@ void CQuickSlot::DrawSlotCells(float cellSz, float pad, float scale)
 		dl->AddText(font, numSz, numPos, IM_COL32(200, 200, 200, 180), numBuf);
 
 		if (slots[i].has_item) {
-			const char* name   = slots[i].name.c_str();
-			float       itemSz = fontSize * 0.80f;
-			ImVec2      tSz    = font->CalcTextSizeA(itemSz, FLT_MAX, 0.0f, name);
-			ImVec2      tPos   = ImVec2(
-				cellMin.x + (cellSz - tSz.x) * 0.5f,
-				cellMin.y + (cellSz - tSz.y) * 0.5f
-			);
-			dl->AddText(font, itemSz, tPos, IM_COL32(230, 230, 230, 255), name);
+			const std::string& iconKey = slots[i].icon_path;
+			ImTextureID tex = iconKey.empty() ? 0 : CImGuiManager::GetInstance().GetTexture(iconKey);
+
+			if (tex) {
+				float   imgPad = 6.0f * scale;
+				ImVec2  imgMin = ImVec2(cellMin.x + imgPad, cellMin.y + imgPad);
+				ImVec2  imgMax = ImVec2(cellMax.x - imgPad, cellMax.y - imgPad);
+				dl->AddImage(tex, imgMin, imgMax);
+			}
+			else {
+				const char* name   = slots[i].name.c_str();
+				float       itemSz = fontSize * 0.80f;
+				ImVec2      tSz    = font->CalcTextSizeA(itemSz, FLT_MAX, 0.0f, name);
+				ImVec2      tPos   = ImVec2(
+					cellMin.x + (cellSz - tSz.x) * 0.5f,
+					cellMin.y + (cellSz - tSz.y) * 0.5f
+				);
+				dl->AddText(font, itemSz, tPos, IM_COL32(230, 230, 230, 255), name);
+			}
 		}
 
 		// Invisible button
@@ -179,11 +190,12 @@ bool CQuickSlot::TryDropOnSlot(CItem* item, ImVec2 mousePos)
 					slots[j] = SlotEntry{};
 			}
 
-			slots[i].has_item = true;
-			slots[i].inv_id   = invId;
-			slots[i].name     = item->GetName();
-			slots[i].type     = item->GetItemType();
-			slots[i].item_id = item->GetItemId();
+			slots[i].has_item  = true;
+			slots[i].inv_id    = invId;
+			slots[i].name      = item->GetName();
+			slots[i].icon_path = item->GetIconPath();
+			slots[i].type      = item->GetItemType();
+			slots[i].item_id   = item->GetItemId();
 			return true;
 		}
 	}

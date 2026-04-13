@@ -4,13 +4,14 @@
 
 class CMyPlayer;
 
-struct SlotEntry 
+struct SlotEntry
 {
-    bool        has_item = false;
-    uint32      inv_id = 0;
+    bool        has_item  = false;
+    uint32      inv_id    = 0;
     std::string name;
-    ITEM_TYPE   type = ITEM_TYPE::ETC;
-    int item_id = -1;       // 아이템 종류 ID(Rendering 시 인자로 넘겨주기 위해 필요)
+    std::string icon_path;
+    ITEM_TYPE   type      = ITEM_TYPE::ETC;
+    int         item_id   = -1;       // 아이템 종류 ID(Rendering 시 인자로 넘겨주기 위해 필요)
 };
 
 
