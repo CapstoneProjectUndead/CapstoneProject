@@ -92,11 +92,13 @@ void CInventory::BeginDrawInventory()
 	float  winH = 460.0f * scale;
 	float  titleH = 36.0f * scale;
 
-	ImGui::SetNextWindowPos(ImVec2(screen.x * 0.5f, screen.y * 0.5f), ImGuiCond_Once, ImVec2(0.5f, 0.5f));
+	float  margin = 20.0f * scale;
+	ImGui::SetNextWindowPos(ImVec2(screen.x - winW - margin, screen.y - winH - margin), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_Always);
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
-		| ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+		| ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
+		| ImGuiWindowFlags_NoMove;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
