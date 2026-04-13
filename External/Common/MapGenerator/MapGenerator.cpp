@@ -284,6 +284,7 @@ void MapGenerator::PlaceMonster()
                 if (!IsValid(rx, ry)) continue;
                 if (GetTile(ELayer::FLOOR, rx, ry) != EModelType::ROAD) continue;
                 if (GetTile(ELayer::OBJECT, rx, ry) != EModelType::UNKNOWN) continue;
+                if (IsBlockedStructure(rx, ry)) continue;
                 mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::MONSTER_GHOST;
                 break;
             }
@@ -311,6 +312,7 @@ void MapGenerator::PlaceMonster()
                     EModelType floor = GetTile(ELayer::FLOOR, nx, ny);
                     if (floor == EModelType::WALL || floor == EModelType::HOUSE_INNTER) continue;
                     if (GetTile(ELayer::OBJECT, nx, ny) != EModelType::UNKNOWN) continue;
+                    if (IsBlockedStructure(nx, ny)) continue;
 
                     mapGrid[(int)ELayer::OBJECT][ny][nx] = EModelType::MONSTER_HUMAN;
                     placed = true;
@@ -326,6 +328,7 @@ void MapGenerator::PlaceMonster()
                     if (!IsValid(sx, sy)) continue;
                     if (GetTile(ELayer::FLOOR, sx, sy) != EModelType::VILLAGE_ROAD) continue;
                     if (GetTile(ELayer::OBJECT, sx, sy) != EModelType::UNKNOWN) continue;
+                    if (IsBlockedStructure(sx, sy)) continue;
 
                     mapGrid[(int)ELayer::OBJECT][sy][sx] = EModelType::MONSTER_HUMAN;
                     placed = true;
@@ -348,7 +351,9 @@ void MapGenerator::PlaceTreasure() {
                 if (!IsValid(rx, ry)) continue;
 
                 EModelType floor = mapGrid[(int)ELayer::FLOOR][ry][rx];
-                if (GetTile(ELayer::OBJECT, rx, ry) == EModelType::UNKNOWN && floor != EModelType::WALL) {
+                if (GetTile(ELayer::OBJECT, rx, ry) == EModelType::UNKNOWN
+                    && floor != EModelType::WALL
+                    && !IsBlockedStructure(rx, ry)) {
                     mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::TREASURE;
                 }
             }
@@ -365,6 +370,20 @@ bool MapGenerator::IsHouseBuilding(int x, int y) {
         t == EModelType::DOOR || t == EModelType::CORNER_DOOR ||
         t == EModelType::HOUSE_WALL_CORNER || t == EModelType::HOUSE_WALL_STRAIGHT ||
         t == EModelType::HOUSE_WALL_EMPTY);
+}
+
+// STRUCTURE 레이어가 통과 불가한 벽 계열인지 검사
+// (ApplyAreaTheme 이후 FLOOR에 WALL이 없으므로, 실제 벽은 STRUCTURE 레이어로 판별해야 함)
+bool MapGenerator::IsBlockedStructure(int x, int y) {
+    if (!IsValid(x, y)) return true;
+    EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
+    return (t == EModelType::VILLAGE_WALL ||
+            t == EModelType::PARK_WALL ||
+            t == EModelType::WAREHOUSE ||
+            t == EModelType::STORE ||
+            t == EModelType::HOUSE_WALL_STRAIGHT ||
+            t == EModelType::HOUSE_WALL_CORNER ||
+            t == EModelType::STORE_WALL_CORNER);
 }
 
 bool MapGenerator::IsStoreBuilding(int x, int y) {

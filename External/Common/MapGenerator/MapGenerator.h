@@ -93,6 +93,7 @@ namespace MapGenerator
     void RefineBuildingTiles();
     bool IsHouseBuilding(int x, int y);
     bool IsStoreBuilding(int x, int y);
+    bool IsBlockedStructure(int x, int y);
     bool TryPlaceDoor(int cx, int cy, int size);
     bool IsSpaceForTree(int x, int y);
 
