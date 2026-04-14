@@ -7,10 +7,10 @@
 #include "MyPlayer.h"
 
 CGhost::CGhost()
-	: CMonster(MON_TYPE::GHOST)
+    : CMonster(MON_TYPE::HUMAN_MONSTER)
 {
-	friction = 0.0f;
-	SetFOV(120);
+    friction = 0.0f;
+    SetFOV(120);
 }
 
 CGhost::~CGhost()
@@ -19,33 +19,31 @@ CGhost::~CGhost()
 
 void CGhost::Update(float elapsedTime)
 {
-	CMonster::Update(elapsedTime);
+    CMonster::Update(elapsedTime);
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
 {
-    // (Idle »óÅÂ)
-
-    // ½Ã¾ß ¹üÀ§¿¡ ÇÃ·¹ÀÌ¾î°¡ µé¾î¿À´ÂÁö Ã¼Å©
+     // ì‹œì•¼ ë²”ìœ„ì— í”Œë ˆì´ì–´ê°€ ë“¤ì–´ì˜¤ëŠ”ì§€ ì²´í¬
     auto target = FindNearestPlayer();
 
     if (target) {
 
-        // Å¸°ÙÀ» ÇâÇÏ´Â ¹æÇâ º¤ÅÍ ¹× Æò¸é(XZ) °Å¸® °è»ê
+        // íƒ€ê²Ÿì„ í–¥í•˜ëŠ” ë°©í–¥ ë²¡í„° ë° í‰ë©´(XZ) ê±°ë¦¬ ê³„ì‚°
         XMFLOAT3 dirVec = Vector3::Subtract(target->position, position);
-        dirVec.y = 0.0f; // YÃà(³ôÀÌ) Â÷ÀÌ´Â ¹«½Ã
+        dirVec.y = 0.0f; // Yì¶•(ë†’ì´) ì°¨ì´ëŠ” ë¬´ì‹œ
         float dist = Vector3::Length(dirVec);
 
-        // ÀÎ½Ä °Å¸®(recog_range) ³»¿¡ ÀÖ´ÂÁö 1Â÷ È®ÀÎ
+        // ì¸ì‹ ê±°ë¦¬(recog_range) ë‚´ì— ìˆëŠ”ì§€ 1ì°¨ í™•ì¸
         if (dist <= recog_range && dist > 0.001f) {
 
-            // Å¸°Ù ¹æÇâ º¤ÅÍ Á¤±ÔÈ­ (±æÀÌ¸¦ 1·Î ¸¸µê)
+            // íƒ€ê²Ÿ ë°©í–¥ ë²¡í„° ì •ê·œí™” (ê¸¸ì´ë¥¼ 1ë¡œ ë§Œë“¦)
             XMFLOAT3 dirNorm = { dirVec.x / dist, 0.0f, dirVec.z / dist };
 
-            // ³»Àû(Dot Product) °è»ê (ObjectÀÇ look º¤ÅÍ È°¿ë)
+            // ë‚´ì (Dot Product) ê³„ì‚° (Objectì˜ look ë²¡í„° í™œìš©)
             float dotProduct = (look.x * dirNorm.x) + (look.z * dirNorm.z);
 
-            // ÇÃ·¹ÀÌ¾î°¡ ½Ã¾ß°¢ ¾È¿¡ µé¾î¿Ô´Ù¸é ÃßÀû ½ÃÀÛ
+            // í”Œë ˆì´ì–´ê°€ ì‹œì•¼ê° ì•ˆì— ë“¤ì–´ì™”ë‹¤ë©´ ì¶”ì  ì‹œì‘
             if (dotProduct >= cos_threshold) {
                 SetTarget(target);
 
@@ -58,42 +56,42 @@ void CGhost::OnIdleMove(float elapsedTime)
         }
     }
 
-    // ÃÊ±â ÀÚ¸®(origin_position)·Î º¹±ÍÇÏ±â
+    // ì´ˆê¸° ìë¦¬(origin_position)ë¡œ ë³µê·€í•˜ê¸°
     XMFLOAT3 dirToOrigin = Vector3::Subtract(origin_position, position);
     dirToOrigin.y = 0.0f;
     float distToOrigin = Vector3::Length(dirToOrigin);
 
     if (distToOrigin > 0.1f) {
 
-        // ÇÃ·¹ÀÌ¾î°¡ ÃÊ±â À§Ä¡·Î º¹±ÍÇÏ´Â µ¿¾È¿¡´Â °È´Â ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ³ª¿Í¾ßÇÑ´Ù.
+        // í”Œë ˆì´ì–´ê°€ ì´ˆê¸° ìœ„ì¹˜ë¡œ ë³µê·€í•˜ëŠ” ë™ì•ˆì—ëŠ” ê±·ëŠ” ì• ë‹ˆë©”ì´ì…˜ì´ ë‚˜ì™€ì•¼í•œë‹¤.
         AI_state = AI_STATE::MONSTER_PATROL;
 
-        // ÃÊ±â ÀÚ¸®¸¦ ÇâÇØ ¹æÇâ Æ²±â
+        // ì´ˆê¸° ìë¦¬ë¥¼ í–¥í•´ ë°©í–¥ í‹€ê¸°
         float returnYaw = XMConvertToDegrees(atan2f(dirToOrigin.x, dirToOrigin.z));
         SetYaw(returnYaw);
         SetYawPitch(returnYaw, 0.0f);
 
-        // ÃÊ±â ÀÚ¸®¸¦ ÇâÇØ °È±â (»êÃ¥ ¼Óµµ)
+        // ì´ˆê¸° ìë¦¬ë¥¼ í–¥í•´ ê±·ê¸° (ì‚°ì±… ì†ë„)
         float walk_speed = 0.5f;
         velocity.x = look.x * walk_speed;
         velocity.z = look.z * walk_speed;
 
-        // ¾ÆÁ÷ µµÂøÇÏÁö ¾Ê¾ÒÀ¸¹Ç·Î idle_timer´Â Áõ°¡½ÃÅ°Áö ¾Ê°í ¿©±â¼­ ÇÔ¼ö Á¾·á!
+        // ì•„ì§ ë„ì°©í•˜ì§€ ì•Šì•˜ìœ¼ë¯€ë¡œ idle_timerëŠ” ì¦ê°€ì‹œí‚¤ì§€ ì•Šê³  ì—¬ê¸°ì„œ í•¨ìˆ˜ ì¢…ë£Œ!
         return;
     }
 
-    // ÃÊ±â ÁöÁ¡À¸·Î º¹±ÍÇÏ¸é 
+    // ì´ˆê¸° ì§€ì ìœ¼ë¡œ ë³µê·€í•˜ë©´ 
     {
         SetYaw(0.0f);
         SetYawPitch(0.0f, 0.0f);
         AI_state = AI_STATE::MONSTER_IDLE;
     }
 
-    // ¼Óµµ 0 °íÁ¤ (ÈŞ½Ä)
+    // ì†ë„ 0 ê³ ì • (íœ´ì‹)
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
-    // Å¸ÀÌ¸Ó Ã¼Å©: 5ÃÊ ½¬¾úÀ¸¸é ¼øÂû(PATROL)ÇÏ·¯ Ãâ¹ß
+    // íƒ€ì´ë¨¸ ì²´í¬: 5ì´ˆ ì‰¬ì—ˆìœ¼ë©´ ìˆœì°°(PATROL)í•˜ëŸ¬ ì¶œë°œ
     idle_timer += elapsedTime;
 
     if (idle_timer >= 5.0f) {
@@ -106,30 +104,30 @@ void CGhost::OnIdleMove(float elapsedTime)
 
 void CGhost::OnPatrolMove(float elapsedTime)
 {
-    // (¼øÂû »óÅÂ)
-    // Å¸°Ù Å½»ö (TRACE ÀüÈ¯)
+    // (ìˆœì°° ìƒíƒœ)
+    // íƒ€ê²Ÿ íƒìƒ‰ (TRACE ì „í™˜)
     auto target = FindNearestPlayer();
     if (target) {
 
-        // Å¸°ÙÀ» ÇâÇÏ´Â º¤ÅÍ ¹× Æò¸é(XZ) °Å¸® °è»ê
+        // íƒ€ê²Ÿì„ í–¥í•˜ëŠ” ë²¡í„° ë° í‰ë©´(XZ) ê±°ë¦¬ ê³„ì‚°
         XMFLOAT3 dirVec = Vector3::Subtract(target->position, position);
-        dirVec.y = 0.0f; // ³ôÀÌ Â÷ÀÌ´Â ¹«½Ã (À§¾Æ·¡´Â ¾È º¸°í Æò¸é ½Ã¾ß¸¸ Ã¼Å©)
+        dirVec.y = 0.0f; // ë†’ì´ ì°¨ì´ëŠ” ë¬´ì‹œ (ìœ„ì•„ë˜ëŠ” ì•ˆ ë³´ê³  í‰ë©´ ì‹œì•¼ë§Œ ì²´í¬)
         float dist = Vector3::Length(dirVec);
 
-        // ÀÏ´Ü ÀÎ½Ä °Å¸®(recog_range) ¾È¿¡ µé¾î¿Ô´ÂÁö 1Â÷ È®ÀÎ
+        // ì¼ë‹¨ ì¸ì‹ ê±°ë¦¬(recog_range) ì•ˆì— ë“¤ì–´ì™”ëŠ”ì§€ 1ì°¨ í™•ì¸
         if (dist <= recog_range && dist > 0.001f) {
 
-            // Å¸°Ù ¹æÇâ º¤ÅÍ Á¤±ÔÈ­ (±æÀÌ¸¦ 1·Î ¸¸µê)
+            // íƒ€ê²Ÿ ë°©í–¥ ë²¡í„° ì •ê·œí™” (ê¸¸ì´ë¥¼ 1ë¡œ ë§Œë“¦)
             XMFLOAT3 dirNorm = { dirVec.x / dist, 0.0f, dirVec.z / dist };
 
-            // ³»Àû(Dot Product) °è»ê (ObjectÀÇ look º¤ÅÍ È°¿ë)
-            // (³»Àû = x³¢¸® °ö + z³¢¸® °ö)
+            // ë‚´ì (Dot Product) ê³„ì‚° (Objectì˜ look ë²¡í„° í™œìš©)
+            // (ë‚´ì  = xë¼ë¦¬ ê³± + zë¼ë¦¬ ê³±)
             float dotProduct = (look.x * dirNorm.x) + (look.z * dirNorm.z);
 
-            // ³»Àû°ªÀÌ ÀÓ°è°ª ÀÌ»óÀÌ¸é ½Ã¾ß°¢ ¾È¿¡ ÀÖ´Â °Í!
+            // ë‚´ì ê°’ì´ ì„ê³„ê°’ ì´ìƒì´ë©´ ì‹œì•¼ê° ì•ˆì— ìˆëŠ” ê²ƒ!
             if (dotProduct >= cos_threshold) {
 
-                // ¹ß°¢!
+                // ë°œê°!
                 SetTarget(target);
                 auto AIComponent = GetComponent<CAIComponent>();
                 if (AIComponent) {
@@ -143,7 +141,7 @@ void CGhost::OnPatrolMove(float elapsedTime)
     patrol_timer += elapsedTime;
     turn_timer += elapsedTime;
 
-    // ÀüÃ¼ ¹èÈ¸ ½Ã°£ (5ÃÊ)
+    // ì „ì²´ ë°°íšŒ ì‹œê°„ (5ì´ˆ)
     if (patrol_timer >= 5.0f) {
         auto AIComponent = GetComponent<CAIComponent>();
         if (AIComponent)
@@ -151,7 +149,7 @@ void CGhost::OnPatrolMove(float elapsedTime)
         return;
     }
 
-    // ¹æÇâ ÀüÈ¯ (2ÃÊ)
+    // ë°©í–¥ ì „í™˜ (2ì´ˆ)
     if (turn_timer >= 2.0f) {
         float newYaw = yaw + 180.0f;
         SetYaw(newYaw);
@@ -159,7 +157,7 @@ void CGhost::OnPatrolMove(float elapsedTime)
         turn_timer = 0.0f;
     }
 
-    // ÀÌµ¿ Ã³¸®
+    // ì´ë™ ì²˜ë¦¬
     float walk_speed = 0.4f;
     velocity.x = look.x * walk_speed;
     velocity.z = look.z * walk_speed;
@@ -170,61 +168,61 @@ void CGhost::OnTraceMove(float elapsedTime)
     auto AIComponent = GetComponent<CAIComponent>();
 
     if (!target_player) {
-        // Å¸°ÙÀÌ »ç¶óÁ³À¸¸é IDLE·Î º¹±Í
+        // íƒ€ê²Ÿì´ ì‚¬ë¼ì¡Œìœ¼ë©´ IDLEë¡œ ë³µê·€
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
-    // Å¸°Ù°úÀÇ ¹æÇâ ¹× Æò¸é °Å¸® °è»ê
+    // íƒ€ê²Ÿê³¼ì˜ ë°©í–¥ ë° í‰ë©´ ê±°ë¦¬ ê³„ì‚°
     XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
-    dirVec.y = 0.0f; // YÃà(³ôÀÌ) Â÷ÀÌ´Â ¹«½ÃÇÏ°í XZ Æò¸é¿¡¼­ÀÇ °Å¸®¸¸ °è»ê
+    dirVec.y = 0.0f; // Yì¶•(ë†’ì´) ì°¨ì´ëŠ” ë¬´ì‹œí•˜ê³  XZ í‰ë©´ì—ì„œì˜ ê±°ë¦¬ë§Œ ê³„ì‚°
     float dist = Vector3::Length(dirVec);
 
-    // »óÅÂ ÀüÈ¯ (State Transition) ÆÇ´Ü
-    // Á¶°Ç A: Å¸°ÙÀÌ ÀÎ½Ä ¹üÀ§(0.5f) ¹ÛÀ¸·Î µµ¸Á°¬À» ¶§ -> ÃßÀû Æ÷±â
+    // ìƒíƒœ ì „í™˜ (State Transition) íŒë‹¨
+       // ì¡°ê±´ A: íƒ€ê²Ÿì´ ì¸ì‹ ë²”ìœ„ ë°–ìœ¼ë¡œ ë„ë§ê°”ì„ ë•Œ -> ì¶”ì  í¬ê¸°
     if (dist > recog_range) {
-        target_player = nullptr; // Å¸°Ù ÃÊ±âÈ­
+        target_player = nullptr; // íƒ€ê²Ÿ ì´ˆê¸°í™”
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-    // Á¶°Ç B: Å¸°ÙÀÌ °ø°İ ¹üÀ§(0.2f) ¾ÈÀ¸·Î µé¾î¿ÔÀ» ¶§ -> °ø°İ ½ÃÀÛ!
-    else if (dist <= 0.2f) {
+    // ì¡°ê±´ B: íƒ€ê²Ÿì´ ê³µê²© ë²”ìœ„ ì•ˆìœ¼ë¡œ ë“¤ì–´ì™”ì„ ë•Œ -> ê³µê²© ì‹œì‘!
+    else if (dist <= attack_range) {
         AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
         return;
     }
 
-    // Å¸°ÙÀ» ÇâÇØ È¸Àü (Rotation)
-    // atan2f ÇÔ¼ö¸¦ ÀÌ¿ëÇØ ¸ñÇ¥ ¹æÇâ º¤ÅÍ¸¦ °¢µµ(Yaw)·Î º¯È¯
+    // íƒ€ê²Ÿì„ í–¥í•´ íšŒì „ (Rotation)
+    // atan2f í•¨ìˆ˜ë¥¼ ì´ìš©í•´ ëª©í‘œ ë°©í–¥ ë²¡í„°ë¥¼ ê°ë„(Yaw)ë¡œ ë³€í™˜
     float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
 
-    SetYaw(targetYaw);             // ¹°¸®ÀûÀÎ ¾Õ ¹æÇâ(look) °»½Å
-    SetYawPitch(targetYaw, 0.0f);  // ±×·¡ÇÈ(¸ğµ¨¸µ) ¹æÇâ °»½Å
+    SetYaw(targetYaw);             // ë¬¼ë¦¬ì ì¸ ì• ë°©í–¥(look) ê°±ì‹ 
+    SetYawPitch(targetYaw, 0.0f);  // ê·¸ë˜í”½(ëª¨ë¸ë§) ë°©í–¥ ê°±ì‹ 
 
-    // Å¸°ÙÀ» ÇâÇØ µ¹Áø (Movement)
-    // ¸¶Âû·ÂÀÌ 0ÀÎ »óÅÂÀÌ¹Ç·Î, IDLE(0.4f)º¸´Ù ÈÎ¾À ºü¸¥ ¼Óµµ·Î Á÷Á¢ ²È¾ÆÁİ´Ï´Ù.
+    // íƒ€ê²Ÿì„ í–¥í•´ ëŒì§„ (Movement)
+    // ë§ˆì°°ë ¥ì´ 0ì¸ ìƒíƒœì´ë¯€ë¡œ, IDLE(0.4f)ë³´ë‹¤ í›¨ì”¬ ë¹ ë¥¸ ì†ë„ë¡œ ì§ì ‘ ê½‚ì•„ì¤ë‹ˆë‹¤.
     velocity.x = look.x * trace_speed;
     velocity.z = look.z * trace_speed;
 }
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-    // °ø°İ Áß¿¡´Â ¹Ì²ô·¯ÁöÁö ¾Ê°Ô ÀÌµ¿ ¼Óµµ 0À¸·Î °íÁ¤
+    // ê³µê²© ì¤‘ì—ëŠ” ë¯¸ë„ëŸ¬ì§€ì§€ ì•Šê²Œ ì´ë™ ì†ë„ 0ìœ¼ë¡œ ê³ ì •
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
-    // Å¸ÀÌ¸Ó Áõ°¡
+    // íƒ€ì´ë¨¸ ì¦ê°€
     attack_timer += elapsedTime;
 
-    // °ø°İ ¾Ö´Ï¸ŞÀÌ¼Ç ±æÀÌ or ÄğÅ¸ÀÓÀÌ Áö³ª¸é?
+    // ê³µê²© ì• ë‹ˆë©”ì´ì…˜ ê¸¸ì´ or ì¿¨íƒ€ì„ì´ ì§€ë‚˜ë©´?
     if (attack_timer >= 1.5f) {
 
-        // ½ÇÁ¦ µ¥¹ÌÁö ÆÇÁ¤ ·ÎÁ÷Àº ¼­¹öÀÇ ÀÌ ½ÃÁ¡(¶Ç´Â Å¸ÀÌ¸Ó Áß°£)¿¡ ¼öÇà!
-        // ¿¹: target_player->TakeDamage(10);
+        // ì‹¤ì œ ë°ë¯¸ì§€ íŒì • ë¡œì§ì€ ì„œë²„ì˜ ì´ ì‹œì (ë˜ëŠ” íƒ€ì´ë¨¸ ì¤‘ê°„)ì— ìˆ˜í–‰!
+        // ì˜ˆ: target_player->TakeDamage(10);
 
         auto AIComponent = GetComponent<CAIComponent>();
         if (AIComponent) {
-            // °ø°İÀÌ ³¡³µÀ¸´Ï ´Ù½Ã °Å¸®¸¦ Àç±â À§ÇØ TRACE »óÅÂ·Î ÀüÈ¯
-            // (TRACE »óÅÂ¿¡¼­ °Å¸®°¡ °¡±î¿ì¸é ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ ´Ù½Ã ATTACKÀ¸·Î µ¹¾Æ¿È)
+            // ê³µê²©ì´ ëë‚¬ìœ¼ë‹ˆ ë‹¤ì‹œ ê±°ë¦¬ë¥¼ ì¬ê¸° ìœ„í•´ TRACE ìƒíƒœë¡œ ì „í™˜
+            // (TRACE ìƒíƒœì—ì„œ ê±°ë¦¬ê°€ ê°€ê¹Œìš°ë©´ ë‹¤ìŒ í”„ë ˆì„ì— ë‹¤ì‹œ ATTACKìœ¼ë¡œ ëŒì•„ì˜´)
             AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
         }
     }
@@ -244,14 +242,14 @@ void CGhost::OnAttackEnter()
 {
     ResetAttackTimer();
 
-    // 1. °ø°İ »óÅÂ ÁøÀÔ ½Ã, ¾î¶² °ø°İÀ» ÇÒÁö °áÁ¤ (¹ß ±¸¸£±â vs ÆÄ¸®Ã¤)
-    // ¿¹: int pattern = rand() % 2; 
+    // 1. ê³µê²© ìƒíƒœ ì§„ì… ì‹œ, ì–´ë–¤ ê³µê²©ì„ í• ì§€ ê²°ì • (ë°œ êµ¬ë¥´ê¸° vs íŒŒë¦¬ì±„)
+    // ì˜ˆ: int pattern = rand() % 2; 
     // DecideAttackPattern(); 
 
-    // 2. ÀÌµ¿ ¼Óµµ¸¦ 0À¸·Î ¸¸µé¾î¼­ °ø°İ Áß¿¡ ¹Ì²ô·¯ÁöÁö ¾Ê°Ô °íÁ¤
+    // 2. ì´ë™ ì†ë„ë¥¼ 0ìœ¼ë¡œ ë§Œë“¤ì–´ì„œ ê³µê²© ì¤‘ì— ë¯¸ë„ëŸ¬ì§€ì§€ ì•Šê²Œ ê³ ì •
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
-    // 3. °ø°İ Å¸ÀÌ¸Ó ÃÊ±âÈ­ (ÀÌÁ¦ CHumanMonsterÀÇ ¸â¹ö º¯¼öÀÌ¹Ç·Î Á÷Á¢ Á¢±Ù °¡´É!)
+    // 3. ê³µê²© íƒ€ì´ë¨¸ ì´ˆê¸°í™” (ì´ì œ CHumanMonsterì˜ ë©¤ë²„ ë³€ìˆ˜ì´ë¯€ë¡œ ì§ì ‘ ì ‘ê·¼ ê°€ëŠ¥!)
     attack_timer = 0.0f;
 }
