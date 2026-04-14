@@ -41,7 +41,8 @@ void CMyPlayer::Update(float elapsedTime)
 	}
 
 	// "E" 키를 누르면 인벤토리를 열고/닫기
-	if (KEY_TAP(KEY::E)) {
+	if (current_scene_type == SCENE_TYPE::GAME && KEY_TAP(KEY::E)) {
+		CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
 		inventory->ToggleOpen();
 	}
 
