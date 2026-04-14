@@ -256,7 +256,7 @@ public:
         return found;
     }
 
-    // 특정 UI를 껐다 켰다 하는 관리 함수
+    // 특정 UI를 껐다 켰다 하는 관리 함수(setMouseMode - true: gameMode)
     void ToggleUI(const std::string& name, bool enable, bool setMouseMode = false);
 private:
     template <typename T>
