@@ -60,6 +60,10 @@ void CGameScene::Initialize()
 		factory->LoadItemFrame(heapManager);
 	}
 
+	// menu UI
+	auto menuUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Menu_UI.json");
+	menuUI->SetEnable(false);
+	ui_manager->AddCanvas(menuUI);
 	// Player UI
 	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
 	ui_manager->AddCanvas(playerUI);
@@ -78,6 +82,8 @@ void CGameScene::Initialize()
 		float max = static_cast<float>(my_player->GetMaxStamina());
 		return current / max;
 		});
+
+	SetButtonEvents();
 
 	// 아이템 생성 (테스트)
 	SpawnWorldItem(5, XMFLOAT3{-1, 2, -1});
@@ -181,6 +187,13 @@ void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 
+	if (KEY_TAP(KEY::ESC)) {
+		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
+		if (menuUI) {
+			ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+		}
+	}
+
 	ProcessPickup();
 
 	if (my_player) {
@@ -201,6 +214,26 @@ void CGameScene::DrawUI()
 		auto quick_slot = my_player->GetQuickSlot();
 		if (quick_slot)
 			quick_slot->Draw();
+	}
+}
+
+void CGameScene::SetButtonEvents()
+{
+	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
+	auto menuBackBtn = ui_manager->GetUI<CUIButton>("Back");
+
+	if (menuToCustomBtn) {
+		menuToCustomBtn->OnClick = [this]() {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
+			};
+	}
+
+	if (menuBackBtn) {
+		menuBackBtn->OnClick = [this]() {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+			};
 	}
 }
 

@@ -20,7 +20,7 @@ public:
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
-
+    void SetButtonEvents();
 public:
     // 서버 패킷 처리 관련 함수들
     void Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt);

@@ -111,8 +111,12 @@ void CLobbyScene::Update(float elapsedTime)
 		UpdatePlayerReadyUI();
 	}
 
+
 	if (KEY_TAP(KEY::ESC)) {
-		ui_manager->ToggleUI("LobbyMenuCanvas", true, false);
+		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
+		if (menuUI) {
+			ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+		}
 	}
 
 	// C 키로 사신 상호작용
@@ -192,7 +196,8 @@ void CLobbyScene::SetButtonEvents()
 
 	if (menuBackBtn) {
 		menuBackBtn->OnClick = [this]() {
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
 			};
 	}
 }
@@ -236,7 +241,6 @@ void CLobbyScene::Exit()
 
 	my_player = nullptr;
 }
-
 
 bool CLobbyScene::IsUIInputEnabled()
 {
