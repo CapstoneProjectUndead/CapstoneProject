@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 struct Vec2
 {
@@ -110,7 +110,7 @@ private:
     Vec2                    prev_mouse_pos;
     Vec2                    old_mouse_pos;  // 프레임마다X, 마우스 키 down 이벤트에만 저장
     Vec2                    drag_dir;
-
+    bool                    is_game_mode{ false };
 public:
     void Init();
     void Tick();
@@ -124,5 +124,7 @@ public:
     Vec2 GetMouseDrag() { return drag_dir; }
 
     void SetOldMousePos(const POINT& p) { old_mouse_pos.x = p.x; old_mouse_pos.y = p.y;}
+    void SetMouseMode(bool gameMode);
+    bool GetMouseMode() const { return is_game_mode; }
 };
 
