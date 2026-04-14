@@ -225,34 +225,49 @@ void CUIImage::CalculateWorldMatrix()
 {
     Rect parentRect = GetParentRect();
 
-    // 위치 계산 (기존과 동일)
+    // 앵커 기반의 기본 위치 계산
     float anchorX = parentRect.left + (parentRect.Width() * (transform.anchor.x + 1.0f) * 0.5f);
     float anchorY = parentRect.top + (parentRect.Height() * (1.0f - transform.anchor.y) * 0.5f);
-    float finalX = anchorX + transform.relative_pos.x;
-    float finalY = anchorY + transform.relative_pos.y;
 
-    // Depth 설정 (이 부분이 핵심)
-    float depth = 0.1f; // 기본값 (0.0 ~ 1.0 사이, 카메라에 가까울수록 작은 값인 경우 기준)
-    if (parent_ui) {
-        // 부모보다 무조건 0.01f만큼 앞으로 (Z값이 작아짐)
-        depth = parent_ui->GetWorldMatrix()._43 - 0.001f;
+    // 피벗을 고려한 최종 위치 보정
+    float finalX = anchorX + transform.relative_pos.x - (transform.pivot.x * transform.size.x);
+    float finalY = anchorY + transform.relative_pos.y - (transform.pivot.y * transform.size.y);
+
+    float depth = parent_ui ? parent_ui->GetWorldMatrix()._43 - 0.001f : 0.1f;
+
+    // 행렬 연산: 스케일(fill_amount 적용) -> 위치 이동
+    XMMATRIX matScale = XMMatrixScaling(transform.size.x * fill_amount, transform.size.y, 1.0f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX + (transform.size.x * fill_amount * 0.5f),
+        finalY + (transform.size.y * 0.5f), depth);
+
+    XMStoreFloat4x4(&world_matrix, matScale * matTranslation);
+
+    // Rect 갱신
+    rect.left = finalX;
+    rect.top = finalY;
+    rect.right = rect.left + (transform.size.x * fill_amount);
+    rect.bottom = rect.top + transform.size.y;
+}
+
+void CUIImage::Update(const float deltaTime)
+{
+    if (value_getter) {
+        float newValue = value_getter();
+        if (fill_amount != newValue) {
+            fill_amount = std::clamp(newValue, 0.0f, 1.0f);
+            Invalidate();
+        }
+    }
+    else if (value_ptr) {
+        // 이전 값과 다를 때만 강제로 더티 플래그를 키기
+        if (fill_amount != *value_ptr) {
+            fill_amount = *value_ptr;
+            Invalidate();
+        }
     }
 
-    // 행렬 생성
-    XMMATRIX matScale = XMMatrixScaling(transform.size.x * fill_amount, transform.size.y, 1.0f);
-    float pivotOffsetX = (0.5f - transform.pivot.x) * transform.size.x;
-    float pivotOffsetY = (0.5f - transform.pivot.y) * transform.size.y;
-    XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
-
-    XMMATRIX world = matScale * matPivot * matTranslation;
-    XMStoreFloat4x4(&world_matrix, world);
-
-    // 판정용 Rect 갱신
-    rect.left = finalX - (transform.pivot.x * transform.size.x);
-    rect.top = finalY - (transform.pivot.y * transform.size.y);
-    rect.right = rect.left + transform.size.x;
-    rect.bottom = rect.top + transform.size.y;
+    // 부모의 업데이트 로직 호출 (이 안에서 is_dirty 체크 후 계산 수행)
+    CUIComponent::Update(deltaTime);
 }
 
 void CUIImage::Collect(IRenderer* renderer)
@@ -527,3 +542,12 @@ bool CUIManager::IntersectsMouse()
     return false;
 }
 
+void CUIManager::ToggleUI(const std::string& name, bool enable, bool setMouseMode)
+{
+    auto ui = GetUI<CUIComponent>(name);
+    if (ui && ui->is_enable != enable) {
+        ui->SetEnable(enable);
+
+        CKeyManager::GetInstance().SetMouseMode(setMouseMode);
+    }
+}

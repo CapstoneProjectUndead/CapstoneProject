@@ -28,8 +28,7 @@
 #include "WorldTreasure.h"		// 보물
 
 #include "UIComponent.h"
-#include "Movement.h"
-#include "Animator.h"
+#include "DataManager.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -61,6 +60,31 @@ void CGameScene::Initialize()
 		factory->LoadItemFrame(heapManager);
 	}
 
+	// menu UI
+	auto menuUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Menu_UI.json");
+	menuUI->SetEnable(false);
+	ui_manager->AddCanvas(menuUI);
+	// Player UI
+	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
+	ui_manager->AddCanvas(playerUI);
+	// player data와 연동
+	auto hpBar = ui_manager->GetUI<CUIImage>("HP_UI");
+	hpBar->BindFillAmount([this]() -> float {
+		if (!my_player) return 0.0f;
+		float current = static_cast<float>(my_player->GetHp());
+		float max = static_cast<float>(my_player->GetMaxHp());
+		return current / max;
+		});
+	auto energyBar = ui_manager->GetUI<CUIImage>("ENERGY_UI");
+	energyBar->BindFillAmount([this]() -> float {
+		if (!my_player) return 0.0f;
+		float current = static_cast<float>(my_player->GetStamina());
+		float max = static_cast<float>(my_player->GetMaxStamina());
+		return current / max;
+		});
+
+	SetButtonEvents();
+
 	// 아이템 생성 (테스트)
 	SpawnWorldItem(5, XMFLOAT3{-1, 2, -1});
 	SpawnWorldItem(9, XMFLOAT3{-1, 2, -2});
@@ -89,8 +113,6 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		auto m = my_player->GetComponent<CMovementComponent>();
-		m->is_fly = true;
 		my_player->SetPosition(1.f, 2.0f, 1.f);
 	}
 
@@ -165,15 +187,17 @@ void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 
+	if (KEY_TAP(KEY::ESC)) {
+		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
+		if (menuUI) {
+			ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+		}
+	}
+
 	ProcessPickup();
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
-		// 디버깅용 임시 설정
-		if (KEY_PRESSED(KEY::U)) {
-			CMovementComponent* m = my_player->GetComponent<CMovementComponent>();
-			m->is_fly = !m->is_fly;
-		}
 	};
 }
 
@@ -190,6 +214,26 @@ void CGameScene::DrawUI()
 		auto quick_slot = my_player->GetQuickSlot();
 		if (quick_slot)
 			quick_slot->Draw();
+	}
+}
+
+void CGameScene::SetButtonEvents()
+{
+	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
+	auto menuBackBtn = ui_manager->GetUI<CUIButton>("Back");
+
+	if (menuToCustomBtn) {
+		menuToCustomBtn->OnClick = [this]() {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
+			};
+	}
+
+	if (menuBackBtn) {
+		menuBackBtn->OnClick = [this]() {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+			};
 	}
 }
 

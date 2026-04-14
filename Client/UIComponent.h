@@ -110,6 +110,7 @@ public:
 
     // fill_amount 적용 외에 UIComponent와 유사
     virtual void CalculateWorldMatrix() override;
+    virtual void Update(const float deltaTime) override;
     virtual void Collect(IRenderer* renderer) override;
 
     virtual json Serialize() override;
@@ -117,8 +118,13 @@ public:
 
     void SetTextureName(const std::string& name) { texture_name = name; }
     const std::string& GetTextureName() const { return texture_name; }
+
+    void BindFillAmount(float* valuePtr) { value_ptr = valuePtr; }
+    void BindFillAmount(std::function<float()> getter) { value_getter = getter; }
 protected:
     float fill_amount = 1.0f;
+    float* value_ptr{}; // fill_amount 참조 값
+    std::function<float()> value_getter;
     std::shared_ptr<CMaterialComponent> mat_comp;  // 생성 시 heap 0 index 사용
     std::string texture_name{ "white" }; // 텍스처 파일 이름 저장(load/save 용)
 };
@@ -206,15 +212,6 @@ private:
 class CUIManager
 {
 public:
-    // 특정 이름의 UI를 찾는 기능 (대사 갱신 시 필요)
-    template <typename T>
-    std::shared_ptr<T> FindUI(const std::string& name) {
-        for (auto& canvas : canvases) {
-            auto found = FindRecursive<T>(canvas, name);
-            if (found) return found;
-        }
-        return nullptr;
-    }
     std::shared_ptr<CDataManager>& GetDataManager() { return data_manager; }
 
     // 새로운 캔버스 생성
@@ -231,6 +228,36 @@ public:
 
     // 마우스 클릭 등의 이벤트 처리
     bool IntersectsMouse();
+
+    // cache
+    // UI를 등록하여 캐시하는 함수
+    void RegisterUI(const std::string& name, std::shared_ptr<CUIComponent> ui) {
+        ui_cache[name] = ui;
+    }
+
+    // 특정 이름의 UI를 찾는 기능
+    template <typename T>
+    std::shared_ptr<T> FindUI(const std::string& name) {
+        for (auto& canvas : canvases) {
+            auto found = FindRecursive<T>(canvas, name);
+            if (found) return found;
+        }
+        return nullptr;
+    }
+
+    // 캐시된 UI를 즉시 반환 (없으면 찾아보고 캐싱)
+    template <typename T>
+    std::shared_ptr<T> GetUI(const std::string& name) {
+        if (ui_cache.find(name) != ui_cache.end())
+            return std::dynamic_pointer_cast<T>(ui_cache[name]);
+
+        auto found = FindUI<T>(name);
+        if (found) ui_cache[name] = found;
+        return found;
+    }
+
+    // 특정 UI를 껐다 켰다 하는 관리 함수(setMouseMode - true: gameMode)
+    void ToggleUI(const std::string& name, bool enable, bool setMouseMode = false);
 private:
     template <typename T>
     std::shared_ptr<T> FindRecursive(std::shared_ptr<CUIComponent> parent, const std::string& name) {
@@ -244,4 +271,5 @@ private:
 private:
     std::vector<std::shared_ptr<CUICanvas>> canvases;
     std::shared_ptr<CDataManager> data_manager;
+    std::map<std::string, std::shared_ptr<CUIComponent>> ui_cache;
 };
