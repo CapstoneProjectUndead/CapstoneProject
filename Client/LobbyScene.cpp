@@ -189,15 +189,37 @@ void CLobbyScene::SetButtonEvents()
 
 	if (menuToCustomBtn) {
 		menuToCustomBtn->OnClick = [this]() {
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
+			if (!g_is_single) {
+				C_SceneChange changeScenePkt;
+				changeScenePkt.player_id = my_player->GetID();
+				changeScenePkt.current_scene = scene_type;
+				changeScenePkt.target_scene = SCENE_TYPE::CUSTOMS;
+
+				auto session = GET_SERVER_SESSION;
+				assert(session);
+
+				auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
+				session->DoSend(sendBuffer);
+			}
 			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
 			};
 	}
 
 	if (menuBackBtn) {
 		menuBackBtn->OnClick = [this]() {
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+			if (!g_is_single) {
+				C_LeaveRoom leavePkt;
+				leavePkt.user_id = my_player->GetID();
+
+				auto session = GET_SERVER_SESSION;
+				assert(session);
+
+				auto sendBuffer = MAKE_SEND_BUFFER(leavePkt);
+				session->DoSend(sendBuffer);
+			}
 			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
 			};
 	}
 }
