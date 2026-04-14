@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <filesystem>
 #include "Player.h"
 #include "KeyManager.h"
@@ -54,9 +54,6 @@ bool CGameFramework::OnCreate()
 	ItemFactory::LoadFromJson(jsonPath.string());
 	ItemFactory::LoadModelMap("../Modeling/item/item_model.json");
 
-	// 렌더링 게임 객체 생성
-	BuildObjects();
-
 	// CKeyManager 초기화
 	CKeyManager::GetInstance().Init();
 
@@ -64,6 +61,9 @@ bool CGameFramework::OnCreate()
 	// bufferCount: 더블 버퍼링이면 2, 트리플이면 3 (SwapchainDesc 확인 필요)
 	// format: 보통 DXGI_FORMAT_R8G8B8A8_UNORM
 	CImGuiManager::GetInstance().Init(ghWnd, GET_DEVICE, GET_CMD_QUEUE, 2, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+	// 렌더링 게임 객체 생성
+	BuildObjects();
 
 	// 텍스처 로드
 	CResourceManager::GetInstance().LoadAll(d3d_device.Get(), command_queue.Get());

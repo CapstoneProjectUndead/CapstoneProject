@@ -1,0 +1,233 @@
+﻿{
+    "Anchor": [
+        0.0,
+        0.0
+    ],
+    "Children": [
+        {
+            "Anchor": [
+                -1.0,
+                1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        -1.0,
+                        1.0
+                    ],
+                    "Children": [],
+                    "Color": [
+                        0.5478547811508179,
+                        0.4194795489311218,
+                        0.4194795489311218,
+                        1.0
+                    ],
+                    "FillAmount": 1.0,
+                    "Name": "HP_UI",
+                    "Pivot": [
+                        0.0,
+                        0.0
+                    ],
+                    "RelativePos": [
+                        0.0,
+                        0.0
+                    ],
+                    "Size": [
+                        500.0,
+                        40.0
+                    ],
+                    "TextureName": "white",
+                    "Type": "Image"
+                }
+            ],
+            "Color": [
+                0.8052805066108704,
+                0.17009223997592926,
+                0.17009223997592926,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "HP_UI",
+            "Pivot": [
+                0.0,
+                0.0
+            ],
+            "RelativePos": [
+                50.0,
+                30.0
+            ],
+            "Size": [
+                500.0,
+                40.0
+            ],
+            "TextureName": "white",
+            "Type": "Image"
+        },
+        {
+            "Anchor": [
+                -1.0,
+                1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        -1.0,
+                        1.0
+                    ],
+                    "Children": [],
+                    "Color": [
+                        0.5476137399673462,
+                        0.6633663177490234,
+                        0.5320066213607788,
+                        1.0
+                    ],
+                    "FillAmount": 1.0,
+                    "Name": "ENERGY_UI",
+                    "Pivot": [
+                        0.0,
+                        0.0
+                    ],
+                    "RelativePos": [
+                        0.0,
+                        0.0
+                    ],
+                    "Size": [
+                        500.0,
+                        40.0
+                    ],
+                    "TextureName": "white",
+                    "Type": "Image"
+                }
+            ],
+            "Color": [
+                0.18409955501556396,
+                1.0,
+                0.052805304527282715,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "ENERGY_UI",
+            "Pivot": [
+                0.0,
+                0.0
+            ],
+            "RelativePos": [
+                50.0,
+                90.0
+            ],
+            "Size": [
+                500.0,
+                40.0
+            ],
+            "TextureName": "white",
+            "Type": "Image"
+        },
+        {
+            "Anchor": [
+                1.0,
+                -1.0
+            ],
+            "Children": [
+                {
+                    "Anchor": [
+                        0.0,
+                        0.0
+                    ],
+                    "Children": [],
+                    "Color": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "Name": "Bag",
+                    "Pivot": [
+                        0.5,
+                        0.5
+                    ],
+                    "RelativePos": [
+                        0.0,
+                        0.0
+                    ],
+                    "Size": [
+                        100.0,
+                        100.0
+                    ],
+                    "Text": "임시가방",
+                    "Type": "Text"
+                }
+            ],
+            "Color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "BAG_UI",
+            "Pivot": [
+                1.0,
+                1.0
+            ],
+            "RelativePos": [
+                -50.0,
+                -50.0
+            ],
+            "Size": [
+                150.0,
+                150.0
+            ],
+            "TextureName": "white",
+            "Type": "Image"
+        },
+        {
+            "Anchor": [
+                0.0,
+                0.0
+            ],
+            "Children": [],
+            "Color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "FillAmount": 1.0,
+            "Name": "AIM_UI",
+            "Pivot": [
+                0.5,
+                0.5
+            ],
+            "RelativePos": [
+                0.0,
+                0.0
+            ],
+            "Size": [
+                200.0,
+                200.0
+            ],
+            "TextureName": "aim_ui",
+            "Type": "Image"
+        }
+    ],
+    "Color": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "Name": "Player_UI",
+    "Pivot": [
+        0.0,
+        0.0
+    ],
+    "RelativePos": [
+        0.0,
+        0.0
+    ],
+    "Size": [
+        1920.0,
+        1080.0
+    ],
+    "Type": "Base"
+}

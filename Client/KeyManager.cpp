@@ -105,9 +105,9 @@ void CKeyManager::Tick()
 
 			// 마우스가 중앙에서 얼마나 떨어졌는지가 곧 회전값(Delta)
 			drag_dir.x = (float)(pt.x - center.x);
-			drag_dir.y = -(float)(pt.y - center.y); // Y축 반전
+			drag_dir.y = (float)(pt.y - center.y);
 
-			// 2. 다시 중앙으로 되돌리기
+			// 다시 중앙으로 되돌리기
 			SetCursorPos(center.x, center.y);
 		}
 		else {

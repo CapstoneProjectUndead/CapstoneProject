@@ -16,8 +16,6 @@
 #include "ServerPacketHandler.h"
 #include "GameFramework.h"
 
-#include "Movement.h"	// 나중에 삭제
-
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
 {
@@ -56,6 +54,26 @@ void CLobbyScene::Initialize()
 	// Ready UI
 	auto ReadyCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/PlayerReady.json");
 	ui_manager->AddCanvas(ReadyCanvas);
+	// Player UI
+	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
+	ui_manager->AddCanvas(playerUI);
+	// player data와 연동
+	auto hpBar = ui_manager->GetUI<CUIImage>("HP_UI");
+	// 0 ~ 1 사이 값으로 변환
+	hpBar->BindFillAmount([this]() -> float {
+		if (!my_player) return 0.0f;
+		float current = static_cast<float>(my_player->GetHp());
+		float max = static_cast<float>(my_player->GetMaxHp());
+		return current / max;
+		});
+	auto energyBar = ui_manager->GetUI<CUIImage>("ENERGY_UI");
+	energyBar->BindFillAmount([this]() -> float {
+		if (!my_player) return 0.0f;
+		float current = static_cast<float>(my_player->GetStamina());
+		float max = static_cast<float>(my_player->GetMaxStamina());
+		return current / max;
+		});
+
 
 	SetupDialogueEvents();
 }
@@ -66,8 +84,6 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!my_player) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
-		//my_player->GetComponent<CMovementComponent>()->is_fly = true;
-
 	}
 
 	if (!camera) {
@@ -111,37 +127,30 @@ void CLobbyScene::Update(float elapsedTime)
 
 void CLobbyScene::InteractWithReaper()
 {
-	std::wstring msg = ui_manager->GetDataManager()->GetDialogue("Reaper", "Ask_Exit");
-
 	// 찾은 대사를 UI 텍스트 컴포넌트에 전달
-	auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
-	if (reaperUI) {
-		reaperUI->SetEnable(true);
-		auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
-		reaperText->SetText(msg);
-	}
+	ui_manager->ToggleUI("ReaperSpeechCanvas", true, true);
+	auto text = ui_manager->GetUI<CUIText>("ReaperText");
+	text->SetText(ui_manager->GetDataManager()->GetDialogue("Reaper", "Ask_Exit"));
 }
 
 void CLobbyScene::SetupDialogueEvents()
 {
-	auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
-	auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
-	auto YNCanvas = ui_manager->FindUI<CUICanvas>("YNCanvas");
-	auto yesBtn = ui_manager->FindUI<CUIButton>("YesButton");
-	auto noBtn = ui_manager->FindUI<CUIButton>("NoButton");
+	auto reaperText = ui_manager->GetUI<CUIText>("ReaperText");
+	auto yesBtn = ui_manager->GetUI<CUIButton>("YesButton");
+	auto noBtn = ui_manager->GetUI<CUIButton>("NoButton");
 
 	// 대사가 끝났을 때 버튼을 보여주는 함수 등록
 	if (reaperText) {
-		reaperText->onFinished = [YNCanvas, reaperUI]() {
-			if (YNCanvas) YNCanvas->SetEnable(true);
+		reaperText->onFinished = [this]() {
+			ui_manager->ToggleUI("YNCanvas", true);
 			};
 	}
 
 	// 버튼 콜백 함수 등록
 	if (yesBtn) {
-		yesBtn->OnClick = [reaperUI, YNCanvas, this]() {
-			if (reaperUI) reaperUI->SetEnable(false);
-			if (YNCanvas) YNCanvas->SetEnable(false);
+		yesBtn->OnClick = [this]() {
+			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
+			ui_manager->ToggleUI("YNCanvas", false, true);
 			if (!g_is_single) {
 				std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
 				if (!myPlayer->GetIsReady()) {
@@ -161,9 +170,9 @@ void CLobbyScene::SetupDialogueEvents()
 	}
 
 	if (noBtn) {
-		noBtn->OnClick = [YNCanvas, reaperUI]() {
-			if (reaperUI) reaperUI->SetEnable(false);
-			if (YNCanvas) YNCanvas->SetEnable(false);
+		noBtn->OnClick = [this]() {
+			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
+			ui_manager->ToggleUI("YNCanvas", false, true);
 			};
 	}
 }
