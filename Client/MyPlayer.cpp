@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "MyPlayer.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
@@ -183,8 +183,13 @@ void CMyPlayer::ProcessRotation()
 		return;
 
 	CKeyManager& keyManager = CKeyManager::GetInstance();
-	if (KEY_PRESSED(KEY::LBTN)) {
-		Vec2 mouseDelta = (keyManager.GetMousePos() - keyManager.GetPrevMousePos()) / 3.0f;
+	bool isGame = keyManager.GetMouseMode();
+	if (KEY_PRESSED(KEY::LBTN) || isGame) {
+		Vec2 mouseDelta;
+		if(isGame)
+			mouseDelta = keyManager.GetMouseDrag() / 5.0f;
+		else
+			mouseDelta = (keyManager.GetMousePos() - keyManager.GetPrevMousePos()) / 3.0f;
 		if (mouseDelta.x || mouseDelta.y) {
 			yaw += mouseDelta.x;
 			pitch += mouseDelta.y;

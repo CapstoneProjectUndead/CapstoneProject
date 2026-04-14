@@ -6,6 +6,7 @@
 #include "Shader.h"
 #include "GameFramework.h"
 #include "AnimationManager.h"
+#include "KeyManager.h"
 
 void CSceneManager::Init(ID3D12Device* device)
 {
@@ -101,6 +102,13 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 	// 해당 씬에 플레이어 셋팅
 	if (myPlayer && active_scene->GetSceneType() != SCENE_TYPE::TITLE)
 		active_scene->SetPlayer(myPlayer);
+
+	if (type == SCENE_TYPE::LOBBY || type == SCENE_TYPE::GAME) {
+		CKeyManager::GetInstance().SetMouseMode(true);
+	}
+	else {
+		CKeyManager::GetInstance().SetMouseMode(false);
+	}
 
 	// 해당 씬에서 할 게 있으면 여기서 처리
 	active_scene->Enter();

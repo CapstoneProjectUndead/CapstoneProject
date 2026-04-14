@@ -93,16 +93,61 @@ void CKeyManager::Tick()
 				input_vector[i].prev_pressed = false;
 			}
 		}
-		 
-		// 마우스 좌표 갱신
-		prev_mouse_pos = cur_mouse_pos;	
 
-		POINT ptMouse = {};
-		GetCursorPos(&ptMouse);
-		ScreenToClient(ghWnd, &ptMouse);
-		cur_mouse_pos = Vec2((float)ptMouse.x, (float)ptMouse.y);
-		drag_dir = cur_mouse_pos - prev_mouse_pos;
-		drag_dir.y *= -1.f;
-		drag_dir.Normalize();
+		if (is_game_mode) {
+			// 게임 모드일 때는 마우스 중앙 고정 & 이동량 계산
+			RECT rect;
+			GetWindowRect(ghWnd, &rect);
+			POINT center = { (rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2 };
+
+			POINT pt;
+			GetCursorPos(&pt);
+
+			// 마우스가 중앙에서 얼마나 떨어졌는지가 곧 회전값(Delta)
+			drag_dir.x = (float)(pt.x - center.x);
+			drag_dir.y = -(float)(pt.y - center.y); // Y축 반전
+
+			// 2. 다시 중앙으로 되돌리기
+			SetCursorPos(center.x, center.y);
+		}
+		else {
+			// 마우스 좌표 갱신
+			prev_mouse_pos = cur_mouse_pos;
+
+			POINT ptMouse = {};
+			GetCursorPos(&ptMouse);
+			ScreenToClient(ghWnd, &ptMouse);
+			cur_mouse_pos = Vec2((float)ptMouse.x, (float)ptMouse.y);
+			drag_dir = cur_mouse_pos - prev_mouse_pos;
+			drag_dir.y *= -1.f;
+			drag_dir.Normalize();
+		}
+	}
+}
+
+void CKeyManager::SetMouseMode(bool gameMode)
+{
+	is_game_mode = gameMode;
+
+	if (gameMode) {
+		// 커서 숨기기 및 고정
+		while (::ShowCursor(FALSE) >= 0);
+		RECT rect;
+		GetWindowRect(ghWnd, &rect);
+		ClipCursor(&rect);
+
+		// 중앙으로 이동시키기 전에 현재 위치를 초기화
+		POINT center = { (rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2 };
+		SetCursorPos(center.x, center.y);
+
+		// 이전 좌표와 현재 좌표를 동일하게 맞춰서 델타값이 0이 되게 함
+		cur_mouse_pos = Vec2((float)center.x, (float)center.y);
+		prev_mouse_pos = cur_mouse_pos;
+	}
+	else {
+		// 커서 다시 보이기
+		while (::ShowCursor(TRUE) < 0);
+
+		ClipCursor(nullptr);
 	}
 }
