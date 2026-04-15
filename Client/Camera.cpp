@@ -23,7 +23,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	SetScissorRect(0, 0, width, height);
 	GenerateProjectionMatrix(0.01f, 30.0f, (float)width / (float)height, 90.0f);
 	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
-	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, -1.0f));
 
 	CreateConstantBuffers(device, commandList);
 }

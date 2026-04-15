@@ -27,11 +27,11 @@ struct InputData
 
 struct PlayerStat
 {
-	uint32 hp;
-	uint32 stamina;
-	uint16 miningSpeed;
+	uint32 hp          = 1000;
+	uint32 stamina     = 1000;
+	uint16 miningSpeed = 0;
 
-	const uint32 maxHp = 1000;
+	const uint32 maxHp      = 1000;
 	const uint32 maxStamina = 1000;
 };
 

@@ -949,17 +949,17 @@ void CTitleScene::Handle_S_EnterRoom(std::shared_ptr<Session>& session, const S_
 
 void CTitleScene::Handle_S_RoomList(std::shared_ptr<Session> session, S_Room_List& pkt)
 {
-    S_Room_List::RoomList userList = pkt.GetRoomList();
+    S_Room_List::RoomList roomList = pkt.GetRoomList();
 
     uint32* newRoom = nullptr;
     if (pkt.room_count > 0)
         newRoom = new uint32[pkt.room_count];
 
     for (int i = 0; i < pkt.room_count; ++i) {
-        newRoom[i] = userList[i].room_info.room_id;
+        newRoom[i] = roomList[i].room_info.room_id;
 
-        RoomInfo info{ userList[i].room_info.room_id, userList[i].room_info.room_name
-            , userList[i].room_info.current_player_count, userList[i].room_info.is_game_start };
+        RoomInfo info{ roomList[i].room_info.room_id, roomList[i].room_info.room_name
+            , roomList[i].room_info.current_player_count, roomList[i].room_info.is_game_start };
 
         auto iter = rooms.find(info.room_id);
         if (iter == rooms.end())

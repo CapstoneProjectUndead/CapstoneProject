@@ -37,6 +37,7 @@ public:
 	void ClampY();
 	void SetSpeed(const float otherSpeed) { speed = otherSpeed; }
 	float GetSpeed() const { return speed; }
+	float GetWalkSpeed() const { return walk_speed; }
 
 	// 서버에서 받은 결과를 바탕으로 재시뮬
 	void Simulate(const XMFLOAT3& dir, float deltaTime);

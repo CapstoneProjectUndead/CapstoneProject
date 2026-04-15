@@ -40,6 +40,11 @@ void CMyPlayer::Update(float elapsedTime)
 		InterpolateMyPlayer(elapsedTime);
 	}
 
+	// 스테미나 Update
+	if (g_is_single) {
+		UpdateStamina(elapsedTime);
+	}
+
 	// "E" 키를 누르면 인벤토리를 열고/닫기
 	if (current_scene_type == SCENE_TYPE::GAME && KEY_TAP(KEY::E)) {
 		CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
@@ -148,7 +153,7 @@ void CMyPlayer::InterpolateMyPlayer(float elapsedTime)
 
 	// 거리에 따른 기본 상태 결정
 	if (distSq > thresholdSq) {
-		if (current_input.shift)
+		if (current_input.shift && !stamina_exhausted)
 			state = PLAYER_STATE::RUN;
 		else
 			state = PLAYER_STATE::WALK;
@@ -240,7 +245,7 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 			state = PLAYER_STATE::IDLE;
 		}
 		else {
-			if (input.shift) {
+			if (input.shift && !stamina_exhausted) {
 				state = PLAYER_STATE::RUN;
 				move->Run();
 			}
@@ -352,6 +357,52 @@ void CMyPlayer::SimulateMove(const InputData& input, float elapsedTime)
 		// A. 속도 계산 (Velocity 갱신)
 		move->Simulate(dir, elapsedTime);
 	}
+}
+
+void CMyPlayer::UpdateStamina(float elapsedTime)
+{
+	const float drainPerSec    = 100.0f; // 뛸 때 초당 감소 (10초면 바닥)
+	const float regenPerSec    =  50.0f; // 쉴 때 초당 회복 (20초면 풀충전)
+	const float recoverThreshold = 200.0f; // 이 값 이상 회복돼야 다시 달리기 허용
+
+	if (state == PLAYER_STATE::RUN) {
+
+		accumulate_stamina -= drainPerSec * elapsedTime;
+
+		if (accumulate_stamina <= 0.0f) {
+
+			accumulate_stamina = 0.0f;
+			stamina_exhausted = true;
+
+			if (auto move = GetComponent<CMovementComponent>()) {
+
+				move->UnRun();
+
+				// 이번 프레임 velocity도 즉시 walk 속도로 재조정
+				float ws = move->GetWalkSpeed();
+				float lenXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
+
+				if (lenXZ > ws && lenXZ > 0.0001f) {
+					float ratio = ws / lenXZ;
+					velocity.x *= ratio;
+					velocity.z *= ratio;
+				}
+			}
+		}
+	}
+	else {
+		accumulate_stamina += regenPerSec * elapsedTime;
+
+		if (accumulate_stamina > static_cast<float>(stat.maxStamina))
+			accumulate_stamina = static_cast<float>(stat.maxStamina);
+
+		// 일정량 이상 회복돼야 달리기 재허용 (0→1 플리커 방지)
+		if (stamina_exhausted && accumulate_stamina >= recoverThreshold)
+			stamina_exhausted = false;
+	}
+
+	// uint32인 stat.stamina에 동기화 (UI 표시용)
+	stat.stamina = static_cast<uint32>(accumulate_stamina);
 }
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)

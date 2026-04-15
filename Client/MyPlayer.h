@@ -60,6 +60,7 @@ public:
 private:
     void ProcessRotation();
     void ProcessInput();
+    void UpdateStamina(float elapsedTime);
 
     // 내 캐릭터 보간 코드 (클라이언트 예측이동이 없어서 추가된 함수)
     void InterpolateMyPlayer(float elapsedTime);
@@ -98,5 +99,7 @@ private:
     bool                              is_ready;
 
     float grounded_timer{ 0.1 };
+    float accumulate_stamina{ 1000.0f };   // 소수점 누적용 float 스태미나
+    bool  stamina_exhausted{ false }; // 스태미나 소진 플래그 (회복 후 해제)
 };
 

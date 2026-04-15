@@ -224,16 +224,20 @@ void CGameScene::SetButtonEvents()
 
 	if (menuToCustomBtn) {
 		menuToCustomBtn->OnClick = [this]() {
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
-			};
+			if (g_is_single) {
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+				ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
+			}
+		};
 	}
 
 	if (menuBackBtn) {
 		menuBackBtn->OnClick = [this]() {
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
-			};
+			if (g_is_single) {
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+				ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+			}
+		};
 	}
 }
 
