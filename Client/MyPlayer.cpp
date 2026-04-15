@@ -40,7 +40,7 @@ void CMyPlayer::Update(float elapsedTime)
 		InterpolateMyPlayer(elapsedTime);
 	}
 
-	// 스테미나 Update
+	// (싱글) 스테미나 Update
 	if (g_is_single) {
 		UpdateStamina(elapsedTime);
 	}
@@ -357,6 +357,18 @@ void CMyPlayer::SimulateMove(const InputData& input, float elapsedTime)
 		// A. 속도 계산 (Velocity 갱신)
 		move->Simulate(dir, elapsedTime);
 	}
+}
+
+void CMyPlayer::SetStaminaFromServer(uint32 stamina)
+{
+	accumulate_stamina = static_cast<float>(stamina);
+	stat.stamina = stamina;
+
+	// 서버 값 기준으로 exhausted 플래그 동기화
+	if (stamina == 0)
+		stamina_exhausted = true;
+	else if (stamina >= 200 && stamina_exhausted)
+		stamina_exhausted = false;
 }
 
 void CMyPlayer::UpdateStamina(float elapsedTime)

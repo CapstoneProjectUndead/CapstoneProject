@@ -84,6 +84,13 @@ public:
 	uint16 GetEquippedItemId() const { return equipped_item_id; }
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
 
+	uint32 GetHp()      const { return stat.hp; }
+	uint32 GetStamina() const { return stat.stamina; }
+	void   SetHp(uint32 hp)           { stat.hp = hp; }
+	void   SetStamina(uint32 stamina) { stat.stamina = stamina; }
+
+	void UpdateStamina(float elapsedTime);
+
 private:
 	weak_ptr<CUser>				user;
 	uint64						last_processed_seq;
@@ -102,5 +109,9 @@ private:
 
 	uint16 equipped_item_id;  // 0 = 맨손
 	bool is_ready;
+
+	PlayerStat  stat;
+	float       accumulate_stamina{ 1000.0f };
+	bool        stamina_exhausted{ false };
 };
 

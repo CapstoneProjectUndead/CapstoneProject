@@ -314,10 +314,11 @@ struct S_PlayerMove : public PacketHeader
 	float			timestamp;
 	NetPlayerInfo	info;
 	SCENE_TYPE		scene_type;
+	uint32			stamina;
 
 	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 73, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 77, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {

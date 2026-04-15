@@ -115,7 +115,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
     }
     else {
         if (auto move = GetComponent<CMovementComponent>()) {
-            if (input.shift) {
+            if (input.shift && !stamina_exhausted) {
                 state = PLAYER_STATE::RUN;
                 move->Run();
             }
@@ -126,9 +126,11 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
         }
     }
 
+    UpdateStamina(elapsedTime);
+
     // 점프
     if (velocity.y > 0) {
-        state = PLAYER_STATE::WALK;
+        state = PLAYER_STATE::JUMP;
     }
 
     if (dir.x != 0 || dir.z != 0) {
@@ -196,6 +198,38 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
     outResult.seq_num = frameA.seq_num;
 
     return true;
+}
+
+void CPlayer::UpdateStamina(float elapsedTime)
+{
+    const float drainPerSec      = 100.0f;
+    const float regenPerSec      =  50.0f;
+    const float recoverThreshold = 200.0f;
+
+    if (state == PLAYER_STATE::RUN) {
+
+        accumulate_stamina -= drainPerSec * elapsedTime;
+
+        if (accumulate_stamina <= 0.0f) {
+
+            accumulate_stamina = 0.0f;
+            stamina_exhausted = true;
+
+            if (auto move = GetComponent<CMovementComponent>())
+                move->UnRun();
+        }
+    }
+    else {
+        accumulate_stamina += regenPerSec * elapsedTime;
+
+        if (accumulate_stamina > static_cast<float>(stat.maxStamina))
+            accumulate_stamina = static_cast<float>(stat.maxStamina);
+
+        if (stamina_exhausted && accumulate_stamina >= recoverThreshold)
+            stamina_exhausted = false;
+    }
+
+    stat.stamina = static_cast<uint32>(accumulate_stamina);
 }
 
 void CPlayer::SendPing()

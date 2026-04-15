@@ -327,6 +327,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
 
 		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
+		myPlayer->SetStaminaFromServer(pkt.stamina);
 
 		// 예측 이동을 없애고
 		// 아래의 코드가 추가되었다.

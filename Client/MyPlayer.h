@@ -57,6 +57,8 @@ public:
     void   SetGold(uint64 amount) { gold = amount; }
     void   AddGold(uint64 amount) { gold += amount; }
 
+    void SetStaminaFromServer(uint32 stamina);
+
 private:
     void ProcessRotation();
     void ProcessInput();
@@ -99,7 +101,7 @@ private:
     bool                              is_ready;
 
     float grounded_timer{ 0.1 };
-    float accumulate_stamina{ 1000.0f };   // 소수점 누적용 float 스태미나
+    float accumulate_stamina{ 1000.0f };   // 누적용 float 스태미나
     bool  stamina_exhausted{ false }; // 스태미나 소진 플래그 (회복 후 해제)
 };
 
