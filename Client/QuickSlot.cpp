@@ -23,6 +23,25 @@ int CQuickSlot::GetSelectedItemId() const
 	return slots[selected_slot].item_id;
 }
 
+ITEM_TYPE CQuickSlot::GetSelectedItemType() const
+{
+	if (selected_slot < 0 || selected_slot >= SLOT_COUNT)
+		return ITEM_TYPE::NONE;
+
+	return slots[selected_slot].type;
+}
+
+int CQuickSlot::GetSelectedInvId() const
+{
+	if (selected_slot < 0 || selected_slot >= SLOT_COUNT)
+		return -1;
+
+	if (!slots[selected_slot].has_item)
+		return -1;
+
+	return static_cast<int>(slots[selected_slot].inv_id);
+}
+
 void CQuickSlot::Draw()
 {
 	float  scale  = G_RATIO_Y;
@@ -154,6 +173,11 @@ void CQuickSlot::DrawSlotCells(float cellSz, float pad, float scale)
 			slots[i] = SlotEntry{};
 			if (selected_slot == i)
 				selected_slot = -1;
+
+			if (!g_is_single) {
+				if (auto player = owner.lock())
+					player->SetEquippedItemId(0);
+			}
 		}
 	}
 }

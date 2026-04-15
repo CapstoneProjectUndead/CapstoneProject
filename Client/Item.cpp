@@ -78,7 +78,7 @@ bool CConsumable::Use(CMyPlayer* player)
 
 	// 이 소비템이 기력을 올려주는 효과가 있다면
 	if (energy_amount > 0)
-		player->SetStamina(min(player->GetStamina() + energy_amount, player->GetMaxStamina()));
+		player->AddStamina(energy_amount);
 
 	// 이 소비템이 버프 효과가 있다면
 	if (effect_amount > 0) {

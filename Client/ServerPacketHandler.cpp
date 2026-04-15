@@ -433,3 +433,35 @@ bool Handle_S_EQUIP_ITEM(std::shared_ptr<Session> session, S_EquipItem& pkt)
 
 	return true;
 }
+
+bool Handle_S_USE_ITEM(std::shared_ptr<Session> session, S_UseItem& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_UseItem(session, pkt);
+
+	return true;
+}

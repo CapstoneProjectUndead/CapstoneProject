@@ -45,6 +45,69 @@ void CMyPlayer::Update(float elapsedTime)
 		UpdateStamina(elapsedTime);
 	}
 
+	// (싱글) 우클릭: 퀵슬롯에 등록된 소비 아이템 사용 
+	if (g_is_single
+		&& KEY_TAP(KEY::RBTN)
+		&& !ImGui::GetIO().WantCaptureMouse)
+	{
+		ITEM_TYPE itemType = quick_slot->GetSelectedItemType();
+
+		// 아이템 타입이 소비 또는 기타
+		if (itemType == ITEM_TYPE::CONSUMABLE || itemType == ITEM_TYPE::ETC) {
+
+			// 퀵슬롯에 등록된 아이템의 인벤토리 ID를 가져온다.
+			int invId = quick_slot->GetSelectedInvId();
+			if (invId >= 0) {
+
+				uint32 uInvId = static_cast<uint32>(invId);
+				auto& items = inventory->GetItems();
+
+				// 인벤토리에서 아이템을 찾아온다.
+				auto it = items.find(uInvId);
+				if (it != items.end()) {
+					
+					// 아이템 사용
+					if (it->second->Use(this)) {
+
+						// 사용한 아이템 인벤토리에서 제거
+						inventory->RemoveItem(uInvId);
+					}
+				}
+			}
+		}
+	}
+	else if(!g_is_single
+		&& current_scene_type == SCENE_TYPE::GAME
+		&& KEY_TAP(KEY::RBTN)
+		&& !ImGui::GetIO().WantCaptureMouse)
+	{
+		ITEM_TYPE itemType = quick_slot->GetSelectedItemType();
+		if (itemType == ITEM_TYPE::CONSUMABLE || itemType == ITEM_TYPE::ETC) {
+
+			int invId = quick_slot->GetSelectedInvId();
+
+			if (invId >= 0) {
+
+				uint32 uInvId = static_cast<uint32>(invId);
+				auto& items = inventory->GetItems();
+				auto it = items.find(uInvId);
+
+				if (it != items.end()) {
+					C_UseItem useItemPkt;
+					useItemPkt.player_id     = GetID();
+					useItemPkt.item_id       = it->second->GetItemId();
+					useItemPkt.inventory_id  = uInvId;
+					useItemPkt.scene_type    = GetCurrentSceneType();
+
+					auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
+					if (auto session = GetSession()) {
+						session->DoSend(sendBuffer);
+					}
+				}
+			}
+		}
+	}
+
 	// "E" 키를 누르면 인벤토리를 열고/닫기
 	if (current_scene_type == SCENE_TYPE::GAME && KEY_TAP(KEY::E)) {
 		CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
@@ -368,6 +431,16 @@ void CMyPlayer::SetStaminaFromServer(uint32 stamina)
 	if (stamina == 0)
 		stamina_exhausted = true;
 	else if (stamina >= 200 && stamina_exhausted)
+		stamina_exhausted = false;
+}
+
+void CMyPlayer::AddStamina(uint32 amount)
+{
+	accumulate_stamina = std::min(accumulate_stamina + static_cast<float>(amount),
+		static_cast<float>(stat.maxStamina));
+
+	stat.stamina = static_cast<uint32>(accumulate_stamina);
+	if (stamina_exhausted && accumulate_stamina >= 200.0f)
 		stamina_exhausted = false;
 }
 

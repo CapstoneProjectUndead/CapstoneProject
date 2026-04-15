@@ -27,6 +27,7 @@ public:
     virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;
     virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) override;
     virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) override;
+    virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
 
 private:
     map<string, shared_ptr<CObject>>    prototypes;

@@ -15,6 +15,7 @@ namespace ItemFactory
 		uint32         heal_amount    = 0;
 		uint32         energy_amount  = 0;
 		uint32         effect_amount  = 0;
+		float          buff_duration  = 0.f;
 		TREASURE_GRADE grade          = TREASURE_GRADE::COMMON;
 	};
 
@@ -78,7 +79,7 @@ namespace ItemFactory
 			else
 				return std::make_shared<CTool>(data, e.max_durability);
 		case ITEM_TYPE::CONSUMABLE:
-			return std::make_shared<CConsumable>(data, e.heal_amount, e.energy_amount, e.effect_amount);
+			return std::make_shared<CConsumable>(data, e.heal_amount, e.energy_amount, e.effect_amount, e.buff_duration);
 		case ITEM_TYPE::TREASURE:
 			return std::make_shared<CTreasure>(data, e.grade, e.base.price);
 		case ITEM_TYPE::ETC:

@@ -58,6 +58,7 @@ public:
     void   AddGold(uint64 amount) { gold += amount; }
 
     void SetStaminaFromServer(uint32 stamina);
+    void AddStamina(uint32 amount);
 
 private:
     void ProcessRotation();

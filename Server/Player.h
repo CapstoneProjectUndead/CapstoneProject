@@ -84,10 +84,17 @@ public:
 	uint16 GetEquippedItemId() const { return equipped_item_id; }
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
 
+public:
+	// 캐릭터 스텟 관련 함수들
+	uint32 GetMaxHp() const { return stat.maxHp; }
+	uint32 GetMaxStamina() const { return stat.maxStamina; }
+
 	uint32 GetHp()      const { return stat.hp; }
+	void   SetHp(uint32 hp) { stat.hp = hp; }
+
 	uint32 GetStamina() const { return stat.stamina; }
-	void   SetHp(uint32 hp)           { stat.hp = hp; }
 	void   SetStamina(uint32 stamina) { stat.stamina = stamina; }
+	void   AddStamina(uint32 amount);
 
 	void UpdateStamina(float elapsedTime);
 

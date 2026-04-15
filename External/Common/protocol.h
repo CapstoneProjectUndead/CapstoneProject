@@ -45,7 +45,7 @@ enum PacketType : uint16_t
 	_S_CUSTOM_SELECT,
 	_C_SCENE_CHANGE,
 	_S_SCENE_CHANGE,
-	_S_Spawn_MONSTER,
+	_S_SPAWN_MONSTER,
 	_S_MONSTER_MOVE,
 
 	_S_MAP_START,
@@ -64,6 +64,8 @@ enum PacketType : uint16_t
 	_C_DROP_ITEM,		// 클라 → 서버
 	_C_EQUIP_ITEM,
 	_S_EQUIP_ITEM,
+	_C_USE_ITEM,
+	_S_USE_ITEM,
 };
 
 #pragma pack (push, 1)
@@ -315,10 +317,11 @@ struct S_PlayerMove : public PacketHeader
 	NetPlayerInfo	info;
 	SCENE_TYPE		scene_type;
 	uint32			stamina;
+	uint32			hp;
 
 	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 77, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 81, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {
@@ -363,7 +366,7 @@ struct S_SpawnMonster : public PacketHeader
 	uint32         room_id;
 	SCENE_TYPE     scene_type;
 
-	S_SpawnMonster() : PacketHeader(sizeof(S_SpawnMonster), (UINT)PacketType::_S_Spawn_MONSTER) {}
+	S_SpawnMonster() : PacketHeader(sizeof(S_SpawnMonster), (UINT)PacketType::_S_SPAWN_MONSTER) {}
 };
 static_assert(sizeof(S_SpawnMonster) == 4 + 58, "S_SpawnMonster size mismatch!");
 
@@ -534,5 +537,26 @@ struct S_EquipItem : public PacketHeader
 	S_EquipItem() : PacketHeader(sizeof(S_EquipItem), (UINT)PacketType::_S_EQUIP_ITEM) {}
 };
 static_assert(sizeof(S_EquipItem) == 4 + 11, "S_EquipItem size mismatch!");
+
+struct C_UseItem : public PacketHeader
+{
+	uint64 player_id;
+	SCENE_TYPE scene_type;
+	uint16 item_id;
+	uint32 inventory_id;
+
+	C_UseItem() : PacketHeader(sizeof(C_UseItem), (UINT)PacketType::_C_USE_ITEM) {}
+};
+static_assert(sizeof(C_UseItem) == 4 + 15, "C_UseItem size mismatch!");
+
+struct S_UseItem : public PacketHeader
+{
+	uint64 player_id;
+	SCENE_TYPE scene_type;
+	bool success;
+
+	S_UseItem() : PacketHeader(sizeof(S_UseItem), (UINT)PacketType::_S_USE_ITEM) {}
+};
+static_assert(sizeof(S_UseItem) == 4 + 10, "S_UseItem size mismatch!");
 
 #pragma pack (pop)

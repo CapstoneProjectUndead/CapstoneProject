@@ -432,3 +432,49 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 	auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
 	BroadCast(sendBuffer);
 }
+
+void CGameScene::Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt)
+{
+	auto& player = players[pkt.player_id];
+	if (!player)
+		return;
+
+	const auto& inventory = player->GetInventory();
+	if (!inventory)
+		return;
+
+	S_UseItem useItemPkt;
+
+	auto it = inventory->GetItems().find(pkt.inventory_id);
+	if (it == inventory->GetItems().end()) {
+		useItemPkt.success = false;
+		useItemPkt.player_id = player->GetID();
+		useItemPkt.scene_type = scene_type;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
+		session->DoSend(sendBuffer);
+		return;
+	}
+
+	auto& item = it->second;
+
+	useItemPkt.player_id  = player->GetID();
+	useItemPkt.scene_type = scene_type;
+	useItemPkt.success    = item->Use(player.get());
+
+	auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
+	session->DoSend(sendBuffer);
+
+	if (useItemPkt.success) {
+		inventory->RemoveItem(pkt.inventory_id);
+
+		S_RemoveItem removeItemPkt;
+		removeItemPkt.player_id    = player->GetID();
+		removeItemPkt.inventory_id = pkt.inventory_id;
+		removeItemPkt.item_id      = pkt.item_id;
+		removeItemPkt.scene_type   = scene_type;
+
+		auto removeBuffer = MAKE_SEND_BUFFER(removeItemPkt);
+		session->DoSend(removeBuffer);
+	}
+}

@@ -3,11 +3,15 @@
 // 서버쪽 Item
 //============
 
+class CPlayer;
+
 class CItem
 {
 public:
 	CItem(std::shared_ptr<ItemData> data);
 	virtual ~CItem() = 0;
+
+	virtual bool Use(CPlayer* player) { return false; }
 
 public:
 	int                GetItemId() const { return base_data->item_id; }
@@ -62,8 +66,10 @@ public:
 class CConsumable : public CItem
 {
 public:
-	CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount);
+	CConsumable(const std::shared_ptr<ItemData> data, const uint32 healAmount, const uint32 energyAmount, const uint32 effectAmount, const float buffDuration);
 	virtual ~CConsumable() override;
+
+	virtual bool Use(CPlayer* player) override;
 
 	uint32 GetHealAmount()   const { return heal_amount; }
 	uint32 GetEnergyAmount() const { return energy_amount; }
@@ -73,6 +79,7 @@ private:
 	const uint32 heal_amount;
 	const uint32 energy_amount;
 	const uint32 effect_amount;
+	const float  buff_duration;
 };
 
 // 기타(예능 아이템)
@@ -81,6 +88,8 @@ class COther : public CItem
 public:
 	COther(const std::shared_ptr<ItemData> data);
 	virtual ~COther() override;
+
+	virtual bool Use(CPlayer* player) override;
 };
 
 // 보물

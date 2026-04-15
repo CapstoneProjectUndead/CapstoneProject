@@ -95,10 +95,11 @@ enum class EModelVariant : uint16_t
 // 대분류: 클래스 분기용 (CEquipment로 만들지, CHealItem으로 만들지 결정)
 enum class ITEM_TYPE : uint8_t
 {
-	EQUIPMENT = 0,
+	EQUIPMENT  = 0,
 	CONSUMABLE,
 	ETC,
 	TREASURE,
+	NONE,       // 슬롯 비어있음/유효하지 않은 타입을 나타내는 센티널
 };
 
 // 소분류: 실제 동작 분기용 (도끼인지, 드릴인지 결정)

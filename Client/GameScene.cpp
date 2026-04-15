@@ -565,3 +565,9 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 			player->SetEquippedItemId(pkt.item_id);
 	}
 }
+
+void CGameScene::Handle_S_UseItem(std::shared_ptr<Session>& session, const S_UseItem& pkt)
+{
+	if (!pkt.success)
+		return;
+}

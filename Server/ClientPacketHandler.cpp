@@ -251,3 +251,18 @@ bool Handle_C_EQUIP_ITEM(std::shared_ptr<Session> session, C_EquipItem& pkt)
 
 	return true;
 }
+
+bool Handle_C_USE_ITEM(std::shared_ptr<Session> session, C_UseItem& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room->IsActive());
+	CScene* targetScene = room->GetScenes()[(UINT)pkt.scene_type].get();
+	assert(targetScene);
+
+	targetScene->PushPacketJob(session,
+		(CScene*)targetScene,
+		&CScene::Handle_C_Use_Item,
+		pkt);
+
+	return true;
+}

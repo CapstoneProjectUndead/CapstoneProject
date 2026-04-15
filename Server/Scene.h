@@ -99,6 +99,7 @@ public:
 	virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) {};
 	virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) {}
 	virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) {}
+	virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) {}
 
 protected:
 	map<uint64, shared_ptr<CPlayer>>	players;

@@ -232,6 +232,16 @@ void CPlayer::UpdateStamina(float elapsedTime)
     stat.stamina = static_cast<uint32>(accumulate_stamina);
 }
 
+void CPlayer::AddStamina(uint32 amount)
+{
+    accumulate_stamina = min(accumulate_stamina + static_cast<float>(amount),
+        static_cast<float>(stat.maxStamina));
+
+    stat.stamina = static_cast<uint32>(accumulate_stamina);
+    if (stamina_exhausted && accumulate_stamina >= 200.0f)
+        stamina_exhausted = false;
+}
+
 void CPlayer::SendPing()
 {
     S_Ping pingPkt;
