@@ -476,5 +476,16 @@ void CGameScene::Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem&
 
 		auto removeBuffer = MAKE_SEND_BUFFER(removeItemPkt);
 		session->DoSend(removeBuffer);
+
+		// 사용한 아이템이 장착 중이었으면 해제 브로드캐스트
+		if (player->GetEquippedItemId() == pkt.item_id) {
+			player->SetEquippedItemId(0);
+			S_EquipItem unequipPkt;
+			unequipPkt.player_id  = player->GetID();
+			unequipPkt.item_id    = 0;
+			unequipPkt.scene_type = scene_type;
+			auto unequipBuffer = MAKE_SEND_BUFFER(unequipPkt);
+			BroadCast(unequipBuffer);
+		}
 	}
 }
