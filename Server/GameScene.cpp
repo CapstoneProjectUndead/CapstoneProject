@@ -413,20 +413,23 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 	if (!player)
 		return;
 
-	auto inventory = player->GetInventory();
-	if (!inventory)
-		return;
+	// item_id == 0 : 장착 해제 요청 (인벤토리 조회 불필요)
+	if (pkt.item_id != 0) {
+		auto inventory = player->GetInventory();
+		if (!inventory)
+			return;
 
-	auto& items = inventory->GetItems();
-	auto iter = items.find(pkt.inventory_id);
-	if (iter == items.end())
-		return;
+		auto& items = inventory->GetItems();
+		auto iter = items.find(pkt.inventory_id);
+		if (iter == items.end())
+			return;
+	}
 
 	player->SetEquippedItemId(pkt.item_id);
-	
+
 	S_EquipItem equipPkt;
-	equipPkt.player_id = pkt.player_id;
-	equipPkt.item_id = pkt.item_id;
+	equipPkt.player_id  = pkt.player_id;
+	equipPkt.item_id    = pkt.item_id;
 	equipPkt.scene_type = scene_type;
 
 	auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);

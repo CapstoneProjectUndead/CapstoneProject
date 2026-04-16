@@ -80,23 +80,44 @@ void CQuickSlot::Draw()
 
 	ImGui::PopStyleVar(2);
 
-	// 1~4 key: select slot
+	// 1~4 key: select slot (같은 키 재입력 시 해제)
 	KEY keys[SLOT_COUNT] = { KEY::_1, KEY::_2, KEY::_3, KEY::_4 };
+
 	for (int i = 0; i < SLOT_COUNT; i++) {
 		if (KEY_TAP(keys[i]) && slots[i].has_item) {
-			selected_slot = i;
+			if (selected_slot == i) {
 
-			// C_EquipItem 패킷
-			if (!g_is_single) {
-				if (auto player = owner.lock()) {
-					C_EquipItem equipItemPkt;
-					equipItemPkt.item_id = slots[i].item_id;
-					equipItemPkt.inventory_id = slots[i].inv_id;
-					equipItemPkt.player_id = player->GetID();
-					equipItemPkt.scene_type = player->GetCurrentSceneType();
+				// 같은 슬롯 재입력 → 장착 해제
+				selected_slot = -1;
 
-					auto sendBuffer = MAKE_SEND_BUFFER(equipItemPkt);
-					player->GetSession()->DoSend(sendBuffer);
+				if (!g_is_single) {
+					if (auto player = owner.lock()) {
+						C_EquipItem equipItemPkt;
+						equipItemPkt.item_id      = 0;
+						equipItemPkt.inventory_id = 0;
+						equipItemPkt.player_id    = player->GetID();
+						equipItemPkt.scene_type   = player->GetCurrentSceneType();
+
+						auto sendBuffer = MAKE_SEND_BUFFER(equipItemPkt);
+						player->GetSession()->DoSend(sendBuffer);
+					}
+				}
+			}
+			else {
+				// 새 슬롯 선택
+				selected_slot = i;
+
+				if (!g_is_single) {
+					if (auto player = owner.lock()) {
+						C_EquipItem equipItemPkt;
+						equipItemPkt.item_id      = slots[i].item_id;
+						equipItemPkt.inventory_id = slots[i].inv_id;
+						equipItemPkt.player_id    = player->GetID();
+						equipItemPkt.scene_type   = player->GetCurrentSceneType();
+
+						auto sendBuffer = MAKE_SEND_BUFFER(equipItemPkt);
+						player->GetSession()->DoSend(sendBuffer);
+					}
 				}
 			}
 		}
@@ -170,13 +191,22 @@ void CQuickSlot::DrawSlotCells(float cellSz, float pad, float scale)
 		    ImGui::IsItemHovered() &&
 		    ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 		{
+			bool wasSelected = (selected_slot == i);
 			slots[i] = SlotEntry{};
-			if (selected_slot == i)
+			if (wasSelected)
 				selected_slot = -1;
 
-			if (!g_is_single) {
-				if (auto player = owner.lock())
-					player->SetEquippedItemId(0);
+			if (!g_is_single && wasSelected) {
+				if (auto player = owner.lock()) {
+					C_EquipItem equipItemPkt;
+					equipItemPkt.item_id      = 0;
+					equipItemPkt.inventory_id = 0;
+					equipItemPkt.player_id    = player->GetID();
+					equipItemPkt.scene_type   = player->GetCurrentSceneType();
+
+					auto sendBuffer = MAKE_SEND_BUFFER(equipItemPkt);
+					player->GetSession()->DoSend(sendBuffer);
+				}
 			}
 		}
 	}
