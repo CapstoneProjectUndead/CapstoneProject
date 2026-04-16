@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "Player.h"
 #include "Monster.h"
@@ -217,13 +217,13 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::string& walk, const std::string& run)
 {
 	// dig state(action으로도 가능)
-	controller.AddState({ "DigState", "Dig" });
+	const std::string dig{ "DigState" };
+	controller.AddState({ dig, "Dig", 2});
 	Transition i2d;
-	i2d.to_state = "DigState";
+	i2d.to_state = dig;
 	i2d.duration = 0.2f;
 	i2d.condition = [this]() {
-		return false;
-		//return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
 		};
 	controller.AddTransition(idle, i2d);
 
@@ -231,13 +231,19 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	d2i.to_state = idle;
 	d2i.duration = 0.2f;
 	d2i.condition = [this]() {
+		// 애니메이션이 끝났거나
+		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 5) {
+			static_cast<CPlayer*>(owner)->SetState(PLAYER_STATE::IDLE);	// 상태변화
+			return true;
+		}
+		// 취소 상태(예: 이동 입력)
+		if (static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG) return true;
 		return false;
-		//return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG;
 		};
-	controller.AddTransition("DigState", d2i);
+	controller.AddTransition(dig, d2i);
 
 	// jump state
-	std::string jump{ "JumpState" };
+	const std::string jump{ "JumpState" };
 	controller.AddState({ jump, "Jump" });
 
 	Transition i2j;
@@ -448,10 +454,7 @@ void CAnimatorComponent::Update(float deltaTime)
 	controller.Update(deltaTime);
 	UpdateLayerWeights(deltaTime);
 
-	// base 동기화 및 업데이트
-	std::string newBase = controller.GetCurrentClip();
-	if (layers[0].current_clip != newBase) {
-		layers[0].current_clip = newBase;
-		layers[0].start_time = current_time; // 베이스도 바뀔 때마다 0초부터 재생되게 함
-	}
+	float clipTime = controller.GetCurrentClipTime();
+	layers[0].current_clip = controller.GetCurrentClip();
+	layers[0].start_time = current_time - clipTime;
 }

@@ -1,9 +1,13 @@
-#pragma once
+﻿#pragma once
 
 // 애니메이션 상태 정보
 struct State {
-    std::string name;       // 상태 이름
-    std::string clip_name;  // 실제 재생할 클립 이름 (또는 블렌드 스페이스 식별자)
+    std::string name;           // 상태 이름
+    std::string clip_name;      // 실제 재생할 클립 이름 (또는 블렌드 스페이스 식별자)
+    float play_speed{ 1.0f };
+    bool is_loop{true};
+    int max_play_count{-1};
+    float loop_start_time{};    // 루프가 시작될 시간
 };
 
 // 상태 전이 정보
@@ -17,6 +21,7 @@ class CAnimationController {
 public:
     CAnimationController() = default;
 
+    void ResetPlayCount() { current_play_count = 0; current_clip_time = 0.0f; }
     void AddState(const State& state) {
         states[state.name] = state;
         if (current_state_name.empty()) current_state_name = state.name;
@@ -29,6 +34,9 @@ public:
     void TransitionTo(const std::string& nextStateName, float duration);
 
     // Getter
+    std::string GetCurrentState() const { return current_state_name; }
+    int GetPlayCount() const { return current_play_count; }
+    float GetCurrentClipTime() const { return current_clip_time; }
     bool IsBlending() const { return is_blending; }
     // 0~1 사이값
     float GetWeight() const { return is_blending ? (blend_timer / blend_duration) : 0.0f; }
@@ -50,4 +58,7 @@ private:
     float blend_timer{};
     float blend_duration{};
     bool is_blending{};
+
+    float current_clip_time{}; // 현재 애니메이션 재생 시간
+    int current_play_count{};
 };

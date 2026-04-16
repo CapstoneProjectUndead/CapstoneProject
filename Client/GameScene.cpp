@@ -197,6 +197,10 @@ void CGameScene::Update(float elapsedTime)
 	ProcessPickup();
 
 	if (my_player) {
+		// 임시
+		if (KEY_PRESSED(KEY::LBTN)) {
+			my_player->SetState(PLAYER_STATE::DIG);
+		}
 		my_player->BeginSendInputPacket(elapsedTime);
 	};
 }

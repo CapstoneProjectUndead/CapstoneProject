@@ -305,7 +305,8 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 
 	if (grounded_timer > 0.0f) {
 		if (!isMoving) {
-			state = PLAYER_STATE::IDLE;
+			if(state != PLAYER_STATE::DIG)
+				state = PLAYER_STATE::IDLE;
 		}
 		else {
 			if (input.shift && !stamina_exhausted) {
