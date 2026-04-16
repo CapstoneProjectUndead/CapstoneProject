@@ -218,7 +218,7 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 {
 	// dig state(action으로도 가능)
 	const std::string dig{ "DigState" };
-	controller.AddState({ dig, "Dig", 2});
+	controller.AddState({ dig, "Dig", 2, false});
 	Transition i2d;
 	i2d.to_state = dig;
 	i2d.duration = 0.2f;
@@ -232,7 +232,7 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	d2i.duration = 0.2f;
 	d2i.condition = [this]() {
 		// 애니메이션이 끝났거나
-		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 5) {
+		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 1) {
 			static_cast<CPlayer*>(owner)->SetState(PLAYER_STATE::IDLE);	// 상태변화
 			return true;
 		}

@@ -198,7 +198,7 @@ void CGameScene::Update(float elapsedTime)
 
 	if (my_player) {
 		// 임시
-		if (KEY_PRESSED(KEY::LBTN)) {
+		if (KEY_TAP(KEY::LBTN)) {
 			my_player->SetState(PLAYER_STATE::DIG);
 		}
 		my_player->BeginSendInputPacket(elapsedTime);
