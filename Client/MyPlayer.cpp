@@ -242,7 +242,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	// 2. 회전
 	ProcessRotation();
 
-	// 3. 예측 이동
+	// 3. 예측 이동 (지금은 완전히 서버 권한 방식이라 싱글 전용이 됨)
 	if (g_is_single) {
 		PredictMove(current_input, elapsedTime);
 	}

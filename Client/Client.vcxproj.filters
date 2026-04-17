@@ -130,6 +130,9 @@
     <Filter Include="ResourceManager">
       <UniqueIdentifier>{d848fd9d-ccfb-451b-a00c-0e009ed4558b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Mineable">
+      <UniqueIdentifier>{af69530c-b2b8-4bbc-86c0-3bf90ca6e799}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -405,6 +408,9 @@
     <ClInclude Include="DataManager.h">
       <Filter>Component\UI</Filter>
     </ClInclude>
+    <ClInclude Include="MineableObject.h">
+      <Filter>Object\Mineable</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -637,6 +643,9 @@
     </ClCompile>
     <ClCompile Include="DataManager.cpp">
       <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MineableObject.cpp">
+      <Filter>Object\Mineable</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
