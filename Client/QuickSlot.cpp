@@ -31,6 +31,17 @@ ITEM_TYPE CQuickSlot::GetSelectedItemType() const
 	return slots[selected_slot].type;
 }
 
+ITEM_SUB_TYPE CQuickSlot::GetSelectedSubType() const
+{
+	if (selected_slot < 0 || selected_slot >= SLOT_COUNT)
+		return ITEM_SUB_TYPE::NONE;
+
+	if (!slots[selected_slot].has_item)
+		return ITEM_SUB_TYPE::NONE;
+
+	return slots[selected_slot].sub_type;
+}
+
 int CQuickSlot::GetSelectedInvId() const
 {
 	if (selected_slot < 0 || selected_slot >= SLOT_COUNT)
@@ -249,6 +260,7 @@ bool CQuickSlot::TryDropOnSlot(CItem* item, ImVec2 mousePos)
 			slots[i].name      = item->GetName();
 			slots[i].icon_path = item->GetIconPath();
 			slots[i].type      = item->GetItemType();
+			slots[i].sub_type  = item->GetSubType();
 			slots[i].item_id   = item->GetItemId();
 			return true;
 		}

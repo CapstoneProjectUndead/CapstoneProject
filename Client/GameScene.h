@@ -4,6 +4,7 @@
 
 class CWorldItem;
 class CItem;
+class CMineableObject;
 
 class CGameScene : public CScene
 {
@@ -44,6 +45,9 @@ private:
     // 플레이어 아이템 줍기
     void ProcessPickup();
 
+    // 채굴 상호작용
+    void ProcessMining();
+
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
 
 private:
@@ -53,7 +57,11 @@ private:
     std::vector<XMFLOAT3>                    ghost_spawn_positions;
 
     static constexpr float  PICKUP_RANGE       = 2.0f;
+    static constexpr float  MINING_RANGE       = 1.0f;
     static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값
-    uint32 world_item_id_counter = WORLD_ITEM_ID_BASE;
+    uint32            world_item_id_counter = WORLD_ITEM_ID_BASE;
+
+    bool              was_digging           = false;
+    CMineableObject*  mining_target         = nullptr;
 };
 

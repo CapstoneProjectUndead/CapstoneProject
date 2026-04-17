@@ -43,6 +43,7 @@ public:
     void Update(float deltaTime);
 
     void EraseCollider(OBJECT_TYPE type);
+    void EraseCollider(CColliderComponent* c);
 
 private:
     // 충돌 후보 추리기(자기 자신 제외)

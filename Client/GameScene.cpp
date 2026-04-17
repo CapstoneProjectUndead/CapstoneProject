@@ -4,6 +4,7 @@
 #include "PhysicsManager.h"
 #include "GameFramework.h"
 
+#include "Collider.h"
 #include "MyPlayer.h"
 #include "Camera.h"
 #include "Shader.h"
@@ -22,6 +23,8 @@
 #include "QuickSlot.h"
 #include "WorldItem.h"
 #include "WorldTool.h"			// (장비)파밍 도구
+#include "MineableObject.h"
+#include "Animator.h"
 #include "WorldWeapon.h"		// (장비)무기
 #include "WorldConsumable.h"	// 소비
 #include "WorldOther.h"			// 기타
@@ -53,9 +56,9 @@ void CGameScene::Initialize()
 
 		// 보물 위치에 보물 생성
 		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
-		for (auto& treasure : treasures) {
-			SpawnWorldItem(110, treasure.world_id, treasure.treasure_pos);
-		}
+		//for (auto& treasure : treasures) {
+		//	SpawnWorldItem(110, treasure.world_id, treasure.treasure_pos);
+		//}
 
 		factory->LoadItemFrame(heapManager);
 	}
@@ -185,8 +188,6 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 void CGameScene::Update(float elapsedTime)
 {
-	CScene::Update(elapsedTime);
-
 	if (KEY_TAP(KEY::ESC)) {
 		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
 		if (menuUI) {
@@ -194,13 +195,12 @@ void CGameScene::Update(float elapsedTime)
 		}
 	}
 
+	CScene::Update(elapsedTime);
+
 	ProcessPickup();
 
 	if (my_player) {
-		// 임시
-		if (KEY_TAP(KEY::LBTN)) {
-			my_player->SetState(PLAYER_STATE::DIG);
-		}
+		ProcessMining();
 		my_player->BeginSendInputPacket(elapsedTime);
 	};
 }
@@ -268,7 +268,7 @@ void CGameScene::Enter()
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
 		if(g_is_single)
-			my_player->SetPosition(1.f, 5.0f, 1.f);	// Lobby 위치 그대로 가져오는 거 방지
+			my_player->SetPosition(1.f, 5.0f, 1.5f);	// Lobby 위치 그대로 가져오는 거 방지
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
@@ -357,6 +357,94 @@ void CGameScene::ProcessPickup()
 		my_player->GetSession()->DoSend(sendBuffer);
 	}
 }
+
+void CGameScene::ProcessMining()
+{
+	if (!my_player)
+		return;
+
+	bool is_digging = (my_player->GetState() == PLAYER_STATE::DIG);
+
+	// DIG→IDLE 전이 감지 = 애니메이션 1회 완료 → 데미지 처리
+	if (was_digging && !is_digging && mining_target) {
+
+		bool still_exists = false;
+		for (auto& obj : objects) {
+
+			if (obj.get() == mining_target) { 
+				still_exists = true; 
+				break; 
+			}
+		}
+
+		if (still_exists) {
+			mining_target->TakeDamage();
+
+			if (mining_target->IsDestroyed()) {
+				CMineableObject* to_remove = mining_target;
+				mining_target = nullptr;
+				XMFLOAT3 pos = to_remove->GetPosition();
+
+				auto it = std::find_if(objects.begin(), objects.end(),
+					[to_remove](const std::shared_ptr<CObject>& obj) {
+						return obj.get() == to_remove;
+					});
+
+				if (it != objects.end()) {
+
+					if (auto col = to_remove->GetComponent<CColliderComponent>())
+						CPhysicsManager::GetInstance().EraseCollider(col);
+
+					size_t idx  = std::distance(objects.begin(), it);
+					size_t last = objects.size() - 1;
+
+					if (idx != last) {
+						std::swap(objects[idx], objects[last]);
+						uint64 moved_id = objects[idx]->GetID();
+						auto map_it = id_To_Index.find(moved_id);
+						if (map_it != id_To_Index.end())
+							map_it->second = idx;
+					}
+					objects.pop_back();
+				}
+
+				SpawnWorldItem(110, pos);
+			}
+		}
+		else {
+			mining_target = nullptr;
+		}
+	}
+
+	was_digging = is_digging;
+
+	// IDLE 상태이고 좌클릭 누르면 (홀딩x), 도구 장착 시에만
+	auto qs = my_player->GetQuickSlot();
+	bool has_tool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
+
+	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool) {
+
+		mining_target = nullptr;
+
+		XMFLOAT3 playerPos = my_player->GetPosition();
+		float min_dist = MINING_RANGE;
+
+		for (auto& obj : objects) {
+
+			if (obj->GetObjectType() != OBJECT_TYPE::MINEABLE_OBJECT) 
+				continue;
+
+			float dist = Vector3::Length(Vector3::Subtract(obj->GetPosition(), playerPos));
+			if (dist < min_dist) {
+				min_dist = dist;
+				mining_target = static_cast<CMineableObject*>(obj.get());
+			}
+		}
+
+		my_player->SetState(PLAYER_STATE::DIG);
+	}
+}
+
 
 // 싱글환경
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)

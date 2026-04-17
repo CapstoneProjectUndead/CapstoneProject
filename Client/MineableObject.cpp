@@ -18,6 +18,7 @@ void CMineableObject::Initialize()
 
 void CMineableObject::Update(const float dt)
 {
+	CObject::Update(dt);
 }
 
 void CMineableObject::TakeDamage()

@@ -9,6 +9,11 @@ void CPhysicsManager::Update(float deltaTime)
     colliders.erase(std::remove(colliders.begin(), colliders.end(), nullptr), colliders.end() );
 }
 
+void CPhysicsManager::EraseCollider(CColliderComponent* c)
+{
+    colliders.erase(std::remove(colliders.begin(), colliders.end(), c), colliders.end());
+}
+
 void CPhysicsManager::EraseCollider(OBJECT_TYPE type)
 {
     colliders.erase(std::remove_if(colliders.begin(), colliders.end(), [type](const CColliderComponent* coll) {

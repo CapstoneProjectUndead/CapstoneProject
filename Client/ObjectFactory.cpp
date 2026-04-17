@@ -7,6 +7,7 @@
 #include "WorldConsumable.h"
 #include "WorldOther.h"
 #include "WorldTreasure.h"
+#include "MineableObject.h"
 
 // Component
 #include "MeshComponent.inl"
@@ -327,7 +328,14 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 		for (const std::string& name : meshNames) {
 			if (!prototypes.contains(name)) continue;
 			auto proto = prototypes[name];
-			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
+			// 보물이면 CMineableObject 생성
+			std::shared_ptr<CObject> obj;
+			if (inst.type == MapGenerator::EModelType::TREASURE)
+				obj = std::make_shared<CMineableObject>();
+			else
+				obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
 			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 
 			auto collider = proto->GetComponent<CColliderComponent>();

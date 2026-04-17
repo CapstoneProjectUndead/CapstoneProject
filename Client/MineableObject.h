@@ -10,11 +10,12 @@ public:
     virtual void Initialize() override;
     virtual void Update(const float dt) override;
 
+public:
     void TakeDamage();
     bool IsDestroyed() const { return hp <= 0; }
     int GetHp() const { return hp; }
 
 private:
-    int hp{ 5 };
-    int max_hp{ 5 };
+    int hp = 5;
+    const int max_hp = 5;
 };
