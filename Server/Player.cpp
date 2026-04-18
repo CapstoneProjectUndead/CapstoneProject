@@ -108,30 +108,35 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
 
     // 상태 갱신
     bool isMoving = (dir.x != 0 || dir.z != 0);
-    if (!isMoving) {
-        state = PLAYER_STATE::IDLE;
-        velocity.x = 0.0f;
-        velocity.z = 0.0f;
-    }
-    else {
-        if (auto move = GetComponent<CMovementComponent>()) {
-            if (input.shift && !stamina_exhausted) {
-                state = PLAYER_STATE::RUN;
-                move->Run();
-            }
-            else {
-                state = PLAYER_STATE::WALK;
-                move->UnRun();
+
+    // 움찔거리는 거 방지 (Client PredictMove와 동일 로직)
+    grounded_timer = is_grounded ? 0.1f : (grounded_timer - elapsedTime);
+
+    if (grounded_timer > 0.0f) {
+        if (!isMoving) {
+            if (state != PLAYER_STATE::DIG)
+                state = PLAYER_STATE::IDLE;
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+        }
+        else {
+            if (auto move = GetComponent<CMovementComponent>()) {
+                if (input.shift && !stamina_exhausted) {
+                    state = PLAYER_STATE::RUN;
+                    move->Run();
+                }
+                else {
+                    state = PLAYER_STATE::WALK;
+                    move->UnRun();
+                }
             }
         }
     }
+    else {
+        state = PLAYER_STATE::JUMP; // 확실히 공중일 때만 점프 상태
+    }
 
     UpdateStamina(elapsedTime);
-
-    // 점프
-    if (velocity.y > 0) {
-        state = PLAYER_STATE::JUMP;
-    }
 
     if (dir.x != 0 || dir.z != 0) {
         if (auto move = GetComponent<CMovementComponent>())

@@ -97,6 +97,7 @@ void CScene::SendPlayersResult()
 			movePkt.info.pitch = player->GetPitch();
 
 			movePkt.info.state = player->GetState();
+			movePkt.info.is_grounded = player->GetIsGround();
 			movePkt.timestamp = player->GetLastSimulatedTime();
 			movePkt.stamina = player->GetStamina();
 			movePkt.hp      = player->GetHp();

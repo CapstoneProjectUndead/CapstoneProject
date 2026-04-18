@@ -120,5 +120,8 @@ private:
 	PlayerStat  stat;
 	float       accumulate_stamina{ 1000.0f };
 	bool        stamina_exhausted{ false };
+
+	// 공중 판정 디바운스 (is_grounded 떨림 방지)
+	float       grounded_timer{ 0.1f };
 };
 

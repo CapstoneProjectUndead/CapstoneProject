@@ -167,28 +167,34 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
             state = PLAYER_STATE::IDLE;
         }
         else {
-            // [보간 이동]
-            // Frame A와 Frame B 사이의 실제 이동 거리 계산
-            // (서버가 보내준 두 점 사이의 거리가 얼마나 되는가?)
-            float intervalDist = Vector3::Length(Vector3::Subtract(frameB->position, frameA->position));
-
-            // 두 패킷 사이의 거리가 1cm 미만(0.01f)이면 '사실상 멈춤'으로 간주
-            if (intervalDist < 0.01f) {
-
-                state = PLAYER_STATE::IDLE;
-
-                if (frameA->state == PLAYER_STATE::WALK || frameA->state == PLAYER_STATE::RUN)
-                    state = frameA->state;
-                if (frameB->state == PLAYER_STATE::WALK || frameB->state == PLAYER_STATE::RUN)
-                    state = frameB->state;
-
-                nextPos = position;
+            // [점프 우선] 서버가 grounded_timer 디바운스로 깔끔하게 결정한 JUMP state는 그대로 보존
+            if (frameA->state == PLAYER_STATE::JUMP || frameB->state == PLAYER_STATE::JUMP) {
+                state = PLAYER_STATE::JUMP;
             }
             else {
-                if (frameA->state == PLAYER_STATE::RUN)
-                    state = PLAYER_STATE::RUN;
-                else
-                    state = PLAYER_STATE::WALK;
+                // [보간 이동]
+                // Frame A와 Frame B 사이의 실제 이동 거리 계산
+                // (서버가 보내준 두 점 사이의 거리가 얼마나 되는가?)
+                float intervalDist = Vector3::Length(Vector3::Subtract(frameB->position, frameA->position));
+
+                // 두 패킷 사이의 거리가 1cm 미만(0.01f)이면 '사실상 멈춤'으로 간주
+                if (intervalDist < 0.01f) {
+
+                    state = PLAYER_STATE::IDLE;
+
+                    if (frameA->state == PLAYER_STATE::WALK || frameA->state == PLAYER_STATE::RUN)
+                        state = frameA->state;
+                    if (frameB->state == PLAYER_STATE::WALK || frameB->state == PLAYER_STATE::RUN)
+                        state = frameB->state;
+
+                    nextPos = position;
+                }
+                else {
+                    if (frameA->state == PLAYER_STATE::RUN)
+                        state = PLAYER_STATE::RUN;
+                    else
+                        state = PLAYER_STATE::WALK;
+                }
             }
 
             // 위치 이동

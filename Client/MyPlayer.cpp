@@ -203,33 +203,10 @@ void CMyPlayer::ProcessInput()
 
 void CMyPlayer::InterpolateMyPlayer(float elapsedTime)
 {
-	// 목적지 좌표 세팅
+	// 상태(state)는 서버가 결정한 값을 그대로 따른다 (Handle_S_Move_Player에서 SetState)
+	// 여기서는 위치 보간만 담당
 	XMFLOAT3 destPos = { dest_info.x, dest_info.y, dest_info.z };
 
-	// 현재 위치와 목적지의 평면(XZ) 거리 차이 계산
-	float dx = destPos.x - position.x;
-	float dz = destPos.z - position.z;
-	float distSq = (dx * dx) + (dz * dz);
-
-	// 임계값을 10cm (0.1f * 0.1f)로 살짝 넉넉하게 키움!
-	float thresholdSq = 0.01f;
-
-	// 거리에 따른 기본 상태 결정
-	if (distSq > thresholdSq) {
-		if (current_input.shift && !stamina_exhausted)
-			state = PLAYER_STATE::RUN;
-		else
-			state = PLAYER_STATE::WALK;
-	}
-	else {
-		state = PLAYER_STATE::IDLE;
-	}
-
-	if (std::abs(server_velocity.y) > 0.2f) {
-		state = PLAYER_STATE::WALK; // 나중에 JUMP로 바꿀 곳
-	}
-
-	// 부드러운 이동 (Lerp)
 	float lerpSpeed = 8.0f * elapsedTime;
 	position = Vector3::Lerp(position, destPos, lerpSpeed);
 }
