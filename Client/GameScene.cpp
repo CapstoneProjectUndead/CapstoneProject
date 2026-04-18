@@ -13,6 +13,7 @@
 #include "Ghost.h"
 
 #include "ItemFinder.h"
+#include "ImGui/imgui.h"
 #include "NetworkManager.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
@@ -365,8 +366,10 @@ void CGameScene::ProcessMining()
 
 	bool is_digging = (my_player->GetState() == PLAYER_STATE::DIG);
 
-	// DIG→IDLE 전이 감지 = 애니메이션 1회 완료 → 데미지 처리
-	if (was_digging && !is_digging && mining_target) {
+	// DIG→IDLE 전이 감지 = 애니메이션 자연 완료(인터럽트 제외) → 데미지 처리
+	if (was_digging && !is_digging && mining_target && my_player->GetDigAnimFinished()) {
+
+		my_player->SetDigAnimFinished(false);
 
 		bool still_exists = false;
 		for (auto& obj : objects) {
@@ -423,9 +426,10 @@ void CGameScene::ProcessMining()
 	bool has_tool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
 
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool) {
+	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool && !ImGui::GetIO().WantCaptureMouse) {
 
 		mining_target = nullptr;
+		my_player->SetDigAnimFinished(false);
 
 		XMFLOAT3 playerPos = my_player->GetPosition();
 		float min_dist = MINING_RANGE;

@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "Animator.h"
 #include "Player.h"
+#include "MyPlayer.h"
 #include "Monster.h"
 #include "AnimationManager.h"
 #include "GPUBufferStruct.h"
@@ -230,10 +231,12 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	Transition d2i;
 	d2i.to_state = idle;
 	d2i.duration = 0.2f;
-	d2i.condition = [this]() {
+	d2i.condition = [this]() { 
 		// 애니메이션이 끝났거나
 		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 1) {
-			static_cast<CPlayer*>(owner)->SetState(PLAYER_STATE::IDLE);	// 상태변화
+			auto* player = static_cast<CMyPlayer*>(owner);
+			player->SetDigAnimFinished(true);
+			player->SetState(PLAYER_STATE::IDLE);
 			return true;
 		}
 		// 취소 상태(예: 이동 입력)

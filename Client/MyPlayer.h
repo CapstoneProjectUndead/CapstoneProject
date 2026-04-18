@@ -60,6 +60,9 @@ public:
     void SetStaminaFromServer(uint32 stamina);
     void AddStamina(uint32 amount);
 
+    bool GetDigAnimFinished() const   { return dig_anim_finished; }
+    void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
+
 private:
     void ProcessRotation();
     void ProcessInput();
@@ -100,6 +103,7 @@ private:
     uint64                            gold;      // 소지금
 
     bool                              is_ready;
+    bool                              dig_anim_finished{ false };
 
     float grounded_timer{ 0.1 };
     float accumulate_stamina{ 1000.0f };   // 누적용 float 스태미나
