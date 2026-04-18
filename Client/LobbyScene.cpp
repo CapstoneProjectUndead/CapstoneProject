@@ -111,7 +111,6 @@ void CLobbyScene::Update(float elapsedTime)
 		UpdatePlayerReadyUI();
 	}
 
-
 	if (KEY_TAP(KEY::ESC)) {
 		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
 		if (menuUI) {

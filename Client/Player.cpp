@@ -171,6 +171,10 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
             if (frameA->state == PLAYER_STATE::JUMP || frameB->state == PLAYER_STATE::JUMP) {
                 state = PLAYER_STATE::JUMP;
             }
+            // [채굴 우선] 서버가 dig_timer로 결정한 DIG state 보존
+            else if (frameA->state == PLAYER_STATE::DIG || frameB->state == PLAYER_STATE::DIG) {
+                state = PLAYER_STATE::DIG;
+            }
             else {
                 // [보간 이동]
                 // Frame A와 Frame B 사이의 실제 이동 거리 계산

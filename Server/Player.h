@@ -37,7 +37,7 @@ public:
 
 	void Update(const float elapsedTime) override;
 	void ProcessInputQueue(const float elapsedTime);
-	void SimulateMove(const InputData& input, float elapsedTime);
+	void SimulateMove(const InputData& input, float elapsedTime, bool updateState = true);
 
 public:
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
@@ -123,5 +123,9 @@ private:
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };
+
+	// 채굴 애니메이션 유지 타이머
+	float       dig_timer{ 0.0f };
+	const float DIG_DURATION = 1.0f;
 };
 

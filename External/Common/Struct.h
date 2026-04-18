@@ -14,14 +14,16 @@ struct InputData
 	bool d = false;
 	bool space = false;
 	bool shift = false;
+	bool lbtn  = false;
 
-	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift)
+	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift, bool _lbtn = false)
 		: w(_w)
 		, a(_a)
 		, s(_s)
 		, d(_d)
 		, space(_space)
 		, shift(_shift)
+		, lbtn(_lbtn)
 	{ }
 };
 

@@ -70,9 +70,9 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
     }
     else
     {
-        // 입력이 없어도 마찰/중력 계산을 위해 1회 업데이트
+        // 입력이 없어도 마찰/중력 계산을 위해 1회 업데이트 (state는 변경하지 않음)
         InputData emptyInput{ false, false, false, false, false, false };
-        SimulateMove(emptyInput, elapsedTime);
+        SimulateMove(emptyInput, elapsedTime, false);
 
         if (last_simulated_time < g_server_total_time)
             last_simulated_time = static_cast<float>(g_server_total_time);
@@ -89,7 +89,7 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
     }
 }
 
-void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
+void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updateState)
 {
     // --------------------
     // 입력 처리 및 방향 계산
@@ -112,28 +112,57 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime)
     // 움찔거리는 거 방지 (Client PredictMove와 동일 로직)
     grounded_timer = is_grounded ? 0.1f : (grounded_timer - elapsedTime);
 
-    if (grounded_timer > 0.0f) {
-        if (!isMoving) {
-            if (state != PLAYER_STATE::DIG)
-                state = PLAYER_STATE::IDLE;
-            velocity.x = 0.0f;
-            velocity.z = 0.0f;
+    if (updateState) {
+        // 채굴 시작: lbtn 클릭 + 이동 없음
+        if (input.lbtn && !isMoving && grounded_timer > 0.0f) {
+            state     = PLAYER_STATE::DIG;
+            dig_timer = DIG_DURATION;
         }
-        else {
-            if (auto move = GetComponent<CMovementComponent>()) {
-                if (input.shift && !stamina_exhausted) {
-                    state = PLAYER_STATE::RUN;
-                    move->Run();
+
+        // 채굴 타이머 감소 (타이머가 살아있으면 DIG 유지, 만료 시 IDLE로 전환)
+        if (dig_timer > 0.0f) {
+            dig_timer -= elapsedTime;
+            if (dig_timer > 0.0f)
+                state = PLAYER_STATE::DIG;
+            else
+                state = PLAYER_STATE::IDLE;
+        }
+
+        if (grounded_timer > 0.0f) {
+            if (!isMoving) {
+                if (state != PLAYER_STATE::DIG)
+                    state = PLAYER_STATE::IDLE;
+                if (is_grounded) {
+                    velocity.x = 0.0f;
+                    velocity.z = 0.0f;
                 }
-                else {
-                    state = PLAYER_STATE::WALK;
-                    move->UnRun();
+            }
+            else {
+                // 이동 입력이 들어오면 채굴 취소
+                dig_timer = 0.0f;
+                if (auto move = GetComponent<CMovementComponent>()) {
+                    if (input.shift && !stamina_exhausted) {
+                        state = PLAYER_STATE::RUN;
+                        move->Run();
+                    }
+                    else {
+                        state = PLAYER_STATE::WALK;
+                        move->UnRun();
+                    }
                 }
             }
         }
+        else {
+            dig_timer = 0.0f;
+            state = PLAYER_STATE::JUMP; // 확실히 공중일 때만 점프 상태
+        }
     }
     else {
-        state = PLAYER_STATE::JUMP; // 확실히 공중일 때만 점프 상태
+        // updateState=false: 물리만 계산, velocity 마찰 적용 (입력 없는 틱)
+        if (is_grounded && !isMoving) {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+        }
     }
 
     UpdateStamina(elapsedTime);

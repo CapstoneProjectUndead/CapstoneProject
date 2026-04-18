@@ -1,16 +1,16 @@
 #pragma once
 //==================================
-// **** Å¬¶ó/¼­¹ö °ø¿ë Çì´õ ÆÄÀÏ ****
+// **** í´ë¼/ì„œë²„ ê³µìš© í—¤ë” íŒŒì¼ ****
 //==================================
 
-// ³×Æ®¿öÅ© ÆĞÅ¶ Àü¿ë ±¸Á¶Ã¼ ¼±¾ğÇÏ´Â Çì´õ
-// ³×ÀÌ¹Ö ±ÔÄ¢ : Net + ±¸Á¶Ã¼ ÀÌ¸§ 
+// ë„¤íŠ¸ì›Œí¬ íŒ¨í‚· ì „ìš© êµ¬ì¡°ì²´ ì„ ì–¸í•˜ëŠ” í—¤ë”
+// ë„¤ì´ë° ê·œì¹™ : Net + êµ¬ì¡°ì²´ ì´ë¦„ 
 
-// **** ÆĞÅ¶¿¡ Æ÷ÇÔÇÒ ±¸Á¶Ã¼¸¸ ¼±¾ğ! ****
+// **** íŒ¨í‚·ì— í¬í•¨í•  êµ¬ì¡°ì²´ë§Œ ì„ ì–¸! ****
 
 //struct NetInputData
 //{
-//	// ÀÌµ¿ °ü·Ã (¼­¹ö°¡ °ËÁõ)
+//	// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 //	bool w = false;
 //	bool a = false;
 //	bool s = false;
@@ -23,18 +23,19 @@ struct NetPlayerInfo
 	uint32			room_id;
 	bool			is_my_player;
 
-	// Ä¿½ºÅÍ¸¶ÀÌÂ¡ Ãß°¡ (26. 2. 25)
+	// ì»¤ìŠ¤í„°ë§ˆì´ì§• ì¶”ê°€ (26. 2. 25)
 	uint8           body_type = 0;
 	uint8           eyes_type = 0;
 	uint8           mouth_type = 0;
 
-	// ¼­¹ö±ÇÀ§ ¹æ½Ä) w,a,s,d ¼­¹ö±ÇÀ§ ¹æ½Ä¿¡¼­ ÇÊ¿äÇÑ µ¥ÀÌÅÍÀÌ´Ù.
+	// ì„œë²„ê¶Œìœ„ ë°©ì‹) w,a,s,d ì„œë²„ê¶Œìœ„ ë°©ì‹ì—ì„œ í•„ìš”í•œ ë°ì´í„°ì´ë‹¤.
 	bool			w = false;
 	bool			a = false;
 	bool			s = false;
 	bool			d = false;
 	bool			space = false;
 	bool			shift = false;
+	bool            lbtn  = false;
 	bool            is_grounded = true;
 
 	float			x, y, z;
@@ -79,6 +80,7 @@ struct NetPlayerInfo
 		, d(other.d)
 		, space(other.space)
 		, shift(other.shift)
+		, lbtn(other.lbtn)
 		, is_grounded(other.is_grounded)
 		, x(other.x)
 		, y(other.y)
@@ -92,7 +94,7 @@ struct NetPlayerInfo
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 60, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 61, "NetObjectInfo size mismatch!");
 
 struct NetMonsterInfo
 {
@@ -150,10 +152,10 @@ static_assert(sizeof(NetMonsterInfo) == 53, "NetMonsterInfo size mismatch!");
 
 struct NetRoomInfo
 {
-	uint32	room_id;	// ¹æ ID
-	char	room_name[ROOM_NAME_MAX]; // 100ÀÚ
+	uint32	room_id;	// ë°© ID
+	char	room_name[ROOM_NAME_MAX]; // 100ì
 	uint16	current_player_count;
-	bool	is_game_start;	// °ÔÀÓÀÌ ÀÌ¹Ì ½ÃÀÛµÈ ¹æÀÎÁö
+	bool	is_game_start;	// ê²Œì„ì´ ì´ë¯¸ ì‹œì‘ëœ ë°©ì¸ì§€
 
 	NetRoomInfo() = default;
 
@@ -181,22 +183,22 @@ namespace NetPacket
 	enum class EModelType : unsigned char
 	{
 		// Road Types
-		ROAD = 0,      // °ø¿ø ±¸¿ªÀÇ ÀÏ¹İ ±æ
-		PARK_GREEN,         // °ø¿ø ±¸¿ªÀÇ ¼öÇ®/º¥Ä¡ ¾Æ·¡ ¹Ù´Ú
-		VILLAGE_ROAD,       // ¸¶À»(»óÁ¡) ±¸¿ªÀÇ ÀÏ¹İ ±æ
+		ROAD = 0,      // ê³µì› êµ¬ì—­ì˜ ì¼ë°˜ ê¸¸
+		PARK_GREEN,         // ê³µì› êµ¬ì—­ì˜ ìˆ˜í’€/ë²¤ì¹˜ ì•„ë˜ ë°”ë‹¥
+		VILLAGE_ROAD,       // ë§ˆì„(ìƒì ) êµ¬ì—­ì˜ ì¼ë°˜ ê¸¸
 
 		WALL,
 
 		//  Buildings
 		WAREHOUSE, STORE,
 		DOOR,
-		CORNER_DOOR,    // HOUSE_WALL_CORNER°ú ¹æÇâ °°À½
+		CORNER_DOOR,    // HOUSE_WALL_CORNERê³¼ ë°©í–¥ ê°™ìŒ
 
-		// Building Wall Types (WareHouse, Store °ø¿ë)
-		HOUSE_INNTER,    // °Ç¹° ³»ºÎ ¹Ù´Ú
-		HOUSE_WALL_STRAIGHT, // ÀÏÀÚ º®
-		HOUSE_WALL_CORNER,   // ¸ğ¼­¸® º®
-		HOUSE_WALL_EMPTY,    // º®X
+		// Building Wall Types (WareHouse, Store ê³µìš©)
+		HOUSE_INNTER,    // ê±´ë¬¼ ë‚´ë¶€ ë°”ë‹¥
+		HOUSE_WALL_STRAIGHT, // ì¼ì ë²½
+		HOUSE_WALL_CORNER,   // ëª¨ì„œë¦¬ ë²½
+		HOUSE_WALL_EMPTY,    // ë²½X
 
 		// Props
 		KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW, UNKNOWN
@@ -205,7 +207,7 @@ namespace NetPacket
 	struct InstanceData
 	{
 		XMFLOAT3 position{};
-		float rotationY{ 0.0f }; // scale ´ë½Å È¸Àü(µµ ´ÜÀ§) Ãß°¡
+		float rotationY{ 0.0f }; // scale ëŒ€ì‹  íšŒì „(ë„ ë‹¨ìœ„) ì¶”ê°€
 		EModelType type{ EModelType::ROAD };
 		EModelVariant model = EModelVariant::NONE;
 
