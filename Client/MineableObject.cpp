@@ -13,6 +13,7 @@ CMineableObject::~CMineableObject()
 void CMineableObject::Initialize()
 {
 	CObject::Initialize();
+
 	hp = max_hp;
 }
 

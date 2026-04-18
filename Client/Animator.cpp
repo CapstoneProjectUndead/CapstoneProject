@@ -218,7 +218,7 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 {
 	// dig state(action으로도 가능)
 	const std::string dig{ "DigState" };
-	controller.AddState({ dig, "Dig", 2, false});
+	controller.AddState({ dig, "Dig", 3, false});
 	Transition i2d;
 	i2d.to_state = dig;
 	i2d.duration = 0.2f;

@@ -418,10 +418,11 @@ void CGameScene::ProcessMining()
 
 	was_digging = is_digging;
 
-	// IDLE 상태이고 좌클릭 누르면 (홀딩x), 도구 장착 시에만
+	// 플레이어가 도구를 장착하고 있는지 검사
 	auto qs = my_player->GetQuickSlot();
 	bool has_tool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
 
+	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
 	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool) {
 
 		mining_target = nullptr;

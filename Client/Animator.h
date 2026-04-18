@@ -40,7 +40,6 @@ public:
 	// layer 1
 	void PlayAction(const std::string& clipName);
 	AnimationData GetAnimationData();
-	int GetPlayCount() const { return controller.GetPlayCount(); }
 
 	void Update(float deltaTime) override;
 	void UpdateLayerWeights(float deltaTime);
