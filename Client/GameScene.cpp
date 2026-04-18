@@ -425,8 +425,12 @@ void CGameScene::ProcessMining()
 	auto qs = my_player->GetQuickSlot();
 	bool has_tool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
 
+	// 이동 중에는 채굴 시작 불가 (Animator에 Walk/Run→Dig 전이가 없어 애니메이션 꼬임 방지)
+	bool is_moving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
+	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
+
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool && !ImGui::GetIO().WantCaptureMouse) {
+	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool && !ImGui::GetIO().WantCaptureMouse && !is_moving) {
 
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
