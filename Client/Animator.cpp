@@ -228,6 +228,15 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		};
 	controller.AddTransition(idle, i2d);
 
+	// Walk/Run → Dig (이동 직후 클릭 시 Walk/Run 블렌딩 끝난 후에도 Dig로 전이 가능)
+	Transition w2d;
+	w2d.to_state = dig;
+	w2d.duration = 0.2f;
+	w2d.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		};
+	controller.AddTransition(walk, w2d);
+
 	Transition d2i;
 	d2i.to_state = idle;
 	d2i.duration = 0.2f;
