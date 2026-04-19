@@ -85,6 +85,9 @@
     <Filter Include="Object\Factory">
       <UniqueIdentifier>{8d37c926-cf9c-4c3b-8864-326c6f3c6825}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Mineable">
+      <UniqueIdentifier>{f1ff860d-b1d6-43c4-b828-0a38b7329b6f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -206,6 +209,9 @@
     </ClCompile>
     <ClCompile Include="Ghost.cpp">
       <Filter>Object\Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="MineableObject.cpp">
+      <Filter>Object\Mineable</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -346,6 +352,9 @@
     </ClInclude>
     <ClInclude Include="Ghost.h">
       <Filter>Object\Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="MineableObject.h">
+      <Filter>Object\Mineable</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
