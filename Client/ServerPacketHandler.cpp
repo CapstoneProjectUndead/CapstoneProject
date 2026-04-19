@@ -465,3 +465,67 @@ bool Handle_S_USE_ITEM(std::shared_ptr<Session> session, S_UseItem& pkt)
 
 	return true;
 }
+
+bool Handle_S_MINEABLE_LIST(std::shared_ptr<Session> session, S_MineableList& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_MineableList(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_DESTROY_MINEABLE(std::shared_ptr<Session> session, S_DestroyMineable& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_DestroyMineable(session, pkt);
+
+	return true;
+}

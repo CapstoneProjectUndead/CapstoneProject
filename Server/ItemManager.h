@@ -44,14 +44,8 @@ public:
 	const unordered_map<uint32, shared_ptr<WorldItem>>& GetItems() const { return items; }
 
 private:
-	// 보물 관련
-	void SpawnWorldTreasures(const vector<MapGenerator::InstanceData>& instanceData);
-
-private:
 	SCENE_TYPE scene_type;
 	unordered_map<uint32, shared_ptr<WorldItem>> items;
 	uint32 world_id_counter;  // SpawnItem 호출 시 자동 증가
-
-	map<uint32, TreasureInfo>           treasure_map;
 };
 

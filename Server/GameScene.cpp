@@ -18,6 +18,7 @@
 
 CGameScene::CGameScene(uint32 roomId)
 	: CScene(SCENE_TYPE::GAME)
+	, mineable_id_counter(10000)
 {
 
 }
@@ -144,9 +145,6 @@ void CGameScene::CreateGameScene()
 
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 
-	// 맵 데이터를 순회하며 보물 좌표 + ID 부여 + spawn
-	item_manager->SpawnWorldTreasures(instanceData);
-
 	// 몬스터 스폰 위치 추출 (서버만 사용)
 	humanMonster_spawn_positions.clear();
 	ghost_spawn_positions.clear();
@@ -176,7 +174,19 @@ void CGameScene::CreateGameScene()
 			auto proto = prototypes[name];
 			auto collider = proto->GetComponent<CColliderComponent>();
 
-			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+			// TREASURE는 CMineableObject로, 나머지는 일반 STATIC_OBJECT로 생성
+			shared_ptr<CObject> obj;
+			bool isMineable = (inst.type == MapGenerator::EModelType::TREASURE);
+			if (isMineable) {
+				auto mineable = make_shared<CMineableObject>();
+				mineable->SetID(mineable_id_counter);
+				mineable_objects[mineable_id_counter] = mineable;
+				++mineable_id_counter;
+				obj = mineable;
+			}
+			else {
+				obj = make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+			}
 			obj->SetCurrentSceneType(scene_type);
 
 			XMMATRIX world = XMLoadFloat4x4(&proto->GetWorldMatrix()) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
@@ -191,9 +201,75 @@ void CGameScene::CreateGameScene()
 					GetPhysicsManager()->SetCollider(copyCollider);
 				}
 			}
-			static_objects.push_back(obj);
+
+			// 파괴 불가 오브젝트만 static_objects로, mineable은 별도 관리
+			if (!isMineable)
+				static_objects.push_back(obj);
 		}
 	}
+}
+
+CMineableObject* CGameScene::FindNearestMineable(const XMFLOAT3& pos, float range)
+{
+	CMineableObject* nearest = nullptr;
+	float min_dist_sq = range * range;
+
+	for (auto& [id, obj] : mineable_objects) {
+
+		if (!obj || obj->IsDestroyed())
+			continue;
+
+		XMFLOAT3 op = obj->GetPosition();
+		float dx = op.x - pos.x;
+		float dz = op.z - pos.z;
+		float dist_sq = dx * dx + dz * dz;
+
+		if (dist_sq < min_dist_sq) {
+			min_dist_sq = dist_sq;
+			nearest = obj.get();
+		}
+	}
+
+	return nearest;
+}
+
+void CGameScene::DestroyMineable(uint32 world_id)
+{
+	auto it = mineable_objects.find(world_id);
+	if (it == mineable_objects.end())
+		return;
+
+	XMFLOAT3 pos = it->second->GetPosition();
+
+	// 물리 콜라이더 제거
+	if (auto col = it->second->GetComponent<CColliderComponent>())
+		GetPhysicsManager()->EraseCollider(col);
+
+	// S_MineableDestroy 브로드캐스트
+	S_DestroyMineable destroyMineablePkt;
+	destroyMineablePkt.obj_id = world_id;
+	destroyMineablePkt.scene_type = scene_type;
+
+	auto sendBuffer = MAKE_SEND_BUFFER(destroyMineablePkt);
+	BroadCast(sendBuffer);
+
+	mineable_objects.erase(it);
+
+	// 드롭 아이템 스폰 (보물) (임시)
+	// 여기는 보물 확률 계산으로 다시 수정되어야 하는 부분
+	auto dropped = item_manager->SpawnItem(110, pos);
+
+	S_SpawnItem spawnPkt;
+	spawnPkt.item_id = 110;
+	spawnPkt.item_world_id = dropped->world_id;
+	spawnPkt.item_type = ITEM_TYPE::TREASURE;
+	spawnPkt.scene_type = scene_type;
+	spawnPkt.x = pos.x;
+	spawnPkt.y = pos.y;
+	spawnPkt.z = pos.z;
+
+	sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+	BroadCast(sendBuffer);
 }
 
 void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt)
@@ -233,7 +309,6 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 				sendBuffer = MAKE_SEND_BUFFER(despawnItem);
 				BroadCast(sendBuffer);
 
-				item_manager->treasure_map.erase(pkt.item_world_id); // 초기 보물이면 제거, 재드롭이면 no-op
 				item_manager->RemoveItem(pkt.item_world_id);
 			}
 		}

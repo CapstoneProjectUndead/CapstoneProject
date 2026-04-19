@@ -58,6 +58,9 @@ enum : uint16
 	PKT_S_EQUIP_ITEM,
 	PKT_C_USE_ITEM,
 	PKT_S_USE_ITEM,
+
+	PKT_S_MINEABLE_LIST,
+	PKT_S_DESTROY_MINEABLE,
 };
 
 // Custom Handlers

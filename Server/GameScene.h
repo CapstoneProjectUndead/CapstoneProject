@@ -2,6 +2,7 @@
 // Server쪽 GameScene
 #include "Scene.h"
 #include "GeometryLoader.h"
+#include "MineableObject.h"
 #include <MapGenerator/MapGenerator.h>
 
 class CGameScene :
@@ -29,10 +30,18 @@ public:
     virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) override;
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
 
+    // 채굴 가능 오브젝트 관련
+    static constexpr float MINING_RANGE = 1.0f;
+    CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range);
+    void DestroyMineable(uint32 world_id);
+
 private:
-    map<string, shared_ptr<CObject>>    prototypes;
-    vector<MapGenerator::InstanceData>  map_instance_data;
-    vector<XMFLOAT3>                    humanMonster_spawn_positions;
-    vector<XMFLOAT3>                    ghost_spawn_positions;
+    map<string, shared_ptr<CObject>>                prototypes;
+    vector<MapGenerator::InstanceData>              map_instance_data;
+    vector<XMFLOAT3>                                humanMonster_spawn_positions;
+    vector<XMFLOAT3>                                ghost_spawn_positions;
+
+    map<uint64, shared_ptr<CMineableObject>>        mineable_objects;
+    uint64                                          mineable_id_counter;
 };
 

@@ -4,6 +4,8 @@
 #include "Collider.h"
 #include "Movement.h"
 #include "Scene.h"
+#include "GameScene.h"
+#include "MineableObject.h"
 #include "Room.h"
 #include "PhysicsManager.h"
 
@@ -129,17 +131,40 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
         // 채굴 타이머 감소 (타이머가 살아있으면 DIG 유지, 만료 시 IDLE로 전환)
         if (dig_timer > 0.0f) {
+
             dig_timer -= elapsedTime;
+
             if (dig_timer > 0.0f)
                 state = PLAYER_STATE::DIG;
-            else
+            else {
                 state = PLAYER_STATE::IDLE;
+
+                // 채굴 완료: 근처 CMineableObject에 데미지
+                if (auto r = room.lock()) {
+
+                    auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
+                    if (gameScene) {
+
+                        CMineableObject* target = gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE);
+
+                        if (target) {
+                            target->TakeDamage();
+
+                            if (target->IsDestroyed())
+                                gameScene->DestroyMineable(target->GetID());
+                        }
+                    }
+                }
+            }
         }
 
         if (grounded_timer > 0.0f) {
+
             if (!isMoving) {
+
                 if (state != PLAYER_STATE::DIG)
                     state = PLAYER_STATE::IDLE;
+
                 if (is_grounded) {
                     velocity.x = 0.0f;
                     velocity.z = 0.0f;

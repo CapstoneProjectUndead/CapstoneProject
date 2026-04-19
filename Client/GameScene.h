@@ -34,6 +34,8 @@ public:
     virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) override;
     virtual void Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt) override;
     virtual void Handle_S_UseItem(std::shared_ptr<Session>& session, const S_UseItem& pkt) override;
+    virtual void Handle_S_MineableList(std::shared_ptr<Session>& session, S_MineableList& pkt) override;
+    virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) override;
 
 private:
     // 싱글용

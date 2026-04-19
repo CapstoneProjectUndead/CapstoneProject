@@ -126,3 +126,28 @@ public:
 		return ItemList(firstItem, itemCount);
 	}
 };
+
+class S_MINEABLELIST_WRITE : public S_WRITE<S_MineableList>
+{
+public:
+	using Mineable = S_MineableList::Mineable;
+	using MineableList = PacketList<S_MineableList::Mineable>;
+
+	S_MINEABLELIST_WRITE(SCENE_TYPE sceneType)
+	{
+		sendBuffer = std::make_shared<SendBuffer>(4096);
+		bw = BufferWriter(sendBuffer->Buffer(), 4096);
+
+		pkt = bw.Reserve<S_MineableList>(1);
+		pkt->SetPacketType((UINT)PacketType::_S_MINEABLE_LIST);
+		pkt->scene_type = sceneType;
+	}
+
+	MineableList ReserveMineableList(uint32 count)
+	{
+		S_MineableList::Mineable* first = bw.Reserve<S_MineableList::Mineable>(count);
+		pkt->buff_offset = (uint64)first - (uint64)pkt;
+		pkt->mineable_count = count;
+		return MineableList(first, count);
+	}
+};

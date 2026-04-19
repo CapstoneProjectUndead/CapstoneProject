@@ -65,6 +65,8 @@ public:
 	virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) {}
 	virtual void Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt) {};
 	virtual void Handle_S_UseItem(std::shared_ptr<Session>& session, const S_UseItem& pkt) {};
+	virtual void Handle_S_MineableList(std::shared_ptr<Session>& session, S_MineableList& pkt) {};
+	virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) {};
 
 public:
 	// 멤버 변수 set

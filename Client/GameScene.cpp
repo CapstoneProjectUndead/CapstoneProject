@@ -361,6 +361,9 @@ void CGameScene::ProcessPickup()
 
 void CGameScene::ProcessMining()
 {
+	if (!g_is_single)
+		return;
+
 	if (!my_player)
 		return;
 
@@ -551,16 +554,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)
 {
 	XMFLOAT3 pos{ pkt.x, pkt.y, pkt.z };
-
-	if (pkt.item_type == ITEM_TYPE::TREASURE) {
-
-		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
-		TreasureInfo treasure{ pkt.item_world_id, pos };
-		treasures.push_back(treasure);
-	}
-	else {
-		SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
-	}
+	SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
 }
 
 // 아이템 리스트 (가변인자)
@@ -570,49 +564,19 @@ void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item
 
 	for (uint32 i = 0; i < pkt.item_count; ++i) {
 
-		XMFLOAT3 pos{ itemList[i].x,  itemList[i].y, itemList[i].z};
-
-		if (itemList[i].item_type == ITEM_TYPE::TREASURE) {
-
-			// 아마 나중에 이부분은 삭제할 수도 있다. 보물 파밍 메커니즘 상의
-			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
-			TreasureInfo treasure{ itemList[i].item_world_id, pos };
-			treasures.push_back(treasure);
-		}
-		else {
-			SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
-		}
+		XMFLOAT3 pos{ itemList[i].x, itemList[i].y, itemList[i].z };
+		SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
 	}
 }
 
 void CGameScene::Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_DeSpawnItem& pkt)
 {
-	if (pkt.item_type == ITEM_TYPE::TREASURE) {
+	auto it = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+		return obj->GetID() == pkt.item_world_id;
+		});
 
-		auto treasureInfo = std::find_if(treasures.begin(), treasures.end(), [&](const TreasureInfo& info) {
-			return info.world_id == pkt.item_world_id;
-			});
-
-		if (treasureInfo != treasures.end()) {
-			treasures.erase(treasureInfo);
-
-			if (my_player) {
-				auto itemFinder = my_player->GetComponent<CItemFinder>();
-				if (itemFinder)
-					itemFinder->RegisterTreasures(treasures);
-			}
-		}
-
+	if (it != objects.end()) {
 		RemoveObject(pkt.item_world_id);
-	}
-	else {
-		auto it = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
-			return obj->GetID() == pkt.item_world_id;
-			});
-
-		if (it != objects.end()) {
-			RemoveObject(pkt.item_world_id);
-		}
 	}
 }
 
@@ -671,4 +635,70 @@ void CGameScene::Handle_S_UseItem(std::shared_ptr<Session>& session, const S_Use
 {
 	if (!pkt.success)
 		return;
+}
+
+void CGameScene::Handle_S_MineableList(std::shared_ptr<Session>& session, S_MineableList& pkt)
+{
+	// CreateGameSceneByServer 함수에서 CMineableObject를 생성했다.
+	// 여기서는 생성된 CMineableObject를 찾아서 server world_id를 세팅하고,
+	// 다우징로드가 참조하는 treasures에도 등록한다.
+
+	S_MineableList::MineableList mineableList = pkt.GetMineableList();
+
+	for (uint32 i = 0; i < pkt.mineable_count; ++i) {
+
+		XMFLOAT3 pos{ mineableList[i].x, mineableList[i].y, mineableList[i].z };
+
+		for (auto& obj : objects) {
+			if (obj->GetObjectType() != OBJECT_TYPE::MINEABLE_OBJECT)
+				continue;
+
+			const XMFLOAT3& p = obj->GetPosition();
+			if (p.x == pos.x && p.y == pos.y && p.z == pos.z) {
+				obj->SetID(mineableList[i].world_id);
+				break;
+			}
+		}
+
+		treasures.push_back(TreasureInfo{ mineableList[i].world_id, pos });
+	}
+
+	// RegisterTreasures는 이후 GameScene::Enter → BuildObjects에서 호출됨 (my_player 유효 시점)
+}
+
+void CGameScene::Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt)
+{
+	// CMineableObject는 id_To_Index 미등록이라 RemoveObject 대신 직접 제거
+	auto objIt = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+		return obj->GetObjectType() == OBJECT_TYPE::MINEABLE_OBJECT
+			&& obj->GetID() == pkt.obj_id;
+		});
+
+	if (objIt != objects.end()) {
+		size_t idx  = std::distance(objects.begin(), objIt);
+		size_t last = objects.size() - 1;
+
+		if (idx != last) {
+			std::swap(objects[idx], objects[last]);
+			uint64 moved_id = objects[idx]->GetID();
+			auto map_it = id_To_Index.find(moved_id);
+			if (map_it != id_To_Index.end())
+				map_it->second = idx;
+		}
+		objects.pop_back();
+	}
+
+	// 다우징로드가 관리하는 treasures에서도 제거 후 갱신
+	auto treasureIt = std::find_if(treasures.begin(), treasures.end(), [&](const TreasureInfo& info) {
+		return info.world_id == static_cast<uint32>(pkt.obj_id);
+		});
+
+	if (treasureIt != treasures.end()) {
+		treasures.erase(treasureIt);
+
+		if (my_player) {
+			if (auto itemFinder = my_player->GetComponent<CItemFinder>())
+				itemFinder->RegisterTreasures(treasures);
+		}
+	}
 }

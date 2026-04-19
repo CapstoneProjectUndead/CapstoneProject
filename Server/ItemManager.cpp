@@ -51,14 +51,3 @@ bool CItemManager::RemoveItem(uint64 worldId)
 	items.erase(worldId);
 	return true;
 }
-
-void CItemManager::SpawnWorldTreasures(const vector<MapGenerator::InstanceData>& instanceData)
-{
-	for (const auto& inst : instanceData) {
-		if (inst.type == MapGenerator::EModelType::TREASURE) {
-			auto worldTreasure = SpawnItem(110, inst.position);
-			TreasureInfo treasureInfo{ worldTreasure->world_id, inst.position };
-			treasure_map[worldTreasure->world_id] = treasureInfo;
-		}
-	}
-}

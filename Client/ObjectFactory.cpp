@@ -370,9 +370,15 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type, inst.model);
 		for (const std::string& name : meshNames) {
 			auto proto = prototypes[name];
-			auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 
+			// 보물이면 CMineableObject 생성
+			std::shared_ptr<CObject> obj;
+			if (inst.type == MapGenerator::EModelType::TREASURE)
+				obj = std::make_shared<CMineableObject>();
+			else
+				obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+
+			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 			obj->Initialize();
 			objects.push_back(obj);
 		}

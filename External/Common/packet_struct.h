@@ -10,7 +10,7 @@
 
 //struct NetInputData
 //{
-//	// �̵� ���� (������ ����)
+//	// 이동 관련 (서버가 검증)
 //	bool w = false;
 //	bool a = false;
 //	bool s = false;

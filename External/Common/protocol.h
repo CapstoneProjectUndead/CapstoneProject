@@ -66,6 +66,9 @@ enum PacketType : uint16_t
 	_S_EQUIP_ITEM,
 	_C_USE_ITEM,
 	_S_USE_ITEM,
+
+	_S_MINEABLE_LIST,
+	_S_DESTROY_MINEABLE,
 };
 
 #pragma pack (push, 1)
@@ -404,6 +407,32 @@ struct S_MapEnd : public PacketHeader
 };
 static_assert(sizeof(S_MapEnd) == 4, "S_MapEnd size mismatch!");
 
+// 서버 → 클라: CMineableObject 목록 (world_id + 위치). S_MapEnd 직후 송신
+struct S_MineableList : public PacketHeader
+{
+	struct Mineable
+	{
+		uint32 world_id;
+		float  x, y, z;
+	};  // 16 bytes
+
+	uint32      buff_offset;
+	uint32      mineable_count;
+	SCENE_TYPE  scene_type;
+
+	S_MineableList() : PacketHeader(sizeof(S_MineableList), (UINT)PacketType::_S_MINEABLE_LIST) {}
+
+	using MineableList = PacketList<S_MineableList::Mineable>;
+
+	MineableList GetMineableList()
+	{
+		BYTE* data = reinterpret_cast<BYTE*>(this);
+		data += buff_offset;
+		return MineableList(reinterpret_cast<Mineable*>(data), mineable_count);
+	}
+};
+static_assert(sizeof(S_MineableList) == 4 + 9, "S_MineableList size mismatch!");
+
 struct C_Ready : public PacketHeader
 {
 	uint64 player_id;
@@ -558,5 +587,14 @@ struct S_UseItem : public PacketHeader
 	S_UseItem() : PacketHeader(sizeof(S_UseItem), (UINT)PacketType::_S_USE_ITEM) {}
 };
 static_assert(sizeof(S_UseItem) == 4 + 10, "S_UseItem size mismatch!");
+
+struct S_DestroyMineable : public PacketHeader
+{
+	uint64 obj_id;
+	SCENE_TYPE scene_type;
+
+	S_DestroyMineable() : PacketHeader(sizeof(S_DestroyMineable), (UINT)PacketType::_S_DESTROY_MINEABLE) {}
+};
+static_assert(sizeof(S_DestroyMineable) == 4 + 9, "S_DestroyMineable size mismatch");
 
 #pragma pack (pop)

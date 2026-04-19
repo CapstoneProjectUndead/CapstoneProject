@@ -144,24 +144,30 @@ void CLobbyScene::SendPlayerToGameScene()
 					session->DoSend(sendBuffer);
 				}
 
-				// 보물 위치 및 ID 전송
-				{
-					S_ITEMLIST_WRITE writer(SCENE_TYPE::GAME);
-					auto itemList = writer.ReserveItemList((uint32)gameScene->item_manager->treasure_map.size());
+				// 보물은 이제 CMineableObject로 존재하며 S_MapData로 위치가 전달된다.
+				// 클라가 TREASURE 타입 instance를 보고 직접 CMineableObject를 생성한다.
+				// 채굴로 파괴되는 시점에 S_SpawnItem으로 WorldItem(보물 아이템)이 스폰된다.
 
-					uint32 i = 0;
-					for (const auto& [id, treasure] : gameScene->item_manager->treasure_map) {
-						itemList[i].item_type     = ITEM_TYPE::TREASURE;
-						itemList[i].item_id       = 110;
-						itemList[i].item_world_id = treasure.world_id;
-						itemList[i].x             = treasure.treasure_pos.x;
-						itemList[i].y             = treasure.treasure_pos.y;
-						itemList[i].z             = treasure.treasure_pos.z;
+				// 서버가 부여한 CMineableObject world_id/위치 전송
+				// 클라는 이 패킷을 받고 이미 생성된 CMineableObject들과 position 매칭으로 world_id를 세팅한다.
+				{
+					auto& mineableMap = gameScene->mineable_objects;
+					S_MINEABLELIST_WRITE writer(SCENE_TYPE::GAME);
+					auto list = writer.ReserveMineableList(static_cast<uint32>(mineableMap.size()));
+
+					int i = 0;
+					for (auto& [id, mineable] : mineableMap) {
+						list[i].world_id = id;
+						const XMFLOAT3& pos = mineable->GetPosition();
+						list[i].x = pos.x;
+						list[i].y = pos.y;
+						list[i].z = pos.z;
 						++i;
 					}
 
+					auto mineableBuf = writer.CloseAndReturn();
 					if (session) {
-						session->DoSend(writer.CloseAndReturn());
+						session->DoSend(mineableBuf);
 					}
 				}
 			}
