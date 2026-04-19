@@ -18,6 +18,11 @@ CObject::~CObject()
 
 }
 
+void CObject::Initialize()
+{
+
+}
+
 void CObject::Update(const float elapsedTime)
 {
 	for (auto& component : components) {

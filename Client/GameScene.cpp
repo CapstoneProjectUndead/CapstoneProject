@@ -425,7 +425,7 @@ void CGameScene::ProcessMining()
 	auto qs = my_player->GetQuickSlot();
 	bool has_tool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
 
-	// 이동 중에는 채굴 시작 불가 (Animator에 Walk/Run→Dig 전이가 없어 애니메이션 꼬임 방지)
+	// 이동 중에는 채굴 시작 불가 
 	bool is_moving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
 	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
 

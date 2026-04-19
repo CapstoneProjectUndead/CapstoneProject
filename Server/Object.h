@@ -18,6 +18,7 @@ public:
 	CObject(OBJECT_TYPE type);
     virtual ~CObject();
 
+    virtual void Initialize();
     virtual void Update(const float elapsedTime);
 
 public:

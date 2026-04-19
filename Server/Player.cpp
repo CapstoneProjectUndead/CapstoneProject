@@ -16,6 +16,9 @@ CPlayer::CPlayer()
 	, state(PLAYER_STATE::IDLE)
     , equipped_item_id(0)
     , is_ready(false)
+    , accumulate_stamina(1000.f)
+    , stamina_exhausted(false)
+    , dig_timer(0.f)
 {
 
 }
@@ -113,10 +116,15 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     grounded_timer = is_grounded ? 0.1f : (grounded_timer - elapsedTime);
 
     if (updateState) {
+
         // 채굴 시작: lbtn 클릭 + 이동 없음
         if (input.lbtn && !isMoving && grounded_timer > 0.0f) {
-            state     = PLAYER_STATE::DIG;
-            dig_timer = DIG_DURATION;
+
+            // 플레이어가 도구를 장착했고 Game 씬에 있을 때만
+            if (equipped_item_id != 0 && current_scene_type == SCENE_TYPE::GAME) {
+                state = PLAYER_STATE::DIG;
+                dig_timer = DIG_DURATION;
+            }
         }
 
         // 채굴 타이머 감소 (타이머가 살아있으면 DIG 유지, 만료 시 IDLE로 전환)

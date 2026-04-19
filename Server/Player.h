@@ -98,6 +98,8 @@ public:
 
 	void UpdateStamina(float elapsedTime);
 
+	void ResetDigTimer() { dig_timer = 0.f; }
+
 private:
 	weak_ptr<CUser>				user;
 	uint64						last_processed_seq;
@@ -118,14 +120,14 @@ private:
 	bool is_ready;
 
 	PlayerStat  stat;
-	float       accumulate_stamina{ 1000.0f };
-	bool        stamina_exhausted{ false };
+	float       accumulate_stamina;
+	bool        stamina_exhausted;
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };
 
 	// 채굴 애니메이션 유지 타이머
-	float       dig_timer{ 0.0f };
-	const float DIG_DURATION = 1.0f;
+	float       dig_timer;
+	const float DIG_DURATION = 1.03f;
 };
 

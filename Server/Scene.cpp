@@ -214,6 +214,7 @@ void CScene::EnterScene(shared_ptr<CPlayer> player)
 
 	players[player->GetID()] = player;
 	player->SetCurrentSceneType(scene_type);
+	player->ResetDigTimer(); // 4.19 추가.
 
 	BroadcastUserEnter(player);
 
