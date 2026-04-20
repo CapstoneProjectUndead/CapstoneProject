@@ -96,9 +96,14 @@ public:
 	void   SetStamina(uint32 stamina) { stat.stamina = stamina; }
 	void   AddStamina(uint32 amount);
 
-	void UpdateStamina(float elapsedTime);
+	ITEM_SUB_TYPE GetHeldItemSubType() const { return held_item_sub_type; }
+	void		  SetHeldItemSubType(ITEM_SUB_TYPE type) { held_item_sub_type = type; }
 
-	void ResetDigTimer() { dig_timer = 0.f; }
+	void   ResetDigTimer() { dig_timer = 0.f; }
+
+private:
+	void UpdateStamina(float elapsedTime);
+	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
 
 private:
 	weak_ptr<CUser>				user;
@@ -116,8 +121,9 @@ private:
 
 	shared_ptr<CInventory>      inventory;
 
-	uint16 equipped_item_id;  // 0 = 맨손
-	bool is_ready;
+	bool			is_ready;
+	uint16			equipped_item_id;  // 0 = 맨손
+	ITEM_SUB_TYPE	held_item_sub_type;
 
 	PlayerStat  stat;
 	float       accumulate_stamina;

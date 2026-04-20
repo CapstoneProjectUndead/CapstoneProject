@@ -498,9 +498,10 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 		auto iter = items.find(pkt.inventory_id);
 		if (iter == items.end())
 			return;
-	}
 
-	player->SetEquippedItemId(pkt.item_id);
+		player->SetEquippedItemId(pkt.item_id);
+		player->SetHeldItemSubType(iter->second->GetSubType());
+	}
 
 	S_EquipItem equipPkt;
 	equipPkt.player_id  = pkt.player_id;

@@ -17,6 +17,7 @@ CPlayer::CPlayer()
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
     , equipped_item_id(0)
+    , held_item_sub_type(ITEM_SUB_TYPE::NONE)
     , is_ready(false)
     , accumulate_stamina(1000.f)
     , stamina_exhausted(false)
@@ -119,44 +120,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     if (updateState) {
 
-        // 채굴 시작: lbtn 클릭 + 이동 없음
-        if (input.lbtn && !isMoving && grounded_timer > 0.0f) {
-
-            // 플레이어가 도구를 장착했고 Game 씬에 있을 때만
-            if (equipped_item_id != 0 && current_scene_type == SCENE_TYPE::GAME) {
-                state = PLAYER_STATE::DIG;
-                dig_timer = DIG_DURATION;
-            }
-        }
-
-        // 채굴 타이머 감소 (타이머가 살아있으면 DIG 유지, 만료 시 IDLE로 전환)
-        if (dig_timer > 0.0f) {
-
-            dig_timer -= elapsedTime;
-
-            if (dig_timer > 0.0f)
-                state = PLAYER_STATE::DIG;
-            else {
-                state = PLAYER_STATE::IDLE;
-
-                // 채굴 완료: 근처 CMineableObject에 데미지
-                if (auto r = room.lock()) {
-
-                    auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
-                    if (gameScene) {
-
-                        CMineableObject* target = gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE);
-
-                        if (target) {
-                            target->TakeDamage();
-
-                            if (target->IsDestroyed())
-                                gameScene->DestroyMineable(target->GetID());
-                        }
-                    }
-                }
-            }
-        }
+        ProcessMining(input, elapsedTime, isMoving);
 
         if (grounded_timer > 0.0f) {
 
@@ -207,6 +171,46 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     // Movement와 Collider Update
     CObject::Update(elapsedTime);
+}
+
+void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)
+{
+    // 채굴 시작: lbtn 클릭 + 정지 + 착지 + 도구 장착 + Game 씬
+    if (input.lbtn && !isMoving && grounded_timer > 0.0f) {
+
+        if (equipped_item_id != 0 
+            && held_item_sub_type == ITEM_SUB_TYPE::TOOL 
+            && current_scene_type == SCENE_TYPE::GAME) {
+
+            state = PLAYER_STATE::DIG;
+            dig_timer = DIG_DURATION;
+        }
+    }
+
+    // 채굴 타이머 감소 (타이머가 살아있으면 DIG 유지, 만료 시 IDLE 전환 + 데미지)
+    if (dig_timer > 0.0f) {
+
+        dig_timer -= elapsedTime;
+
+        if (dig_timer > 0.0f) {
+            state = PLAYER_STATE::DIG;
+        }
+        else {
+            state = PLAYER_STATE::IDLE;
+
+            if (auto r = room.lock()) {
+                auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
+                if (gameScene) {
+                    CMineableObject* target = gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE);
+                    if (target) {
+                        target->TakeDamage();
+                        if (target->IsDestroyed())
+                            gameScene->DestroyMineable(target->GetID());
+                    }
+                }
+            }
+        }
+    }
 }
 
 void CPlayer::RecordServerFrameHistory(const ServerFrameHistory& history)

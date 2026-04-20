@@ -55,12 +55,6 @@ void CGameScene::Initialize()
 		humanMonster_spawn_positions = factory->GetHumanMonsterSpawnPositions();
 		ghost_spawn_positions = factory->GetGhostSpawnPositions();
 
-		// 보물 위치에 보물 생성
-		// 보물 생성만 멀티용 SpawnWorldItem 함수 호출.
-		//for (auto& treasure : treasures) {
-		//	SpawnWorldItem(110, treasure.world_id, treasure.treasure_pos);
-		//}
-
 		factory->LoadItemFrame(heapManager);
 	}
 
@@ -361,6 +355,7 @@ void CGameScene::ProcessPickup()
 
 void CGameScene::ProcessMining()
 {
+	// 싱글 전용 
 	if (!g_is_single)
 		return;
 
@@ -369,7 +364,7 @@ void CGameScene::ProcessMining()
 
 	bool is_digging = (my_player->GetState() == PLAYER_STATE::DIG);
 
-	// DIG→IDLE 전이 감지 = 애니메이션 자연 완료(인터럽트 제외) → 데미지 처리
+	// DIG→IDLE 전이 감지 = 애니메이션 1회 재생 완료(인터럽트 제외) → 데미지 처리
 	if (was_digging && !is_digging && mining_target && my_player->GetDigAnimFinished()) {
 
 		my_player->SetDigAnimFinished(false);
