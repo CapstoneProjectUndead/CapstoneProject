@@ -88,6 +88,9 @@ namespace MapGenerator
     static std::mt19937 gen(rd());
 
     bool IsValid(int x, int y);
+    bool IsWalkableFloor(int x, int y);
+    bool IsBlockedObject(int x, int y);
+    std::vector<Cell> FindPath(int sx, int sy, int ex, int ey);
     int GetBuildingMask(int x, int y, bool isHouse);
     // house/store corner,empty,straight 설정
     void RefineBuildingTiles();

@@ -502,3 +502,81 @@ void MapGenerator::CreateOpenSpaces(int numSpaces) {
 bool MapGenerator::IsValid(int x, int y) {
     return (x > 0 && x < WIDTH - 1 && y > 0 && y < HEIGHT - 1);
 }
+
+bool MapGenerator::IsWalkableFloor(int x, int y) {
+    if (!IsValid(x, y)) return false;
+    EModelType tile = mapGrid[(int)ELayer::FLOOR][y][x];
+    return tile == EModelType::ROAD
+        || tile == EModelType::PARK_GREEN
+        || tile == EModelType::VILLAGE_ROAD;
+}
+
+bool MapGenerator::IsBlockedObject(int x, int y) {
+    if (!IsValid(x, y)) return false;
+    EModelType obj = mapGrid[(int)ELayer::OBJECT][y][x];
+    return obj == EModelType::TREE
+        || obj == EModelType::BENCH
+        || obj == EModelType::SEESAW
+        || obj == EModelType::KIOSK;
+}
+
+std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, int ey) {
+    if (!IsValid(sx, sy) || !IsValid(ex, ey)) return {};
+
+    auto passable = [](int x, int y) {
+        return IsWalkableFloor(x, y)
+            && !IsBlockedStructure(x, y);
+    };
+
+    // 목적지가 막혀 있으면 인접 타일 중 통과 가능한 곳을 목적지로 대체
+    if (!passable(ex, ey)) {
+        const int ndx4[] = { 0, 0, -1, 1 };
+        const int ndy4[] = { -1, 1,  0, 0 };
+        bool found = false;
+        for (int i = 0; i < 4 && !found; i++) {
+            int tx = ex + ndx4[i];
+            int ty = ey + ndy4[i];
+            if (IsValid(tx, ty) && passable(tx, ty)) {
+                ex = tx; ey = ty;
+                found = true;
+            }
+        }
+
+        if (!found) return {};
+    }
+
+    const int ndx[] = { 0, 0, -1, 1 };
+    const int ndy[] = { -1, 1,  0, 0 };
+
+    std::vector<std::vector<bool>>  visited(HEIGHT, std::vector<bool>(WIDTH, false));
+    std::vector<std::vector<Cell>>  parent(HEIGHT,  std::vector<Cell>(WIDTH, { -1, -1 }));
+
+    std::queue<Cell> q;
+    q.push({ sx, sy });
+    visited[sy][sx] = true;
+
+    while (!q.empty()) {
+        Cell cur = q.front(); q.pop();
+        if (cur.x == ex && cur.y == ey) {
+            std::vector<Cell> path;
+            Cell c = { ex, ey };
+            while (c.x != sx || c.y != sy) {
+                path.push_back(c);
+                c = parent[c.y][c.x];
+            }
+            std::reverse(path.begin(), path.end());
+            return path;
+        }
+        for (int i = 0; i < 4; i++) {
+            int nx = cur.x + ndx[i];
+            int ny = cur.y + ndy[i];
+            if (IsValid(nx, ny) && !visited[ny][nx] && passable(nx, ny)) {
+                visited[ny][nx] = true;
+                parent[ny][nx]  = cur;
+                q.push({ nx, ny });
+            }
+        }
+    }
+
+    return {};
+}
