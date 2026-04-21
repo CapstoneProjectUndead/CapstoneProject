@@ -73,11 +73,11 @@ protected:
     float attack_timer; // 공격 상태에서 시간을 잴 타이머
     float turn_timer;
 
-    const float recog_range = 5.0f; // 인지 범위
+    float recog_range = 3.0f; // 인지 범위
     float fov_angle = 120.f; // 시야각
     float cos_threshold; // 미리 계산된 코사인 임계값
 
-    const float attack_range = 1.2f; // 공격 범위
-    const float trace_speed = 0.6f;  // 추격 속도
+    float attack_range = 1.2f; // 공격 범위
+    float trace_speed = 2.0f;  // 추격 속도
 };
 
