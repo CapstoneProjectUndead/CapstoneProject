@@ -1,5 +1,6 @@
 #pragma once
 #include "Component.h"
+#include "CollisionAlgorithm.h"
 
 class CObject;
 struct CollisionInfo;
@@ -38,6 +39,7 @@ public:
 	void SetSpeed(const float otherSpeed) { speed = otherSpeed; }
 	float GetSpeed() const { return speed; }
 	float GetWalkSpeed() const { return walk_speed; }
+	void SetCollisionMask(EColLayer mask) { collision_mask = mask; }
 
 	// 서버에서 받은 결과를 바탕으로 재시뮬
 	void Simulate(const XMFLOAT3& dir, float deltaTime);
@@ -48,4 +50,6 @@ private:
 	const float max_speed{ 5.0f };
 	const float run_speed{ 5.0f };
 	float speed{ walk_speed };
+
+	EColLayer collision_mask{ static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT) };
 };

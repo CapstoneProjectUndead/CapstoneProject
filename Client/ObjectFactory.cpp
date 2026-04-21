@@ -74,13 +74,13 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 }
 
 void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
-	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer)
+	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer,
+	EColLayer colMask)
 {
 	// Collider 설정
 	if (g_is_single) {
 		EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
-		EColLayer mask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND);
-		AddCollider(character, node, category, mask);
+		AddCollider(character, node, category, colMask);
 	}
 
 	if (node->mesh.positions.empty()) return;
@@ -103,7 +103,7 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 
 void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
 	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
-	CharacterAnimSet aniSet, bool isPlayer)
+	CharacterAnimSet aniSet, bool isPlayer, EColLayer colMask)
 {
 	auto frameRoot = CGeometryLoader::LoadGeometry(modelFileName);
 	if (!frameRoot) return;
@@ -113,10 +113,10 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	character->SetComponent(renderer);
 
 	// 메쉬 노드 순회 및 파츠 처리
-	ProcessNode(character, frameRoot, renderer, partProcessor, aniSet, isPlayer);
+	ProcessNode(character, frameRoot, renderer, partProcessor, aniSet, isPlayer, colMask);
 	// 자식 노드 순회 처리
 	for (const auto& child : frameRoot->childrens) {
-		ProcessNode(character, child, renderer, partProcessor, aniSet, isPlayer);
+		ProcessNode(character, child, renderer, partProcessor, aniSet, isPlayer, colMask);
 	}
 	
 	// 애니메이터 설정
@@ -536,7 +536,8 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 		fileName,
 		undeadProcessor,
 		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
-		false
+		false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::GROUND)
 	);
 
 	character->SetShader("skinning");
@@ -672,7 +673,11 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 		monster->SetComponent(AIComp);
 
 		// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
-		monster->SetComponent(std::make_shared<CMovementComponent>());
+		auto moveComp = std::make_shared<CMovementComponent>();
+		if (monType == MON_TYPE::GHOST)
+			moveComp->SetCollisionMask(EColLayer::WALL);
+
+		monster->SetComponent(moveComp);
 	}
 
 	return monster;
