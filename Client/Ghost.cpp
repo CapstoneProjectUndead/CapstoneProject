@@ -182,23 +182,51 @@ void CGhost::OnTraceMove(float elapsedTime)
     }
 
     const float TILE_SIZE = 2.0f;
-    path_refresh_timer += elapsedTime;
-    if (path_refresh_timer >= 0.2f || nav_path.empty()) {
-        path_refresh_timer = 0.0f;
-        int sx = (int)roundf(position.x / TILE_SIZE);
-        int sz = (int)roundf(position.z / TILE_SIZE);
-        int ex = (int)roundf(target_player->position.x / TILE_SIZE);
-        int ez = (int)roundf(target_player->position.z / TILE_SIZE);
-        nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+    int sx = (int)roundf(position.x / TILE_SIZE);
+    int sz = (int)roundf(position.z / TILE_SIZE);
+    int ex = (int)roundf(target_player->position.x / TILE_SIZE);
+    int ez = (int)roundf(target_player->position.z / TILE_SIZE);
+
+    // Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
+    bool has_wall = false;
+    {
+        int x = sx, z = sz;
+        int dx = abs(ex - sx), dz = abs(ez - sz);
+        int stepX = (ex > sx) ? 1 : -1;
+        int stepZ = (ez > sz) ? 1 : -1;
+        int err = dx - dz;
+
+        while (x != ex || z != ez) {
+
+            if (MapGenerator::IsBlockedStructure(x, z)) { 
+                has_wall = true; 
+                break; 
+            }
+
+            int e2 = 2 * err;
+            if (e2 > -dz) { err -= dz; x += stepX; }
+            if (e2 <  dx) { err += dx; z += stepZ; }
+        }
     }
 
     XMFLOAT3 moveDir = dirVec;
-    if (!nav_path.empty()) {
-        XMFLOAT3 wpWorld = { nav_path[0].x * TILE_SIZE, position.y, nav_path[0].y * TILE_SIZE };
-        XMFLOAT3 toWp = Vector3::Subtract(wpWorld, position);
-        toWp.y = 0.0f;
-        if (Vector3::Length(toWp) > 0.1f)
-            moveDir = toWp;
+    if (has_wall) {
+        path_refresh_timer += elapsedTime;
+        if (path_refresh_timer >= 0.2f || nav_path.empty()) {
+            path_refresh_timer = 0.0f;
+            nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+        }
+        if (!nav_path.empty()) {
+            XMFLOAT3 wpWorld = { nav_path[0].x * TILE_SIZE, position.y, nav_path[0].y * TILE_SIZE };
+            XMFLOAT3 toWp = Vector3::Subtract(wpWorld, position);
+            toWp.y = 0.0f;
+            if (Vector3::Length(toWp) > 0.1f)
+                moveDir = toWp;
+        }
+    }
+    else {
+        nav_path.clear();
+        path_refresh_timer = 0.0f;
     }
 
     float targetYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
@@ -349,9 +377,6 @@ XMFLOAT3 CGhost::GetRandomWanderTarget()
         return position;
 
     int idx = rand() % (int)candidates.size();
-    return {
-        candidates[idx].x * TILE_SIZE,
-        position.y,
-        candidates[idx].y * TILE_SIZE
-    };
+
+    return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
