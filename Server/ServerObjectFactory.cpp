@@ -137,8 +137,6 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	// Movement 컴포넌트 추가. (순서가 중요. AI -> Movement 순서로 가야함.)
 	shared_ptr<CMovementComponent> movementComponent = std::make_shared<CMovementComponent>();
 	movementComponent->SetPhysicsManager(physicsManager);
-	if (monType == MON_TYPE::GHOST)
-		movementComponent->SetCollisionMask(EColLayer::WALL);
 	monster->SetComponent(movementComponent);
 
 	// Monster가 속한 Room 
@@ -148,13 +146,13 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	return monster;
 }
 
-void CServerObjectFactory::InitializeCharacter(const std::string& fileName, shared_ptr<CObject>& object, shared_ptr<CPhysicsManager>& physicsManager, bool isPlayer, EColLayer colMask)
+void CServerObjectFactory::InitializeCharacter(const std::string& fileName, shared_ptr<CObject>& object, shared_ptr<CPhysicsManager>& physicsManager, bool isPlayer)
 {
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-	ProcessNode(physicsManager, object, frameRoot, isPlayer, colMask);
+	ProcessNode(physicsManager, object, frameRoot, isPlayer);
 	for (const auto& child : frameRoot->childrens) {
-		ProcessNode(physicsManager, object, child, isPlayer, colMask);
+		ProcessNode(physicsManager, object, child, isPlayer);
 	}
 }
 
@@ -189,14 +187,14 @@ void CServerObjectFactory::InitializeHumanMonster(shared_ptr<CObject> object, sh
 void CServerObjectFactory::InitializeGhost(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	std::string fileName{ "../Modeling/Ghost3.bin" };
-	InitializeCharacter(fileName, object, physicsManager, false,
-		static_cast<EColLayer>(EColLayer::WALL | EColLayer::GROUND));
+	InitializeCharacter(fileName, object, physicsManager, false);
 }
 
-void CServerObjectFactory::ProcessNode(shared_ptr<CPhysicsManager> physicsManager, shared_ptr<CObject>& object, const std::unique_ptr<CGeometryLoader::FrameNode>& node, bool isPlayer, EColLayer colMask)
+void CServerObjectFactory::ProcessNode(shared_ptr<CPhysicsManager> physicsManager, shared_ptr<CObject>& object, const std::unique_ptr<CGeometryLoader::FrameNode>& node, bool isPlayer)
 {
 	EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
-	AddCollider(physicsManager, object, node, category, colMask);
+	EColLayer mask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND);
+	AddCollider(physicsManager, object, node, category, mask);
 }
 
 void CServerObjectFactory::AddCollider(shared_ptr<CPhysicsManager> physicsManager, std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask)

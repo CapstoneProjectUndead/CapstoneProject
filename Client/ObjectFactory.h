@@ -4,7 +4,6 @@
 
 // 맵 생성 알고리즘
 #include <MapGenerator/MapGenerator.h>
-#include <CollisionAlgorithm.h>
 
 class CDescriptorHeapManager;
 class CCharacter;
@@ -30,18 +29,13 @@ public:
 	~CObjectFactory() = default;
 public:
 	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
-
 	// init component(공통 컴포넌트 구성 초기화 헬퍼 함수)
 	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName = "inst");
 	void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
-		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer,
-		EColLayer colMask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND));
-
-	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
+		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer);
+	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName, 
 		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
-		CharacterAnimSet aniSet, bool isPlayer,
-		EColLayer colMask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND));
-
+		CharacterAnimSet aniSet, bool isPlayer);
 	// concave는 따로 생성 필요
 	void AddCollider(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask);
 	// MovementComp Set

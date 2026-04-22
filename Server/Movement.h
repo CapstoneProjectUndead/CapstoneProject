@@ -1,7 +1,6 @@
 #pragma once
 // Server쪽 Movement
 #include "Component.h"
-#include "CollisionAlgorithm.h"
 
 class CObject;
 class CPhysicsManager;
@@ -48,7 +47,6 @@ public:
 	weak_ptr<CPhysicsManager>   GetPhysicsManagerWeak() const { return physics_manager; }
 	shared_ptr<CPhysicsManager> GetPhysicsManager() const { return physics_manager.lock(); }
 	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
-	void						SetCollisionMask(EColLayer mask) { collision_mask = mask; }
 
 private:
 	const float walk_speed{ 2.5f };
@@ -56,6 +54,5 @@ private:
 	const float run_speed{ 5.0f };
 	float speed{ walk_speed };
 
-	EColLayer collision_mask{ static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT) };
 	weak_ptr<CPhysicsManager> physics_manager;
 };
