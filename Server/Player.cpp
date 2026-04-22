@@ -8,6 +8,8 @@
 #include "MineableObject.h"
 #include "Room.h"
 #include "PhysicsManager.h"
+#include "Item.h"
+#include "Inventory.h"
 
 
 CPlayer::CPlayer()
@@ -17,7 +19,7 @@ CPlayer::CPlayer()
     , dt_ping_accumulator(0.0f)
 	, state(PLAYER_STATE::IDLE)
     , equipped_item_id(0)
-    , held_item_sub_type(ITEM_SUB_TYPE::NONE)
+    , equipped_item_sub_type(ITEM_SUB_TYPE::NONE)
     , is_ready(false)
     , accumulate_stamina(1000.f)
     , stamina_exhausted(false)
@@ -179,7 +181,7 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
     if (input.lbtn && !isMoving && grounded_timer > 0.0f) {
 
         if (equipped_item_id != 0 
-            && held_item_sub_type == ITEM_SUB_TYPE::TOOL 
+            && equipped_item_sub_type == ITEM_SUB_TYPE::TOOL 
             && current_scene_type == SCENE_TYPE::GAME) {
 
             state = PLAYER_STATE::DIG;
@@ -201,11 +203,69 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
             if (auto r = room.lock()) {
                 auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
                 if (gameScene) {
+
                     CMineableObject* target = gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE);
+
                     if (target) {
                         target->TakeDamage();
                         if (target->IsDestroyed())
                             gameScene->DestroyMineable(target->GetID());
+
+                        if (equipped_item && equipped_item->GetSubType() == ITEM_SUB_TYPE::TOOL) {
+                            auto tool = std::static_pointer_cast<CTool>(equipped_item);
+
+                            // 내구도 닳기
+                            tool->ReduceDurability();
+
+                            // 플레이어에게 내구도 상태 알려주기
+                            S_UpdateDurability updateDurPkt;
+                            updateDurPkt.player_id = GetID();
+                            updateDurPkt.item_id = equipped_item_id;
+                            updateDurPkt.inventory_id = equipped_item->GetInventoryID();
+                            updateDurPkt.current_durability = tool->GetCurrentDurability();
+                            updateDurPkt.item_type = equipped_item->GetItemType();
+                            updateDurPkt.item_sub_type = equipped_item_sub_type;
+                            updateDurPkt.scene_type = GetCurrentSceneType();
+
+                            if (GetSession()) {
+                                auto sendBuffer = MAKE_SEND_BUFFER(updateDurPkt);
+                                GetSession()->DoSend(sendBuffer);
+                            }
+
+                            // 내구도가 0인지 체크
+                            if (tool->GetCurrentDurability() <= 0) {
+
+                                // 인벤토리에서 도구 제거
+                                if (inventory && inventory->RemoveItem(equipped_item->GetInventoryID())) {
+
+                                    // 내구도 0이라서 플레이어에게 해당 아이템 없애라고 지시
+                                    S_RemoveItem removeItemPkt;
+                                    removeItemPkt.item_id = equipped_item_id;
+                                    removeItemPkt.inventory_id = equipped_item->GetInventoryID();
+                                    removeItemPkt.player_id = GetID();
+                                    removeItemPkt.scene_type = GetCurrentSceneType();
+
+                                    if (GetSession()) {
+                                        auto sendBuffer = MAKE_SEND_BUFFER(removeItemPkt);
+                                        GetSession()->DoSend(sendBuffer);
+                                    }
+
+                                    // 해당 유저와 다른 유저들에게 해당 유저가 들고있던 무기 없어졌다고 알려야한다.
+                                    S_EquipItem equipPkt;
+                                    equipPkt.player_id = GetID();
+                                    equipPkt.item_id = 0;
+                                    equipPkt.scene_type = GetCurrentSceneType();
+
+                                    auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+                                    gameScene->BroadCast(sendBuffer);
+
+                                    // 장착 해제
+                                    equipped_item = nullptr;
+                                    equipped_item_id = 0;
+                                    equipped_item_sub_type = ITEM_SUB_TYPE::NONE;
+                                }
+                            }
+                        }
                     }
                 }
             }

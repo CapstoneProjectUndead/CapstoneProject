@@ -63,6 +63,7 @@ enum : uint16
 
 	PKT_S_MINEABLE_LIST,
 	PKT_S_DESTROY_MINEABLE,
+	PKT_S_UPDATE_DURABILITY,
 };
 
 // Custom Handlers
@@ -95,6 +96,7 @@ bool Handle_S_EQUIP_ITEM(std::shared_ptr<Session> session, S_EquipItem& pkt);
 bool Handle_S_USE_ITEM(std::shared_ptr<Session> session, S_UseItem& pkt);
 bool Handle_S_MINEABLE_LIST(std::shared_ptr<Session> session, S_MineableList& pkt);
 bool Handle_S_DESTROY_MINEABLE(std::shared_ptr<Session> session, S_DestroyMineable& pkt);
+bool Handle_S_UPDATE_DURABILITY(std::shared_ptr<Session> session, S_UpdateDurability& pkt);
 
 class CServerPacketHandler
 {
@@ -132,6 +134,7 @@ public:
 		GPacketHandler[PKT_S_USE_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_UseItem>(Handle_S_USE_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_MINEABLE_LIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MineableList>(Handle_S_MINEABLE_LIST, session, buffer, len); };
 		GPacketHandler[PKT_S_DESTROY_MINEABLE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_DestroyMineable>(Handle_S_DESTROY_MINEABLE, session, buffer, len); };
+		GPacketHandler[PKT_S_UPDATE_DURABILITY] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_UpdateDurability>(Handle_S_UPDATE_DURABILITY, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

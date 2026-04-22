@@ -28,6 +28,7 @@ class CUser;
 class CRoom;
 class CollisionInfo;
 class CInventory;
+class CItem;
 
 class CPlayer : public CObject
 {
@@ -81,9 +82,6 @@ public:
 	bool GetIsReady() const { return is_ready; }
 	void SetIsReady(bool ready) { is_ready = ready; }
 
-	uint16 GetEquippedItemId() const { return equipped_item_id; }
-	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
-
 public:
 	// 캐릭터 스텟 관련 함수들
 	uint32 GetMaxHp() const { return stat.maxHp; }
@@ -96,8 +94,14 @@ public:
 	void   SetStamina(uint32 stamina) { stat.stamina = stamina; }
 	void   AddStamina(uint32 amount);
 
-	ITEM_SUB_TYPE GetHeldItemSubType() const { return held_item_sub_type; }
-	void		  SetHeldItemSubType(ITEM_SUB_TYPE type) { held_item_sub_type = type; }
+	void   SetEquipedItem(shared_ptr<CItem> item) { equipped_item = item; }
+	shared_ptr<CItem> GetEquipedItem() const { return equipped_item; }
+
+	uint16 GetEquippedItemId() const { return equipped_item_id; }
+	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
+
+	ITEM_SUB_TYPE GetEquippedItemSubType() const { return equipped_item_sub_type; }
+	void		  SetEquippedItemSubType(ITEM_SUB_TYPE type) { equipped_item_sub_type = type; }
 
 	void   ResetDigTimer() { dig_timer = 0.f; }
 
@@ -121,9 +125,10 @@ private:
 
 	shared_ptr<CInventory>      inventory;
 
-	bool			is_ready;
-	uint16			equipped_item_id;  // 0 = 맨손
-	ITEM_SUB_TYPE	held_item_sub_type;
+	bool			  is_ready;
+	uint16			  equipped_item_id;  // 0 = 맨손
+	ITEM_SUB_TYPE	  equipped_item_sub_type;
+	shared_ptr<CItem> equipped_item;
 
 	PlayerStat  stat;
 	float       accumulate_stamina;

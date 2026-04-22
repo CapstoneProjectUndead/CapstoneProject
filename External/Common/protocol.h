@@ -69,6 +69,7 @@ enum PacketType : uint16_t
 
 	_S_MINEABLE_LIST,
 	_S_DESTROY_MINEABLE,
+	_S_UPDATE_DURABILITY,
 };
 
 #pragma pack (push, 1)
@@ -596,5 +597,19 @@ struct S_DestroyMineable : public PacketHeader
 	S_DestroyMineable() : PacketHeader(sizeof(S_DestroyMineable), (UINT)PacketType::_S_DESTROY_MINEABLE) {}
 };
 static_assert(sizeof(S_DestroyMineable) == 4 + 9, "S_DestroyMineable size mismatch");
+
+struct S_UpdateDurability : public PacketHeader
+{
+	uint64 player_id;
+	uint16 item_id;
+	uint32 inventory_id;
+	uint32 current_durability;
+	ITEM_TYPE item_type;
+	ITEM_SUB_TYPE item_sub_type;
+	SCENE_TYPE scene_type;
+
+	S_UpdateDurability() : PacketHeader(sizeof(S_UpdateDurability), (UINT)PacketType::_S_UPDATE_DURABILITY) {}
+};
+static_assert(sizeof(S_UpdateDurability) == 4 + 22, "S_UpdateDurability size mismatch!");
 
 #pragma pack (pop)

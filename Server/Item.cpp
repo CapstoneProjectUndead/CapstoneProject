@@ -37,6 +37,12 @@ CTool::~CTool()
 {
 }
 
+void CTool::ReduceDurability()
+{
+	if (current_durability > 0)
+		current_durability -= 5;
+}
+
 // 무기
 CWeapon::CWeapon(const std::shared_ptr<ItemData> data)
 	: CEquipment(data)

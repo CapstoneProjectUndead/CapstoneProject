@@ -379,7 +379,30 @@ void CGameScene::ProcessMining()
 		}
 
 		if (still_exists) {
+
+			// 채굴 가능한 오브젝트에 데미지를 입힌다.
 			mining_target->TakeDamage();
+
+			// 플레이어의 도구 내구도를 감소 시킨다. 
+			auto qs = my_player->GetQuickSlot();
+			auto inv = my_player->GetInventory();
+			bool is_tool = inv && qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL);
+			
+			if (is_tool) {
+				const auto& items = inv->GetItems();
+				auto it = items.find(qs->GetSelectedInvId());
+				if (it != items.end())
+					if (auto tool = dynamic_cast<CTool*>(it->second.get())) {
+
+						// 도구 내구도 닳기
+						tool->ReduceDurability();
+
+						// 내구도가 0이 되어 파괴되었는지 체크
+						if (tool->GetCurrentDurability() <= 0) {
+							inv->RemoveItem(qs->GetSelectedInvId());
+						}
+					}
+			}
 
 			if (mining_target->IsDestroyed()) {
 				CMineableObject* to_remove = mining_target;
@@ -694,6 +717,24 @@ void CGameScene::Handle_S_DestroyMineable(std::shared_ptr<Session>& session, con
 		if (my_player) {
 			if (auto itemFinder = my_player->GetComponent<CItemFinder>())
 				itemFinder->RegisterTreasures(treasures);
+		}
+	}
+}
+
+void CGameScene::Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt)
+{
+	if (my_player->GetID() == pkt.player_id) {
+		auto inv = my_player->GetInventory();
+		if (inv) {
+			const auto& items = inv->GetItems();
+			auto it = items.find(pkt.inventory_id);
+			if (it == items.end())
+				return;
+
+			if (pkt.item_type == ITEM_TYPE::EQUIPMENT && pkt.item_sub_type == ITEM_SUB_TYPE::TOOL) {
+				auto tool = std::static_pointer_cast<CTool>(it->second);
+				tool->SetCurrentDurability(pkt.current_durability);
+			}
 		}
 	}
 }

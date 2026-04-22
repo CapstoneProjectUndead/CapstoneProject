@@ -67,6 +67,7 @@ public:
 	virtual void Handle_S_UseItem(std::shared_ptr<Session>& session, const S_UseItem& pkt) {};
 	virtual void Handle_S_MineableList(std::shared_ptr<Session>& session, S_MineableList& pkt) {};
 	virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) {};
+	virtual void Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt) {};
 
 public:
 	// 멤버 변수 set

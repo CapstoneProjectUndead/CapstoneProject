@@ -55,6 +55,11 @@ public:
 	uint32 GetCurrentDurability() const { return current_durability; }
 	uint32 GetMaxDurability() const { return max_durability; }
 
+	void ReduceDurability();
+
+	// 멀티용
+	void SetCurrentDurability(uint32 dur) { current_durability = dur; }
+
 private:
 	const uint32 max_durability;
 	uint32 current_durability;

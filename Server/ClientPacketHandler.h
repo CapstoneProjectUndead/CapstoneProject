@@ -61,6 +61,7 @@ enum : uint16
 
 	PKT_S_MINEABLE_LIST,
 	PKT_S_DESTROY_MINEABLE,
+	PKT_S_UPDATE_DURABILITY,
 };
 
 // Custom Handlers

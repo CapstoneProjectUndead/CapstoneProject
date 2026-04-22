@@ -488,7 +488,6 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 	if (!player)
 		return;
 
-	// item_id == 0 : 장착 해제 요청 (인벤토리 조회 불필요)
 	if (pkt.item_id != 0) {
 		auto inventory = player->GetInventory();
 		if (!inventory)
@@ -500,7 +499,14 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 			return;
 
 		player->SetEquippedItemId(pkt.item_id);
-		player->SetHeldItemSubType(iter->second->GetSubType());
+		player->SetEquippedItemSubType(iter->second->GetSubType());
+		player->SetEquipedItem(iter->second);
+	}
+	else {
+		// item_id == 0 : 장착 해제
+		player->SetEquippedItemId(0);
+		player->SetEquippedItemSubType(ITEM_SUB_TYPE::NONE);
+		player->SetEquipedItem(nullptr);
 	}
 
 	S_EquipItem equipPkt;
