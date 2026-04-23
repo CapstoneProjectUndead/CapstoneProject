@@ -362,23 +362,23 @@ void CGameScene::ProcessMining()
 	if (!my_player)
 		return;
 
-	bool is_digging = (my_player->GetState() == PLAYER_STATE::DIG);
+	bool isDigging = (my_player->GetState() == PLAYER_STATE::DIG);
 
 	// DIG→IDLE 전이 감지 = 애니메이션 1회 재생 완료(인터럽트 제외) → 데미지 처리
-	if (was_digging && !is_digging && mining_target && my_player->GetDigAnimFinished()) {
+	if (was_digging && !isDigging && mining_target && my_player->GetDigAnimFinished()) {
 
 		my_player->SetDigAnimFinished(false);
 
-		bool still_exists = false;
+		bool stillExist = false;
 		for (auto& obj : objects) {
 
 			if (obj.get() == mining_target) { 
-				still_exists = true; 
+				stillExist = true;
 				break; 
 			}
 		}
 
-		if (still_exists) {
+		if (stillExist) {
 
 			// 채굴 가능한 오브젝트에 데미지를 입힌다.
 			mining_target->TakeDamage();
@@ -386,9 +386,9 @@ void CGameScene::ProcessMining()
 			// 플레이어의 도구 내구도를 감소 시킨다. 
 			auto qs = my_player->GetQuickSlot();
 			auto inv = my_player->GetInventory();
-			bool is_tool = inv && qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL);
+			bool isTool = inv && qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL);
 			
-			if (is_tool) {
+			if (isTool) {
 				const auto& items = inv->GetItems();
 				auto it = items.find(qs->GetSelectedInvId());
 				if (it != items.end())
@@ -405,18 +405,18 @@ void CGameScene::ProcessMining()
 			}
 
 			if (mining_target->IsDestroyed()) {
-				CMineableObject* to_remove = mining_target;
+				CMineableObject* toRemove = mining_target;
 				mining_target = nullptr;
-				XMFLOAT3 pos = to_remove->GetPosition();
+				XMFLOAT3 pos = toRemove->GetPosition();
 
 				auto it = std::find_if(objects.begin(), objects.end(),
-					[to_remove](const std::shared_ptr<CObject>& obj) {
-						return obj.get() == to_remove;
+					[toRemove](const std::shared_ptr<CObject>& obj) {
+						return obj.get() == toRemove;
 					});
 
 				if (it != objects.end()) {
 
-					if (auto col = to_remove->GetComponent<CColliderComponent>())
+					if (auto col = toRemove->GetComponent<CColliderComponent>())
 						CPhysicsManager::GetInstance().EraseCollider(col);
 
 					size_t idx  = std::distance(objects.begin(), it);
@@ -440,24 +440,24 @@ void CGameScene::ProcessMining()
 		}
 	}
 
-	was_digging = is_digging;
+	was_digging = isDigging;
 
 	// 플레이어가 도구를 장착하고 있는지 검사
 	auto qs = my_player->GetQuickSlot();
-	bool has_tool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
+	bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
 
 	// 이동 중에는 채굴 시작 불가 
-	bool is_moving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
+	bool isMoving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
 	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
 
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !is_digging && has_tool && !ImGui::GetIO().WantCaptureMouse && !is_moving) {
+	if (KEY_TAP(KEY::LBTN) && !isDigging && hasTool && !ImGui::GetIO().WantCaptureMouse && !isMoving) {
 
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
 
 		XMFLOAT3 playerPos = my_player->GetPosition();
-		float min_dist = MINING_RANGE;
+		float minDist = MINING_RANGE;
 
 		for (auto& obj : objects) {
 
@@ -465,8 +465,8 @@ void CGameScene::ProcessMining()
 				continue;
 
 			float dist = Vector3::Length(Vector3::Subtract(obj->GetPosition(), playerPos));
-			if (dist < min_dist) {
-				min_dist = dist;
+			if (dist < minDist) {
+				minDist = dist;
 				mining_target = static_cast<CMineableObject*>(obj.get());
 			}
 		}
