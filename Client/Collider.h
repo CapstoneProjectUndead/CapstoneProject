@@ -181,6 +181,7 @@ struct CollisionFilter {
 */
 class CColliderComponent : public CComponent
 {
+    friend class CMovementComponent;
 public:
     CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox);
     ~CColliderComponent() = default;
