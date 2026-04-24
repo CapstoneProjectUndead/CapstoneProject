@@ -1,6 +1,7 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "AnimationController.h"
+#include "AnimationManager.h"
 struct AnimationData;
 struct CMeshComponent;
 struct CMaterialComponent;
@@ -39,6 +40,7 @@ public:
 
 	// layer 1
 	void PlayAction(const std::string& clipName);
+	// 렌더링 시에 호출
 	AnimationData GetAnimationData();
 
 	void Update(float deltaTime) override;
@@ -67,4 +69,7 @@ private:
 	CharacterAnimSet anim_set;
 	std::vector<Socket> sockets;
 	std::unordered_map<SOCKET_TYPE, SocketRenderCache> render_cache;
+	// pitch를 위한 클립(플레이어만 사용)
+	AnimationClip up_clip;
+	AnimationClip down_clip;
 };
