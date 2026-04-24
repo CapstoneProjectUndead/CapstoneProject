@@ -537,7 +537,7 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 		undeadProcessor,
 		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
 		false,
-		static_cast<EColLayer>(EColLayer::GROUND)
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::GROUND)
 	);
 
 	character->SetShader("skinning");

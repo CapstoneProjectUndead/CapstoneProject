@@ -181,6 +181,7 @@ struct CollisionFilter {
 */
 class CColliderComponent : public CComponent
 {
+    friend class CPhysicsManager;
     friend class CMovementComponent;
 public:
     CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox);
@@ -198,7 +199,6 @@ public:
 
     bool Intersects(const CColliderComponent* other);
 private:
-    friend class CPhysicsManager;
     std::unique_ptr<CColliderShape> shape;
     BoundingBox local_aabb{};
     BoundingBox world_aabb{};   // for broad phase
