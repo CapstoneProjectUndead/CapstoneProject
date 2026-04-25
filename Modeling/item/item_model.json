@@ -1,6 +1,6 @@
 ﻿{
     "item_models": {
-      "1": { "model": "shovel_0307"},
+      "1": { "model": "Equip_shovel" },
       "5": { "model": "Equip_ax"},
       "9": { "model": "Equip_pick"},
       "14": { "model": "Equip_bat"},
