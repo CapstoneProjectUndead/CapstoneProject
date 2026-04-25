@@ -189,7 +189,6 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
 std::shared_ptr<CPlayer> CMonster::FindNearestPlayer()
 {
     CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    assert(currentScene->GetSceneType() == current_scene_type);
     auto player = currentScene->GetMyPlayer();
 
     return player;

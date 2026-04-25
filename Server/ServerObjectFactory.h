@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "CollisionAlgorithm.h"
 
 class CPlayer;
 class CMonster;
@@ -7,6 +8,7 @@ class Session;
 class CUser;
 class CRoom;
 class CPhysicsManager;
+
 namespace CGeometryLoader {
     struct FrameNode;
 }

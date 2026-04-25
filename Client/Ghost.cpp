@@ -6,7 +6,6 @@
 #include "SceneManager.h"
 #include "MyPlayer.h"
 #include "AnimationManager.h"
-#include "Collider.h"
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
@@ -43,9 +42,9 @@ void CGhost::Update(float elapsedTime)
 
     auto nearPlayer = FindNearestPlayer();
     if (nearPlayer) {
-        auto* ghostCol  = GetComponent<CColliderComponent>();
-        auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
-        if (ghostCol && playerCol && ghostCol->GetWorldAABB().Intersects(playerCol->GetWorldAABB())) {
+        XMFLOAT3 dir = Vector3::Subtract(nearPlayer->position, position);
+        dir.y = 0.0f;
+        if (Vector3::Length(dir) <= contact_range) {
             if (contact_damage_timer >= 1.0f) {
                 uint32 hp = nearPlayer->GetHp();
                 nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);

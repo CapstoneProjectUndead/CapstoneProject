@@ -38,6 +38,11 @@ private:
     bool        is_waiting    = false;
     float       patrol_speed  = 1.2f;
 
+    // ATTACK
+    bool        hit_damage_dealt     = false;
+    float       contact_damage_timer = 0.0f;
+    const float contact_range        = 0.6f;
+
     // TRACE/IDLE 경로 탐색
     std::vector<MapGenerator::Cell> nav_path;
     float path_refresh_timer = 0.0f;

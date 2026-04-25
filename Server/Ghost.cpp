@@ -28,6 +28,21 @@ CGhost::~CGhost()
 void CGhost::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+
+	contact_damage_timer += elapsedTime;
+
+	auto nearPlayer = FindNearestPlayer();
+	if (nearPlayer) {
+		XMFLOAT3 dir = Vector3::Subtract(nearPlayer->GetPosition(), position);
+		dir.y = 0.0f;
+		if (Vector3::Length(dir) <= contact_range) {
+			if (contact_damage_timer >= 1.0f) {
+				uint32 hp = nearPlayer->GetHp();
+				nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);
+				contact_damage_timer = 0.0f;
+			}
+		}
+	}
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
@@ -214,7 +229,19 @@ void CGhost::OnAttackMove(float elapsedTime)
 
 	attack_timer += elapsedTime;
 
-	if (attack_timer >= 1.5f) {
+	if (!hit_damage_dealt && attack_timer >= 0.6f) {
+		hit_damage_dealt = true;
+		if (target_player) {
+			XMFLOAT3 dirVec = Vector3::Subtract(target_player->GetPosition(), position);
+			dirVec.y = 0.0f;
+			if (Vector3::Length(dirVec) <= attack_range) {
+				uint32 hp = target_player->GetHp();
+				target_player->SetHp(hp > 100 ? hp - 100 : 0);
+			}
+		}
+	}
+
+	if (attack_timer >= 1.27f) {
 		auto AIComponent = GetComponent<CAIComponent>();
 		if (AIComponent)
 			AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
@@ -250,10 +277,10 @@ void CGhost::OnAttackEnter()
 {
 	ResetAttackTimer();
 
-	velocity.x = 0.0f;
-	velocity.z = 0.0f;
-
-	attack_timer = 0.0f;
+	velocity.x       = 0.0f;
+	velocity.z       = 0.0f;
+	attack_timer     = 0.0f;
+	hit_damage_dealt = false;
 }
 
 void CGhost::PatrolRadiusWander(float elapsedTime)
