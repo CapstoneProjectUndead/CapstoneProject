@@ -3,7 +3,6 @@
 #include "Player.h"
 #include "MyPlayer.h"
 #include "Monster.h"
-#include "AnimationManager.h"
 #include "GPUBufferStruct.h"
 
 #include "SceneManager.h"
@@ -16,7 +15,7 @@ CAnimatorComponent::CAnimatorComponent()
 {
 	layers.resize(2);
 	layers[0].mask_id = -1; // 베이스는 전체
-	layers[1].mask_id = 0;
+	layers[1].mask_id = 0;	// 상반신 mask
 }
 
 void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
@@ -26,9 +25,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 
 	// 상태 등록
 	std::string idle{ "IdleState" }, walk{ "WalkState" }, run{ "RunState" };
-	controller.AddState({ idle, animSet.idle });
-	controller.AddState({ walk, animSet.walk });
-	controller.AddState({ run, animSet.run });
+	State walkState{ walk, animSet.walk };
 
 	// 전이 규칙
 	AddLocomotionTransitions(idle, walk, run);
@@ -40,6 +37,12 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	switch (objType) {
 	case OBJECT_TYPE::PLAYER:
 	{
+		up_clip = CAnimationManager::GetInstance().GetClip("Ganga_up");
+		down_clip = CAnimationManager::GetInstance().GetClip("Ganga_down");
+
+		// 발 속도 맞추기
+		walkState.play_speed = 2.5f;
+
 		sockets.resize(SOCKET_TYPE::COUNT);
 		int headIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "head");
 		Socket headSocket{ headIdx, XMMatrixIdentity() };
@@ -123,6 +126,10 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	}
 		break;
 	}
+
+	controller.AddState({ idle, animSet.idle });
+	controller.AddState(walkState);
+	controller.AddState({ run, animSet.run });
 }
 
 void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run)
@@ -424,8 +431,19 @@ AnimationData CAnimatorComponent::GetAnimationData()
 	data.cur_frame_A = (uint32_t)(relativeTimeA * 60.0f) % animA.total_frames;
 	data.bone_count = animA.bone_count;
 
+	// pitch 가중치 계산
+	float pitchWeight{ -1.0f };
+	bool isUp{};
+	if (!up_clip.name.empty()) {
+		// pitch 정규화
+		float pitch = owner->pitch / 90.f;
+		if(pitch <= 0.0f)
+			isUp = true;
+		pitchWeight = std::abs(pitch);
+	}
+
 	// 블렌딩 대상 결정
-	// 우선순위 1: 상반신 액션(감정 표현 모션 등)
+	// 상반신 액션(감정 표현 모션 등)
 	if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
 		// 상반신 액션 모드
 		auto& animB = manager.GetClip(layers[1].current_clip);
@@ -436,8 +454,7 @@ AnimationData CAnimatorComponent::GetAnimationData()
 		data.blend_weight = layers[1].weight;
 		data.mask_id = layers[1].mask_id;
 	}
-	// 우선순위 2: 상태 전이 중
-	else if (controller.IsBlending()) {
+	else if (controller.IsBlending()) {	// blending 처리
 		std::string clipB = controller.GetNextClip();
 		if (!clipB.empty()) {
 			auto& animB = manager.GetClip(clipB);
@@ -446,6 +463,15 @@ AnimationData CAnimatorComponent::GetAnimationData()
 			data.blend_weight = controller.GetWeight();
 			data.mask_id = -1;
 		}
+	}
+	else if (pitchWeight > 0.0f) {
+		if(isUp)
+			data.start_offset_B = up_clip.start_matrix_offset;
+		else
+			data.start_offset_B = down_clip.start_matrix_offset;
+		data.cur_frame_B = 0;
+		data.blend_weight = pitchWeight;
+		data.mask_id = 0; // 상반신 마스크 ID 적용 (상체만 고개 들게)
 	}
 	else {
 		data.blend_weight = 0.0f;
