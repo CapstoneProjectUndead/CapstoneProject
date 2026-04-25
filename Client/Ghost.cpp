@@ -5,6 +5,8 @@
 #include "Movement.h"
 #include "SceneManager.h"
 #include "MyPlayer.h"
+#include "AnimationManager.h"
+#include "Collider.h"
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
@@ -27,7 +29,30 @@ CGhost::~CGhost()
 
 void CGhost::Update(float elapsedTime)
 {
+    // 애니메이션 프레임 수 체크용 (지우지 말 것!)
+    //static bool printed = false;
+    //if (!printed) {
+    //    auto& clip = CAnimationManager::GetInstance().GetClip("Ghost_attack");
+    //    std::cout << "Ghost_attack total_frames: " << clip.total_frames << std::endl;
+    //    printed = true;
+    //}
+
     CMonster::Update(elapsedTime);
+
+    contact_damage_timer += elapsedTime;
+
+    auto nearPlayer = FindNearestPlayer();
+    if (nearPlayer) {
+        auto* ghostCol  = GetComponent<CColliderComponent>();
+        auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+        if (ghostCol && playerCol && ghostCol->GetWorldAABB().Intersects(playerCol->GetWorldAABB())) {
+            if (contact_damage_timer >= 1.0f) {
+                uint32 hp = nearPlayer->GetHp();
+                nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);
+                contact_damage_timer = 0.0f;
+            }
+        }
+    }
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
@@ -97,9 +122,9 @@ void CGhost::OnIdleMove(float elapsedTime)
         SetYaw(returnYaw);
         SetYawPitch(returnYaw, 0.0f);
 
-        float walk_speed = 0.5f;
-        velocity.x = look.x * walk_speed;
-        velocity.z = look.z * walk_speed;
+        float walkSpeed = 0.5f;
+        velocity.x = look.x * walkSpeed;
+        velocity.z = look.z * walkSpeed;
 
         return;
     }
@@ -188,7 +213,7 @@ void CGhost::OnTraceMove(float elapsedTime)
     int ez = (int)roundf(target_player->position.z / TILE_SIZE);
 
     // Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
-    bool has_wall = false;
+    bool hasWall = false;
     {
         int x = sx, z = sz;
         int dx = abs(ex - sx), dz = abs(ez - sz);
@@ -199,7 +224,7 @@ void CGhost::OnTraceMove(float elapsedTime)
         while (x != ex || z != ez) {
 
             if (MapGenerator::IsBlockedStructure(x, z)) { 
-                has_wall = true; 
+                hasWall = true;
                 break; 
             }
 
@@ -210,7 +235,7 @@ void CGhost::OnTraceMove(float elapsedTime)
     }
 
     XMFLOAT3 moveDir = dirVec;
-    if (has_wall) {
+    if (hasWall) {
         path_refresh_timer += elapsedTime;
         if (path_refresh_timer >= 0.2f || nav_path.empty()) {
             path_refresh_timer = 0.0f;
@@ -242,21 +267,24 @@ void CGhost::OnAttackMove(float elapsedTime)
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
-    // 타이머 증가
     attack_timer += elapsedTime;
 
-    // 공격 애니메이션 길이 or 쿨타임이 지나면?
-    if (attack_timer >= 1.5f) {
-
-        // 실제 데미지 판정 로직은 서버의 이 시점(또는 타이머 중간)에 수행!
-        // 예: target_player->TakeDamage(10);
-
-        auto AIComponent = GetComponent<CAIComponent>();
-        if (AIComponent) {
-            // 공격이 끝났으니 다시 거리를 재기 위해 TRACE 상태로 전환
-            // (TRACE 상태에서 거리가 가까우면 다음 프레임에 다시 ATTACK으로 돌아옴)
-            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+    if (!hit_damage_dealt && attack_timer >= 0.6f) {
+        hit_damage_dealt = true;
+        if (target_player) {
+            XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+            dirVec.y = 0.0f;
+            if (Vector3::Length(dirVec) <= attack_range) {
+                uint32 hp = target_player->GetHp();
+                target_player->SetHp(hp > 100 ? hp - 100 : 0);
+            }
         }
+    }
+
+    if (attack_timer >= 1.27f) {
+        auto AIComponent = GetComponent<CAIComponent>();
+        if (AIComponent)
+            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
     }
 }
 
@@ -289,12 +317,11 @@ void CGhost::OnAttackEnter()
 {
     ResetAttackTimer();
 
-    // 이동 속도를 0으로 만들어서 공격 중에 미끄러지지 않게 고정
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
-    // 공격 타이머 초기화 
-    attack_timer = 0.0f;
+    attack_timer     = 0.0f;
+    hit_damage_dealt = false;
 }
 
 

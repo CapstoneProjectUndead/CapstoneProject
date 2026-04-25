@@ -630,6 +630,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = std::make_shared<CHumanMonster>();
+		monster->SetCurrentSceneType(sceneType);
 		CreateHumanCharacter(monster, heapManager);
 	}
 	break;
@@ -641,6 +642,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::GHOST:
 	{
 		monster = std::make_shared<CGhost>();
+		monster->SetCurrentSceneType(sceneType);
 		CreateGhostCharacter(monster, heapManager);
 	}
 		break;
@@ -648,9 +650,6 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 		return nullptr;
 		break;
 	}
-
-	// monster가 속한 scene
-	monster->SetCurrentSceneType(sceneType);
 
 	// monster ID, AI, Movement 셋팅 (싱글 모드일 때만)
 	// ID 값은 멀티 모드일 때도 여전히 필요하지만 다른 곳에서 셋팅된다. 
