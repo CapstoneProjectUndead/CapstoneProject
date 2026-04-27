@@ -132,6 +132,31 @@ void CMyPlayer::Update(float elapsedTime)
 		}
 	}
 
+	// 넉백
+	if (knockback_timer > 0.0f) {
+
+		float ratio = knockback_timer / 0.3f;
+		velocity.x += knockback_vel.x * ratio;
+		velocity.z += knockback_vel.z * ratio;
+
+		knockback_timer -= elapsedTime;
+
+		if (knockback_timer < 0.0f) {
+			knockback_timer = 0.0f;
+			is_knocked_back = false;
+		}
+	}
+
+	// 스턴
+	if (stun_timer > 0.0f) {
+		stun_timer -= elapsedTime;
+
+		if (stun_timer < 0.0f) {
+			stun_timer = 0.0f;
+			is_stunned = false;
+		}
+	}
+
 	CPlayer::Update(elapsedTime);
 }
 
@@ -263,6 +288,10 @@ void CMyPlayer::ProcessRotation()
 
 void CMyPlayer::PredictMove(const InputData& input, float dt)
 {
+	// 플레이어가 몬스터 공격을 받아서 넉백 상태이면 return
+	if (is_knocked_back || is_stunned)
+		return;
+
 	auto move = GetComponent<CMovementComponent>();
 	if (!move || current_scene_type == SCENE_TYPE::CUSTOMS) return;
 	
@@ -421,7 +450,7 @@ void CMyPlayer::AddStamina(uint32 amount)
 		static_cast<float>(stat.maxStamina));
 
 	stat.stamina = static_cast<uint32>(accumulate_stamina);
-	if (stamina_exhausted && accumulate_stamina >= 200.0f)
+	if (stamina_exhausted && accumulate_stamina >= 30.0f)
 		stamina_exhausted = false;
 }
 
@@ -469,6 +498,28 @@ void CMyPlayer::UpdateStamina(float elapsedTime)
 
 	// uint32인 stat.stamina에 동기화 (UI 표시용)
 	stat.stamina = static_cast<uint32>(accumulate_stamina);
+}
+
+void CMyPlayer::ApplyKnockback(XMFLOAT3 dir, float force)
+{
+	dir.y = 0.0f;
+	float len = Vector3::Length(dir);
+
+	if (len < 0.001f) 
+		return;
+
+	knockback_vel    = { dir.x / len * force, 0.0f, dir.z / len * force };
+	knockback_timer  = 0.3f;
+
+	is_knocked_back  = true;
+	ApplyStun(1.3f);
+}
+
+void CMyPlayer::ApplyStun(float time)
+{
+	is_stunned = true;
+	stun_timer = time;
+	SetState(PLAYER_STATE::IDLE);
 }
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)

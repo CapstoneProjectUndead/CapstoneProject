@@ -5,6 +5,7 @@
 #include "AIComponent.h"
 #include "Movement.h"
 #include "SceneManager.h"
+#include "Collider.h"
 
 CGhost::CGhost()
 	: CMonster(MON_TYPE::GHOST)
@@ -33,13 +34,19 @@ void CGhost::Update(float elapsedTime)
 
 	auto nearPlayer = FindNearestPlayer();
 	if (nearPlayer) {
-		XMFLOAT3 dir = Vector3::Subtract(nearPlayer->GetPosition(), position);
-		dir.y = 0.0f;
-		if (Vector3::Length(dir) <= contact_range) {
+
+		auto* ghostCol  = GetComponent<CColliderComponent>();
+		auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+
+		if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
+
 			if (contact_damage_timer >= 1.0f) {
 				uint32 hp = nearPlayer->GetHp();
 				nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);
 				contact_damage_timer = 0.0f;
+
+				XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
+				nearPlayer->ApplyKnockback(knockbackDir, 0.6f);
 			}
 		}
 	}
@@ -234,9 +241,19 @@ void CGhost::OnAttackMove(float elapsedTime)
 		if (target_player) {
 			XMFLOAT3 dirVec = Vector3::Subtract(target_player->GetPosition(), position);
 			dirVec.y = 0.0f;
-			if (Vector3::Length(dirVec) <= attack_range) {
+
+			XMFLOAT3 fwd       = Vector3::Normalize(XMFLOAT3{ look.x,  0.0f, look.z  });
+			XMFLOAT3 right_vec = Vector3::Normalize(XMFLOAT3{ right.x, 0.0f, right.z });
+
+			float forwardDist = Vector3::DotProduct(dirVec, fwd);
+			float sideDist    = Vector3::DotProduct(dirVec, right_vec);
+
+			constexpr float depth = 2.0f;
+			constexpr float width = 1.5f;
+
+			if (forwardDist >= 0.0f && forwardDist <= depth && fabsf(sideDist) <= width) {
 				uint32 hp = target_player->GetHp();
-				target_player->SetHp(hp > 100 ? hp - 100 : 0);
+				target_player->SetHp(hp > 20 ? hp - 20 : 0);
 			}
 		}
 	}

@@ -23,7 +23,6 @@ void CPlayer::Update(float elapsedTime)
 {
     UpdateBuffs(elapsedTime);
     PreUpdate(elapsedTime);
-
     CCharacter::Update(elapsedTime);
 }
 

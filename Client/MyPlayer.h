@@ -60,6 +60,9 @@ public:
     void SetStaminaFromServer(uint32 stamina);
     void AddStamina(uint32 amount);
 
+    void ApplyKnockback(XMFLOAT3 dir, float force);
+    void ApplyStun(float time);
+
     bool GetDigAnimFinished() const   { return dig_anim_finished; }
     void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
 
@@ -106,7 +109,14 @@ private:
     bool                              dig_anim_finished{ false };
 
     float grounded_timer{ 0.1 };
-    float accumulate_stamina{ 100.0f };   // 누적용 float 스태미나
-    bool  stamina_exhausted{ false }; // 스태미나 소진 플래그 (회복 후 해제)
+    float accumulate_stamina{ 100.0f };
+    bool  stamina_exhausted{ false };
+
+    bool     is_knocked_back{ false };
+    XMFLOAT3 knockback_vel{};
+    float    knockback_timer{ 0.0f };
+
+    bool     is_stunned = false;
+    float    stun_timer = { 0.0f };
 };
 

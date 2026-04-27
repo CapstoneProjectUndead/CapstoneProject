@@ -21,7 +21,7 @@ CPlayer::CPlayer()
     , equipped_item_id(0)
     , equipped_item_sub_type(ITEM_SUB_TYPE::NONE)
     , is_ready(false)
-    , accumulate_stamina(1000.f)
+    , accumulate_stamina(100.f)
     , stamina_exhausted(false)
     , dig_timer(0.f)
 {
@@ -131,7 +131,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
                 if (state != PLAYER_STATE::DIG)
                     state = PLAYER_STATE::IDLE;
 
-                if (is_grounded) {
+                if (is_grounded && knockback_timer <= 0.0f) {
                     velocity.x = 0.0f;
                     velocity.z = 0.0f;
                 }
@@ -158,7 +158,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     }
     else {
         // updateState=false: 물리만 계산, velocity 마찰 적용 (입력 없는 틱)
-        if (is_grounded && !isMoving) {
+        if (is_grounded && !isMoving && knockback_timer <= 0.0f) {
             velocity.x = 0.0f;
             velocity.z = 0.0f;
         }
@@ -166,13 +166,50 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     UpdateStamina(elapsedTime);
 
-    if (dir.x != 0 || dir.z != 0) {
+    if (knockback_timer <= 0.0f && stun_timer <= 0.0f && (dir.x != 0 || dir.z != 0)) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Move(dir, elapsedTime);
     }
 
+    if (knockback_timer > 0.0f) {
+
+        float ratio = knockback_timer / 0.3f;
+        velocity.x += knockback_vel.x * ratio;
+        velocity.z += knockback_vel.z * ratio;
+
+        knockback_timer -= elapsedTime;
+
+        if (knockback_timer < 0.0f)
+            knockback_timer = 0.0f;
+    }
+
+    if (stun_timer > 0.0f) {
+        stun_timer -= elapsedTime;
+        if (stun_timer < 0.0f)
+            stun_timer = 0.0f;
+    }
+
     // Movement와 Collider Update
     CObject::Update(elapsedTime);
+}
+
+void CPlayer::ApplyKnockback(XMFLOAT3 dir, float force)
+{
+    dir.y = 0.0f;
+    float len = Vector3::Length(dir);
+
+    if (len < 0.001f) 
+        return;
+
+    knockback_vel = { dir.x / len * force, 0.0f, dir.z / len * force };
+    knockback_timer = 0.3f;
+    ApplyStun(1.5f);
+}
+
+void CPlayer::ApplyStun(float time)
+{
+    stun_timer = time;
+    state = PLAYER_STATE::IDLE;
 }
 
 void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)

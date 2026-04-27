@@ -105,6 +105,9 @@ public:
 
 	void   ResetDigTimer() { dig_timer = 0.f; }
 
+	void   ApplyKnockback(XMFLOAT3 dir, float force);
+	void   ApplyStun(float time);
+
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
@@ -133,6 +136,11 @@ private:
 	PlayerStat  stat;
 	float       accumulate_stamina;
 	bool        stamina_exhausted;
+
+	XMFLOAT3    knockback_vel{};
+	float       knockback_timer{ 0.0f };
+
+	float       stun_timer{ 0.0f };
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };
