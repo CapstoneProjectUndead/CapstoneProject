@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 
 class CMesh;
@@ -49,6 +49,7 @@ public:
     {
         render_units.push_back(renderUnit);
     }
+    std::vector<RenderUnit>& GetRenderUnits() { return render_units; }
 private:
     std::vector<RenderUnit> render_units;
 };

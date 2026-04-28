@@ -53,10 +53,9 @@ void CObject::Render(ID3D12GraphicsCommandList* commandList)
 
 void CObject::OnCollect(IRenderer* renderer)
 {
-	auto meshRenderer = GetComponent<CMeshRendererComponent>();
 	bool isStatic = (obj_type == OBJECT_TYPE::STATIC_OBJECT);
 
-	if (meshRenderer) {
+	for (const auto& meshRenderer : GetComponents<CMeshRendererComponent>()) {
 		// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
 		meshRenderer->Collect(renderer, isStatic);
 	}

@@ -78,8 +78,11 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		sockets.resize(SOCKET_TYPE::HAND_R + 1);
 		uint8_t monType = static_cast<uint8_t>(static_cast<CMonster*>(owner)->GetMonsterType());
 		int idx = CAnimationManager::GetInstance().GetBoneIndex(objType, monType, "handR");
-		XMMATRIX rotation = XMMatrixRotationY(XMConvertToRadians(90.0f));
-		Socket socket{ idx, rotation };
+		// offset matrix
+		XMMATRIX mScale = XMMatrixScalingFromVector(XMVectorSet(0.2635728f, 0.2635728f, 0.2635728f, 0.0f));
+		XMMATRIX mRot = XMMatrixRotationRollPitchYaw(XMConvertToRadians(0.0f), XMConvertToRadians(90.0f), XMConvertToRadians(-90.0f));
+		XMMATRIX mTrans = XMMatrixTranslationFromVector(XMVectorSet(-0.003635712f, 0.02177059f, 0.01650229f, 0.0f));
+		Socket socket{ idx, mScale * mRot * mTrans };
 		sockets[HAND_R] = socket;
 
 		// Attack 상태 등록 및 전이 추가
