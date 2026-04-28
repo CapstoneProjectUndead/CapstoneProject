@@ -52,15 +52,12 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 
 	// MeshComponent
 	auto meshComp = std::make_shared<CMeshComponent>();
-	obj->SetComponent(meshComp);
 	meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
 	obj->world_matrix = node->local_matrix;
 
 	// MaterialComponent
 	for (auto& material : node->mesh.materials) {
 		auto matComp = std::make_shared<CMaterialComponent>();
-		obj->SetComponent(matComp);
-
 		const std::string& texName = material.albedoMap;
 		if (!texName.empty()) {
 			auto mat = GetMaterial(heapManager, texName); // 기존 GetMaterial 활용
@@ -68,7 +65,7 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 			mat->material.glossiness = material.glossiness;
 			matComp->SetMaterial(mat);
 		}
-		meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
+		meshRenderer->SetRenderUnit(meshComp, matComp);
 	}
 
 	obj->name = node->name;
@@ -90,7 +87,6 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 
 	// MeshComponent 생성 및 설정
 	auto meshComp = std::make_shared<CMeshComponent>();
-	character->SetComponent(meshComp);
 
 	if (aniSet.idle.empty())
 		meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
@@ -409,9 +405,8 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 			auto mat = matManager.GetMaterial(texName, tex, heapManager);
 			matComp->SetMaterial(mat);
-			character->SetComponent(matComp);
 
-			RenderUnit unit{ meshComp.get(), matComp.get() };
+			RenderUnit unit{ meshComp, matComp };
 			renderer->SetRenderUnit(unit);
 			return matComp;
 			};
@@ -488,9 +483,7 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				character->SetComponent(matComp);
-
-				RenderUnit unit{ meshComp.get(), matComp.get() };
+				RenderUnit unit{ meshComp, matComp };
 				renderer->SetRenderUnit(unit);
 				};
 
@@ -523,9 +516,7 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				character->SetComponent(matComp);
-
-				RenderUnit unit{ meshComp.get(), matComp.get() };
+				RenderUnit unit{ meshComp, matComp };
 				renderer->SetRenderUnit(unit);
 				};
 
@@ -560,9 +551,7 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				character->SetComponent(matComp);
-
-				RenderUnit unit{ meshComp.get(), matComp.get() };
+				RenderUnit unit{ meshComp, matComp };
 				renderer->SetRenderUnit(unit);
 				};
 

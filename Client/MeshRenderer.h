@@ -31,8 +31,8 @@ private:
 
 struct RenderUnit
 {
-    CMeshComponent* mesh{};
-    CMaterialComponent* material{};
+    std::shared_ptr<CMeshComponent> mesh;
+    std::shared_ptr<CMaterialComponent> material;
 };
 
 class CMeshRendererComponent : public CComponent
@@ -41,7 +41,11 @@ public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
     void Collect(IRenderer* renderer, bool isStatic);
-    void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat = nullptr)
+    void SetRenderUnit(std::shared_ptr<CMeshComponent>& mesh)
+    {
+        render_units.push_back({ mesh, nullptr });
+    }
+    void SetRenderUnit(std::shared_ptr<CMeshComponent>& mesh, std::shared_ptr<CMaterialComponent>& mat)
     {
         render_units.push_back({ mesh, mat });
     }

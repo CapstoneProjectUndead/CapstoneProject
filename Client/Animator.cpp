@@ -372,7 +372,10 @@ XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 
 void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName)
 {
-	if (itemID == -1) return;
+	if (itemID < 0) {
+		render_cache[type].last_item_id = -1;	// 초기화
+		return;
+	}
 
 	auto& cache = render_cache[type];
 
@@ -381,25 +384,31 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
 		
 		if (proto) {
-			cache.mesh = proto->GetComponent<CMeshComponent>();
-			cache.mat = proto->GetComponent<CMaterialComponent>();
+			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
+				cache.render_units = renderer->GetRenderUnits();
+			}
 			cache.last_item_id = itemID;
+			cache.model_name = "";
 		}
 	}
-	else if (cache.last_item_id != itemID && NULL == itemID) {	// item이 아니면 modelName 사용
+	else if (cache.last_item_id != itemID && NULL == itemID && modelName != cache.model_name) {	// item이 아니면 modelName 사용
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(modelName);
 
 		if (proto) {
-			cache.mesh = proto->GetComponent<CMeshComponent>();
-			cache.mat = proto->GetComponent<CMaterialComponent>();
+			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
+				cache.render_units = renderer->GetRenderUnits();
+			}
 			cache.last_item_id = itemID;
+			cache.model_name = modelName;
 		}
 	}
 
 	// material은 없을 수 있음
-	if (cache.mesh) {
-		XMMATRIX socketMat = GetSocketMatrix(type);
-		CSceneManager::GetInstance().GetRanderers()["inst"]->AddInstance(cache.mesh->GetMesh().get(), cache.mat, Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
+	for (const RenderUnit& unit : cache.render_units) {
+		if (unit.mesh) {
+			XMMATRIX socketMat = GetSocketMatrix(type);
+			CSceneManager::GetInstance().GetRanderers()["inst"]->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
+		}
 	}
 }
 
