@@ -63,6 +63,9 @@ public:
 	uint64  GetID() const { return obj_id; }
 	void	SetID(const uint64 id) { obj_id = id; }
 
+	bool IsPendingDelete() const { return pending_delete; }
+	void MarkForDelete()         { pending_delete = true; }
+
 	OBJECT_TYPE GetObjectType() const { return obj_type; }
 	void        SetObjectType(OBJECT_TYPE type) { obj_type = type; }
 
@@ -96,6 +99,7 @@ public:
 protected:
 	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
+	bool        pending_delete = false;
 	SCENE_TYPE  current_scene_type = SCENE_TYPE::NONE; // 현재 오브젝트가 속한 씬
 
 	std::string shader_name{"inst"};	// 적용 쉐이더 이름

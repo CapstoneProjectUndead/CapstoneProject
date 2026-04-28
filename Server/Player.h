@@ -2,6 +2,7 @@
 // Server쪽 Player
 
 #include "Object.h"
+#include <MapGenerator/MapGenerator.h>
 
 struct ServerFrameHistory
 {
@@ -107,10 +108,20 @@ public:
 
 	void   ApplyKnockback(XMFLOAT3 dir, float force);
 	void   ApplyStun(float time);
+	void   ApplyPossession();
+
+	bool  GetIsPossessed() const { return is_possessed; }
+	void  SetPossessed(bool val) { is_possessed = val; }
+
+	float GetPossessionTimer() const { return possession_timer; }
+	void  SetPossessionTimer(float t) { possession_timer = t; }
 
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
+	void UpdatePossession(float elapsedTime);
+	XMFLOAT3            GetRandomPossessedTarget();
+	shared_ptr<CPlayer> FindNearestOtherPlayer();
 
 private:
 	weak_ptr<CUser>				user;
@@ -141,6 +152,16 @@ private:
 	float       knockback_timer{ 0.0f };
 
 	float       stun_timer{ 0.0f };
+
+	bool        is_possessed{ false };
+	float       possession_timer{ 0.0f };
+
+	std::vector<MapGenerator::Cell> possessed_nav_path;
+	float    possessed_path_refresh_timer{ 0.0f };
+	XMFLOAT3 possessed_wander_target{};
+	bool     possessed_is_waiting{ false };
+	float    possessed_wait_timer{ 0.0f };
+	float    possession_contact_timer{ 0.0f };
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };

@@ -46,6 +46,12 @@ public:
 	uint32 GetStamina() const { return stat.stamina; }
 	void   SetStamina(const uint32 stamina) { stat.stamina = stamina; }
 
+	bool GetIsPossessed() const { return is_possessed; }
+	void SetPossessed(bool val) { is_possessed = val; }
+
+	float GetPossessionTimer() const { return possession_timer; }
+	void  SetPossessionTimer(float t) { possession_timer = t; }
+
 	uint16 GetMiningSpeed() const { return stat.miningSpeed; }
 	void   SetMiningSpeed(const uint16 speed) { stat.miningSpeed = speed; }
 
@@ -95,5 +101,8 @@ protected:
 
 	uint16							 equipped_item_id{ 0 };
 	PlayerStat stat;
+
+	bool  is_possessed    = false;
+	float possession_timer = 0.0f;
 };
 

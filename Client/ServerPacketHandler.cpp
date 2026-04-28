@@ -180,6 +180,20 @@ bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pk
 	return true;
 }
 
+bool Handle_S_DESPAWN_MONSTER(std::shared_ptr<Session> session, S_DeSpawnMonster& pkt)
+{
+	// Title 씬과 Custom 씬에는 몬스터가 존재할 수 없다.
+	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
+		assert(nullptr);
+
+	SCENE_TYPE sceneType = pkt.scene_type;
+	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)sceneType].get();
+	assert(targetScene && targetScene->GetSceneType() == sceneType);
+	targetScene->Handle_S_DeSpawn_Monster(session, pkt);
+
+	return true;
+}
+
 bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt)
 {
 	// Title 씬과 Custom 씬에는 플레이어가 없다.

@@ -48,8 +48,10 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
             if (!player)
                 continue;
 
-            // 추가 조건: 플레이어가 죽었거나 연결이 끊긴 상태라면 무시
+            // 추가 조건: 플레이어가 죽었거나 빙의 상태라면 무시
             if (player->GetState() == PLAYER_STATE::DEAD)
+                continue;
+            if (player->GetIsPossessed())
                 continue;
 
             // MathHelper를 활용해 직관적으로 두 좌표의 차이 벡터를 구함

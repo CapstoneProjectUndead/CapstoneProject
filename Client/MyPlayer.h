@@ -1,5 +1,6 @@
 #pragma once
 #include "Player.h"
+#include "MapGenerator/MapGenerator.h"
 
 struct ClientFrameHistory 
 {
@@ -60,11 +61,12 @@ public:
     void SetStaminaFromServer(uint32 stamina);
     void AddStamina(uint32 amount);
 
-    void ApplyKnockback(XMFLOAT3 dir, float force);
-    void ApplyStun(float time);
-
     bool GetDigAnimFinished() const   { return dig_anim_finished; }
     void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
+
+    void ApplyKnockback(XMFLOAT3 dir, float force);
+    void ApplyStun(float time);
+    void ApplyPossession();
 
 private:
     void ProcessRotation();
@@ -82,6 +84,13 @@ private:
 
     void SendInputPacket(C_Input& inputPkt, const InputData& input);
     void SendPingToServer(const float elapsedTime);
+
+    // 아이템 줍기
+    void UseItem();
+
+    // 빙의 관련
+    void     UpdatePossession(float elapsedTime);
+    XMFLOAT3 GetRandomPossessedTarget();
 
 private:
     std::weak_ptr<Session> session;
@@ -118,5 +127,11 @@ private:
 
     bool     is_stunned = false;
     float    stun_timer = { 0.0f };
+
+    std::vector<MapGenerator::Cell> possessed_nav_path;
+    float                           possessed_path_refresh_timer = 0.0f;
+    XMFLOAT3                        possessed_wander_target      = {};
+    bool                            possessed_is_waiting         = false;
+    float                           possessed_wait_timer         = 0.0f;
 };
 

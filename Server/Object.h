@@ -44,6 +44,9 @@ public:
     shared_ptr<CRoom>       GetRoom() const { return room.lock(); }
     void                    SetRoom(shared_ptr<CRoom> _room) { room = _room; }
 
+    bool IsPendingDelete() const { return pending_delete; }
+    void MarkForDelete()         { pending_delete = true; }
+
     weak_ptr<CUser>         GetUserWeak() const { return user; }
     shared_ptr<CUser>       GetUser() const { return user.lock(); }
     void                    SetUser(shared_ptr<CUser> _user) { user = _user; }
@@ -98,7 +101,8 @@ protected:
     weak_ptr<Session>                   session;
     uint64                              obj_id;
     OBJECT_TYPE                         obj_type;
-    SCENE_TYPE					        current_scene_type; // 현재 오브젝트가 속한 씬 (방이 씬을 포함하고 있는 구조)
+    SCENE_TYPE					        current_scene_type;
+    bool                                pending_delete = false; // 현재 오브젝트가 속한 씬 (방이 씬을 포함하고 있는 구조)
     float						        last_simulated_time;
 
     XMFLOAT4X4                          world_matrix;

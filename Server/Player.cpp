@@ -41,14 +41,24 @@ void CPlayer::Update(const float elapsedTime)
 {
     last_simulated_time = static_cast<float>(g_server_total_time);
 
-    // 회전 Update
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
+
+    if (is_possessed)
+        UpdatePossession(elapsedTime);
+
     ProcessInputQueue(elapsedTime);
 }
 
 void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_targetDT(16.6ms)
 {
+    if (is_possessed) {
+        input_queue.clear();
+        InputData emptyInput{ false, false, false, false, false, false };
+        SimulateMove(emptyInput, elapsedTime, false);
+        return;
+    }
+
     if (!input_queue.empty())
     {
         // 쌓인 패킷이 있다면, 각 패킷마다 시뮬레이션을 돌림
@@ -99,6 +109,11 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 
 void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updateState)
 {
+    if (is_possessed) {
+        CObject::Update(elapsedTime);
+        return;
+    }
+
     // --------------------
     // 입력 처리 및 방향 계산
     // --------------------
@@ -210,6 +225,191 @@ void CPlayer::ApplyStun(float time)
 {
     stun_timer = time;
     state = PLAYER_STATE::IDLE;
+}
+
+void CPlayer::ApplyPossession()
+{
+    is_possessed    = true;
+    possession_timer = 30.0f;
+
+    possessed_nav_path.clear();
+    possessed_path_refresh_timer = 0.0f;
+    possessed_wander_target      = GetRandomPossessedTarget();
+    possessed_is_waiting         = false;
+    possessed_wait_timer         = 0.0f;
+    possession_contact_timer     = 0.0f;
+}
+
+void CPlayer::UpdatePossession(float elapsedTime)
+{
+    possession_timer        -= elapsedTime;
+    possession_contact_timer += elapsedTime;
+
+    if (possession_timer <= 0.0f) {
+        possession_timer = 0.0f;
+        is_possessed     = false;
+        velocity.x       = 0.0f;
+        velocity.z       = 0.0f;
+        state            = PLAYER_STATE::IDLE;
+        return;
+    }
+
+    constexpr float TILE_SIZE     = 2.0f;
+    constexpr float ARRIVE_DIST   = 0.4f;
+    constexpr float POSSESS_SPEED = 4.0f;
+
+    auto nearOther = FindNearestOtherPlayer();
+
+    if (nearOther) {
+        XMFLOAT3 dirVec = Vector3::Subtract(nearOther->GetPosition(), position);
+        dirVec.y = 0.0f;
+        float dist = Vector3::Length(dirVec);
+
+        if (dist > 0.001f) {
+            float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+            SetYaw(targetYaw);
+            SetYawPitch(targetYaw, 0.0f);
+            velocity.x = look.x * POSSESS_SPEED;
+            velocity.z = look.z * POSSESS_SPEED;
+            state      = PLAYER_STATE::RUN;
+        }
+
+        auto* myCol    = GetComponent<CColliderComponent>();
+        auto* otherCol = nearOther->GetComponent<CColliderComponent>();
+        if (myCol && otherCol && myCol->Intersects(otherCol)) {
+            if (possession_contact_timer >= 1.0f) {
+                uint32 hp = nearOther->GetHp();
+                nearOther->SetHp(hp > 15 ? hp - 15 : 0);
+                possession_contact_timer = 0.0f;
+
+                XMFLOAT3 knockbackDir = Vector3::Subtract(nearOther->GetPosition(), position);
+                nearOther->ApplyKnockback(knockbackDir, 0.8f);
+            }
+        }
+
+        return;
+    }
+
+    // 타 플레이어 없음 → BFS 랜덤 배회
+    if (possessed_is_waiting) {
+
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+
+        possessed_wait_timer -= elapsedTime;
+
+        if (possessed_wait_timer <= 0.0f) {
+            possessed_wander_target      = GetRandomPossessedTarget();
+            possessed_nav_path.clear();
+            possessed_path_refresh_timer = 0.0f;
+            possessed_is_waiting         = false;
+        }
+
+        return;
+    }
+
+    XMFLOAT3 dirVec = Vector3::Subtract(possessed_wander_target, position);
+    dirVec.y = 0.0f;
+    float dist = Vector3::Length(dirVec);
+
+    if (dist < ARRIVE_DIST) {
+
+        velocity.x           = 0.0f;
+        velocity.z           = 0.0f;
+        possessed_is_waiting = true;
+        possessed_wait_timer = 0.3f + (rand() % 5) * 0.1f;
+
+        return;
+    }
+
+    possessed_path_refresh_timer += elapsedTime;
+
+    if (possessed_path_refresh_timer >= 0.2f || possessed_nav_path.empty()) {
+
+        possessed_path_refresh_timer = 0.0f;
+        int sx = (int)roundf(position.x / TILE_SIZE);
+        int sz = (int)roundf(position.z / TILE_SIZE);
+        int ex = (int)roundf(possessed_wander_target.x / TILE_SIZE);
+        int ez = (int)roundf(possessed_wander_target.z / TILE_SIZE);
+        possessed_nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+    }
+
+    XMFLOAT3 moveDir = dirVec;
+    if (!possessed_nav_path.empty()) {
+
+        XMFLOAT3 wpWorld = { possessed_nav_path[0].x * TILE_SIZE, position.y, possessed_nav_path[0].y * TILE_SIZE };
+        XMFLOAT3 toWp    = Vector3::Subtract(wpWorld, position);
+        toWp.y = 0.0f;
+
+        if (Vector3::Length(toWp) > 0.1f)
+            moveDir = toWp;
+    }
+
+    float moveYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
+    SetYaw(moveYaw);
+    SetYawPitch(moveYaw, 0.0f);
+
+    velocity.x = look.x * POSSESS_SPEED;
+    velocity.z = look.z * POSSESS_SPEED;
+    state      = PLAYER_STATE::RUN;
+}
+
+shared_ptr<CPlayer> CPlayer::FindNearestOtherPlayer()
+{
+    auto r = GetRoom();
+    if (!r) 
+        return nullptr;
+
+    CScene* scene = r->GetScenes()[(UINT)current_scene_type].get();
+    if (!scene) 
+        return nullptr;
+
+    auto& players = scene->GetPlayers();
+    shared_ptr<CPlayer> nearest = nullptr;
+    float minDistSq = FLT_MAX;
+
+    for (const auto& [id, p] : players) {
+
+        if (!p || id == obj_id) continue;
+        if (p->GetIsPossessed()) continue;
+
+        XMFLOAT3 dir = Vector3::Subtract(p->GetPosition(), position);
+        dir.y = 0.0f;
+        float distSq = dir.x * dir.x + dir.z * dir.z;
+
+        if (distSq < minDistSq) {
+            minDistSq = distSq;
+            nearest   = p;
+        }
+    }
+
+    return nearest;
+}
+
+XMFLOAT3 CPlayer::GetRandomPossessedTarget()
+{
+    const float TILE_SIZE = 2.0f;
+    int cx = (int)roundf(position.x / TILE_SIZE);
+    int cz = (int)roundf(position.z / TILE_SIZE);
+
+    const int dx[] = { 0, 0, -1, 1 };
+    const int dz[] = { -1, 1,  0, 0 };
+
+    std::vector<MapGenerator::Cell> candidates;
+    for (int i = 0; i < 4; i++) {
+
+        int nx = cx + dx[i];
+        int nz = cz + dz[i];
+
+        if (MapGenerator::IsWalkableFloor(nx, nz) && !MapGenerator::IsBlockedStructure(nx, nz))
+            candidates.push_back({ nx, nz });
+    }
+
+    if (candidates.empty())
+        return position;
+
+    int idx = rand() % (int)candidates.size();
+    return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
 void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)

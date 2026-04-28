@@ -252,8 +252,10 @@ void CGhost::OnAttackMove(float elapsedTime)
 			constexpr float width = 1.5f;
 
 			if (forwardDist >= 0.0f && forwardDist <= depth && fabsf(sideDist) <= width) {
-				uint32 hp = target_player->GetHp();
-				target_player->SetHp(hp > 20 ? hp - 20 : 0);
+				if (rand() % 100 < 30) {
+					target_player->ApplyPossession();
+					MarkForDelete();
+				}
 			}
 		}
 	}

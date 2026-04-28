@@ -40,6 +40,7 @@ enum : uint16
 	PKT_C_SCENE_CHANGE,
 	PKT_S_SCENE_CHANGE,
 	PKT_S_SPAWN_MONSTER,
+	PKT_S_DESPAWN_MONSTER,
 	PKT_S_MONSTER_MOVE,
 
 	PKT_S_MAP_START,
@@ -81,6 +82,7 @@ bool Handle_S_REMOVE_PLAYER(std::shared_ptr<Session> session, S_RemovePlayer& pk
 bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt);
 bool Handle_S_CUSTOM_SELECT(std::shared_ptr<Session> session, S_CustomSelect& pkt);
 bool Handle_S_SPAWN_MONSTER(std::shared_ptr<Session> session, S_SpawnMonster& pkt);
+bool Handle_S_DESPAWN_MONSTER(std::shared_ptr<Session> session, S_DeSpawnMonster& pkt);
 bool Handle_S_MONSTER_MOVE(std::shared_ptr<Session> session, S_MonsterMove& pkt);
 bool Handle_S_SCENE_CHANGE(std::shared_ptr<Session> session, S_SceneChange& pkt);
 bool Handle_S_MAP_START(std::shared_ptr<Session> session, S_MapStart& pkt);
@@ -119,6 +121,7 @@ public:
 		GPacketHandler[PKT_S_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PlayerMove>(Handle_S_PLAYER_MOVE, session, buffer, len); };
 		GPacketHandler[PKT_S_CUSTOM_SELECT] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_CustomSelect>(Handle_S_CUSTOM_SELECT, session, buffer, len); };
 		GPacketHandler[PKT_S_SPAWN_MONSTER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnMonster>(Handle_S_SPAWN_MONSTER, session, buffer, len); };
+		GPacketHandler[PKT_S_DESPAWN_MONSTER] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_DeSpawnMonster>(Handle_S_DESPAWN_MONSTER, session, buffer, len); };
 		GPacketHandler[PKT_S_MONSTER_MOVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MonsterMove>(Handle_S_MONSTER_MOVE, session, buffer, len); };
 		GPacketHandler[PKT_S_SCENE_CHANGE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SceneChange>(Handle_S_SCENE_CHANGE, session, buffer, len); };
 		GPacketHandler[PKT_S_MAP_START] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MapStart>(Handle_S_MAP_START, session, buffer, len); };

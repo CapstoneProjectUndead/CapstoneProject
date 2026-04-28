@@ -290,12 +290,16 @@ void CGhost::OnAttackMove(float elapsedTime)
             float forwardDist = Vector3::DotProduct(dirVec, fwd);
             float sideDist    = Vector3::DotProduct(dirVec, right_vec);
 
-            constexpr float depth = 0.7f;  // 전방 깊이
-            constexpr float width = 0.7f;  // 좌우 너비 (절반)
+            constexpr float depth = 0.7f;
+            constexpr float width = 0.7f;
 
             if (forwardDist >= 0.0f && forwardDist <= depth && fabsf(sideDist) <= width) {
-                uint32 hp = target_player->GetHp();
-                target_player->SetHp(hp > 10 ? hp - 10 : 0);
+                if (target_player->GetIsMyPlayer()) {
+                    if (rand() % 100 < 30) {
+                        static_cast<CMyPlayer*>(target_player.get())->ApplyPossession();
+                        MarkForDelete();
+                    }
+                }
             }
         }
     }

@@ -46,67 +46,7 @@ void CMyPlayer::Update(float elapsedTime)
 	}
 
 	// (싱글) 우클릭: 퀵슬롯에 등록된 소비 아이템 사용 
-	if (g_is_single
-		&& KEY_TAP(KEY::RBTN)
-		&& !ImGui::GetIO().WantCaptureMouse)
-	{
-		ITEM_TYPE itemType = quick_slot->GetSelectedItemType();
-
-		// 아이템 타입이 소비 또는 기타
-		if (itemType == ITEM_TYPE::CONSUMABLE || itemType == ITEM_TYPE::ETC) {
-
-			// 퀵슬롯에 등록된 아이템의 인벤토리 ID를 가져온다.
-			int invId = quick_slot->GetSelectedInvId();
-			if (invId >= 0) {
-
-				uint32 uInvId = static_cast<uint32>(invId);
-				auto& items = inventory->GetItems();
-
-				// 인벤토리에서 아이템을 찾아온다.
-				auto it = items.find(uInvId);
-				if (it != items.end()) {
-					
-					// 아이템 사용
-					if (it->second->Use(this)) {
-
-						// 사용한 아이템 인벤토리에서 제거
-						inventory->RemoveItem(uInvId);
-					}
-				}
-			}
-		}
-	}
-	else if(!g_is_single
-		&& current_scene_type == SCENE_TYPE::GAME
-		&& KEY_TAP(KEY::RBTN)
-		&& !ImGui::GetIO().WantCaptureMouse)
-	{
-		ITEM_TYPE itemType = quick_slot->GetSelectedItemType();
-		if (itemType == ITEM_TYPE::CONSUMABLE || itemType == ITEM_TYPE::ETC) {
-
-			int invId = quick_slot->GetSelectedInvId();
-
-			if (invId >= 0) {
-
-				uint32 uInvId = static_cast<uint32>(invId);
-				auto& items = inventory->GetItems();
-				auto it = items.find(uInvId);
-
-				if (it != items.end()) {
-					C_UseItem useItemPkt;
-					useItemPkt.player_id     = GetID();
-					useItemPkt.item_id       = it->second->GetItemId();
-					useItemPkt.inventory_id  = uInvId;
-					useItemPkt.scene_type    = GetCurrentSceneType();
-
-					auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
-					if (auto session = GetSession()) {
-						session->DoSend(sendBuffer);
-					}
-				}
-			}
-		}
-	}
+	UseItem();
 
 	// "E" 키를 누르면 인벤토리를 열고/닫기
 	if (current_scene_type == SCENE_TYPE::GAME && KEY_TAP(KEY::E)) {
@@ -156,6 +96,10 @@ void CMyPlayer::Update(float elapsedTime)
 			is_stunned = false;
 		}
 	}
+
+	// 빙의
+	if (g_is_single && is_possessed)
+		UpdatePossession(elapsedTime);
 
 	CPlayer::Update(elapsedTime);
 }
@@ -289,7 +233,7 @@ void CMyPlayer::ProcessRotation()
 void CMyPlayer::PredictMove(const InputData& input, float dt)
 {
 	// 플레이어가 몬스터 공격을 받아서 넉백 상태이면 return
-	if (is_knocked_back || is_stunned)
+	if (is_knocked_back || is_stunned || is_possessed)
 		return;
 
 	auto move = GetComponent<CMovementComponent>();
@@ -409,6 +353,71 @@ void CMyPlayer::SendPingToServer(const float elapsedTime)
 	}
 }
 
+void CMyPlayer::UseItem()
+{
+	if (g_is_single
+		&& KEY_TAP(KEY::RBTN)
+		&& !ImGui::GetIO().WantCaptureMouse)
+	{
+		ITEM_TYPE itemType = quick_slot->GetSelectedItemType();
+
+		// 아이템 타입이 소비 또는 기타
+		if (itemType == ITEM_TYPE::CONSUMABLE || itemType == ITEM_TYPE::ETC) {
+
+			// 퀵슬롯에 등록된 아이템의 인벤토리 ID를 가져온다.
+			int invId = quick_slot->GetSelectedInvId();
+			if (invId >= 0) {
+
+				uint32 uInvId = static_cast<uint32>(invId);
+				auto& items = inventory->GetItems();
+
+				// 인벤토리에서 아이템을 찾아온다.
+				auto it = items.find(uInvId);
+				if (it != items.end()) {
+
+					// 아이템 사용
+					if (it->second->Use(this)) {
+
+						// 사용한 아이템 인벤토리에서 제거
+						inventory->RemoveItem(uInvId);
+					}
+				}
+			}
+		}
+	}
+	else if (!g_is_single
+		&& current_scene_type == SCENE_TYPE::GAME
+		&& KEY_TAP(KEY::RBTN)
+		&& !ImGui::GetIO().WantCaptureMouse)
+	{
+		ITEM_TYPE itemType = quick_slot->GetSelectedItemType();
+		if (itemType == ITEM_TYPE::CONSUMABLE || itemType == ITEM_TYPE::ETC) {
+
+			int invId = quick_slot->GetSelectedInvId();
+
+			if (invId >= 0) {
+
+				uint32 uInvId = static_cast<uint32>(invId);
+				auto& items = inventory->GetItems();
+				auto it = items.find(uInvId);
+
+				if (it != items.end()) {
+					C_UseItem useItemPkt;
+					useItemPkt.player_id = GetID();
+					useItemPkt.item_id = it->second->GetItemId();
+					useItemPkt.inventory_id = uInvId;
+					useItemPkt.scene_type = GetCurrentSceneType();
+
+					auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
+					if (auto session = GetSession()) {
+						session->DoSend(sendBuffer);
+					}
+				}
+			}
+		}
+	}
+}
+
 void CMyPlayer::SimulateMove(const InputData& input, float elapsedTime)
 {
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
@@ -520,6 +529,127 @@ void CMyPlayer::ApplyStun(float time)
 	is_stunned = true;
 	stun_timer = time;
 	SetState(PLAYER_STATE::IDLE);
+}
+
+void CMyPlayer::ApplyPossession()
+{
+    is_possessed = true;
+    possession_timer = 20.0f;
+
+    possessed_nav_path.clear();
+    possessed_path_refresh_timer = 0.0f;
+    possessed_wander_target      = GetRandomPossessedTarget();
+    possessed_is_waiting         = false;
+    possessed_wait_timer         = 0.0f;
+}
+
+void CMyPlayer::UpdatePossession(float elapsedTime)
+{
+    possession_timer -= elapsedTime;
+
+    if (possession_timer <= 0.0f) {
+
+        possession_timer = 0.0f;
+        is_possessed     = false;
+        velocity.x       = 0.0f;
+        velocity.z       = 0.0f;
+        state            = PLAYER_STATE::IDLE;
+
+        return;
+    }
+
+    constexpr float TILE_SIZE     = 2.0f;
+    constexpr float ARRIVE_DIST   = 0.4f;
+    constexpr float POSSESS_SPEED = 3.0f;
+
+    if (possessed_is_waiting) {
+
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+
+        possessed_wait_timer -= elapsedTime;
+
+        if (possessed_wait_timer <= 0.0f) {
+            possessed_wander_target      = GetRandomPossessedTarget();
+            possessed_nav_path.clear();
+            possessed_path_refresh_timer = 0.0f;
+            possessed_is_waiting         = false;
+        }
+
+        return;
+    }
+
+    XMFLOAT3 dirVec = Vector3::Subtract(possessed_wander_target, position);
+    dirVec.y = 0.0f;
+    float dist = Vector3::Length(dirVec);
+
+    if (dist < ARRIVE_DIST) {
+
+        velocity.x           = 0.0f;
+        velocity.z           = 0.0f;
+        possessed_is_waiting = true;
+        possessed_wait_timer = 0.3f + (rand() % 5) * 0.1f;
+
+        return;
+    }
+
+    possessed_path_refresh_timer += elapsedTime;
+
+    if (possessed_path_refresh_timer >= 0.2f || possessed_nav_path.empty()) {
+
+        possessed_path_refresh_timer = 0.0f;
+
+        int sx = (int)roundf(position.x / TILE_SIZE);
+        int sz = (int)roundf(position.z / TILE_SIZE);
+        int ex = (int)roundf(possessed_wander_target.x / TILE_SIZE);
+        int ez = (int)roundf(possessed_wander_target.z / TILE_SIZE);
+
+        possessed_nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+    }
+
+    XMFLOAT3 moveDir = dirVec;
+    if (!possessed_nav_path.empty()) {
+        XMFLOAT3 wpWorld = { possessed_nav_path[0].x * TILE_SIZE, position.y, possessed_nav_path[0].y * TILE_SIZE };
+        XMFLOAT3 toWp    = Vector3::Subtract(wpWorld, position);
+        toWp.y = 0.0f;
+        if (Vector3::Length(toWp) > 0.1f)
+            moveDir = toWp;
+    }
+
+    float moveYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
+    SetYaw(moveYaw);
+    SetYawPitch(moveYaw, 0.0f);
+
+    velocity.x = look.x * POSSESS_SPEED;
+    velocity.z = look.z * POSSESS_SPEED;
+    state      = PLAYER_STATE::RUN;
+}
+
+XMFLOAT3 CMyPlayer::GetRandomPossessedTarget()
+{
+    const float TILE_SIZE = 2.0f;
+    int cx = (int)roundf(position.x / TILE_SIZE);
+    int cz = (int)roundf(position.z / TILE_SIZE);
+
+    const int dx[] = { 0, 0, -1, 1 };
+    const int dz[] = { -1, 1,  0, 0 };
+
+    std::vector<MapGenerator::Cell> candidates;
+
+    for (int i = 0; i < 4; i++) {
+
+        int nx = cx + dx[i];
+        int nz = cz + dz[i];
+
+        if (MapGenerator::IsWalkableFloor(nx, nz) && !MapGenerator::IsBlockedStructure(nx, nz))
+            candidates.push_back({ nx, nz });
+    }
+
+    if (candidates.empty())
+        return position;
+
+    int idx = rand() % (int)candidates.size();
+    return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)
