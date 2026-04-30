@@ -18,7 +18,7 @@ CGhost::CGhost()
 {
 	friction = 0.0f;
 	trace_speed = 2.0f;
-	attack_range = 0.4f;
+	attack_range = 1.5f;
 	SetFOV(120);
 }
 
@@ -46,7 +46,7 @@ void CGhost::Update(float elapsedTime)
 				contact_damage_timer = 0.0f;
 
 				XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
-				nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 3.f);
+				nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 1.-f);
 			}
 		}
 	}
@@ -160,21 +160,25 @@ void CGhost::OnTraceMove(float elapsedTime)
 {
 	auto AIComponent = GetComponent<CAIComponent>();
 
-	if (!target_player) {
+	auto targetPlayer = target_player.lock();
+
+	if (!targetPlayer) {
 		AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
 	}
 
-	XMFLOAT3 dirVec = Vector3::Subtract(target_player->GetPosition(), position);
+	XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
 	dirVec.y = 0.0f;
 	float dist = Vector3::Length(dirVec);
 
 	if (dist > recog_range) {
-		target_player = nullptr;
+		target_player.reset();
 		AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
 	}
-	else if (dist <= attack_range) {
+	attack_cooldown_timer += elapsedTime;
+
+	if (dist <= attack_range && attack_cooldown_timer >= 1.5f) {
 		AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
 		return;
 	}
@@ -182,8 +186,8 @@ void CGhost::OnTraceMove(float elapsedTime)
 	const float TILE_SIZE = 2.0f;
 	int sx = (int)roundf(position.x / TILE_SIZE);
 	int sz = (int)roundf(position.z / TILE_SIZE);
-	int ex = (int)roundf(target_player->GetPosition().x / TILE_SIZE);
-	int ez = (int)roundf(target_player->GetPosition().z / TILE_SIZE);
+	int ex = (int)roundf(targetPlayer->GetPosition().x / TILE_SIZE);
+	int ez = (int)roundf(targetPlayer->GetPosition().z / TILE_SIZE);
 
 	// Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
 	bool has_wall = false;
@@ -231,15 +235,37 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-	velocity.x = 0.0f;
-	velocity.z = 0.0f;
+	constexpr float DASH_SPEED    = 5.0f;
+	constexpr float DASH_DURATION = 0.5f;
 
 	attack_timer += elapsedTime;
 
+	auto targetPlayer = target_player.lock();
+
+	// 돌진: 0.5s 동안 플레이어를 향해 추적하며 달려듦
+	if (attack_timer < DASH_DURATION && targetPlayer) {
+		XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
+		dir.y = 0.0f;
+		float dist = Vector3::Length(dir);
+		if (dist > 0.1f) {
+			float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+			SetYaw(yaw);
+			SetYawPitch(yaw, 0.0f);
+			velocity.x = look.x * DASH_SPEED;
+			velocity.z = look.z * DASH_SPEED;
+		} else {
+			velocity.x = 0.0f;
+			velocity.z = 0.0f;
+		}
+	} else {
+		velocity.x = 0.0f;
+		velocity.z = 0.0f;
+	}
+
 	if (!hit_damage_dealt && attack_timer >= 0.6f) {
 		hit_damage_dealt = true;
-		if (target_player) {
-			XMFLOAT3 dirVec = Vector3::Subtract(target_player->GetPosition(), position);
+		if (targetPlayer) {
+			XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
 			dirVec.y = 0.0f;
 
 			XMFLOAT3 fwd       = Vector3::Normalize(XMFLOAT3{ look.x,  0.0f, look.z  });
@@ -251,9 +277,9 @@ void CGhost::OnAttackMove(float elapsedTime)
 			constexpr float depth = 2.0f;
 			constexpr float width = 1.5f;
 
-			if (forwardDist >= 0.0f && forwardDist <= depth && fabsf(sideDist) <= width) {
+			if (forwardDist >= -0.5f && forwardDist <= depth && fabsf(sideDist) <= width) {
 				if (rand() % 100 < 30) {
-					target_player->ApplyPossession();
+					targetPlayer->ApplyPossession();
 					MarkForDelete();
 				}
 			}
@@ -298,8 +324,22 @@ void CGhost::OnAttackEnter()
 
 	velocity.x       = 0.0f;
 	velocity.z       = 0.0f;
-	attack_timer     = 0.0f;
-	hit_damage_dealt = false;
+	attack_timer          = 0.0f;
+	hit_damage_dealt      = false;
+	attack_cooldown_timer = 0.0f;
+
+	auto targetPlayer = target_player.lock();
+
+	if (targetPlayer) {
+		XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
+		dir.y = 0.0f;
+		float len = Vector3::Length(dir);
+		if (len > 0.001f) {
+			float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+			SetYaw(yaw);
+			SetYawPitch(yaw, 0.0f);
+		}
+	}
 }
 
 void CGhost::PatrolRadiusWander(float elapsedTime)

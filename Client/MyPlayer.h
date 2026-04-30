@@ -126,9 +126,6 @@ private:
     XMFLOAT3 knockback_vel{};
     float    knockback_timer{ 0.0f };
 
-    bool     is_stunned = false;
-    float    stun_timer = { 0.0f };
-
     std::vector<MapGenerator::Cell> possessed_nav_path;
     float                           possessed_path_refresh_timer = 0.0f;
     XMFLOAT3                        possessed_wander_target      = {};

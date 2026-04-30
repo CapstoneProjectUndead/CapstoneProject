@@ -19,7 +19,7 @@ CGhost::CGhost()
 {
     friction = 0.0f;
     trace_speed = 2.0f;
-    attack_range = 0.4f;
+    attack_range = 1.5f;
     SetFOV(120);
 }
 
@@ -57,7 +57,7 @@ void CGhost::Update(float elapsedTime)
 
                 if (nearPlayer->GetIsMyPlayer()) {
                     XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
-                    static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 3.f);
+                    static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 1.0f);
                 }
             }
         }
@@ -190,27 +190,30 @@ void CGhost::OnPatrolMove(float elapsedTime)
 void CGhost::OnTraceMove(float elapsedTime)
 {
     auto AIComponent = GetComponent<CAIComponent>();
+    auto targetPlayer = target_player.lock();
 
-    if (!target_player) {
+    if (!targetPlayer) {
         // 타겟이 사라졌으면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
     // 타겟과의 방향 및 평면 거리 계산
-    XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+    XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
     dirVec.y = 0.0f; // Y축(높이) 차이는 무시하고 XZ 평면에서의 거리만 계산
     float dist = Vector3::Length(dirVec);
+
+    attack_cooldown_timer += elapsedTime;
 
     // 상태 전환 (State Transition) 판단
        // 조건 A: 타겟이 인식 범위 밖으로 도망갔을 때 -> 추적 포기
     if (dist > recog_range) {
-        target_player = nullptr; // 타겟 초기화
+        target_player.reset(); // 타겟 초기화
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-    // 조건 B: 타겟이 공격 범위 안으로 들어왔을 때 -> 공격 시작!
-    else if (dist <= attack_range) {
+    // 조건 B: 타겟이 공격 범위 안으로 들어왔을 때 -> 공격 시작! (쿨타임 1.5s)
+    else if (dist <= attack_range && attack_cooldown_timer >= 1.5f) {
         AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
         return;
     }
@@ -218,8 +221,8 @@ void CGhost::OnTraceMove(float elapsedTime)
     const float TILE_SIZE = 2.0f;
     int sx = (int)roundf(position.x / TILE_SIZE);
     int sz = (int)roundf(position.z / TILE_SIZE);
-    int ex = (int)roundf(target_player->position.x / TILE_SIZE);
-    int ez = (int)roundf(target_player->position.z / TILE_SIZE);
+    int ex = (int)roundf(targetPlayer->position.x / TILE_SIZE);
+    int ez = (int)roundf(targetPlayer->position.z / TILE_SIZE);
 
     // Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
     bool hasWall = false;
@@ -272,16 +275,39 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-    // 공격 중에는 미끄러지지 않게 이동 속도 0으로 고정
-    velocity.x = 0.0f;
-    velocity.z = 0.0f;
+    constexpr float DASH_SPEED    = 5.0f;
+    constexpr float DASH_DURATION = 0.5f;
 
     attack_timer += elapsedTime;
 
+    auto targetPlayer = target_player.lock();
+
+    // 돌진: 0.5s 동안 플레이어를 향해 추적하며 달려듦
+    if (attack_timer < DASH_DURATION && targetPlayer) {
+        XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+        dir.y = 0.0f;
+        float dist = Vector3::Length(dir);
+        if (dist > 0.1f) {
+            float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+            velocity.x = look.x * DASH_SPEED;
+            velocity.z = look.z * DASH_SPEED;
+        } 
+        else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+        }
+    }
+    else {
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+    }
+
     if (!hit_damage_dealt && attack_timer >= 0.6f) {
         hit_damage_dealt = true;
-        if (target_player) {
-            XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+        if (targetPlayer) {
+            XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
             dirVec.y = 0.0f;
 
             XMFLOAT3 fwd       = Vector3::Normalize(XMFLOAT3{ look.x,  0.0f, look.z  });
@@ -290,13 +316,13 @@ void CGhost::OnAttackMove(float elapsedTime)
             float forwardDist = Vector3::DotProduct(dirVec, fwd);
             float sideDist    = Vector3::DotProduct(dirVec, right_vec);
 
-            constexpr float depth = 0.7f;
-            constexpr float width = 0.7f;
+            constexpr float depth = 1.5f;
+            constexpr float width = 1.0f;
 
-            if (forwardDist >= 0.0f && forwardDist <= depth && fabsf(sideDist) <= width) {
-                if (target_player->GetIsMyPlayer()) {
+            if (forwardDist >= -0.5f && forwardDist <= depth && fabsf(sideDist) <= width) {
+                if (targetPlayer->GetIsMyPlayer()) {
                     if (rand() % 100 < 30) {
-                        static_cast<CMyPlayer*>(target_player.get())->ApplyPossession();
+                        static_cast<CMyPlayer*>(targetPlayer.get())->ApplyPossession();
                         MarkForDelete();
                     }
                 }
@@ -340,11 +366,24 @@ void CGhost::OnAttackEnter()
 {
     ResetAttackTimer();
 
-    velocity.x = 0.0f;
-    velocity.z = 0.0f;
+    velocity.x       = 0.0f;
+    velocity.z       = 0.0f;
+    attack_timer          = 0.0f;
+    hit_damage_dealt      = false;
+    attack_cooldown_timer = 0.0f;
 
-    attack_timer     = 0.0f;
-    hit_damage_dealt = false;
+    auto targetPlayer = target_player.lock();
+
+    if (targetPlayer) {
+        XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+        dir.y = 0.0f;
+        float len = Vector3::Length(dir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
 }
 
 

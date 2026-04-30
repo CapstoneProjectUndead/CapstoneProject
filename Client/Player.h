@@ -52,6 +52,8 @@ public:
 	float GetPossessionTimer() const { return possession_timer; }
 	void  SetPossessionTimer(float t) { possession_timer = t; }
 
+	bool  GetIsStunned() const { return is_stunned; }
+
 	uint16 GetMiningSpeed() const { return stat.miningSpeed; }
 	void   SetMiningSpeed(const uint16 speed) { stat.miningSpeed = speed; }
 
@@ -104,5 +106,8 @@ protected:
 
 	bool  is_possessed    = false;
 	float possession_timer = 0.0f;
+
+	bool     is_stunned = false;
+	float    stun_timer = { 0.0f };
 };
 

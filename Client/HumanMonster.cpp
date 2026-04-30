@@ -167,21 +167,23 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 {
     auto AIComponent = GetComponent<CAIComponent>();
 
-    if (!target_player) {
+    auto targetPlayer = target_player.lock();
+
+    if (!targetPlayer) {
         // 타겟이 사라졌으면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
     // 타겟과의 방향 및 평면 거리 계산
-    XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+    XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
     dirVec.y = 0.0f; // Y축(높이) 차이는 무시하고 XZ 평면에서의 거리만 계산
     float dist = Vector3::Length(dirVec);
 
     // 상태 전환 (State Transition) 판단
        // 조건 A: 타겟이 인식 범위 밖으로 도망갔을 때 -> 추적 포기
     if (dist > recog_range) {
-        target_player = nullptr; // 타겟 초기화
+        target_player.reset(); // 타겟 초기화
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }

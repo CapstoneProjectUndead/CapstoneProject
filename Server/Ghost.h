@@ -39,8 +39,9 @@ private:
     float       patrol_speed  = 1.2f;
 
     // ATTACK
-    bool  hit_damage_dealt     = false;
-    float contact_damage_timer = 0.0f;
+    bool  hit_damage_dealt      = false;
+    float contact_damage_timer  = 0.0f;
+    float attack_cooldown_timer = 9999.f;
 
     // TRACE/IDLE 경로 탐색
     std::vector<MapGenerator::Cell> nav_path;
