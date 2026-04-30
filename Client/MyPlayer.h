@@ -64,7 +64,8 @@ public:
     bool GetDigAnimFinished() const   { return dig_anim_finished; }
     void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
 
-    void ApplyKnockback(XMFLOAT3 dir, float force);
+    // 넉백 + 스턴 (기본값 1.3f) 스턴은 원치 않으면 인자를 0으로 쓰면 된다.
+    void ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration = 1.3f);
     void ApplyStun(float time);
     void ApplyPossession();
 

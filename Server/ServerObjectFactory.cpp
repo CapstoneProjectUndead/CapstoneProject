@@ -175,7 +175,8 @@ void CServerObjectFactory::InitializeUndeadCharacter(shared_ptr<CObject> object,
 	// 플레이어에게 충돌체(Collider) 달아주기
 	// -----------------------------------
 	std::string fileName{ "../Modeling/undead_char_0412.bin" };
-	InitializeCharacter(fileName, object, physicsManager, true);
+	InitializeCharacter(fileName, object, physicsManager, true,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER));
 }
 
 void CServerObjectFactory::InitializeHumanMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)

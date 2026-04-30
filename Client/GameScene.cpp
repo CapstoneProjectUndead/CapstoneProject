@@ -133,7 +133,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		my_player->SetComponent(dowsingUI);
 	}
 
-	// 싱글 드롭 콜백 등록
+	// 싱글 전용: 드롭 콜백 등록
 	if (my_player) {
 		auto inv = my_player->GetInventory();
 		if (inv) {

@@ -57,7 +57,7 @@ void CGhost::Update(float elapsedTime)
 
                 if (nearPlayer->GetIsMyPlayer()) {
                     XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
-                    static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f);
+                    static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 3.f);
                 }
             }
         }

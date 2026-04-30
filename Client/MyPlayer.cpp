@@ -509,19 +509,20 @@ void CMyPlayer::UpdateStamina(float elapsedTime)
 	stat.stamina = static_cast<uint32>(accumulate_stamina);
 }
 
-void CMyPlayer::ApplyKnockback(XMFLOAT3 dir, float force)
+void CMyPlayer::ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration)
 {
 	dir.y = 0.0f;
 	float len = Vector3::Length(dir);
 
-	if (len < 0.001f) 
+	if (len < 0.001f)
 		return;
 
 	knockback_vel    = { dir.x / len * force, 0.0f, dir.z / len * force };
 	knockback_timer  = 0.3f;
 
 	is_knocked_back  = true;
-	ApplyStun(1.3f);
+	if (stun_duration > 0.0f)
+		ApplyStun(stun_duration);
 }
 
 void CMyPlayer::ApplyStun(float time)

@@ -225,6 +225,8 @@ void CTitleScene::DrawTitleMainWindow()
             ImTextureID exitTex   = CImGuiManager::GetInstance().GetTexture("exit");
 
             if (ImageButtonWithText((long long)singleTex, "##single", btnSize)) {
+                // 싱글 모드
+                g_is_single = true;
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
             }
             ImGui::Spacing();
@@ -868,6 +870,9 @@ void CTitleScene::Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGI
 {
     // 로그인 성공
     if (pkt.success) {
+
+        // 싱글 모드가 아닌 멀티 모드로 전환
+        g_is_single = false;
 
         ShowResultPopup(true, "로그인 성공!");
 

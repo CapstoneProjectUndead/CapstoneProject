@@ -24,6 +24,15 @@ CPlayer::CPlayer()
     , accumulate_stamina(100.f)
     , stamina_exhausted(false)
     , dig_timer(0.f)
+    , knockback_vel{}
+    , knockback_timer(0.0f)
+    , stun_timer(0.0f)
+    , is_possessed(false)
+    , possessed_path_refresh_timer(0.0f)
+    , possessed_wander_target{}
+    , possessed_is_waiting(false)
+    , possessed_wait_timer(0.0f)
+    , possession_contact_timer(0.0f)
 {
 
 }
@@ -208,17 +217,18 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     CObject::Update(elapsedTime);
 }
 
-void CPlayer::ApplyKnockback(XMFLOAT3 dir, float force)
+void CPlayer::ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration)
 {
     dir.y = 0.0f;
     float len = Vector3::Length(dir);
 
-    if (len < 0.001f) 
+    if (len < 0.001f)
         return;
 
-    knockback_vel = { dir.x / len * force, 0.0f, dir.z / len * force };
+    knockback_vel   = { dir.x / len * force, 0.0f, dir.z / len * force };
     knockback_timer = 0.3f;
-    ApplyStun(1.5f);
+    if (stun_duration > 0.0f)
+        ApplyStun(stun_duration);
 }
 
 void CPlayer::ApplyStun(float time)
@@ -254,13 +264,15 @@ void CPlayer::UpdatePossession(float elapsedTime)
         return;
     }
 
-    constexpr float TILE_SIZE     = 2.0f;
-    constexpr float ARRIVE_DIST   = 0.4f;
-    constexpr float POSSESS_SPEED = 4.0f;
+    constexpr float TILE_SIZE          = 2.0f;
+    constexpr float ARRIVE_DIST        = 0.4f;
+    constexpr float POSSESS_SPEED      = 4.0f;
+    constexpr float ATTACK_INTERVAL    = 1.5f; // 공격 후 대기 시간 = 데미지 쿨다운
 
     auto nearOther = FindNearestOtherPlayer();
 
     if (nearOther) {
+
         XMFLOAT3 dirVec = Vector3::Subtract(nearOther->GetPosition(), position);
         dirVec.y = 0.0f;
         float dist = Vector3::Length(dirVec);
@@ -269,21 +281,31 @@ void CPlayer::UpdatePossession(float elapsedTime)
             float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
             SetYaw(targetYaw);
             SetYawPitch(targetYaw, 0.0f);
+        }
+
+        if (possession_contact_timer >= ATTACK_INTERVAL) {
             velocity.x = look.x * POSSESS_SPEED;
             velocity.z = look.z * POSSESS_SPEED;
             state      = PLAYER_STATE::RUN;
         }
+        else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+            state      = PLAYER_STATE::IDLE;
+        }
 
         auto* myCol    = GetComponent<CColliderComponent>();
         auto* otherCol = nearOther->GetComponent<CColliderComponent>();
-        if (myCol && otherCol && myCol->Intersects(otherCol)) {
-            if (possession_contact_timer >= 1.0f) {
+
+        if (myCol && otherCol && myCol->Intersects(otherCol))
+        {
+            if (possession_contact_timer >= ATTACK_INTERVAL) {
                 uint32 hp = nearOther->GetHp();
                 nearOther->SetHp(hp > 15 ? hp - 15 : 0);
                 possession_contact_timer = 0.0f;
 
                 XMFLOAT3 knockbackDir = Vector3::Subtract(nearOther->GetPosition(), position);
-                nearOther->ApplyKnockback(knockbackDir, 0.8f);
+                nearOther->ApplyKnockback(knockbackDir, 0.8f, 0.0f);
             }
         }
 

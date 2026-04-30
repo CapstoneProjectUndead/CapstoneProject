@@ -46,7 +46,7 @@ void CGhost::Update(float elapsedTime)
 				contact_damage_timer = 0.0f;
 
 				XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
-				nearPlayer->ApplyKnockback(knockbackDir, 0.6f);
+				nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 3.f);
 			}
 		}
 	}

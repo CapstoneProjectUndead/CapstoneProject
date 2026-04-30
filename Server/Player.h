@@ -106,7 +106,8 @@ public:
 
 	void   ResetDigTimer() { dig_timer = 0.f; }
 
-	void   ApplyKnockback(XMFLOAT3 dir, float force);
+	// 넉백 + 스턴 (기본값 1.3f) 스턴은 원치 않으면 인자를 0으로 쓰면 된다.
+	void   ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration = 1.5f);
 	void   ApplyStun(float time);
 	void   ApplyPossession();
 
@@ -120,6 +121,7 @@ private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
 	void UpdatePossession(float elapsedTime);
+
 	XMFLOAT3            GetRandomPossessedTarget();
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
 
@@ -148,20 +150,20 @@ private:
 	float       accumulate_stamina;
 	bool        stamina_exhausted;
 
-	XMFLOAT3    knockback_vel{};
-	float       knockback_timer{ 0.0f };
+	XMFLOAT3    knockback_vel;
+	float       knockback_timer;
 
-	float       stun_timer{ 0.0f };
+	float       stun_timer;
 
-	bool        is_possessed{ false };
+	bool        is_possessed;
 	float       possession_timer{ 0.0f };
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
-	float    possessed_path_refresh_timer{ 0.0f };
-	XMFLOAT3 possessed_wander_target{};
-	bool     possessed_is_waiting{ false };
-	float    possessed_wait_timer{ 0.0f };
-	float    possession_contact_timer{ 0.0f };
+	float    possessed_path_refresh_timer;
+	XMFLOAT3 possessed_wander_target;
+	bool     possessed_is_waiting;
+	float    possessed_wait_timer;
+	float    possession_contact_timer;
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };
