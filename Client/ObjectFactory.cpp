@@ -39,7 +39,7 @@ std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(CDescriptorHeapManager* h
 }
 
 // mesh/material component set
-void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName)
+void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName)
 {
 	if (!node || node->mesh.positions.empty()) return;
 
@@ -48,6 +48,7 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 
 	// MeshRendererComponent
 	auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+	meshRenderer->SetShader(shaderName);
 	obj->SetComponent(meshRenderer);
 
 	// MeshComponent
@@ -69,7 +70,6 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 	}
 
 	obj->name = node->name;
-	obj->SetShader(shaderName);
 }
 
 void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
@@ -108,6 +108,7 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 
 	// Renderer 및 기초 컴포넌트 설정
 	auto renderer = std::make_shared<CMeshRendererComponent>();
+	renderer->SetShader(EShaderName::Skinning);
 	character->SetComponent(renderer);
 
 	// 메쉬 노드 순회 및 파츠 처리
@@ -255,14 +256,14 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	// Renderer에 Mesh/Material 설정
 	for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
 		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+		meshRenderer->SetShader(EShaderName::Inst);
 		for (const RenderUnit originUnit : renderer->GetRenderUnits()) {
 			meshRenderer->SetRenderUnit(originUnit);
-			obj->SetComponent(meshRenderer);
 		}
+		obj->SetComponent(meshRenderer);
 	}
 
 	obj->Initialize();
-	obj->SetShader("inst");
 }
 
 void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
@@ -460,7 +461,6 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		}
 	};
 
-	character->SetShader("skinning");
 	InitCharacterComponents(
 		character,
 		heapManager,
@@ -500,8 +500,6 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 		{ "Human_monster_idle", "Human_monster_walk", "Human_monster_run", "Human_monster_attack" },
 		false
 	);
-
-	character->SetShader("skinning");
 }
 
 void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
@@ -533,8 +531,6 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
 		false
 	);
-
-	character->SetShader("skinning");
 }
 
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
@@ -558,6 +554,7 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 			for (auto& material : node->mesh.materials) {
 				CreateUnit(material.albedoMap);
 			}
+			renderer->SetShader(EShaderName::Inst);
 		};
 
 	InitCharacterComponents(
@@ -569,7 +566,6 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 		false
 	);
 
-	character->SetShader("inst");
 	return character;
 }
 

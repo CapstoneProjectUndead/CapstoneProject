@@ -32,7 +32,7 @@ CScene::~CScene()
 
 void CScene::Initialize()
 {
-	factory->GetMaterial(CSceneManager::GetInstance().GetShaders()["ui"]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
+	factory->GetMaterial(CSceneManager::GetInstance().GetShaders()[EShaderName::UI]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -81,53 +81,45 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	// 3D 객체들 수집
 	for (const auto& obj : objects) {
 		if (obj->IsVisible(frustum)) {
-			auto it = renderers.find(obj->GetShader());
-			if (it != renderers.end()) {
-				obj->OnCollect(it->second.get());
-			}
+			obj->OnCollect(renderers);
 		}
 	}
 
 	// 플레이어 수집
 	if (my_player) {
-		auto it = renderers.find(my_player->GetShader());
-		if (it != renderers.end()) {
-			my_player->OnCollect(it->second.get());
-		}
+		my_player->OnCollect(renderers);
 	}
 
 	// UI 매니저 수집
 	ui_manager->Collect(renderers);
 
 	// Draw Phase
-	for (const auto& [name, pShader] : shaders) {
-		pShader->RenderBegin(commandList);
+	for (size_t i = 0; i < EShaderName::Count; ++i) {
+		if (!shaders[i]) continue;
+		shaders[i]->RenderBegin(commandList);
 
-		if (name == "billboard") {
+		if (i == EShaderName::Billboard) {
 			camera->UpdateShaderVariablesBillBoard(commandList);
 		}
-		else if (name == "ui") {
+		else if (i == EShaderName::UI) {
 			camera->UpdateShaderVariables(commandList, true);
 		}
 		else {
 			camera->UpdateShaderVariables(commandList, false);
 		}
 
-		bool useLight = (name != "ui" && name != "billboard");
+		bool useLight = (i != EShaderName::UI && i != EShaderName::Billboard);
 		if (light && useLight) {
 			light->Render(commandList);
 		}
 
 		// 인스턴싱 드로우
-		auto it = renderers.find(name);
-		if (it != renderers.end()) {
-			it->second->Render(commandList);
-			if (name == "ui") {
-				renderers["text"]->Render(commandList);
-			}
+		renderers[i]->Render(commandList);
+		if (i == EShaderName::UI) {
+			renderers[EShaderName::Text]->Render(commandList);
 		}
 
-		pShader->RenderEnd(commandList);
+		shaders[i]->RenderEnd(commandList);
 	}
 }
 
@@ -234,7 +226,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 			// 싱글 모드가 아닌 멀티 모드로 전환
 			g_is_single = false;
 
-			CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+			CDescriptorHeapManager* skinningHeapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 			my_player = factory->CreateMyPlayer(skinningHeapManager);
 
 			// 세션 저장
@@ -262,7 +254,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		}
 	}
 	else {
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer(skinningHeapManager);
 		otherPlayer->SetID(pkt.info.player_id);
 		otherPlayer->SetRoomID(pkt.room_id);
@@ -287,7 +279,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
-		CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer(skinningHeapManager);
 
 		// 다른 유저의 Player ID 부여
@@ -401,7 +393,7 @@ void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_R
 void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt)
 {
 	CDescriptorHeapManager* skinningHeapManager{
-			CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
+			CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
 	
 	uint32 monsterId = pkt.info.monster_id;
 	MON_TYPE type = pkt.info.monster_type;

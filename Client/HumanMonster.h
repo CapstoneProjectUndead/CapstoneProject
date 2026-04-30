@@ -11,7 +11,7 @@ public:
     ~CHumanMonster();
 
     virtual void Update(float elapsedTime) override;
-    void OnCollect(IRenderer* renderer) override;
+    void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
     virtual void OnIdleMove(float elapsedTime) override;
     virtual void OnPatrolMove(float elapsedTime) override;
     virtual void OnTraceMove(float elapsedTime) override;

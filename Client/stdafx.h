@@ -170,6 +170,16 @@ inline bool IsEqual(float fA, float fB) { return(::IsZero(fA - fB)); }
 inline float InverseSqrt(float fValue) { return 1.0f / sqrtf(fValue); }
 inline void Swap(float* pfS, float* pfT) { float fTemp = *pfS; *pfS = *pfT; *pfT = fTemp; }
 
+enum EShaderName : size_t {
+	Inst,
+	Skinning,
+	UI,
+	Billboard,
+	Text,
+	XRay,	// 은면 렌더링
+	Count
+};
+
 namespace Math
 {
 	template<typename T>

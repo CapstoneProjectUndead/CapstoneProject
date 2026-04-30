@@ -46,7 +46,7 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 	}
 }
 
-void CMeshRendererComponent::Collect(IRenderer* renderer, bool isStatic)
+void CMeshRendererComponent::Collect(std::unique_ptr<IRenderer>& renderer, bool isStatic)
 {
 	if (!owner) return;
 

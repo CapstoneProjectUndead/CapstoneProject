@@ -23,9 +23,9 @@ void CHumanMonster::Update(float elapsedTime)
 	CMonster::Update(elapsedTime);
 }
 
-void CHumanMonster::OnCollect(IRenderer* renderer)
+void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
-    CObject::OnCollect(renderer);
+    CObject::OnCollect(renderers);
 
     auto animator = GetComponent<CAnimatorComponent>();
     if (animator) {

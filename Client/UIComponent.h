@@ -46,10 +46,10 @@ public:
     virtual void Update(const float deltaTime) override;
 
     virtual void Render(ID3D12GraphicsCommandList* commandList) override;
-    virtual void Collect(IRenderer* renderer);
+    virtual void Collect(std::unique_ptr<IRenderer>& renderer);
     // getter
     Rect GetParentRect();
-    virtual std::string GetShaderName() const { return "ui"; }
+    virtual EShaderName GetShaderName() const { return EShaderName::UI; }
     std::string& GetName() { return name; }
     std::vector<std::shared_ptr<CUIComponent>>& GetChildren() { return child; }
     // imgui를 통해 수정
@@ -74,7 +74,7 @@ public:
     void SetColor(const XMFLOAT4& c) { color = c; }
 
     // Collect 후 자식 순회
-    void Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
+    void Traverse(std::vector<std::unique_ptr<IRenderer>>& renderers);
     // Rect에 마우스가 있는지 검사
     virtual bool IntersectsMouse(float x, float y);
 protected:
@@ -111,7 +111,7 @@ public:
     // fill_amount 적용 외에 UIComponent와 유사
     virtual void CalculateWorldMatrix() override;
     virtual void Update(const float deltaTime) override;
-    virtual void Collect(IRenderer* renderer) override;
+    virtual void Collect(std::unique_ptr<IRenderer>& renderer) override;
 
     virtual json Serialize() override;
     virtual void Deserialize(const json& j) override;
@@ -145,7 +145,7 @@ public:
 
     // 빌보드를 띄울 타겟(말하는 주체)
     void SetTarget(CObject* obj);
-    virtual std::string GetShaderName() const override { return "billboard"; }
+    virtual EShaderName GetShaderName() const { return EShaderName::Billboard; }
 private:
     XMFLOAT3 offset{ 1.0f, 1.0f, -0.1f }; // 머리 위 높이 조절
     CObject* target{};
@@ -155,10 +155,10 @@ class CUIText : public CUIComponent {
 public:
     CUIText();
 
-    virtual std::string GetShaderName() const override { return "text"; }
+    virtual EShaderName GetShaderName() const { return EShaderName::Text; }
     void SetText(const std::wstring& text);
     void SetBillboard(bool b) { is_billboard = b; }
-    virtual void Collect(IRenderer* renderer) override;
+    virtual void Collect(std::unique_ptr<IRenderer>& renderer) override;
     virtual void Update(float deltaTime) override;
     virtual json Serialize() override;
     virtual void Deserialize(const json& j) override;
@@ -181,7 +181,7 @@ class CUIButton : public CUIImage {
 public:
     CUIButton();
     virtual void Update(float deltaTime) override;
-    virtual void Collect(IRenderer* renderer) override;
+    virtual void Collect(std::unique_ptr<IRenderer>& renderer) override;
 
     virtual json Serialize() override;
 
@@ -224,7 +224,7 @@ public:
     std::vector<std::shared_ptr<CUICanvas>>& GetCanvases() { return canvases; }
     void Update(float deltaTime);
     void Render(ID3D12GraphicsCommandList* commandList);
-    void Collect(std::map<std::string, std::unique_ptr<IRenderer>>& renderers);
+    void Collect(std::vector<std::unique_ptr<IRenderer>>& renderers);
 
     // 마우스 클릭 등의 이벤트 처리
     bool IntersectsMouse();

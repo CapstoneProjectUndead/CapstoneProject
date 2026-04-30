@@ -43,7 +43,7 @@ public:
 	virtual void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList* );
 	// RenderCallback을 호출
-	virtual void OnCollect(IRenderer* renderer);
+	virtual void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers);
 	
 	void SetBoundingSphere(const XMFLOAT3& center, float radius) { local_sphere.Center = center; local_sphere.Radius = radius; };
 	void SetBoundingSphere(const BoundingSphere& sphere) { local_sphere = sphere; };
@@ -53,8 +53,6 @@ public:
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }
-	void SetShader(const std::string& name) { shader_name = name; }
-	std::string GetShader() const { return shader_name; }
 
 	XMFLOAT3 GetVelocity() { return velocity; }
 	void     SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
@@ -97,8 +95,6 @@ protected:
 	uint64      obj_id = -1;	// 모든 오브젝트는 고유 식별 ID를 가진다.
 	OBJECT_TYPE obj_type;
 	SCENE_TYPE  current_scene_type = SCENE_TYPE::NONE; // 현재 오브젝트가 속한 씬
-
-	std::string shader_name{"inst"};	// 적용 쉐이더 이름
 
 	XMFLOAT3 velocity{};
 	std::vector<std::shared_ptr<CComponent>> components;

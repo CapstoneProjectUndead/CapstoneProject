@@ -114,15 +114,13 @@ void CUIComponent::Render(ID3D12GraphicsCommandList* commandList)
     }
 }
 
-void CUIComponent::Traverse(std::map<std::string, std::unique_ptr<IRenderer>>& renderers)
+void CUIComponent::Traverse(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
     if (!is_enable) return;
 
-    std::string shaderKey = GetShaderName(); // 아래 3번 참고
-    auto it = renderers.find(shaderKey);
 
-    if (it != renderers.end()) {
-        Collect(it->second.get());
+    if (renderers[GetShaderName()]) {
+        Collect(renderers[GetShaderName()]);
     }
 
     for (auto& c : child) {
@@ -136,7 +134,7 @@ bool CUIComponent::IntersectsMouse(float x, float y)
     return rect.IsPointInside(x, y);
 }
 
-void CUIComponent::Collect(IRenderer* renderer)
+void CUIComponent::Collect(std::unique_ptr<IRenderer>& renderer)
 {
     if (!is_enable) return;
 
@@ -270,7 +268,7 @@ void CUIImage::Update(const float deltaTime)
     CUIComponent::Update(deltaTime);
 }
 
-void CUIImage::Collect(IRenderer* renderer)
+void CUIImage::Collect(std::unique_ptr<IRenderer>& renderer)
 {
     if (!is_enable) return;
 
@@ -342,11 +340,11 @@ void CUIText::SetText(const std::wstring& t)
     is_finished = false; // 다시 타이핑 시작
 }
 
-void CUIText::Collect(IRenderer* renderer)
+void CUIText::Collect(std::unique_ptr<IRenderer>& renderer)
 {
     if (!is_enable) return;
-
-    auto textRenderer = dynamic_cast<CTextRenderer*>(renderer);
+    
+    auto textRenderer = dynamic_cast<CTextRenderer*>(renderer.get());
     if (textRenderer) {
         textRenderer->AddTextInstance(current_text, world_matrix, color, is_billboard);
     }
@@ -413,7 +411,7 @@ void CUIButton::Update(float deltaTime)
     CUIComponent::Update(deltaTime);
 }
 
-void CUIButton::Collect(IRenderer* renderer)
+void CUIButton::Collect(std::unique_ptr<IRenderer>& renderer)
 {
     if (!is_enable) return;
 
@@ -523,7 +521,7 @@ void CUIManager::Render(ID3D12GraphicsCommandList* commandList)
     }
 }
 
-void CUIManager::Collect(std::map<std::string, std::unique_ptr<IRenderer>>& renderers)
+void CUIManager::Collect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
     for (auto& canvas : canvases) {
         // 캔버스부터 시작해서 재귀적으로 수집 시작

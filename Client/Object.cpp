@@ -51,13 +51,15 @@ void CObject::Render(ID3D12GraphicsCommandList* commandList)
 			renderer->Render(commandList);
 }
 
-void CObject::OnCollect(IRenderer* renderer)
+void CObject::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
 	bool isStatic = (obj_type == OBJECT_TYPE::STATIC_OBJECT);
 
 	for (const auto& meshRenderer : GetComponents<CMeshRendererComponent>()) {
-		// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
-		meshRenderer->Collect(renderer, isStatic);
+		if (renderers[meshRenderer->GetShader()]) {
+			// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
+			meshRenderer->Collect(renderers[meshRenderer->GetShader()], isStatic);
+		}
 	}
 }
 

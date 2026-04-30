@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
@@ -11,11 +11,12 @@
 void CSceneManager::Init(ID3D12Device* device)
 {
 	// shader
+	shaders.resize(EShaderName::Count);
 	{
 		// inst
 		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
 		shader->CreateShader(device);
-		shaders.emplace("inst", std::move(shader));
+		shaders[EShaderName::Inst] = std::move(shader);
 	}
 	{
 		// skinning
@@ -29,44 +30,45 @@ void CSceneManager::Init(ID3D12Device* device)
 			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
 			CAnimationManager::GetInstance().CreateMaskBuffer(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
 		}
-		shaders.emplace("skinning", std::move(shader));
+		shaders[EShaderName::Skinning] = std::move(shader);
 	}
 	{
 		// billboard(ui용)
 		std::shared_ptr<CShader> shader = std::make_unique<CBillboardShader>();
 		shader->CreateShader(device);
-		shaders.emplace("billboard", std::move(shader));
+		shaders[EShaderName::Billboard] = std::move(shader);
 	}
 	{
 		// UI
 		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
 		shader->CreateShader(device);
-		shaders.emplace("ui", std::move(shader));
+		shaders[EShaderName::UI] = std::move(shader);
 	}
 
 	// renderer
+	renderers.resize(EShaderName::Count);
 	{
 		auto instRenderer = std::make_unique<CInstRenderer>();
 		instRenderer->Initialize(device, 5000);
-		renderers["inst"] = std::move(instRenderer);
+		renderers[EShaderName::Inst] = std::move(instRenderer);
 
 		auto aniRenderer = std::make_unique<CAniRenderer>();
 		aniRenderer->Initialize(device, 100);
-		renderers["skinning"] = std::move(aniRenderer);
+		renderers[EShaderName::Skinning] = std::move(aniRenderer);
 
 		auto uiRenderer = std::make_unique<CUIRenderer>();
 		uiRenderer->Initialize(device, 100);
-		renderers["ui"] = std::move(uiRenderer);
+		renderers[EShaderName::UI] = std::move(uiRenderer);
 
 		auto bbRenderer = std::make_unique<CBillboardRenderer>();
 		bbRenderer->Initialize(device, 500);
-		renderers["billboard"] = std::move(bbRenderer);
+		renderers[EShaderName::Billboard] = std::move(bbRenderer);
 
 		// 20부터 font용(아직 제한X)
-		CDescriptorHeapManager* heap = shaders["ui"]->GetHeapManager();
+		CDescriptorHeapManager* heap = shaders[EShaderName::UI]->GetHeapManager();
 		auto textRenderer = std::make_unique<CTextRenderer>();
 		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetCPUHandle(20), heap->GetGPUHandle(20));
-		renderers["text"] = std::move(textRenderer);
+		renderers[EShaderName::Text] = std::move(textRenderer);
 	}
 }
 
