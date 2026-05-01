@@ -84,25 +84,33 @@ void CGameScene::Initialize()
 	SetButtonEvents();
 
 	// 아이템 생성 (테스트)
-	SpawnWorldItem(5, XMFLOAT3{-1, 2, -1});
-	SpawnWorldItem(9, XMFLOAT3{-1, 2, -2});
-	SpawnWorldItem(14, XMFLOAT3{-1, 2, -3});
-	SpawnWorldItem(15, XMFLOAT3{-1, 2, -4});
-	SpawnWorldItem(17, XMFLOAT3{-2, 2, -1});
-	SpawnWorldItem(19, XMFLOAT3{-2, 2, -2});
+	SpawnWorldItem(5, XMFLOAT3{ -1, 2, -1 });
+	SpawnWorldItem(9, XMFLOAT3{ -1, 2, -2 });
+	SpawnWorldItem(14, XMFLOAT3{ -1, 2, -3 });
+	SpawnWorldItem(15, XMFLOAT3{ -1, 2, -4 });
+	SpawnWorldItem(17, XMFLOAT3{ -2, 2, -1 });
+	SpawnWorldItem(19, XMFLOAT3{ -2, 2, -2 });
 
-	SpawnWorldItem(20, XMFLOAT3{1, 2, 1});
-	SpawnWorldItem(21, XMFLOAT3{1, 2, 2});
-	SpawnWorldItem(22, XMFLOAT3{1, 2, 3});
-	SpawnWorldItem(23, XMFLOAT3{1, 2, 4});
-	SpawnWorldItem(24, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(25, XMFLOAT3{2, 2, 2});
-	SpawnWorldItem(26, XMFLOAT3{2, 2, 3});
-	SpawnWorldItem(27, XMFLOAT3{2, 2, 4});
-	SpawnWorldItem(29, XMFLOAT3{3, 2, 1});
-	SpawnWorldItem(30, XMFLOAT3{3, 2, 2});
-	SpawnWorldItem(31, XMFLOAT3{3, 2, 3});
-	SpawnWorldItem(40, XMFLOAT3{3, 2, 4});
+	SpawnWorldItem(20, XMFLOAT3{ 1, 2, 1 });
+	SpawnWorldItem(21, XMFLOAT3{ 1, 2, 2 });
+	SpawnWorldItem(22, XMFLOAT3{ 1, 2, 3 });
+	SpawnWorldItem(23, XMFLOAT3{ 1, 2, 4 });
+	SpawnWorldItem(24, XMFLOAT3{ 2, 2, 1 });
+	SpawnWorldItem(25, XMFLOAT3{ 2, 2, 2 });
+	SpawnWorldItem(26, XMFLOAT3{ 2, 2, 3 });
+	SpawnWorldItem(27, XMFLOAT3{ 2, 2, 4 });
+	SpawnWorldItem(29, XMFLOAT3{ 3, 2, 1 });
+	SpawnWorldItem(30, XMFLOAT3{ 3, 2, 2 });
+	SpawnWorldItem(31, XMFLOAT3{ 3, 2, 3 });
+	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
+
+	CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
+	auto humanMonster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
+	if (humanMonster) {
+		humanMonster->SetPosition(2, 0.1f, 2.f);
+		humanMonster->SetOriginPos({ 2, 0.1f, 2.f });
+		AddObject(humanMonster, humanMonster->GetID());
+	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

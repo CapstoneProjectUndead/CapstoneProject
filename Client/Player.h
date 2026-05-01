@@ -110,7 +110,12 @@ protected:
 	bool  is_possessed    = false;
 	float possession_timer = 0.0f;
 
-	bool     is_stunned = false;
-	float    stun_timer = { 0.0f };
+	bool     is_stunned    = false;
+	float    stun_timer    = { 0.0f };
+
+	bool     is_knocked_back = false;
+
+public:
+	bool GetIsKnockedBack() const { return is_knocked_back; }
 };
 

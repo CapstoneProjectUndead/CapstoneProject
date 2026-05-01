@@ -122,7 +122,6 @@ private:
     float accumulate_stamina{ 100.0f };
     bool  stamina_exhausted{ false };
 
-    bool     is_knocked_back{ false };
     XMFLOAT3 knockback_vel{};
     float    knockback_timer{ 0.0f };
 

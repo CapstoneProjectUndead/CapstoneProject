@@ -176,13 +176,14 @@ void CServerObjectFactory::InitializeUndeadCharacter(shared_ptr<CObject> object,
 	// -----------------------------------
 	std::string fileName{ "../Modeling/undead_char_0412.bin" };
 	InitializeCharacter(fileName, object, physicsManager, true,
-		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER));
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER | EColLayer::CHARACTER));
 }
 
 void CServerObjectFactory::InitializeHumanMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
 {
 	std::string fileName{ "../Modeling/Human_monster.bin" };
-	InitializeCharacter(fileName, object, physicsManager, false);
+	InitializeCharacter(fileName, object, physicsManager, false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER));
 }
 
 void CServerObjectFactory::InitializeGhost(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)

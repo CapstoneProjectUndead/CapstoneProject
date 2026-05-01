@@ -472,7 +472,8 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		fileName,
 		undeadProcessor,
 		{ "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" },
-		true
+		true,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::CHARACTER)
 	);
 }
 
@@ -503,7 +504,8 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 		fileName,
 		undeadProcessor,
 		{ "Human_monster_idle", "Human_monster_walk", "Human_monster_run", "Human_monster_attack" },
-		false
+		false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER)
 	);
 
 	character->SetShader("skinning");

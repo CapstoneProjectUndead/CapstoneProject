@@ -40,6 +40,7 @@ private:
 
     // ATTACK
     bool  hit_damage_dealt      = false;
+    bool  stun_applied          = false;
     float contact_damage_timer  = 0.0f;
     float attack_cooldown_timer = 9999.f;
 

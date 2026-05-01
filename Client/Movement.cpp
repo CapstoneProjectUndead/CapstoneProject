@@ -102,7 +102,8 @@ void CMovementComponent::Update(const float deltaTime)
             bool isMoving = (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('S') & 0x8000) ||
                 (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('D') & 0x8000);
 
-            if (!isMoving) {
+            CPlayer* p = static_cast<CPlayer*>(owner);
+            if (!isMoving && !p->GetIsKnockedBack()) {
                 owner->velocity.x = 0.0f;
                 owner->velocity.z = 0.0f;
             }

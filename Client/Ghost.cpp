@@ -18,7 +18,8 @@ CGhost::CGhost()
     , is_waiting(false)
 {
     friction = 0.0f;
-    trace_speed = 2.0f;
+    trace_speed = 4.0f;
+    recog_range = 6.0f;
     attack_range = 1.5f;
     SetFOV(120);
 }
@@ -41,23 +42,25 @@ void CGhost::Update(float elapsedTime)
 
     contact_damage_timer += elapsedTime;
 
-    auto nearPlayer = FindNearestPlayer();
-    if (nearPlayer) {
+    if (AI_state != AI_STATE::MONSTER_ATTACK) {
+        auto nearPlayer = FindNearestPlayer();
+        if (nearPlayer) {
 
-        auto* ghostCol  = GetComponent<CColliderComponent>();
-        auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+            auto* ghostCol = GetComponent<CColliderComponent>();
+            auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
 
-        if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
+            if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
 
-            if (contact_damage_timer >= 1.0f) {
+                if (contact_damage_timer >= 1.0f) {
 
-                uint32 hp = nearPlayer->GetHp();
-                nearPlayer->SetHp(hp > 5 ? hp - 5 : 0);
-                contact_damage_timer = 0.0f;
+                    uint32 hp = nearPlayer->GetHp();
+                    nearPlayer->SetHp(hp > 5 ? hp - 5 : 0);
+                    contact_damage_timer = 0.0f;
 
-                if (nearPlayer->GetIsMyPlayer()) {
-                    XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
-                    static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 1.0f);
+                    if (nearPlayer->GetIsMyPlayer()) {
+                        XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
+                        static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 1.0f);
+                    }
                 }
             }
         }
@@ -205,16 +208,37 @@ void CGhost::OnTraceMove(float elapsedTime)
 
     attack_cooldown_timer += elapsedTime;
 
-    // 상태 전환 (State Transition) 판단
-       // 조건 A: 타겟이 인식 범위 밖으로 도망갔을 때 -> 추적 포기
     if (dist > recog_range) {
-        target_player.reset(); // 타겟 초기화
+        target_player.reset();
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-    // 조건 B: 타겟이 공격 범위 안으로 들어왔을 때 -> 공격 시작! (쿨타임 1.5s)
     else if (dist <= attack_range && attack_cooldown_timer >= 1.5f) {
         AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
+        return;
+    }
+    else if (attack_cooldown_timer < 1.5f) {
+        constexpr float retreat_dist = 1.5f;
+        if (dist < retreat_dist) {
+            XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+            awayDir.y = 0.0f;
+            float len = Vector3::Length(awayDir);
+            if (len > 0.001f) {
+                float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+                SetYaw(yaw);
+                SetYawPitch(yaw, 0.0f);
+                velocity.x = look.x * 1.5f;
+                velocity.z = look.z * 1.5f;
+                AI_state = AI_STATE::MONSTER_TRACE;
+            }
+        } else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+            AI_state = AI_STATE::MONSTER_IDLE;
+            float yaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
         return;
     }
 
@@ -275,56 +299,48 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-    constexpr float DASH_SPEED    = 5.0f;
+    constexpr float DASH_SPEED    = 6.0f;
     constexpr float DASH_DURATION = 0.5f;
+    constexpr float STOP_DIST     = 0.7f;
 
     attack_timer += elapsedTime;
-
     auto targetPlayer = target_player.lock();
 
-    // 돌진: 0.5s 동안 플레이어를 향해 추적하며 달려듦
+    // 돌진: STOP_DIST 이상이면 달리고, 코앞에 닿으면 즉시 멈추고 스턴
     if (attack_timer < DASH_DURATION && targetPlayer) {
         XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
         dir.y = 0.0f;
         float dist = Vector3::Length(dir);
-        if (dist > 0.1f) {
+
+        if (dist > STOP_DIST) {
             float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
             SetYaw(yaw);
             SetYawPitch(yaw, 0.0f);
             velocity.x = look.x * DASH_SPEED;
             velocity.z = look.z * DASH_SPEED;
-        } 
-        else {
+        } else {
             velocity.x = 0.0f;
             velocity.z = 0.0f;
+            if (!stun_applied && targetPlayer->GetIsMyPlayer()) {
+                static_cast<CMyPlayer*>(targetPlayer.get())->ApplyStun(1.0f);
+                stun_applied = true;
+            }
         }
-    }
-    else {
+    } else {
         velocity.x = 0.0f;
         velocity.z = 0.0f;
     }
 
-    if (!hit_damage_dealt && attack_timer >= 0.6f) {
+    // 빙의 판정
+    if (!hit_damage_dealt && attack_timer >= 1.1f) {
         hit_damage_dealt = true;
-        if (targetPlayer) {
-            XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
-            dirVec.y = 0.0f;
-
-            XMFLOAT3 fwd       = Vector3::Normalize(XMFLOAT3{ look.x,  0.0f, look.z  });
-            XMFLOAT3 right_vec = Vector3::Normalize(XMFLOAT3{ right.x, 0.0f, right.z });
-
-            float forwardDist = Vector3::DotProduct(dirVec, fwd);
-            float sideDist    = Vector3::DotProduct(dirVec, right_vec);
-
-            constexpr float depth = 1.5f;
-            constexpr float width = 1.0f;
-
-            if (forwardDist >= -0.5f && forwardDist <= depth && fabsf(sideDist) <= width) {
-                if (targetPlayer->GetIsMyPlayer()) {
-                    if (rand() % 100 < 30) {
-                        static_cast<CMyPlayer*>(targetPlayer.get())->ApplyPossession();
-                        MarkForDelete();
-                    }
+        if (targetPlayer && targetPlayer->GetIsMyPlayer()) {
+            XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+            dir.y = 0.0f;
+            if (Vector3::Length(dir) <= 0.8f) {
+                if (rand() % 100 < 25) {
+                    static_cast<CMyPlayer*>(targetPlayer.get())->ApplyPossession();
+                    MarkForDelete();
                 }
             }
         }
@@ -370,6 +386,7 @@ void CGhost::OnAttackEnter()
     velocity.z       = 0.0f;
     attack_timer          = 0.0f;
     hit_damage_dealt      = false;
+    stun_applied          = false;
     attack_cooldown_timer = 0.0f;
 
     auto targetPlayer = target_player.lock();
