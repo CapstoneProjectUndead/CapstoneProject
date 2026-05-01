@@ -19,6 +19,12 @@ void CSceneManager::Init(ID3D12Device* device)
 		shaders[EShaderName::Inst] = std::move(shader);
 	}
 	{
+		// twoside(D3D12_CULL_MODE_NONE)
+		std::shared_ptr<CShader> shader = std::make_unique<CTwoSideShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::TwoSide] = std::move(shader);
+	}
+	{
 		// skinning
 		std::shared_ptr<CShader> shader = std::make_unique<CSkinningShader>();
 		shader->CreateShader(device);
@@ -51,6 +57,10 @@ void CSceneManager::Init(ID3D12Device* device)
 		auto instRenderer = std::make_unique<CInstRenderer>();
 		instRenderer->Initialize(device, 5000);
 		renderers[EShaderName::Inst] = std::move(instRenderer);
+
+		auto twiSideRenderer = std::make_unique<CInstRenderer>();
+		twiSideRenderer->Initialize(device, 100);
+		renderers[EShaderName::TwoSide] = std::move(twiSideRenderer);
 
 		auto aniRenderer = std::make_unique<CAniRenderer>();
 		aniRenderer->Initialize(device, 100);

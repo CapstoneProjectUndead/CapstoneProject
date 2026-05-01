@@ -114,9 +114,11 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 		}
 
 		// 인스턴싱 드로우
-		renderers[i]->Render(commandList);
-		if (i == EShaderName::UI) {
-			renderers[EShaderName::Text]->Render(commandList);
+		if (renderers[i]) {
+			renderers[i]->Render(commandList);
+			if (i == EShaderName::UI) {
+				renderers[EShaderName::Text]->Render(commandList);
+			}
 		}
 
 		shaders[i]->RenderEnd(commandList);

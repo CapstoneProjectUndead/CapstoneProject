@@ -172,11 +172,11 @@ inline void Swap(float* pfS, float* pfT) { float fTemp = *pfS; *pfS = *pfT; *pfT
 
 enum EShaderName : size_t {
 	Inst,
+	TwoSide,
 	Skinning,
 	UI,
 	Billboard,
 	Text,
-	XRay,	// 은면 렌더링
 	Count
 };
 

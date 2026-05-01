@@ -176,11 +176,11 @@ void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
 	player->SetComponent(std::make_shared<CMovementComponent>());
 }
 
-void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
+void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName)
 {
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
-	InitStaticComponents(obj, heapManager, node);
+	InitStaticComponents(obj, heapManager, node, shaderName);
 
 	// 싱글일 때만 collider 생성(멀티면 서버에서 생성)
 	if (g_is_single) {
@@ -206,7 +206,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 	for (const auto& children : frameRoot->childrens) {
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-		InitStaticComponents(obj, heapManager, children);
+		InitStaticComponents(obj, heapManager, children, EShaderName::Inst);
 
 		// Lobby 특화 Collider 로직
 		float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&children->mesh.bounds.Extents))) * 1.5f;
@@ -705,32 +705,38 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 	return worldItem;
 }
 
+void CObjectFactory::LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName)
+{
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+	if (!frameRoot) return;
+
+	LoadFrameNode(heapManager, prototypes, frameRoot, shaderName);
+	for (const auto& children : frameRoot->childrens) {
+		LoadFrameNode(heapManager, prototypes, children, shaderName);
+	}
+}
+
 void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
 {
-	auto LoadNode = [this, heapManager](const std::string fileName) {
-			auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-			if (!frameRoot) return;
-
-			LoadFrameNode(heapManager, prototypes, frameRoot);
-			for (const auto& children : frameRoot->childrens) {
-				LoadFrameNode(heapManager, prototypes, children);
-			}
-		};
 	{
 		std::string fileName{ "../Modeling/Equip_0412.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/Food_0411.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName);
 	}
+}
+
+void CObjectFactory::LoadTwoSideFrame(CDescriptorHeapManager* heapManager)
+{
 	{
 		std::string fileName{ "../Modeling/flapper.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName, EShaderName::TwoSide);
 	}
 }
 

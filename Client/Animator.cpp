@@ -384,6 +384,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
 		
 		if (proto) {
+			// item은 모두 inst rnederer 사용
 			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
 				cache.render_units = renderer->GetRenderUnits();
 			}
@@ -397,6 +398,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 		if (proto) {
 			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
 				cache.render_units = renderer->GetRenderUnits();
+				cache.shader_name = renderer->GetShader();
 			}
 			cache.last_item_id = itemID;
 			cache.model_name = modelName;
@@ -407,7 +409,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 	for (const RenderUnit& unit : cache.render_units) {
 		if (unit.mesh) {
 			XMMATRIX socketMat = GetSocketMatrix(type);
-			CSceneManager::GetInstance().GetRanderers()[EShaderName::Inst]->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
+			CSceneManager::GetInstance().GetRanderers()[cache.shader_name]->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
 		}
 	}
 }

@@ -56,6 +56,8 @@ void CGameScene::Initialize()
 		ghost_spawn_positions = factory->GetGhostSpawnPositions();
 
 		factory->LoadItemFrame(heapManager);
+		// 우선 게임씬에서 load
+		factory->LoadTwoSideFrame(shaders[EShaderName::TwoSide]->GetHeapManager());
 	}
 
 	// menu UI

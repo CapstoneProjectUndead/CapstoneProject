@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CObject;
 class CCamera;
@@ -105,6 +105,13 @@ class CInstShader : public CShader
 public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+};
+
+// CInstShader에서 CULL_MODE_NONE
+class CTwoSideShader : public CInstShader
+{
+public:
+	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
 };
 
 class CUIShader : public CShader
