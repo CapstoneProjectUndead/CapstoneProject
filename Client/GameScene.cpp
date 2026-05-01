@@ -635,8 +635,33 @@ void CGameScene::Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_R
 void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt)
 {
 	if (my_player->GetID() == pkt.player_id) {
-		my_player->SetEquippedItemId(pkt.item_id);
+
+		bool wasDowsing = my_player->GetDowsing();
+		auto itemFinder = my_player->GetComponent<CItemFinder>();
+		auto animator = my_player->GetComponent<CAnimatorComponent>();
+
+		if (!itemFinder || !animator)
+			return;
+
+		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0) {
+			my_player->SetDowsing(true);
+
+			itemFinder->Toggle();
+
+			animator->PlayAction("Ganga_search");
+		}
+		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+			my_player->SetDowsing(false);
+
+			itemFinder->Toggle();
+
+			animator->PlayAction("");
+		}
+		else {
+			my_player->SetEquippedItemId(pkt.item_id);
+		}
 	}
+	// 다른 플레이어
 	else {
 		auto& indexMap = GetIDIndex();
 		auto it = indexMap.find(pkt.player_id);
@@ -644,8 +669,26 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 			return;
 
 		auto player = std::dynamic_pointer_cast<CPlayer>(objects[it->second]);
-		if (player)
+		if (!player)
+			return;
+
+		auto animator = player->GetComponent<CAnimatorComponent>();
+		if (!animator)
+			return;
+
+		bool wasDowsing = player->GetDowsing();
+
+		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0){
+			player->SetDowsing(true);
+			animator->PlayAction("Ganga_search");
+		}
+		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+			player->SetDowsing(false);
+			animator->PlayAction("");
+		}
+		else {
 			player->SetEquippedItemId(pkt.item_id);
+		}
 	}
 }
 

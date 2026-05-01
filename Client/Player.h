@@ -80,6 +80,8 @@ public:
 	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
 	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
 
+	void SetDowsing(bool dows) { is_dowsing = dows; }
+	bool GetDowsing() const { return is_dowsing; }
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
 
 private:
@@ -101,6 +103,7 @@ protected:
 	std::deque<OpponentFrameHistory> interpolation_deq;
 	std::vector<Buff>                buffs;
 
+	bool							 is_dowsing = false;
 	uint16							 equipped_item_id{ 0 };
 	PlayerStat stat;
 

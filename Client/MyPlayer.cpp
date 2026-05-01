@@ -55,19 +55,43 @@ void CMyPlayer::Update(float elapsedTime)
 	}
 
 	if (KEY_TAP(KEY::F)) {
-		auto itemFinder = GetComponent<CItemFinder>();
-		if (itemFinder) {
-			itemFinder->Toggle();
-			// 애니메이션 호출
-			if (itemFinder->is_enable) {
-				auto animator = GetComponent<CAnimatorComponent>();
-				if (animator)
-					animator->PlayAction("Ganga_search");
+
+		if (g_is_single) {
+			auto itemFinder = GetComponent<CItemFinder>();
+			if (itemFinder) {
+				itemFinder->Toggle();
+				// 애니메이션 호출
+				if (itemFinder->is_enable) {
+					auto animator = GetComponent<CAnimatorComponent>();
+					if (animator)
+						animator->PlayAction("Ganga_search");
+				}
+				else {
+					auto animator = GetComponent<CAnimatorComponent>();
+					if (animator)
+						animator->PlayAction("");
+				}
+			}
+		}
+		else {
+			C_EquipItem equipPkt;
+
+			if (!is_dowsing) {
+				equipPkt.player_id = GetID();
+				equipPkt.item_id = -1;
+				equipPkt.is_dowsing_rod = true;
+				equipPkt.scene_type = current_scene_type;
 			}
 			else {
-				auto animator = GetComponent<CAnimatorComponent>();
-				if (animator)
-					animator->PlayAction("");
+				equipPkt.player_id = GetID();
+				equipPkt.item_id = -1;
+				equipPkt.is_dowsing_rod = false;
+				equipPkt.scene_type = current_scene_type;
+			}
+
+			auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+			if (auto s = session.lock()) {
+				s->DoSend(sendBuffer);
 			}
 		}
 	}
@@ -115,20 +139,28 @@ void CMyPlayer::OnCollect(IRenderer* renderer)
 
 	auto animator = GetComponent<CAnimatorComponent>();
 	if (animator) {
+
 		// 싱글 모드일 때는 바로 장착
 		if (g_is_single) {
-			animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
+			auto itemFinder = GetComponent<CItemFinder>();
+			if (itemFinder && itemFinder->is_enable) {
+				animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
+				animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
+			}
+			else if(itemFinder && !itemFinder->is_enable)
+				animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
 		}
 		else {
 			// 멀티 모드에서는 서버의 허락을 받는다.
-			if (equipped_item_id != 0)
+			if (is_dowsing) {
+				auto itemFinder = GetComponent<CItemFinder>();
+				if (itemFinder && itemFinder->is_enable) {
+					animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
+					animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
+				}
+			}
+			else if (!is_dowsing && equipped_item_id != 0)
 				animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
-		}
-
-		auto itemFinder = GetComponent<CItemFinder>();
-		if (itemFinder && itemFinder->is_enable) {
-			animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
-			animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
 		}
 	}
 }

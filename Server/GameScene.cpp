@@ -488,6 +488,37 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 	if (!player)
 		return;
 
+	bool wasDowsing = player->GetDowsing();
+
+	// IDLE -> 다우징 요청
+	if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0) {
+		player->SetDowsing(true);
+
+		S_EquipItem equipPkt;
+		equipPkt.is_dowsing_rod = true;
+		equipPkt.player_id = pkt.player_id;
+		equipPkt.item_id = -1;
+		equipPkt.scene_type = scene_type;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+		BroadCast(sendBuffer);
+		return;
+	}
+	// 다우징 -> IDLE 요청
+	else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+		player->SetDowsing(false);
+		
+		S_EquipItem equipPkt;
+		equipPkt.is_dowsing_rod = false;
+		equipPkt.player_id = pkt.player_id;
+		equipPkt.item_id = -1;
+		equipPkt.scene_type = scene_type;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+		BroadCast(sendBuffer);
+		return;
+	}
+
 	if (pkt.item_id != 0) {
 		auto inventory = player->GetInventory();
 		if (!inventory)

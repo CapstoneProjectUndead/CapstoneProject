@@ -117,6 +117,9 @@ public:
 	float GetPossessionTimer() const { return possession_timer; }
 	void  SetPossessionTimer(float t) { possession_timer = t; }
 
+	bool GetDowsing() const { return is_dowsing; }
+	void SetDowsing(bool dows) { is_dowsing = dows; }
+
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
@@ -142,6 +145,7 @@ private:
 	shared_ptr<CInventory>      inventory;
 
 	bool			  is_ready;
+	bool			  is_dowsing;
 	uint16			  equipped_item_id;  // 0 = 맨손
 	ITEM_SUB_TYPE	  equipped_item_sub_type;
 	shared_ptr<CItem> equipped_item;
