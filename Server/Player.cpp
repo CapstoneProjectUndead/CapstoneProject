@@ -29,6 +29,10 @@ CPlayer::CPlayer()
     , knockback_timer(0.0f)
     , stun_timer(0.0f)
     , is_possessed(false)
+    , possession_timer(0.0f)
+    , c_hold_timer(0.0f)
+    , last_c_input(false)
+    , start_jump(false)
     , possessed_path_refresh_timer(0.0f)
     , possessed_wander_target{}
     , possessed_is_waiting(false)
@@ -139,6 +143,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     if (input.d) dir.x++;
 
     // 점프
+    start_jump = (input.space && is_grounded);
     if (input.space) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Jump();
@@ -664,7 +669,23 @@ void CPlayer::UpdateStamina(float elapsedTime)
                 move->UnRun();
         }
     }
+    else if (start_jump) {
+
+        constexpr float jumpCost = 15.0f;
+        accumulate_stamina -= jumpCost;
+
+        if (accumulate_stamina <= 0.0f) {
+            accumulate_stamina = 0.0f;
+            stamina_exhausted = true;
+
+            if (auto move = GetComponent<CMovementComponent>())
+                move->UnRun();
+        }
+    }
     else {
+        if (!is_grounded)
+            return;
+
         accumulate_stamina += regenPerSec * elapsedTime;
 
         if (accumulate_stamina > static_cast<float>(stat.maxStamina))

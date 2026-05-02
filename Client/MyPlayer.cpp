@@ -278,6 +278,10 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 	if (input.s) dir.z--;
 	if (input.a) dir.x--;
 	if (input.d) dir.x++;
+
+	// 점프 시작
+	start_jump = (input.space && is_grounded);
+
 	if (input.space) {
 		move->Jump();
 	}
@@ -528,7 +532,18 @@ void CMyPlayer::UpdateStamina(float elapsedTime)
 			}
 		}
 	}
+	else if (start_jump) {
+
+		constexpr float jumpCost = 15.0f;
+		accumulate_stamina -= jumpCost;
+
+		if (accumulate_stamina <= 0.0f)
+			accumulate_stamina = 0.0f;
+	}
 	else {
+		if (!is_grounded)
+			return;
+
 		accumulate_stamina += regenPerSec * elapsedTime;
 
 		if (accumulate_stamina > static_cast<float>(stat.maxStamina))

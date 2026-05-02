@@ -121,6 +121,7 @@ private:
     float grounded_timer{ 0.1 };
     float accumulate_stamina{ 100.0f };
     bool  stamina_exhausted{ false };
+    bool  start_jump{ false };
 
     XMFLOAT3 knockback_vel{};
     float    knockback_timer{ 0.0f };

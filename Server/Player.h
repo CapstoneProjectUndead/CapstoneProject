@@ -162,9 +162,10 @@ private:
 	float       stun_timer;
 
 	bool        is_possessed;
-	float       possession_timer{ 0.0f };
-	float       c_hold_timer{ 0.0f };
-	bool        last_c_input{ false };
+	float       possession_timer;
+	float       c_hold_timer;
+	bool        last_c_input;
+	bool        start_jump;
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
 	float    possessed_path_refresh_timer;
