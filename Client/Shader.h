@@ -1,10 +1,10 @@
-ï»¿#pragma once
+#pragma once
 
 class CObject;
 class CCamera;
 
 /*
-* í…ìŠ¤ì²˜(srv) ë°”ì¸ë”© ìˆœì„œ
+* ÅØ½ºÃ³(srv) ¹ÙÀÎµù ¼ø¼­
 1. srvIndex = Allocate()
 2. texture->CreateTextureResource(), CreateSrv(GetCPUHandle(srvIndex))
 4. SetDescriptorHeaps
@@ -13,7 +13,7 @@ class CCamera;
 */
 class CDescriptorHeapManager {
 public:
-	// ë””ìŠ¤í¬ë¦½í„° í™ ìƒì„±
+	// µğ½ºÅ©¸³ÅÍ Èü »ı¼º
 	void Initialize(ID3D12Device* device, UINT numDescriptors);
 	UINT Allocate()
 	{
@@ -44,34 +44,34 @@ private:
 };
 
 /*
-pipeline ìƒíƒœ ê°ì²´ë¥¼ ìƒì„±í•˜ê³  ê²Œì„ ì˜¤ë¸Œì íŠ¸ë¥¼ ê´€ë¦¬í•˜ëŠ” í´ë˜ìŠ¤
-static shader: lightë§Œ ìˆëŠ” ê¸°ë³¸ ì‰ì´ë”
+pipeline »óÅÂ °´Ã¼¸¦ »ı¼ºÇÏ°í °ÔÀÓ ¿ÀºêÁ§Æ®¸¦ °ü¸®ÇÏ´Â Å¬·¡½º
+static shader: light¸¸ ÀÖ´Â ±âº» ½¦ÀÌ´õ
 */
 class CShader {
 public:
 	CShader() {};
 	virtual ~CShader() {};
 
-	// ì…ë ¥ ì¡°ë¦½ê¸°ì—ê²Œ ì •ì  ë²„í¼ë¥¼ ì•Œë ¤ì£¼ê¸° ìœ„í•œ êµ¬ì¡°ì²´ ë°˜í™˜
+	// ÀÔ·Â Á¶¸³±â¿¡°Ô Á¤Á¡ ¹öÆÛ¸¦ ¾Ë·ÁÁÖ±â À§ÇÑ ±¸Á¶Ã¼ ¹İÈ¯
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
-	// ë˜ìŠ¤í„°ë¼ì´ì € ìƒíƒœë¥¼ ì„¤ì •í•˜ê¸° ìœ„í•œ êµ¬ì¡°ì²´ ë°˜í™˜
+	// ·¡½ºÅÍ¶óÀÌÀú »óÅÂ¸¦ ¼³Á¤ÇÏ±â À§ÇÑ ±¸Á¶Ã¼ ¹İÈ¯
 	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
-	// ë¸”ë Œë“œ ìƒíƒœë¥¼ ì„¤ì •í•˜ê¸° ìœ„í•œ êµ¬ì¡°ì²´ ë°˜í™˜
+	// ºí·»µå »óÅÂ¸¦ ¼³Á¤ÇÏ±â À§ÇÑ ±¸Á¶Ã¼ ¹İÈ¯
 	virtual D3D12_BLEND_DESC CreateBlendState();
-	// ê¹Šì´-ìŠ¤í…ì‹¤ ê²€ì‚¬ë¥¼ ìœ„í•œ ìƒíƒœë¥¼ ì„¤ì •í•˜ê¸° ìœ„í•œ êµ¬ì¡°ì²´ ë°˜í™˜
+	// ±íÀÌ-½ºÅÙ½Ç °Ë»ç¸¦ À§ÇÑ »óÅÂ¸¦ ¼³Á¤ÇÏ±â À§ÇÑ ±¸Á¶Ã¼ ¹İÈ¯
 	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
 
-	// ì…°ì´ë” ì½”ë“œ ì»´íŒŒì¼
+	// ¼ÎÀÌ´õ ÄÚµå ÄÄÆÄÀÏ
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob** );
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob** );
 	virtual D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**);
 	D3D12_SHADER_BYTECODE CompileShaderFromFile(WCHAR* , LPCSTR ,LPCSTR , ID3DBlob** );
 
-	//ê·¸ë˜í”½ìŠ¤ íŒŒì´í”„ë¼ì¸ ìƒíƒœ ê°ì²´ ìƒì„±
+	//±×·¡ÇÈ½º ÆÄÀÌÇÁ¶óÀÎ »óÅÂ °´Ã¼ »ı¼º
 	virtual void CreateShader(ID3D12Device*);
-	// descriptor heap, descriptor ìƒì„± í•¨ìˆ˜
+	// descriptor heap, descriptor »ı¼º ÇÔ¼ö
 	virtual void CreateShaderVariables(ID3D12Device*) {}
-	// ë£¨íŠ¸ ì‹œê·¸ë‹ˆì²˜, CreateDescriptorHeap ìˆ˜í–‰
+	// ·çÆ® ½Ã±×´ÏÃ³, CreateDescriptorHeap ¼öÇà
 	ID3D12RootSignature* GetGraphicsRootSignature() { return graphics_root_signature.Get(); }
 	virtual ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*);
 
@@ -89,7 +89,7 @@ protected:
 	std::unique_ptr<CDescriptorHeapManager> heap_manager;
 };
 
-// ìŠ¤í‚¤ë‹ ì •ë³´ shader
+// ½ºÅ°´× Á¤º¸ shader
 class CSkinningShader : public CShader
 {
 public:
@@ -105,9 +105,10 @@ class CInstShader : public CShader
 public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 };
 
-// CInstShaderì—ì„œ CULL_MODE_NONE
+// CInstShader¿¡¼­ CULL_MODE_NONE
 class CTwoSideShader : public CInstShader
 {
 public:

@@ -1,4 +1,4 @@
-ï»¿#include "stdafx.h"
+#include "stdafx.h"
 #include "LightManager.h"
 #include "Camera.h"
 
@@ -15,10 +15,10 @@ void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* 
     );
     light_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 
-    // light ì´ˆê¸°í™”
-    light.ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+    // light ÃÊ±âÈ­
+    light.ambient_light = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 
-    // ë°©í–¥ê´‘ 3ê°œ ì˜ˆì‹œ
+    // ¹æÇâ±¤ 3°³ ¿¹½Ã
     light.lights[0].direction = XMFLOAT3(0.577f, -0.577f, 0.577f);
     light.lights[0].strength = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
@@ -31,7 +31,7 @@ void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void CLightManager::Update(const CCamera* camera)
 {
-    light.eyePosWorld = camera->GetPos();
+    light.eyePos_world = camera->GetPos();
 }
 
 void CLightManager::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList)

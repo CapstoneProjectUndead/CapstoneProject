@@ -411,6 +411,9 @@
     <ClInclude Include="MineableObject.h">
       <Filter>Object\Mineable</Filter>
     </ClInclude>
+    <ClInclude Include="ShadowMap.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -647,6 +650,9 @@
     <ClCompile Include="MineableObject.cpp">
       <Filter>Object\Mineable</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMap.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -686,5 +692,8 @@
       <Filter>Component\Rendering</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Common.hlsli">
+      <Filter>D3D12\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -239,6 +239,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ServerSession.h" />
     <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Resource.h" />
@@ -336,6 +337,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ServerSession.cpp" />
     <ClCompile Include="ServerSessionManager.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -424,6 +426,7 @@ call ClientCopy.bat</Command>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Common.hlsli" />
     <None Include="MeshComponent.inl" />
     <None Include="packages.config" />
   </ItemGroup>

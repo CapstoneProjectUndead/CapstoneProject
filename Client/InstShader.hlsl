@@ -1,30 +1,4 @@
-#ifndef NUM_DIR_LIGHTS
-    #define NUM_DIR_LIGHTS 3
-#endif
-
-#ifndef NUM_POINT_LIGHTS
-    #define NUM_POINT_LIGHTS 0
-#endif
-
-#ifndef NUM_SPOT_LIGHTS
-    #define NUM_SPOT_LIGHTS 0
-#endif
-
-#include "Light.hlsl"
-
-cbuffer CameraInfo : register(b0)
-{
-    float4x4 viewMatrix : packoffset(c0);
-    float4x4 projectionMatrix : packoffset(c4);
-};
-
-cbuffer LightInfo : register(b1)
-{
-    float4 ambientLight;
-    float3 eyePosWorld;
-    
-    Light gLights[MaxLights];
-};
+#include "Common.hlsli"
 
 struct VS_INPUT
 {
@@ -36,7 +10,8 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 position_clip : SV_POSITION;
-    float3 position_world : POSITION;
+    float4 shadow_pos : POSITION0;
+    float3 position_world : POSITION1;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD;
 
@@ -59,9 +34,6 @@ struct InstanceData
 
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 
-Texture2D texDiffuse[50] : register(t0);
-SamplerState sample : register(s0);
-
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 {
     VS_OUTPUT output;
@@ -79,6 +51,8 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
 
     output.tex = input.tex;
+    
+    output.shadow_pos = mul(posW, gShadowTransform);
 
     return output;
 }
@@ -95,9 +69,12 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
     float3 toEyeW = normalize(eyePosWorld - input.position_world);
 
     float4 ambient = ambientLight * diffuseAlbedo;
+    
+    // Only the first light casts a shadow
+    float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
+    shadowFactor[0] = CalcShadowFactor(input.shadow_pos);
 
     Material mat = { diffuseAlbedo, instMat.fresnel, instMat.glossiness };
-    float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, input.position_world, input.normal, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;
