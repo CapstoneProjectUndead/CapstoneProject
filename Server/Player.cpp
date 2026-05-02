@@ -78,6 +78,7 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
             input_queue.pop_front();
 
             // (가속 -> 속도제한 -> 이동 -> 감속)
+            last_c_input = pending.input.c;
             SimulateMove(pending.input, elapsedTime);
 
             // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
@@ -99,7 +100,8 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
     else
     {
         // 입력이 없어도 마찰/중력 계산을 위해 1회 업데이트 (state는 변경하지 않음)
-        InputData emptyInput{ false, false, false, false, false, false };
+        InputData emptyInput{ false, false, false, false, false, false, false };
+        emptyInput.c = last_c_input;
         SimulateMove(emptyInput, elapsedTime, false);
 
         if (last_simulated_time < g_server_total_time)
@@ -309,7 +311,7 @@ void CPlayer::UpdatePossession(float elapsedTime)
                 possession_contact_timer = 0.0f;
 
                 XMFLOAT3 knockbackDir = Vector3::Subtract(nearOther->GetPosition(), position);
-                //nearOther->ApplyKnockback(knockbackDir, 0.8f, 0.0f);
+                nearOther->ApplyKnockback(knockbackDir, 0.5f, 0.0f);
             }
         }
 
@@ -382,6 +384,9 @@ void CPlayer::UpdatePossession(float elapsedTime)
 
 void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
 {
+    if (current_scene_type != SCENE_TYPE::GAME)
+        return;
+
     if (!input.c) {
         c_hold_timer = 0.0f;
         return;
@@ -403,7 +408,7 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
                 XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), position);
                 diff.y = 0.0f;
 
-                if (Vector3::Length(diff) <= 0.5f) {
+                if (Vector3::Length(diff) <= 1.0f) {
                     target = player;
                     break;
                 }

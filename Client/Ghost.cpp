@@ -218,7 +218,7 @@ void CGhost::OnTraceMove(float elapsedTime)
         return;
     }
     else if (attack_cooldown_timer < 1.5f) {
-        constexpr float retreat_dist = 1.5f;
+        constexpr float retreat_dist = 1.0f;
         if (dist < retreat_dist) {
             XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
             awayDir.y = 0.0f;

@@ -103,14 +103,6 @@ void CGameScene::Initialize()
 	SpawnWorldItem(30, XMFLOAT3{ 3, 2, 2 });
 	SpawnWorldItem(31, XMFLOAT3{ 3, 2, 3 });
 	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
-
-	CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
-	auto humanMonster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
-	if (humanMonster) {
-		humanMonster->SetPosition(2, 0.1f, 2.f);
-		humanMonster->SetOriginPos({ 2, 0.1f, 2.f });
-		AddObject(humanMonster, humanMonster->GetID());
-	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

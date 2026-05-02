@@ -87,7 +87,8 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		// Attack 상태 등록 및 전이 추가
 		if (!animSet.action.empty()) {
 			std::string attack{ "AttackState" };
-			controller.AddState({ attack, animSet.action, 2.0f });
+			float attackSpeed = (static_cast<CMonster*>(owner)->GetMonsterType() == MON_TYPE::HUMAN_MONSTER) ? 2.0f : 1.0f;
+			controller.AddState({ attack, animSet.action, attackSpeed });
 
 			// Run → Attack
 			Transition r2a;
