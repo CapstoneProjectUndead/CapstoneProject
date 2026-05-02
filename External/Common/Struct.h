@@ -15,8 +15,9 @@ struct InputData
 	bool space = false;
 	bool shift = false;
 	bool lbtn  = false;
+	bool c     = false;
 
-	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift, bool _lbtn = false)
+	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift, bool _lbtn = false, bool _c = false)
 		: w(_w)
 		, a(_a)
 		, s(_s)
@@ -24,6 +25,7 @@ struct InputData
 		, space(_space)
 		, shift(_shift)
 		, lbtn(_lbtn)
+		, c(_c)
 	{ }
 };
 

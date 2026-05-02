@@ -215,7 +215,7 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
 
     attack_timer += elapsedTime;
 
-    if (!hit_damage_dealt && attack_timer >= 0.7f) {
+    if (!hit_damage_dealt && attack_timer >= 0.45f) {
         hit_damage_dealt = true;
 
         auto targetPlayer = target_player.lock();
@@ -229,12 +229,12 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
             float forwardDist = Vector3::DotProduct(dirVec, fwd);
             float sideDist    = Vector3::DotProduct(dirVec, right_vec);
 
-            constexpr float depth = 1.5f;
+            constexpr float depth = 2.5f;
             constexpr float width = 1.0f;
 
             if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
                 uint32 hp = targetPlayer->GetHp();
-                targetPlayer->SetHp(hp > 15 ? hp - 15 : 0);
+                targetPlayer->SetHp(hp > 10 ? hp - 10 : 0);
                 XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->GetPosition(), position);
                 targetPlayer->ApplyKnockback(knockbackDir, 0.6f, 0.f);
             }

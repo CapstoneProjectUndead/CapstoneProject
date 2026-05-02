@@ -250,7 +250,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 68, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 69, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -313,7 +313,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 79, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 80, "C_PlayerInput size mismatch!");
 
 struct S_PlayerMove : public PacketHeader
 {
@@ -326,7 +326,7 @@ struct S_PlayerMove : public PacketHeader
 
 	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 83, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 84, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {

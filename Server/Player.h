@@ -125,6 +125,8 @@ private:
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
 	void UpdatePossession(float elapsedTime);
 
+	void ReleasePossession(const InputData& input, const float elapsedTime);
+
 	XMFLOAT3            GetRandomPossessedTarget();
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
 
@@ -161,6 +163,7 @@ private:
 
 	bool        is_possessed;
 	float       possession_timer{ 0.0f };
+	float       c_hold_timer{ 0.0f };
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
 	float    possessed_path_refresh_timer;

@@ -124,6 +124,9 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
         return;
     }
 
+    // C키 홀드 → 인접 빙의 플레이어 해제
+    ReleasePossession(input, elapsedTime);
+
     // --------------------
     // 입력 처리 및 방향 계산
     // --------------------
@@ -306,7 +309,7 @@ void CPlayer::UpdatePossession(float elapsedTime)
                 possession_contact_timer = 0.0f;
 
                 XMFLOAT3 knockbackDir = Vector3::Subtract(nearOther->GetPosition(), position);
-                nearOther->ApplyKnockback(knockbackDir, 0.8f, 0.0f);
+                //nearOther->ApplyKnockback(knockbackDir, 0.8f, 0.0f);
             }
         }
 
@@ -377,13 +380,57 @@ void CPlayer::UpdatePossession(float elapsedTime)
     state      = PLAYER_STATE::RUN;
 }
 
+void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
+{
+    if (!input.c) {
+        c_hold_timer = 0.0f;
+        return;
+    }
+
+    // C키가 눌린 상태에서 매 프레임 범위 내 빙의 플레이어 탐색
+    shared_ptr<CPlayer> target = nullptr;
+    auto room = GetRoom();
+    if (room) {
+        CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
+        if (scene) {
+            for (auto& [id, player] : scene->GetPlayers()) {
+
+                if (!player || id == obj_id) 
+                    continue;
+                if (!player->GetIsPossessed()) 
+                    continue;
+
+                XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), position);
+                diff.y = 0.0f;
+
+                if (Vector3::Length(diff) <= 0.5f) {
+                    target = player;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (target) {
+        c_hold_timer += elapsedTime;
+        if (c_hold_timer >= 5.0f) {
+            c_hold_timer = 0.0f;
+            target->SetPossessed(false);
+            target->SetPossessionTimer(0.0f);
+        }
+    }
+    else {
+        c_hold_timer = 0.0f;
+    }
+}
+
 shared_ptr<CPlayer> CPlayer::FindNearestOtherPlayer()
 {
-    auto r = GetRoom();
-    if (!r) 
+    auto room = GetRoom();
+    if (!room) 
         return nullptr;
 
-    CScene* scene = r->GetScenes()[(UINT)current_scene_type].get();
+    CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
     if (!scene) 
         return nullptr;
 
@@ -391,18 +438,20 @@ shared_ptr<CPlayer> CPlayer::FindNearestOtherPlayer()
     shared_ptr<CPlayer> nearest = nullptr;
     float minDistSq = FLT_MAX;
 
-    for (const auto& [id, p] : players) {
+    for (const auto& [id, player] : players) {
 
-        if (!p || id == obj_id) continue;
-        if (p->GetIsPossessed()) continue;
+        if (!player || id == obj_id)
+            continue;
+        if (player->GetIsPossessed())
+            continue;
 
-        XMFLOAT3 dir = Vector3::Subtract(p->GetPosition(), position);
+        XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);
         dir.y = 0.0f;
         float distSq = dir.x * dir.x + dir.z * dir.z;
 
         if (distSq < minDistSq) {
             minDistSq = distSq;
-            nearest   = p;
+            nearest   = player;
         }
     }
 
