@@ -43,6 +43,8 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		// 발 속도 맞추기
 		walkState.play_speed = 2.5f;
 
+		controller.AddState({ idle, animSet.idle });
+
 		sockets.resize(SOCKET_TYPE::COUNT);
 		int headIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "head");
 		Socket headSocket{ headIdx, XMMatrixIdentity() };
@@ -85,7 +87,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		// Attack 상태 등록 및 전이 추가
 		if (!animSet.action.empty()) {
 			std::string attack{ "AttackState" };
-			controller.AddState({ attack, animSet.action });
+			controller.AddState({ attack, animSet.action, 2.0f });
 
 			// Run → Attack
 			Transition r2a;
