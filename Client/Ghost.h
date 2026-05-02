@@ -38,6 +38,12 @@ private:
     const float wander_radius     = 4.0f;
     float       patrol_speed      = 1.2f;
 
+    // ATTACK
+    bool  hit_damage_dealt      = false;
+    bool  stun_applied          = false;
+    float contact_damage_timer  = 0.0f;
+    float attack_cooldown_timer = 9999.f;
+
     // TRACE 경로 탐색
     std::vector<MapGenerator::Cell> nav_path;
     float path_refresh_timer  = 0.0f;

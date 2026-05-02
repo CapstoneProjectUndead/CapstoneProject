@@ -19,5 +19,9 @@ public:
     virtual void OnIdleEnter() override;
     virtual void OnPatrolEnter() override;
     virtual void OnAttackEnter() override;
+
+private:
+    bool  hit_damage_dealt      = false;
+    float attack_cooldown_timer = 9999.f;
 };
 

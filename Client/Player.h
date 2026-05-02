@@ -46,6 +46,14 @@ public:
 	uint32 GetStamina() const { return stat.stamina; }
 	void   SetStamina(const uint32 stamina) { stat.stamina = stamina; }
 
+	bool GetIsPossessed() const { return is_possessed; }
+	void SetPossessed(bool val) { is_possessed = val; }
+
+	float GetPossessionTimer() const { return possession_timer; }
+	void  SetPossessionTimer(float t) { possession_timer = t; }
+
+	bool  GetIsStunned() const { return is_stunned; }
+
 	uint16 GetMiningSpeed() const { return stat.miningSpeed; }
 	void   SetMiningSpeed(const uint16 speed) { stat.miningSpeed = speed; }
 
@@ -72,6 +80,8 @@ public:
 	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
 	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
 
+	void SetDowsing(bool dows) { is_dowsing = dows; }
+	bool GetDowsing() const { return is_dowsing; }
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
 
 private:
@@ -93,7 +103,19 @@ protected:
 	std::deque<OpponentFrameHistory> interpolation_deq;
 	std::vector<Buff>                buffs;
 
+	bool							 is_dowsing = false;
 	uint16							 equipped_item_id{ 0 };
 	PlayerStat stat;
+
+	bool  is_possessed    = false;
+	float possession_timer = 0.0f;
+
+	bool     is_stunned    = false;
+	float    stun_timer    = { 0.0f };
+
+	bool     is_knocked_back = false;
+
+public:
+	bool GetIsKnockedBack() const { return is_knocked_back; }
 };
 

@@ -75,7 +75,11 @@ void CLobbyScene::SendPlayerToGameScene()
 		for (auto& [id, player] : players) {
 
 			auto session = player->GetSession();
-			player->SetPosition(XMFLOAT3{ 0.0f, 2.0f, 0.0f });
+
+			// 임시)
+			static float i = 0.f;
+			player->SetPosition(XMFLOAT3{ i, 2.0f, 0.0f });
+			++i;
 
 			// GameScene Map 데이터를 클라이언트로 전송
 			{

@@ -66,7 +66,7 @@ protected:
     AI_STATE AI_state;
     MON_TYPE monster_type;
 
-    std::shared_ptr<CPlayer> target_player;
+    std::weak_ptr<CPlayer> target_player;
 
     float idle_timer;   // 쉴 때 쓰는 타이머
     float patrol_timer; // 순찰할 때 쓰는 타이머

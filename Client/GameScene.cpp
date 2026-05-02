@@ -84,25 +84,25 @@ void CGameScene::Initialize()
 	SetButtonEvents();
 
 	// 아이템 생성 (테스트)
-	SpawnWorldItem(5, XMFLOAT3{-1, 2, -1});
-	SpawnWorldItem(9, XMFLOAT3{-1, 2, -2});
-	SpawnWorldItem(14, XMFLOAT3{-1, 2, -3});
-	SpawnWorldItem(15, XMFLOAT3{-1, 2, -4});
-	SpawnWorldItem(17, XMFLOAT3{-2, 2, -1});
-	SpawnWorldItem(19, XMFLOAT3{-2, 2, -2});
+	SpawnWorldItem(5, XMFLOAT3{ -1, 2, -1 });
+	SpawnWorldItem(9, XMFLOAT3{ -1, 2, -2 });
+	SpawnWorldItem(14, XMFLOAT3{ -1, 2, -3 });
+	SpawnWorldItem(15, XMFLOAT3{ -1, 2, -4 });
+	SpawnWorldItem(17, XMFLOAT3{ -2, 2, -1 });
+	SpawnWorldItem(19, XMFLOAT3{ -2, 2, -2 });
 
-	SpawnWorldItem(20, XMFLOAT3{1, 2, 1});
-	SpawnWorldItem(21, XMFLOAT3{1, 2, 2});
-	SpawnWorldItem(22, XMFLOAT3{1, 2, 3});
-	SpawnWorldItem(23, XMFLOAT3{1, 2, 4});
-	SpawnWorldItem(24, XMFLOAT3{2, 2, 1});
-	SpawnWorldItem(25, XMFLOAT3{2, 2, 2});
-	SpawnWorldItem(26, XMFLOAT3{2, 2, 3});
-	SpawnWorldItem(27, XMFLOAT3{2, 2, 4});
-	SpawnWorldItem(29, XMFLOAT3{3, 2, 1});
-	SpawnWorldItem(30, XMFLOAT3{3, 2, 2});
-	SpawnWorldItem(31, XMFLOAT3{3, 2, 3});
-	SpawnWorldItem(40, XMFLOAT3{3, 2, 4});
+	SpawnWorldItem(20, XMFLOAT3{ 1, 2, 1 });
+	SpawnWorldItem(21, XMFLOAT3{ 1, 2, 2 });
+	SpawnWorldItem(22, XMFLOAT3{ 1, 2, 3 });
+	SpawnWorldItem(23, XMFLOAT3{ 1, 2, 4 });
+	SpawnWorldItem(24, XMFLOAT3{ 2, 2, 1 });
+	SpawnWorldItem(25, XMFLOAT3{ 2, 2, 2 });
+	SpawnWorldItem(26, XMFLOAT3{ 2, 2, 3 });
+	SpawnWorldItem(27, XMFLOAT3{ 2, 2, 4 });
+	SpawnWorldItem(29, XMFLOAT3{ 3, 2, 1 });
+	SpawnWorldItem(30, XMFLOAT3{ 3, 2, 2 });
+	SpawnWorldItem(31, XMFLOAT3{ 3, 2, 3 });
+	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -133,7 +133,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		my_player->SetComponent(dowsingUI);
 	}
 
-	// 싱글 드롭 콜백 등록
+	// 싱글 전용: 드롭 콜백 등록
 	if (my_player) {
 		auto inv = my_player->GetInventory();
 		if (inv) {
@@ -635,8 +635,33 @@ void CGameScene::Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_R
 void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt)
 {
 	if (my_player->GetID() == pkt.player_id) {
-		my_player->SetEquippedItemId(pkt.item_id);
+
+		bool wasDowsing = my_player->GetDowsing();
+		auto itemFinder = my_player->GetComponent<CItemFinder>();
+		auto animator = my_player->GetComponent<CAnimatorComponent>();
+
+		if (!itemFinder || !animator)
+			return;
+
+		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0) {
+			my_player->SetDowsing(true);
+
+			itemFinder->Toggle();
+
+			animator->PlayAction("Ganga_search");
+		}
+		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+			my_player->SetDowsing(false);
+
+			itemFinder->Toggle();
+
+			animator->PlayAction("");
+		}
+		else {
+			my_player->SetEquippedItemId(pkt.item_id);
+		}
 	}
+	// 다른 플레이어
 	else {
 		auto& indexMap = GetIDIndex();
 		auto it = indexMap.find(pkt.player_id);
@@ -644,8 +669,26 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 			return;
 
 		auto player = std::dynamic_pointer_cast<CPlayer>(objects[it->second]);
-		if (player)
+		if (!player)
+			return;
+
+		auto animator = player->GetComponent<CAnimatorComponent>();
+		if (!animator)
+			return;
+
+		bool wasDowsing = player->GetDowsing();
+
+		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0){
+			player->SetDowsing(true);
+			animator->PlayAction("Ganga_search");
+		}
+		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+			player->SetDowsing(false);
+			animator->PlayAction("");
+		}
+		else {
 			player->SetEquippedItemId(pkt.item_id);
+		}
 	}
 }
 

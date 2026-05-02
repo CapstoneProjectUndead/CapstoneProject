@@ -49,6 +49,14 @@ void CGameScene::Initialize()
 	item_manager->SpawnItem(47, XMFLOAT3{ 2.2, 0, 1.7 });
 	item_manager->SpawnItem(48, XMFLOAT3{ 2.2, 0, 1.8 });
 	item_manager->SpawnItem(49, XMFLOAT3{ 2.2, 0, 1.9 });
+
+	// 테스트 (임시코드)
+	//shared_ptr<CGhost> ghost = static_pointer_cast<CGhost>(CServerObjectFactory::CreateMonster(MON_TYPE::GHOST, scene_type, GetRoom(), GetPhysicsManager()));
+	//if (ghost) {
+	//	ghost->SetPosition(2, 0.1f, 2.f);
+	//	ghost->SetOriginPos({ 2, 0.1f, 2.f });
+	//	AddMonster(ghost);
+	//}
 }
 
 void CGameScene::Update(float elapsedTime)
@@ -69,17 +77,17 @@ void CGameScene::OnSceneActivate()
 		shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
 		if (!humanMonster)
 			continue;
-
+	
 		humanMonster->SetPosition(pos.x, 0.1f, pos.z);
 		humanMonster->SetOriginPos({ pos.x, 0.1f, pos.z });
 		AddMonster(humanMonster);
 	}
-
+	
 	for (const auto& pos : ghost_spawn_positions) {
 		shared_ptr<CGhost> ghost = static_pointer_cast<CGhost>(CServerObjectFactory::CreateMonster(MON_TYPE::GHOST, scene_type, GetRoom(), GetPhysicsManager()));
 		if (!ghost)
 			continue;
-
+	
 		ghost->SetPosition(pos.x, 0.1f, pos.z);
 		ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
 		AddMonster(ghost);
@@ -487,6 +495,37 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 	auto& player = players[pkt.player_id];
 	if (!player)
 		return;
+
+	bool wasDowsing = player->GetDowsing();
+
+	// IDLE -> 다우징 요청
+	if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0) {
+		player->SetDowsing(true);
+
+		S_EquipItem equipPkt;
+		equipPkt.is_dowsing_rod = true;
+		equipPkt.player_id = pkt.player_id;
+		equipPkt.item_id = -1;
+		equipPkt.scene_type = scene_type;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+		BroadCast(sendBuffer);
+		return;
+	}
+	// 다우징 -> IDLE 요청
+	else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+		player->SetDowsing(false);
+		
+		S_EquipItem equipPkt;
+		equipPkt.is_dowsing_rod = false;
+		equipPkt.player_id = pkt.player_id;
+		equipPkt.item_id = -1;
+		equipPkt.scene_type = scene_type;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+		BroadCast(sendBuffer);
+		return;
+	}
 
 	if (pkt.item_id != 0) {
 		auto inventory = player->GetInventory();

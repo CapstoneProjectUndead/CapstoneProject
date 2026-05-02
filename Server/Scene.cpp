@@ -32,7 +32,7 @@ CScene::CScene(SCENE_TYPE type, uint32 roomId)
 
 CScene::~CScene()
 {
-	int a = 0;
+	
 }
 
 void CScene::Initialize()
@@ -84,6 +84,8 @@ void CScene::SendPlayersResult()
 			movePkt.last_seq_num = player->GetLastSequence();
 			movePkt.info.player_id = player->GetID(); 
 			movePkt.scene_type = player->GetCurrentSceneType();
+
+			movePkt.info.is_possessed = player->GetIsPossessed();
 
 			movePkt.info.x = player->GetPosition().x;
 			movePkt.info.y = player->GetPosition().y;
@@ -205,6 +207,24 @@ void CScene::SimulateMonsters(const float elapsedTime)
 		if (monster) {
 			monster->Update(elapsedTime);
 		}
+	}
+
+	std::vector<uint64> toDelete;
+	for (const auto& [id, monster] : monsters) {
+		if (monster && monster->IsPendingDelete())
+			toDelete.push_back(id);
+	}
+
+	for (uint64 id : toDelete) {
+		monsters.erase(id);
+
+		S_DeSpawnMonster despawnMonPkt;
+		despawnMonPkt.monster_id = id;
+		despawnMonPkt.room_id = room_id;
+		despawnMonPkt.scene_type = scene_type;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(despawnMonPkt);
+		BroadCast(sendBuffer);
 	}
 }
 
@@ -384,7 +404,7 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->SetPitch(pkt.info.pitch);
 
 	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
-	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space, pkt.info.shift, pkt.info.lbtn };
+	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space, pkt.info.shift, pkt.info.lbtn, pkt.info.c };
 	PendingInput pInput{ input, pkt.seq_num };
 	mover->PushInput(pInput);
 }

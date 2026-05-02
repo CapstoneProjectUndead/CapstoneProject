@@ -187,6 +187,7 @@ public:
     bool Intersects(const CColliderComponent* other);
 private:
     friend class CPhysicsManager;
+    friend class CMovementComponent;
     std::unique_ptr<CColliderShape> shape;
     BoundingBox local_aabb{};
     BoundingBox world_aabb{};   // for broad phase

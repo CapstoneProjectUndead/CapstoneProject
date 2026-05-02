@@ -36,6 +36,7 @@ struct NetPlayerInfo
 	bool			space = false;
 	bool			shift = false;
 	bool            lbtn  = false;
+	bool            c     = false;
 	bool            is_grounded = true;
 
 	float			x, y, z;
@@ -47,6 +48,7 @@ struct NetPlayerInfo
 	float			roll	= 0.0f; 
 
 	PLAYER_STATE	state;
+	bool			is_possessed = false;
 
 	NetPlayerInfo() = default;
 	NetPlayerInfo(uint64 _id, uint32 roomId, uint8 bodyType, uint8 eyeType, uint8 mouthType 
@@ -81,6 +83,7 @@ struct NetPlayerInfo
 		, space(other.space)
 		, shift(other.shift)
 		, lbtn(other.lbtn)
+		, c(other.c)
 		, is_grounded(other.is_grounded)
 		, x(other.x)
 		, y(other.y)
@@ -91,10 +94,11 @@ struct NetPlayerInfo
 		, yaw(other.yaw)
 		, pitch(other.pitch)
 		, roll(other.roll)
+		, is_possessed(other.is_possessed)
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 61, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 63, "NetObjectInfo size mismatch!");
 
 struct NetMonsterInfo
 {

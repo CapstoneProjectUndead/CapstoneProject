@@ -5,6 +5,7 @@
 #include "AIComponent.h"
 #include "Movement.h"
 #include "SceneManager.h"
+#include "Collider.h"
 
 CGhost::CGhost()
 	: CMonster(MON_TYPE::GHOST)
@@ -16,8 +17,9 @@ CGhost::CGhost()
 	, is_waiting(false)
 {
 	friction = 0.0f;
-	trace_speed = 2.0f;
-	attack_range = 0.4f;
+	trace_speed = 4.0f;
+	recog_range = 6.0f;
+	attack_range = 1.5f;
 	SetFOV(120);
 }
 
@@ -28,6 +30,29 @@ CGhost::~CGhost()
 void CGhost::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+
+	contact_damage_timer += elapsedTime;
+
+	if (AI_state != AI_STATE::MONSTER_ATTACK) {
+		auto nearPlayer = FindNearestPlayer();
+		if (nearPlayer) {
+
+			auto* ghostCol = GetComponent<CColliderComponent>();
+			auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+
+			if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
+
+				if (contact_damage_timer >= 1.0f) {
+					uint32 hp = nearPlayer->GetHp();
+					nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);
+					contact_damage_timer = 0.0f;
+
+					XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
+					nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 1.f);
+				}
+			}
+		}
+	}
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
@@ -138,30 +163,57 @@ void CGhost::OnTraceMove(float elapsedTime)
 {
 	auto AIComponent = GetComponent<CAIComponent>();
 
-	if (!target_player) {
+	auto targetPlayer = target_player.lock();
+
+	if (!targetPlayer) {
 		AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
 	}
 
-	XMFLOAT3 dirVec = Vector3::Subtract(target_player->GetPosition(), position);
+	XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
 	dirVec.y = 0.0f;
 	float dist = Vector3::Length(dirVec);
 
 	if (dist > recog_range) {
-		target_player = nullptr;
+		target_player.reset();
 		AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
 	}
-	else if (dist <= attack_range) {
+
+	attack_cooldown_timer += elapsedTime;
+
+	if (dist <= attack_range && attack_cooldown_timer >= 1.5f) {
 		AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
+		return;
+	}
+	else if (attack_cooldown_timer < 1.5f) {
+		constexpr float retreat_dist = 1.0f;
+		if (dist < retreat_dist) {
+			XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->GetPosition());
+			awayDir.y = 0.0f;
+			float len = Vector3::Length(awayDir);
+			if (len > 0.001f) {
+				float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+				SetYaw(yaw);
+				SetYawPitch(yaw, 0.0f);
+				velocity.x = look.x * 1.5f;
+				velocity.z = look.z * 1.5f;
+			}
+		} else {
+			velocity.x = 0.0f;
+			velocity.z = 0.0f;
+			float yaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+			SetYaw(yaw);
+			SetYawPitch(yaw, 0.0f);
+		}
 		return;
 	}
 
 	const float TILE_SIZE = 2.0f;
 	int sx = (int)roundf(position.x / TILE_SIZE);
 	int sz = (int)roundf(position.z / TILE_SIZE);
-	int ex = (int)roundf(target_player->GetPosition().x / TILE_SIZE);
-	int ez = (int)roundf(target_player->GetPosition().z / TILE_SIZE);
+	int ex = (int)roundf(targetPlayer->GetPosition().x / TILE_SIZE);
+	int ez = (int)roundf(targetPlayer->GetPosition().z / TILE_SIZE);
 
 	// Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
 	bool has_wall = false;
@@ -209,12 +261,54 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-	velocity.x = 0.0f;
-	velocity.z = 0.0f;
+	constexpr float DASH_SPEED    = 6.0f;
+	constexpr float DASH_DURATION = 0.5f;
+	constexpr float STOP_DIST     = 0.7f;
 
 	attack_timer += elapsedTime;
+	auto targetPlayer = target_player.lock();
 
-	if (attack_timer >= 1.5f) {
+	// 돌진: STOP_DIST 이상이면 달리고, 코앞에 닿으면 즉시 멈춤
+	if (attack_timer < DASH_DURATION && targetPlayer) {
+		XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
+		dir.y = 0.0f;
+		float dist = Vector3::Length(dir);
+
+		if (dist > STOP_DIST) {
+			float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+			SetYaw(yaw);
+			SetYawPitch(yaw, 0.0f);
+			velocity.x = look.x * DASH_SPEED;
+			velocity.z = look.z * DASH_SPEED;
+		} else {
+			velocity.x = 0.0f;
+			velocity.z = 0.0f;
+			if (!stun_applied) {
+				targetPlayer->ApplyStun(1.0f);
+				stun_applied = true;
+			}
+		}
+	} else {
+		velocity.x = 0.0f;
+		velocity.z = 0.0f;
+	}
+
+	// 빙의 판정
+	if (!hit_damage_dealt && attack_timer >= 1.1f) {
+		hit_damage_dealt = true;
+		if (targetPlayer) {
+			XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
+			dir.y = 0.0f;
+			if (Vector3::Length(dir) <= 0.8f) {
+				if (rand() % 100 < 25) {
+					targetPlayer->ApplyPossession();
+					MarkForDelete();
+				}
+			}
+		}
+	}
+
+	if (attack_timer >= 1.27f) {
 		auto AIComponent = GetComponent<CAIComponent>();
 		if (AIComponent)
 			AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
@@ -250,10 +344,25 @@ void CGhost::OnAttackEnter()
 {
 	ResetAttackTimer();
 
-	velocity.x = 0.0f;
-	velocity.z = 0.0f;
+	velocity.x       = 0.0f;
+	velocity.z       = 0.0f;
+	attack_timer          = 0.0f;
+	hit_damage_dealt      = false;
+	stun_applied          = false;
+	attack_cooldown_timer = 0.0f;
 
-	attack_timer = 0.0f;
+	auto targetPlayer = target_player.lock();
+
+	if (targetPlayer) {
+		XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
+		dir.y = 0.0f;
+		float len = Vector3::Length(dir);
+		if (len > 0.001f) {
+			float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+			SetYaw(yaw);
+			SetYawPitch(yaw, 0.0f);
+		}
+	}
 }
 
 void CGhost::PatrolRadiusWander(float elapsedTime)

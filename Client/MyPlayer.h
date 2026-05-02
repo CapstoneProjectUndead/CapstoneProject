@@ -1,5 +1,6 @@
 #pragma once
 #include "Player.h"
+#include "MapGenerator/MapGenerator.h"
 
 struct ClientFrameHistory 
 {
@@ -63,6 +64,11 @@ public:
     bool GetDigAnimFinished() const   { return dig_anim_finished; }
     void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
 
+    // 넉백 + 스턴 (기본값 1.3f) 스턴은 원치 않으면 인자를 0으로 쓰면 된다.
+    void ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration = 1.3f);
+    void ApplyStun(float time);
+    void ApplyPossession();
+
 private:
     void ProcessRotation();
     void ProcessInput();
@@ -79,6 +85,13 @@ private:
 
     void SendInputPacket(C_Input& inputPkt, const InputData& input);
     void SendPingToServer(const float elapsedTime);
+
+    // 아이템 줍기
+    void UseItem();
+
+    // 빙의 관련
+    void     UpdatePossession(float elapsedTime);
+    XMFLOAT3 GetRandomPossessedTarget();
 
 private:
     std::weak_ptr<Session> session;
@@ -106,7 +119,16 @@ private:
     bool                              dig_anim_finished{ false };
 
     float grounded_timer{ 0.1 };
-    float accumulate_stamina{ 1000.0f };   // 누적용 float 스태미나
-    bool  stamina_exhausted{ false }; // 스태미나 소진 플래그 (회복 후 해제)
+    float accumulate_stamina{ 100.0f };
+    bool  stamina_exhausted{ false };
+
+    XMFLOAT3 knockback_vel{};
+    float    knockback_timer{ 0.0f };
+
+    std::vector<MapGenerator::Cell> possessed_nav_path;
+    float                           possessed_path_refresh_timer = 0.0f;
+    XMFLOAT3                        possessed_wander_target      = {};
+    bool                            possessed_is_waiting         = false;
+    float                           possessed_wait_timer         = 0.0f;
 };
 

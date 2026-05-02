@@ -5,6 +5,8 @@
 #include "Movement.h"
 #include "SceneManager.h"
 #include "MyPlayer.h"
+#include "AnimationManager.h"
+#include "Collider.h"
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
@@ -16,8 +18,9 @@ CGhost::CGhost()
     , is_waiting(false)
 {
     friction = 0.0f;
-    trace_speed = 2.f;
-    attack_range = 0.4f;
+    trace_speed = 4.0f;
+    recog_range = 6.0f;
+    attack_range = 1.5f;
     SetFOV(120);
 }
 
@@ -27,7 +30,41 @@ CGhost::~CGhost()
 
 void CGhost::Update(float elapsedTime)
 {
+    // 애니메이션 프레임 수 체크용 (지우지 말 것!)
+    //static bool printed = false;
+    //if (!printed) {
+    //    auto& clip = CAnimationManager::GetInstance().GetClip("Ghost_attack");
+    //    std::cout << "Ghost_attack total_frames: " << clip.total_frames << std::endl;
+    //    printed = true;
+    //}
+
     CMonster::Update(elapsedTime);
+
+    contact_damage_timer += elapsedTime;
+
+    if (AI_state != AI_STATE::MONSTER_ATTACK) {
+        auto nearPlayer = FindNearestPlayer();
+        if (nearPlayer) {
+
+            auto* ghostCol = GetComponent<CColliderComponent>();
+            auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+
+            if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
+
+                if (contact_damage_timer >= 1.0f) {
+
+                    uint32 hp = nearPlayer->GetHp();
+                    nearPlayer->SetHp(hp > 5 ? hp - 5 : 0);
+                    contact_damage_timer = 0.0f;
+
+                    if (nearPlayer->GetIsMyPlayer()) {
+                        XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
+                        static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 1.0f);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
@@ -97,9 +134,9 @@ void CGhost::OnIdleMove(float elapsedTime)
         SetYaw(returnYaw);
         SetYawPitch(returnYaw, 0.0f);
 
-        float walk_speed = 0.5f;
-        velocity.x = look.x * walk_speed;
-        velocity.z = look.z * walk_speed;
+        float walkSpeed = 0.5f;
+        velocity.x = look.x * walkSpeed;
+        velocity.z = look.z * walkSpeed;
 
         return;
     }
@@ -156,39 +193,63 @@ void CGhost::OnPatrolMove(float elapsedTime)
 void CGhost::OnTraceMove(float elapsedTime)
 {
     auto AIComponent = GetComponent<CAIComponent>();
+    auto targetPlayer = target_player.lock();
 
-    if (!target_player) {
+    if (!targetPlayer) {
         // 타겟이 사라졌으면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
     // 타겟과의 방향 및 평면 거리 계산
-    XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+    XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
     dirVec.y = 0.0f; // Y축(높이) 차이는 무시하고 XZ 평면에서의 거리만 계산
     float dist = Vector3::Length(dirVec);
 
-    // 상태 전환 (State Transition) 판단
-       // 조건 A: 타겟이 인식 범위 밖으로 도망갔을 때 -> 추적 포기
+    attack_cooldown_timer += elapsedTime;
+
     if (dist > recog_range) {
-        target_player = nullptr; // 타겟 초기화
+        target_player.reset();
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-    // 조건 B: 타겟이 공격 범위 안으로 들어왔을 때 -> 공격 시작!
-    else if (dist <= attack_range) {
+    else if (dist <= attack_range && attack_cooldown_timer >= 1.5f) {
         AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
+        return;
+    }
+    else if (attack_cooldown_timer < 1.5f) {
+        constexpr float retreat_dist = 1.0f;
+        if (dist < retreat_dist) {
+            XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+            awayDir.y = 0.0f;
+            float len = Vector3::Length(awayDir);
+            if (len > 0.001f) {
+                float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+                SetYaw(yaw);
+                SetYawPitch(yaw, 0.0f);
+                velocity.x = look.x * 1.5f;
+                velocity.z = look.z * 1.5f;
+                AI_state = AI_STATE::MONSTER_TRACE;
+            }
+        } else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+            AI_state = AI_STATE::MONSTER_IDLE;
+            float yaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
         return;
     }
 
     const float TILE_SIZE = 2.0f;
     int sx = (int)roundf(position.x / TILE_SIZE);
     int sz = (int)roundf(position.z / TILE_SIZE);
-    int ex = (int)roundf(target_player->position.x / TILE_SIZE);
-    int ez = (int)roundf(target_player->position.z / TILE_SIZE);
+    int ex = (int)roundf(targetPlayer->position.x / TILE_SIZE);
+    int ez = (int)roundf(targetPlayer->position.z / TILE_SIZE);
 
     // Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
-    bool has_wall = false;
+    bool hasWall = false;
     {
         int x = sx, z = sz;
         int dx = abs(ex - sx), dz = abs(ez - sz);
@@ -199,7 +260,7 @@ void CGhost::OnTraceMove(float elapsedTime)
         while (x != ex || z != ez) {
 
             if (MapGenerator::IsBlockedStructure(x, z)) { 
-                has_wall = true; 
+                hasWall = true;
                 break; 
             }
 
@@ -210,7 +271,7 @@ void CGhost::OnTraceMove(float elapsedTime)
     }
 
     XMFLOAT3 moveDir = dirVec;
-    if (has_wall) {
+    if (hasWall) {
         path_refresh_timer += elapsedTime;
         if (path_refresh_timer >= 0.2f || nav_path.empty()) {
             path_refresh_timer = 0.0f;
@@ -238,25 +299,57 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-    // 공격 중에는 미끄러지지 않게 이동 속도 0으로 고정
-    velocity.x = 0.0f;
-    velocity.z = 0.0f;
+    constexpr float DASH_SPEED    = 6.0f;
+    constexpr float DASH_DURATION = 0.5f;
+    constexpr float STOP_DIST     = 0.7f;
 
-    // 타이머 증가
     attack_timer += elapsedTime;
+    auto targetPlayer = target_player.lock();
 
-    // 공격 애니메이션 길이 or 쿨타임이 지나면?
-    if (attack_timer >= 1.5f) {
+    // 돌진: STOP_DIST 이상이면 달리고, 코앞에 닿으면 즉시 멈추고 스턴
+    if (attack_timer < DASH_DURATION && targetPlayer) {
+        XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+        dir.y = 0.0f;
+        float dist = Vector3::Length(dir);
 
-        // 실제 데미지 판정 로직은 서버의 이 시점(또는 타이머 중간)에 수행!
-        // 예: target_player->TakeDamage(10);
-
-        auto AIComponent = GetComponent<CAIComponent>();
-        if (AIComponent) {
-            // 공격이 끝났으니 다시 거리를 재기 위해 TRACE 상태로 전환
-            // (TRACE 상태에서 거리가 가까우면 다음 프레임에 다시 ATTACK으로 돌아옴)
-            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+        if (dist > STOP_DIST) {
+            float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+            velocity.x = look.x * DASH_SPEED;
+            velocity.z = look.z * DASH_SPEED;
+        } else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+            if (!stun_applied && targetPlayer->GetIsMyPlayer()) {
+                static_cast<CMyPlayer*>(targetPlayer.get())->ApplyStun(1.0f);
+                stun_applied = true;
+            }
         }
+    } else {
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+    }
+
+    // 빙의 판정
+    if (!hit_damage_dealt && attack_timer >= 1.1f) {
+        hit_damage_dealt = true;
+        if (targetPlayer && targetPlayer->GetIsMyPlayer()) {
+            XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+            dir.y = 0.0f;
+            if (Vector3::Length(dir) <= 0.8f) {
+                if (rand() % 100 < 25) {
+                    static_cast<CMyPlayer*>(targetPlayer.get())->ApplyPossession();
+                    MarkForDelete();
+                }
+            }
+        }
+    }
+
+    if (attack_timer >= 1.27f) {
+        auto AIComponent = GetComponent<CAIComponent>();
+        if (AIComponent)
+            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
     }
 }
 
@@ -289,12 +382,25 @@ void CGhost::OnAttackEnter()
 {
     ResetAttackTimer();
 
-    // 이동 속도를 0으로 만들어서 공격 중에 미끄러지지 않게 고정
-    velocity.x = 0.0f;
-    velocity.z = 0.0f;
+    velocity.x       = 0.0f;
+    velocity.z       = 0.0f;
+    attack_timer          = 0.0f;
+    hit_damage_dealt      = false;
+    stun_applied          = false;
+    attack_cooldown_timer = 0.0f;
 
-    // 공격 타이머 초기화 
-    attack_timer = 0.0f;
+    auto targetPlayer = target_player.lock();
+
+    if (targetPlayer) {
+        XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+        dir.y = 0.0f;
+        float len = Vector3::Length(dir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
 }
 
 

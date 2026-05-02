@@ -167,64 +167,84 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 {
     auto AIComponent = GetComponent<CAIComponent>();
 
-    if (!target_player) {
+    auto targetPlayer = target_player.lock();
+
+    if (!targetPlayer) {
         // 타겟이 사라졌으면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
     // 타겟과의 방향 및 평면 거리 계산
-    XMFLOAT3 dirVec = Vector3::Subtract(target_player->position, position);
+    XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
     dirVec.y = 0.0f; // Y축(높이) 차이는 무시하고 XZ 평면에서의 거리만 계산
     float dist = Vector3::Length(dirVec);
 
-    // 상태 전환 (State Transition) 판단
-       // 조건 A: 타겟이 인식 범위 밖으로 도망갔을 때 -> 추적 포기
+    attack_cooldown_timer += elapsedTime;
+
     if (dist > recog_range) {
-        target_player = nullptr; // 타겟 초기화
+        target_player.reset();
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
-    // 조건 B: 타겟이 공격 범위 안으로 들어왔을 때 -> 공격 시작!
-    else if (dist <= attack_range) {
+    else if (dist <= attack_range && attack_cooldown_timer >= 0.4f) {
         AIComponent->ChangeState(AI_STATE::MONSTER_ATTACK);
         return;
     }
+    else if (dist <= attack_range) {
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+        AI_state = AI_STATE::MONSTER_IDLE;
+        return;
+    }
 
-    // 타겟을 향해 회전 (Rotation)
-    // atan2f 함수를 이용해 목표 방향 벡터를 각도(Yaw)로 변환
+    AI_state = AI_STATE::MONSTER_TRACE;
+
     float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+    SetYaw(targetYaw);
+    SetYawPitch(targetYaw, 0.0f);
 
-    SetYaw(targetYaw);             // 물리적인 앞 방향(look) 갱신
-    SetYawPitch(targetYaw, 0.0f);  // 그래픽(모델링) 방향 갱신
-
-    // 타겟을 향해 돌진 (Movement)
-    // 마찰력이 0인 상태이므로, IDLE(0.4f)보다 훨씬 빠른 속도로 직접 꽂아줍니다.
     velocity.x = look.x * trace_speed;
     velocity.z = look.z * trace_speed;
 }
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
 {
-    // 공격 중에는 미끄러지지 않게 이동 속도 0으로 고정
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
-    // 타이머 증가
     attack_timer += elapsedTime;
 
-    // 공격 애니메이션 길이 or 쿨타임이 지나면?
-    if (attack_timer >= 1.5f) {
+    if (!hit_damage_dealt && attack_timer >= 0.45f) {
+        hit_damage_dealt = true;
 
-        // 실제 데미지 판정 로직은 서버의 이 시점(또는 타이머 중간)에 수행!
-        // 예: target_player->TakeDamage(10);
+        auto targetPlayer = target_player.lock();
+        if (targetPlayer && targetPlayer->GetIsMyPlayer()) {
+            XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
+            dirVec.y = 0.0f;
 
-        auto AIComponent = GetComponent<CAIComponent>();
-        if (AIComponent) {
-            // 공격이 끝났으니 다시 거리를 재기 위해 TRACE 상태로 전환
-            // (TRACE 상태에서 거리가 가까우면 다음 프레임에 다시 ATTACK으로 돌아옴)
-            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
+            XMFLOAT3 fwd       = Vector3::Normalize(XMFLOAT3{ look.x,  0.0f, look.z  });
+            XMFLOAT3 right_vec = Vector3::Normalize(XMFLOAT3{ right.x, 0.0f, right.z });
+
+            float forwardDist = Vector3::DotProduct(dirVec, fwd);
+            float sideDist    = Vector3::DotProduct(dirVec, right_vec);
+
+            constexpr float depth = 2.5f;  // 조절 가능
+            constexpr float width = 1.0f;  // 조절 가능
+
+            if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
+                uint32 hp = targetPlayer->GetHp();
+                targetPlayer->SetHp(hp > 10 ? hp - 10 : 0);
+                XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->position, position);
+                static_cast<CMyPlayer*>(targetPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 0.f);
+            }
         }
+    }
+
+    if (attack_timer >= 1.5f) {
+        auto AIComponent = GetComponent<CAIComponent>();
+        if (AIComponent)
+            AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
     }
 }
 
@@ -242,14 +262,21 @@ void CHumanMonster::OnAttackEnter()
 {
     ResetAttackTimer();
 
-    // 1. 공격 상태 진입 시, 어떤 공격을 할지 결정 (발 구르기 vs 파리채)
-    // 예: int pattern = rand() % 2; 
-    // DecideAttackPattern(); 
+    velocity.x            = 0.0f;
+    velocity.z            = 0.0f;
+    attack_timer          = 0.0f;
+    hit_damage_dealt      = false;
+    attack_cooldown_timer = 0.0f;
 
-    // 2. 이동 속도를 0으로 만들어서 공격 중에 미끄러지지 않게 고정
-    velocity.x = 0.0f;
-    velocity.z = 0.0f;
-
-    // 3. 공격 타이머 초기화 (이제 CHumanMonster의 멤버 변수이므로 직접 접근 가능!)
-    attack_timer = 0.0f;
+    auto targetPlayer = target_player.lock();
+    if (targetPlayer) {
+        XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+        dir.y = 0.0f;
+        float len = Vector3::Length(dir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(dir.x, dir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
 }

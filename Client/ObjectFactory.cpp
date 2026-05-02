@@ -74,13 +74,13 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 }
 
 void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
-	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer)
+	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer,
+	EColLayer colMask)
 {
 	// Collider 설정
 	if (g_is_single) {
 		EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
-		EColLayer mask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND);
-		AddCollider(character, node, category, mask);
+		AddCollider(character, node, category, colMask);
 	}
 
 	if (node->mesh.positions.empty()) return;
@@ -103,7 +103,7 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 
 void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
 	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
-	CharacterAnimSet aniSet, bool isPlayer)
+	CharacterAnimSet aniSet, bool isPlayer, EColLayer colMask)
 {
 	auto frameRoot = CGeometryLoader::LoadGeometry(modelFileName);
 	if (!frameRoot) return;
@@ -113,10 +113,10 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	character->SetComponent(renderer);
 
 	// 메쉬 노드 순회 및 파츠 처리
-	ProcessNode(character, frameRoot, renderer, partProcessor, aniSet, isPlayer);
+	ProcessNode(character, frameRoot, renderer, partProcessor, aniSet, isPlayer, colMask);
 	// 자식 노드 순회 처리
 	for (const auto& child : frameRoot->childrens) {
-		ProcessNode(character, child, renderer, partProcessor, aniSet, isPlayer);
+		ProcessNode(character, child, renderer, partProcessor, aniSet, isPlayer, colMask);
 	}
 	
 	// 애니메이터 설정
@@ -472,7 +472,8 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		fileName,
 		undeadProcessor,
 		{ "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" },
-		true
+		true,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::CHARACTER)
 	);
 }
 
@@ -503,7 +504,8 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 		fileName,
 		undeadProcessor,
 		{ "Human_monster_idle", "Human_monster_walk", "Human_monster_run", "Human_monster_attack" },
-		false
+		false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER)
 	);
 
 	character->SetShader("skinning");
@@ -536,7 +538,8 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 		fileName,
 		undeadProcessor,
 		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
-		false
+		false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::GROUND)
 	);
 
 	character->SetShader("skinning");
@@ -629,6 +632,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::HUMAN_MONSTER:
 	{
 		monster = std::make_shared<CHumanMonster>();
+		monster->SetCurrentSceneType(sceneType);
 		CreateHumanCharacter(monster, heapManager);
 	}
 	break;
@@ -640,6 +644,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	case MON_TYPE::GHOST:
 	{
 		monster = std::make_shared<CGhost>();
+		monster->SetCurrentSceneType(sceneType);
 		CreateGhostCharacter(monster, heapManager);
 	}
 		break;
@@ -647,9 +652,6 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 		return nullptr;
 		break;
 	}
-
-	// monster가 속한 scene
-	monster->SetCurrentSceneType(sceneType);
 
 	// monster ID, AI, Movement 셋팅 (싱글 모드일 때만)
 	// ID 값은 멀티 모드일 때도 여전히 필요하지만 다른 곳에서 셋팅된다. 

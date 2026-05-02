@@ -46,6 +46,7 @@ enum PacketType : uint16_t
 	_C_SCENE_CHANGE,
 	_S_SCENE_CHANGE,
 	_S_SPAWN_MONSTER,
+	_S_DESPAWN_MONSTER,
 	_S_MONSTER_MOVE,
 
 	_S_MAP_START,
@@ -249,7 +250,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 67, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 69, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -312,7 +313,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 78, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 80, "C_PlayerInput size mismatch!");
 
 struct S_PlayerMove : public PacketHeader
 {
@@ -325,7 +326,7 @@ struct S_PlayerMove : public PacketHeader
 
 	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 82, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 84, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {
@@ -373,6 +374,16 @@ struct S_SpawnMonster : public PacketHeader
 	S_SpawnMonster() : PacketHeader(sizeof(S_SpawnMonster), (UINT)PacketType::_S_SPAWN_MONSTER) {}
 };
 static_assert(sizeof(S_SpawnMonster) == 4 + 58, "S_SpawnMonster size mismatch!");
+
+struct S_DeSpawnMonster : public PacketHeader
+{
+	uint64		   monster_id;
+	uint32         room_id;
+	SCENE_TYPE     scene_type;
+
+	S_DeSpawnMonster() : PacketHeader(sizeof(S_DeSpawnMonster), (UINT)PacketType::_S_DESPAWN_MONSTER) {}
+};
+static_assert(sizeof(S_DeSpawnMonster) == 4 + 13, "S_DeSpawnMonster size mismatch!");
 
 struct S_MonsterMove : public PacketHeader
 {
@@ -549,24 +560,26 @@ static_assert(sizeof(C_DropItem) == 4 + 14, "C_DropItem size mismatch!");
 
 struct C_EquipItem : public PacketHeader
 {
+	bool   is_dowsing_rod = false;
 	uint64 player_id;
 	uint32 inventory_id; 
-	uint16 item_id;	// 아이템 도감번호
+	int16 item_id;	// 아이템 도감번호
 	SCENE_TYPE scene_type;
 
 	C_EquipItem() : PacketHeader(sizeof(C_EquipItem), (UINT)PacketType::_C_EQUIP_ITEM) {}
 };
-static_assert(sizeof(C_EquipItem) == 4 + 15, "C_EquipItem size mismatch!");
+static_assert(sizeof(C_EquipItem) == 4 + 16, "C_EquipItem size mismatch!");
 
 struct S_EquipItem : public PacketHeader
 {
+	bool   is_dowsing_rod = false;
 	uint64 player_id;
-	uint16 item_id;	// 아이템 도감번호
+	int16 item_id;	// 아이템 도감번호
 	SCENE_TYPE scene_type;
 
 	S_EquipItem() : PacketHeader(sizeof(S_EquipItem), (UINT)PacketType::_S_EQUIP_ITEM) {}
 };
-static_assert(sizeof(S_EquipItem) == 4 + 11, "S_EquipItem size mismatch!");
+static_assert(sizeof(S_EquipItem) == 4 + 12, "S_EquipItem size mismatch!");
 
 struct C_UseItem : public PacketHeader
 {

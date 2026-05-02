@@ -21,9 +21,19 @@ CPlayer::CPlayer()
     , equipped_item_id(0)
     , equipped_item_sub_type(ITEM_SUB_TYPE::NONE)
     , is_ready(false)
-    , accumulate_stamina(1000.f)
+    , is_dowsing(false)
+    , accumulate_stamina(100.f)
     , stamina_exhausted(false)
     , dig_timer(0.f)
+    , knockback_vel{}
+    , knockback_timer(0.0f)
+    , stun_timer(0.0f)
+    , is_possessed(false)
+    , possessed_path_refresh_timer(0.0f)
+    , possessed_wander_target{}
+    , possessed_is_waiting(false)
+    , possessed_wait_timer(0.0f)
+    , possession_contact_timer(0.0f)
 {
 
 }
@@ -41,14 +51,24 @@ void CPlayer::Update(const float elapsedTime)
 {
     last_simulated_time = static_cast<float>(g_server_total_time);
 
-    // 회전 Update
     SetYawPitch(yaw, pitch);
     UpdateWorldMatrix();
+
+    if (is_possessed)
+        UpdatePossession(elapsedTime);
+
     ProcessInputQueue(elapsedTime);
 }
 
 void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_targetDT(16.6ms)
 {
+    if (is_possessed) {
+        input_queue.clear();
+        InputData emptyInput{ false, false, false, false, false, false };
+        SimulateMove(emptyInput, elapsedTime, false);
+        return;
+    }
+
     if (!input_queue.empty())
     {
         // 쌓인 패킷이 있다면, 각 패킷마다 시뮬레이션을 돌림
@@ -58,6 +78,7 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
             input_queue.pop_front();
 
             // (가속 -> 속도제한 -> 이동 -> 감속)
+            last_c_input = pending.input.c;
             SimulateMove(pending.input, elapsedTime);
 
             // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
@@ -79,7 +100,8 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
     else
     {
         // 입력이 없어도 마찰/중력 계산을 위해 1회 업데이트 (state는 변경하지 않음)
-        InputData emptyInput{ false, false, false, false, false, false };
+        InputData emptyInput{ false, false, false, false, false, false, false };
+        emptyInput.c = last_c_input;
         SimulateMove(emptyInput, elapsedTime, false);
 
         if (last_simulated_time < g_server_total_time)
@@ -99,6 +121,14 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 
 void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updateState)
 {
+    if (is_possessed) {
+        CObject::Update(elapsedTime);
+        return;
+    }
+
+    // C키 홀드 → 인접 빙의 플레이어 해제
+    ReleasePossession(input, elapsedTime);
+
     // --------------------
     // 입력 처리 및 방향 계산
     // --------------------
@@ -131,7 +161,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
                 if (state != PLAYER_STATE::DIG)
                     state = PLAYER_STATE::IDLE;
 
-                if (is_grounded) {
+                if (is_grounded && knockback_timer <= 0.0f) {
                     velocity.x = 0.0f;
                     velocity.z = 0.0f;
                 }
@@ -158,7 +188,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     }
     else {
         // updateState=false: 물리만 계산, velocity 마찰 적용 (입력 없는 틱)
-        if (is_grounded && !isMoving) {
+        if (is_grounded && !isMoving && knockback_timer <= 0.0f) {
             velocity.x = 0.0f;
             velocity.z = 0.0f;
         }
@@ -166,13 +196,297 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     UpdateStamina(elapsedTime);
 
-    if (dir.x != 0 || dir.z != 0) {
+    if (knockback_timer <= 0.0f && stun_timer <= 0.0f && (dir.x != 0 || dir.z != 0)) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Move(dir, elapsedTime);
     }
 
+    if (knockback_timer > 0.0f) {
+
+        float ratio = knockback_timer / 0.3f;
+        velocity.x += knockback_vel.x * ratio;
+        velocity.z += knockback_vel.z * ratio;
+
+        knockback_timer -= elapsedTime;
+
+        if (knockback_timer < 0.0f)
+            knockback_timer = 0.0f;
+    }
+
+    if (stun_timer > 0.0f) {
+        stun_timer -= elapsedTime;
+        if (stun_timer < 0.0f)
+            stun_timer = 0.0f;
+    }
+
     // Movement와 Collider Update
     CObject::Update(elapsedTime);
+}
+
+void CPlayer::ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration)
+{
+    dir.y = 0.0f;
+    float len = Vector3::Length(dir);
+
+    if (len < 0.001f)
+        return;
+
+    knockback_vel   = { dir.x / len * force, 0.0f, dir.z / len * force };
+    knockback_timer = 0.3f;
+    if (stun_duration > 0.0f)
+        ApplyStun(stun_duration);
+}
+
+void CPlayer::ApplyStun(float time)
+{
+    stun_timer = time;
+    state = PLAYER_STATE::IDLE;
+}
+
+void CPlayer::ApplyPossession()
+{
+    is_possessed    = true;
+    possession_timer = 30.0f;
+
+    possessed_nav_path.clear();
+    possessed_path_refresh_timer = 0.0f;
+    possessed_wander_target      = GetRandomPossessedTarget();
+    possessed_is_waiting         = false;
+    possessed_wait_timer         = 0.0f;
+    possession_contact_timer     = 0.0f;
+}
+
+void CPlayer::UpdatePossession(float elapsedTime)
+{
+    possession_timer        -= elapsedTime;
+    possession_contact_timer += elapsedTime;
+
+    if (possession_timer <= 0.0f) {
+        possession_timer = 0.0f;
+        is_possessed     = false;
+        velocity.x       = 0.0f;
+        velocity.z       = 0.0f;
+        state            = PLAYER_STATE::IDLE;
+        return;
+    }
+
+    constexpr float TILE_SIZE          = 2.0f;
+    constexpr float ARRIVE_DIST        = 0.4f;
+    constexpr float POSSESS_SPEED      = 4.0f;
+    constexpr float ATTACK_INTERVAL    = 1.5f; // 공격 후 대기 시간 = 데미지 쿨다운
+
+    auto nearOther = FindNearestOtherPlayer();
+
+    if (nearOther) {
+
+        XMFLOAT3 dirVec = Vector3::Subtract(nearOther->GetPosition(), position);
+        dirVec.y = 0.0f;
+        float dist = Vector3::Length(dirVec);
+
+        if (dist > 0.001f) {
+            float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+            SetYaw(targetYaw);
+            SetYawPitch(targetYaw, 0.0f);
+        }
+
+        if (possession_contact_timer >= ATTACK_INTERVAL) {
+            velocity.x = look.x * POSSESS_SPEED;
+            velocity.z = look.z * POSSESS_SPEED;
+            state      = PLAYER_STATE::RUN;
+        }
+        else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+            state      = PLAYER_STATE::IDLE;
+        }
+
+        auto* myCol    = GetComponent<CColliderComponent>();
+        auto* otherCol = nearOther->GetComponent<CColliderComponent>();
+
+        if (myCol && otherCol && myCol->Intersects(otherCol))
+        {
+            if (possession_contact_timer >= ATTACK_INTERVAL) {
+                uint32 hp = nearOther->GetHp();
+                nearOther->SetHp(hp > 15 ? hp - 15 : 0);
+                possession_contact_timer = 0.0f;
+
+                XMFLOAT3 knockbackDir = Vector3::Subtract(nearOther->GetPosition(), position);
+                nearOther->ApplyKnockback(knockbackDir, 0.5f, 0.0f);
+            }
+        }
+
+        return;
+    }
+
+    // 타 플레이어 없음 → BFS 랜덤 배회
+    if (possessed_is_waiting) {
+
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+
+        possessed_wait_timer -= elapsedTime;
+
+        if (possessed_wait_timer <= 0.0f) {
+            possessed_wander_target      = GetRandomPossessedTarget();
+            possessed_nav_path.clear();
+            possessed_path_refresh_timer = 0.0f;
+            possessed_is_waiting         = false;
+        }
+
+        return;
+    }
+
+    XMFLOAT3 dirVec = Vector3::Subtract(possessed_wander_target, position);
+    dirVec.y = 0.0f;
+    float dist = Vector3::Length(dirVec);
+
+    if (dist < ARRIVE_DIST) {
+
+        velocity.x           = 0.0f;
+        velocity.z           = 0.0f;
+        possessed_is_waiting = true;
+        possessed_wait_timer = 0.3f + (rand() % 5) * 0.1f;
+
+        return;
+    }
+
+    possessed_path_refresh_timer += elapsedTime;
+
+    if (possessed_path_refresh_timer >= 0.2f || possessed_nav_path.empty()) {
+
+        possessed_path_refresh_timer = 0.0f;
+        int sx = (int)roundf(position.x / TILE_SIZE);
+        int sz = (int)roundf(position.z / TILE_SIZE);
+        int ex = (int)roundf(possessed_wander_target.x / TILE_SIZE);
+        int ez = (int)roundf(possessed_wander_target.z / TILE_SIZE);
+        possessed_nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+    }
+
+    XMFLOAT3 moveDir = dirVec;
+    if (!possessed_nav_path.empty()) {
+
+        XMFLOAT3 wpWorld = { possessed_nav_path[0].x * TILE_SIZE, position.y, possessed_nav_path[0].y * TILE_SIZE };
+        XMFLOAT3 toWp    = Vector3::Subtract(wpWorld, position);
+        toWp.y = 0.0f;
+
+        if (Vector3::Length(toWp) > 0.1f)
+            moveDir = toWp;
+    }
+
+    float moveYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
+    SetYaw(moveYaw);
+    SetYawPitch(moveYaw, 0.0f);
+
+    velocity.x = look.x * POSSESS_SPEED;
+    velocity.z = look.z * POSSESS_SPEED;
+    state      = PLAYER_STATE::RUN;
+}
+
+void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
+{
+    if (current_scene_type != SCENE_TYPE::GAME)
+        return;
+
+    if (!input.c) {
+        c_hold_timer = 0.0f;
+        return;
+    }
+
+    // C키가 눌린 상태에서 매 프레임 범위 내 빙의 플레이어 탐색
+    shared_ptr<CPlayer> target = nullptr;
+    auto room = GetRoom();
+    if (room) {
+        CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
+        if (scene) {
+            for (auto& [id, player] : scene->GetPlayers()) {
+
+                if (!player || id == obj_id) 
+                    continue;
+                if (!player->GetIsPossessed()) 
+                    continue;
+
+                XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), position);
+                diff.y = 0.0f;
+
+                if (Vector3::Length(diff) <= 1.0f) {
+                    target = player;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (target) {
+        c_hold_timer += elapsedTime;
+        if (c_hold_timer >= 5.0f) {
+            c_hold_timer = 0.0f;
+            target->SetPossessed(false);
+            target->SetPossessionTimer(0.0f);
+        }
+    }
+    else {
+        c_hold_timer = 0.0f;
+    }
+}
+
+shared_ptr<CPlayer> CPlayer::FindNearestOtherPlayer()
+{
+    auto room = GetRoom();
+    if (!room) 
+        return nullptr;
+
+    CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
+    if (!scene) 
+        return nullptr;
+
+    auto& players = scene->GetPlayers();
+    shared_ptr<CPlayer> nearest = nullptr;
+    float minDistSq = FLT_MAX;
+
+    for (const auto& [id, player] : players) {
+
+        if (!player || id == obj_id)
+            continue;
+        if (player->GetIsPossessed())
+            continue;
+
+        XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);
+        dir.y = 0.0f;
+        float distSq = dir.x * dir.x + dir.z * dir.z;
+
+        if (distSq < minDistSq) {
+            minDistSq = distSq;
+            nearest   = player;
+        }
+    }
+
+    return nearest;
+}
+
+XMFLOAT3 CPlayer::GetRandomPossessedTarget()
+{
+    const float TILE_SIZE = 2.0f;
+    int cx = (int)roundf(position.x / TILE_SIZE);
+    int cz = (int)roundf(position.z / TILE_SIZE);
+
+    const int dx[] = { 0, 0, -1, 1 };
+    const int dz[] = { -1, 1,  0, 0 };
+
+    std::vector<MapGenerator::Cell> candidates;
+    for (int i = 0; i < 4; i++) {
+
+        int nx = cx + dx[i];
+        int nz = cz + dz[i];
+
+        if (MapGenerator::IsWalkableFloor(nx, nz) && !MapGenerator::IsBlockedStructure(nx, nz))
+            candidates.push_back({ nx, nz });
+    }
+
+    if (candidates.empty())
+        return position;
+
+    int idx = rand() % (int)candidates.size();
+    return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
 void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)
@@ -333,9 +647,9 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 
 void CPlayer::UpdateStamina(float elapsedTime)
 {
-    const float drainPerSec      = 100.0f;
-    const float regenPerSec      =  50.0f;
-    const float recoverThreshold = 200.0f;
+    const float drainPerSec = 16.7f;        // 뛸 때 초당 감소 (6초면 바닥)
+    const float regenPerSec = 10.0f;        // 쉴 때 초당 회복 
+    const float recoverThreshold = 30.0f;   // 이 값 이상 회복돼야 다시 달리기 허용
 
     if (state == PLAYER_STATE::RUN) {
 
@@ -369,7 +683,7 @@ void CPlayer::AddStamina(uint32 amount)
         static_cast<float>(stat.maxStamina));
 
     stat.stamina = static_cast<uint32>(accumulate_stamina);
-    if (stamina_exhausted && accumulate_stamina >= 200.0f)
+    if (stamina_exhausted && accumulate_stamina >= 30.0f)
         stamina_exhausted = false;
 }
 

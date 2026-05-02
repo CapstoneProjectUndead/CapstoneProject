@@ -52,6 +52,16 @@ void CScene::AnimateObjects(float elapsedTime)
 		if(obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
 			obj->Update(elapsedTime);
 	}
+
+	// 오브젝트 삭제 (4. 28 추가)
+	std::vector<uint64> toDelete;
+	for (const auto& obj : objects) {
+		if (obj->IsPendingDelete())
+			toDelete.push_back(obj->GetID());
+	}
+
+	for (uint64 id : toDelete)
+		RemoveObject(id);
 }
 
 void CScene::Update(float elapsedTime)
@@ -231,9 +241,6 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 
 	if (pkt.is_my_player) {
 		{
-			// 싱글 모드가 아닌 멀티 모드로 전환
-			g_is_single = false;
-
 			CDescriptorHeapManager* skinningHeapManager{ shaders["skinning"]->GetHeapManager() };
 			my_player = factory->CreateMyPlayer(skinningHeapManager);
 
@@ -330,6 +337,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		myPlayer->SetState(pkt.info.state);
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
+		myPlayer->SetPossessed(pkt.info.is_possessed);
 
 		// 예측 이동을 없애고
 		// 아래의 코드가 추가되었다.
@@ -363,6 +371,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		otherPlayer->SetYaw(pkt.info.yaw);
 		otherPlayer->SetPitch(pkt.info.pitch);
 		otherPlayer->SetState(pkt.info.state);
+		otherPlayer->SetPossessed(pkt.info.is_possessed);
 
 		// 회전을 위해 남겨둠
 		{
@@ -413,6 +422,16 @@ void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_S
 	monster->SetPosition(pos);
 	monster->SetOriginPos(pos);
 	AddObject(monster, monsterId);
+}
+
+void CScene::Handle_S_DeSpawn_Monster(std::shared_ptr<Session>& session, const S_DeSpawnMonster& pkt)
+{
+	auto& indexMap = GetIDIndex();
+	auto it = indexMap.find(pkt.monster_id);
+	if (it == indexMap.end())
+		return;
+
+	objects[it->second]->MarkForDelete();
 }
 
 void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_MonsterMove& pkt)

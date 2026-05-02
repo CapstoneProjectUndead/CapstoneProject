@@ -102,7 +102,8 @@ void CMovementComponent::Update(const float deltaTime)
             bool isMoving = (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('S') & 0x8000) ||
                 (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('D') & 0x8000);
 
-            if (!isMoving) {
+            CPlayer* p = static_cast<CPlayer*>(owner);
+            if (!isMoving && !p->GetIsKnockedBack()) {
                 owner->velocity.x = 0.0f;
                 owner->velocity.z = 0.0f;
             }
@@ -202,7 +203,8 @@ XMVECTOR CMovementComponent::CalculatePlatform(float dt)
 void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingMotion, float dt)
 {
     // 벽/오브젝트 충돌 처리
-    uint32_t wallMask = EColLayer::WALL | EColLayer::OBJECT;
+    auto* col = owner->GetComponent<CColliderComponent>();
+    uint32_t wallMask = col ? (col->filter.mask & ~EColLayer::GROUND) : (EColLayer::WALL | EColLayer::OBJECT);
     const float stepHeight = 0.2; // 오를 수 있는 최대 높이
 
     // Iterative Slide

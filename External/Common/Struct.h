@@ -15,8 +15,9 @@ struct InputData
 	bool space = false;
 	bool shift = false;
 	bool lbtn  = false;
+	bool c     = false;
 
-	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift, bool _lbtn = false)
+	InputData(bool _w, bool _a, bool _s, bool _d, bool _space, bool _shift, bool _lbtn = false, bool _c = false)
 		: w(_w)
 		, a(_a)
 		, s(_s)
@@ -24,17 +25,18 @@ struct InputData
 		, space(_space)
 		, shift(_shift)
 		, lbtn(_lbtn)
+		, c(_c)
 	{ }
 };
 
 struct PlayerStat
 {
-	uint32 hp          = 1000;
-	uint32 stamina     = 1000;
+	uint32 hp          = 100;
+	uint32 stamina     = 100;
 	uint16 miningSpeed = 0;
 
-	const uint32 maxHp      = 1000;
-	const uint32 maxStamina = 1000;
+	const uint32 maxHp      = 100;
+	const uint32 maxStamina = 100;
 };
 
 struct Buff

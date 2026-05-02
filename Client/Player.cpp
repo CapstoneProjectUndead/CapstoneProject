@@ -23,7 +23,6 @@ void CPlayer::Update(float elapsedTime)
 {
     UpdateBuffs(elapsedTime);
     PreUpdate(elapsedTime);
-
     CCharacter::Update(elapsedTime);
 }
 
@@ -60,7 +59,11 @@ void CPlayer::OnCollect(IRenderer* renderer)
 
     auto animator = GetComponent<CAnimatorComponent>();
     if (animator) {
-        if (equipped_item_id != 0)
+        if (is_dowsing) {
+            animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
+            animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
+        }
+        else if (!is_dowsing && equipped_item_id != 0)
             animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
     }
 }

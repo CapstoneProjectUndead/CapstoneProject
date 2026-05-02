@@ -24,7 +24,7 @@ CMonster::~CMonster()
 
 void CMonster::Update(float elapsedTime)
 {
-    // (½Ì±Û ¸ğµå)
+    // (ì‹±ê¸€ ëª¨ë“œ)
     if (g_is_single) {
         UpdateSingle(elapsedTime);
     }
@@ -35,27 +35,27 @@ void CMonster::Update(float elapsedTime)
 
 void CMonster::UpdateSingle(float elapsedTime)
 {
-    // ¹°¸® ¿£ÁøÀÌ µ¹±â ÀüÀÇ ÇöÀç Y ÁÂÇ¥¸¦ ±â¾ïÇÕ´Ï´Ù.
+    // ë¬¼ë¦¬ ì—”ì§„ì´ ëŒê¸° ì „ì˜ í˜„ì¬ Y ì¢Œí‘œë¥¼ ê¸°ì–µí•©ë‹ˆë‹¤.
     float beforeY = position.y;
 
     CCharacter::Update(elapsedTime);
 
-    // (½Ì±Û È¯°æ) ¸ó½ºÅÍ ¶³¸² ¹®Á¦ ¹æÁö ÄÚµå
+    // (ì‹±ê¸€ í™˜ê²½) ëª¬ìŠ¤í„° ë–¨ë¦¼ ë¬¸ì œ ë°©ì§€ ì½”ë“œ
     if (g_is_single && is_grounded && std::abs(velocity.y) < 0.1f) {
 
-        // ¹°¸® ¿£ÁøÀÌ ¹æ±İ ¹ñ¾î³½ Y°ª°ú ¿ø·¡ Y°ªÀÇ Â÷ÀÌ °è»ê
+        // ë¬¼ë¦¬ ì—”ì§„ì´ ë°©ê¸ˆ ë±‰ì–´ë‚¸ Yê°’ê³¼ ì›ë˜ Yê°’ì˜ ì°¨ì´ ê³„ì‚°
         float yDiff = std::abs(position.y - beforeY);
 
-        // ¿ÀÂ÷°¡ 0 ÃÊ°ú 0.05f ¹Ì¸¸ÀÌ¶ó¸é -> ÀÌ°Ç ÀÌµ¿ÀÌ ¾Æ´Ï¶ó EPA Ãæµ¹ º¸Á¤¿¡ ÀÇÇÑ '¶³¸²'ÀÌ´Ù!
+        // ì˜¤ì°¨ê°€ 0 ì´ˆê³¼ 0.05f ë¯¸ë§Œì´ë¼ë©´ -> ì´ê±´ ì´ë™ì´ ì•„ë‹ˆë¼ EPA ì¶©ëŒ ë³´ì •ì— ì˜í•œ 'ë–¨ë¦¼'ì´ë‹¤!
         if (yDiff > 0.0f && yDiff < 0.05f) {
-            position.y = Math::Lerp(beforeY, position.y, 0.2f); // 0.2f´Â Èí¼ö °­µµ (Á¶Àı °¡´É)
+            position.y = Math::Lerp(beforeY, position.y, 0.2f); // 0.2fëŠ” í¡ìˆ˜ ê°•ë„ (ì¡°ì ˆ ê°€ëŠ¥)
         }
     }
 }
 
 void CMonster::UpdateMulti(float elapsedTime)
 {
-    // ¸ÖÆ¼ ÇÃ·¹ÀÌÀÏ °æ¿ì¿¡¸¸ ½ÇÇà!
+    // ë©€í‹° í”Œë ˆì´ì¼ ê²½ìš°ì—ë§Œ ì‹¤í–‰!
     if (!g_is_single) {
         MonsterMoveSyncByInterpolation(elapsedTime);
     }
@@ -73,12 +73,12 @@ void CMonster::RecordMonsterFrameHistory(const MonsterFrameHistory& state)
 
 void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
 {
-    // µ¥ÀÌÅÍ°¡ 2°³ ¹Ì¸¸ÀÌ¸é º¸°£ ºÒ°¡´É
+    // ë°ì´í„°ê°€ 2ê°œ ë¯¸ë§Œì´ë©´ ë³´ê°„ ë¶ˆê°€ëŠ¥
     if (interpolation_deq.size() < 2)
         return;
 
     // ---------------------------------------------------------
-    // 1. ½Ã°£ µ¿±âÈ­ ¹× Å¸°Ù ½Ã°£ ¼³Á¤
+    // 1. ì‹œê°„ ë™ê¸°í™” ë° íƒ€ê²Ÿ ì‹œê°„ ì„¤ì •
     // ---------------------------------------------------------
     float serverNow = CNetworkClockManager::GetInstance().GetServerNow();
 
@@ -87,34 +87,34 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
     float rawDelay = (measurer->GetAverageInterval() * 1.5f) + (measurer->GetCurrentJitter() * 5.0f);
     float targetDelay = std::clamp(rawDelay, 0.05f, 2.0f);
 
-    // 60Æ½(16ms) ±âÁØÀÌ¹Ç·Î ÃÖ¼Ò µô·¹ÀÌ¸¦ Á¶±İ ¿©À¯ ÀÖ°Ô ÀâÀ½
+    // 60í‹±(16ms) ê¸°ì¤€ì´ë¯€ë¡œ ìµœì†Œ ë”œë ˆì´ë¥¼ ì¡°ê¸ˆ ì—¬ìœ  ìˆê²Œ ì¡ìŒ
     smoothed_delay = std::lerp(smoothed_delay, targetDelay, 0.01f);
 
-    // ±âº» Å¸°Ù ½Ã°£
+    // ê¸°ë³¸ íƒ€ê²Ÿ ì‹œê°„
     float targetServerTime = serverNow - smoothed_delay;
 
     // ---------------------------------------------------------
-    // 2. ½Ã°£ Ãà º¸Á¤ (Time Warp & Clamp)
+    // 2. ì‹œê°„ ì¶• ë³´ì • (Time Warp & Clamp)
     // ---------------------------------------------------------
 
-    // [Time Warp] ·ºÀÌ Ç®·Á¼­ µ¥ÀÌÅÍ°¡ ¸ô·È°Å³ª ½Ã°è°¡ ³Ê¹« µÚÃ³Áø °æ¿ì
-    // ¹öÆÛ°¡ 1ÃÊ(60°³) Å©±âÀÌ¹Ç·Î, 0.7ÃÊ ÀÌ»ó Â÷ÀÌ³ª¸é ÃÖ½ÅÀ¸·Î °­Á¦ °ßÀÎ
+    // [Time Warp] ë ‰ì´ í’€ë ¤ì„œ ë°ì´í„°ê°€ ëª°ë ¸ê±°ë‚˜ ì‹œê³„ê°€ ë„ˆë¬´ ë’¤ì²˜ì§„ ê²½ìš°
+    // ë²„í¼ê°€ 1ì´ˆ(60ê°œ) í¬ê¸°ì´ë¯€ë¡œ, 0.7ì´ˆ ì´ìƒ ì°¨ì´ë‚˜ë©´ ìµœì‹ ìœ¼ë¡œ ê°•ì œ ê²¬ì¸
     if (interpolation_deq.back().server_timestamp - targetServerTime > 0.7f) {
         targetServerTime = interpolation_deq.back().server_timestamp - smoothed_delay;
     }
 
-    // [¾ÈÀüÀåÄ¡] ¹Ì·¡ µ¥ÀÌÅÍ ¹æÁö (µ¥ÀÌÅÍ ºÎÁ· ½Ã ´ë±â)
+    // [ì•ˆì „ì¥ì¹˜] ë¯¸ë˜ ë°ì´í„° ë°©ì§€ (ë°ì´í„° ë¶€ì¡± ì‹œ ëŒ€ê¸°)
     if (targetServerTime > interpolation_deq.back().server_timestamp) {
         targetServerTime = interpolation_deq.back().server_timestamp;
     }
 
-    // [¾ÈÀüÀåÄ¡] °ú°Å µ¥ÀÌÅÍ ¹æÁö (¹öÆÛ ¹üÀ§ ÀÌÅ» ¹æÁö)
+    // [ì•ˆì „ì¥ì¹˜] ê³¼ê±° ë°ì´í„° ë°©ì§€ (ë²„í¼ ë²”ìœ„ ì´íƒˆ ë°©ì§€)
     if (targetServerTime < interpolation_deq.front().server_timestamp) {
         targetServerTime = interpolation_deq.front().server_timestamp;
     }
 
     // ---------------------------------------------------------
-    // 3. º¸°£ ±¸°£ °Ë»ö (Frame A, Frame B)
+    // 3. ë³´ê°„ êµ¬ê°„ ê²€ìƒ‰ (Frame A, Frame B)
     // ---------------------------------------------------------
 
     MonsterFrameHistory* frameA = nullptr;
@@ -130,36 +130,36 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
     }
 
     // ---------------------------------------------------------
-    // 4. º¸°£ ¹× ÀÌµ¿ Ã³¸®
+    // 4. ë³´ê°„ ë° ì´ë™ ì²˜ë¦¬
     // ---------------------------------------------------------
 
     if (frameA && frameB) {
 
-        // ¾ËÆÄ°ª ±¸ÇÏ±â
+        // ì•ŒíŒŒê°’ êµ¬í•˜ê¸°
         float timeDiff = frameB->server_timestamp - frameA->server_timestamp;
         float alpha = (timeDiff > 0.0001f) ? (targetServerTime - frameA->server_timestamp) / timeDiff : 0.0f;
 
-        // ¸ñÇ¥ À§Ä¡, È¸Àü, »óÅÂ °è»ê
+        // ëª©í‘œ ìœ„ì¹˜, íšŒì „, ìƒíƒœ ê³„ì‚°
         XMFLOAT3 nextPos = Vector3::Lerp(frameA->position, frameB->position, alpha);
 
-        // È¸Àü°ªÀº ¹Ù·Î Àû¿ë, ¾î¶² ¾Ö´Ï¸ŞÀÌ¼ÇÀ» Àç»ıÇÒÁö¿¡ ´ëÇÑ »óÅÂ°ªµµ ¹Ù·Î Àû¿ë!
+        // íšŒì „ê°’ì€ ë°”ë¡œ ì ìš©, ì–´ë–¤ ì• ë‹ˆë©”ì´ì…˜ì„ ì¬ìƒí• ì§€ì— ëŒ€í•œ ìƒíƒœê°’ë„ ë°”ë¡œ ì ìš©!
         SetYaw(frameB->yaw);
         SetPitch(frameB->pitch);
         AI_state = frameB->AI_state;
 
         if (AI_state == AI_STATE::MONSTER_IDLE) {
 
-            // ¼­¹ö°¡ º¸³»ÁØ ¹Ì·¡ÀÇ Y°ª(frameB)°ú ÇöÀç ³» Y°ªÀÇ Â÷ÀÌ¸¦ ±¸ÇÔ
+            // ì„œë²„ê°€ ë³´ë‚´ì¤€ ë¯¸ë˜ì˜ Yê°’(frameB)ê³¼ í˜„ì¬ ë‚´ Yê°’ì˜ ì°¨ì´ë¥¼ êµ¬í•¨
             float yDiff = std::abs(frameB->position.y - position.y);
 
-            // ¿ÀÂ÷°¡ 0.05f(5cm) ¹Ì¸¸ÀÌ¶ó¸é, ÀÌ°Ç ÀÌµ¿ÀÌ ¾Æ´Ï¶ó ¹°¸® ¿£ÁøÀÇ '¶³¸²'À¸·Î °£ÁÖ!
+            // ì˜¤ì°¨ê°€ 0.05f(5cm) ë¯¸ë§Œì´ë¼ë©´, ì´ê±´ ì´ë™ì´ ì•„ë‹ˆë¼ ë¬¼ë¦¬ ì—”ì§„ì˜ 'ë–¨ë¦¼'ìœ¼ë¡œ ê°„ì£¼!
             if (yDiff < 0.05f) {
-                nextPos.y = position.y; // YÃàÀº ´ú´ú°Å¸®Áö ¾Ê°Ô ÇöÀç À§Ä¡·Î ²Ë Àâ¾ÆµÒ
+                nextPos.y = position.y; // Yì¶•ì€ ëœëœê±°ë¦¬ì§€ ì•Šê²Œ í˜„ì¬ ìœ„ì¹˜ë¡œ ê½‰ ì¡ì•„ë‘ 
             }
         }
         // -------------------------------------------------------------
 
-        // ÅÚ·¹Æ÷Æ® Ã¼Å© ¹× ÀÌµ¿ Àû¿ë
+        // í…”ë ˆí¬íŠ¸ ì²´í¬ ë° ì´ë™ ì ìš©
         float distToTarget = Vector3::Length(Vector3::Subtract(nextPos, position));
 
         if (distToTarget > 5.0f) {
@@ -168,7 +168,7 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
         else{
             float lerpSpeed = 15.0f;
 
-            // ÇÁ·¹ÀÓ ¼Óµµ¿¡ »ó°ü¾øÀÌ ÀÏÁ¤ÇÑ ¼Óµµ·Î º¸°£ÇÏ°Ô ¸¸µì´Ï´Ù.
+            // í”„ë ˆì„ ì†ë„ì— ìƒê´€ì—†ì´ ì¼ì •í•œ ì†ë„ë¡œ ë³´ê°„í•˜ê²Œ ë§Œë“­ë‹ˆë‹¤.
             float smoothFactor = 1.0f - std::exp(-lerpSpeed * elapsedTime);
             nextPos.y = Math::Lerp(position.y, nextPos.y, smoothFactor);
 
@@ -177,9 +177,9 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
     }
 
     // ---------------------------------------------------------
-    // 5. ÀåºÎ Á¤¸® (Buffer Management)
+    // 5. ì¥ë¶€ ì •ë¦¬ (Buffer Management)
     // ---------------------------------------------------------
-    // targetServerTimeº¸´Ù È®½ÇÈ÷ °ú°ÅÀÎ µ¥ÀÌÅÍ´Â »èÁ¦ÇÏµÇ, º¸°£À» À§ÇØ ÃÖ¼Ò 2°³´Â ³²±è
+    // targetServerTimeë³´ë‹¤ í™•ì‹¤íˆ ê³¼ê±°ì¸ ë°ì´í„°ëŠ” ì‚­ì œí•˜ë˜, ë³´ê°„ì„ ìœ„í•´ ìµœì†Œ 2ê°œëŠ” ë‚¨ê¹€
 
     while (interpolation_deq.size() > 2 && interpolation_deq[1].server_timestamp < targetServerTime) {
         interpolation_deq.pop_front();
@@ -189,8 +189,10 @@ void CMonster::MonsterMoveSyncByInterpolation(float elapsedTime)
 std::shared_ptr<CPlayer> CMonster::FindNearestPlayer()
 {
     CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
-    assert(currentScene->GetSceneType() == current_scene_type);
     auto player = currentScene->GetMyPlayer();
+
+    if (!player || player->GetIsPossessed())
+        return nullptr;
 
     return player;
 }

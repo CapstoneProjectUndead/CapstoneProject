@@ -2,6 +2,7 @@
 // Server쪽 Player
 
 #include "Object.h"
+#include <MapGenerator/MapGenerator.h>
 
 struct ServerFrameHistory
 {
@@ -105,9 +106,29 @@ public:
 
 	void   ResetDigTimer() { dig_timer = 0.f; }
 
+	// 넉백 + 스턴 (기본값 1.3f) 스턴은 원치 않으면 인자를 0으로 쓰면 된다.
+	void   ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration = 1.5f);
+	void   ApplyStun(float time);
+	void   ApplyPossession();
+
+	bool  GetIsPossessed() const { return is_possessed; }
+	void  SetPossessed(bool val) { is_possessed = val; }
+
+	float GetPossessionTimer() const { return possession_timer; }
+	void  SetPossessionTimer(float t) { possession_timer = t; }
+
+	bool GetDowsing() const { return is_dowsing; }
+	void SetDowsing(bool dows) { is_dowsing = dows; }
+
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
+	void UpdatePossession(float elapsedTime);
+
+	void ReleasePossession(const InputData& input, const float elapsedTime);
+
+	XMFLOAT3            GetRandomPossessedTarget();
+	shared_ptr<CPlayer> FindNearestOtherPlayer();
 
 private:
 	weak_ptr<CUser>				user;
@@ -126,6 +147,7 @@ private:
 	shared_ptr<CInventory>      inventory;
 
 	bool			  is_ready;
+	bool			  is_dowsing;
 	uint16			  equipped_item_id;  // 0 = 맨손
 	ITEM_SUB_TYPE	  equipped_item_sub_type;
 	shared_ptr<CItem> equipped_item;
@@ -133,6 +155,23 @@ private:
 	PlayerStat  stat;
 	float       accumulate_stamina;
 	bool        stamina_exhausted;
+
+	XMFLOAT3    knockback_vel;
+	float       knockback_timer;
+
+	float       stun_timer;
+
+	bool        is_possessed;
+	float       possession_timer{ 0.0f };
+	float       c_hold_timer{ 0.0f };
+	bool        last_c_input{ false };
+
+	std::vector<MapGenerator::Cell> possessed_nav_path;
+	float    possessed_path_refresh_timer;
+	XMFLOAT3 possessed_wander_target;
+	bool     possessed_is_waiting;
+	float    possessed_wait_timer;
+	float    possession_contact_timer;
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };

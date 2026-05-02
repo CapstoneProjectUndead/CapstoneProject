@@ -32,6 +32,7 @@ public:
     void OnItemRemovedFromInventory(uint32 inventoryId);
 
     int  GetSelectedSlot() const { return selected_slot; } // 0-based, -1 = none
+    void SetSelectedSlot(int slot) { selected_slot = slot; }
     int  GetSelectedItemId() const;
 
     ITEM_TYPE     GetSelectedItemType() const;
