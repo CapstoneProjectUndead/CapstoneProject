@@ -74,7 +74,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		}
 		PlayerSetState(idle, walk, run);
 	}
-		break;
+	break;
 	case OBJECT_TYPE::MONSTER:
 	{
 		sockets.resize(SOCKET_TYPE::HAND_R + 1);
@@ -96,7 +96,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			r2a.duration = 0.1f;
 			r2a.condition = [this]() {
 				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_ATTACK;
-			};
+				};
 			controller.AddTransition(run, r2a);
 
 			// Idle → Attack (엣지 케이스)
@@ -105,7 +105,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			i2a.duration = 0.1f;
 			i2a.condition = [this]() {
 				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_ATTACK;
-			};
+				};
 			controller.AddTransition(idle, i2a);
 
 			// Attack → Run
@@ -114,7 +114,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			a2r.duration = 0.2f;
 			a2r.condition = [this]() {
 				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
-			};
+				};
 			controller.AddTransition(attack, a2r);
 
 			// Attack → Idle
@@ -123,11 +123,11 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			a2i.duration = 0.2f;
 			a2i.condition = [this]() {
 				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
-			};
+				};
 			controller.AddTransition(attack, a2i);
 		}
 	}
-		break;
+	break;
 	}
 
 	controller.AddState({ idle, animSet.idle });
@@ -229,7 +229,7 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 {
 	// dig state(action으로도 가능)
 	const std::string dig{ "DigState" };
-	controller.AddState({ dig, "Dig", 3, false});
+	controller.AddState({ dig, "Dig", 3, false });
 	Transition i2d;
 	i2d.to_state = dig;
 	i2d.duration = 0.2f;
@@ -250,9 +250,10 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	Transition d2i;
 	d2i.to_state = idle;
 	d2i.duration = 0.2f;
-	d2i.condition = [this]() { 
+	d2i.condition = [this]() {
 		// 애니메이션이 끝났거나
-		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 1) {
+		// PlayerSetState 안의 d2i 조건 수정
+		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 1.0f) {
 			auto* player = static_cast<CMyPlayer*>(owner);
 			player->SetDigAnimFinished(true);
 			player->SetState(PLAYER_STATE::IDLE);
@@ -346,29 +347,45 @@ XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 	XMMATRIX worldMatrix = XMLoadFloat4x4(&owner->world_matrix);
 	if (static_cast<size_t>(type) >= sockets.size()) return worldMatrix;
 
-	// 인덱스가 유효한지 확인
 	const auto& socket = sockets[type];
 	if (socket.bone_index == -1) return worldMatrix;
 
 	auto& manager = CAnimationManager::GetInstance();
+	std::string clipA = layers[0].current_clip;
+	float relTimeA = current_time - layers[0].start_time;
 
-	// 행렬 계산(base + action)
-	// Layer 0 (Base)
-	float relTime0 = current_time - layers[0].start_time;
-	XMMATRIX mat0 = manager.GetBoneSocketMatrix(layers[0].current_clip, relTime0, socket.bone_index);
+	// Dig일 경우 소켓 시간도 마지막에 고정
+	if (clipA == "Dig" || clipA == "DigState") {
+		auto& animA = manager.GetClip(clipA);
+		float maxTime = (animA.total_frames > 0) ? (animA.total_frames - 1) / 60.0f : 0.0f;
+		if (relTimeA > maxTime) relTimeA = maxTime;
+	}
 
-	XMMATRIX finalLocalMat = mat0;
+	XMMATRIX matA = manager.GetBoneSocketMatrix(clipA, relTimeA, socket.bone_index);
+	XMMATRIX finalLocalMat = matA;
 
-	// Layer 1 (Action)이 재생 중이라면 블렌딩
-	if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
+	if (controller.IsBlending()) {
+		std::string clipB = controller.GetNextClip();
+		if (clipB.empty()) clipB = controller.GetCurrentClip();
+
+		if (!clipB.empty() && clipB != clipA) {
+			float relTimeB = controller.GetCurrentClipTime();
+			XMMATRIX matB = manager.GetBoneSocketMatrix(clipB, relTimeB, socket.bone_index);
+			float weight = controller.GetWeight();
+
+			// 유저님이 원하는 단순 행렬 선형 보간 (Matrix Lerp)
+			finalLocalMat = matA * (1.0f - weight) + matB * weight;
+		}
+	}
+	else if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
 		float relTime1 = current_time - layers[1].start_time;
 		XMMATRIX mat1 = manager.GetBoneSocketMatrix(layers[1].current_clip, relTime1, socket.bone_index);
-		// Simple Blending
-		finalLocalMat = mat0 * (1.0f - layers[1].weight) + mat1 * layers[1].weight;
+		finalLocalMat = matA * (1.0f - layers[1].weight) + mat1 * layers[1].weight;
 	}
-	
+
 	return socket.local_offset * finalLocalMat * worldMatrix;
 }
+
 
 void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName)
 {
@@ -379,7 +396,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 	// 아이템이 바뀌었을 때만 load
 	if (cache.last_item_id != itemID && itemID > 0) {
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
-		
+
 		if (proto) {
 			cache.mesh = proto->GetComponent<CMeshComponent>();
 			cache.mat = proto->GetComponent<CMaterialComponent>();
@@ -423,58 +440,66 @@ AnimationData CAnimatorComponent::GetAnimationData()
 	AnimationData data{};
 	auto& manager = CAnimationManager::GetInstance();
 
-	// 베이스 애니메이션 (Layer 0)
 	std::string baseClip = layers[0].current_clip;
 	if (baseClip.empty()) return data;
 
 	auto& animA = manager.GetClip(baseClip);
 	data.start_offset_A = animA.start_matrix_offset;
-
-	float relativeTimeA = current_time - layers[0].start_time;
-	data.cur_frame_A = (uint32_t)(relativeTimeA * 60.0f) % animA.total_frames;
 	data.bone_count = animA.bone_count;
 
-	// pitch 가중치 계산
+	// 현재 시간 기반 프레임 계산
+	float relativeTimeA = current_time - layers[0].start_time;
+	uint32_t frameA = (uint32_t)(relativeTimeA * 60.0f);
+	uint32_t maxF = (animA.total_frames > 0) ? (uint32_t)animA.total_frames - 1 : 0;
+
+	// [수정] Dig 계열만 마지막 프레임 고정, 나머지는 루프(%) 적용
+	if (baseClip == "Dig" || baseClip == "DigState") {
+		data.cur_frame_A = (frameA < maxF) ? frameA : maxF;
+	}
+	else {
+		data.cur_frame_A = (animA.total_frames > 0) ? (frameA % animA.total_frames) : 0;
+	}
+
+	// Pitch 로직 (기존 유지)
 	float pitchWeight{ -1.0f };
 	bool isUp{};
 	if (!up_clip.name.empty()) {
-		// pitch 정규화
 		float pitch = owner->pitch / 90.f;
-		if(pitch <= 0.0f)
-			isUp = true;
+		if (pitch <= 0.0f) isUp = true;
 		pitchWeight = std::abs(pitch);
 	}
 
-	// 블렌딩 대상 결정
-	// 상반신 액션(감정 표현 모션 등)
+	// 블렌딩 처리 (단순 선형 보간 유지)
 	if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
-		// 상반신 액션 모드
 		auto& animB = manager.GetClip(layers[1].current_clip);
 		data.start_offset_B = animB.start_matrix_offset;
 		float relativeTimeB = current_time - layers[1].start_time;
 		data.cur_frame_B = (uint32_t)(relativeTimeB * 60.0f) % animB.total_frames;
-
 		data.blend_weight = layers[1].weight;
 		data.mask_id = layers[1].mask_id;
 	}
-	else if (controller.IsBlending()) {	// blending 처리
+	else if (controller.IsBlending()) {
 		std::string clipB = controller.GetNextClip();
+		if (clipB.empty()) clipB = controller.GetCurrentClip();
+
 		if (!clipB.empty()) {
 			auto& animB = manager.GetClip(clipB);
 			data.start_offset_B = animB.start_matrix_offset;
-			data.cur_frame_B = (uint32_t)(current_time * 60.0f) % animB.total_frames;
-			data.blend_weight = controller.GetWeight();
+
+			// 다음 클립(B)의 프레임 계산
+			float clipTimeB = controller.GetCurrentClipTime();
+			data.cur_frame_B = (uint32_t)(clipTimeB * 60.0f) % animB.total_frames;
+
+			data.blend_weight = controller.GetWeight(); // 10:0 -> 0:10 리니어 블렌딩
 			data.mask_id = -1;
 		}
 	}
 	else if (pitchWeight > 0.0f) {
-		if(isUp)
-			data.start_offset_B = up_clip.start_matrix_offset;
-		else
-			data.start_offset_B = down_clip.start_matrix_offset;
+		if (isUp) data.start_offset_B = up_clip.start_matrix_offset;
+		else data.start_offset_B = down_clip.start_matrix_offset;
 		data.cur_frame_B = 0;
 		data.blend_weight = pitchWeight;
-		data.mask_id = 0; // 상반신 마스크 ID 적용 (상체만 고개 들게)
+		data.mask_id = 0;
 	}
 	else {
 		data.blend_weight = 0.0f;
@@ -484,18 +509,32 @@ AnimationData CAnimatorComponent::GetAnimationData()
 	return data;
 }
 
+
 void CAnimatorComponent::Update(float deltaTime)
 {
-	if (owner == nullptr)
-		return;
+	if (owner == nullptr) return;
 
 	current_time += deltaTime;
-	
-	// 애니메이션 상태 머신 update
 	controller.Update(deltaTime);
 	UpdateLayerWeights(deltaTime);
 
-	float clipTime = controller.GetCurrentClipTime();
-	layers[0].current_clip = controller.GetCurrentClip();
-	layers[0].start_time = current_time - clipTime;
+	std::string nextClip = controller.GetCurrentClip();
+
+	// [수정] 블렌딩 중일 때의 처리 로직
+	if (controller.IsBlending()) {
+		// 1. 단발성 애니메이션(Dig)이 블렌딩 중이면? -> 포즈를 고정해야 하므로 시간을 같이 밀어줌
+		if (layers[0].current_clip == "Dig" || layers[0].current_clip == "DigState") {
+			layers[0].start_time += deltaTime;
+		}
+		// 2. 루프 애니메이션(Walk, Idle 등)이 블렌딩 중이면? -> 가만히 둬야 current_time에 의해 계속 재생됨
+		else {
+			// 아무것도 안 함 (start_time 유지)
+		}
+	}
+	else {
+		// 블렌딩 중이 아닐 때는 실시간으로 상태 동기화
+		float clipTime = controller.GetCurrentClipTime();
+		layers[0].current_clip = nextClip;
+		layers[0].start_time = current_time - clipTime;
+	}
 }
