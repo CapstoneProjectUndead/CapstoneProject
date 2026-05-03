@@ -13,6 +13,7 @@
 #include "LobbyScene.h"
 
 #include "ImGuiManager.h"
+#include "SoundManager.h"
 #include "ResourceManager.h"
 #include "TitleScene.h"
 #include "CustomScene.h"
@@ -56,6 +57,9 @@ bool CGameFramework::OnCreate()
 
 	// CKeyManager 초기화
 	CKeyManager::GetInstance().Init();
+
+	// CSoundManager 초기화
+	CSoundManager::GetInstance().Init();
 
 	// ImGuiManager 초기화
 	// bufferCount: 더블 버퍼링이면 2, 트리플이면 3 (SwapchainDesc 확인 필요)
@@ -482,6 +486,9 @@ void CGameFramework::Update()
 
 	// 키 입력 처리
 	CKeyManager::GetInstance().Tick();
+
+	// 사운드 업데이트
+	CSoundManager::GetInstance().Tick();
 
 	// 네트워크 패킷 처리
 	CNetworkManager::GetInstance().Tick(0);

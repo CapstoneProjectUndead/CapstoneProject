@@ -133,6 +133,9 @@
     <Filter Include="Object\Mineable">
       <UniqueIdentifier>{af69530c-b2b8-4bbc-86c0-3bf90ca6e799}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sound">
+      <UniqueIdentifier>{25df808c-3f77-4bd5-9ab3-fb9c9ec378ec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -411,6 +414,12 @@
     <ClInclude Include="MineableObject.h">
       <Filter>Object\Mineable</Filter>
     </ClInclude>
+    <ClInclude Include="Sound.h">
+      <Filter>Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundManager.h">
+      <Filter>Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -646,6 +655,12 @@
     </ClCompile>
     <ClCompile Include="MineableObject.cpp">
       <Filter>Object\Mineable</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound.cpp">
+      <Filter>Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundManager.cpp">
+      <Filter>Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
