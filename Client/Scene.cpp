@@ -17,6 +17,7 @@
 #include "UIComponent.h"
 #include "Renderers.h"
 #include "SceneManager.h"
+#include "SoundManager.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
@@ -164,6 +165,9 @@ void CScene::DrawUI_Final()
 {
 	ManageIME();  // 공통 로직 (IME/포커스)
 	DrawUI();     // 자식이 구현할 구체적인 UI 로직
+
+	if (!ImGui::IsAnyItemHovered())
+		last_hovered_id_ = 0;
 }
 
 void CScene::ManageIME()
@@ -197,6 +201,23 @@ void CScene::ManageIME()
 
 		last_input_state = currentInputState;
 	}
+}
+
+void CScene::CheckHoverSound()
+{
+	if (!ImGui::IsItemHovered())
+		return;
+
+	ImGuiID id = ImGui::GetItemID();
+	if (id != last_hovered_id_) {
+		last_hovered_id_ = id;
+		CSoundManager::GetInstance().Play("sfx_button");
+	}
+}
+
+void CScene::PlayClickSound()
+{
+	CSoundManager::GetInstance().Play("sfx_select");
 }
 
 void CScene::AddObject(std::shared_ptr<CObject> obj, UINT id)

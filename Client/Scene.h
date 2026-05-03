@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "LightManager.h"
+#include "ImGuiManager.h"
 
 class CPlayer;
 class CMyPlayer;
@@ -36,6 +37,10 @@ public:
 
 	// UI 관련 
 	void DrawUI_Final();
+
+	// UI 버튼 누를 때 효과음
+	void CheckHoverSound();
+	void PlayClickSound();
 
 protected:
 	// UI 관련 
@@ -100,4 +105,6 @@ protected:
 
 	// 4월 15일 추가. 
 	std::vector<uint64>						player_slot_ids;
+
+	ImGuiID last_hovered_id_ = 0;
 };

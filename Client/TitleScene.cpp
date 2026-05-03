@@ -8,10 +8,9 @@
 #include "ServerSession.h"
 #include "SceneManager.h"
 #include "User.h"
-#include "ImGuiManager.h"
+#include "SoundManager.h"
 
 #define ROOM_MAX_PLAYER 4
-
 
 CTitleScene::CTitleScene()
     : CScene(SCENE_TYPE::TITLE)
@@ -228,19 +227,25 @@ void CTitleScene::DrawTitleMainWindow()
                 // 싱글 모드
                 g_is_single = true;
                 CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
+                PlayClickSound();
             }
+            CheckHoverSound();
             ImGui::Spacing();
             ImGui::Spacing();
 
             if (ImageButtonWithText((long long)multiTex, "##multi", btnSize)) {
                 SetUIState(TitleUIState::MultiSelect);
+                PlayClickSound();
             }
+            CheckHoverSound();
             ImGui::Spacing();
             ImGui::Spacing();
 
             if (ImageButtonWithText((long long)exitTex, "##exit", btnSize)) {
                 g_run = false;
+                PlayClickSound();
             }
+            CheckHoverSound();
         }
         // =======================
         // [State 2] 멀티 선택 화면
@@ -251,19 +256,24 @@ void CTitleScene::DrawTitleMainWindow()
                 // 오프라인 상태: 로그인 / 회원가입 / 뒤로가기
                 if (ImGui::Button((const char*)u8"로그인", btnSize)) {
                     SetUIState(TitleUIState::Login);
+                    PlayClickSound();
                 }
+                CheckHoverSound();
                 ImGui::Spacing();
                 ImGui::Spacing();
 
                 if (ImGui::Button((const char*)u8"회원가입", btnSize)) {
                     SetUIState(TitleUIState::SignUp);
+                    PlayClickSound();
                 }
+                CheckHoverSound();
             }
             else {
                 // 온라인 상태: 방 검색 / 로그아웃
                 if (ImGui::Button((const char*)u8"방 검색", btnSize)) {
                     is_title_draw = false;
                     SetUIState(TitleUIState::RoomList);
+                    PlayClickSound();
 
                     if (SERVER_SESSION) {
                         auto user = SERVER_SESSION->GetUser();
@@ -274,12 +284,14 @@ void CTitleScene::DrawTitleMainWindow()
                         }
                     }
                 }
+                CheckHoverSound();
                 ImGui::Spacing();
                 ImGui::Spacing();
 
                 if (ImGui::Button((const char*)u8"로그아웃", btnSize)) {
 
                     StartLoading(LoadingType::Logout);
+                    PlayClickSound();
 
                     // 로그아웃 패킷 전송 로직
                     auto serverSession = GET_SERVER_SESSION
@@ -299,13 +311,16 @@ void CTitleScene::DrawTitleMainWindow()
                     //result.Success("로그아웃 성공!");
                     //SetLastResult(result);
                 }
+                CheckHoverSound();
             }
             ImGui::Spacing();
             ImGui::Spacing();
 
             if (ImGui::Button((const char*)u8"뒤로가기", btnSize)) {
                 SetUIState(TitleUIState::Main); // 메인으로 복귀
+                PlayClickSound();
             }
+            CheckHoverSound();
         }
 
         ImGui::PopStyleColor(3);
@@ -360,6 +375,7 @@ void CTitleScene::DrawLogInWindow()
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
         if (ImGui::Button("Connect & Login", ImVec2(btnWidth, btnHeight))) {
+            PlayClickSound();
 
             // 패킷 전송
             C_LOGIN loginPkt;
@@ -385,6 +401,7 @@ void CTitleScene::DrawLogInWindow()
             // 폰트 스케일 원상 복구
             ImGui::SetWindowFontScale(1.0f);
         }
+        CheckHoverSound();
     }
     ImGui::End();
 
@@ -437,6 +454,7 @@ void CTitleScene::DrawSignUpWindow()
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
 
         if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, btnHeight))) {
+            PlayClickSound();
 
             C_SIGNUP signUpPkt;
             COPY_STRING(signUpPkt.id, id);
@@ -454,6 +472,7 @@ void CTitleScene::DrawSignUpWindow()
             memset(pw, 0, sizeof(pw));
             memset(name, 0, sizeof(name));
         }
+        CheckHoverSound();
 
         // 폰트 스케일 원상 복구
         ImGui::SetWindowFontScale(1.0f);
@@ -496,6 +515,7 @@ void CTitleScene::DrawLoadingPopUp()
 
         ImGui::Spacing();
         if (ImGui::Button("Cancel")) {
+            PlayClickSound();
             StopLoading();
             ImGui::CloseCurrentPopup();
         }
@@ -538,6 +558,7 @@ void CTitleScene::DrawLoadingPopUpResult()
         ImGui::Spacing();
 
         if (ImGui::Button((const char*)u8"확인")) {
+            PlayClickSound();
 
             pop_up_result.is_visible = false; // 팝업 닫기
             ImGui::CloseCurrentPopup();
@@ -733,6 +754,7 @@ void CTitleScene::DrawRefreshButton()
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
     if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(btnSize, btnSize))) {
+        PlayClickSound();
         // 새로고침 패킷 전송
         if (SERVER_SESSION) {
             auto user = SERVER_SESSION->GetUser();
@@ -743,6 +765,7 @@ void CTitleScene::DrawRefreshButton()
             }
         }
     }
+    CheckHoverSound();
     ImGui::PopStyleColor(2);
 }
 
@@ -765,12 +788,15 @@ void CTitleScene::DrawThreeButton()
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
     if (ImGui::Button((const char*)u8"방 만들기", ImVec2(btnWidth, btnHeight))) {
+        PlayClickSound();
         show_room_create_popup = true;
     }
+    CheckHoverSound();
     ImGui::SameLine(0, spacing);
 
     if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
         if (selected_room_id != 0) {
+            PlayClickSound();
             StartLoading(LoadingType::RoomEnter);
             // 입장 패킷 전송...
             if (SERVER_SESSION) {
@@ -785,12 +811,15 @@ void CTitleScene::DrawThreeButton()
             }
         }
     }
+    CheckHoverSound();
     ImGui::SameLine(0, spacing);
 
     if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
+        PlayClickSound();
         is_title_draw = true;
         SetUIState(TitleUIState::MultiSelect); // 다시 메뉴 선택으로
     }
+    CheckHoverSound();
 
     ImGui::PopStyleColor(2);
 }
@@ -823,6 +852,7 @@ void CTitleScene::DrawRoomCreatePopUp()
         ImVec2 btnSize = ImVec2(120.0f * scale, 40.0f * scale);
 
         if (ImGui::Button((const char*)u8"생성", btnSize)) {
+            PlayClickSound();
             if (strlen(roomName) == 0) {
                 sprintf_s(roomName, sizeof(roomName), "Unknown Room");
             }
@@ -851,6 +881,7 @@ void CTitleScene::DrawRoomCreatePopUp()
         ImGui::SameLine();
 
         if (ImGui::Button((const char*)u8"취소", btnSize)) {
+            PlayClickSound();
             memset(roomName, 0, sizeof(roomName));
             ImGui::CloseCurrentPopup();
             show_room_create_popup = false;
