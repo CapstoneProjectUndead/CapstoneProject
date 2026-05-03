@@ -65,6 +65,15 @@ using Microsoft::WRL::ComPtr;
 #define FRAME_BUFFER_WIDTH	1920
 #define FRAME_BUFFER_HEIGHT 1080
 
+// FMOD
+#include <FMOD/fmod.h>
+#include <FMOD/fmod.hpp>
+#ifdef _DEBUG
+#pragma comment(lib, "FMOD\\fmodL_vc.lib")
+#else
+#pragma comment(lib, "FMOD\\fmod_vc.lib")
+#endif
+
 // 창우
 #include "Core.h"
 #include <ServerEngine/global.h>

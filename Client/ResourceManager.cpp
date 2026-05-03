@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ResourceManager.h"
 #include "ImGuiManager.h"
+#include "SoundManager.h"
 
 void CResourceManager::LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
 {
@@ -9,6 +10,9 @@ void CResourceManager::LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueu
 
     // 게임 씬 관련 텍스처 로드
     LoadGameSceneTextures(device, cmdQueue);
+
+    // 사운드 리소스 로드
+    LoadSounds();
 }
 
 void CResourceManager::LoadTitleSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
@@ -58,4 +62,11 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_pizza",            L"../Modeling/item/image/Food_pizza.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_fish",             L"../Modeling/item/image/Food_fish.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_lunch",            L"../Modeling/item/image/Food_lunch.png");
+}
+
+void CResourceManager::LoadSounds()
+{
+    CSoundManager::GetInstance().LoadSound("sfx_button", "../Resource/Sound/button01a.mp3");
+    CSoundManager::GetInstance().LoadSound("sfx_select", "../Resource/Sound/select09.mp3");
+    CSoundManager::GetInstance().LoadSound("sfx_jump",   "../Resource/Sound/jump12.mp3");
 }

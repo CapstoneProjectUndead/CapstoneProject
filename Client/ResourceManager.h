@@ -1,7 +1,7 @@
 #pragma once
 
-// ImGui¿¡¼­ »ç¿ëÇÏ´Â ¸ðµç ÅØ½ºÃ³¸¦ ÇÑ °÷¿¡¼­ ·ÎµåÇÑ´Ù.
-// ¾Àº°·Î ÇÔ¼ö¸¦ ºÐ¸®ÇÏ¿© °ü¸®ÇÑ´Ù.
+// ImGuiï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½Ã³ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½Ñ´ï¿½.
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 
 class CResourceManager
 {
@@ -18,10 +18,11 @@ public:
     }
 
 public:
-    // ¾Û ½ÃÀÛ ½Ã ÇÑ ¹ø È£Ãâ. ¸ðµç ¾ÀÀÇ ÅØ½ºÃ³¸¦ ¾÷·ÎµåÇÑ´Ù.
+    // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½. ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½Îµï¿½ï¿½Ñ´ï¿½.
     void LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
 
 private:
     void LoadTitleSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
     void LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
+    void LoadSounds();
 };
