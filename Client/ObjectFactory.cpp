@@ -21,6 +21,7 @@
 #include "MyPlayer.h"
 #include "HumanMonster.h"
 #include "Ghost.h"
+#include "DogMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
 #include "ItemFinder.h"
@@ -538,6 +539,11 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 	);
 }
 
+void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+{
+
+}
+
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
 {
 	std::shared_ptr<CCharacter> character = std::make_shared<CCharacter>(OBJECT_TYPE::STATIC_OBJECT);
@@ -631,7 +637,9 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	break;
 	case MON_TYPE::ANIMAL_MONSTER:
 	{
-		
+		monster = std::make_shared<CDogMonster>();
+		monster->SetCurrentSceneType(sceneType);
+		CreateDogCharacter(monster, heapManager);
 	}
 		break;
 	case MON_TYPE::GHOST:

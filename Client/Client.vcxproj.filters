@@ -419,9 +419,12 @@
     </ClInclude>
     <ClInclude Include="SoundManager.h">
       <Filter>Sound</Filter>
-	</ClInclude>
-	<ClInclude Include="ShadowMap.h">
+    </ClInclude>
+    <ClInclude Include="ShadowMap.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="DogMonster.h">
+      <Filter>Object\Monster</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -664,9 +667,12 @@
     </ClCompile>
     <ClCompile Include="SoundManager.cpp">
       <Filter>Sound</Filter>
-	</ClCompile>
-	<ClCompile Include="ShadowMap.cpp">
+    </ClCompile>
+    <ClCompile Include="ShadowMap.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="DogMonster.cpp">
+      <Filter>Object\Monster</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -11,6 +11,7 @@
 #include "ObjectFactory.h"
 #include "HumanMonster.h"
 #include "Ghost.h"
+#include "DogMonster.h"
 
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
@@ -108,6 +109,15 @@ void CGameScene::Initialize()
 	SpawnWorldItem(30, XMFLOAT3{ 3, 2, 2 });
 	SpawnWorldItem(31, XMFLOAT3{ 3, 2, 3 });
 	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
+
+	// 테스트 (임시코드)
+	CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
+	auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::ANIMAL_MONSTER, scene_type);
+	if (dog) {
+		dog->SetPosition(2, 0.1f, 2.f);
+		dog->SetOriginPos({ 2, 0.1f, 2.f });
+		AddObject(dog, dog->GetID());
+	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
