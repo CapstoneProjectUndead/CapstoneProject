@@ -394,6 +394,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 
 		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
 		myPlayer->SetState(pkt.info.state);
+		myPlayer->SetIsGrounded((pkt.info.state != PLAYER_STATE::JUMP));
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
 		myPlayer->SetPossessed(pkt.info.is_possessed);

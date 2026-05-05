@@ -143,8 +143,8 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     if (input.d) dir.x++;
 
     // 점프
-    start_jump = (input.space && is_grounded);
-    if (input.space) {
+    start_jump = (input.space && is_grounded && !stamina_exhausted);
+    if (input.space && !stamina_exhausted) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Jump();
     }
@@ -690,25 +690,21 @@ void CPlayer::UpdateStamina(float elapsedTime)
     const float regenPerSec = 10.0f;        // 쉴 때 초당 회복 
     const float recoverThreshold = 30.0f;   // 이 값 이상 회복돼야 다시 달리기 허용
 
+    if (start_jump) {
+        constexpr float jumpCost = 12.0f;
+        accumulate_stamina -= jumpCost;
+        if (accumulate_stamina <= 0.0f) {
+            accumulate_stamina = 0.0f;
+            stamina_exhausted = true;
+        }
+    }
+
     if (state == PLAYER_STATE::RUN) {
 
         accumulate_stamina -= drainPerSec * elapsedTime;
 
         if (accumulate_stamina <= 0.0f) {
 
-            accumulate_stamina = 0.0f;
-            stamina_exhausted = true;
-
-            if (auto move = GetComponent<CMovementComponent>())
-                move->UnRun();
-        }
-    }
-    else if (start_jump) {
-
-        constexpr float jumpCost = 15.0f;
-        accumulate_stamina -= jumpCost;
-
-        if (accumulate_stamina <= 0.0f) {
             accumulate_stamina = 0.0f;
             stamina_exhausted = true;
 

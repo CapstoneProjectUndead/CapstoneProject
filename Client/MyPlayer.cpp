@@ -221,7 +221,12 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	// 2. 회전
 	ProcessRotation();
 
-	// 3. 예측 이동 (지금은 완전히 서버 권한 방식이라 싱글 전용이 됨)
+	// 3. 점프 시작 판정 + 효과음 (싱글/멀티 공통, 서버 허락 없이 즉시)
+	start_jump = (current_input.space && is_grounded && !stamina_exhausted);
+	if (start_jump)
+		CSoundManager::GetInstance().Play(SOUND_ID::jump12);
+
+	// 4. 예측 이동 (지금은 완전히 서버 권한 방식이라 싱글 전용이 됨)
 	if (g_is_single) {
 		PredictMove(current_input, elapsedTime);
 	}
@@ -280,12 +285,7 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 	if (input.a) dir.x--;
 	if (input.d) dir.x++;
 
-	// 점프 시작
-	start_jump = (input.space && is_grounded);
-	if (start_jump)
-		CSoundManager::GetInstance().Play(SOUND_ID::jump12);
-
-	if (input.space) {
+	if (input.space && !stamina_exhausted) {
 		move->Jump();
 	}
 
@@ -490,7 +490,7 @@ void CMyPlayer::SetStaminaFromServer(uint32 stamina)
 	// 서버 값 기준으로 exhausted 플래그 동기화
 	if (stamina == 0)
 		stamina_exhausted = true;
-	else if (stamina >= 200 && stamina_exhausted)
+	else if (stamina >= 30 && stamina_exhausted)
 		stamina_exhausted = false;
 }
 
@@ -509,6 +509,15 @@ void CMyPlayer::UpdateStamina(float elapsedTime)
 	const float drainPerSec    =  16.7f;  // 뛸 때 초당 감소 (6초면 바닥)
 	const float regenPerSec    =  10.0f;   // 쉴 때 초당 회복 
 	const float recoverThreshold = 30.0f; // 이 값 이상 회복돼야 다시 달리기 허용
+
+	if (start_jump) {
+		constexpr float jumpCost = 12.0f;
+		accumulate_stamina -= jumpCost;
+		if (accumulate_stamina <= 0.0f) {
+			accumulate_stamina = 0.0f;
+			stamina_exhausted = true;
+		}
+	}
 
 	if (state == PLAYER_STATE::RUN) {
 
@@ -534,14 +543,6 @@ void CMyPlayer::UpdateStamina(float elapsedTime)
 				}
 			}
 		}
-	}
-	else if (start_jump) {
-
-		constexpr float jumpCost = 15.0f;
-		accumulate_stamina -= jumpCost;
-
-		if (accumulate_stamina <= 0.0f)
-			accumulate_stamina = 0.0f;
 	}
 	else {
 		if (!is_grounded)
