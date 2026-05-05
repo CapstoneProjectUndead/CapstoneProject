@@ -180,5 +180,7 @@ private:
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;
 	const float DIG_DURATION = 1.03f;
+
+	float       dig_sound_timer = -1.0f;
 };
 

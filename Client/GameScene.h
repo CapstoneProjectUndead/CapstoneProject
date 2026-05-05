@@ -50,7 +50,7 @@ private:
     void ProcessPickup();
 
     // 채굴 상호작용
-    void ProcessMining();
+    void ProcessMining(float elapsedTime);
 
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
 
@@ -67,5 +67,6 @@ private:
 
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;
+    float             dig_sound_timer       = -1.0f;
 };
 

@@ -174,6 +174,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
             else {
                 // 이동 입력이 들어오면 채굴 취소
                 dig_timer = 0.0f;
+                dig_sound_timer = -1.0f;
                 if (auto move = GetComponent<CMovementComponent>()) {
                     if (input.shift && !stamina_exhausted) {
                         state = PLAYER_STATE::RUN;
@@ -188,6 +189,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
         }
         else {
             dig_timer = 0.0f;
+            dig_sound_timer = -1.0f;
             state = PLAYER_STATE::JUMP; // 확실히 공중일 때만 점프 상태
         }
     }
@@ -329,8 +331,29 @@ void CPlayer::UpdatePossession(float elapsedTime)
         if (myCol && otherCol && myCol->Intersects(otherCol))
         {
             if (possession_contact_timer >= ATTACK_INTERVAL) {
+
+                S_PlaySound soundPkt;
+                soundPkt.scene_type = current_scene_type;
+                soundPkt.sound_id = SOUND_ID::damaged1;
+
+                XMFLOAT3 pos = GetPosition();
+                soundPkt.x = pos.x;
+                soundPkt.y = pos.y;
+                soundPkt.z = pos.z;
+
+                auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+                if (auto r = room.lock()) {
+                    auto& scenes = r->GetScenes();
+                    auto currentScene = scenes[(UINT)current_scene_type].get();
+                    currentScene->BroadCast(sendBuffer);
+                }
+
                 uint32 hp = nearOther->GetHp();
-                nearOther->SetHp(hp > 15 ? hp - 15 : 0);
+                nearOther->SetHp(hp > 10 ? hp - 10 : 0);
+
+                uint32 myHp = GetHp();
+                SetHp(myHp > 10 ? hp - 10 : 0);
+
                 possession_contact_timer = 0.0f;
 
                 XMFLOAT3 knockbackDir = Vector3::Subtract(nearOther->GetPosition(), position);
@@ -531,7 +554,7 @@ XMFLOAT3 CPlayer::GetRandomPossessedTarget()
 void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)
 {
     // 채굴 시작: lbtn 클릭 + 정지 + 착지 + 도구 장착 + Game 씬
-    if (input.lbtn && !isMoving && grounded_timer > 0.0f) {
+    if (input.lbtn && !isMoving && !is_possessed && grounded_timer > 0.0f) {
 
         if (equipped_item_id != 0 
             && equipped_item_sub_type == ITEM_SUB_TYPE::TOOL 
@@ -539,6 +562,36 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
 
             state = PLAYER_STATE::DIG;
             dig_timer = DIG_DURATION;
+            dig_sound_timer = 0.0f;
+        }
+    }
+
+    // 채굴 소리 타이머: DIG 시작 후 0.5초 시점에 PlaySound 패킷 전송
+    if (dig_sound_timer >= 0.0f) {
+        dig_sound_timer += elapsedTime;
+        if (dig_sound_timer >= 0.5f) {
+            dig_sound_timer = -1.0f;
+
+            if (auto r = room.lock()) {
+                auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
+                if (gameScene && gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE)) {
+
+                    S_PlaySound soundPkt;
+                    soundPkt.is_global = false;
+                    soundPkt.scene_type = current_scene_type;
+                    soundPkt.sound_id = SOUND_ID::flying_pan;
+
+                    XMFLOAT3 targetPos = GetPosition();
+                    soundPkt.x = targetPos.x;
+                    soundPkt.y = targetPos.y;
+                    soundPkt.z = targetPos.z;
+
+                    auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+                    auto& scenes = r->GetScenes();
+                    auto currentScene = scenes[(UINT)current_scene_type].get();
+                    currentScene->BroadCast(sendBuffer);
+                }
+            }
         }
     }
 

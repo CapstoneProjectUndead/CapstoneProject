@@ -209,7 +209,7 @@ void CGameScene::Update(float elapsedTime)
 	ProcessPickup();
 
 	if (my_player) {
-		ProcessMining();
+		ProcessMining(elapsedTime);
 		my_player->BeginSendInputPacket(elapsedTime);
 	};
 }
@@ -367,7 +367,7 @@ void CGameScene::ProcessPickup()
 	}
 }
 
-void CGameScene::ProcessMining()
+void CGameScene::ProcessMining(float elapsedTime)
 {
 	// 싱글 전용 
 	if (!g_is_single)
@@ -377,6 +377,14 @@ void CGameScene::ProcessMining()
 		return;
 
 	bool isDigging = (my_player->GetState() == PLAYER_STATE::DIG);
+
+	if (dig_sound_timer >= 0.0f) {
+		dig_sound_timer += elapsedTime;
+		if (dig_sound_timer >= 0.5f) {
+			CSoundManager::GetInstance().Play(SOUND_ID::flying_pan);
+			dig_sound_timer = -1.0f;
+		}
+	}
 
 	// DIG→IDLE 전이 감지 = 애니메이션 1회 재생 완료(인터럽트 제외) → 데미지 처리
 	if (was_digging && !isDigging && mining_target && my_player->GetDigAnimFinished()) {
@@ -465,7 +473,8 @@ void CGameScene::ProcessMining()
 	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
 
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !isDigging && hasTool && !ImGui::GetIO().WantCaptureMouse && !isMoving) {
+	if (KEY_TAP(KEY::LBTN) && !isDigging && hasTool && !my_player->GetIsPossessed()
+		&& !ImGui::GetIO().WantCaptureMouse && !isMoving) {
 
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
@@ -484,6 +493,9 @@ void CGameScene::ProcessMining()
 				mining_target = static_cast<CMineableObject*>(obj.get());
 			}
 		}
+
+		if (mining_target)
+			dig_sound_timer = 0.0f;
 
 		my_player->SetState(PLAYER_STATE::DIG);
 	}
