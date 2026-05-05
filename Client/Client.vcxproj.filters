@@ -686,6 +686,9 @@
     <FxCompile Include="UI.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="ShadowShader.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MeshComponent.inl">

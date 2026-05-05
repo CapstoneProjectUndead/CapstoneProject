@@ -15,6 +15,7 @@ struct Light
 struct LightCB
 {
 	XMFLOAT4X4 shadow_transform{Matrix4x4::Identity()};
+	XMFLOAT4X4 shadow_view_proj;     // Shadow Pass용 (World -> NDC)
 	XMFLOAT4 ambient_light;
 	XMFLOAT3 eyePos_world;
 	float pad; // 16바이트 정렬 맞추기
@@ -29,7 +30,8 @@ public:
 	CLightManager() = default;
 
 	void Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-	void Update(const CCamera* camera);
+	// Frank D. Luna way
+	void Update(const CCamera* camera, const BoundingSphere& sceneBounds);
 	void Render(ID3D12GraphicsCommandList* commandList);
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
 private:

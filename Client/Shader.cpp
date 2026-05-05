@@ -4,26 +4,33 @@
 #include "GeometryLoader.h"
 #include "ShadowMap.h"
 
-void CDescriptorHeapManager::Initialize(ID3D12Device* device, UINT numDescriptors)
+void DescriptorHeap::Initialize(ID3D12Device* device, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag)
 {
 	num_desc = numDescriptors;
-	descriptor_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	descriptor_size = device->GetDescriptorHandleIncrementSize(heapType);
 
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = numDescriptors;
-	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
+	desc.Type = heapType;
+	desc.Flags = heapFlag;
+	
 	device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptor_heap));
 
 	cpu_start = descriptor_heap->GetCPUDescriptorHandleForHeapStart();
-	gpu_start = descriptor_heap->GetGPUDescriptorHandleForHeapStart();
+	if(heapFlag == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+		gpu_start = descriptor_heap->GetGPUDescriptorHandleForHeapStart();
+}
+
+void CDescriptorHeapManager::Initialize(ID3D12Device* device, UINT numSRV, UINT numDSV)
+{
+	srv_heap.Initialize(device, numSRV, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+	dsv_heap.Initialize(device, numDSV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 }
 
 void CShader::CreateDescriptorHeap(ID3D12Device* device, UINT numDescriptors)
 {
 	heap_manager = std::make_unique<CDescriptorHeapManager>();
-	heap_manager->Initialize(device, numDescriptors);
+	heap_manager->Initialize(device, numDescriptors, 1);
 }
 
 D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
@@ -144,7 +151,7 @@ D3D12_SHADER_BYTECODE CShader::CompileShaderFromFile(WCHAR* fileName, LPCSTR sha
 
 void CShader::CreateShader(ID3D12Device* device)
 {
-	//±×·¡ÇÈ½º ÆÄÀÌÇÁ¶óÀÎ »óÅÂ °´Ã¼ ¹è¿­À» »ı¼ºÇÑ´Ù.
+	//ê·¸ë˜í”½ìŠ¤ íŒŒì´í”„ë¼ì¸ ìƒíƒœ ê°ì²´ ë°°ì—´ì„ ìƒì„±í•œë‹¤.
 	ComPtr<ID3DBlob> shaderblo{}, pixelShaderBlob{}, gsShaderBlob;
 	graphics_root_signature = CreateGraphicsRootSignature(device);
 
@@ -233,7 +240,7 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	rootSignatureDesc.pStaticSamplers = &samplerDesc;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
-	// ÀÓÀÇ ±æÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÏ´Â µ¥ »ç¿ë
+	// ì„ì˜ ê¸¸ì´ ë°ì´í„°ë¥¼ ë°˜í™˜í•˜ëŠ” ë° ì‚¬ìš©
 	ComPtr<ID3DBlob> signatureBlob{};
 	ComPtr<ID3DBlob> errorBlob{};
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
@@ -245,16 +252,16 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	return graphicsRootSignature;
 }
 
-
 void CShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
 {
 	commandList->SetGraphicsRootSignature(graphics_root_signature.Get());
 	commandList->SetPipelineState(pipeline_states.Get());
 	if (heap_manager) {
-		ID3D12DescriptorHeap* heaps[] = { heap_manager->GetHeap() };
-		commandList->SetDescriptorHeaps(1, heaps);
-		// Ã¹ ¹øÂ° ÇÚµé°ª Get
-		D3D12_GPU_DESCRIPTOR_HANDLE handle = heap_manager->GetGPUHandle(0);
+		// SRV í™ ë°”ì¸ë”© (DSV í™ì€ SetDescriptorHeapsì— ë„£ì§€ ì•ˆí )
+		ID3D12DescriptorHeap* heaps[] = { heap_manager->GetSRVHeap().GetHeap()};
+		commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+
+		D3D12_GPU_DESCRIPTOR_HANDLE handle = heap_manager->GetSRVGPUHandle(DescriptorSlot::DiffuseIdx);
 		commandList->SetGraphicsRootDescriptorTable(2, handle);
 	}
 }
@@ -305,20 +312,13 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	ID3D12RootSignature* graphicsRootSignature{};
 
 	const int numDesc{ 50 };
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[2] = {};
+	D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
 	// texture
 	descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRanges[0].NumDescriptors = numDesc;
 	descriptorRanges[0].BaseShaderRegister = 0;
 	descriptorRanges[0].RegisterSpace = 0;
 	descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	// gShadowMap
-	descriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges[1].NumDescriptors = 1;
-	descriptorRanges[1].BaseShaderRegister = 1;
-	descriptorRanges[1].RegisterSpace = 2;
-	descriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
 	D3D12_ROOT_PARAMETER rootParameters[6];
@@ -336,7 +336,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 
 	// table(texture map + shasow map)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = 2;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRanges;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
@@ -378,8 +378,8 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	samplerDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	samplerDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	samplerDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	samplerDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE; // ±íÀÌ 1.0(¸Õ °÷) Ãë±Ş
-	samplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL; // d(p) <= s(p) ºñ±³
+	samplerDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE; // ê¹Šì´ 1.0(ë¨¼ ê³³) ì·¨ê¸‰
+	samplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL; // d(p) <= s(p) ë¹„êµ
 	samplerDescs[1].ShaderRegister = 1;
 	samplerDescs[1].RegisterSpace = 0;
 	samplerDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -394,7 +394,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	rootSignatureDesc.pStaticSamplers = samplerDescs;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
-	// ÀÓÀÇ ±æÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÏ´Â µ¥ »ç¿ë
+	// ì„ì˜ ê¸¸ì´ ë°ì´í„°ë¥¼ ë°˜í™˜í•˜ëŠ” ë° ì‚¬ìš©
 	ComPtr<ID3DBlob> signatureBlob{};
 	ComPtr<ID3DBlob> errorBlob{};
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
@@ -422,20 +422,13 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	ID3D12RootSignature* graphicsRootSignature{};
 
 	const int numDesc{ 50 };
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[2] = {};
+	D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
 	// texture
 	descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRanges[0].NumDescriptors = numDesc;
 	descriptorRanges[0].BaseShaderRegister = 0;
 	descriptorRanges[0].RegisterSpace = 0;
 	descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	// gShadowMap
-	descriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges[1].NumDescriptors = 1;
-	descriptorRanges[1].BaseShaderRegister = 1;
-	descriptorRanges[1].RegisterSpace = 2;
-	descriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
 	D3D12_ROOT_PARAMETER rootParameters[4];
@@ -453,7 +446,7 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 
 	// table(texture map + shasow map)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = 2;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRanges;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
@@ -483,8 +476,8 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	samplerDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	samplerDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	samplerDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	samplerDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE; // ±íÀÌ 1.0(¸Õ °÷) Ãë±Ş
-	samplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL; // d(p) <= s(p) ºñ±³
+	samplerDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE; // ê¹Šì´ 1.0(ë¨¼ ê³³) ì·¨ê¸‰
+	samplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL; // d(p) <= s(p) ë¹„êµ
 	samplerDescs[1].ShaderRegister = 1;
 	samplerDescs[1].RegisterSpace = 0;
 	samplerDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -495,11 +488,11 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.NumParameters = _countof(rootParameters);
 	rootSignatureDesc.pParameters = rootParameters;
-	rootSignatureDesc.NumStaticSamplers = 2; // »ùÇÃ·¯ 2°³
+	rootSignatureDesc.NumStaticSamplers = 2; // ìƒ˜í”ŒëŸ¬ 2ê°œ
 	rootSignatureDesc.pStaticSamplers = samplerDescs;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
-	// ÀÓÀÇ ±æÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÏ´Â µ¥ »ç¿ë
+	// ì„ì˜ ê¸¸ì´ ë°ì´í„°ë¥¼ ë°˜í™˜í•˜ëŠ” ë° ì‚¬ìš©
 	ComPtr<ID3DBlob> signatureBlob{};
 	ComPtr<ID3DBlob> errorBlob{};
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
@@ -531,6 +524,59 @@ D3D12_RASTERIZER_DESC CTwoSideShader::CreateRasterizerState()
 	return rasterizerDesc;
 }
 
+// CShadowShader
+D3D12_SHADER_BYTECODE CShadowShader::CreateVertexShader(ID3DBlob** shaderBlob)
+{
+	return CompileShaderFromFile(L"ShadowShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+}
+
+D3D12_BLEND_DESC CShadowShader::CreateBlendState()
+{
+	D3D12_BLEND_DESC blendDesc{};
+	blendDesc.AlphaToCoverageEnable = FALSE;
+	blendDesc.IndependentBlendEnable = FALSE;
+	blendDesc.RenderTarget[0].BlendEnable = FALSE;
+	blendDesc.RenderTarget[0].LogicOpEnable = FALSE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	return blendDesc;
+}
+
+void CShadowShader::CreateShader(ID3D12Device* device)
+{
+	//ê·¸ë˜í”½ìŠ¤ íŒŒì´í”„ë¼ì¸ ìƒíƒœ ê°ì²´ ë°°ì—´ì„ ìƒì„±í•œë‹¤.
+	ComPtr<ID3DBlob> shaderblo{}, pixelShaderBlob{}, gsShaderBlob;
+	graphics_root_signature = CreateGraphicsRootSignature(device);
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
+	pipelineStateDesc.pRootSignature = graphics_root_signature.Get();
+	pipelineStateDesc.VS = CreateVertexShader(&shaderblo);
+	pipelineStateDesc.BlendState = CreateBlendState();
+	pipelineStateDesc.DepthStencilState = CreateDepthStencilState();
+	pipelineStateDesc.InputLayout = CreateInputLayout();
+	pipelineStateDesc.SampleMask = UINT_MAX;
+	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipelineStateDesc.NumRenderTargets = 0;
+	pipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	pipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	pipelineStateDesc.SampleDesc.Count = 1;
+
+	// shadow acne ë°©ì§€
+	pipelineStateDesc.RasterizerState = CreateRasterizerState();
+	pipelineStateDesc.RasterizerState.DepthBias = 10000;
+	pipelineStateDesc.RasterizerState.DepthBiasClamp = 0.2f;
+	pipelineStateDesc.RasterizerState.SlopeScaledDepthBias = 0.3f;
+	HRESULT hr = device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pipeline_states));
+	if (pipelineStateDesc.InputLayout.pInputElementDescs) delete[] pipelineStateDesc.InputLayout.pInputElementDescs;
+}
+
 // CUIShader
 D3D12_SHADER_BYTECODE CUIShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
@@ -547,7 +593,7 @@ D3D12_RASTERIZER_DESC CUIShader::CreateRasterizerState()
 
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;	// UI¿¡¼­ »ï°¢ÇüÀÌ µÚÁı¾îÁ®¼­ NONEÀ¸·Î ¼³Á¤
+	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;	// UIì—ì„œ ì‚¼ê°í˜•ì´ ë’¤ì§‘ì–´ì ¸ì„œ NONEìœ¼ë¡œ ì„¤ì •
 	rasterizerDesc.FrontCounterClockwise = FALSE;
 	rasterizerDesc.DepthBias = 0;
 	rasterizerDesc.DepthBiasClamp = 0.0f;
@@ -639,7 +685,7 @@ ID3D12RootSignature* CUIShader::CreateGraphicsRootSignature(ID3D12Device* device
 	rootSignatureDesc.pStaticSamplers = &samplerDesc;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
-	// ÀÓÀÇ ±æÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÏ´Â µ¥ »ç¿ë
+	// ì„ì˜ ê¸¸ì´ ë°ì´í„°ë¥¼ ë°˜í™˜í•˜ëŠ” ë° ì‚¬ìš©
 	ComPtr<ID3DBlob> signatureBlob{};
 	ComPtr<ID3DBlob> errorBlob{};
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
@@ -741,7 +787,7 @@ ID3D12RootSignature* CBillboardShader::CreateGraphicsRootSignature(ID3D12Device*
 	rootSignatureDesc.pStaticSamplers = &samplerDesc;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
-	// ÀÓÀÇ ±æÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÏ´Â µ¥ »ç¿ë
+	// ì„ì˜ ê¸¸ì´ ë°ì´í„°ë¥¼ ë°˜í™˜í•˜ëŠ” ë° ì‚¬ìš©
 	ComPtr<ID3DBlob> signatureBlob{};
 	ComPtr<ID3DBlob> errorBlob{};
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
@@ -755,7 +801,7 @@ ID3D12RootSignature* CBillboardShader::CreateGraphicsRootSignature(ID3D12Device*
 
 void CBillboardShader::CreateShader(ID3D12Device* device)
 {
-	//±×·¡ÇÈ½º ÆÄÀÌÇÁ¶óÀÎ »óÅÂ °´Ã¼ ¹è¿­À» »ı¼ºÇÑ´Ù.
+	//ê·¸ë˜í”½ìŠ¤ íŒŒì´í”„ë¼ì¸ ìƒíƒœ ê°ì²´ ë°°ì—´ì„ ìƒì„±í•œë‹¤.
 	ComPtr<ID3DBlob> shaderblo{}, pixelShaderBlob{}, gsShaderBlob;
 	graphics_root_signature = CreateGraphicsRootSignature(device);
 

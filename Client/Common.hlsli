@@ -1,5 +1,5 @@
 #ifndef NUM_DIR_LIGHTS
-    #define NUM_DIR_LIGHTS 3
+    #define NUM_DIR_LIGHTS 1
 #endif
 
 #ifndef NUM_POINT_LIGHTS
@@ -21,6 +21,7 @@ cbuffer CameraInfo : register(b0)
 cbuffer LightInfo : register(b1)
 {
     float4x4 gShadowTransform;
+    float4x4 gShadowViewProj;
     float4 ambientLight;
     float3 eyePosWorld;
 	float pad;
@@ -29,7 +30,6 @@ cbuffer LightInfo : register(b1)
 };
 
 Texture2D texDiffuse[50] : register(t0);
-Texture2D gShadowMap : register(t1, space2); // space1 used instData
 
 SamplerState sample : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
@@ -44,7 +44,7 @@ float CalcShadowFactor(float4 shadowPosH)
     float depth = shadowPosH.z;
 
     uint width, height, numMips;
-    gShadowMap.GetDimensions(0, width, height, numMips);
+    texDiffuse[49].GetDimensions(0, width, height, numMips);
 
     // Texel size.
     float dx = 1.0f / (float) width;
@@ -60,7 +60,7 @@ float CalcShadowFactor(float4 shadowPosH)
     [unroll]
     for (int i = 0; i < 9; ++i)
     {
-        percentLit += gShadowMap.SampleCmpLevelZero(gsamShadow,
+        percentLit += texDiffuse[49].SampleCmpLevelZero(gsamShadow,
             shadowPosH.xy + offsets[i], depth).r;
     }
     

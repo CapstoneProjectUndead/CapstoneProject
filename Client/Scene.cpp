@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Camera.h"
 #include "MyPlayer.h"
 #include "Shader.h"
@@ -17,12 +17,15 @@
 #include "UIComponent.h"
 #include "Renderers.h"
 #include "SceneManager.h"
+#include "ShadowMap.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
 {
 	factory = std::make_shared<CObjectFactory>();
 	ui_manager = std::make_shared<CUIManager>();
+	scene_bounds.Center = XMFLOAT3{ 0, 0.0f, 0 };
+	scene_bounds.Radius = 10;
 }
 
 CScene::~CScene()
@@ -33,6 +36,20 @@ CScene::~CScene()
 void CScene::Initialize()
 {
 	factory->GetMaterial(CSceneManager::GetInstance().GetShaders()[EShaderName::UI]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
+	shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+	auto instHeap = shaders[EShaderName::Inst]->GetHeapManager();
+	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
+	auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
+
+	shadow_map->CreateDescriptors(
+		shadowHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx),
+		shadowHeap->GetSRVGPUHandle(DescriptorSlot::ShadowMapIdx),
+		shadowHeap->GetDSVCPUHandle(0)
+	);
+
+	shadow_map->CreateSRV(instHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+	shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -62,40 +79,38 @@ void CScene::Update(float elapsedTime)
 	if(camera)
 		camera->Update(my_player->position, elapsedTime);
 	if(light)
-		light->Update(camera.get());
+		light->Update(camera.get(), scene_bounds);
 
 	ui_manager->Update(elapsedTime);
 }
 
-void CScene::Render(ID3D12GraphicsCommandList* commandList)
+void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 {
-	BoundingFrustum frustum;
+	if (!shadow_map) return;
+
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+	auto& renderers = CSceneManager::GetInstance().GetRanderers();
+	shaders[EShaderName::Shadow]->RenderBegin(commandList);
+	shadow_map->RenderBegin(commandList);
+	light->Render(commandList);
+	renderers[EShaderName::Shadow]->Render(commandList);
+
+	shadow_map->RenderEnd(commandList);
+	shaders[EShaderName::Shadow]->RenderEnd(commandList);
+}
+
+void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
+{
 	if (camera) {
 		camera->SetViewportsAndScissorRects(commandList);
-		frustum = camera->GetFrustum();
 	}
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
-	// Collect Phase
-	// 3D 객체들 수집
-	for (const auto& obj : objects) {
-		if (obj->IsVisible(frustum)) {
-			obj->OnCollect(renderers);
-		}
-	}
-
-	// 플레이어 수집
-	if (my_player) {
-		my_player->OnCollect(renderers);
-	}
-
-	// UI 매니저 수집
-	ui_manager->Collect(renderers);
 
 	// Draw Phase
 	for (size_t i = 0; i < EShaderName::Count; ++i) {
-		if (!shaders[i]) continue;
+		if (!shaders[i] || i == EShaderName::Shadow) continue;
 		shaders[i]->RenderBegin(commandList);
 
 		if (i == EShaderName::Billboard) {
@@ -123,6 +138,35 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 
 		shaders[i]->RenderEnd(commandList);
 	}
+}
+
+void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
+{
+	BoundingFrustum frustum;
+	if (camera) {
+		frustum = camera->GetFrustum();
+	}
+
+	auto& renderers = CSceneManager::GetInstance().GetRanderers();
+	for (const auto& obj : objects) {
+		if (obj->IsVisible(frustum)) {
+			obj->OnCollect(renderers);
+		}
+	}
+
+	// 플레이어 수집
+	if (my_player) {
+		my_player->OnCollect(renderers);
+	}
+
+	// UI 매니저 수집
+	ui_manager->Collect(renderers);
+}
+
+void CScene::Render(ID3D12GraphicsCommandList* commandList)
+{
+	CollectObjects(commandList);
+	RenderBasePass(commandList);
 }
 
 void CScene::Exit()

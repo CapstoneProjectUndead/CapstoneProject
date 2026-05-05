@@ -5,7 +5,7 @@ public:
     CShadowMap(ID3D12Device* device, UINT width, UINT height);
     ~CShadowMap() = default;
 
-    // 리소스의 상태 전환 (Depth Write <-> Shader Resource)
+    // (Depth Write <-> Shader Resource)
     void RenderBegin(ID3D12GraphicsCommandList* cmdList);
     void RenderEnd(ID3D12GraphicsCommandList* cmdList);
 
@@ -21,6 +21,8 @@ public:
     UINT GetHeight()const { return height; }
 
     void CreateDescriptors( D3D12_CPU_DESCRIPTOR_HANDLE srvCpu, D3D12_GPU_DESCRIPTOR_HANDLE srvGpu, D3D12_CPU_DESCRIPTOR_HANDLE dsvCpu);
+    // create srv of shadow_depth_buffer in other shader
+    void CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu);
 
     void OnResize(UINT newWidth, UINT newHeight);
 private:
@@ -30,7 +32,6 @@ private:
     ComPtr<ID3D12Resource> shadow_depth_buffer;
     ID3D12Device* d3d_device{};
 
-    // 핸들 저장 (이미 생성된 힙에서의 위치)
     D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu;
     D3D12_GPU_DESCRIPTOR_HANDLE srv_gpu;
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_cpu;

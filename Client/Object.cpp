@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Object.h"
 
 #include "Camera.h"
@@ -59,6 +59,8 @@ void CObject::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 		if (renderers[meshRenderer->GetShader()]) {
 			// 메시 렌더러 컴포넌트 내부에서 renderer->AddInstance 호출
 			meshRenderer->Collect(renderers[meshRenderer->GetShader()], isStatic);
+			// shadow Collect
+			meshRenderer->Collect(renderers[EShaderName::Shadow], isStatic);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "PhysicsManager.h"
@@ -37,6 +37,8 @@
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
 {
+	scene_bounds.Center = XMFLOAT3{ MapGenerator::WIDTH * 2 / 2, 0.0f, MapGenerator::HEIGHT * 2 / 2 };
+	scene_bounds.Radius = MapGenerator::HEIGHT * 2 / 2;
 }
 
 CGameScene::~CGameScene()

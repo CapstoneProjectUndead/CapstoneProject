@@ -80,6 +80,11 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
     float4 litColor = ambient + directLight;
     
     litColor.a = diffuseAlbedo.a;
-
     return litColor;
+    
+    // debugging
+    //float4 shadowPos = input.shadow_pos;
+    //shadowPos.xyz /= shadowPos.w;
+
+    //return float4(shadowPos.xyz, 1.0f);
 }

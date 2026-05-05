@@ -96,6 +96,18 @@ void CShadowMap::CreateResourceViews()
 	d3d_device->CreateDepthStencilView(shadow_depth_buffer.Get(), &dsvDesc, dsv_cpu);
 }
 
+void CShadowMap::CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu)
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS; // DSV°¡ D24_S8ÀÏ ¶§
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	d3d_device->CreateShaderResourceView(shadow_depth_buffer.Get(), &srvDesc, srvCpu);
+}
+
 void CShadowMap::CreateResource()
 {
 	D3D12_RESOURCE_DESC texDesc = {};

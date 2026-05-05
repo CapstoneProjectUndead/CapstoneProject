@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "LightManager.h"
 
 class CPlayer;
@@ -8,6 +8,7 @@ class CObject;
 class CShader;
 class CObjectFactory;
 class CUIManager;
+class CShadowMap;
 
 class CScene
 {
@@ -22,6 +23,7 @@ public:
 	void AnimateObjects(float);
 
 	virtual void Initialize();
+	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
@@ -36,7 +38,10 @@ public:
 
 	// UI 관련 
 	void DrawUI_Final();
-
+private:
+	// Rendering
+	void RenderBasePass(ID3D12GraphicsCommandList* commandList);
+	void CollectObjects(ID3D12GraphicsCommandList* commandList);
 protected:
 	// UI 관련 
 	// 자식들이 각자 그릴 UI를 구현하는 순수 가상 함수
@@ -99,4 +104,8 @@ protected:
 
 	// 4월 15일 추가. 
 	std::vector<uint64>						player_slot_ids;
+
+	// for shadow
+	BoundingSphere scene_bounds{};
+	std::shared_ptr<CShadowMap> shadow_map;
 };

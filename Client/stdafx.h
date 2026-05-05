@@ -1,15 +1,15 @@
-ï»¿// header.h: í‘œì¤€ ì‹œìŠ¤í…œ í¬í•¨ íŒŒì¼
-// ë˜ëŠ” í”„ë¡œì íŠ¸ íŠ¹ì • í¬í•¨ íŒŒì¼ì´ ë“¤ì–´ ìˆëŠ” í¬í•¨ íŒŒì¼ì…ë‹ˆë‹¤.
+// header.h: Ç¥ÁØ ½Ã½ºÅÛ Æ÷ÇÔ ÆÄÀÏ
+// ¶Ç´Â ÇÁ·ÎÁ§Æ® Æ¯Á¤ Æ÷ÇÔ ÆÄÀÏÀÌ µé¾î ÀÖ´Â Æ÷ÇÔ ÆÄÀÏÀÔ´Ï´Ù.
 //
 
 #pragma once
 
 #include "targetver.h"
-#define WIN32_LEAN_AND_MEAN             // ê±°ì˜ ì‚¬ìš©ë˜ì§€ ì•ŠëŠ” ë‚´ìš©ì„ Windows í—¤ë”ì—ì„œ ì œì™¸í•©ë‹ˆë‹¤.
-// Windows í—¤ë” íŒŒì¼
+#define WIN32_LEAN_AND_MEAN             // °ÅÀÇ »ç¿ëµÇÁö ¾Ê´Â ³»¿ëÀ» Windows Çì´õ¿¡¼­ Á¦¿ÜÇÕ´Ï´Ù.
+// Windows Çì´õ ÆÄÀÏ
 #include <windows.h>
 #include <mmsystem.h>
-// C ëŸ°íƒ€ì„ í—¤ë” íŒŒì¼ì…ë‹ˆë‹¤.
+// C ·±Å¸ÀÓ Çì´õ ÆÄÀÏÀÔ´Ï´Ù.
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
@@ -65,7 +65,7 @@ using Microsoft::WRL::ComPtr;
 #define FRAME_BUFFER_WIDTH	1920
 #define FRAME_BUFFER_HEIGHT 1080
 
-// ì°½ìš°
+// Ã¢¿ì
 #include "Core.h"
 #include <ServerEngine/global.h>
 #include <ServerEngine/ThreadManager.h>
@@ -139,17 +139,17 @@ inline std::string WstringToUtf8(const std::wstring& wstr)
 {
 	if (wstr.empty()) return std::string();
 
-	// 1. í•„ìš”í•œ í¬ê¸° ê³„ì‚° (CP_UTF8 ì‚¬ìš©)
+	// 1. ÇÊ¿äÇÑ Å©±â °è»ê (CP_UTF8 »ç¿ë)
 	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
 
-	// 2. ë²„í¼ í• ë‹¹ ë° ë³€í™˜
+	// 2. ¹öÆÛ ÇÒ´ç ¹× º¯È¯
 	std::string strTo(size_needed, 0);
 	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
 
 	return strTo;
 }
 
-// ë””ë²„ê·¸ìš© í´ë˜ìŠ¤ ë° ë§¤í¬ë¡œ(d3d12 ì±… ì°¸ê³ )
+// µğ¹ö±×¿ë Å¬·¡½º ¹× ¸ÅÅ©·Î(d3d12 Ã¥ Âü°í)
 class CDxException {
 public:
 	CDxException() = default;
@@ -177,6 +177,7 @@ enum EShaderName : size_t {
 	UI,
 	Billboard,
 	Text,
+	Shadow,
 	Count
 };
 
@@ -334,7 +335,7 @@ namespace Vector3
 		return(false);
 	}
 
-	// ì¶”ê°€í•œ ì½”ë“œ
+	// Ãß°¡ÇÑ ÄÚµå
 	inline XMFLOAT3 VInterpTo(XMFLOAT3& current, XMFLOAT3& target, float duration, float interpSpeed)
 	{
 		if (interpSpeed <= 0.f)
@@ -355,7 +356,7 @@ namespace Vector3
 	{
 		XMFLOAT3 xmf3Result;
 
-		// XMVectorLerp(V0, V1, t) : V0ì™€ V1 ì‚¬ì´ë¥¼ t(0.0~1.0) ë¹„ìœ¨ë¡œ ë³´ê°„
+		// XMVectorLerp(V0, V1, t) : V0¿Í V1 »çÀÌ¸¦ t(0.0~1.0) ºñÀ²·Î º¸°£
 		XMVECTOR v0 = XMLoadFloat3(&xmf3Vector1);
 		XMVECTOR v1 = XMLoadFloat3(&xmf3Vector2);
 		XMStoreFloat3(&xmf3Result, XMVectorLerp(v0, v1, fPercent));
@@ -364,7 +365,7 @@ namespace Vector3
 	}
 }
 
-//4ì°¨ì› ë²¡í„°ì˜ ì—°ì‚°
+//4Â÷¿ø º¤ÅÍÀÇ ¿¬»ê
 namespace Vector4
 {
 	inline XMFLOAT4 Add(XMFLOAT4& xmf4Vector1, XMFLOAT4& xmf4Vector2)

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
@@ -12,6 +12,12 @@ void CSceneManager::Init(ID3D12Device* device)
 {
 	// shader
 	shaders.resize(EShaderName::Count);
+	{
+		// shadow
+		std::shared_ptr<CShader> shader = std::make_unique<CShadowShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::Shadow] = std::move(shader);
+	}
 	{
 		// inst
 		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
@@ -33,8 +39,8 @@ void CSceneManager::Init(ID3D12Device* device)
 			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char_0308.bin", "../Modeling/undead_ani_baking.bin", OBJECT_TYPE::PLAYER, NULL);
 			CAnimationManager::GetInstance().Initialize("../Modeling/Human_monster.bin", "../Modeling/Human_monster_ani.bin", OBJECT_TYPE::MONSTER, static_cast<uint8_t>(MON_TYPE::HUMAN_MONSTER));
 			CAnimationManager::GetInstance().Initialize("../Modeling/Ghost3.bin", "../Modeling/Ghost3_ani.bin", OBJECT_TYPE::MONSTER, static_cast<uint8_t>(MON_TYPE::GHOST));
-			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
-			CAnimationManager::GetInstance().CreateMaskBuffer(device, GET_CMD_LIST, skinningHeapManager->GetCPUHandle(skinningHeapManager->Allocate()));
+			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetSRVCPUHandle(skinningHeapManager->GetSRVHeap().Allocate()));
+			CAnimationManager::GetInstance().CreateMaskBuffer(device, GET_CMD_LIST, skinningHeapManager->GetSRVCPUHandle(skinningHeapManager->GetSRVHeap().Allocate()));
 		}
 		shaders[EShaderName::Skinning] = std::move(shader);
 	}
@@ -54,6 +60,10 @@ void CSceneManager::Init(ID3D12Device* device)
 	// renderer
 	renderers.resize(EShaderName::Count);
 	{
+		auto shadowRenderer = std::make_unique<CInstRenderer>();
+		shadowRenderer->Initialize(device, 100);
+		renderers[EShaderName::Shadow] = std::move(shadowRenderer);
+
 		auto instRenderer = std::make_unique<CInstRenderer>();
 		instRenderer->Initialize(device, 5000);
 		renderers[EShaderName::Inst] = std::move(instRenderer);
@@ -77,7 +87,7 @@ void CSceneManager::Init(ID3D12Device* device)
 		// 20부터 font용(아직 제한X)
 		CDescriptorHeapManager* heap = shaders[EShaderName::UI]->GetHeapManager();
 		auto textRenderer = std::make_unique<CTextRenderer>();
-		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetCPUHandle(20), heap->GetGPUHandle(20));
+		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetSRVCPUHandle(20), heap->GetSRVGPUHandle(20));
 		renderers[EShaderName::Text] = std::move(textRenderer);
 	}
 }
