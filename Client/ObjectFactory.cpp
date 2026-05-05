@@ -78,10 +78,8 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 	EColLayer colMask)
 {
 	// Collider 설정
-	if (g_is_single) {
-		EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
-		AddCollider(character, node, category, colMask);
-	}
+	EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
+	AddCollider(character, node, category, colMask);
 
 	if (node->mesh.positions.empty()) return;
 	character->world_matrix = node->local_matrix;
@@ -131,7 +129,7 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 
 void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask)
 {
-	if (!g_is_single || !node) return;
+	if (!node) return;
 
 	// Mesh Collider
 	if (!node->mesh_colliders.empty()) {
@@ -140,7 +138,8 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 			auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 			collider->SetFillter({ category, mask });
 			obj->SetComponent(collider);
-			CPhysicsManager::GetInstance().SetCollider(collider);
+			if (g_is_single) 
+				CPhysicsManager::GetInstance().SetCollider(collider);
 		}
 	}
 
@@ -150,7 +149,8 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		collider->SetFillter({ category, mask });
 		obj->SetComponent(collider);
-		CPhysicsManager::GetInstance().SetCollider(collider);
+		if (g_is_single) 
+			CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 
 	// Sphere Colliders
@@ -159,7 +159,8 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		collider->SetFillter({ category, mask });
 		obj->SetComponent(collider);
-		CPhysicsManager::GetInstance().SetCollider(collider);
+		if (g_is_single) 
+			CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 
 	// Capsule Colliders
@@ -168,7 +169,8 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		collider->SetFillter({ category, mask });
 		obj->SetComponent(collider);
-		CPhysicsManager::GetInstance().SetCollider(collider);
+		if (g_is_single) 
+			CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 }
 

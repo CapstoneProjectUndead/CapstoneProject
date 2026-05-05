@@ -24,6 +24,8 @@ private:
     void     PatrolRadiusWander(float elapsedTime);
     XMFLOAT3 GetRandomWanderTarget();
 
+    void CheckContactDamage();
+
 private:
     // Stuck 감지
     float    stuck_check_timer = 0.0f;

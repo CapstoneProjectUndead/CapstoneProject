@@ -66,7 +66,11 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
 
 void CResourceManager::LoadSounds()
 {
-    CSoundManager::GetInstance().LoadSound("sfx_button", "../Resource/Sound/button01a.mp3");
-    CSoundManager::GetInstance().LoadSound("sfx_select", "../Resource/Sound/select09.mp3");
-    CSoundManager::GetInstance().LoadSound("sfx_jump",   "../Resource/Sound/jump12.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::button01a, "../Resource/Sound/button01a.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::select09, "../Resource/Sound/select09.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::jump12,   "../Resource/Sound/jump12.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::damaged1,   "../Resource/Sound/damaged1.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::ghost_attack,   "../Resource/Sound/ghost_attack.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::crude_laughter,   "../Resource/Sound/crude_laughter.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::devil_laugh1,   "../Resource/Sound/devil_laugh1.mp3");
 }

@@ -33,26 +33,7 @@ void CGhost::Update(float elapsedTime)
 
 	contact_damage_timer += elapsedTime;
 
-	if (AI_state != AI_STATE::MONSTER_ATTACK) {
-		auto nearPlayer = FindNearestPlayer();
-		if (nearPlayer) {
-
-			auto* ghostCol = GetComponent<CColliderComponent>();
-			auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
-
-			if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
-
-				if (contact_damage_timer >= 1.0f) {
-					uint32 hp = nearPlayer->GetHp();
-					nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);
-					contact_damage_timer = 0.0f;
-
-					XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
-					nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 1.f);
-				}
-			}
-		}
-	}
+	CheckContactDamage();
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
@@ -295,12 +276,46 @@ void CGhost::OnAttackMove(float elapsedTime)
 
 	// 빙의 판정
 	if (!hit_damage_dealt && attack_timer >= 1.1f) {
+
+		S_PlaySound soundPkt;
+		soundPkt.is_global = false;
+		soundPkt.scene_type = current_scene_type;
+		soundPkt.sound_id = SOUND_ID::ghost_attack;
+
+		XMFLOAT3 targetPos = targetPlayer->GetPosition();
+		soundPkt.x = targetPos.x;
+		soundPkt.y = targetPos.y;
+		soundPkt.z = targetPos.z;
+
+		auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+		if (auto scene = GetScene()) {
+			scene->BroadCast(sendBuffer);
+		}
+
 		hit_damage_dealt = true;
+
 		if (targetPlayer) {
 			XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
 			dir.y = 0.0f;
+
 			if (Vector3::Length(dir) <= 0.8f) {
 				if (rand() % 100 < 25) {
+
+					S_PlaySound soundPkt;
+					soundPkt.is_global = false;
+					soundPkt.scene_type = current_scene_type;
+					soundPkt.sound_id = SOUND_ID::crude_laughter;
+
+					XMFLOAT3 targetPos = targetPlayer->GetPosition();
+					soundPkt.x = targetPos.x;
+					soundPkt.y = targetPos.y;
+					soundPkt.z = targetPos.z;
+
+					auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+					if (auto scene = GetScene()) {
+						scene->BroadCast(sendBuffer);
+					}
+
 					targetPlayer->ApplyPossession();
 					MarkForDelete();
 				}
@@ -446,4 +461,28 @@ XMFLOAT3 CGhost::GetRandomWanderTarget()
 	int idx = rand() % (int)candidates.size();
 
 	return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
+}
+
+void CGhost::CheckContactDamage()
+{
+	if (AI_state != AI_STATE::MONSTER_ATTACK) {
+		auto nearPlayer = FindNearestPlayer();
+		if (nearPlayer) {
+
+			auto* ghostCol = GetComponent<CColliderComponent>();
+			auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+
+			if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
+
+				if (contact_damage_timer >= 1.0f) {
+					uint32 hp = nearPlayer->GetHp();
+					nearPlayer->SetHp(hp > 10 ? hp - 10 : 0);
+					contact_damage_timer = 0.0f;
+
+					XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
+					nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 1.f);
+				}
+			}
+		}
+	}
 }

@@ -267,6 +267,24 @@ void CPlayer::UpdatePossession(float elapsedTime)
     possession_contact_timer += elapsedTime;
 
     if (possession_timer <= 0.0f) {
+
+        S_PlaySound soundPkt;
+        soundPkt.is_global = false;
+        soundPkt.scene_type = current_scene_type;
+        soundPkt.sound_id = SOUND_ID::devil_laugh1;
+
+        XMFLOAT3 targetPos = GetPosition();
+        soundPkt.x = targetPos.x;
+        soundPkt.y = targetPos.y;
+        soundPkt.z = targetPos.z;
+
+        auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+        if (auto r = room.lock()) {
+            auto& scenes = r->GetScenes();
+            auto currentScene = scenes[(UINT)current_scene_type].get();
+            currentScene->BroadCast(sendBuffer);
+        }
+
         possession_timer = 0.0f;
         is_possessed     = false;
         velocity.x       = 0.0f;
@@ -424,6 +442,22 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
     if (target) {
         c_hold_timer += elapsedTime;
         if (c_hold_timer >= 5.0f) {
+
+            S_PlaySound soundPkt;
+            soundPkt.is_global = false;
+            soundPkt.scene_type = current_scene_type;
+            soundPkt.sound_id = SOUND_ID::devil_laugh1;
+
+            XMFLOAT3 targetPos = GetPosition();
+            soundPkt.x = targetPos.x;
+            soundPkt.y = targetPos.y;
+            soundPkt.z = targetPos.z;
+
+            auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+            auto& scenes = room->GetScenes();
+            auto currentScene = scenes[(UINT)current_scene_type].get();
+            currentScene->BroadCast(sendBuffer);
+
             c_hold_timer = 0.0f;
             target->SetPossessed(false);
             target->SetPossessionTimer(0.0f);

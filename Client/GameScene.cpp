@@ -33,6 +33,7 @@
 
 #include "UIComponent.h"
 #include "DataManager.h"
+#include "SoundManager.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -779,5 +780,27 @@ void CGameScene::Handle_S_UpdateDurability(std::shared_ptr<Session>& session, co
 				tool->SetCurrentDurability(pkt.current_durability);
 			}
 		}
+	}
+}
+
+void CGameScene::Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt)
+{
+	if (pkt.is_global) {
+		CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		return;
+	}
+
+	if (pkt.player_id != 0 && my_player->GetID() == pkt.player_id) {
+		CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		return;
+	}
+	else {
+		XMFLOAT3 soundPos = { pkt.x, pkt.y, pkt.z };
+		XMFLOAT3 myPos = my_player->GetPosition();
+		XMFLOAT3 diff = Vector3::Subtract(soundPos, myPos);
+		diff.y = 0.0f;
+
+		if (Vector3::Length(diff) <= 4.0f)
+			CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
 	}
 }

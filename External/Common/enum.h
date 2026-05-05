@@ -143,3 +143,14 @@ enum class TREASURE_GRADE : uint8_t
 	EPIC,		// 에픽
 	LEGENDARY	// 전설
 };
+
+enum class SOUND_ID : uint16_t
+{
+	button01a,
+	damaged1,
+	ghost_attack,
+	jump12,
+	select09,
+	crude_laughter,
+	devil_laugh1,
+};

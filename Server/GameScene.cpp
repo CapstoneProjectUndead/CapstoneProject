@@ -80,6 +80,7 @@ void CGameScene::OnSceneActivate()
 	
 		humanMonster->SetPosition(pos.x, 0.1f, pos.z);
 		humanMonster->SetOriginPos({ pos.x, 0.1f, pos.z });
+		humanMonster->SetScene(this);
 		AddMonster(humanMonster);
 	}
 	
@@ -90,6 +91,7 @@ void CGameScene::OnSceneActivate()
 	
 		ghost->SetPosition(pos.x, 0.1f, pos.z);
 		ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
+		ghost->SetScene(this);
 		AddMonster(ghost);
 	}
 }

@@ -6,6 +6,7 @@
 #include "ServerPacketHandler.h"
 #include "NetworkManager.h"
 #include "NetworkClockManager.h"
+#include "SoundManager.h"
 #include "User.h"
 
 #include "Inventory.h"
@@ -281,6 +282,8 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 
 	// 점프 시작
 	start_jump = (input.space && is_grounded);
+	if (start_jump)
+		CSoundManager::GetInstance().Play(SOUND_ID::jump12);
 
 	if (input.space) {
 		move->Jump();
@@ -599,6 +602,7 @@ void CMyPlayer::UpdatePossession(float elapsedTime)
 
     if (possession_timer <= 0.0f) {
 
+		CSoundManager::GetInstance().Play(SOUND_ID::devil_laugh1);
         possession_timer = 0.0f;
         is_possessed     = false;
         velocity.x       = 0.0f;
