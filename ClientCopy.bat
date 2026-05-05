@@ -1,5 +1,7 @@
 xcopy /s /y ".\Client\*.hlsl" ".\x64\Debug"
 xcopy /s /y ".\Client\*.hlsl" ".\x64\Release"
+xcopy /s /y ".\Client\*.hlsli" ".\x64\Debug"
+xcopy /s /y ".\Client\*.hlsli" ".\x64\Release"
 xcopy /s /y /i ".\External\Common\Data\*.json" ".\x64\Debug\Data"
 xcopy /s /y /i ".\External\Common\Data\*.json" ".\x64\Release\Data"
 xcopy /s /e /y ".\Modeling" ".\x64\Modeling\"
