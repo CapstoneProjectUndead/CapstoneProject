@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
 #include "WorldItem.h"
@@ -383,7 +383,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 
 void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
 {
-	std::string fileName{ "../Modeling/undead_char_0412.bin" };
+	std::string fileName{ "../Modeling/undead_char.bin" };
 
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
