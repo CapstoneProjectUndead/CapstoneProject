@@ -10,8 +10,6 @@ class CShader;
 class CUIScene : public CScene {
 public:
 	CUIScene();
-    virtual void Initialize() override;
-
     virtual void Update(float dt) override;
 	virtual void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) override;
     virtual void Render(ID3D12GraphicsCommandList*) override;

@@ -23,8 +23,8 @@ void CTexture::CreateSrv(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE cpuDe
 
 std::shared_ptr<CTexture> CTextureManager::GetTexture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, CDescriptorHeapManager* heap, const std::string& name)
 {
-    ID3D12DescriptorHeap* heapPtr = heap->GetHeap();
-    auto key = std::make_pair(name, heapPtr); // 키 생성
+    ID3D12DescriptorHeap* heapPtr = heap->GetSRVHeap().GetHeap();
+    auto key = std::make_pair(name, heapPtr); // generate key
 
     auto it = textures.find(key);
     if (it != textures.end())
@@ -37,9 +37,9 @@ std::shared_ptr<CTexture> CTextureManager::GetTexture(ID3D12Device* device, ID3D
 
     tex->CreateTextureResource(device, commandList, path);
 
-    UINT index = heap->Allocate();
+    UINT index = heap->GetSRVHeap().Allocate();
     tex->SetDescriptorIndex(index);
-    tex->CreateSrv(device, heap->GetCPUHandle(index));
+    tex->CreateSrv(device, heap->GetSRVCPUHandle(index));
 
     textures[key] = tex;
 

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CTimer;
 
@@ -44,6 +44,7 @@ public:
 	void Update();
 	void Render();
 
+	void RenderBegin();
 	void CommandBegin();
 	void CommandEnd();
 

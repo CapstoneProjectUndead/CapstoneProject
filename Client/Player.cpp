@@ -53,9 +53,9 @@ void CPlayer::PreUpdate(float elapsedTime)
     }
 }
 
-void CPlayer::OnCollect(IRenderer* renderer)
+void CPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
-    CObject::OnCollect(renderer);
+    CObject::OnCollect(renderers);
 
     auto animator = GetComponent<CAnimatorComponent>();
     if (animator) {

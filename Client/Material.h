@@ -2,6 +2,7 @@
 #include "Component.h"
 
 class CTexture;
+class CDescriptorHeapManager;
 
 struct MaterialData
 {
@@ -29,10 +30,10 @@ class CMaterialManager
 {
 public:
     // 없으면 생성
-    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex);
-    std::shared_ptr<CMaterial> GetMaterial(const std::string& name);
+    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap);
+    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, CDescriptorHeapManager* heap);
     // 미리 Load
-    void LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex);
+    void LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap);
 private:
     std::unordered_map<std::string, std::shared_ptr<CMaterial>> materials;
 };

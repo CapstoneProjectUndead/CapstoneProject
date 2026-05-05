@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "PhysicsManager.h"
@@ -37,6 +37,8 @@
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
 {
+	scene_bounds.Center = XMFLOAT3{ MapGenerator::WIDTH * 2 / 2, 0.0f, MapGenerator::HEIGHT * 2 / 2 };
+	scene_bounds.Radius = MapGenerator::HEIGHT * 2 / 2;
 }
 
 CGameScene::~CGameScene()
@@ -48,7 +50,7 @@ void CGameScene::Initialize()
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 
 	if (objects.empty()) {
-		CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
+		CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
 		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
 
@@ -56,6 +58,8 @@ void CGameScene::Initialize()
 		ghost_spawn_positions = factory->GetGhostSpawnPositions();
 
 		factory->LoadItemFrame(heapManager);
+		// 우선 게임씬에서 load
+		factory->LoadTwoSideFrame(shaders[EShaderName::TwoSide]->GetHeapManager());
 	}
 
 	// menu UI
@@ -109,7 +113,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 {
 	// 플레이어 생성
 	if (!my_player) {
-		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 		my_player->SetPosition(1.f, 2.0f, 1.f);
 	}
@@ -127,7 +131,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		dowsingUI->SetEnable(false);
 		// Material 설정
 		std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
-		m->SetMaterial(factory->GetMaterial(shaders["ui"]->GetHeapManager(), "finder_arrow"));
+		m->SetMaterial(factory->GetMaterial(shaders[EShaderName::UI]->GetHeapManager(), "finder_arrow"));
 		dowsingUI->SetMaterial(m);
 
 		my_player->SetComponent(dowsingUI);
@@ -145,8 +149,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 	// 싱글 전용: 몬스터 스폰
 	if (g_is_single) {
-		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
-
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
 		for (const auto& pos : humanMonster_spawn_positions) {
 			auto humanMonster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
 			if (!humanMonster)
@@ -480,7 +483,7 @@ void CGameScene::ProcessMining()
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 {
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
+	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
 
 	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
@@ -504,7 +507,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
 {
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
+	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
 
 	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
@@ -565,7 +568,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 	humanMonster_spawn_positions.clear();
 	ghost_spawn_positions.clear();
 
-	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()["inst"]->GetHeapManager() };
+	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Inst]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
 }
 

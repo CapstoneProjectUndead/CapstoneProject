@@ -419,6 +419,9 @@
     </ClInclude>
     <ClInclude Include="SoundManager.h">
       <Filter>Sound</Filter>
+	</ClInclude>
+	<ClInclude Include="ShadowMap.h">
+      <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -661,6 +664,9 @@
     </ClCompile>
     <ClCompile Include="SoundManager.cpp">
       <Filter>Sound</Filter>
+	</ClCompile>
+	<ClCompile Include="ShadowMap.cpp">
+      <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -695,11 +701,17 @@
     <FxCompile Include="UI.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="ShadowShader.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MeshComponent.inl">
       <Filter>Component\Rendering</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Common.hlsli">
+      <Filter>D3D12\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

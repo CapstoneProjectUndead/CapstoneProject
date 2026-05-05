@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "LightManager.h"
 #include "ImGuiManager.h"
 
@@ -9,6 +9,7 @@ class CObject;
 class CShader;
 class CObjectFactory;
 class CUIManager;
+class CShadowMap;
 
 class CScene
 {
@@ -23,6 +24,7 @@ public:
 	void AnimateObjects(float);
 
 	virtual void Initialize();
+	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
@@ -42,6 +44,10 @@ public:
 	void CheckHoverSound();
 	void PlayClickSound();
 
+private:
+	// Rendering
+	void RenderBasePass(ID3D12GraphicsCommandList* commandList);
+	void CollectObjects(ID3D12GraphicsCommandList* commandList);
 protected:
 	// UI 관련 
 	// 자식들이 각자 그릴 UI를 구현하는 순수 가상 함수
@@ -107,4 +113,8 @@ protected:
 	std::vector<uint64>						player_slot_ids;
 
 	ImGuiID last_hovered_id_ = 0;
+
+	// for shadow
+	BoundingSphere scene_bounds{};
+	std::shared_ptr<CShadowMap> shadow_map;
 };

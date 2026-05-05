@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 
 class CMesh;
@@ -31,8 +31,8 @@ private:
 
 struct RenderUnit
 {
-    CMeshComponent* mesh{};
-    CMaterialComponent* material{};
+    std::shared_ptr<CMeshComponent> mesh;
+    std::shared_ptr<CMaterialComponent> material;
 };
 
 class CMeshRendererComponent : public CComponent
@@ -40,8 +40,12 @@ class CMeshRendererComponent : public CComponent
 public:
     void Update(const float deltaTime) override {};
     void Render(ID3D12GraphicsCommandList* commandList) override;
-    void Collect(IRenderer* renderer, bool isStatic);
-    void SetRenderUnit(CMeshComponent* mesh, CMaterialComponent* mat = nullptr)
+    void Collect(std::unique_ptr<IRenderer>& renderer, bool isStatic);
+    void SetRenderUnit(std::shared_ptr<CMeshComponent>& mesh)
+    {
+        render_units.push_back({ mesh, nullptr });
+    }
+    void SetRenderUnit(std::shared_ptr<CMeshComponent>& mesh, std::shared_ptr<CMaterialComponent>& mat)
     {
         render_units.push_back({ mesh, mat });
     }
@@ -49,6 +53,11 @@ public:
     {
         render_units.push_back(renderUnit);
     }
+    std::vector<RenderUnit>& GetRenderUnits() { return render_units; }
+
+    void SetShader(const EShaderName name) { shader_name = name; }
+    EShaderName GetShader() const { return shader_name; }
 private:
     std::vector<RenderUnit> render_units;
+    EShaderName shader_name{ EShaderName::Inst };	// 적용 쉐이더 이름
 };

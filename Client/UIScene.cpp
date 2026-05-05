@@ -17,19 +17,6 @@ CUIScene::CUIScene()
 {
 }
 
-void CUIScene::Initialize()
-{
-	CScene::Initialize();
-
-    auto shaders = CSceneManager::GetInstance().GetShaders();
-    {
-        // UI
-        std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
-        shader->CreateShader(GET_DEVICE);
-        shaders.emplace("ui", std::move(shader));
-    }
-}
-
 void CUIScene::Update(float dt)
 {
     ui_manager->Update(dt);
@@ -53,20 +40,18 @@ void CUIScene::Render(ID3D12GraphicsCommandList* commandList)
 
     ui_manager->Collect(renderers);
 
-    for (const auto& [name, pShader] : shaders) {
-        pShader->RenderBegin(commandList);
+    for(size_t i = 0; i < EShaderName::Count; ++i) {
+        if (!shaders[i]) continue;
+        shaders[i]->RenderBegin(commandList);
 
         camera->UpdateShaderVariables(commandList, true);
 
-        auto it = renderers.find(name);
-        if (it != renderers.end()) {
-            it->second->Render(commandList);
-            if (name == "ui") {
-                renderers["text"]->Render(commandList);
-            }
+        renderers[i]->Render(commandList);
+        if (i == EShaderName::UI) {
+            renderers[EShaderName::Text]->Render(commandList);
         }
 
-        pShader->RenderEnd(commandList);
+        shaders[i]->RenderEnd(commandList);
     }
 }
 

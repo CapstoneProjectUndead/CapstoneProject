@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Player.h"
 #include "MapGenerator/MapGenerator.h"
 
@@ -25,7 +25,7 @@ public:
 
     virtual void Update(float elapsedTime) override;
     inline void PreUpdate(float elapsedTime);
-    virtual void OnCollect(IRenderer* renderer) override;
+    virtual void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
 
 public:
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }

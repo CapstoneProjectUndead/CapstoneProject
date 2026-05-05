@@ -1,32 +1,5 @@
+#include "Common.hlsli"
 #define SKINNED
-
-#ifndef NUM_DIR_LIGHTS
-    #define NUM_DIR_LIGHTS 3
-#endif
-
-#ifndef NUM_POINT_LIGHTS
-    #define NUM_POINT_LIGHTS 0
-#endif
-
-#ifndef NUM_SPOT_LIGHTS
-    #define NUM_SPOT_LIGHTS 0
-#endif
-
-#include "Light.hlsl"
-
-cbuffer CameraInfo : register(b0)
-{
-    float4x4 viewMatrix : packoffset(c0);
-    float4x4 projectionMatrix : packoffset(c4);
-};
-
-cbuffer LightInfo : register(b1)
-{
-    float4 ambientLight;
-    float3 eyePosWorld;
-    
-    Light gLights[MaxLights];
-}
 
 struct VS_INPUT
 {
@@ -42,7 +15,8 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 position_clip : SV_POSITION;
-    float3 position_world : POSITION;
+    float4 shadow_pos : POSITION0;
+    float3 position_world : POSITION1;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD;
     nointerpolation uint instanceID : INSTANCEID;
@@ -58,16 +32,16 @@ struct MaterialData
 
 struct AnimationData
 {
-    // ì²« ë²ˆì§¸ ì• ë‹ˆë©”ì´ì…˜ ì •ë³´
+    // Ã¹ ¹øÂ° ¾Ö´Ï¸ŞÀÌ¼Ç Á¤º¸
     uint start_offset_A;
     uint cur_frame_A;
-    // ë‘ ë²ˆì§¸ ì• ë‹ˆë©”ì´ì…˜ ì •ë³´
+    // µÎ ¹øÂ° ¾Ö´Ï¸ŞÀÌ¼Ç Á¤º¸
     uint start_offset_B;
     uint cur_frame_B;
     
     uint bone_count;
     int mask_id;
-    float blend_weight; // 0.0ì´ë©´ A, 1.0ì´ë©´ B
+    float blend_weight; // 0.0ÀÌ¸é A, 1.0ÀÌ¸é B
 };
 
 struct InstanceData
@@ -80,12 +54,9 @@ struct InstanceData
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 
-// ë³¸ë³„ ë§ˆìŠ¤í¬ ì •ë³´ë¥¼ ë‹´ëŠ” ë²„í¼ (ë¯¸ë¦¬ CPUì—ì„œ ë„˜ê²¨ì¤Œ)
-// ì˜ˆ: 0ë²ˆ~10ë²ˆ ë³¸ì€ 0.0(í•˜ë°˜ì‹ ), 11ë²ˆ~20ë²ˆ ë³¸ì€ 1.0(ìƒë°˜ì‹ )
+// º»º° ¸¶½ºÅ© Á¤º¸¸¦ ´ã´Â ¹öÆÛ (¹Ì¸® CPU¿¡¼­ ³Ñ°ÜÁÜ)
+// ¿¹: 0¹ø~10¹ø º»Àº 0.0(ÇÏ¹İ½Å), 11¹ø~20¹ø º»Àº 1.0(»ó¹İ½Å)
 StructuredBuffer<float> gBoneMasks : register(t2, space1);
-
-Texture2D texDiffuse[50] : register(t0);
-SamplerState sample : register(s0);
 
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 {
@@ -96,7 +67,7 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     float4x4 finalWorld = instData.world_matrix;
     output.instanceID = instanceID;
 #ifdef SKINNED
-    // boneIdx = í•´ë‹¹ í´ë¦½ì˜ ì‹œì‘ì  (anim_start_offset) + í˜„ì¬ í”„ë ˆì„ê¹Œì§€ ê±´ë„ˆë›°ê¸° (cur_frame * bone_count) + ê·¸ ì•ˆì—ì„œ ë‚´ ë¼ˆì˜ ë²ˆí˜¸ (input.bone_indices[i])
+    // boneIdx = ÇØ´ç Å¬¸³ÀÇ ½ÃÀÛÁ¡ (anim_start_offset) + ÇöÀç ÇÁ·¹ÀÓ±îÁö °Ç³Ê¶Ù±â (cur_frame * bone_count) + ±× ¾È¿¡¼­ ³» »ÀÀÇ ¹øÈ£ (input.bone_indices[i])
     uint frameBaseA = instData.animation.start_offset_A + (instData.animation.cur_frame_A * instData.animation.bone_count);
     uint frameBaseB = instData.animation.start_offset_B + (instData.animation.cur_frame_B * instData.animation.bone_count);
     float alpha = instData.animation.blend_weight;
@@ -124,7 +95,7 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
             maskWeight = gBoneMasks[maskIdx];
         }
         
-        // ìµœì¢… ê°€ì¤‘ì¹˜ = ë ˆì´ì–´ ìì²´ì˜ ë¸”ë Œë“œ ìˆ˜ì¹˜ * ë³¸ë³„ ë§ˆìŠ¤í¬ ìˆ˜ì¹˜
+        // ÃÖÁ¾ °¡ÁßÄ¡ = ·¹ÀÌ¾î ÀÚÃ¼ÀÇ ºí·»µå ¼öÄ¡ * º»º° ¸¶½ºÅ© ¼öÄ¡
         float finalWeight = alpha * maskWeight;
         
         float4x4 matA = gAnimBuffer[frameBaseA + boneIdx];
@@ -146,6 +117,7 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
     output.tex = input.tex;
+    output.shadow_pos = mul(posW, gShadowTransform);
     
     return output;
 }
@@ -162,9 +134,12 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
     float3 toEyeW = normalize(eyePosWorld - input.position_world);
 
     float4 ambient = ambientLight * diffuseAlbedo;
+    
+    // Only the first light casts a shadow
+    float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
+    shadowFactor[0] = CalcShadowFactor(input.shadow_pos);
 
     Material mat = { diffuseAlbedo, instMat.fresnel, instMat.glossiness };
-    float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, input.position_world, input.normal, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;

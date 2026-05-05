@@ -5,6 +5,7 @@
 struct AnimationData;
 struct CMeshComponent;
 struct CMaterialComponent;
+struct RenderUnit;
 
 struct AnimLayer {
 	std::string current_clip;
@@ -24,9 +25,10 @@ struct CharacterAnimSet {
 
 // 소켓 렌더링에 필요한 리소스 정보 캐싱
 struct SocketRenderCache {
-	CMeshComponent* mesh;
-	CMaterialComponent* mat;
+	std::vector<RenderUnit> render_units{};
 	int last_item_id{ -1 }; // 아이템이 바뀌었는지 체크용
+	std::string model_name{}; // 아이템 아닐 때 모델이 바뀌었는지 체크
+	EShaderName shader_name{ EShaderName::Inst };
 };
 
 class CAnimatorComponent : public CComponent

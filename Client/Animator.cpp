@@ -80,8 +80,11 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		sockets.resize(SOCKET_TYPE::HAND_R + 1);
 		uint8_t monType = static_cast<uint8_t>(static_cast<CMonster*>(owner)->GetMonsterType());
 		int idx = CAnimationManager::GetInstance().GetBoneIndex(objType, monType, "handR");
-		XMMATRIX rotation = XMMatrixRotationY(XMConvertToRadians(90.0f));
-		Socket socket{ idx, rotation };
+		// offset matrix
+		XMMATRIX mScale = XMMatrixScalingFromVector(XMVectorSet(0.2635728f, 0.2635728f, 0.2635728f, 0.0f));
+		XMMATRIX mRot = XMMatrixRotationRollPitchYaw(XMConvertToRadians(0.0f), XMConvertToRadians(90.0f), XMConvertToRadians(-90.0f));
+		XMMATRIX mTrans = XMMatrixTranslationFromVector(XMVectorSet(-0.003635712f, 0.02177059f, 0.01650229f, 0.0f));
+		Socket socket{ idx, mScale * mRot * mTrans };
 		sockets[HAND_R] = socket;
 
 		// Attack 상태 등록 및 전이 추가
@@ -372,7 +375,10 @@ XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 
 void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName)
 {
-	if (itemID == -1) return;
+	if (itemID < 0) {
+		render_cache[type].last_item_id = -1;	// 초기화
+		return;
+	}
 
 	auto& cache = render_cache[type];
 
@@ -381,25 +387,33 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
 		
 		if (proto) {
-			cache.mesh = proto->GetComponent<CMeshComponent>();
-			cache.mat = proto->GetComponent<CMaterialComponent>();
+			// item은 모두 inst rnederer 사용
+			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
+				cache.render_units = renderer->GetRenderUnits();
+			}
 			cache.last_item_id = itemID;
+			cache.model_name = "";
 		}
 	}
-	else if (cache.last_item_id != itemID && NULL == itemID) {	// item이 아니면 modelName 사용
+	else if (cache.last_item_id != itemID && NULL == itemID && modelName != cache.model_name) {	// item이 아니면 modelName 사용
 		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(modelName);
 
 		if (proto) {
-			cache.mesh = proto->GetComponent<CMeshComponent>();
-			cache.mat = proto->GetComponent<CMaterialComponent>();
+			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
+				cache.render_units = renderer->GetRenderUnits();
+				cache.shader_name = renderer->GetShader();
+			}
 			cache.last_item_id = itemID;
+			cache.model_name = modelName;
 		}
 	}
 
 	// material은 없을 수 있음
-	if (cache.mesh) {
-		XMMATRIX socketMat = GetSocketMatrix(type);
-		CSceneManager::GetInstance().GetRanderers()["inst"]->AddInstance(cache.mesh->GetMesh().get(), cache.mat, Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
+	for (const RenderUnit& unit : cache.render_units) {
+		if (unit.mesh) {
+			XMMATRIX socketMat = GetSocketMatrix(type);
+			CSceneManager::GetInstance().GetRanderers()[cache.shader_name]->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), Matrix4x4::XMMatrixToFloat4x4(socketMat), false);
+		}
 	}
 }
 

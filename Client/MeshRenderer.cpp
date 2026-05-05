@@ -46,7 +46,7 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 	}
 }
 
-void CMeshRendererComponent::Collect(IRenderer* renderer, bool isStatic)
+void CMeshRendererComponent::Collect(std::unique_ptr<IRenderer>& renderer, bool isStatic)
 {
 	if (!owner) return;
 
@@ -61,10 +61,10 @@ void CMeshRendererComponent::Collect(IRenderer* renderer, bool isStatic)
 
 		if (animator) {
 			// 애니메이터로부터 현재 프레임 정보를 가져옴
-			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix, aniData);
+			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), owner->world_matrix, aniData);
 		}
 		else
-			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix, isStatic);
+			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), owner->world_matrix, isStatic);
 #ifdef DEBUG
 		auto collider = owner->GetComponents<CColliderComponent>();
 		for (auto c : collider)
