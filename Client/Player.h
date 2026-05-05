@@ -19,7 +19,7 @@ public:
 	CPlayer();
 	virtual void Update(float elapsedTime) override;
 	void PreUpdate(float elapsedTime);
-	virtual void OnCollect(IRenderer* renderer) override;
+	virtual void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
 
 public:
 	void SetState(const PLAYER_STATE _state) { state = _state; }

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include <filesystem>
 #include "Player.h"
 #include "KeyManager.h"
@@ -503,6 +503,10 @@ void CGameFramework::Update()
 
 void CGameFramework::Render()
 {
+	CSceneManager::GetInstance().GetActiveScene()->RenderShadowPass(command_list.Get());
+
+	RenderBegin();
+
 	CSceneManager::GetInstance().Render(command_list.Get());
 
 	// ImGui 렌더링
@@ -510,26 +514,11 @@ void CGameFramework::Render()
 	CImGuiManager::GetInstance().Render(command_list.Get());
 }
 
-void CGameFramework::CommandBegin()
+void CGameFramework::RenderBegin()
 {
-	// 명령 리셋
-	ThrowIfFailed(command_allocator->Reset());
-	ThrowIfFailed(command_list->Reset(command_allocator.Get(), NULL));
-
 	// 뷰포트 씨저 사각형 설정
 	command_list->RSSetViewports(1, &viewport);
 	command_list->RSSetScissorRects(1, &scissor_rect);
-
-	// 현재 렌더 타겟에 대한 프리젠트가 끝나기를 기다림. 프리젠트가 끝나면 렌더 타겟 상태로 바꿈
-	D3D12_RESOURCE_BARRIER resourceBarrier{};
-	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	// render target state로 리소스 변경
-	resourceBarrier.Transition.pResource = render_target_buffers[swap_chain_buffer_index].Get();
-	resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	command_list->ResourceBarrier(1, &resourceBarrier);
 
 	// 현재 렌더 타겟에 해당하는 서술자의 CPU 주소(핸들) 값을 계산
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvCPUDesciptorHandle = rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart();
@@ -547,6 +536,24 @@ void CGameFramework::CommandBegin()
 
 	// 원하는 값으로 깊이 스텐실 지우기
 	command_list->ClearDepthStencilView(dsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, NULL);
+}
+
+void CGameFramework::CommandBegin()
+{
+	// 명령 리셋
+	ThrowIfFailed(command_allocator->Reset());
+	ThrowIfFailed(command_list->Reset(command_allocator.Get(), NULL));
+
+	// 현재 렌더 타겟에 대한 프리젠트가 끝나기를 기다림. 프리젠트가 끝나면 렌더 타겟 상태로 바꿈
+	D3D12_RESOURCE_BARRIER resourceBarrier{};
+	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	// render target state로 리소스 변경
+	resourceBarrier.Transition.pResource = render_target_buffers[swap_chain_buffer_index].Get();
+	resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	command_list->ResourceBarrier(1, &resourceBarrier);
 }
 
 void CGameFramework::CommandEnd()

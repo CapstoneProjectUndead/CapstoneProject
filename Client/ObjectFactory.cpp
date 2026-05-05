@@ -33,44 +33,43 @@ uint32 CObjectFactory::s_monster_id_generator = 1001;
 std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name)
 {
 	std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-	std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex);
+	std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex, heapManager);
 
 	return mat;
 }
 
 // mesh/material component set
-void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName)
+void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName)
 {
 	if (!node || node->mesh.positions.empty()) return;
 
 	float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&node->mesh.bounds.Extents))) * 1.5f;
 	obj->SetBoundingSphere(node->mesh.bounds.Center, radius);
 
+	// MeshRendererComponent
+	auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+	meshRenderer->SetShader(shaderName);
+	obj->SetComponent(meshRenderer);
+
 	// MeshComponent
 	auto meshComp = std::make_shared<CMeshComponent>();
-	obj->SetComponent(meshComp);
 	meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
 	obj->world_matrix = node->local_matrix;
 
 	// MaterialComponent
-	auto matComp = std::make_shared<CMaterialComponent>();
-	obj->SetComponent(matComp);
-
-	std::string texName = node->mesh.materials[0].albedoMap;
-	if (!texName.empty()) {
-		auto mat = GetMaterial(heapManager, texName); // 기존 GetMaterial 활용
-		mat->material.albedo = node->mesh.materials[0].albedoColor;
-		mat->material.glossiness = node->mesh.materials[0].glossiness;
-		matComp->SetMaterial(mat);
+	for (auto& material : node->mesh.materials) {
+		auto matComp = std::make_shared<CMaterialComponent>();
+		const std::string& texName = material.albedoMap;
+		if (!texName.empty()) {
+			auto mat = GetMaterial(heapManager, texName); // 기존 GetMaterial 활용
+			mat->material.albedo = material.albedoColor;
+			mat->material.glossiness = material.glossiness;
+			matComp->SetMaterial(mat);
+		}
+		meshRenderer->SetRenderUnit(meshComp, matComp);
 	}
 
-	// MeshRendererComponent
-	auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-	obj->SetComponent(meshRenderer);
-	meshRenderer->SetRenderUnit(meshComp.get(), matComp.get());
-
 	obj->name = node->name;
-	obj->SetShader(shaderName);
 }
 
 void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
@@ -86,7 +85,6 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 
 	// MeshComponent 생성 및 설정
 	auto meshComp = std::make_shared<CMeshComponent>();
-	character->SetComponent(meshComp);
 
 	if (aniSet.idle.empty())
 		meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
@@ -108,6 +106,7 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 
 	// Renderer 및 기초 컴포넌트 설정
 	auto renderer = std::make_shared<CMeshRendererComponent>();
+	renderer->SetShader(EShaderName::Skinning);
 	character->SetComponent(renderer);
 
 	// 메쉬 노드 순회 및 파츠 처리
@@ -179,11 +178,11 @@ void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
 	player->SetComponent(std::make_shared<CMovementComponent>());
 }
 
-void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
+void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName)
 {
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
-	InitStaticComponents(obj, heapManager, node);
+	InitStaticComponents(obj, heapManager, node, shaderName);
 
 	// 싱글일 때만 collider 생성(멀티면 서버에서 생성)
 	if (g_is_single) {
@@ -209,7 +208,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 	for (const auto& children : frameRoot->childrens) {
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-		InitStaticComponents(obj, heapManager, children);
+		InitStaticComponents(obj, heapManager, children, EShaderName::Inst);
 
 		// Lobby 특화 Collider 로직
 		float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&children->mesh.bounds.Extents))) * 1.5f;
@@ -256,21 +255,17 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);
 	XMStoreFloat4x4(&obj->world_matrix, world);
 
-	// Renderer 및 Mesh/Material 설정
-	auto meshComp = proto->GetComponent<CMeshComponent>();
-	auto matComp = proto->GetComponent<CMaterialComponent>();
-
-	if (meshComp && matComp) {
+	// Renderer에 Mesh/Material 설정
+	for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
 		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-		RenderUnit unit;
-		unit.mesh = meshComp;
-		unit.material = matComp;
-		meshRenderer->SetRenderUnit(unit);
+		meshRenderer->SetShader(EShaderName::Inst);
+		for (const RenderUnit originUnit : renderer->GetRenderUnits()) {
+			meshRenderer->SetRenderUnit(originUnit);
+		}
 		obj->SetComponent(meshRenderer);
 	}
 
 	obj->Initialize();
-	obj->SetShader("inst");
 }
 
 void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
@@ -401,7 +396,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 	};
 	for (const std::string& name : resourceNames) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		matManager.LoadMaterial(name, tex);
+		matManager.LoadMaterial(name, tex, heapManager);
 	}
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
@@ -411,11 +406,10 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 		auto CreateUnit = [&](const std::string& texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
 			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-			auto mat = matManager.GetMaterial(texName, tex);
+			auto mat = matManager.GetMaterial(texName, tex, heapManager);
 			matComp->SetMaterial(mat);
-			character->SetComponent(matComp);
 
-			RenderUnit unit{ meshComp.get(), matComp.get() };
+			RenderUnit unit{ meshComp, matComp };
 			renderer->SetRenderUnit(unit);
 			return matComp;
 			};
@@ -462,12 +456,13 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 			character->mouth_material[2]->SetEnable(false);
 			break;
 		case UndeadMeshName::Unknown:
-			CreateUnit(node->name);
+			for (auto& material : node->mesh.materials) {
+				CreateUnit(material.albedoMap);
+			}
 			break;
 		}
 	};
 
-	character->SetShader("skinning");
 	InitCharacterComponents(
 		character,
 		heapManager,
@@ -483,68 +478,64 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 {
 	std::string fileName{ "../Modeling/Human_monster.bin" };
 
-	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 			auto CreateUnit = [&](const std::string& texName) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex);
+				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				character->SetComponent(matComp);
-
-				RenderUnit unit{ meshComp.get(), matComp.get() };
+				RenderUnit unit{ meshComp, matComp };
 				renderer->SetRenderUnit(unit);
 				};
 
-			CreateUnit(node->mesh.materials[0].albedoMap);
+			for (auto& material : node->mesh.materials) {
+				CreateUnit(material.albedoMap);
+			}
 		};
 
 	InitCharacterComponents(
 		character,
 		heapManager,
 		fileName,
-		undeadProcessor,
+		Processor,
 		{ "Human_monster_idle", "Human_monster_walk", "Human_monster_run", "Human_monster_attack" },
 		false,
 		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER)
 	);
-
-	character->SetShader("skinning");
 }
 
 void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/Ghost3.bin" };
 
-	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 			auto CreateUnit = [&](const std::string& texName) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex);
+				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				character->SetComponent(matComp);
-
-				RenderUnit unit{ meshComp.get(), matComp.get() };
+				RenderUnit unit{ meshComp, matComp };
 				renderer->SetRenderUnit(unit);
 				};
 
-			CreateUnit(node->mesh.materials[0].albedoMap);
+			for (auto& material : node->mesh.materials) {
+				CreateUnit(material.albedoMap);
+			}
 		};
 
 	InitCharacterComponents(
 		character,
 		heapManager,
 		fileName,
-		undeadProcessor,
+		Processor,
 		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
 		false,
 		static_cast<EColLayer>(EColLayer::WALL | EColLayer::GROUND)
 	);
-
-	character->SetShader("skinning");
 }
 
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
@@ -559,15 +550,16 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 			auto CreateUnit = [&](const std::string& texName) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex);
+				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				character->SetComponent(matComp);
-
-				RenderUnit unit{ meshComp.get(), matComp.get() };
+				RenderUnit unit{ meshComp, matComp };
 				renderer->SetRenderUnit(unit);
 				};
 
-			CreateUnit(node->mesh.materials[0].albedoMap);
+			for (auto& material : node->mesh.materials) {
+				CreateUnit(material.albedoMap);
+			}
+			renderer->SetShader(EShaderName::Inst);
 		};
 
 	InitCharacterComponents(
@@ -579,7 +571,6 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 		false
 	);
 
-	character->SetShader("inst");
 	return character;
 }
 
@@ -718,28 +709,38 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 	return worldItem;
 }
 
+void CObjectFactory::LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName)
+{
+	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+	if (!frameRoot) return;
+
+	LoadFrameNode(heapManager, prototypes, frameRoot, shaderName);
+	for (const auto& children : frameRoot->childrens) {
+		LoadFrameNode(heapManager, prototypes, children, shaderName);
+	}
+}
+
 void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
 {
-	auto LoadNode = [this, heapManager](const std::string fileName) {
-			auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
-			if (!frameRoot) return;
-
-			LoadFrameNode(heapManager, prototypes, frameRoot);
-			for (const auto& children : frameRoot->childrens) {
-				LoadFrameNode(heapManager, prototypes, children);
-			}
-		};
 	{
 		std::string fileName{ "../Modeling/Equip_0412.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/Food_0411.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
-		LoadNode(fileName);
+		LoadNode(heapManager, fileName);
+	}
+}
+
+void CObjectFactory::LoadTwoSideFrame(CDescriptorHeapManager* heapManager)
+{
+	{
+		std::string fileName{ "../Modeling/flapper.bin" };
+		LoadNode(heapManager, fileName, EShaderName::TwoSide);
 	}
 }
 

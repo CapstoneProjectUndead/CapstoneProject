@@ -30,7 +30,7 @@ void CLobbyScene::Initialize()
 	CScene::Initialize();
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager{ shaders["inst"]->GetHeapManager() };
+	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
 	if (objects.empty()) {
 		objects = factory->CreateLobby(heapManager);
 	}
@@ -85,7 +85,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 {
 	// 플레이어 생성
 	if (!my_player) {
-		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()["skinning"]->GetHeapManager() };
+		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
 		my_player = factory->CreateMyPlayer(skinningHeapManager);
 	}
 

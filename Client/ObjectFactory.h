@@ -31,7 +31,7 @@ public:
 public:
 	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
 	// init component(공통 컴포넌트 구성 초기화 헬퍼 함수)
-	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const std::string& shaderName = "inst");
+	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName);
 	void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
 		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer,
 		EColLayer colMask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND));
@@ -45,7 +45,7 @@ public:
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 
 	// Create Map
-	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
+	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName = EShaderName::Inst);
 	// Lobby
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	// GameScene 모델 파츠 load
@@ -69,6 +69,8 @@ public:
 	std::shared_ptr<CWorldItem> CreateWorldItem(uint16 itemID, CDescriptorHeapManager* heapManager);
 	// 미리 prototypes에 적재
 	void LoadItemFrame(CDescriptorHeapManager* heapManager);
+	// 은면이 보여야하는 오브젝트 prototypes에 적재
+	void LoadTwoSideFrame(CDescriptorHeapManager* heapManager);
 
 	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
@@ -99,7 +101,7 @@ private:
 		Unknown
 	};
 
-
+	void LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName = EShaderName::Inst);
 	// string to enum mapping
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);

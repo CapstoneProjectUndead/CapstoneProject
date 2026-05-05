@@ -1,10 +1,11 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "HumanMonster.h"
 #include "Player.h"
 #include "AIComponent.h"
 #include "Movement.h"
 #include "SceneManager.h"
 #include "MyPlayer.h"
+#include "Animator.h"
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
@@ -20,6 +21,16 @@ CHumanMonster::~CHumanMonster()
 void CHumanMonster::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+}
+
+void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
+{
+    CObject::OnCollect(renderers);
+
+    auto animator = GetComponent<CAnimatorComponent>();
+    if (animator) {
+        animator->RenderSocketModel(CAnimatorComponent::HAND_R, NULL, "flapper");
+    }
 }
 
 void CHumanMonster::OnIdleMove(float elapsedTime)

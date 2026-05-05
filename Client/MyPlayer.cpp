@@ -134,9 +134,9 @@ void CMyPlayer::PreUpdate(float elapsedTime)
 	ServerAuthorityMove(elapsedTime);
 }
 
-void CMyPlayer::OnCollect(IRenderer* renderer)
+void CMyPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
-	CObject::OnCollect(renderer);
+	CObject::OnCollect(renderers);
 
 	auto animator = GetComponent<CAnimatorComponent>();
 	if (animator) {
