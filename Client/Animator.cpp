@@ -461,11 +461,22 @@ void CAnimatorComponent::UpdateLayerWeights(float deltaTime)
 
 	// Layer 1 (Action/UpperBody) 페이드 인/아웃
 	if (!layers[1].current_clip.empty()) {
-		layers[1].weight += deltaTime * 5.0f; // 0.2초 Fade-in
+		auto& anim = CAnimationManager::GetInstance().GetClip(layers[1].current_clip);
+		float duration = (float)anim.total_frames / 60.0f;
+		float elapsed = current_time - layers[1].start_time;
+
+		// 애니메이션 재생 중 (Fade-in)
+		if (elapsed < duration) {
+			layers[1].weight += deltaTime * 10.0f;
+		}
+		else {	// fade out
+			layers[1].weight -= deltaTime * 5.0f;
+			if (layers[1].weight <= 0.0f) {
+				layers[1].current_clip = "";
+			}
+		}
+
 		if (layers[1].weight > 1.0f) layers[1].weight = 1.0f;
-	}
-	else {
-		layers[1].weight -= deltaTime * 5.0f; // Fade-out
 		if (layers[1].weight < 0.0f) layers[1].weight = 0.0f;
 	}
 }

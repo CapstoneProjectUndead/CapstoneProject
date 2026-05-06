@@ -21,6 +21,7 @@ public:
 	void PreUpdate(float elapsedTime);
 	virtual void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
 
+	void OnAttack();	// 공격 시 호출
 public:
 	void SetState(const PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
