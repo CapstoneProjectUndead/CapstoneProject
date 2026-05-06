@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Character.h"
 
 class CCamera;
@@ -83,6 +83,7 @@ public:
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 	bool GetDowsing() const { return is_dowsing; }
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
+	uint16 GetEquippedItemId() const { return equipped_item_id; }
 
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);

@@ -721,11 +721,11 @@ void CObjectFactory::LoadNode(CDescriptorHeapManager* heapManager, const std::st
 void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
 {
 	{
-		std::string fileName{ "../Modeling/Equip_0412.bin" };
+		std::string fileName{ "../Modeling/Equip.bin" };
 		LoadNode(heapManager, fileName);
 	}
 	{
-		std::string fileName{ "../Modeling/Food_0411.bin" };
+		std::string fileName{ "../Modeling/Food.bin" };
 		LoadNode(heapManager, fileName);
 	}
 	{

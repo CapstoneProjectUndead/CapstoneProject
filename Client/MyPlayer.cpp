@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "MyPlayer.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
@@ -62,11 +62,13 @@ void CMyPlayer::Update(float elapsedTime)
 				itemFinder->Toggle();
 				// 애니메이션 호출
 				if (itemFinder->is_enable) {
+					is_dowsing = true;
 					auto animator = GetComponent<CAnimatorComponent>();
 					if (animator)
 						animator->PlayAction("Ganga_search");
 				}
 				else {
+					is_dowsing = false;
 					auto animator = GetComponent<CAnimatorComponent>();
 					if (animator)
 						animator->PlayAction("");
@@ -139,29 +141,15 @@ void CMyPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 
 	auto animator = GetComponent<CAnimatorComponent>();
 	if (animator) {
-
-		// 싱글 모드일 때는 바로 장착
-		if (g_is_single) {
+		if (is_dowsing) {
 			auto itemFinder = GetComponent<CItemFinder>();
 			if (itemFinder && itemFinder->is_enable) {
 				animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
 				animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
 			}
-			else if(itemFinder && !itemFinder->is_enable)
-				animator->RenderSocketModel(CAnimatorComponent::HAND_R, quick_slot->GetSelectedItemId());
 		}
-		else {
-			// 멀티 모드에서는 서버의 허락을 받는다.
-			if (is_dowsing) {
-				auto itemFinder = GetComponent<CItemFinder>();
-				if (itemFinder && itemFinder->is_enable) {
-					animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_R, NULL, "dowsing_rod_0307");
-					animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
-				}
-			}
-			else if (!is_dowsing && equipped_item_id != 0)
-				animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
-		}
+		else if (!is_dowsing && equipped_item_id > 0)
+			animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
 	}
 }
 

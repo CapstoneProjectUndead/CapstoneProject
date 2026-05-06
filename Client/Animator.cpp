@@ -232,12 +232,20 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 {
 	// dig state(action으로도 가능)
 	const std::string dig{ "DigState" };
-	controller.AddState({ dig, "Dig_pick_ax", 3, false});
+	controller.AddState({ dig, "Dig_hand", 3.0f, false });
+
 	Transition i2d;
 	i2d.to_state = dig;
 	i2d.duration = 0.2f;
 	i2d.condition = [this]() {
-		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		auto* player = static_cast<CPlayer*>(owner);
+		if (player->GetState() == PLAYER_STATE::DIG) {
+			std::string targetClip = GetDigClipByItem(player->GetEquippedItemId());
+
+			controller.ModifyStateClip("DigState", targetClip);
+			return true;
+		}
+		return false;
 		};
 	controller.AddTransition(idle, i2d);
 
@@ -246,7 +254,14 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	w2d.to_state = dig;
 	w2d.duration = 0.2f;
 	w2d.condition = [this]() {
-		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		auto* player = static_cast<CPlayer*>(owner);
+		if (player->GetState() == PLAYER_STATE::DIG) {
+			std::string targetClip = GetDigClipByItem(player->GetEquippedItemId());
+
+			controller.ModifyStateClip("DigState", targetClip);
+			return true;
+		}
+		return false;
 		};
 	controller.AddTransition(walk, w2d);
 
@@ -261,7 +276,6 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 			player->SetState(PLAYER_STATE::IDLE);
 			return true;
 		}
-		// 취소 상태(예: 이동 입력)
 		if (static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG) return true;
 		return false;
 		};

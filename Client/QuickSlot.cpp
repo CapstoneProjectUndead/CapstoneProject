@@ -100,9 +100,9 @@ void CQuickSlot::Draw()
 
 				// 같은 슬롯 재입력 → 장착 해제
 				selected_slot = -1;
-
+				auto player = owner.lock();
 				if (!g_is_single) {
-					if (auto player = owner.lock()) {
+					if (player) {
 						C_EquipItem equipItemPkt;
 						equipItemPkt.item_id      = 0;
 						equipItemPkt.inventory_id = 0;
@@ -113,13 +113,17 @@ void CQuickSlot::Draw()
 						player->GetSession()->DoSend(sendBuffer);
 					}
 				}
+				else {
+					player->SetEquippedItemId(0);
+				}
 			}
 			else {
 				// 새 슬롯 선택
 				selected_slot = i;
 
+				auto player = owner.lock();
 				if (!g_is_single) {
-					if (auto player = owner.lock()) {
+					if (player) {
 						C_EquipItem equipItemPkt;
 						equipItemPkt.item_id      = slots[i].item_id;
 						equipItemPkt.inventory_id = slots[i].inv_id;
@@ -129,6 +133,9 @@ void CQuickSlot::Draw()
 						auto sendBuffer = MAKE_SEND_BUFFER(equipItemPkt);
 						player->GetSession()->DoSend(sendBuffer);
 					}
+				}
+				else {
+					player->SetEquippedItemId(slots[i].item_id);
 				}
 			}
 		}

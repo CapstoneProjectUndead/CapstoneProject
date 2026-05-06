@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 // 애니메이션 상태 정보
 struct State {
@@ -48,6 +48,7 @@ public:
         if (!is_blending) return "";
         return states.at(next_state_name).clip_name;
     }
+    void ModifyStateClip(const std::string& stateName, const std::string& aniName) { states[stateName].clip_name = aniName; }
 private:
     std::string current_state_name;
     std::string next_state_name;

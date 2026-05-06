@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Component.h"
 #include "AnimationController.h"
 #include "AnimationManager.h"
@@ -65,6 +65,23 @@ public:
 	// 현재 씬의 factory의 prototypes에 존재하는 mesh/material을 캐싱. itemID > 0이면 아이템 정보임
 	void RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName = "");
 private:
+	std::string GetDigClipByItem(int itemId) {
+		if (itemId > 0 && itemId <= 4) return "Dig_shovel";
+		else if (itemId > 4 && itemId <= 12) return "Dig_pick_ax";
+		return "Dig_hand";
+	}
+	std::string GetAttackClipByItem(int itemId) {
+		switch (itemId) {
+		case 14: 
+		case 19: 
+			return "Attack_swing";
+		case 15:   return "Attack_hammer";
+		//case : return "Attack_spray";
+		case 17: return "Attack_sand";
+		default: return "";
+		}
+	}
+
 	float current_time{};
 	std::vector<AnimLayer> layers;
 	CAnimationController controller;
@@ -75,3 +92,4 @@ private:
 	AnimationClip up_clip;
 	AnimationClip down_clip;
 };
+
