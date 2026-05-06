@@ -222,7 +222,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	ProcessRotation();
 
 	// 3. 점프 시작 판정 + 효과음 (싱글/멀티 공통, 서버 허락 없이 즉시)
-	start_jump = (current_input.space && is_grounded && !stamina_exhausted);
+	start_jump = (current_input.space && is_grounded && !stamina_exhausted && !is_possessed);
 	if (start_jump)
 		CSoundManager::GetInstance().Play(SOUND_ID::jump12);
 

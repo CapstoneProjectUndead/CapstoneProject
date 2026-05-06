@@ -187,9 +187,15 @@ XMVECTOR CPhysicsManager::ApplyGravity(CObject* obj, float dt)
     if (!col) return XMVectorZero();;
 
     // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
+    // 오브젝트의 실제 충돌 마스크와 교집합: Ghost처럼 OBJECT 통과 설정이면 나무를 지면으로 잘못 인식하지 않음
     XMFLOAT3 downDelta = { 0, -0.1f, 0 };
     CollisionInfo info{};
-    obj->is_grounded = Overlap(obj, downDelta, info, EColLayer::GROUND | EColLayer::OBJECT);
+    uint32_t groundCheckMask = col->filter.mask & (EColLayer::GROUND | EColLayer::OBJECT);
+
+    if (groundCheckMask == 0) 
+        groundCheckMask = EColLayer::GROUND;
+
+    obj->is_grounded = Overlap(obj, downDelta, info, groundCheckMask);
 
     XMVECTOR verticalSeparation = XMVectorZero();
 
