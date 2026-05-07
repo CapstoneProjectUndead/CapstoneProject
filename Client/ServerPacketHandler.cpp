@@ -607,3 +607,17 @@ bool Handle_S_PLAY_SOUND(std::shared_ptr<Session> session, S_PlaySound& pkt)
 
 	return true;
 }
+
+bool Handle_S_POSSESSION_RELEASE_FAIL(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)
+{
+	CGameScene* gameScene = nullptr;
+
+	gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+
+	if (!gameScene)
+		return true;
+
+	gameScene->Handle_S_PossessionReleaseFail(session, pkt);
+
+	return true;
+}

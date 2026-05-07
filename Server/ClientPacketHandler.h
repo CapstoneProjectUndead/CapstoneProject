@@ -65,6 +65,8 @@ enum : uint16
 	PKT_S_UPDATE_DURABILITY,
 
 	PKT_S_PLAY_SOUND,
+
+	PKT_S_POSSESSION_RELEASE_FAIL,
 };
 
 // Custom Handlers

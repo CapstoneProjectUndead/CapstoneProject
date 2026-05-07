@@ -62,6 +62,9 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_pizza",            L"../Modeling/item/image/Food_pizza.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_fish",             L"../Modeling/item/image/Food_fish.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_lunch",            L"../Modeling/item/image/Food_lunch.png");
+
+    // 빙의 해제 UI
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "ghost_icon", L"../Resource/GameScene/ghost.png");
 }
 
 void CResourceManager::LoadSounds()

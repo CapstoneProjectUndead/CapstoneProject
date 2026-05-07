@@ -73,6 +73,8 @@ enum PacketType : uint16_t
 	_S_UPDATE_DURABILITY,
 
 	_S_PLAY_SOUND,
+
+	_S_POSSESSION_RELEASE_FAIL,
 };
 
 #pragma pack (push, 1)
@@ -638,5 +640,13 @@ struct S_PlaySound : public PacketHeader
 	S_PlaySound() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_PLAY_SOUND) {}
 };
 static_assert(sizeof(S_PlaySound) == 4 + 24, "S_PlaySound size mismatch!");
+
+struct S_PossessionReleaseFail : public PacketHeader
+{
+	uint64 player_id = -1;
+
+	S_PossessionReleaseFail() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_POSSESSION_RELEASE_FAIL) {}
+};
+static_assert(sizeof(S_PossessionReleaseFail) == 4 + 8, "S_PossessionReleaseFail size mismatch!");
 
 #pragma pack (pop)

@@ -211,6 +211,11 @@ void CGameScene::Update(float elapsedTime)
 	if (my_player) {
 		ProcessMining(elapsedTime);
 		my_player->BeginSendInputPacket(elapsedTime);
+
+		// (멀티 전용) 빙의 해제 progress bar UI는 클라이언트 예측 기법 적용
+		if (!g_is_single && !my_player->GetIsPossessed()) {
+			ReleasePossession(elapsedTime);
+		}
 	};
 }
 
@@ -227,6 +232,11 @@ void CGameScene::DrawUI()
 		auto quick_slot = my_player->GetQuickSlot();
 		if (quick_slot)
 			quick_slot->Draw();
+
+		// 빙의 해제 진행 바 (멀티 전용)
+		if (!g_is_single && my_player->GetCHoldProgress() > 0.0f) {
+			DrawDePossessProgressBar();
+		}
 	}
 }
 
@@ -561,6 +571,87 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
 
 	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
+}
+
+void CGameScene::ReleasePossession(float elapsedTime)
+{
+	bool canRelease = false;
+
+	if (KEY_PRESSED(KEY::C)) {
+		XMFLOAT3 myPos = my_player->GetPosition();
+
+		for (auto& obj : objects) {
+			auto* player = dynamic_cast<CPlayer*>(obj.get());
+
+			if (!player || player == my_player.get()) 
+				continue;
+			if (!player->GetIsPossessed()) 
+				continue;
+
+			XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), myPos);
+			diff.y = 0.0f;
+			if (Vector3::Length(diff) <= 0.9f) { 
+				canRelease = true; 
+				break; 
+			}
+		}
+	}
+
+	if (canRelease)
+		my_player->UpdateCHoldTimer(elapsedTime);
+	else
+		my_player->ResetCHoldTimer();
+}
+
+void CGameScene::DrawDePossessProgressBar()
+{
+	ImVec2 sz = ImGui::GetIO().DisplaySize;
+
+	// BASE_UI_HEIGHT(600) 기준, G_RATIO_Y로 해상도 대응
+	const float iconSize  = 150.f * G_RATIO_Y;
+	const float barWidth  = 407.f * G_RATIO_Y;
+	const float barHeight = 38.f  * G_RATIO_Y;
+
+	// 바가 유령 이미지 중간부터 시작 → 유령이 바를 덮는 겹침 효과
+	const float overlapX  = iconSize * 0.55f;
+	const float winWidth  = overlapX + barWidth;
+	const float winHeight = iconSize;
+
+	ImGui::SetNextWindowPos(ImVec2(sz.x * 0.5f - winWidth * 0.5f - 50.f, sz.y - 268.f * G_RATIO_Y), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(winWidth, winHeight));
+	ImGui::SetNextWindowBgAlpha(0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
+
+	ImGui::Begin("##possession_release", nullptr,
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoScrollWithMouse);
+
+	// 1. 진행 바를 먼저 그림 (유령 뒤에 렌더링)
+	float barY = (winHeight - barHeight) * 0.5f;
+	ImGui::SetCursorPos(ImVec2(overlapX, barY));
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.33f, 0.47f, 0.82f, 1.f));
+	ImGui::PushStyleColor(ImGuiCol_FrameBg,       ImVec4(0.33f, 0.47f, 0.82f, 0.4f));
+	ImGui::ProgressBar(my_player->GetCHoldProgress(), ImVec2(barWidth, barHeight), "");
+	ImGui::PopStyleColor(2);
+
+	// 2. 유령 아이콘을 위에 그림 (진행 바를 덮음)
+	ImGui::SetCursorPos(ImVec2(0.f, 0.f));
+	ImTextureID ghostTex = CImGuiManager::GetInstance().GetTexture("ghost_icon");
+	ImGui::Image(ghostTex, ImVec2(iconSize, iconSize));
+
+	ImGui::End();
+	ImGui::PopStyleVar(3);
+}
+
+void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)
+{
+	if (my_player->GetID() != pkt.player_id)
+		return;
+
+	my_player->ResetCHoldTimer();
 }
 
 void CGameScene::Exit()

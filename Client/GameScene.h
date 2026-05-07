@@ -38,6 +38,7 @@ public:
     virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) override;
     virtual void Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt) override;
     virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) override;
+    void Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
 
 private:
     // 싱글용
@@ -53,6 +54,10 @@ private:
     void ProcessMining(float elapsedTime);
 
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
+
+    // 빙의 해제 (멀티 전용)
+    void ReleasePossession(float elapsedTime);
+    void DrawDePossessProgressBar();
 
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;

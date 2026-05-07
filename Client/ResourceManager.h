@@ -1,7 +1,7 @@
 #pragma once
 
-// ImGui���� ����ϴ� ��� �ؽ�ó�� �� ������ �ε��Ѵ�.
-// ������ �Լ��� �и��Ͽ� �����Ѵ�.
+// ImGui에서 사용하는 모든 텍스처를 한 곳에서 로드한다.
+// 씬별로 함수를 분리하여 관리한다.
 
 class CResourceManager
 {
@@ -18,7 +18,7 @@ public:
     }
 
 public:
-    // �� ���� �� �� �� ȣ��. ��� ���� �ؽ�ó�� ���ε��Ѵ�.
+    // 클라이언트 실행 시 한 번 호출. 모든 씬의 텍스처를 업로드한다.
     void LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
 
 private:

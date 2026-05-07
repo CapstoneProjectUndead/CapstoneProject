@@ -64,6 +64,10 @@ public:
     bool GetDigAnimFinished() const   { return dig_anim_finished; }
     void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
 
+    float GetCHoldProgress() const { return min(c_hold_timer / 5.0f, 1.0f); }
+    void  UpdateCHoldTimer(float delta) { c_hold_timer = min(c_hold_timer + delta, 5.0f); }
+    void  ResetCHoldTimer()             { c_hold_timer = 0.0f; }
+
     // 넉백 + 스턴 (기본값 1.3f) 스턴은 원치 않으면 인자를 0으로 쓰면 된다.
     void ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration = 1.3f);
     void ApplyStun(float time);
@@ -125,6 +129,7 @@ private:
 
     XMFLOAT3 knockback_vel{};
     float    knockback_timer{ 0.0f };
+    float    c_hold_timer{ 0.0f };
 
     std::vector<MapGenerator::Cell> possessed_nav_path;
     float                           possessed_path_refresh_timer = 0.0f;
