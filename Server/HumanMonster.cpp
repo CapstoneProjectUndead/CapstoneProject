@@ -220,6 +220,22 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
 
         auto targetPlayer = target_player.lock();
         if (targetPlayer) {
+
+            S_PlaySound soundPkt;
+            soundPkt.is_global = false;
+            soundPkt.scene_type = current_scene_type;
+            soundPkt.sound_id = SOUND_ID::jab;
+
+            XMFLOAT3 monsterPos = GetPosition();
+            soundPkt.x = monsterPos.x;
+            soundPkt.y = monsterPos.y;
+            soundPkt.z = monsterPos.z;
+
+            auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+            if (auto scene = GetScene()) {
+                scene->BroadCast(sendBuffer);
+            }
+
             XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
             dirVec.y = 0.0f;
 
@@ -229,10 +245,25 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
             float forwardDist = Vector3::DotProduct(dirVec, fwd);
             float sideDist    = Vector3::DotProduct(dirVec, right_vec);
 
-            constexpr float depth = 2.5f;
-            constexpr float width = 1.0f;
+            constexpr float depth = 1.3f;
+            constexpr float width = 0.8f;
 
             if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
+
+                soundPkt.is_global = false;
+                soundPkt.scene_type = current_scene_type;
+                soundPkt.sound_id = SOUND_ID::damaged1;
+
+                XMFLOAT3 targetPos = targetPlayer->GetPosition();
+                soundPkt.x = targetPos.x;
+                soundPkt.y = targetPos.y;
+                soundPkt.z = targetPos.z;
+
+                sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+                if (auto scene = GetScene()) {
+                    scene->BroadCast(sendBuffer);
+                }
+
                 uint32 hp = targetPlayer->GetHp();
                 targetPlayer->SetHp(hp > 10 ? hp - 10 : 0);
                 XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->GetPosition(), position);

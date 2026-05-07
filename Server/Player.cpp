@@ -255,6 +255,10 @@ void CPlayer::ApplyPossession()
     is_possessed    = true;
     possession_timer = 30.0f;
 
+    accumulate_stamina = 0.0f;
+    stamina_exhausted  = true;
+    stat.stamina       = 0;
+
     possessed_nav_path.clear();
     possessed_path_refresh_timer = 0.0f;
     possessed_wander_target      = GetRandomPossessedTarget();
@@ -291,7 +295,7 @@ void CPlayer::UpdatePossession(float elapsedTime)
         is_possessed     = false;
         velocity.x       = 0.0f;
         velocity.z       = 0.0f;
-        state            = PLAYER_STATE::IDLE;
+        state            = PLAYER_STATE::RUN;
         return;
     }
 
@@ -752,7 +756,7 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 void CPlayer::UpdateStamina(float elapsedTime)
 {
     const float drainPerSec = 16.7f;        // 뛸 때 초당 감소 (6초면 바닥)
-    const float regenPerSec = 10.0f;        // 쉴 때 초당 회복 
+    const float regenPerSec = 15.0f;        // 쉴 때 초당 회복 
     const float recoverThreshold = 30.0f;   // 이 값 이상 회복돼야 다시 달리기 허용
 
     if (start_jump) {

@@ -154,4 +154,5 @@ enum class SOUND_ID : uint16_t
 	crude_laughter,
 	devil_laugh1,
 	flying_pan,
+	jab,
 };

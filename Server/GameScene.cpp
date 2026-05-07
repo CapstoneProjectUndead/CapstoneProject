@@ -51,11 +51,12 @@ void CGameScene::Initialize()
 	item_manager->SpawnItem(49, XMFLOAT3{ 2.2, 0, 1.9 });
 
 	// 테스트 (임시코드)
-	//shared_ptr<CGhost> ghost = static_pointer_cast<CGhost>(CServerObjectFactory::CreateMonster(MON_TYPE::GHOST, scene_type, GetRoom(), GetPhysicsManager()));
-	//if (ghost) {
-	//	ghost->SetPosition(2, 0.1f, 2.f);
-	//	ghost->SetOriginPos({ 2, 0.1f, 2.f });
-	//	AddMonster(ghost);
+	//shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
+	//if (humanMonster) {
+	//	humanMonster->SetPosition(2, 0.1f, 2.f);
+	//	humanMonster->SetOriginPos({ 2, 0.1f, 2.f });
+	//	humanMonster->SetScene(this);
+	//	AddMonster(humanMonster);
 	//}
 }
 

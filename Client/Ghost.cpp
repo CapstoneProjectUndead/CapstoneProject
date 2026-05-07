@@ -174,8 +174,8 @@ void CGhost::OnTraceMove(float elapsedTime)
     auto AIComponent = GetComponent<CAIComponent>();
     auto targetPlayer = target_player.lock();
 
-    if (!targetPlayer) {
-        // 타겟이 사라졌으면 IDLE로 복귀
+    if (!targetPlayer || targetPlayer->GetIsPossessed()) {
+        // 타겟이 사라졌거나 이미 빙의 상태면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
@@ -314,7 +314,7 @@ void CGhost::OnAttackMove(float elapsedTime)
     if (!hit_damage_dealt && attack_timer >= 1.1f) {
         CSoundManager::GetInstance().Play(SOUND_ID::ghost_attack);
         hit_damage_dealt = true;
-        if (targetPlayer && targetPlayer->GetIsMyPlayer()) {
+        if (targetPlayer && targetPlayer->GetIsMyPlayer() && !targetPlayer->GetIsPossessed()) {
             XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
             dir.y = 0.0f;
             if (Vector3::Length(dir) <= 0.8f) {

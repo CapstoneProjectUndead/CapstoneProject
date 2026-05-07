@@ -146,7 +146,7 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 	auto targetPlayer = target_player.lock();
 
-	if (!targetPlayer) {
+	if (!targetPlayer || targetPlayer->GetIsPossessed()) {
 		AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
 	}
@@ -294,7 +294,7 @@ void CGhost::OnAttackMove(float elapsedTime)
 
 		hit_damage_dealt = true;
 
-		if (targetPlayer) {
+		if (targetPlayer && !targetPlayer->GetIsPossessed()) {
 			XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
 			dir.y = 0.0f;
 

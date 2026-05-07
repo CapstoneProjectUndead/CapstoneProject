@@ -6,6 +6,7 @@
 #include "SceneManager.h"
 #include "MyPlayer.h"
 #include "Animator.h"
+#include "SoundManager.h"
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
@@ -227,6 +228,9 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
     attack_timer += elapsedTime;
 
     if (!hit_damage_dealt && attack_timer >= 0.45f) {
+
+        CSoundManager::GetInstance().Play(SOUND_ID::jab);
+
         hit_damage_dealt = true;
 
         auto targetPlayer = target_player.lock();
@@ -240,10 +244,11 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
             float forwardDist = Vector3::DotProduct(dirVec, fwd);
             float sideDist    = Vector3::DotProduct(dirVec, right_vec);
 
-            constexpr float depth = 2.5f;  // 조절 가능
-            constexpr float width = 1.0f;  // 조절 가능
+            constexpr float depth = 1.3f;  // 조절 가능
+            constexpr float width = 0.8f;  // 조절 가능
 
             if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
+                CSoundManager::GetInstance().Play(SOUND_ID::damaged1);
                 uint32 hp = targetPlayer->GetHp();
                 targetPlayer->SetHp(hp > 10 ? hp - 10 : 0);
                 XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->position, position);
