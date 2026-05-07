@@ -280,7 +280,7 @@ bool Handle_S_SPAWN_ITEM(std::shared_ptr<Session> session, S_SpawnItem& pkt)
 	return true;
 }
 
-bool Handle_S_SPAWN_ITEM_LIST(std::shared_ptr<Session> session, S_Item_List& pkt)
+bool Handle_S_SPAWN_ITEM_LIST(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt)
 {
 	CScene* targetScene = nullptr;
 
@@ -372,6 +372,38 @@ bool Handle_S_ADD_ITEM(std::shared_ptr<Session> session, S_AddItem& pkt)
 		return true;
 
 	targetScene->Handle_S_AddItem(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_ADD_ITEM_LIST(std::shared_ptr<Session> session, S_AddItemList& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_AddItemList(session, pkt);
 
 	return true;
 }

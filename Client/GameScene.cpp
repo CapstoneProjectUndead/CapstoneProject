@@ -35,6 +35,7 @@
 #include "UIComponent.h"
 #include "DataManager.h"
 #include "SoundManager.h"
+#include "ItemFactory.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -693,12 +694,11 @@ void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_Sp
 }
 
 // 아이템 리스트 (가변인자)
-void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item_List& pkt)
+void CGameScene::Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt)
 {
-	S_Item_List::ItemList itemList = pkt.GetItemList();
+	S_Spawn_Item_List::ItemList itemList = pkt.GetItemList();
 
 	for (uint32 i = 0; i < pkt.item_count; ++i) {
-
 		XMFLOAT3 pos{ itemList[i].x, itemList[i].y, itemList[i].z };
 		SpawnWorldItem(itemList[i].item_id, itemList[i].item_world_id, pos);
 	}
@@ -738,6 +738,26 @@ void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddI
 
 		auto worldItem = static_cast<CWorldItem*>(item->get());
 		my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
+	}
+}
+
+void CGameScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemList& pkt)
+{
+	S_AddItemList::ItemList itemList = pkt.GetItemList();
+	
+	for (uint32 i = 0; i < pkt.item_count; ++i) {
+		auto item = ItemFactory::Create(itemList[i].item_id);
+		if (item) {
+			if (my_player) {
+				my_player->GetInventory()->AddItemWithId(item, itemList[i].inventory_id);
+			}
+			else {
+				// 이러면 안되지만 일단 임시로...
+				// 이 패킷을 받는 시점에서 my_player가 아직 Lobby씬에 있어서 GameScene에서는 nullptr 이다.
+				my_player = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->GetMyPlayer();
+				my_player->GetInventory()->AddItemWithId(item, itemList[i].inventory_id);
+			}
+		}
 	}
 }
 

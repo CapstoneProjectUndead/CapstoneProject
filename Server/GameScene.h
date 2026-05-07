@@ -19,6 +19,9 @@ public:
     virtual void OnSceneActivate() override;
     virtual void OnSceneDeactivate() override;
 
+    virtual void EnterScene(shared_ptr<CPlayer> player) override;
+    virtual void LeaveScene(uint64 playerId) override;
+
 private:
     void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
     void LoadGameScene();

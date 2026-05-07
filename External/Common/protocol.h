@@ -61,6 +61,7 @@ enum PacketType : uint16_t
 	_S_DESPAWN_ITEM,
 	_C_PICKUP_ITEM,     // 클라 → 서버: 보물 줍기 요청
 	_S_ADD_ITEM,		// 서버 → 클라: 인벤토리에 추가해라
+	_S_ADD_ITEM_LIST,	// 서버 → 클라: 인벤토리에 여러 아이템 추가해라
 	_S_REMOVE_ITEM,		// 서버 → 클라: 인벤토리에서 없애라
 	_C_DROP_ITEM,		// 클라 → 서버
 	_C_EQUIP_ITEM,
@@ -478,7 +479,7 @@ struct S_SpawnItem : public PacketHeader
 };
 static_assert(sizeof(S_SpawnItem) == 4 + 20, "S_SpawnItem size mismatch!");
 
-struct S_Item_List : public PacketHeader
+struct S_Spawn_Item_List : public PacketHeader
 {
 	struct Item
 	{
@@ -492,9 +493,9 @@ struct S_Item_List : public PacketHeader
 	uint32      item_count;
 	SCENE_TYPE	scene_type;
 
-	S_Item_List(int32 count) : PacketHeader(sizeof(S_Item_List), (UINT)PacketType::_S_SPAWN_ITEM_LIST) {}
+	S_Spawn_Item_List(int32 count) : PacketHeader(sizeof(S_Spawn_Item_List), (UINT)PacketType::_S_SPAWN_ITEM_LIST) {}
 
-	using ItemList = PacketList<S_Item_List::Item>;
+	using ItemList = PacketList<S_Spawn_Item_List::Item>;
 
 	ItemList GetItemList()
 	{
@@ -503,7 +504,7 @@ struct S_Item_List : public PacketHeader
 		return ItemList(reinterpret_cast<Item*>(data), item_count);
 	}
 };
-static_assert(sizeof(S_Item_List) == 4 + 9, "S_Spawn_Item_List size mismatch!");
+static_assert(sizeof(S_Spawn_Item_List) == 4 + 9, "S_Spawn_Item_List size mismatch!");
 
 struct S_DeSpawnItem : public PacketHeader
 {
@@ -539,6 +540,33 @@ struct S_AddItem : public PacketHeader
 	S_AddItem() : PacketHeader(sizeof(S_AddItem), (UINT)PacketType::_S_ADD_ITEM) {}
 };
 static_assert(sizeof(S_AddItem) == 4 + 20, "S_AddItem size mismatch!");
+
+struct S_AddItemList : public PacketHeader
+{
+	struct Item
+	{
+		uint16 item_id;
+		uint32 inventory_id;
+		ITEM_TYPE item_type;
+	};
+
+	uint64 player_id;
+	SCENE_TYPE scene_type;
+	uint16 buff_offset;
+	uint16 item_count;
+
+	using ItemList = PacketList<S_AddItemList::Item>;
+
+	ItemList GetItemList()
+	{
+		BYTE* data = reinterpret_cast<BYTE*>(this);
+		data += buff_offset;
+		return ItemList(reinterpret_cast<Item*>(data), item_count);
+	}
+
+	S_AddItemList() : PacketHeader(sizeof(S_AddItemList), (UINT)PacketType::_S_ADD_ITEM_LIST) {}
+};
+static_assert(sizeof(S_AddItemList) == 4 + 13, "S_AddItemList size mismatch!");
 
 struct S_RemoveItem : public PacketHeader
 {

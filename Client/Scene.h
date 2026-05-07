@@ -71,9 +71,10 @@ public:
 	void Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt);
 
 	virtual void Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt) {}
-	virtual void Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Item_List& pkt) {}
+	virtual void Handle_S_SpawnItemList(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt) {}
 	virtual void Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_DeSpawnItem& pkt) {}
 	virtual void Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt) {}
+	virtual void Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemList& pkt) {}
 	virtual void Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt) {}
 	virtual void Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_EquipItem& pkt) {};
 	virtual void Handle_S_UseItem(std::shared_ptr<Session>& session, const S_UseItem& pkt) {};

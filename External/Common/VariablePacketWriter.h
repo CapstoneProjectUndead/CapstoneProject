@@ -102,25 +102,25 @@ public:
 	}
 };
 
-class S_ITEMLIST_WRITE : public S_WRITE<S_Item_List>
+class S_SPAWN_ITEMLIST_WRITE : public S_WRITE<S_Spawn_Item_List>
 {
 public:
-	using Item = S_Item_List::Item;
-	using ItemList = PacketList<S_Item_List::Item>;
+	using Item = S_Spawn_Item_List::Item;
+	using ItemList = PacketList<S_Spawn_Item_List::Item>;
 
-	S_ITEMLIST_WRITE(SCENE_TYPE sceneType)
+	S_SPAWN_ITEMLIST_WRITE(SCENE_TYPE sceneType)
 	{
 		sendBuffer = std::make_shared<SendBuffer>(4096);
 		bw = BufferWriter(sendBuffer->Buffer(), 4096);
 
-		pkt = bw.Reserve<S_Item_List>(1);
+		pkt = bw.Reserve<S_Spawn_Item_List>(1);
 		pkt->SetPacketType((UINT)PacketType::_S_SPAWN_ITEM_LIST);
 		pkt->scene_type = sceneType;
 	}
 
 	ItemList ReserveItemList(uint32 itemCount)
 	{
-		S_Item_List::Item* firstItem = bw.Reserve<S_Item_List::Item>(itemCount);
+		S_Spawn_Item_List::Item* firstItem = bw.Reserve<S_Spawn_Item_List::Item>(itemCount);
 		pkt->buff_offset = (uint64)firstItem - (uint64)pkt;
 		pkt->item_count = itemCount;
 		return ItemList(firstItem, itemCount);
@@ -149,5 +149,31 @@ public:
 		pkt->buff_offset = (uint64)first - (uint64)pkt;
 		pkt->mineable_count = count;
 		return MineableList(first, count);
+	}
+};
+
+class S_ADDITEMLIST_WRITE : public S_WRITE<S_AddItemList>
+{
+public:
+	using Item = S_AddItemList::Item;
+	using ItemList = PacketList<S_AddItemList::Item>;
+
+	S_ADDITEMLIST_WRITE(uint64 playerId, SCENE_TYPE sceneType)
+	{
+		sendBuffer = std::make_shared<SendBuffer>(4096);
+		bw = BufferWriter(sendBuffer->Buffer(), 4096);
+
+		pkt = bw.Reserve<S_AddItemList>(1);
+		pkt->SetPacketType((UINT)PacketType::_S_ADD_ITEM_LIST);
+		pkt->player_id = playerId;
+		pkt->scene_type = sceneType;
+	}
+
+	ItemList ReserveItemList(uint16 itemCount)
+	{
+		S_AddItemList::Item* firstItem = bw.Reserve<S_AddItemList::Item>(itemCount);
+		pkt->buff_offset = (uint64)firstItem - (uint64)pkt;
+		pkt->item_count = itemCount;
+		return ItemList(firstItem, itemCount);
 	}
 };

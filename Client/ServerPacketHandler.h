@@ -55,6 +55,7 @@ enum : uint16
 	PKT_S_DESPAWN_ITEM,
 	PKT_C_PICKUP_ITEM,
 	PKT_S_ADD_ITEM,
+	PKT_S_ADD_ITEM_LIST,
 	PKT_S_REMOVE_ITEM,
 	PKT_C_DROP_ITEM,
 	PKT_C_EQUIP_ITEM,
@@ -93,9 +94,10 @@ bool Handle_S_MAP_START(std::shared_ptr<Session> session, S_MapStart& pkt);
 bool Handle_S_MAP_DATA(std::shared_ptr<Session> session, S_MapData& pkt);
 bool Handle_S_MAP_END(std::shared_ptr<Session> session, S_MapEnd& pkt);
 bool Handle_S_SPAWN_ITEM(std::shared_ptr<Session> session, S_SpawnItem& pkt);
-bool Handle_S_SPAWN_ITEM_LIST(std::shared_ptr<Session> session, S_Item_List& pkt);
+bool Handle_S_SPAWN_ITEM_LIST(std::shared_ptr<Session> session, S_Spawn_Item_List& pkt);
 bool Handle_S_DESPAWN_ITEM(std::shared_ptr<Session> session, S_DeSpawnItem& pkt);
 bool Handle_S_ADD_ITEM(std::shared_ptr<Session> session, S_AddItem& pkt);
+bool Handle_S_ADD_ITEM_LIST(std::shared_ptr<Session> session, S_AddItemList& pkt);
 bool Handle_S_REMOVE_ITEM(std::shared_ptr<Session> session, S_RemoveItem& pkt);
 bool Handle_S_READY(std::shared_ptr<Session> session, S_Ready& pkt);
 bool Handle_S_EQUIP_ITEM(std::shared_ptr<Session> session, S_EquipItem& pkt);
@@ -134,9 +136,10 @@ public:
 		GPacketHandler[PKT_S_MAP_DATA] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MapData>(Handle_S_MAP_DATA, session, buffer, len); };
 		GPacketHandler[PKT_S_MAP_END] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_MapEnd>(Handle_S_MAP_END, session, buffer, len); };
 		GPacketHandler[PKT_S_SPAWN_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_SpawnItem>(Handle_S_SPAWN_ITEM, session, buffer, len); };
-		GPacketHandler[PKT_S_SPAWN_ITEM_LIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Item_List>(Handle_S_SPAWN_ITEM_LIST, session, buffer, len); };
+		GPacketHandler[PKT_S_SPAWN_ITEM_LIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Spawn_Item_List>(Handle_S_SPAWN_ITEM_LIST, session, buffer, len); };
 		GPacketHandler[PKT_S_DESPAWN_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_DeSpawnItem>(Handle_S_DESPAWN_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_ADD_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddItem>(Handle_S_ADD_ITEM, session, buffer, len); };
+		GPacketHandler[PKT_S_ADD_ITEM_LIST] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_AddItemList>(Handle_S_ADD_ITEM_LIST, session, buffer, len); };
 		GPacketHandler[PKT_S_REMOVE_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RemoveItem>(Handle_S_REMOVE_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_READY] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_Ready>(Handle_S_READY, session, buffer, len); };
 		GPacketHandler[PKT_S_EQUIP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_EquipItem>(Handle_S_EQUIP_ITEM, session, buffer, len); };

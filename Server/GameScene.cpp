@@ -104,6 +104,38 @@ void CGameScene::OnSceneDeactivate()
 	monsters.clear();
 	monster_cnt = 0;
 }
+
+void CGameScene::EnterScene(shared_ptr<CPlayer> player)
+{
+	CScene::EnterScene(player);
+
+	uint32 itemList[13] = { 5,9,14,15,17,19,20,25,24,45,47,48,49 };
+	vector<shared_ptr<CItem>> items;
+	for (int i = 0; i < 12; ++i) {
+		auto item = item_manager->CreateItem(itemList[i]);
+		items.push_back(item);
+	}
+
+	S_ADDITEMLIST_WRITE pktWriter(player->GetID(), scene_type);
+	auto list = pktWriter.ReserveItemList(items.size());
+
+	uint32 i = 0;
+	for (auto& item : items) {
+		player->GetInventory()->AddItem(item);
+		list[i].item_id = item->GetItemId();
+		list[i].inventory_id = item->GetInventoryID();
+		list[i].item_type = item->GetItemType();
+		++i;
+	}
+
+	auto sendBuffer = pktWriter.CloseAndReturn();
+	if(auto s = player->GetSession())
+		s->DoSend(sendBuffer);
+}
+
+void CGameScene::LeaveScene(uint64 playerId)
+{
+}
  
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
