@@ -1,6 +1,7 @@
 #pragma once
 // Server쪽 Monster
 #include "Object.h"
+#include <MapGenerator/MapGenerator.h>
 
 class CScene;
 class CPlayer;
@@ -84,5 +85,9 @@ protected:
 
     float attack_range = 1.2f; // 공격 범위
     float trace_speed = 2.0f;  // 추격 속도
+
+    // BFS 경로 탐색 (TRACE 추적 / IDLE 복귀 공용)
+    std::vector<MapGenerator::Cell> nav_path;
+    float path_refresh_timer = 0.0f;
 };
 

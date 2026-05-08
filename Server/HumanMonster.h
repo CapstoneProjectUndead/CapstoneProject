@@ -19,6 +19,7 @@ public:
 
     virtual void OnIdleEnter() override;
     virtual void OnPatrolEnter() override;
+    virtual void OnTraceEnter() override;
     virtual void OnAttackEnter() override;
 
 private:

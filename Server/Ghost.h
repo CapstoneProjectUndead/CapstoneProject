@@ -1,7 +1,6 @@
 #pragma once
 // Server쪽 Ghost
 #include "Monster.h"
-#include <MapGenerator/MapGenerator.h>
 
 class CGhost :
     public CMonster
@@ -46,7 +45,4 @@ private:
     float contact_damage_timer  = 0.0f;
     float attack_cooldown_timer = 9999.f;
 
-    // TRACE/IDLE 경로 탐색
-    std::vector<MapGenerator::Cell> nav_path;
-    float path_refresh_timer = 0.0f;
 };

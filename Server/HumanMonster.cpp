@@ -69,17 +69,34 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
         // 몬스터가 초기 위치로 복귀하는 동안에는 걷는 애니메이션이 나와야한다.
         AI_state = AI_STATE::MONSTER_PATROL;
 
-        // 초기 자리를 향해 방향 틀기
-        float returnYaw = XMConvertToDegrees(atan2f(dirToOrigin.x, dirToOrigin.z));
+        const float TILE_SIZE = 2.0f;
+        path_refresh_timer += elapsedTime;
+        if (path_refresh_timer >= 0.3f || nav_path.empty()) {
+            path_refresh_timer = 0.0f;
+            int sx = (int)roundf(position.x / TILE_SIZE);
+            int sz = (int)roundf(position.z / TILE_SIZE);
+            int ex = (int)roundf(origin_position.x / TILE_SIZE);
+            int ez = (int)roundf(origin_position.z / TILE_SIZE);
+            nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+        }
+
+        XMFLOAT3 moveDir = dirToOrigin;
+        if (!nav_path.empty()) {
+            XMFLOAT3 wpWorld = { nav_path[0].x * TILE_SIZE, position.y, nav_path[0].y * TILE_SIZE };
+            XMFLOAT3 toWp = Vector3::Subtract(wpWorld, position);
+            toWp.y = 0.0f;
+            if (Vector3::Length(toWp) > 0.1f)
+                moveDir = toWp;
+        }
+
+        float returnYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
         SetYaw(returnYaw);
         SetYawPitch(returnYaw, 0.0f);
 
-        // 초기 자리를 향해 걷기 (산책 속도)
         float walk_speed = 0.5f;
         velocity.x = look.x * walk_speed;
         velocity.z = look.z * walk_speed;
 
-        // 아직 도착하지 않았으므로 idle_timer는 증가시키지 않고 여기서 함수 종료!
         return;
     }
 
@@ -200,7 +217,54 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
     AI_state = AI_STATE::MONSTER_TRACE;
 
-    float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+    const float TILE_SIZE = 2.0f;
+    int sx = (int)roundf(position.x / TILE_SIZE);
+    int sz = (int)roundf(position.z / TILE_SIZE);
+    XMFLOAT3 targetPos = targetPlayer->GetPosition();
+    int ex = (int)roundf(targetPos.x / TILE_SIZE);
+    int ez = (int)roundf(targetPos.z / TILE_SIZE);
+
+    // Bresenham 직선으로 벽 여부 확인 — 막힘 없으면 직진, 막히면 BFS
+    bool hasWall = false;
+    {
+        int x = sx, z = sz;
+        int dx = abs(ex - sx), dz = abs(ez - sz);
+        int stepX = (ex > sx) ? 1 : -1;
+        int stepZ = (ez > sz) ? 1 : -1;
+        int err = dx - dz;
+
+        while (x != ex || z != ez) {
+            if (MapGenerator::IsBlockedStructure(x, z)) {
+                hasWall = true;
+                break;
+            }
+            int e2 = 2 * err;
+            if (e2 > -dz) { err -= dz; x += stepX; }
+            if (e2 <  dx) { err += dx; z += stepZ; }
+        }
+    }
+
+    XMFLOAT3 moveDir = dirVec;
+    if (hasWall) {
+        path_refresh_timer += elapsedTime;
+        if (path_refresh_timer >= 0.2f || nav_path.empty()) {
+            path_refresh_timer = 0.0f;
+            nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+        }
+        if (!nav_path.empty()) {
+            XMFLOAT3 wpWorld = { nav_path[0].x * TILE_SIZE, position.y, nav_path[0].y * TILE_SIZE };
+            XMFLOAT3 toWp = Vector3::Subtract(wpWorld, position);
+            toWp.y = 0.0f;
+            if (Vector3::Length(toWp) > 0.1f)
+                moveDir = toWp;
+        }
+    }
+    else {
+        nav_path.clear();
+        path_refresh_timer = 0.0f;
+    }
+
+    float targetYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
     SetYaw(targetYaw);
     SetYawPitch(targetYaw, 0.0f);
 
@@ -284,12 +348,20 @@ void CHumanMonster::OnIdleEnter()
     // IDLE 상태로 진입하면 10초 동안 쉬는데
     // 그 타이머를 0으로 만든다.
     ResetIdleTimer();
+    nav_path.clear();
+    path_refresh_timer = 0.0f;
 }
 
 void CHumanMonster::OnPatrolEnter()
 {
     // 순찰 타이머 리셋
     ResetPatrolTimers();
+}
+
+void CHumanMonster::OnTraceEnter()
+{
+    nav_path.clear();
+    path_refresh_timer = 0.0f;
 }
 
 void CHumanMonster::OnAttackEnter()

@@ -1,5 +1,6 @@
 #pragma once
 #include "Character.h"
+#include "MapGenerator/MapGenerator.h"
 
 struct MonsterFrameHistory
 {
@@ -106,5 +107,9 @@ protected:
     MonsterInfo dest_info;
     std::deque<MonsterFrameHistory> interpolation_deq;
     //==================================================
+
+    // BFS 경로 탐색 (TRACE 추적 / IDLE 복귀 공용)
+    std::vector<MapGenerator::Cell> nav_path;
+    float path_refresh_timer = 0.0f;
 };
 

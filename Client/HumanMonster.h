@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Monster.h"
+#include "MapGenerator/MapGenerator.h"
 
 class CPlayer;
 
@@ -19,6 +20,7 @@ public:
 
     virtual void OnIdleEnter() override;
     virtual void OnPatrolEnter() override;
+    virtual void OnTraceEnter() override;
     virtual void OnAttackEnter() override;
 
 private:
