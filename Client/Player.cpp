@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Player.h"
 #include "NetworkManager.h"
 #include "Movement.h"
@@ -66,6 +66,15 @@ void CPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
         else if (!is_dowsing && equipped_item_id != 0)
             animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
     }
+}
+
+void CPlayer::OnAttack()
+{
+    auto* animator = GetComponent<CAnimatorComponent>();
+
+    std::string attackClip = animator->GetAttackClipByItem(GetEquippedItemId());
+
+    animator->PlayAction(attackClip);
 }
 
 void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)

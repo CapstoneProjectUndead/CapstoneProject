@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Animator.h"
 #include "Player.h"
 #include "MyPlayer.h"
@@ -232,12 +232,20 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 {
 	// dig state(action으로도 가능)
 	const std::string dig{ "DigState" };
-	controller.AddState({ dig, "Dig", 3, false});
+	controller.AddState({ dig, "Dig_hand", 3.0f, false });
+
 	Transition i2d;
 	i2d.to_state = dig;
 	i2d.duration = 0.2f;
 	i2d.condition = [this]() {
-		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		auto* player = static_cast<CPlayer*>(owner);
+		if (player->GetState() == PLAYER_STATE::DIG) {
+			std::string targetClip = GetDigClipByItem(player->GetEquippedItemId());
+
+			controller.ModifyStateClip("DigState", targetClip);
+			return true;
+		}
+		return false;
 		};
 	controller.AddTransition(idle, i2d);
 
@@ -246,7 +254,14 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	w2d.to_state = dig;
 	w2d.duration = 0.2f;
 	w2d.condition = [this]() {
-		return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DIG;
+		auto* player = static_cast<CPlayer*>(owner);
+		if (player->GetState() == PLAYER_STATE::DIG) {
+			std::string targetClip = GetDigClipByItem(player->GetEquippedItemId());
+
+			controller.ModifyStateClip("DigState", targetClip);
+			return true;
+		}
+		return false;
 		};
 	controller.AddTransition(walk, w2d);
 
@@ -261,7 +276,6 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 			player->SetState(PLAYER_STATE::IDLE);
 			return true;
 		}
-		// 취소 상태(예: 이동 입력)
 		if (static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG) return true;
 		return false;
 		};
@@ -318,6 +332,30 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
 		};
 	controller.AddTransition(jump, j2r);
+
+	// possess
+	const std::string possess{ "PossessState" };
+	controller.AddState({ possess, "Ganga_run2" });
+
+	// 모든 주요 상태(Idle, Walk, Run, Jump, Dig)에서 빙의로 가는 전이 추가
+	std::vector<std::string> allStates = { idle, walk, run, "JumpState", "DigState" };
+	for (const auto& from : allStates) {
+		Transition any2p;
+		any2p.to_state = possess;
+		any2p.duration = 0.1f;
+		any2p.condition = [this]() {
+			return static_cast<CPlayer*>(owner)->GetIsPossessed();
+			};
+		controller.AddTransition(from, any2p);
+	}
+
+	Transition p2i;
+	p2i.to_state = idle;
+	p2i.duration = 0.2f;
+	p2i.condition = [this]() {
+		return !static_cast<CPlayer*>(owner)->GetIsPossessed();
+		};
+	controller.AddTransition(possess, p2i);
 }
 
 void CAnimatorComponent::PlayAction(const std::string& clipName)
@@ -423,11 +461,22 @@ void CAnimatorComponent::UpdateLayerWeights(float deltaTime)
 
 	// Layer 1 (Action/UpperBody) 페이드 인/아웃
 	if (!layers[1].current_clip.empty()) {
-		layers[1].weight += deltaTime * 5.0f; // 0.2초 Fade-in
+		auto& anim = CAnimationManager::GetInstance().GetClip(layers[1].current_clip);
+		float duration = (float)anim.total_frames / 60.0f;
+		float elapsed = current_time - layers[1].start_time;
+
+		// 애니메이션 재생 중 (Fade-in)
+		if (elapsed < duration) {
+			layers[1].weight += deltaTime * 10.0f;
+		}
+		else {	// fade out
+			layers[1].weight -= deltaTime * 5.0f;
+			if (layers[1].weight <= 0.0f) {
+				layers[1].current_clip = "";
+			}
+		}
+
 		if (layers[1].weight > 1.0f) layers[1].weight = 1.0f;
-	}
-	else {
-		layers[1].weight -= deltaTime * 5.0f; // Fade-out
 		if (layers[1].weight < 0.0f) layers[1].weight = 0.0f;
 	}
 }

@@ -36,9 +36,10 @@ void CSceneManager::Init(ID3D12Device* device)
 		shader->CreateShader(device);
 		{
 			auto skinningHeapManager = shader->GetHeapManager();
-			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char_0308.bin", "../Modeling/undead_ani_baking.bin", OBJECT_TYPE::PLAYER, NULL);
+			CAnimationManager::GetInstance().Initialize("../Modeling/undead_char.bin", "../Modeling/undead_ani_baking.bin", OBJECT_TYPE::PLAYER, NULL);
 			CAnimationManager::GetInstance().Initialize("../Modeling/Human_monster.bin", "../Modeling/Human_monster_ani.bin", OBJECT_TYPE::MONSTER, static_cast<uint8_t>(MON_TYPE::HUMAN_MONSTER));
 			CAnimationManager::GetInstance().Initialize("../Modeling/Ghost3.bin", "../Modeling/Ghost3_ani.bin", OBJECT_TYPE::MONSTER, static_cast<uint8_t>(MON_TYPE::GHOST));
+			CAnimationManager::GetInstance().Initialize("../Modeling/Dog.bin", "../Modeling/Dog_ani.bin", OBJECT_TYPE::MONSTER, static_cast<uint8_t>(MON_TYPE::ANIMAL_MONSTER));
 			CAnimationManager::GetInstance().CreateAnimationTexture(device, GET_CMD_LIST, skinningHeapManager->GetSRVCPUHandle(skinningHeapManager->GetSRVHeap().Allocate()));
 			CAnimationManager::GetInstance().CreateMaskBuffer(device, GET_CMD_LIST, skinningHeapManager->GetSRVCPUHandle(skinningHeapManager->GetSRVHeap().Allocate()));
 		}

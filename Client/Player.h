@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Character.h"
 
 class CCamera;
@@ -21,6 +21,7 @@ public:
 	void PreUpdate(float elapsedTime);
 	virtual void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
 
+	void OnAttack();	// 공격 시 호출
 public:
 	void SetState(const PLAYER_STATE _state) { state = _state; }
 	PLAYER_STATE GetState() const { return state; }
@@ -83,6 +84,7 @@ public:
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 	bool GetDowsing() const { return is_dowsing; }
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
+	uint16 GetEquippedItemId() const { return equipped_item_id; }
 
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);

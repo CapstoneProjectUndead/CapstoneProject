@@ -484,8 +484,7 @@ void CGameScene::ProcessMining(float elapsedTime)
 	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
 
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !isDigging && hasTool && !my_player->GetIsPossessed()
-		&& !ImGui::GetIO().WantCaptureMouse && !isMoving) {
+	if (KEY_TAP(KEY::LBTN) && !isDigging && (hasTool || my_player->GetEquippedItemId() == 0) && !ImGui::GetIO().WantCaptureMouse && !isMoving) {
 
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
