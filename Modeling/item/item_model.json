@@ -5,6 +5,7 @@
     "9": { "model": "Equip_pick" },
     "14": { "model": "Equip_bat" },
     "15": { "model": "Equip_squeaky_hammer" },
+    "16": { "model": "Equip_ghostspray" },
     "17": { "model": "Equip_magicwand" },
     "19": { "model": "Equip_toysword" },
     "20": { "model": "Food_meat" },

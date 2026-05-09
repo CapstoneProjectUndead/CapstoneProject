@@ -71,7 +71,7 @@ public:
 		case 19:
 			return "Attack_swing";
 		case 15:   return "Attack_hammer";
-			//case : return "Attack_spray";
+		case 16: return "Attack_spray";
 		case 17: return "Attack_wand";
 		default: return "";
 		}
