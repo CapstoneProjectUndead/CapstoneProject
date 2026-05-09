@@ -71,6 +71,8 @@ enum PacketType : uint16_t
 	_S_MINEABLE_LIST,
 	_S_DESTROY_MINEABLE,
 	_S_UPDATE_DURABILITY,
+
+	_S_PLAY_SOUND,
 };
 
 #pragma pack (push, 1)
@@ -624,5 +626,17 @@ struct S_UpdateDurability : public PacketHeader
 	S_UpdateDurability() : PacketHeader(sizeof(S_UpdateDurability), (UINT)PacketType::_S_UPDATE_DURABILITY) {}
 };
 static_assert(sizeof(S_UpdateDurability) == 4 + 22, "S_UpdateDurability size mismatch!");
+
+struct S_PlaySound : public PacketHeader
+{
+	bool is_global = false;
+	float x, y, z;
+	SOUND_ID sound_id;
+	uint64 player_id = -1;
+	SCENE_TYPE scene_type;
+
+	S_PlaySound() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_PLAY_SOUND) {}
+};
+static_assert(sizeof(S_PlaySound) == 4 + 24, "S_PlaySound size mismatch!");
 
 #pragma pack (pop)

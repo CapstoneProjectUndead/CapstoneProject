@@ -7,6 +7,7 @@
 #include "MyPlayer.h"
 #include "AnimationManager.h"
 #include "Collider.h"
+#include "SoundManager.h"
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
@@ -37,34 +38,12 @@ void CGhost::Update(float elapsedTime)
     //    std::cout << "Ghost_attack total_frames: " << clip.total_frames << std::endl;
     //    printed = true;
     //}
-
+    
     CMonster::Update(elapsedTime);
-
+    
     contact_damage_timer += elapsedTime;
-
-    if (AI_state != AI_STATE::MONSTER_ATTACK) {
-        auto nearPlayer = FindNearestPlayer();
-        if (nearPlayer) {
-
-            auto* ghostCol = GetComponent<CColliderComponent>();
-            auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
-
-            if (ghostCol && playerCol && ghostCol->Intersects(playerCol)) {
-
-                if (contact_damage_timer >= 1.0f) {
-
-                    uint32 hp = nearPlayer->GetHp();
-                    nearPlayer->SetHp(hp > 5 ? hp - 5 : 0);
-                    contact_damage_timer = 0.0f;
-
-                    if (nearPlayer->GetIsMyPlayer()) {
-                        XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
-                        static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 1.0f);
-                    }
-                }
-            }
-        }
-    }
+    
+    CheckContactDamage();
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
@@ -333,12 +312,14 @@ void CGhost::OnAttackMove(float elapsedTime)
 
     // 빙의 판정
     if (!hit_damage_dealt && attack_timer >= 1.1f) {
+        CSoundManager::GetInstance().Play(SOUND_ID::ghost_attack);
         hit_damage_dealt = true;
         if (targetPlayer && targetPlayer->GetIsMyPlayer()) {
             XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
             dir.y = 0.0f;
             if (Vector3::Length(dir) <= 0.8f) {
                 if (rand() % 100 < 25) {
+                    CSoundManager::GetInstance().Play(SOUND_ID::crude_laughter);
                     static_cast<CMyPlayer*>(targetPlayer.get())->ApplyPossession();
                     MarkForDelete();
                 }
@@ -485,4 +466,43 @@ XMFLOAT3 CGhost::GetRandomWanderTarget()
     int idx = rand() % (int)candidates.size();
 
     return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
+}
+
+void CGhost::CheckContactDamage()
+{
+    if (AI_state != AI_STATE::MONSTER_ATTACK) {
+        auto nearPlayer = FindNearestPlayer();
+        if (nearPlayer) {
+
+            bool inContact = false;
+            if (g_is_single) {
+                auto* ghostCol = GetComponent<CColliderComponent>();
+                auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+                inContact = ghostCol && playerCol && ghostCol->Intersects(playerCol);
+            }
+            else {
+                // 멀티에서 유령 위치가 보간 지연으로 최대 0.8m 뒤처지므로,
+                // GJK 대신 XZ 거리 비교로 판정 (임계값 = 캡슐 반지름 합 + 보간 여유)
+                XMFLOAT3 diff = Vector3::Subtract(nearPlayer->position, position);
+                diff.y = 0.0f;
+                inContact = Vector3::Length(diff) < 1.0f;
+            }
+
+            if (inContact) {
+
+                if (contact_damage_timer >= 1.0f) {
+
+                    uint32 hp = nearPlayer->GetHp();
+                    nearPlayer->SetHp(hp > 5 ? hp - 5 : 0);
+                    contact_damage_timer = 0.0f;
+
+                    if (nearPlayer->GetIsMyPlayer()) {
+                        CSoundManager::GetInstance().Play(SOUND_ID::damaged1);
+                        XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->position, position);
+                        static_cast<CMyPlayer*>(nearPlayer.get())->ApplyKnockback(knockbackDir, 0.6f, 1.0f);
+                    }
+                }
+            }
+        }
+    }
 }

@@ -11,6 +11,7 @@
 #include "ObjectFactory.h"
 #include "HumanMonster.h"
 #include "Ghost.h"
+#include "DogMonster.h"
 
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
@@ -33,6 +34,7 @@
 
 #include "UIComponent.h"
 #include "DataManager.h"
+#include "SoundManager.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -107,6 +109,15 @@ void CGameScene::Initialize()
 	SpawnWorldItem(30, XMFLOAT3{ 3, 2, 2 });
 	SpawnWorldItem(31, XMFLOAT3{ 3, 2, 3 });
 	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
+
+	// 테스트 (임시코드)
+	CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
+	auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::ANIMAL_MONSTER, scene_type);
+	if (dog) {
+		dog->SetPosition(2, 0.1f, 2.f);
+		dog->SetOriginPos({ 2, 0.1f, 2.f });
+		AddObject(dog, dog->GetID());
+	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -782,5 +793,27 @@ void CGameScene::Handle_S_UpdateDurability(std::shared_ptr<Session>& session, co
 				tool->SetCurrentDurability(pkt.current_durability);
 			}
 		}
+	}
+}
+
+void CGameScene::Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt)
+{
+	if (pkt.is_global) {
+		CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		return;
+	}
+
+	if (pkt.player_id != 0 && my_player->GetID() == pkt.player_id) {
+		CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		return;
+	}
+	else {
+		XMFLOAT3 soundPos = { pkt.x, pkt.y, pkt.z };
+		XMFLOAT3 myPos = my_player->GetPosition();
+		XMFLOAT3 diff = Vector3::Subtract(soundPos, myPos);
+		diff.y = 0.0f;
+
+		if (Vector3::Length(diff) <= 4.0f)
+			CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
 	}
 }

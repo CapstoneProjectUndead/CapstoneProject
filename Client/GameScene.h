@@ -37,6 +37,7 @@ public:
     virtual void Handle_S_MineableList(std::shared_ptr<Session>& session, S_MineableList& pkt) override;
     virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) override;
     virtual void Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt) override;
+    virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) override;
 
 private:
     // 싱글용

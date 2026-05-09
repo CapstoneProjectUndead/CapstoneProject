@@ -35,15 +35,15 @@ public:
 	void Tick();
 
 	// loopCount: 1 = 1회, 0 = 무한반복
-	void LoadSound(const std::string& key, const std::string& path);
-	int  Play(const std::string& key, int loopCount = 1, float volume = 1.f, bool overlap = false);
-	void Stop(const std::string& key);
+	void LoadSound(SOUND_ID key, const std::string& path);
+	int  Play(SOUND_ID key, int loopCount = 1, float volume = 1.f, bool overlap = false);
+	void Stop(SOUND_ID key);
 	void StopAll();
-	void SetVolume(const std::string& key, float volume, int channelIdx);
+	void SetVolume(SOUND_ID key, float volume, int channelIdx);
 
 	FMOD::System* GetFMODSystem() { return fmod_system; }
 
 private:
 	FMOD::System*                                        fmod_system = nullptr;
-	std::unordered_map<std::string, std::unique_ptr<CSound>> sound_map;
+	std::unordered_map<SOUND_ID, std::unique_ptr<CSound>>   sound_map;
 };

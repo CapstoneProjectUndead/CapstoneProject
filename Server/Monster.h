@@ -2,6 +2,7 @@
 // Server쪽 Monster
 #include "Object.h"
 
+class CScene;
 class CPlayer;
 class CAIComponent;
 
@@ -41,6 +42,9 @@ public:
     void SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
     const XMFLOAT3& GetOriginPos() const { return origin_position; }
 
+    CScene* GetScene() const { return current_scene; }
+    void    SetScene(CScene* scene) { current_scene = scene; }
+
 protected:
     std::shared_ptr<CPlayer> FindNearestPlayer();
 
@@ -65,6 +69,7 @@ protected:
     XMFLOAT3 origin_position;
     AI_STATE AI_state;
     MON_TYPE monster_type;
+    CScene* current_scene;
 
     std::weak_ptr<CPlayer> target_player;
 

@@ -143,8 +143,8 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     if (input.d) dir.x++;
 
     // 점프
-    start_jump = (input.space && is_grounded);
-    if (input.space) {
+    start_jump = (input.space && is_grounded && !stamina_exhausted);
+    if (input.space && !stamina_exhausted) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Jump();
     }
@@ -267,6 +267,24 @@ void CPlayer::UpdatePossession(float elapsedTime)
     possession_contact_timer += elapsedTime;
 
     if (possession_timer <= 0.0f) {
+
+        S_PlaySound soundPkt;
+        soundPkt.is_global = false;
+        soundPkt.scene_type = current_scene_type;
+        soundPkt.sound_id = SOUND_ID::devil_laugh1;
+
+        XMFLOAT3 targetPos = GetPosition();
+        soundPkt.x = targetPos.x;
+        soundPkt.y = targetPos.y;
+        soundPkt.z = targetPos.z;
+
+        auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+        if (auto r = room.lock()) {
+            auto& scenes = r->GetScenes();
+            auto currentScene = scenes[(UINT)current_scene_type].get();
+            currentScene->BroadCast(sendBuffer);
+        }
+
         possession_timer = 0.0f;
         is_possessed     = false;
         velocity.x       = 0.0f;
@@ -424,6 +442,22 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
     if (target) {
         c_hold_timer += elapsedTime;
         if (c_hold_timer >= 5.0f) {
+
+            S_PlaySound soundPkt;
+            soundPkt.is_global = false;
+            soundPkt.scene_type = current_scene_type;
+            soundPkt.sound_id = SOUND_ID::devil_laugh1;
+
+            XMFLOAT3 targetPos = GetPosition();
+            soundPkt.x = targetPos.x;
+            soundPkt.y = targetPos.y;
+            soundPkt.z = targetPos.z;
+
+            auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+            auto& scenes = room->GetScenes();
+            auto currentScene = scenes[(UINT)current_scene_type].get();
+            currentScene->BroadCast(sendBuffer);
+
             c_hold_timer = 0.0f;
             target->SetPossessed(false);
             target->SetPossessionTimer(0.0f);
@@ -656,25 +690,21 @@ void CPlayer::UpdateStamina(float elapsedTime)
     const float regenPerSec = 10.0f;        // 쉴 때 초당 회복 
     const float recoverThreshold = 30.0f;   // 이 값 이상 회복돼야 다시 달리기 허용
 
+    if (start_jump) {
+        constexpr float jumpCost = 12.0f;
+        accumulate_stamina -= jumpCost;
+        if (accumulate_stamina <= 0.0f) {
+            accumulate_stamina = 0.0f;
+            stamina_exhausted = true;
+        }
+    }
+
     if (state == PLAYER_STATE::RUN) {
 
         accumulate_stamina -= drainPerSec * elapsedTime;
 
         if (accumulate_stamina <= 0.0f) {
 
-            accumulate_stamina = 0.0f;
-            stamina_exhausted = true;
-
-            if (auto move = GetComponent<CMovementComponent>())
-                move->UnRun();
-        }
-    }
-    else if (start_jump) {
-
-        constexpr float jumpCost = 15.0f;
-        accumulate_stamina -= jumpCost;
-
-        if (accumulate_stamina <= 0.0f) {
             accumulate_stamina = 0.0f;
             stamina_exhausted = true;
 

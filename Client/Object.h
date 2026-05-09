@@ -54,6 +54,8 @@ public:
 	void SetPosition(XMFLOAT3 otherPosition) { SetPosition(otherPosition.x, otherPosition.y, otherPosition.z); }
 	XMFLOAT3 GetPosition() const { return position; }
 
+	void SetIsGrounded(bool ground) { is_grounded = ground; }
+
 	XMFLOAT3 GetVelocity() { return velocity; }
 	void     SetVelocity(const XMFLOAT3& vel) { velocity = vel; }
 	void     SetVelocity(float vx, float vy, float vz) { velocity = { vx, vy, vz }; }
@@ -104,7 +106,7 @@ protected:
 	std::vector<std::shared_ptr<CComponent>> components;
 
 	float jump_power{ 4.0f };
-	bool is_grounded{};
+	bool is_grounded{true};
 	float friction{ 9.0f };
 
 	// 회전을 쿼터니언 방식으로 하기 위한 멤버 변수 추가

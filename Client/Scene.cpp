@@ -249,13 +249,13 @@ void CScene::CheckHoverSound()
 	ImGuiID id = ImGui::GetItemID();
 	if (id != last_hovered_id_) {
 		last_hovered_id_ = id;
-		CSoundManager::GetInstance().Play("sfx_button");
+		CSoundManager::GetInstance().Play(SOUND_ID::button01a);
 	}
 }
 
 void CScene::PlayClickSound()
 {
-	CSoundManager::GetInstance().Play("sfx_select");
+	CSoundManager::GetInstance().Play(SOUND_ID::select09);
 }
 
 void CScene::AddObject(std::shared_ptr<CObject> obj, UINT id)
@@ -394,6 +394,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 
 		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
 		myPlayer->SetState(pkt.info.state);
+		myPlayer->SetIsGrounded((pkt.info.state != PLAYER_STATE::JUMP));
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
 		myPlayer->SetPossessed(pkt.info.is_possessed);
@@ -498,7 +499,7 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 	auto& vec = GetObjects();
 	auto& indexMap = GetIDIndex();
 
-	// 해당 ID가 존재하는 플레이어인지 확인
+	// 해당 ID가 존재하는 몬스터인지 확인
 	auto it = indexMap.find(pkt.info.monster_id);
 	if (it == indexMap.end())
 		return;
