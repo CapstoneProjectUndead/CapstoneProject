@@ -95,10 +95,10 @@ void CGameScene::Initialize()
 	SpawnWorldItem(9, XMFLOAT3{ -1, 2, -2 });
 	SpawnWorldItem(14, XMFLOAT3{ -1, 2, -3 });
 	SpawnWorldItem(15, XMFLOAT3{ -1, 2, -4 });
+	SpawnWorldItem(16, XMFLOAT3{ 1, 2, 1 });
 	SpawnWorldItem(17, XMFLOAT3{ -2, 2, -1 });
 	SpawnWorldItem(19, XMFLOAT3{ -2, 2, -2 });
 
-	SpawnWorldItem(20, XMFLOAT3{ 1, 2, 1 });
 	SpawnWorldItem(21, XMFLOAT3{ 1, 2, 2 });
 	SpawnWorldItem(22, XMFLOAT3{ 1, 2, 3 });
 	SpawnWorldItem(23, XMFLOAT3{ 1, 2, 4 });

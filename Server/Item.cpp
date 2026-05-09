@@ -16,8 +16,10 @@ CItem::~CItem()
 }
 
 // 장비 공통
-CEquipment::CEquipment(const std::shared_ptr<ItemData> data)
+CEquipment::CEquipment(const std::shared_ptr<ItemData> data, const uint32 maxDur)
 	: CItem(data)
+	, max_durability(maxDur)
+	, current_durability(maxDur)
 {
 }
 
@@ -27,10 +29,8 @@ CEquipment::~CEquipment()
 
 // 파밍 도구
 CTool::CTool(const std::shared_ptr<ItemData> data, const uint32 maxDur)
-	: CEquipment(data)
-	, max_durability(maxDur)
+	: CEquipment(data, maxDur)
 {
-	current_durability = max_durability;
 }
 
 CTool::~CTool()
@@ -44,12 +44,16 @@ void CTool::ReduceDurability()
 }
 
 // 무기
-CWeapon::CWeapon(const std::shared_ptr<ItemData> data)
-	: CEquipment(data)
+CWeapon::CWeapon(const std::shared_ptr<ItemData> data, const uint32 maxDur)
+	: CEquipment(data, maxDur)
 {
 }
 
 CWeapon::~CWeapon()
+{
+}
+
+void CWeapon::ReduceDurability()
 {
 }
 

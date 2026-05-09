@@ -109,7 +109,7 @@ void CGameScene::EnterScene(shared_ptr<CPlayer> player)
 {
 	CScene::EnterScene(player);
 
-	uint32 itemList[13] = { 5,9,14,15,17,19,20,25,24,45,47,48,49 };
+	uint32 itemList[13] = { 5,9,14,15,16,17,19,25,24,45,47,48,49 };
 	vector<shared_ptr<CItem>> items;
 	for (int i = 0; i < 12; ++i) {
 		auto item = item_manager->CreateItem(itemList[i]);

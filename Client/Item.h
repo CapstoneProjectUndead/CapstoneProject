@@ -32,14 +32,27 @@ protected:
 };
 
 
-// 장비 공통 
+// 장비 공통
 class CEquipment : public CItem
 {
 public:
-	CEquipment(const std::shared_ptr<ItemData> data);
+	CEquipment(const std::shared_ptr<ItemData> data, const uint32 maxDur);
 	virtual ~CEquipment() = 0;
 
 	virtual void Equip(CMyPlayer* player) = 0;
+
+public:
+	uint32 GetCurrentDurability() const { return current_durability; }
+	uint32 GetMaxDurability() const { return max_durability; }
+
+	virtual void ReduceDurability() {};
+
+	// 멀티용
+	void SetCurrentDurability(uint32 dur) { current_durability = dur; }
+
+protected:
+	const uint32 max_durability;
+	uint32       current_durability;
 };
 
 // 파밍 도구 (내구도 있음)
@@ -50,29 +63,18 @@ public:
 	virtual ~CTool() override;
 
 	virtual void Equip(CMyPlayer* player) override;
-
-public:
-	uint32 GetCurrentDurability() const { return current_durability; }
-	uint32 GetMaxDurability() const { return max_durability; }
-
-	void ReduceDurability();
-
-	// 멀티용
-	void SetCurrentDurability(uint32 dur) { current_durability = dur; }
-
-private:
-	const uint32 max_durability;
-	uint32 current_durability;
+	virtual void ReduceDurability() override;
 };
 
 // 무기
 class CWeapon : public CEquipment
 {
 public:
-	CWeapon(const std::shared_ptr<ItemData> data);
+	CWeapon(const std::shared_ptr<ItemData> data, const uint32 maxDur);
 	virtual ~CWeapon() override;
 
 	virtual void Equip(CMyPlayer* player) override;
+	virtual void ReduceDurability() override;
 };
 
 // 소비(회복템)
