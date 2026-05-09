@@ -571,11 +571,6 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 	);
 }
 
-void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
-{
-
-}
-
 std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
 {
 	std::shared_ptr<CCharacter> character = std::make_shared<CCharacter>(OBJECT_TYPE::STATIC_OBJECT);
