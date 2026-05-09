@@ -504,6 +504,38 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 	);
 }
 
+void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+{
+	std::string fileName{ "../Modeling/Dog.bin" };
+
+	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
+		std::shared_ptr<CMeshRendererComponent> renderer) {
+			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
+			auto CreateUnit = [&](const std::string& texName) {
+				auto matComp = std::make_shared<CMaterialComponent>();
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
+				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				matComp->SetMaterial(mat);
+				RenderUnit unit{ meshComp, matComp };
+				renderer->SetRenderUnit(unit);
+				};
+
+			for (auto& material : node->mesh.materials) {
+				CreateUnit(material.albedoMap);
+			}
+		};
+
+	InitCharacterComponents(
+		character,
+		heapManager,
+		fileName,
+		Processor,
+		{ "idle", "walk", "run", "bite" },
+		false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER)
+	);
+}
+
 void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
 {
 	std::string fileName{ "../Modeling/Ghost3.bin" };
@@ -730,6 +762,10 @@ void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
 	}
 	{
 		std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
+		LoadNode(heapManager, fileName);
+	}
+	{
+		std::string fileName{ "../Modeling/treasure.bin" };
 		LoadNode(heapManager, fileName);
 	}
 }

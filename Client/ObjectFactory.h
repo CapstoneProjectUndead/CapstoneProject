@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Material.h"
 #include "Texture.h"
 
@@ -57,6 +57,7 @@ public:
 	// Load model
 	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
 	void CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
+	void CreateDogCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	void CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
 	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
 

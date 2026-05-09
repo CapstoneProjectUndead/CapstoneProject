@@ -76,12 +76,12 @@ public:
 		default: return "";
 		}
 	}
-private:
 	std::string GetDigClipByItem(int itemId) {
 		if (itemId > 0 && itemId <= 4) return "Dig_shovel";
 		else if (itemId > 4 && itemId <= 12) return "Dig_pick_ax";
 		return "Dig_hand";
 	}
+private:
 
 	float current_time{};
 	std::vector<AnimLayer> layers;
