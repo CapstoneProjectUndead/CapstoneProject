@@ -201,7 +201,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "Equip_ghostspray",
         "description": "유령을 퇴치하는 스프레이"
     },
     {

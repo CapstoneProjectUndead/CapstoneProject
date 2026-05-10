@@ -34,6 +34,7 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_squeaky_hammer", L"../Modeling/item/image/Equip_squeaky_hammer.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_magicwand",      L"../Modeling/item/image/Equip_magicwand.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_toysword",       L"../Modeling/item/image/Equip_toysword.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_ghostspray",       L"../Modeling/item/image/Equip_ghostspray.png");
 
     // 음식/소비 아이템 이미지
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_meat",             L"../Modeling/item/image/Food_meat.png");
