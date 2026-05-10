@@ -269,6 +269,27 @@ bool CQuickSlot::TryDropOnSlot(CItem* item, ImVec2 mousePos)
 			slots[i].type      = item->GetItemType();
 			slots[i].sub_type  = item->GetSubType();
 			slots[i].item_id   = item->GetItemId();
+
+			// 현재 장착 중인 슬롯에 드롭한 경우 equipped_item_id 갱신
+			if (i == selected_slot) {
+				auto player = owner.lock();
+				if (!g_is_single) {
+					if (player) {
+						C_EquipItem pkt;
+						pkt.item_id      = slots[i].item_id;
+						pkt.inventory_id = slots[i].inv_id;
+						pkt.player_id    = player->GetID();
+						pkt.scene_type   = player->GetCurrentSceneType();
+						auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+						player->GetSession()->DoSend(sendBuffer);
+					}
+				}
+				else {
+					if (player)
+						player->SetEquippedItemId(slots[i].item_id);
+				}
+			}
+
 			return true;
 		}
 	}
