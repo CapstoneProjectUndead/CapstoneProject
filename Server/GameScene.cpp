@@ -135,6 +135,7 @@ void CGameScene::EnterScene(shared_ptr<CPlayer> player)
 
 void CGameScene::LeaveScene(uint64 playerId)
 {
+	CScene::LeaveScene(playerId);
 }
  
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
