@@ -9,6 +9,7 @@
 #include "Collider.h"
 #include "SoundManager.h"
 #include "GameScene.h"
+#include "State.h"
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
@@ -498,8 +499,11 @@ void CGhost::ApplySprayHit(const XMFLOAT3& fromPos)
     if (ai) {
         if (spray_hit_count >= MAX_SPRAY_HITS)
             ai->ChangeState(AI_STATE::MONSTER_FLEE);
-        else if (AI_state != AI_STATE::MONSTER_TRACE)
-            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        else {
+            auto cur = ai->GetCurrentState();
+            if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+                ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        }
     }
 }
 
