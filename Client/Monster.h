@@ -30,18 +30,21 @@ public:
     virtual void OnPatrolMove(float elapsedTime) = 0;
     virtual void OnTraceMove(float elapsedTime) = 0;
     virtual void OnAttackMove(float elapsedTime) = 0;
+    virtual void OnFleeMove(float elapsedTime) {}
 
     // AI Enter (진입 시 - 필요한 애들만 오버라이딩하게)
     virtual void OnIdleEnter() {}
     virtual void OnPatrolEnter() {}
     virtual void OnTraceEnter() {}
     virtual void OnAttackEnter() {}
+    virtual void OnFleeEnter(){}
 
     // AI Exit (탈출 시 - 필요한 애들만 오버라이딩하게)
     virtual void OnIdleExit() {}
     virtual void OnPatrolExit() {}
     virtual void OnTraceExit() {}
     virtual void OnAttackExit() {}
+    virtual void OnFleeExit() {}
 
 private:
     void UpdateSingle(float elapsedTime);

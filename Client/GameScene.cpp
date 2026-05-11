@@ -12,6 +12,7 @@
 #include "HumanMonster.h"
 #include "Ghost.h"
 #include "DogMonster.h"
+#include "AIComponent.h"
 
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
@@ -91,6 +92,7 @@ void CGameScene::Initialize()
 	SetButtonEvents();
 
 	// 아이템 생성 (테스트)
+	SpawnWorldItem(1, XMFLOAT3{ -1, 2, -1 });
 	SpawnWorldItem(5, XMFLOAT3{ -1, 2, -1 });
 	SpawnWorldItem(9, XMFLOAT3{ -1, 2, -2 });
 	SpawnWorldItem(14, XMFLOAT3{ -1, 2, -3 });
@@ -207,10 +209,23 @@ void CGameScene::Update(float elapsedTime)
 
 	CScene::Update(elapsedTime);
 
-	ProcessPickup();
-
 	if (my_player) {
-		ProcessMining(elapsedTime);
+
+		// 아이템 줍기
+		ProcessPickup();
+
+		// 플레이어가 장착하고 있는 아이템에 따라 행동 분기
+		auto qs = my_player->GetQuickSlot();
+		bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
+		bool hasWeapon = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::WEAPON;
+
+		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || my_player->GetEquippedItemId() == 0)) {
+			ProcessMining(elapsedTime);
+		}
+		else if(!ImGui::GetIO().WantCaptureMouse && hasWeapon) {
+			ProcessAttack(elapsedTime);
+		}
+
 		my_player->BeginSendInputPacket(elapsedTime);
 
 		// (멀티 전용) 빙의 해제 progress bar UI는 클라이언트 예측 기법 적용
@@ -287,7 +302,7 @@ void CGameScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
-		if(g_is_single)
+		if (g_is_single)
 			my_player->SetPosition(1.f, 5.0f, 1.5f);	// Lobby 위치 그대로 가져오는 거 방지
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
@@ -300,81 +315,78 @@ void CGameScene::Enter()
 
 void CGameScene::ProcessPickup()
 {
-	if (!my_player)
-		return;
+	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) == KEY_STATE::TAP) {
 
-	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) != KEY_STATE::TAP)
-		return;
+		XMFLOAT3 playerPos = my_player->GetPosition();
 
-	XMFLOAT3 playerPos = my_player->GetPosition();
-
-	// Objects에는 플레이어, 몬스터, 맵 오브젝트, 아이템 모두 들어있다.
-	// 여기서 아이템만 필터링한다.
-	std::vector<std::shared_ptr<CObject>> worldItems;
-	for (auto& obj : objects) {
-		if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
-			worldItems.push_back(obj);
+		// Objects에는 플레이어, 몬스터, 맵 오브젝트, 아이템 모두 들어있다.
+		// 여기서 아이템만 필터링한다.
+		std::vector<std::shared_ptr<CObject>> worldItems;
+		for (auto& obj : objects) {
+			if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
+				worldItems.push_back(obj);
+			}
 		}
-	}
 
-	// 플레이어 근처에 있는 아이템을 찾는다.
-	auto it = std::find_if(worldItems.begin(), worldItems.end(),
-		[&](const std::shared_ptr<CObject>& item) {
-			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), playerPos);
-			return Vector3::Length(diff) <= PICKUP_RANGE;
-		});
+		// 플레이어 근처에 있는 아이템을 찾는다.
+		auto it = std::find_if(worldItems.begin(), worldItems.end(),
+			[&](const std::shared_ptr<CObject>& item) {
+				XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), playerPos);
+				return Vector3::Length(diff) <= PICKUP_RANGE;
+			});
 
-	if (it == worldItems.end())
-		return;
-
-	auto worldItem = static_cast<CWorldItem*>(it->get());
-
-	// 싱글환경
-	if (g_is_single) {
-
-		auto inv = my_player->GetInventory();
-		if (!inv)
+		if (it == worldItems.end())
 			return;
 
-		// 보물이라면 
-		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
+		auto worldItem = static_cast<CWorldItem*>(it->get());
 
-			// 아이템 줍기 시도
-			if (inv->AddItem(worldItem->GetItem())) {
+		// 싱글환경
+		if (g_is_single) {
 
-				// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
-				uint32 id = worldItem->GetID();
-				auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
-					[id](const TreasureInfo& info) {
-						return info.world_id == id;
-					});
+			auto inv = my_player->GetInventory();
+			if (!inv)
+				return;
 
-				if (treasure_it != treasures.end())
-					treasures.erase(treasure_it);
+			// 보물이라면 
+			if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
 
-				// 다우징로드에 있는 보물 컨테이너 갱신
-				// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
-				my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+				// 아이템 줍기 시도
+				if (inv->AddItem(worldItem->GetItem())) {
 
+					// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
+					uint32 id = worldItem->GetID();
+					auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
+						[id](const TreasureInfo& info) {
+							return info.world_id == id;
+						});
+
+					if (treasure_it != treasures.end())
+						treasures.erase(treasure_it);
+
+					// 다우징로드에 있는 보물 컨테이너 갱신
+					// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
+					my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+
+					RemoveObject(worldItem->GetID());
+				}
+			}
+			else {
+				inv->AddItem(worldItem->GetItem());
 				RemoveObject(worldItem->GetID());
 			}
 		}
 		else {
-			inv->AddItem(worldItem->GetItem());
-			RemoveObject(worldItem->GetID());
-		}
-	}
-	else {
-		// (멀티) 서버에 줍기 요청만 보낸다.
-		// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
-		C_PickupItem pickupPkt;
-		pickupPkt.player_id = my_player->GetUser()->GetUserID();
-		pickupPkt.item_world_id = worldItem->GetID();
-		pickupPkt.item_type = worldItem->GetItem()->GetItemType();
-		pickupPkt.scene_type = my_player->GetCurrentSceneType();
+			// (멀티) 서버에 줍기 요청만 보낸다.
+			// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
+			C_PickupItem pickupPkt;
+			pickupPkt.player_id = my_player->GetUser()->GetUserID();
+			pickupPkt.item_world_id = worldItem->GetID();
+			pickupPkt.item_type = worldItem->GetItem()->GetItemType();
+			pickupPkt.scene_type = my_player->GetCurrentSceneType();
 
-		auto sendBuffer = MAKE_SEND_BUFFER(pickupPkt);
-		my_player->GetSession()->DoSend(sendBuffer);
+			auto sendBuffer = MAKE_SEND_BUFFER(pickupPkt);
+			my_player->GetSession()->DoSend(sendBuffer);
+		}
 	}
 }
 
@@ -475,16 +487,12 @@ void CGameScene::ProcessMining(float elapsedTime)
 
 	was_digging = isDigging;
 
-	// 플레이어가 도구를 장착하고 있는지 검사
-	auto qs = my_player->GetQuickSlot();
-	bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
-
 	// 이동 중에는 채굴 시작 불가 
 	bool isMoving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
 	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
 
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !isDigging && (hasTool || my_player->GetEquippedItemId() == 0) && !ImGui::GetIO().WantCaptureMouse && !isMoving) {
+	if (KEY_TAP(KEY::LBTN) && !isDigging && !isMoving) {
 
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
@@ -511,6 +519,75 @@ void CGameScene::ProcessMining(float elapsedTime)
 	}
 }
 
+void CGameScene::ProcessAttack(float elapsedTime)
+{
+	// 싱글 전용 
+	if (!g_is_single)
+		return;
+
+	if (!my_player)
+		return;
+
+	if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f 
+		&& !my_player->GetIsKnockedBack()
+		&& !my_player->GetIsPossessed()) {
+
+		my_player->OnAttack();
+
+		uint16 equippedID = my_player->GetEquippedItemId();
+
+		if (equippedID == 16) {
+			CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
+			spray_attack_timer    = 0.8f;
+			spray_attack_cooldown = 1.5f;
+		}
+	}
+
+	// 스프레이 공격을 시작하면 0.8초 후에 데미지가 들어간다.
+	if (spray_attack_timer > 0.0f) {
+		spray_attack_timer -= elapsedTime;
+		if (spray_attack_timer <= 0.0f) {
+			spray_attack_timer = -1.0f;
+			SprayAttack(elapsedTime);
+		}
+	}
+
+	if (spray_attack_cooldown > 0.0f)
+		spray_attack_cooldown -= elapsedTime;
+}
+
+void CGameScene::SprayAttack(float elapsedTime)
+{
+	constexpr float SPRAY_RANGE = 1.5f;
+
+	XMFLOAT3 playerPos  = my_player->GetPosition();
+	XMFLOAT3 playerLook = my_player->look;
+
+	for (auto& obj : objects) {
+		if (obj->GetObjectType() != OBJECT_TYPE::MONSTER) 
+			continue;
+
+		auto* monster = static_cast<CMonster*>(obj.get());
+		if (monster->GetMonsterType() != MON_TYPE::GHOST) 
+			continue;
+		if (monster->GetAIState() == AI_STATE::MONSTER_FLEE) 
+			continue;
+
+		XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+		toMonster.y = 0.0f;
+		float dist = Vector3::Length(toMonster);
+
+		if (dist > SPRAY_RANGE || dist < 0.001f) 
+			continue;
+
+		// 전방 체크: 플레이어 정면 방향에 있는지
+		float dot = playerLook.x * (toMonster.x / dist) + playerLook.z * (toMonster.z / dist);
+		if (dot <= 0.0f) 
+			continue;
+
+		static_cast<CGhost*>(monster)->ApplySprayHit(playerPos);
+	}
+}
 
 // 싱글환경
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
@@ -521,7 +598,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
 		return;
-
+	
 	worldItem->Initialize();
 
 	// 아이템의 위치

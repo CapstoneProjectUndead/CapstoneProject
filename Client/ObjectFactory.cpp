@@ -694,6 +694,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 		AIComp->AddState(std::make_shared<CPatrolState>());
 		AIComp->AddState(std::make_shared<CTraceState>());
 		AIComp->AddState(std::make_shared<CAttackState>());
+		AIComp->AddState(std::make_shared<CFleeState>());
 
 		// 항상 IDLE 로 시작.
 		AIComp->SetState(AI_STATE::MONSTER_IDLE);

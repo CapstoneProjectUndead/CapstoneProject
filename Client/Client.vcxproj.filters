@@ -426,6 +426,9 @@
     <ClInclude Include="DogMonster.h">
       <Filter>Object\Monster</Filter>
     </ClInclude>
+    <ClInclude Include="FleeState.h">
+      <Filter>Component\AI\State</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -673,6 +676,9 @@
     </ClCompile>
     <ClCompile Include="DogMonster.cpp">
       <Filter>Object\Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="FleeState.cpp">
+      <Filter>Component\AI\State</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

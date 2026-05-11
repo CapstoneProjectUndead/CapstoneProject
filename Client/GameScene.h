@@ -41,10 +41,10 @@ public:
     virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) override;
     void Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
 
-private:
-    // 싱글용
+    // 싱글용 (Ghost 드롭 등 외부에서 호출 가능)
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
 
+private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
     void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position);
 
@@ -53,6 +53,10 @@ private:
 
     // 채굴 상호작용
     void ProcessMining(float elapsedTime);
+
+    // 공격
+    void ProcessAttack(float elapsedTime);
+    void SprayAttack(float elapsedTime);
 
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
 
@@ -74,5 +78,9 @@ private:
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;
     float             dig_sound_timer       = -1.0f;
+
+private:
+    float             spray_attack_timer    = -1.0f;
+    float             spray_attack_cooldown = -1.0f;
 };
 

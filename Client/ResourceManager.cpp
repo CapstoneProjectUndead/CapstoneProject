@@ -79,4 +79,6 @@ void CResourceManager::LoadSounds()
     CSoundManager::GetInstance().LoadSound(SOUND_ID::devil_laugh1,   "../Resource/Sound/devil_laugh1.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::flying_pan,   "../Resource/Sound/flying_pan.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::jab,   "../Resource/Sound/jab.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::ghost_spray,   "../Resource/Sound/ghost_spray.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::devil_scared1,   "../Resource/Sound/devil_scared1.mp3");
 }

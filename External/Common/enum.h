@@ -47,6 +47,7 @@ enum class AI_STATE // 어떤 애니메이션을 재생할지 결정한다.
 	MONSTER_PATROL,
 	MONSTER_TRACE,
 	MONSTER_ATTACK,
+	MONSTER_FLEE,
 	MONSTER_DEAD,
 };
 
@@ -144,6 +145,10 @@ enum class TREASURE_GRADE : uint8_t
 	LEGENDARY	// 전설
 };
 
+//=======
+// 사운드
+//=======
+
 enum class SOUND_ID : uint16_t
 {
 	button01a,
@@ -155,4 +160,6 @@ enum class SOUND_ID : uint16_t
 	devil_laugh1,
 	flying_pan,
 	jab,
+	ghost_spray,
+	devil_scared1,
 };
