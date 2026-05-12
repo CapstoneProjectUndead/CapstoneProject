@@ -169,6 +169,7 @@
     </ClCompile>
     <ClCompile Include="AIComponent.cpp" />
     <ClCompile Include="AttackState.cpp" />
+    <ClCompile Include="FleeState.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="Collider.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="AIComponent.h" />
     <ClInclude Include="AIStates.h" />
     <ClInclude Include="AttackState.h" />
+    <ClInclude Include="FleeState.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="Collider.h" />

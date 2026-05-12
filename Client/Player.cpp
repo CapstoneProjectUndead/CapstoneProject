@@ -187,6 +187,11 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
             else if (frameA->state == PLAYER_STATE::DIG || frameB->state == PLAYER_STATE::DIG) {
                 state = PLAYER_STATE::DIG;
             }
+            // [공격 우선] 서버가 spray_attack_timer로 결정한 ATTACK state 보존
+            // PlayAction은 Handle_S_Move_Player에서 패킷 수신 즉시 호출 (보간 지연 없음)
+            else if (frameA->state == PLAYER_STATE::ATTACK || frameB->state == PLAYER_STATE::ATTACK) {
+                state = PLAYER_STATE::ATTACK;
+            }
             else {
                 // [보간 이동]
                 // Frame A와 Frame B 사이의 실제 이동 거리 계산

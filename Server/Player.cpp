@@ -10,6 +10,7 @@
 #include "PhysicsManager.h"
 #include "Item.h"
 #include "Inventory.h"
+#include "Ghost.h"
 
 
 CPlayer::CPlayer()
@@ -157,13 +158,21 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     if (updateState) {
 
-        ProcessMining(input, elapsedTime, isMoving);
+        if (equipped_item_sub_type == ITEM_SUB_TYPE::TOOL
+            && current_scene_type == SCENE_TYPE::GAME) {
+            ProcessMining(input, elapsedTime, isMoving);
+        }
+
+        if (equipped_item_sub_type == ITEM_SUB_TYPE::WEAPON
+            && current_scene_type == SCENE_TYPE::GAME) {
+            ProcessAttack(input, elapsedTime);
+        }
 
         if (grounded_timer > 0.0f) {
 
             if (!isMoving) {
 
-                if (state != PLAYER_STATE::DIG)
+                if (state != PLAYER_STATE::DIG && state != PLAYER_STATE::ATTACK)
                     state = PLAYER_STATE::IDLE;
 
                 if (is_grounded && knockback_timer <= 0.0f) {
@@ -177,11 +186,13 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
                 dig_sound_timer = -1.0f;
                 if (auto move = GetComponent<CMovementComponent>()) {
                     if (input.shift && !stamina_exhausted) {
-                        state = PLAYER_STATE::RUN;
+                        if (state != PLAYER_STATE::ATTACK)
+                            state = PLAYER_STATE::RUN;
                         move->Run();
                     }
                     else {
-                        state = PLAYER_STATE::WALK;
+                        if (state != PLAYER_STATE::ATTACK)
+                            state = PLAYER_STATE::WALK;
                         move->UnRun();
                     }
                 }
@@ -273,23 +284,8 @@ void CPlayer::UpdatePossession(float elapsedTime)
     possession_contact_timer += elapsedTime;
 
     if (possession_timer <= 0.0f) {
-
-        S_PlaySound soundPkt;
-        soundPkt.is_global = false;
-        soundPkt.scene_type = current_scene_type;
-        soundPkt.sound_id = SOUND_ID::devil_laugh1;
-
-        XMFLOAT3 targetPos = GetPosition();
-        soundPkt.x = targetPos.x;
-        soundPkt.y = targetPos.y;
-        soundPkt.z = targetPos.z;
-
-        auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-        if (auto r = room.lock()) {
-            auto& scenes = r->GetScenes();
-            auto currentScene = scenes[(UINT)current_scene_type].get();
-            currentScene->BroadCast(sendBuffer);
-        }
+        // 빙의 해제 Sound 패킷 전송
+        SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
 
         possession_timer = 0.0f;
         is_possessed     = false;
@@ -336,21 +332,7 @@ void CPlayer::UpdatePossession(float elapsedTime)
         {
             if (possession_contact_timer >= ATTACK_INTERVAL) {
 
-                S_PlaySound soundPkt;
-                soundPkt.scene_type = current_scene_type;
-                soundPkt.sound_id = SOUND_ID::damaged1;
-
-                XMFLOAT3 pos = GetPosition();
-                soundPkt.x = pos.x;
-                soundPkt.y = pos.y;
-                soundPkt.z = pos.z;
-
-                auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                if (auto r = room.lock()) {
-                    auto& scenes = r->GetScenes();
-                    auto currentScene = scenes[(UINT)current_scene_type].get();
-                    currentScene->BroadCast(sendBuffer);
-                }
+                SendSoundPacket(false, SOUND_ID::damaged1, GetPosition());
 
                 uint32 hp = nearOther->GetHp();
                 nearOther->SetHp(hp > 10 ? hp - 10 : 0);
@@ -471,22 +453,7 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
         if (c_hold_timer >= 5.0f) {
 
             // 빙의 해제 Sound 패킷 전송
-            {
-                S_PlaySound soundPkt;
-                soundPkt.is_global = false;
-                soundPkt.scene_type = current_scene_type;
-                soundPkt.sound_id = SOUND_ID::devil_laugh1;
-
-                XMFLOAT3 targetPos = GetPosition();
-                soundPkt.x = targetPos.x;
-                soundPkt.y = targetPos.y;
-                soundPkt.z = targetPos.z;
-
-                auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                auto& scenes = room->GetScenes();
-                auto currentScene = scenes[(UINT)current_scene_type].get();
-                currentScene->BroadCast(sendBuffer);
-            }
+            SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
 
             c_hold_timer = 0.0f;
             target->SetPossessed(false);
@@ -569,17 +536,11 @@ XMFLOAT3 CPlayer::GetRandomPossessedTarget()
 
 void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)
 {
-    // 채굴 시작: lbtn 클릭 + 정지 + 착지 + 도구 장착 + Game 씬
+    // 채굴 시작: lbtn 탭 + 정지 + 착지
     if (input.lbtn && !isMoving && !is_possessed && grounded_timer > 0.0f) {
-
-        if (equipped_item_id != 0 
-            && equipped_item_sub_type == ITEM_SUB_TYPE::TOOL 
-            && current_scene_type == SCENE_TYPE::GAME) {
-
-            state = PLAYER_STATE::DIG;
-            dig_timer = DIG_DURATION;
-            dig_sound_timer = 0.0f;
-        }
+        state = PLAYER_STATE::DIG;
+        dig_timer = DIG_DURATION;
+        dig_sound_timer = 0.0f;
     }
 
     // 채굴 소리 타이머: DIG 시작 후 0.5초 시점에 PlaySound 패킷 전송
@@ -591,21 +552,7 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
             if (auto r = room.lock()) {
                 auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
                 if (gameScene && gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE)) {
-
-                    S_PlaySound soundPkt;
-                    soundPkt.is_global = false;
-                    soundPkt.scene_type = current_scene_type;
-                    soundPkt.sound_id = SOUND_ID::flying_pan;
-
-                    XMFLOAT3 targetPos = GetPosition();
-                    soundPkt.x = targetPos.x;
-                    soundPkt.y = targetPos.y;
-                    soundPkt.z = targetPos.z;
-
-                    auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                    auto& scenes = r->GetScenes();
-                    auto currentScene = scenes[(UINT)current_scene_type].get();
-                    currentScene->BroadCast(sendBuffer);
+                    SendSoundPacket(false, SOUND_ID::flying_pan, GetPosition());
                 }
             }
         }
@@ -692,6 +639,65 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
                 }
             }
         }
+    }
+}
+
+void CPlayer::ProcessAttack(const InputData& input, float elapsedTime)
+{
+    if (equipped_item_id == 16) {
+        if (input.lbtn && !is_possessed && grounded_timer > 0.0f && spray_attack_timer <= 0.0f) {
+            SendSoundPacket(false, SOUND_ID::ghost_spray, GetPosition());
+            state = PLAYER_STATE::ATTACK;
+            spray_attack_timer = SPRAY_ATTACK_DURATION;
+        }
+
+        if (spray_attack_timer > 0.0f) {
+            float prev = spray_attack_timer;
+            spray_attack_timer -= elapsedTime;
+
+            // 0.8초 경과 시 데미지 (1.5 - 0.8 = 0.7 threshold)
+            if (prev > 0.7f && spray_attack_timer <= 0.7f)
+                SprayAttack(elapsedTime);
+
+            state = (spray_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+        }
+    }
+}
+
+void CPlayer::SprayAttack(float elapsedTime)
+{
+    constexpr float SPRAY_RANGE = 1.5f;
+
+    auto r = GetRoom();
+    if (!r) 
+        return;
+
+    auto scene = r->GetScenes()[(UINT)current_scene_type].get();
+    if (!scene) 
+        return;
+
+    XMFLOAT3 playerPos  = position;
+    XMFLOAT3 playerLook = look;
+
+    for (auto& [id, monster] : scene->GetMonsters()) {
+        if (!monster || monster->GetMonsterType() != MON_TYPE::GHOST)
+            continue;
+        if (monster->GetAIState() == AI_STATE::MONSTER_FLEE)
+            continue;
+
+        XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+        toMonster.y = 0.0f;
+        float dist = Vector3::Length(toMonster);
+
+        if (dist > SPRAY_RANGE || dist < 0.001f)
+            continue;
+
+        // 전방 체크: 플레이어 정면 방향에 있는지
+        float dot = playerLook.x * (toMonster.x / dist) + playerLook.z * (toMonster.z / dist);
+        if (dot <= 0.0f)
+            continue;
+
+        static_cast<CGhost*>(monster.get())->ApplySprayHit(playerPos, static_pointer_cast<CPlayer>(shared_from_this()));
     }
 }
 

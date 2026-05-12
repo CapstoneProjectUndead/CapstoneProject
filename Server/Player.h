@@ -123,12 +123,14 @@ public:
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
+	void ProcessAttack(const InputData& input, float elapsedTime);
 	void UpdatePossession(float elapsedTime);
-
 	void ReleasePossession(const InputData& input, const float elapsedTime);
 
 	XMFLOAT3            GetRandomPossessedTarget();
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
+
+	void SprayAttack(float elapsedTime);
 
 private:
 	weak_ptr<CUser>				user;
@@ -180,6 +182,10 @@ private:
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;
 	const float DIG_DURATION = 1.03f;
+
+	// 스프레이 공격 상태 유지 타이머
+	float       spray_attack_timer{ 0.0f };
+	const float SPRAY_ATTACK_DURATION = 1.5f;
 
 	float       dig_sound_timer = -1.0f;
 };

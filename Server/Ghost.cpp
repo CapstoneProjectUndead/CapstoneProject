@@ -6,6 +6,7 @@
 #include "Movement.h"
 #include "SceneManager.h"
 #include "Collider.h"
+#include "State.h"
 
 CGhost::CGhost()
 	: CMonster(MON_TYPE::GHOST)
@@ -29,6 +30,12 @@ CGhost::~CGhost()
 
 void CGhost::Update(float elapsedTime)
 {
+	if (knockback_timer > 0.0f) {
+		knockback_timer -= elapsedTime;
+		if (knockback_timer < 0.0f)
+			knockback_timer = 0.0f;
+	}
+
 	CMonster::Update(elapsedTime);
 
 	contact_damage_timer += elapsedTime;
@@ -142,6 +149,9 @@ void CGhost::OnPatrolMove(float elapsedTime)
 
 void CGhost::OnTraceMove(float elapsedTime)
 {
+	if (knockback_timer > 0.0f)
+		return;
+
 	auto AIComponent = GetComponent<CAIComponent>();
 
 	auto targetPlayer = target_player.lock();
@@ -276,21 +286,8 @@ void CGhost::OnAttackMove(float elapsedTime)
 
 	// 빙의 판정
 	if (!hit_damage_dealt && attack_timer >= 1.1f) {
-
-		S_PlaySound soundPkt;
-		soundPkt.is_global = false;
-		soundPkt.scene_type = current_scene_type;
-		soundPkt.sound_id = SOUND_ID::ghost_attack;
-
 		XMFLOAT3 targetPos = targetPlayer->GetPosition();
-		soundPkt.x = targetPos.x;
-		soundPkt.y = targetPos.y;
-		soundPkt.z = targetPos.z;
-
-		auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-		if (auto scene = GetScene()) {
-			scene->BroadCast(sendBuffer);
-		}
+		SendSoundPacket(false, SOUND_ID::ghost_attack, targetPos);
 
 		hit_damage_dealt = true;
 
@@ -300,21 +297,8 @@ void CGhost::OnAttackMove(float elapsedTime)
 
 			if (Vector3::Length(dir) <= 0.8f) {
 				if (rand() % 100 < 25) {
-
-					S_PlaySound soundPkt;
-					soundPkt.is_global = false;
-					soundPkt.scene_type = current_scene_type;
-					soundPkt.sound_id = SOUND_ID::crude_laughter;
-
 					XMFLOAT3 targetPos = targetPlayer->GetPosition();
-					soundPkt.x = targetPos.x;
-					soundPkt.y = targetPos.y;
-					soundPkt.z = targetPos.z;
-
-					auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-					if (auto scene = GetScene()) {
-						scene->BroadCast(sendBuffer);
-					}
+					SendSoundPacket(false, SOUND_ID::crude_laughter, targetPos);
 
 					targetPlayer->ApplyPossession();
 					MarkForDelete();
@@ -463,6 +447,82 @@ XMFLOAT3 CGhost::GetRandomWanderTarget()
 	return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
+void CGhost::ApplySprayHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
+{
+	// 사운드 브로드캐스트
+	SendSoundPacket(false, SOUND_ID::devil_scared1, GetPosition());
+
+	target_player = player;
+
+	// 넉백 방향 계산
+	XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+	awayDir.y = 0.0f;
+	float len = Vector3::Length(awayDir);
+
+	spray_hit_count++;
+
+	// 격분: 단계별 속도 증가
+	if (spray_hit_count == 1)
+		trace_speed *= 1.3f;
+	else if (spray_hit_count == 2)
+		trace_speed *= 1.7f;
+
+	// 상태 전환 (OnFleeEnter가 velocity를 0으로 초기화할 수 있으므로 ChangeState 먼저)
+	auto* ai = GetComponent<CAIComponent>();
+	if (ai) {
+		if (spray_hit_count >= MAX_SPRAY_HITS)
+			ai->ChangeState(AI_STATE::MONSTER_FLEE);
+		else {
+			auto cur = ai->GetCurrentState();
+			if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+				ai->ChangeState(AI_STATE::MONSTER_TRACE);
+		}
+	}
+
+	// 넉백 velocity는 ChangeState 이후에 적용 (OnFleeEnter의 velocity 초기화를 덮어씀)
+	if (len > 0.001f) {
+		knockback_vel   = { awayDir.x / len * KNOCKBACK_FORCE, 0.0f, awayDir.z / len * KNOCKBACK_FORCE };
+		knockback_timer = KNOCKBACK_DURATION;
+		velocity.x = knockback_vel.x;
+		velocity.z = knockback_vel.z;
+	}
+}
+
+void CGhost::OnFleeEnter()
+{
+	flee_timer = FLEE_DURATION;
+	nav_path.clear();
+	velocity.x = 0.0f;
+	velocity.z = 0.0f;
+}
+
+void CGhost::OnFleeMove(float elapsedTime)
+{
+	if (knockback_timer > 0.0f)
+		return;
+
+	flee_timer -= elapsedTime;
+	if (flee_timer <= 0.0f) {
+		MarkForDelete();
+		return;
+	}
+
+	auto targetPlayer = target_player.lock();
+	if (targetPlayer) {
+		XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->GetPosition());
+		awayDir.y = 0.0f;
+		float len = Vector3::Length(awayDir);
+		if (len > 0.001f) {
+			float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+			SetYaw(yaw);
+			SetYawPitch(yaw, 0.0f);
+		}
+	}
+
+	velocity.x = look.x * FLEE_SPEED;
+	velocity.z = look.z * FLEE_SPEED;
+}
+
 void CGhost::CheckContactDamage()
 {
 	if (AI_state != AI_STATE::MONSTER_ATTACK) {
@@ -481,6 +541,9 @@ void CGhost::CheckContactDamage()
 
 					XMFLOAT3 knockbackDir = Vector3::Subtract(nearPlayer->GetPosition(), position);
 					nearPlayer->ApplyKnockback(knockbackDir, 0.6f, 1.f);
+
+					XMFLOAT3 playerPos  = nearPlayer->GetPosition();
+					SendSoundPacket(false, SOUND_ID::damaged1, playerPos);
 				}
 			}
 		}

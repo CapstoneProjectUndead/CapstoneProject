@@ -2,6 +2,8 @@
 // Server쪽 Object
 #include "Object.h"
 #include "Component.h"
+#include "Room.h"
+#include "Scene.h"
 
 
 CObject::CObject(OBJECT_TYPE type)
@@ -87,4 +89,24 @@ void CObject::UpdateLookRightFromYaw()
 		0.0f,
 		-look.x
 	);
+}
+
+void CObject::SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& generatePos, float range)
+{
+	S_PlaySound soundPkt;
+	soundPkt.is_global = isGlobal;
+	soundPkt.scene_type = current_scene_type;
+	soundPkt.sound_id = id;
+
+	soundPkt.x = generatePos.x;
+	soundPkt.y = generatePos.y;
+	soundPkt.z = generatePos.z;
+
+	auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
+
+	if (auto room = GetRoom()) {
+		auto& scenes = room->GetScenes();
+		auto currentScene = scenes[(UINT)current_scene_type].get();
+		currentScene->BroadCast(sendBuffer);
+	}
 }

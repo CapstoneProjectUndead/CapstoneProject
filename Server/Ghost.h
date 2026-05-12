@@ -2,6 +2,8 @@
 // Server쪽 Ghost
 #include "Monster.h"
 
+class CPlayer;
+
 class CGhost :
     public CMonster
 {
@@ -19,6 +21,12 @@ public:
     virtual void OnPatrolEnter() override;
     virtual void OnTraceEnter() override;
     virtual void OnAttackEnter() override;
+    virtual void OnFleeEnter() override;
+
+    virtual void OnFleeMove(float elapsedTime) override;
+
+public:
+    void ApplySprayHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player);
 
 private:
     void     PatrolRadiusWander(float elapsedTime);
@@ -45,4 +53,15 @@ private:
     float contact_damage_timer  = 0.0f;
     float attack_cooldown_timer = 9999.f;
 
+    // 스프레이 피격
+    int      spray_hit_count = 0;
+    float    flee_timer      = 0.0f;
+    float    knockback_timer = 0.0f;
+    XMFLOAT3 knockback_vel   = {};
+
+    static constexpr int   MAX_SPRAY_HITS     = 3;
+    static constexpr float FLEE_DURATION      = 1.0f;
+    static constexpr float FLEE_SPEED         = 1.0f;
+    static constexpr float KNOCKBACK_DURATION = 0.3f;
+    static constexpr float KNOCKBACK_FORCE    = 3.0f;
 };

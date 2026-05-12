@@ -27,12 +27,17 @@ public:
     virtual void OnPatrolEnter() {}
     virtual void OnTraceEnter() {}
     virtual void OnAttackEnter() {}
+    virtual void OnFleeEnter() {}
 
     // AI Exit (탈출 시 - 필요한 애들만 오버라이딩하게)
     virtual void OnIdleExit() {}
     virtual void OnPatrolExit() {}
     virtual void OnTraceExit() {}
     virtual void OnAttackExit() {}
+    virtual void OnFleeExit() {}
+
+    // AI Move (필요한 애들만 오버라이딩하게)
+    virtual void OnFleeMove(float elapsedTime) {}
 
 public:
     AI_STATE GetAIState() const { return AI_state; }

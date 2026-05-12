@@ -64,6 +64,7 @@ public:
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
+	map<uint64, shared_ptr<CMonster>>& GetMonsters() { return monsters; }
 
 	weak_ptr<CRoom>      GetRoomWeak() const { return room; }
 	shared_ptr<CRoom>    GetRoom() const { return room.lock(); }

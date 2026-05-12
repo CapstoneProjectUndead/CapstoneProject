@@ -361,12 +361,6 @@ void CGhost::OnFleeMove(float elapsedTime)
     flee_timer -= elapsedTime;
 
     if (flee_timer <= 0.0f) {
-        auto scene = CSceneManager::GetInstance().GetActiveScene();
-        if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
-            XMFLOAT3 itemSpawnPos = position;
-            itemSpawnPos.y = 0;
-            gameScene->SpawnWorldItem(DROP_ITEM_ID, itemSpawnPos);
-        }
         MarkForDelete();
         return;
     }
@@ -447,7 +441,8 @@ void CGhost::OnFleeEnter()
     auto targetPlayer = target_player.lock();
     if (!targetPlayer) {
         auto nearest = FindNearestPlayer();
-        if (nearest) SetTarget(nearest);
+        if (nearest) 
+            SetTarget(nearest);
         targetPlayer = target_player.lock();
     }
 
@@ -460,6 +455,13 @@ void CGhost::OnFleeEnter()
             SetYaw(yaw);
             SetYawPitch(yaw, 0.0f);
         }
+    }
+
+    auto scene = CSceneManager::GetInstance().GetActiveScene();
+    if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
+        XMFLOAT3 itemSpawnPos = position;
+        itemSpawnPos.y = 0;
+        gameScene->SpawnWorldItem(DROP_ITEM_ID, itemSpawnPos);
     }
 }
 
@@ -592,23 +594,16 @@ XMFLOAT3 CGhost::GetRandomWanderTarget()
 
 void CGhost::CheckContactDamage()
 {
+    if (!g_is_single) 
+        return;
+
     if (AI_state != AI_STATE::MONSTER_ATTACK) {
         auto nearPlayer = FindNearestPlayer();
         if (nearPlayer) {
-
             bool inContact = false;
-            if (g_is_single) {
-                auto* ghostCol = GetComponent<CColliderComponent>();
-                auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
-                inContact = ghostCol && playerCol && ghostCol->Intersects(playerCol);
-            }
-            else {
-                // 멀티에서 유령 위치가 보간 지연으로 최대 0.8m 뒤처지므로,
-                // GJK 대신 XZ 거리 비교로 판정 (임계값 = 캡슐 반지름 합 + 보간 여유)
-                XMFLOAT3 diff = Vector3::Subtract(nearPlayer->position, position);
-                diff.y = 0.0f;
-                inContact = Vector3::Length(diff) < 1.0f;
-            }
+            auto* ghostCol = GetComponent<CColliderComponent>();
+            auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+            inContact = ghostCol && playerCol && ghostCol->Intersects(playerCol);
 
             if (inContact) {
 
