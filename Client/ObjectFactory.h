@@ -45,7 +45,7 @@ public:
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 
 	// Create Map
-	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName = EShaderName::Inst);
+	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName = EShaderName::Skinning);
 	// Lobby
 	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
 	// GameScene 모델 파츠 load
@@ -102,7 +102,7 @@ private:
 		Unknown
 	};
 
-	void LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName = EShaderName::Inst);
+	void LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName = EShaderName::Skinning);
 	// string to enum mapping
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);

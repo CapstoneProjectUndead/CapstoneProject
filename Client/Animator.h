@@ -28,7 +28,7 @@ struct SocketRenderCache {
 	std::vector<RenderUnit> render_units{};
 	int last_item_id{ -1 }; // 아이템이 바뀌었는지 체크용
 	std::string model_name{}; // 아이템 아닐 때 모델이 바뀌었는지 체크
-	EShaderName shader_name{ EShaderName::Inst };
+	EShaderName shader_name{ EShaderName::Skinning };
 };
 
 class CAnimatorComponent : public CComponent

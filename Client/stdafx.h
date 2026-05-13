@@ -180,9 +180,8 @@ inline float InverseSqrt(float fValue) { return 1.0f / sqrtf(fValue); }
 inline void Swap(float* pfS, float* pfT) { float fTemp = *pfS; *pfS = *pfT; *pfT = fTemp; }
 
 enum EShaderName : size_t {
-	Inst,
-	TwoSide,
 	Skinning,
+	TwoSide,
 	UI,
 	Billboard,
 	Text,

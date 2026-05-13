@@ -54,7 +54,7 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 
 	// MeshComponent
 	auto meshComp = std::make_shared<CMeshComponent>();
-	meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
+	meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, node);
 	obj->world_matrix = node->local_matrix;
 
 	// MaterialComponent
@@ -87,11 +87,7 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 
 	// MeshComponent 생성 및 설정
 	auto meshComp = std::make_shared<CMeshComponent>();
-
-	if (aniSet.idle.empty())
-		meshComp->SetMeshFromFile<CMatVertex>(GET_DEVICE, GET_CMD_LIST, node);
-	else
-		meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, node);
+	meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, node);
 
 	// 파츠 처리 (머티리얼 등)
 	if (partProcessor) {
@@ -210,7 +206,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 	for (const auto& children : frameRoot->childrens) {
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-		InitStaticComponents(obj, heapManager, children, EShaderName::Inst);
+		InitStaticComponents(obj, heapManager, children, EShaderName::Skinning);
 
 		// Lobby 특화 Collider 로직
 		float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&children->mesh.bounds.Extents))) * 1.5f;
@@ -260,7 +256,7 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	// Renderer에 Mesh/Material 설정
 	for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
 		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-		meshRenderer->SetShader(EShaderName::Inst);
+		meshRenderer->SetShader(EShaderName::Skinning);
 		for (const RenderUnit originUnit : renderer->GetRenderUnits()) {
 			meshRenderer->SetRenderUnit(originUnit);
 		}
@@ -604,7 +600,7 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 				auto& material = node->mesh.materials[i];
 				CreateUnit(material.albedoMap, i);
 			}
-			renderer->SetShader(EShaderName::Inst);
+			renderer->SetShader(EShaderName::Skinning);
 		};
 
 	InitCharacterComponents(

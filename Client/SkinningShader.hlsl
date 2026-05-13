@@ -32,16 +32,16 @@ struct MaterialData
 
 struct AnimationData
 {
-    // Ã¹ ¹øÂ° ¾Ö´Ï¸ŞÀÌ¼Ç Á¤º¸
+    // ì²« ë²ˆì§¸ ì• ë‹ˆë©”ì´ì…˜ ì •ë³´
     uint start_offset_A;
     uint cur_frame_A;
-    // µÎ ¹øÂ° ¾Ö´Ï¸ŞÀÌ¼Ç Á¤º¸
+    // ë‘ ë²ˆì§¸ ì• ë‹ˆë©”ì´ì…˜ ì •ë³´
     uint start_offset_B;
     uint cur_frame_B;
     
     uint bone_count;
     int mask_id;
-    float blend_weight; // 0.0ÀÌ¸é A, 1.0ÀÌ¸é B
+    float blend_weight; // 0.0ì´ë©´ A, 1.0ì´ë©´ B
 };
 
 struct InstanceData
@@ -54,8 +54,8 @@ struct InstanceData
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 
-// º»º° ¸¶½ºÅ© Á¤º¸¸¦ ´ã´Â ¹öÆÛ (¹Ì¸® CPU¿¡¼­ ³Ñ°ÜÁÜ)
-// ¿¹: 0¹ø~10¹ø º»Àº 0.0(ÇÏ¹İ½Å), 11¹ø~20¹ø º»Àº 1.0(»ó¹İ½Å)
+// ë³¸ë³„ ë§ˆìŠ¤í¬ ì •ë³´ë¥¼ ë‹´ëŠ” ë²„í¼ (ë¯¸ë¦¬ CPUì—ì„œ ë„˜ê²¨ì¤Œ)
+// ì˜ˆ: 0ë²ˆ~10ë²ˆ ë³¸ì€ 0.0(í•˜ë°˜ì‹ ), 11ë²ˆ~20ë²ˆ ë³¸ì€ 1.0(ìƒë°˜ì‹ )
 StructuredBuffer<float> gBoneMasks : register(t2, space1);
 
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
@@ -67,48 +67,51 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     float4x4 finalWorld = instData.world_matrix;
     output.instanceID = instanceID;
 #ifdef SKINNED
-    // boneIdx = ÇØ´ç Å¬¸³ÀÇ ½ÃÀÛÁ¡ (anim_start_offset) + ÇöÀç ÇÁ·¹ÀÓ±îÁö °Ç³Ê¶Ù±â (cur_frame * bone_count) + ±× ¾È¿¡¼­ ³» »ÀÀÇ ¹øÈ£ (input.bone_indices[i])
-    uint frameBaseA = instData.animation.start_offset_A + (instData.animation.cur_frame_A * instData.animation.bone_count);
-    uint frameBaseB = instData.animation.start_offset_B + (instData.animation.cur_frame_B * instData.animation.bone_count);
-    float alpha = instData.animation.blend_weight;
+    bool isAni = !(instData.animation.bone_count == 0);
+    if (isAni) {
+        // boneIdx = í•´ë‹¹ í´ë¦½ì˜ ì‹œì‘ì  (anim_start_offset) + í˜„ì¬ í”„ë ˆì„ê¹Œì§€ ê±´ë„ˆë›°ê¸° (cur_frame * bone_count) + ê·¸ ì•ˆì—ì„œ ë‚´ ë¼ˆì˜ ë²ˆí˜¸ (input.bone_indices[i])
+        uint frameBaseA = instData.animation.start_offset_A + (instData.animation.cur_frame_A * instData.animation.bone_count);
+        uint frameBaseB = instData.animation.start_offset_B + (instData.animation.cur_frame_B * instData.animation.bone_count);
+        float alpha = instData.animation.blend_weight;
 
-    int maskID = instData.animation.mask_id;
-    uint boneCount = instData.animation.bone_count;
+        int maskID = instData.animation.mask_id;
+        uint boneCount = instData.animation.bone_count;
     
-    float weights[4];
-    weights[0] = input.bone_weights.x;
-    weights[1] = input.bone_weights.y;
-    weights[2] = input.bone_weights.z;
-    weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
+        float weights[4];
+        weights[0] = input.bone_weights.x;
+        weights[1] = input.bone_weights.y;
+        weights[2] = input.bone_weights.z;
+        weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
 
-    float3 posL = float3(0.0f, 0.0f, 0.0f);
-    float3 normalL = float3(0.0f, 0.0f, 0.0f);
+        float3 posL = float3(0.0f, 0.0f, 0.0f);
+        float3 normalL = float3(0.0f, 0.0f, 0.0f);
     
-    for (int i = 0; i < 4; ++i)
-    {
-        uint boneIdx = input.bone_indices[i];
-        
-        float maskWeight = 1.0f;
-        if (maskID >= 0)
+        for (int i = 0; i < 4; ++i)
         {
-            uint maskIdx = (uint) maskID * boneCount + boneIdx;
-            maskWeight = gBoneMasks[maskIdx];
-        }
+            uint boneIdx = input.bone_indices[i];
         
-        // ÃÖÁ¾ °¡ÁßÄ¡ = ·¹ÀÌ¾î ÀÚÃ¼ÀÇ ºí·»µå ¼öÄ¡ * º»º° ¸¶½ºÅ© ¼öÄ¡
-        float finalWeight = alpha * maskWeight;
+            float maskWeight = 1.0f;
+            if (maskID >= 0)
+            {
+                uint maskIdx = (uint) maskID * boneCount + boneIdx;
+                maskWeight = gBoneMasks[maskIdx];
+            }
         
-        float4x4 matA = gAnimBuffer[frameBaseA + boneIdx];
-        float4x4 matB = gAnimBuffer[frameBaseB + boneIdx];
+        // ìµœì¢… ê°€ì¤‘ì¹˜ = ë ˆì´ì–´ ìì²´ì˜ ë¸”ë Œë“œ ìˆ˜ì¹˜ * ë³¸ë³„ ë§ˆìŠ¤í¬ ìˆ˜ì¹˜
+            float finalWeight = alpha * maskWeight;
+        
+            float4x4 matA = gAnimBuffer[frameBaseA + boneIdx];
+            float4x4 matB = gAnimBuffer[frameBaseB + boneIdx];
     
-        float4x4 blendedMatrix = lerp(matA, matB, finalWeight);
+            float4x4 blendedMatrix = lerp(matA, matB, finalWeight);
 
-        posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
-        normalL += weights[i] * mul(input.normal, (float3x3) blendedMatrix);
-    }
+            posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
+            normalL += weights[i] * mul(input.normal, (float3x3) blendedMatrix);
+        }
     
-    input.position = posL;
-    input.normal = normalL;
+        input.position = posL;
+        input.normal = normalL;
+    }
 #endif
     float4 posW = mul(float4(input.position, 1.0f), finalWorld);
     output.position_world = posW.xyz;

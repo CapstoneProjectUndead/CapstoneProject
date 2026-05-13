@@ -131,6 +131,29 @@ void CInstRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     RenderBatches(cmdList, 3);
 }
 
+void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
+{
+    AniCB data;
+    XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
+    XMStoreFloat4x4(&data.world_matrix, worldT);
+    if (material)
+        data.material = material->GetMaterial()->GetMaterialData();
+    else {
+        data.material = MaterialData{};
+        data.material.albedo = { 1, 1, 0, 1 };
+        data.material.tex_idx = 0;  // texture는 white
+    }
+    data.ani_data = AnimationData{};
+
+    RenderKey key{ mesh, submeshIndex };
+
+    // Mesh별로 배치(Batch) 구성
+    if (isStatic)
+        static_batches[key].push_back(data);
+    else
+        dynamic_batches[key].push_back(data);
+}
+
 // CAniRenderer
 void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData)
 {

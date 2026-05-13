@@ -130,7 +130,7 @@ public:
 	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
 };
 
-class CShadowShader : public CInstShader {
+class CShadowShader : public CSkinningShader {
 public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_BLEND_DESC CreateBlendState() override;

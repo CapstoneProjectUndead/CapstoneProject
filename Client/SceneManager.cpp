@@ -20,12 +20,6 @@ void CSceneManager::Init(ID3D12Device* device)
 		shaders[EShaderName::Shadow] = std::move(shader);
 	}
 	{
-		// inst
-		std::shared_ptr<CShader> shader = std::make_unique<CInstShader>();
-		shader->CreateShader(device);
-		shaders[EShaderName::Inst] = std::move(shader);
-	}
-	{
 		// twoside(D3D12_CULL_MODE_NONE)
 		std::shared_ptr<CShader> shader = std::make_unique<CTwoSideShader>();
 		shader->CreateShader(device);
@@ -62,20 +56,16 @@ void CSceneManager::Init(ID3D12Device* device)
 	// renderer
 	renderers.resize(EShaderName::Count);
 	{
-		auto shadowRenderer = std::make_unique<CInstRenderer>();
+		auto shadowRenderer = std::make_unique<CAniRenderer>();
 		shadowRenderer->Initialize(device, 100);
 		renderers[EShaderName::Shadow] = std::move(shadowRenderer);
-
-		auto instRenderer = std::make_unique<CInstRenderer>();
-		instRenderer->Initialize(device, 5000);
-		renderers[EShaderName::Inst] = std::move(instRenderer);
 
 		auto twiSideRenderer = std::make_unique<CInstRenderer>();
 		twiSideRenderer->Initialize(device, 100);
 		renderers[EShaderName::TwoSide] = std::move(twiSideRenderer);
 
 		auto aniRenderer = std::make_unique<CAniRenderer>();
-		aniRenderer->Initialize(device, 100);
+		aniRenderer->Initialize(device, 1500);
 		renderers[EShaderName::Skinning] = std::move(aniRenderer);
 
 		auto uiRenderer = std::make_unique<CUIRenderer>();
@@ -96,7 +86,6 @@ void CSceneManager::Init(ID3D12Device* device)
 	// shadow map
 	{
 		shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
-		auto instHeap = shaders[EShaderName::Inst]->GetHeapManager();
 		auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
 		auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
 
@@ -106,7 +95,6 @@ void CSceneManager::Init(ID3D12Device* device)
 			shadowHeap->GetDSVCPUHandle(0)
 		);
 
-		shadow_map->CreateSRV(instHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 		shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 	}
 }

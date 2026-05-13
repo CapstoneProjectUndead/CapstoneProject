@@ -72,6 +72,7 @@ public:
 
 class CAniRenderer : public CRenderer<AniCB> {
 public:
+    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 };
