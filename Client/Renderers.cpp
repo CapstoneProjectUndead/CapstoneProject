@@ -61,10 +61,10 @@ inline void CRenderer<T>::RenderBatches(ID3D12GraphicsCommandList* commandList, 
         gpuAddr += currentOffset * sizeof(T);
         commandList->SetGraphicsRootShaderResourceView(rootSlot, gpuAddr);
 
-        key->Render(commandList, count);
+        key.mesh->Render(commandList, key.submesh_index, count);
         currentOffset += count;
     }
-    static_batches.clear(); // 나중에 제거(오류남)
+    static_batches.clear();
 
     // 2. Dynamic Batches 렌더링
     for (auto& [key, instances] : dynamic_batches) {
@@ -77,14 +77,14 @@ inline void CRenderer<T>::RenderBatches(ID3D12GraphicsCommandList* commandList, 
         gpuAddr += currentOffset * sizeof(T);
         commandList->SetGraphicsRootShaderResourceView(rootSlot, gpuAddr);
 
-        key->Render(commandList, count);
+        key.mesh->Render(commandList, key.submesh_index, count);
         currentOffset += count;
     }
     dynamic_batches.clear();
 }
 
 template<typename T>
-inline void CRenderer<T>::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic)
+inline void CRenderer<T>::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
     T data;
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
@@ -97,11 +97,13 @@ inline void CRenderer<T>::AddInstance(CMesh* mesh, CMaterialComponent* material,
         data.material.tex_idx = 0;  // texture는 white
     }
 
+    RenderKey key{ mesh, submeshIndex };
+
     // Mesh별로 배치(Batch) 구성
     if(isStatic)
-        static_batches[mesh].push_back(data);
+        static_batches[key].push_back(data);
     else
-        dynamic_batches[mesh].push_back(data);
+        dynamic_batches[key].push_back(data);
 }
 
 template<typename T>
@@ -114,11 +116,13 @@ inline void CRenderer<T>::AddInstance(CMesh* mesh, const XMFLOAT4 color, const X
     data.material.albedo = color;
     data.material.tex_idx = 0;  // texture는 white
 
+    RenderKey key{ mesh, 0 };
+
     // Mesh별로 배치(Batch) 구성
     if (isStatic)
-        static_batches[mesh].push_back(data);
+        static_batches[key].push_back(data);
     else
-        dynamic_batches[mesh].push_back(data);
+        dynamic_batches[key].push_back(data);
 }
 
 // CInstRenderer
@@ -128,7 +132,7 @@ void CInstRenderer::Render(ID3D12GraphicsCommandList* cmdList)
 }
 
 // CAniRenderer
-void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, AnimationData aniData)
+void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData)
 {
     AniCB data;
     if (material)
@@ -143,7 +147,9 @@ void CAniRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const 
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
     XMStoreFloat4x4(&data.world_matrix, worldT);
 
-    dynamic_batches[mesh].push_back(data);
+    RenderKey key{ mesh, submeshIndex };
+
+    dynamic_batches[key].push_back(data);
 }
 
 void CAniRenderer::Render(ID3D12GraphicsCommandList* cmdList)
@@ -162,9 +168,9 @@ CUIRenderer::CUIRenderer()
     quad_mesh = std::make_shared<CRectangleMesh>(GET_DEVICE, GET_CMD_LIST, 1.0f, 1.0f);
 }
 
-void CUIRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic)
+void CUIRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
-    CRenderer<UIInstCB>::AddInstance(quad_mesh.get(), material, world, isStatic);
+    CRenderer<UIInstCB>::AddInstance(quad_mesh.get(), material, world, submeshIndex, isStatic);
 }
 
 void CUIRenderer::AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic)
@@ -182,9 +188,9 @@ CBillboardRenderer::CBillboardRenderer()
     b_mesh = std::make_shared<CBillboardMesh>(GET_DEVICE, GET_CMD_LIST, 1.0f, 1.0f);
 }
 
-void CBillboardRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic)
+void CBillboardRenderer::AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
-    CRenderer<BillboardInstCB>::AddInstance(b_mesh.get(), material, world, isStatic);
+    CRenderer<BillboardInstCB>::AddInstance(b_mesh.get(), material, world, submeshIndex, isStatic);
 }
 
 void CBillboardRenderer::AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic)

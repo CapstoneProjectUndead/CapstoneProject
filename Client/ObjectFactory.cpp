@@ -58,7 +58,8 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 	obj->world_matrix = node->local_matrix;
 
 	// MaterialComponent
-	for (auto& material : node->mesh.materials) {
+	for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
+		auto& material = node->mesh.materials[i];
 		auto matComp = std::make_shared<CMaterialComponent>();
 		const std::string& texName = material.albedoMap;
 		if (!texName.empty()) {
@@ -67,7 +68,7 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 			mat->material.glossiness = material.glossiness;
 			matComp->SetMaterial(mat);
 		}
-		meshRenderer->SetRenderUnit(meshComp, matComp);
+		meshRenderer->SetRenderUnit(meshComp, matComp, i);
 	}
 
 	obj->name = node->name;
@@ -411,7 +412,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
-
+			
 		// 머티리얼 생성 및 렌더 유닛 등록 후 material return
 		auto CreateUnit = [&](const std::string& texName) {
 			auto matComp = std::make_shared<CMaterialComponent>();
@@ -419,7 +420,7 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 			auto mat = matManager.GetMaterial(texName, tex, heapManager);
 			matComp->SetMaterial(mat);
 
-			RenderUnit unit{ meshComp, matComp };
+			RenderUnit unit{ meshComp, matComp, 0 };
 			renderer->SetRenderUnit(unit);
 			return matComp;
 			};
@@ -491,17 +492,18 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName) {
+			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp };
+				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
 				};
 
-			for (auto& material : node->mesh.materials) {
-				CreateUnit(material.albedoMap);
+			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
+				auto& material = node->mesh.materials[i];
+				CreateUnit(material.albedoMap, i);
 			}
 		};
 
@@ -523,17 +525,18 @@ void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, C
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName) {
+			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp };
+				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
 				};
 
-			for (auto& material : node->mesh.materials) {
-				CreateUnit(material.albedoMap);
+			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
+				auto& material = node->mesh.materials[i];
+				CreateUnit(material.albedoMap, i);
 			}
 		};
 
@@ -555,17 +558,18 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName) {
+			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp };
+				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
 				};
 
-			for (auto& material : node->mesh.materials) {
-				CreateUnit(material.albedoMap);
+			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
+				auto& material = node->mesh.materials[i];
+				CreateUnit(material.albedoMap, i);
 			}
 		};
 
@@ -589,17 +593,18 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName) {
+			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
 				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
 				auto mat = matManager.GetMaterial(texName, tex, heapManager);
 				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp };
+				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
 				};
 
-			for (auto& material : node->mesh.materials) {
-				CreateUnit(material.albedoMap);
+			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
+				auto& material = node->mesh.materials[i];
+				CreateUnit(material.albedoMap, i);
 			}
 			renderer->SetShader(EShaderName::Inst);
 		};

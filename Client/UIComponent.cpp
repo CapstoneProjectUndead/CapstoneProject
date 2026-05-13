@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "UIComponent.h"
 #include "Mesh.h"
 #include "Renderers.h"
@@ -108,7 +108,6 @@ void CUIComponent::Render(ID3D12GraphicsCommandList* commandList)
 {
     if (!is_enable) return;
 
-    //CUIRenderer::GetInstance().AddInstance({ 1, 1, 0, 1 }, world_matrix);
     for (auto& c : child) {
         c->Render(commandList);
     }
@@ -273,7 +272,7 @@ void CUIImage::Collect(std::unique_ptr<IRenderer>& renderer)
     if (!is_enable) return;
 
     mat_comp->GetMaterial()->material.albedo = color;
-    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
+    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, 0, true);
 }
 
 json CUIImage::Serialize()
@@ -416,9 +415,9 @@ void CUIButton::Collect(std::unique_ptr<IRenderer>& renderer)
     if (!is_enable) return;
 
     GetColorByState();
-    // 머티리얼의 albedo를 버튼 상태 색상으로 업데이트
+    // 머티리얼의 albedo를 버튼 상태 색상으로 업데이트unit.submesh_index
     mat_comp->GetMaterial()->material.albedo = color;
-    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, true);
+    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, 0, true);
 }
 
 json CUIButton::Serialize()

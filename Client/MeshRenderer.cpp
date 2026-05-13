@@ -61,10 +61,10 @@ void CMeshRendererComponent::Collect(std::unique_ptr<IRenderer>& renderer, bool 
 
 		if (animator) {
 			// 애니메이터로부터 현재 프레임 정보를 가져옴
-			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), owner->world_matrix, aniData);
+			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), owner->world_matrix, unit.submesh_index, aniData);
 		}
 		else
-			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), owner->world_matrix, isStatic);
+			renderer->AddInstance(unit.mesh->GetMesh().get(), unit.material.get(), owner->world_matrix, unit.submesh_index, isStatic);
 #ifdef DEBUG
 		auto collider = owner->GetComponents<CColliderComponent>();
 		for (auto c : collider)

@@ -4,6 +4,7 @@ namespace CGeometryLoader {
 	struct FrameNode;
 	struct MeshCollider;
 	struct Mesh;
+	struct SubMesh;
 }
 
 class CVertex {
@@ -53,17 +54,28 @@ public:
 	void ReleaseUploadBuffer();
 
 	virtual void Render(ID3D12GraphicsCommandList*, uint32 instCount = 1);
+	void Render(ID3D12GraphicsCommandList* commandList, UINT submeshIndex, uint32 instCount);
 	void SetPrimitive(D3D12_PRIMITIVE_TOPOLOGY t) { primitive_topology = t; }
 
 	// 불러온 모델 데이터 저장용 함수
 	template<typename T>
 	void SetVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<T> vertices);
 	void SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices);
+	void SetSubMesh(const std::vector<CGeometryLoader::SubMesh>& submesh);
 
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const CGeometryLoader::MeshCollider& collider);
+
+	struct SubMesh
+	{
+		UINT start_index{};
+		UINT index_count{};
+		UINT material_index{};
+	};
+
+	std::vector<SubMesh> submeshes;
 protected:
 	// 정점 버퍼
 	ComPtr<ID3D12Resource> vertex_buffer{};
