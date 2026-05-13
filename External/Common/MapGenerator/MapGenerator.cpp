@@ -1,7 +1,7 @@
 #ifdef CLIENT
-    #include "stdafx.h"
+#include "stdafx.h"
 #else
-    #include "pch.h"
+#include "pch.h"
 #endif
 
 #include "MapGenerator.h"
@@ -21,10 +21,45 @@ int GetRandomInt(int min, int max) {
 // Store centers tracked during PlaceMediumStore, used by PlaceMonster
 std::vector<Cell> g_store_centers;
 
+std::vector<Cell> m_placedCenters; // 구조물 간 거리 체크
+
+
 // 특정 레이어의 타일 타입을 안전하게 가져옴
 EModelType GetTile(ELayer layer, int x, int y) {
     if (!IsValid(x, y)) return EModelType::UNKNOWN;
     return mapGrid[(int)layer][y][x];
+}
+
+// 구조물 간 최소 거리 체크 (공원, 상점 등이 겹치지 x)
+bool IsFarEnough(int cx, int cy, int minDistance) {
+    for (const auto& center : m_placedCenters) {
+        int dist = std::abs(center.x - cx) + std::abs(center.y - cy);
+        if (dist < minDistance) return false;
+    }
+    return true;
+}
+
+
+// --- 개선된 베딩(Padding) 헬퍼 함수 ---
+// '벽(WALL)'인 경우에만 길로 바꾸도록 하여, 이미 깔린 공원 바닥이나 다른 길을 덮어쓰지 않습니다.
+void ClearPadding(int cx, int cy, int size, EModelType roadType) {
+    int padSize = size + 1;
+    for (int y = cy - padSize; y <= cy + padSize; y++) {
+        for (int x = cx - padSize; x <= cx + padSize; x++) {
+            if (!IsValid(x, y)) continue;
+
+            // 이미 배치된 구조물(상점 본체 등)은 건드리지 않습니다.
+            EModelType currentStruct = mapGrid[(int)ELayer::STRUCTURE][y][x];
+            if (currentStruct != EModelType::UNKNOWN && currentStruct != EModelType::WALL) continue;
+
+            // 핵심 수정: '벽'일 때만 바닥재를 roadType으로 교체하고 벽을 제거합니다.
+            // 이렇게 하면 공원 바닥재가 일반 길로 덮이는 것을 막을 수 있습니다.
+            if (mapGrid[(int)ELayer::FLOOR][y][x] == EModelType::WALL) {
+                mapGrid[(int)ELayer::FLOOR][y][x] = roadType;
+                mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::UNKNOWN;
+            }
+        }
+    }
 }
 
 // 빌딩 내부 및 외벽 배치 공통 로직
@@ -41,21 +76,26 @@ void SetBuildingArea(int cx, int cy, int size, EModelType structType) {
 // --- 메인 API 함수 ---
 std::vector<InstanceData> MapGenerator::Generate3DMap() {
     g_store_centers.clear();
-    float areaRatio = (WIDTH * HEIGHT) / 5000.0f;
+
+    float areaRatio = (WIDTH * HEIGHT) / 2500.0f;
     int halfHeight = HEIGHT / 2;
 
-    // 초기화 (벽으로 채우기)
+    // 초기화
     for (int l = 0; l < (int)ELayer::COUNT; l++)
         for (int y = 0; y < HEIGHT; y++)
             for (int x = 0; x < WIDTH; x++)
                 mapGrid[l][y][x] = (l == (int)ELayer::FLOOR) ? EModelType::WALL : EModelType::UNKNOWN;
 
-    // 지형 생성 (미로 + 오픈 스페이스)
+    // 1. 미로 생성
     CarveMaze(1, 1);
-    CreateOpenSpaces(max(5, (int)(20 * areaRatio)));
 
+    // 2. 공터 생성
+    //CreateOpenSpaces(max(2, (int)(6 * areaRatio)));
+
+    // 3. 구조물 배치
     PlaceStructures(areaRatio, halfHeight);
 
+    // 4. 후처리
     ApplyAreaTheme(halfHeight);
     PlaceTreasure();
     RefineBuildingTiles();
@@ -73,12 +113,90 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
 
                 InstanceData inst;
                 inst.type = type;
-                inst.position = XMFLOAT3(x * TILE_SIZE, l * 0.01f, y * TILE_SIZE);
 
-                if (l == (int)ELayer::STRUCTURE) {
-                    inst.rotationY = CalculateRotation(x, y, type);
+                float posX = x * TILE_SIZE;
+                float posZ = y * TILE_SIZE;
+                float rotY = 0.0f;
+
+                // 회전/ 위치 처리
+                if (type == EModelType::FENCE_WOOD_STR) {
+                    // 나무 울타리 0/90도 정렬
+                    bool hasGreenLeft = (GetTile(ELayer::FLOOR, x - 1, y) == EModelType::PARK_GREEN);
+                    bool hasGreenRight = (GetTile(ELayer::FLOOR, x + 1, y) == EModelType::PARK_GREEN);
+                    rotY = (hasGreenLeft && hasGreenRight) ? 0.0f : 90.0f;
                 }
+                else if (type == EModelType::KIOSK) {
+                    // 주변 타일을 살펴서 자판기 뒷면이 벽을 향하도록 회전 설정
+                    if (GetTile(ELayer::FLOOR, x, y - 1) == EModelType::WALL) rotY = 0.0f;    // 뒤가 위쪽 벽
+                    else if (GetTile(ELayer::FLOOR, x, y + 1) == EModelType::WALL) rotY = 180.0f; // 뒤가 아래쪽 벽
+                    else if (GetTile(ELayer::FLOOR, x - 1, y) == EModelType::WALL) rotY = 270.0f; // 뒤가 왼쪽 벽
+                    else if (GetTile(ELayer::FLOOR, x + 1, y) == EModelType::WALL) rotY = 90.0f;  // 뒤가 오른쪽 벽
+                    else {
+                        // 벽을 못 찾았다면:: 기존처럼 90도 스냅 랜덤
+                        static float snapRots[] = { 0.0f, 90.0f, 180.0f, 270.0f };
+                        rotY = snapRots[GetRandomInt(0, 3)];
+                    }
+                }
+                else if (type == EModelType::HOUSE_INNTER) {
+                    static float snapRots[] = { 0.0f, 90.0f, 180.0f, 270.0f };
+                    rotY = snapRots[GetRandomInt(0, 3)];
+                }
+                else if (l == (int)ELayer::OBJECT) {
+                    rotY = (float)GetRandomInt(0, 359);
+                    if (type == EModelType::SMALL_BUSH) { // 덤불만 지터
+                        float jitter = TILE_SIZE * 0.3f;
+                        posX += (GetRandomInt(-100, 100) / 100.0f) * jitter;
+                        posZ += (GetRandomInt(-100, 100) / 100.0f) * jitter;
+                    }
+                }
+                else if (l == (int)ELayer::STRUCTURE) {
+                    rotY = CalculateRotation(x, y, type);
+                }
+
+                inst.position = XMFLOAT3(posX, l * 0.01f, posZ);
+                inst.rotationY = rotY;
                 instanceList.push_back(inst);
+
+
+                if (l == (int)ELayer::FLOOR) {
+
+                    if (type == EModelType::ROAD) {
+
+                        InstanceData sand;
+                        sand.type = EModelType::PARK_SAND_DECO;
+
+                        float sandY = 0.012f + (GetRandomInt(0, 60) * 0.0001f);
+                        sand.position = XMFLOAT3(x * TILE_SIZE, sandY, y * TILE_SIZE);
+                        sand.rotationY = (float)GetRandomInt(0, 359);
+                        instanceList.push_back(sand);
+                    }
+
+                    if (type == EModelType::PARK_GREEN) {
+                        for (int i = 0; i < 3; i++) { // 한 칸에 3개 생성
+                            InstanceData grass;
+                            grass.type = EModelType::GRASS;
+
+                            float dj = TILE_SIZE * 0.4f;
+                            float dx = (GetRandomInt(-100, 100) / 100.0f) * dj;
+                            float dz = (GetRandomInt(-100, 100) / 100.0f) * dj;
+
+                            grass.position = XMFLOAT3((x * TILE_SIZE) + dx, 0.02f, (y * TILE_SIZE) + dz);
+                            grass.rotationY = (float)GetRandomInt(0, 359);
+                            instanceList.push_back(grass);
+                        }
+                    }
+                    // 일반 길 20% 확률로 돌맹이 1개
+                    else if ((type == EModelType::ROAD) && GetRandomInt(0, 99) < 20) {
+                        InstanceData stone;
+                        stone.type = EModelType::DECO_STONE;
+                        float dj = TILE_SIZE * 0.3f;
+                        float dx = (GetRandomInt(-100, 100) / 100.0f) * dj;
+                        float dz = (GetRandomInt(-100, 100) / 100.0f) * dj;
+                        stone.position = XMFLOAT3((x * TILE_SIZE) + dx, 0.02f, (y * TILE_SIZE) + dz);
+                        stone.rotationY = (float)GetRandomInt(0, 359);
+                        instanceList.push_back(stone);
+                    }
+                }
             }
         }
     }
@@ -90,16 +208,69 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
     return instanceList;
 }
 
+
+
+
+
 void MapGenerator::PlaceStructures(float areaRatio, int halfHeight) {
-    for (int i = 0; i < max(1, (int)(3 * areaRatio)); i++)
-        PlaceLargeWarehouse(GetRandomInt(4, WIDTH - 4), GetRandomInt(halfHeight, HEIGHT - 4));
-    for (int i = 0; i < max(2, (int)(10 * areaRatio)); i++)
-        PlaceMediumStore(GetRandomInt(4, WIDTH - 4), GetRandomInt(halfHeight, HEIGHT - 4));
-    for (int i = 0; i < max(5, (int)(20 * areaRatio)); i++)
-        PlaceParkPlaza(GetRandomInt(3, WIDTH - 3), GetRandomInt(5, halfHeight - 5));
-    for (int i = 0; i < max(5, (int)(25 * areaRatio)); i++)
-        PlaceSmallKiosk(GetRandomInt(4, WIDTH - 4), GetRandomInt(halfHeight, HEIGHT - 4));
+    m_placedCenters.clear();
+
+    // 1. 대형 창고 (마을 구역, 거리 12)
+    int warehouseCount = max(1, (int)(2 * areaRatio));
+    for (int i = 0; i < warehouseCount; i++) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            int rx = GetRandomInt(5, WIDTH - 5), ry = GetRandomInt(halfHeight + 2, HEIGHT - 5);
+            if (IsFarEnough(rx, ry, 12)) {
+                PlaceLargeWarehouse(rx, ry);
+                m_placedCenters.push_back({ rx, ry });
+                break;
+            }
+        }
+    }
+
+    // 2. 공원 광장 (공원 구역, 거리 10)
+    int parkCount = max(2, (int)(6 * areaRatio));
+    for (int i = 0; i < parkCount; i++) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            int rx = GetRandomInt(4, WIDTH - 4), ry = GetRandomInt(4, halfHeight - 4);
+            if (IsFarEnough(rx, ry, 10)) {
+                PlaceParkPlaza(rx, ry);
+                m_placedCenters.push_back({ rx, ry });
+                break;
+            }
+        }
+    }
+
+    // 3. 중형 상점 (마을 구역, 거리 8)
+    int storeCount = max(2, (int)(4 * areaRatio));
+    for (int i = 0; i < storeCount; i++) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            int rx = GetRandomInt(4, WIDTH - 4), ry = GetRandomInt(halfHeight + 2, HEIGHT - 4);
+            if (IsFarEnough(rx, ry, 8)) {
+                PlaceMediumStore(rx, ry);
+                m_placedCenters.push_back({ rx, ry });
+                break;
+            }
+        }
+    }
+
+    // 4. 소형 키오스크 (마을 구역, 거리 5)
+    int kioskCount = max(3, (int)(10 * areaRatio));
+    for (int i = 0; i < kioskCount; i++) {
+        for (int attempt = 0; attempt < 15; attempt++) {
+            int rx = GetRandomInt(4, WIDTH - 4), ry = GetRandomInt(halfHeight + 1, HEIGHT - 4);
+            if (IsFarEnough(rx, ry, 1)) {
+                PlaceSmallKiosk(rx, ry);
+                m_placedCenters.push_back({ rx, ry });
+                break;
+            }
+        }
+    }
 }
+
+
+
+
 
 void MapGenerator::ApplyAreaTheme(int halfHeight) {
     for (int y = 0; y < HEIGHT; y++) {
@@ -107,13 +278,18 @@ void MapGenerator::ApplyAreaTheme(int halfHeight) {
             EModelType& floor = mapGrid[(int)ELayer::FLOOR][y][x];
             EModelType& structLayer = mapGrid[(int)ELayer::STRUCTURE][y][x];
 
+            if (structLayer != EModelType::UNKNOWN && structLayer != EModelType::WALL) continue;
+
             if (y > halfHeight) { // 마을 구역
-                if (floor == EModelType::ROAD) floor = EModelType::VILLAGE_ROAD;
+                if (floor == EModelType::ROAD) {
+                    floor = EModelType::VILLAGE_ROAD;
+                }
                 else if (floor == EModelType::WALL) {
                     structLayer = EModelType::VILLAGE_WALL;
                 }
             }
             else { // 공원 구역
+                // 공원 구역이지만 Plaza(PARK_GREEN)가 아닌 일반 미로 벽/길 처리
                 if (floor == EModelType::WALL) {
                     floor = EModelType::ROAD;
                     structLayer = EModelType::PARK_WALL;
@@ -123,12 +299,10 @@ void MapGenerator::ApplyAreaTheme(int halfHeight) {
     }
 }
 
-// 구조물 레이어의 회전값을 계산하는 전용 함수
 float MapGenerator::CalculateRotation(int x, int y, EModelType type) {
     int bMask = GetBuildingMask(x, y, true);
     int sMask = GetBuildingMask(x, y, false);
 
-    // 코너형 (주택 코너, 상점 코너, 코너 문)
     if (type == EModelType::HOUSE_WALL_CORNER || type == EModelType::STORE_WALL_CORNER || type == EModelType::CORNER_DOOR) {
         int mask = (type == EModelType::STORE_WALL_CORNER) ? sMask : bMask;
         if ((mask & 10) == 10) return 0.0f;
@@ -136,7 +310,6 @@ float MapGenerator::CalculateRotation(int x, int y, EModelType type) {
         if ((mask & 5) == 5)   return 180.0f;
         if ((mask & 9) == 9)   return 90.0f;
     }
-    // 직선형 (벽, 문)
     else if (type == EModelType::HOUSE_WALL_STRAIGHT || type == EModelType::DOOR) {
         if (!(bMask & 1)) return 0.0f;
         if (!(bMask & 8)) return 270.0f;
@@ -146,12 +319,11 @@ float MapGenerator::CalculateRotation(int x, int y, EModelType type) {
     return 0.0f;
 }
 
-// --- 로직 함수들 ---
 bool MapGenerator::TryPlaceDoor(int cx, int cy, int size) {
     struct DoorPos { int x, y; bool isCorner; };
     std::vector<DoorPos> candidates = {
-         {cx, cy - size, false}, {cx, cy + size, false}, {cx - size, cy, false}, {cx + size, cy, false}, // 중앙
-        {cx - size, cy - size, true}, {cx + size, cy - size, true}, {cx - size, cy + size, true}, {cx + size, cy + size, true} // 코너
+         {cx, cy - size, false}, {cx, cy + size, false}, {cx - size, cy, false}, {cx + size, cy, false},
+        {cx - size, cy - size, true}, {cx + size, cy - size, true}, {cx - size, cy + size, true}, {cx + size, cy + size, true}
     };
 
     std::shuffle(candidates.begin(), candidates.end(), gen);
@@ -159,11 +331,10 @@ bool MapGenerator::TryPlaceDoor(int cx, int cy, int size) {
     for (auto& cp : candidates) {
         int tx = cp.x, ty = cp.y;
         if (cp.isCorner) {
-            // 코너 문 모델의 왼쪽 면(진입로) 계산
-            if (cp.x < cx && cp.y < cy)      tx -= 1; // NW -> West
-            else if (cp.x > cx && cp.y < cy) ty -= 1; // NE -> North
-            else if (cp.x < cx && cp.y > cy) ty += 1; // SW -> South
-            else if (cp.x > cx && cp.y > cy) tx += 1; // SE -> East
+            if (cp.x < cx && cp.y < cy)      tx -= 1;
+            else if (cp.x > cx && cp.y < cy) ty -= 1;
+            else if (cp.x < cx && cp.y > cy) ty += 1;
+            else if (cp.x > cx && cp.y > cy) tx += 1;
         }
         else {
             tx += (cp.x > cx ? 1 : (cp.x < cx ? -1 : 0));
@@ -181,7 +352,7 @@ bool MapGenerator::TryPlaceDoor(int cx, int cy, int size) {
 }
 
 void MapGenerator::PlaceMediumStore(int cx, int cy) {
-    int size = HOUSE_SIZE - 1;
+    int size = 1;
     if (!IsValid(cx - (size + 1), cy - (size + 1)) || !IsValid(cx + size + 1, cy + size + 1)) return;
 
     for (int y = cy - size; y <= cy + size; y++) {
@@ -197,18 +368,19 @@ void MapGenerator::PlaceMediumStore(int cx, int cy) {
         }
     }
 
-    // 상점 탈출구 예약
-    if (IsValid(cx + size + 1, cy)) {
-        mapGrid[(int)ELayer::FLOOR][cy][cx + size + 1] = EModelType::ROAD;
-    }
-
     g_store_centers.push_back({ cx, cy });
+
+    // 상점 주변 베딩 (마을 길로)
+    ClearPadding(cx, cy, size, EModelType::VILLAGE_ROAD);
 }
 
 void MapGenerator::PlaceLargeWarehouse(int cx, int cy) {
     if (!IsValid(cx - (HOUSE_SIZE + 1), cy - (HOUSE_SIZE + 1)) || !IsValid(cx + HOUSE_SIZE + 1, cy + HOUSE_SIZE + 1)) return;
     SetBuildingArea(cx, cy, HOUSE_SIZE, EModelType::WAREHOUSE);
     TryPlaceDoor(cx, cy, HOUSE_SIZE);
+
+    // 창고 주변 베딩 (마을 길로)
+    ClearPadding(cx, cy, HOUSE_SIZE, EModelType::VILLAGE_ROAD);
 }
 
 bool MapGenerator::IsSpaceForTree(int x, int y) {
@@ -219,71 +391,93 @@ bool MapGenerator::IsSpaceForTree(int x, int y) {
 }
 
 void MapGenerator::PlaceParkPlaza(int cx, int cy) {
-    int size = 3;
+    int size = 2; // 5x5 사이즈
     if (!IsValid(cx - size, cy - size) || !IsValid(cx + size, cy + size)) return;
 
+    // 1. 공원 바닥 깔기
     for (int y = cy - size; y <= cy + size; y++)
         for (int x = cx - size; x <= cx + size; x++)
             mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::PARK_GREEN;
 
+    // 2. 중앙 벤치
     mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::BENCH;
-    if (IsSpaceForTree(cx, cy + size - 1)) mapGrid[(int)ELayer::OBJECT][cy + size - 1][cx] = EModelType::SEESAW;
 
+    // 3. 테두리 울타리 및 식생 배치
     for (int y = cy - size; y <= cy + size; y++) {
         for (int x = cx - size; x <= cx + size; x++) {
             if (GetTile(ELayer::OBJECT, x, y) != EModelType::UNKNOWN) continue;
-            bool isEdge = (y == cy - size || y == cy + size || x == cx - size || x == cx + size);
-            if (isEdge && GetRandomInt(0, 99) < 50) {
-                mapGrid[(int)ELayer::OBJECT][y][x] = IsSpaceForTree(x, y) ? EModelType::TREE : EModelType::SMALL_BUSH;
+
+            bool isEdgeX = (x == cx - size || x == cx + size);
+            bool isEdgeY = (y == cy - size || y == cy + size);
+
+            if ((isEdgeX || isEdgeY) && !(isEdgeX && isEdgeY)) {
+                if (GetRandomInt(0, 99) < 50) {
+                    // [수정] 나무 울타리 전용 타입으로 배치
+                    mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::FENCE_WOOD_STR;
+                }
+                else {
+                    mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
+                }
             }
-            else if (!isEdge && GetRandomInt(0, 99) < 10) {
-                mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
+            else if (isEdgeX && isEdgeY) {
+                mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::TREE;
             }
         }
     }
+    ClearPadding(cx, cy, size, EModelType::PARK_GREEN);
 }
 
-// --- 소품 및 건물 배치 함수 ---
 void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
     if (!IsValid(cx - 1, cy - 1) || !IsValid(cx + 1, cy + 1)) return;
-
-    // 건물 위거나 문 바로 앞이면 설치 안 함 (여유 공간 확보)
     if (IsHouseBuilding(cx, cy)) return;
 
-    for (int y = cy - 1; y <= cy + 1; y++) {
-        for (int x = cx - 1; x <= cx + 1; x++) {
-            if (mapGrid[(int)ELayer::STRUCTURE][y][x] == EModelType::DOOR ||
-                mapGrid[(int)ELayer::STRUCTURE][y][x] == EModelType::CORNER_DOOR) return;
+    // 1. 자판기가 등질 벽 탐색
+    int wallDX = 0, wallDY = 0;
+    bool foundWall = false;
+
+    if (GetTile(ELayer::FLOOR, cx, cy - 1) == EModelType::WALL) { wallDY = -1; foundWall = true; }
+    else if (GetTile(ELayer::FLOOR, cx, cy + 1) == EModelType::WALL) { wallDY = 1; foundWall = true; }
+    else if (GetTile(ELayer::FLOOR, cx - 1, cy) == EModelType::WALL) { wallDX = -1; foundWall = true; }
+    else if (GetTile(ELayer::FLOOR, cx + 1, cy) == EModelType::WALL) { wallDX = 1; foundWall = true; }
+
+    if (!foundWall) return;
+
+    // 2. 2x3 영역을 길(VILLAGE_ROAD)로
+    if (wallDY != 0) {
+        for (int y = cy; (wallDY == -1 ? y <= cy + 1 : y >= cy - 1); (wallDY == -1 ? y++ : y--)) {
+            for (int x = cx - 1; x <= cx + 1; x++) {
+                if (IsValid(x, y)) mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
+            }
+        }
+    }
+    else { // 좌/우 벽에 붙은 경우 (가로 2, 세로 3)
+        for (int x = cx; (wallDX == -1 ? x <= cx + 1 : x >= cx - 1); (wallDX == -1 ? x++ : x--)) {
+            for (int y = cy - 1; y <= cy + 1; y++) {
+                if (IsValid(x, y)) mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
+            }
         }
     }
 
-    // 바닥을 마을 길로 교체하고 키오스크 배치
-    for (int y = cy - 1; y <= cy + 1; y++) {
-        for (int x = cx - 1; x <= cx + 1; x++) {
-            if (!IsHouseBuilding(x, y)) mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
-        }
-    }
     mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::KIOSK;
 }
 
-void MapGenerator::PlaceMonster()
-{
-    const int size = HOUSE_SIZE - 1;
 
+
+void MapGenerator::PlaceMonster() {
+    const int size = 1;
     const int ndx[] = { 0, 0, -1, 1 };
     const int ndy[] = { -1, 1,  0, 0 };
 
-    // Ghost: 미로 길(ROAD) 타일에 구역별로 1마리씩 배치
-    const int BLOCK_SIZE = 15;
+    const int BLOCK_SIZE = 8;
     for (int by = 0; by < HEIGHT / 2; by += BLOCK_SIZE) {
         for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
-            for (int attempt = 0; attempt < 20; attempt++) {
+            for (int attempt = 0; attempt < 10; attempt++) {
                 int rx = GetRandomInt(bx, min(bx + BLOCK_SIZE - 1, WIDTH - 1));
                 int ry = GetRandomInt(by, min(by + BLOCK_SIZE - 1, HEIGHT / 2 - 1));
                 if (!IsValid(rx, ry)) continue;
                 if (GetTile(ELayer::FLOOR, rx, ry) != EModelType::ROAD) continue;
                 if (GetTile(ELayer::OBJECT, rx, ry) != EModelType::UNKNOWN) continue;
-                if (IsBlockedStructure(rx, ry)) continue;
+
                 mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::MONSTER_GHOST;
                 break;
             }
@@ -294,7 +488,6 @@ void MapGenerator::PlaceMonster()
         int cx = center.x, cy = center.y;
         bool placed = false;
 
-        // 상점 문 앞(바깥쪽)에 배치 시도
         for (int dy = -(size + 1); dy <= (size + 1) && !placed; dy++) {
             for (int dx = -(size + 1); dx <= (size + 1) && !placed; dx++) {
                 int sx = cx + dx, sy = cy + dy;
@@ -319,7 +512,6 @@ void MapGenerator::PlaceMonster()
             }
         }
 
-        // 상점 내부에 배치 (중심 근처의 VILLAGE_ROAD 타일)
         if (!placed) {
             for (int dy = -size; dy <= size && !placed; dy++) {
                 for (int dx = -size; dx <= size && !placed; dx++) {
@@ -338,20 +530,15 @@ void MapGenerator::PlaceMonster()
 }
 
 void MapGenerator::PlaceTreasure() {
-    const int BLOCK_SIZE = 10;
-    // 맵을 구역(Block)으로 나눠서 보물이 한곳에 쏠리지 않게 배치
+    const int BLOCK_SIZE = 6;
     for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
         for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
-            int count = GetRandomInt(0, 2); // 구역당 최대 2개
-            for (int t = 0; t < count; t++) {
+            if (GetRandomInt(0, 99) < 40) {
                 int rx = GetRandomInt(bx, min(bx + BLOCK_SIZE - 1, WIDTH - 1));
                 int ry = GetRandomInt(by, min(by + BLOCK_SIZE - 1, HEIGHT - 1));
 
-                if (!IsValid(rx, ry)) continue;
-
-                EModelType floor = mapGrid[(int)ELayer::FLOOR][ry][rx];
-                if (GetTile(ELayer::OBJECT, rx, ry) == EModelType::UNKNOWN
-                    && floor != EModelType::WALL
+                if (IsValid(rx, ry) && GetTile(ELayer::OBJECT, rx, ry) == EModelType::UNKNOWN
+                    && mapGrid[(int)ELayer::FLOOR][ry][rx] != EModelType::WALL
                     && !IsBlockedStructure(rx, ry)) {
                     mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::TREASURE;
                 }
@@ -360,35 +547,30 @@ void MapGenerator::PlaceTreasure() {
     }
 }
 
-// --- 유틸리티 및 지형 생성 알고리즘 ---
 bool MapGenerator::IsHouseBuilding(int x, int y) {
     if (!IsValid(x, y)) return false;
     EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
-    // 모든 건물 관련 타입을 체크
     return (t == EModelType::WAREHOUSE || t == EModelType::STORE ||
         t == EModelType::DOOR || t == EModelType::CORNER_DOOR ||
         t == EModelType::HOUSE_WALL_CORNER || t == EModelType::HOUSE_WALL_STRAIGHT ||
         t == EModelType::HOUSE_WALL_EMPTY);
 }
 
-// STRUCTURE 레이어가 통과 불가한 벽 계열인지 검사
-// (ApplyAreaTheme 이후 FLOOR에 WALL이 없으므로, 실제 벽은 STRUCTURE 레이어로 판별해야 함)
 bool MapGenerator::IsBlockedStructure(int x, int y) {
     if (!IsValid(x, y)) return true;
     EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
     return (t == EModelType::VILLAGE_WALL ||
-            t == EModelType::PARK_WALL ||
-            t == EModelType::WAREHOUSE ||
-            t == EModelType::STORE ||
-            t == EModelType::HOUSE_WALL_STRAIGHT ||
-            t == EModelType::HOUSE_WALL_CORNER ||
-            t == EModelType::STORE_WALL_CORNER);
+        t == EModelType::PARK_WALL ||
+        t == EModelType::WAREHOUSE ||
+        t == EModelType::STORE ||
+        t == EModelType::HOUSE_WALL_STRAIGHT ||
+        t == EModelType::HOUSE_WALL_CORNER ||
+        t == EModelType::STORE_WALL_CORNER);
 }
 
 bool MapGenerator::IsStoreBuilding(int x, int y) {
     if (!IsValid(x, y)) return false;
     EModelType t = mapGrid[(int)ELayer::STRUCTURE][y][x];
-    // 모든 건물 관련 타입을 체크
     return (t == EModelType::STORE || t == EModelType::STORE_WALL_CORNER || t == EModelType::STORE_WALL_EMPTY);
 }
 
@@ -397,15 +579,12 @@ void MapGenerator::RefineBuildingTiles() {
         for (int x = 0; x < WIDTH; x++) {
             EModelType& current = mapGrid[(int)ELayer::STRUCTURE][y][x];
 
-            // 창고(Warehouse) 처리
             if (bool isHouse = current == EModelType::WAREHOUSE) {
                 int mask = GetBuildingMask(x, y, isHouse);
-
                 if (mask == 15) current = EModelType::HOUSE_WALL_EMPTY;
                 else if (mask == 10 || mask == 6 || mask == 5 || mask == 9) current = EModelType::HOUSE_WALL_CORNER;
                 else current = EModelType::HOUSE_WALL_STRAIGHT;
             }
-            // 천막 상점(Store) 처리
             else if (current == EModelType::STORE) {
                 int mask = GetBuildingMask(x, y, false);
                 if (mask == 10 || mask == 6 || mask == 5 || mask == 9) {
@@ -419,20 +598,19 @@ void MapGenerator::RefineBuildingTiles() {
     }
 }
 
-// 헬퍼 함수: 주변 4방향 건물 여부 체크
 int MapGenerator::GetBuildingMask(int x, int y, bool isHouse) {
     int mask = 0;
     if (isHouse) {
-        if (IsHouseBuilding(x, y - 1)) mask |= 1; // 상
-        if (IsHouseBuilding(x, y + 1)) mask |= 2; // 하
-        if (IsHouseBuilding(x - 1, y)) mask |= 4; // 좌
-        if (IsHouseBuilding(x + 1, y)) mask |= 8; // 우
+        if (IsHouseBuilding(x, y - 1)) mask |= 1;
+        if (IsHouseBuilding(x, y + 1)) mask |= 2;
+        if (IsHouseBuilding(x - 1, y)) mask |= 4;
+        if (IsHouseBuilding(x + 1, y)) mask |= 8;
     }
     else {
-        if (IsStoreBuilding(x, y - 1)) mask |= 1; // 상
-        if (IsStoreBuilding(x, y + 1)) mask |= 2; // 하
-        if (IsStoreBuilding(x - 1, y)) mask |= 4; // 좌
-        if (IsStoreBuilding(x + 1, y)) mask |= 8; // 우
+        if (IsStoreBuilding(x, y - 1)) mask |= 1;
+        if (IsStoreBuilding(x, y + 1)) mask |= 2;
+        if (IsStoreBuilding(x - 1, y)) mask |= 4;
+        if (IsStoreBuilding(x + 1, y)) mask |= 8;
     }
     return mask;
 }
@@ -441,7 +619,6 @@ void MapGenerator::CarveMaze(int startX, int startY) {
     std::stack<Cell> s;
     s.push({ startX, startY });
 
-    // 시작점이 이미 ROAD(문 앞)라면 그대로 두고, 아니면 ROAD로 바꿈
     if (mapGrid[(int)ELayer::FLOOR][startY][startX] == EModelType::WALL)
         mapGrid[(int)ELayer::FLOOR][startY][startX] = EModelType::ROAD;
 
@@ -456,7 +633,6 @@ void MapGenerator::CarveMaze(int startX, int startY) {
             int ny = curr.y + dy[dirs[i]];
 
             if (IsValid(nx, ny) && mapGrid[(int)ELayer::FLOOR][ny][nx] == EModelType::WALL) {
-                // 중간 타일도 체크 (건물을 관통하지 않도록)
                 int mx = curr.x + dx[dirs[i]] / 2;
                 int my = curr.y + dy[dirs[i]] / 2;
 
@@ -476,8 +652,8 @@ void MapGenerator::CarveMaze(int startX, int startY) {
 void MapGenerator::CreateOpenSpaces(int numSpaces) {
     std::vector<Rect> builtSpaces;
     for (int i = 0; i < numSpaces; ) {
-        int w = GetRandomInt(3, 7);
-        int h = GetRandomInt(3, 7);
+        int w = GetRandomInt(2, 4);
+        int h = GetRandomInt(2, 4);
         int startX = GetRandomInt(2, WIDTH - w - 2);
         int startY = GetRandomInt(2, HEIGHT - h - 2);
         Rect newSpace = { startX, startY, w, h };
@@ -488,12 +664,19 @@ void MapGenerator::CreateOpenSpaces(int numSpaces) {
         }
 
         if (!overlap) {
-            for (int y = startY; y < startY + h; y++)
-                for (int x = startX; x < startX + w; x++)
-                    mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::ROAD;
+            for (int y = startY; y < startY + h; y++) {
+                for (int x = startX; x < startX + w; x++) {
+                    if (IsValid(x, y))
+                        mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::ROAD;
+                }
+            }
 
             builtSpaces.push_back(newSpace);
             i++;
+        }
+        else {
+            static int failCount = 0;
+            if (++failCount > 100) break;
         }
     }
 }
@@ -525,9 +708,8 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
     auto passable = [](int x, int y) {
         return IsWalkableFloor(x, y)
             && !IsBlockedStructure(x, y);
-    };
+        };
 
-    // 목적지가 막혀 있으면 인접 타일 중 통과 가능한 곳을 목적지로 대체
     if (!passable(ex, ey)) {
         const int ndx4[] = { 0, 0, -1, 1 };
         const int ndy4[] = { -1, 1,  0, 0 };
@@ -540,7 +722,6 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
                 found = true;
             }
         }
-
         if (!found) return {};
     }
 
@@ -548,7 +729,7 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
     const int ndy[] = { -1, 1,  0, 0 };
 
     std::vector<std::vector<bool>>  visited(HEIGHT, std::vector<bool>(WIDTH, false));
-    std::vector<std::vector<Cell>>  parent(HEIGHT,  std::vector<Cell>(WIDTH, { -1, -1 }));
+    std::vector<std::vector<Cell>>  parent(HEIGHT, std::vector<Cell>(WIDTH, { -1, -1 }));
 
     std::queue<Cell> q;
     q.push({ sx, sy });
@@ -571,7 +752,7 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
             int ny = cur.y + ndy[i];
             if (IsValid(nx, ny) && !visited[ny][nx] && passable(nx, ny)) {
                 visited[ny][nx] = true;
-                parent[ny][nx]  = cur;
+                parent[ny][nx] = cur;
                 q.push({ nx, ny });
             }
         }
