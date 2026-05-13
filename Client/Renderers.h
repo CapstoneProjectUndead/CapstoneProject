@@ -15,10 +15,10 @@ public:
     virtual void Initialize(ID3D12Device* dev, UINT instSize) = 0;
     virtual void Render(ID3D12GraphicsCommandList* cmdList) = 0;
     // bool 인자로 batch 배열 선택
-    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic) {};
+    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) {};
     // white texture 사용(사용 시 힙 0번에 tex set)
     virtual void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) {};
-    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, AnimationData aniData) {};
+    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) {};
 };
 
 template<typename T>
@@ -30,7 +30,7 @@ public:
     }
 
     // bool 인자로 batch 배열 선택
-    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic) override;
+    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     // white texture 사용(사용 시 힙 0번에 tex set)
     virtual void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
 
@@ -40,6 +40,20 @@ public:
     void RenderBatches(ID3D12GraphicsCommandList* cmdList, UINT rootSlot);
     virtual void Render(ID3D12GraphicsCommandList* cmdList) = 0;
 protected:
+    struct RenderKey
+    {
+        CMesh* mesh{};
+        UINT submesh_index{};
+
+        bool operator<(const RenderKey& other) const
+        {
+            if (mesh != other.mesh)
+                return mesh < other.mesh;
+
+            return submesh_index < other.submesh_index;
+        }
+    };
+
     T* mapped{};
     ComPtr<ID3D12Resource> inst_cb;
     UINT max_capacity{};
@@ -47,8 +61,8 @@ protected:
 
     // 한번만 설정-> static
     // 계속 변경-> dynamic
-    std::map<CMesh*, std::vector<T>> static_batches;
-    std::map<CMesh*, std::vector<T>> dynamic_batches;
+    std::map<RenderKey, std::vector<T>> static_batches;
+    std::map<RenderKey, std::vector<T>> dynamic_batches;
 };
 
 class CInstRenderer : public CRenderer<InstCB> {
@@ -58,14 +72,14 @@ public:
 
 class CAniRenderer : public CRenderer<AniCB> {
 public:
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, AnimationData aniData) override;
+    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 };
 
 class CUIRenderer : public CRenderer<UIInstCB> {
 public:
     CUIRenderer();
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic) override;
+    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:
@@ -75,7 +89,7 @@ private:
 class CBillboardRenderer : public CRenderer<BillboardInstCB> {
 public:
     CBillboardRenderer();
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, bool isStatic) override;
+    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GeometryLoader.h"
 #include "Mesh.h"
 
@@ -48,13 +48,19 @@ void CMesh::ReleaseUploadBuffer()
 
 void CMesh::Render(ID3D12GraphicsCommandList* commandList, uint32 instCount)
 {
+	Render(commandList, 0, instCount);
+}
+
+void CMesh::Render(ID3D12GraphicsCommandList* commandList, UINT submeshIndex, uint32 instCount)
+{
 	// 프리미티브 유형 설정
 	commandList->IASetPrimitiveTopology(primitive_topology);
 	// 정점 버퍼 뷰 설정
 	commandList->IASetVertexBuffers(slot_num, 1, &vertex_buffer_view);
 	if (index_buffer) {
+		auto& sm = submeshes[submeshIndex];
 		commandList->IASetIndexBuffer(&index_buffer_view);
-		commandList->DrawIndexedInstanced(index_num, instCount, start_index, base_vertex_index, 0);
+		commandList->DrawIndexedInstanced(sm.index_count, instCount, sm.start_index, base_vertex_index, 0);
 	}
 	else {
 		// 렌더링(입력 조립기 작동)
@@ -65,12 +71,31 @@ void CMesh::Render(ID3D12GraphicsCommandList* commandList, uint32 instCount)
 void CMesh::SetIndices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, UINT num, std::vector<UINT> indices)
 {
 	index_num = num;
+	if (submeshes.empty()) {
+		submeshes.push_back({ 0, num, 0 });
+	}
 
 	index_buffer = CreateBufferResource(device, commandList, indices.data(), sizeof(UINT) * index_num, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, index_upload_buffer.GetAddressOf());
 
 	index_buffer_view.BufferLocation = index_buffer->GetGPUVirtualAddress();
 	index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
 	index_buffer_view.SizeInBytes = sizeof(UINT) * index_num;
+}
+
+void CMesh::SetSubMesh(const std::vector<CGeometryLoader::SubMesh>& submesh)
+{
+	submeshes.clear();
+
+	for (const auto& sm : submesh)
+	{
+		SubMesh sub{};
+
+		sub.start_index = sm.start_index;
+		sub.index_count = sm.index_count;
+		sub.material_index = sm.material_index;
+
+		submeshes.push_back(sub);
+	}
 }
 
 template<>
@@ -179,6 +204,7 @@ CRectangleMesh::CRectangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 	// 인덱스 버퍼 생성
 	index_num = 6;
+	submeshes.push_back({ 0, index_num, 0 });
 	UINT indexes[] = {
 		0,1,3,
 		1,2,3
@@ -219,6 +245,7 @@ CRectangleMesh::CRectangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 	// 인덱스 버퍼 생성
 	index_num = 6;
+	submeshes.push_back({ 0, index_num, 0 });
 	UINT indexes[] = {
 		0,1,3,
 		1,2,3

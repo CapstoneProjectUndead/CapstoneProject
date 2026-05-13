@@ -25,16 +25,16 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::WALL_2_DOOR001] = "wall_2_door001";
     id_to_file[EModelVariant::VENDING_MACHINE_001] = "vending_machine001";
     id_to_file[EModelVariant::SEESAW_001] = "seesaw001";
-    id_to_file[EModelVariant::VILLAGE_WALL] = "village_wall";
+    id_to_file[EModelVariant::STONE_WALL] = "stone_wall";
     id_to_file[EModelVariant::PARK_WALL] = "park_wall";
     id_to_file[EModelVariant::TENT_CLOTH] = "tent_cloth";
     id_to_file[EModelVariant::TENT_CORNER_CLOTH] = "tent_corner_cloth";
     id_to_file[EModelVariant::TENT_CORNER] = "tent_corner";
 
     // Grass (ID 반복문 처리)
-    for (int i = 19; i <= 37; ++i) {
-        EModelVariant var = static_cast<EModelVariant>(static_cast<int>(EModelVariant::GRASS_019) + (i - 19));
-        std::string name = "grass0" + std::to_string(i);
+    for (int i = 0; i <= 2; ++i) {
+        EModelVariant var = static_cast<EModelVariant>(static_cast<int>(EModelVariant::GRASS_1) + (i));
+        std::string name = "park_grass_" + std::to_string(i + 1);
         id_to_file[var] = name;
     }
 
@@ -48,30 +48,31 @@ void CMapAssetManager::initialize()
     // Props
     id_to_file[EModelVariant::PARK_BENCH_002] = "park_bench002";
     id_to_file[EModelVariant::PARK_BENCH_003] = "park_bench003";
-    id_to_file[EModelVariant::SMALL_BUSH_001] = "small_bush001";
-    id_to_file[EModelVariant::SMALL_BUSH_002] = "small_bush002";
-    id_to_file[EModelVariant::TREE_002] = "tree002";
-    id_to_file[EModelVariant::PINETREE] = "pinetree";
+    id_to_file[EModelVariant::PARK_BUSH] = "park_bush";
+    id_to_file[EModelVariant::PARK_SHRUB] = "park_shrub";
+    id_to_file[EModelVariant::TREE_1] = "tree_1";
+    id_to_file[EModelVariant::TREE_2] = "tree_2";
+    id_to_file[EModelVariant::TREE_3] = "tree_3";
     id_to_file[EModelVariant::TRASHCAN_001] = "trashcan001";
     id_to_file[EModelVariant::TRASHCAN_002] = "trashcan002";
+    id_to_file[EModelVariant::MANHOLE] = "manhole";
 
     // 카테고리별 랜덤 풀 설정 (추가 장식물용 - 파일명 기반)
-    random_pools["grass"] = { "grass019", "grass020", "grass021", "grass022", "grass023", "grass024", "grass025",
-        "grass026", "grass027", "grass028", "grass029", "grass030", "grass031", "grass032", "grass033", "grass034", "grass035", "grass036", "grass037" };
+    random_pools["grass"] = { "park_grass_1", "park_grass_2", "park_grass_3"};
     random_pools["stone"] = { "stone011", "stone012", "stone013", "stone014", "stone015", "stone016", "stone017",
         "stone018", "stone019", "stone020", "stone021", "stone022", "stone023", "stone024" };
-    random_pools["tree"] = { "tree002", "pinetree" };
+    random_pools["tree"] = { "tree_1", "tree_2", "tree_3" };
     random_pools["bench"] = { "park_bench002", "park_bench003" };
-    random_pools["bush"] = { "small_bush001", "small_bush002" };
+    random_pools["bush"] = { "park_bush", "park_shrub" };
     random_pools["trashcan"] = { "trashcan001", "trashcan002" };
 
     // 모델 타입별 메쉬 매핑 (EModelType -> {EModelVariant 후보들(실제 모델 enum), 추가 풀 키})
     asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {"stone"} };
     asset_table[EModelType::PARK_GREEN] = { {EModelVariant::PARK_GREEN}, {"grass"} };
     asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {} };
-    asset_table[EModelType::WALL] = { {EModelVariant::PARK_WALL}, {} };
+    //asset_table[EModelType::WALL] = { {EModelVariant::STONE_WALL}, {} };
     asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
-    asset_table[EModelType::VILLAGE_WALL] = { {EModelVariant::VILLAGE_WALL}, {} };
+    asset_table[EModelType::VILLAGE_WALL] = { {EModelVariant::STONE_WALL}, {} };
     asset_table[EModelType::HOUSE_INNTER] = { {EModelVariant::HOUSE_PLACE}, {} };
     asset_table[EModelType::HOUSE_WALL_STRAIGHT] = { {EModelVariant::WALL_1002}, {} };
     asset_table[EModelType::HOUSE_WALL_CORNER] = { {EModelVariant::WALL_2001}, {} };
@@ -84,6 +85,7 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
     asset_table[EModelType::TREASURE] = { {}, {"trashcan"} };
+    //asset_table[EModelType::MANHOLE] = { {EModelVariant::MANHOLE} };  // entry나 manhole로 설정 필요
 
     // 천막 상점 관련
     asset_table[EModelType::STORE_WALL_EMPTY] = { {EModelVariant::TENT_CLOTH}, {} };
@@ -92,9 +94,6 @@ void CMapAssetManager::initialize()
     // 서버 전용 마커 (렌더링 없음)
     asset_table[EModelType::MONSTER_HUMAN] = { {}, {} };
     asset_table[EModelType::MONSTER_GHOST] = { {}, {} };
-
-    // 콜라이더 제외 키워드 설정
-    no_collider_set = { "grass", "stone" };
 }
 
 std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelVariant serverModelId)
@@ -126,15 +125,6 @@ std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelV
     }
 
     return results;
-}
-
-bool CMapAssetManager::RequiresCollider(const std::string& meshName)
-{
-    for (const auto& keyword : no_collider_set) {
-        if (meshName.find(keyword) != std::string::npos) return false;
-    }
-
-    return true;
 }
 
 EModelVariant CMapAssetManager::GetVariantFromName(const std::string& meshName)
