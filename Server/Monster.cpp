@@ -6,6 +6,8 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "Item.h"
+#include "AIComponent.h"
+#include "State.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CObject(OBJECT_TYPE::MONSTER)
@@ -72,6 +74,30 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
     }
 
     return nullptr;
+}
+
+void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
+{
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    awayDir.y = 0.0f;
+    float len = Vector3::Length(awayDir);
+    if (len < 0.001f) 
+        return;
+
+    target_player = player;
+    SendSoundPacket(false, SOUND_ID::surprising_girl, GetPosition());
+
+    melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
+    melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
+    velocity.x = melee_knockback_vel.x;
+    velocity.z = melee_knockback_vel.z;
+
+    auto* ai = GetComponent<CAIComponent>();
+    if (ai) {
+        auto cur = ai->GetCurrentState();
+        if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+    }
 }
 
 void CMonster::DropItem(uint16 itemID)

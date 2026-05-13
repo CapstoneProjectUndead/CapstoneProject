@@ -274,6 +274,9 @@ void CScene::RemoveObject(UINT id)
 	UINT idx = id_To_Index[id];
 	UINT last = objects.size() - 1;
 
+	if (auto* col = objects[idx]->GetComponent<CColliderComponent>())
+		CPhysicsManager::GetInstance().EraseCollider(col);
+
 	std::swap(objects[idx], objects[last]);
 	id_To_Index[objects[idx]->GetID()] = idx;
 

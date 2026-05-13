@@ -11,6 +11,7 @@
 #include "Item.h"
 #include "Inventory.h"
 #include "Ghost.h"
+#include "HumanMonster.h"
 
 
 CPlayer::CPlayer()
@@ -163,10 +164,20 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
             ProcessMining(input, elapsedTime, isMoving);
         }
 
-        if ((equipped_item_sub_type == ITEM_SUB_TYPE::MELEE_WEAPON
-            || equipped_item_sub_type == ITEM_SUB_TYPE::RANGED_WEAPON)
-            && current_scene_type == SCENE_TYPE::GAME) {
-            ProcessAttack(input, elapsedTime);
+        if (current_scene_type == SCENE_TYPE::GAME) {
+            switch (equipped_item_sub_type) 
+            {
+                case ITEM_SUB_TYPE::MELEE_WEAPON:
+                {
+                    ProcessMeleeAttack(input, elapsedTime);
+                }
+                break;
+                case ITEM_SUB_TYPE::RANGED_WEAPON:
+                {
+                    ProcessRangedAttack(input, elapsedTime);
+                }
+                break;
+            }
         }
 
         if (grounded_timer > 0.0f) {
@@ -643,25 +654,97 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
     }
 }
 
-void CPlayer::ProcessAttack(const InputData& input, float elapsedTime)
+void CPlayer::ProcessMeleeAttack(const InputData& input, float elapsedTime)
 {
-    if (equipped_item_id == 16) {
-        if (input.lbtn && !is_possessed && grounded_timer > 0.0f && spray_attack_timer <= 0.0f) {
-            SendSoundPacket(false, SOUND_ID::ghost_spray, GetPosition());
-            state = PLAYER_STATE::ATTACK;
-            spray_attack_timer = SPRAY_ATTACK_DURATION;
+    if (input.lbtn && !is_possessed && grounded_timer > 0.0f && melee_attack_timer <= 0.0f) {
+        state = PLAYER_STATE::ATTACK;
+        melee_attack_timer = MELEE_ATTACK_DURATION;
+    }
+
+    if (melee_attack_timer > 0.0f) {
+        float prev = melee_attack_timer;
+        melee_attack_timer -= elapsedTime;
+
+        // 0.4초 경과 시 데미지 (1.5 - 0.4 = 1.1 threshold)
+        if (prev > 1.1f && melee_attack_timer <= 1.1f)
+            MeleeAttack();
+
+        state = (melee_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+    }
+}
+
+void CPlayer::MeleeAttack()
+{
+    auto r = GetRoom();
+    if (!r) 
+        return;
+
+    auto scene = r->GetScenes()[(UINT)current_scene_type].get();
+    if (!scene) 
+        return;
+
+    XMFLOAT3 playerPos  = position;
+    XMFLOAT3 playerLook = look;
+    playerLook.y = 0.0f;
+    float lookLen = sqrtf(playerLook.x * playerLook.x + playerLook.z * playerLook.z);
+    if (lookLen < 0.001f) 
+        return;
+
+    playerLook.x /= lookLen;
+    playerLook.z /= lookLen;
+
+    XMFLOAT3 right = { playerLook.z, 0.0f, -playerLook.x };
+
+    constexpr float MELEE_DEPTH      = 1.3f;
+    constexpr float MELEE_HALF_WIDTH = 0.6f;
+
+    for (auto& [id, monster] : scene->GetMonsters()) {
+        if (!monster) 
+            continue;
+
+        MON_TYPE mType = monster->GetMonsterType();
+        if (mType != MON_TYPE::HUMAN_MONSTER && mType != MON_TYPE::ANIMAL_MONSTER) 
+            continue;
+
+        XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+        toMonster.y = 0.0f;
+
+        float forwardDist = playerLook.x * toMonster.x + playerLook.z * toMonster.z;
+        if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH) 
+            continue;
+
+        float lateralDist = fabsf(right.x * toMonster.x + right.z * toMonster.z);
+        if (lateralDist > MELEE_HALF_WIDTH) 
+            continue;
+
+        monster->ApplyMeleeHit(playerPos, static_pointer_cast<CPlayer>(shared_from_this()));
+    }
+}
+
+void CPlayer::ProcessRangedAttack(const InputData& input, float elapsedTime)
+{
+    switch (equipped_item_id)
+    {
+        case 16:  // 스프레이
+        {
+            if (input.lbtn && !is_possessed && grounded_timer > 0.0f && spray_attack_timer <= 0.0f) {
+                SendSoundPacket(false, SOUND_ID::ghost_spray, GetPosition());
+                state = PLAYER_STATE::ATTACK;
+                spray_attack_timer = SPRAY_ATTACK_DURATION;
+            }
+
+            if (spray_attack_timer > 0.0f) {
+                float prev = spray_attack_timer;
+                spray_attack_timer -= elapsedTime;
+
+                // 0.8초 경과 시 데미지 (1.5 - 0.8 = 0.7 threshold)
+                if (prev > 0.7f && spray_attack_timer <= 0.7f)
+                    SprayAttack(elapsedTime);
+
+                state = (spray_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+            }
         }
-
-        if (spray_attack_timer > 0.0f) {
-            float prev = spray_attack_timer;
-            spray_attack_timer -= elapsedTime;
-
-            // 0.8초 경과 시 데미지 (1.5 - 0.8 = 0.7 threshold)
-            if (prev > 0.7f && spray_attack_timer <= 0.7f)
-                SprayAttack(elapsedTime);
-
-            state = (spray_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
-        }
+        break;
     }
 }
 

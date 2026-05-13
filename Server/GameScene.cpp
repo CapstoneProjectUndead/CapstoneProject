@@ -51,13 +51,13 @@ void CGameScene::Initialize()
 	item_manager->SpawnItem(49, XMFLOAT3{ 2.2, 0, 1.9 });
 
 	// 테스트 (임시코드)
-	//shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
-	//if (humanMonster) {
-	//	humanMonster->SetPosition(2, 0.1f, 2.f);
-	//	humanMonster->SetOriginPos({ 2, 0.1f, 2.f });
-	//	humanMonster->SetScene(this);
-	//	AddMonster(humanMonster);
-	//}
+	shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
+	if (humanMonster) {
+		humanMonster->SetPosition(2, 0.1f, 2.f);
+		humanMonster->SetOriginPos({ 2, 0.1f, 2.f });
+		humanMonster->SetScene(this);
+		AddMonster(humanMonster);
+	}
 }
 
 void CGameScene::Update(float elapsedTime)

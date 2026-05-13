@@ -123,7 +123,8 @@ public:
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
-	void ProcessAttack(const InputData& input, float elapsedTime);
+	void ProcessMeleeAttack(const InputData& input, float elapsedTime);
+	void ProcessRangedAttack(const InputData& input, float elapsedTime);
 	void UpdatePossession(float elapsedTime);
 	void ReleasePossession(const InputData& input, const float elapsedTime);
 
@@ -131,6 +132,7 @@ private:
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
 
 	void SprayAttack(float elapsedTime);
+	void MeleeAttack();
 
 private:
 	weak_ptr<CUser>				user;
@@ -186,6 +188,10 @@ private:
 	// 스프레이 공격 상태 유지 타이머
 	float       spray_attack_timer{ 0.0f };
 	const float SPRAY_ATTACK_DURATION = 1.5f;
+
+	// 근접 공격 상태 유지 타이머
+	float       melee_attack_timer{ 0.0f };
+	const float MELEE_ATTACK_DURATION = 1.5f;
 
 	float       dig_sound_timer = -1.0f;
 };

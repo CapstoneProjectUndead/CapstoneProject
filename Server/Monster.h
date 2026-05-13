@@ -48,6 +48,8 @@ public:
     void SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
     const XMFLOAT3& GetOriginPos() const { return origin_position; }
 
+    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player);
+
     CScene* GetScene() const { return current_scene; }
     void    SetScene(CScene* scene) { current_scene = scene; }
 
@@ -92,6 +94,12 @@ protected:
 
     float attack_range = 1.2f; // 공격 범위
     float trace_speed = 2.0f;  // 추격 속도
+
+    // 근접 피격 넉백
+    float     melee_knockback_timer = 0.0f;
+    XMFLOAT3  melee_knockback_vel   = {};
+    static constexpr float MELEE_KNOCKBACK_DURATION = 0.25f;
+    static constexpr float MELEE_KNOCKBACK_FORCE    = 3.0f;
 
     // BFS 경로 탐색 (TRACE 추적 / IDLE 복귀 공용)
     std::vector<MapGenerator::Cell> nav_path;

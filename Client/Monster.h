@@ -59,10 +59,10 @@ public:
     void            SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
     const XMFLOAT3& GetOriginPos() const { return origin_position; }
 
-    void ApplyMeleeHit(const XMFLOAT3& fromPos);
-
     void            SetDestInfo(const MonsterInfo& pos) { dest_info = pos; }
     void            RecordMonsterFrameHistory(const MonsterFrameHistory& state);
+
+    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos);
 
 protected:
     void MonsterMoveSyncByInterpolation(float elapsedTime);

@@ -6,6 +6,7 @@
 #include "Movement.h"
 #include "Room.h"
 #include "Scene.h"
+#include "State.h"
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
@@ -21,10 +22,21 @@ CHumanMonster::~CHumanMonster()
 void CHumanMonster::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+
+	if (melee_knockback_timer > 0.0f) {
+		float ratio = melee_knockback_timer / MELEE_KNOCKBACK_DURATION;
+		velocity.x = melee_knockback_vel.x * ratio;
+		velocity.z = melee_knockback_vel.z * ratio;
+		melee_knockback_timer -= elapsedTime;
+		if (melee_knockback_timer < 0.0f) melee_knockback_timer = 0.0f;
+	}
 }
 
 void CHumanMonster::OnIdleMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     // (Idle 상태)
 
     // 시야 범위에 플레이어가 들어오는지 체크
@@ -124,6 +136,9 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
 void CHumanMonster::OnPatrolMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     // (순찰 상태)
     // 타겟 탐색 (TRACE 전환)
     auto target = FindNearestPlayer();
@@ -185,6 +200,9 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
 
 void CHumanMonster::OnTraceMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     auto AIComponent = GetComponent<CAIComponent>();
     auto targetPlayer = target_player.lock();
 
@@ -274,6 +292,9 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
@@ -341,6 +362,81 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
         if (AIComponent)
             AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
     }
+}
+
+void CHumanMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
+{
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    awayDir.y = 0.0f;
+    float len = Vector3::Length(awayDir);
+    if (len < 0.001f) return;
+
+    target_player = player;
+    SendSoundPacket(false, SOUND_ID::surprising_girl, GetPosition());
+
+    melee_hit_count++;
+
+    // ChangeState 먼저 (OnFleeEnter가 velocity를 0으로 초기화하므로)
+    auto* ai = GetComponent<CAIComponent>();
+    if (ai) {
+        if (melee_hit_count >= MAX_MELEE_HITS) {
+            ai->ChangeState(AI_STATE::MONSTER_FLEE);
+        } else {
+            auto cur = ai->GetCurrentState();
+            if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+                ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        }
+    }
+
+    // 넉백 velocity는 ChangeState 이후에 적용 (OnFleeEnter의 velocity 초기화를 덮어씀)
+    melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
+    melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
+    velocity.x = melee_knockback_vel.x;
+    velocity.z = melee_knockback_vel.z;
+}
+
+void CHumanMonster::OnFleeEnter()
+{
+    flee_timer = FLEE_DURATION;
+    nav_path.clear();
+    path_refresh_timer = 0.0f;
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
+
+    DropItem(20);
+}
+
+void CHumanMonster::OnFleeMove(float elapsedTime)
+{
+    if (melee_knockback_timer > 0.0f) return;
+
+    flee_timer -= elapsedTime;
+    if (flee_timer <= 0.0f) {
+        MarkForDelete();
+        return;
+    }
+
+    auto targetPlayer = target_player.lock();
+    if (targetPlayer) {
+        XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->GetPosition());
+        awayDir.y = 0.0f;
+        float len = Vector3::Length(awayDir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
+
+    velocity.x = look.x * FLEE_SPEED;
+    velocity.z = look.z * FLEE_SPEED;
+}
+
+void CHumanMonster::OnFleeExit()
+{
+    flee_timer = 0.0f;
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
 }
 
 void CHumanMonster::OnIdleEnter()
