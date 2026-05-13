@@ -60,7 +60,8 @@ void CGhost::Update(float elapsedTime)
 
 void CGhost::OnIdleMove(float elapsedTime)
 {
-    if (knockback_timer > 0.0f) return;
+    if (knockback_timer > 0.0f) 
+        return;
 
      // 시야 범위에 플레이어가 들어오는지 체크
     auto target = FindNearestPlayer();
@@ -158,7 +159,8 @@ void CGhost::OnIdleMove(float elapsedTime)
 
 void CGhost::OnPatrolMove(float elapsedTime)
 {
-    if (knockback_timer > 0.0f) return;
+    if (knockback_timer > 0.0f) 
+        return;
 
     // 플레이어 감지 (TRACE 전환)
     auto target = FindNearestPlayer();
@@ -187,7 +189,8 @@ void CGhost::OnPatrolMove(float elapsedTime)
 
 void CGhost::OnTraceMove(float elapsedTime)
 {
-    if (knockback_timer > 0.0f) return;
+    if (knockback_timer > 0.0f) 
+        return;
 
     auto AIComponent = GetComponent<CAIComponent>();
     auto targetPlayer = target_player.lock();
@@ -296,7 +299,8 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
-    if (knockback_timer > 0.0f) return;
+    if (knockback_timer > 0.0f) 
+        return;
 
     constexpr float DASH_SPEED    = 6.0f;
     constexpr float DASH_DURATION = 0.5f;
@@ -356,7 +360,8 @@ void CGhost::OnAttackMove(float elapsedTime)
 
 void CGhost::OnFleeMove(float elapsedTime)
 {
-    if (knockback_timer > 0.0f) return;
+    if (knockback_timer > 0.0f) 
+        return;
 
     flee_timer -= elapsedTime;
 
@@ -460,8 +465,8 @@ void CGhost::OnFleeEnter()
     auto scene = CSceneManager::GetInstance().GetActiveScene();
     if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
         XMFLOAT3 itemSpawnPos = position;
-        itemSpawnPos.y = 0;
-        gameScene->SpawnWorldItem(DROP_ITEM_ID, itemSpawnPos);
+        itemSpawnPos.y = 0.2f;
+        gameScene->SpawnWorldItem(20, itemSpawnPos);
     }
 }
 

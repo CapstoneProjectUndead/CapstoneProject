@@ -394,7 +394,7 @@ void CHumanMonster::OnFleeEnter()
     auto scene = CSceneManager::GetInstance().GetActiveScene();
     if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
         XMFLOAT3 itemSpawnPos = position;
-        itemSpawnPos.y = 0.0f;
+        itemSpawnPos.y = 0.2f;
         gameScene->SpawnWorldItem(20, itemSpawnPos);
     }
 }

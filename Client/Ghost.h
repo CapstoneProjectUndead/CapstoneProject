@@ -56,7 +56,6 @@ private:
     float flee_timer = 0.0f;
     static constexpr float  FLEE_DURATION = 1.0f;
     static constexpr float  FLEE_SPEED    = 1.0f;
-    static constexpr uint16 DROP_ITEM_ID  = 20; // 드롭 아이템 ID (수정 필요 시 여기서)
 
     // 스프레이 피격
     int       spray_hit_count   = 0;
