@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Component.h"
 
 class CMesh;
@@ -33,6 +33,7 @@ struct RenderUnit
 {
     std::shared_ptr<CMeshComponent> mesh;
     std::shared_ptr<CMaterialComponent> material;
+    UINT submesh_index{};
 };
 
 class CMeshRendererComponent : public CComponent
@@ -45,9 +46,9 @@ public:
     {
         render_units.push_back({ mesh, nullptr });
     }
-    void SetRenderUnit(std::shared_ptr<CMeshComponent>& mesh, std::shared_ptr<CMaterialComponent>& mat)
+    void SetRenderUnit(std::shared_ptr<CMeshComponent>& mesh, std::shared_ptr<CMaterialComponent>& mat, UINT submeshIndex)
     {
-        render_units.push_back({ mesh, mat });
+        render_units.push_back({ mesh, mat, submeshIndex });
     }
     void SetRenderUnit(RenderUnit renderUnit)
     {

@@ -1,4 +1,4 @@
-﻿#ifdef CLIENT
+#ifdef CLIENT
     #include "stdafx.h"
 #else
     #include "pch.h"
@@ -110,7 +110,6 @@ void MapGenerator::ApplyAreaTheme(int halfHeight) {
             if (y > halfHeight) { // 마을 구역
                 if (floor == EModelType::ROAD) floor = EModelType::VILLAGE_ROAD;
                 else if (floor == EModelType::WALL) {
-                    floor = EModelType::VILLAGE_ROAD;
                     structLayer = EModelType::VILLAGE_WALL;
                 }
             }

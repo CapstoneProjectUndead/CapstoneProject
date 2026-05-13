@@ -15,13 +15,11 @@ void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* 
     );
     light_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 
-    // light ÃÊ±âÈ­
+    // light ì´ˆê¸°í™”
     light.ambient_light = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 
-    // ¹æÇâ±¤ 3°³ ¿¹½Ã
-    light.lights[0].direction = XMFLOAT3(0 , -1, 0);
-    XMVECTOR dir = XMVector3Normalize(XMVectorSet(0.5f, -1.0f, 0.5f, 0.0f));
-    XMStoreFloat3(&light.lights[0].direction, dir);
+    // ë°©í–¥ê´‘ 3ê°œ ì˜ˆì‹œ
+    light.lights[0].direction = XMFLOAT3(0.01 , -1.0, 0.01);
     light.lights[0].strength = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
     //light.lights[1].direction = XMFLOAT3(-0.577f, -0.577f, 0.0f);

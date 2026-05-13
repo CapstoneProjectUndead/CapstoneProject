@@ -1,77 +1,7 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GeometryLoader.h"
 
 using namespace CGeometryLoader;
-
-//std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(const std::string& filename, int boneCount)
-//{
-//    std::unordered_map<std::string, AnimationClip> animations;
-//
-//    BinaryReader br(filename);
-//    if (!br.Good())
-//        return animations;
-//
-//    std::ifstream& file = br.Stream();
-//    std::string tag;
-//
-//    // <AnimationClipCount>:
-//    br.FindTag("<AnimationClipCount>:");
-//    int clipCount = 0;
-//    file.read((char*)&clipCount, sizeof(int));
-//
-//    for (int c = 0; c < clipCount; ++c)
-//    {
-//        br.FindTag("<AnimationClip>:");
-//        std::string clipName = br.ReadName();
-//
-//        br.FindTag("<ClipLength>:");
-//        float clipLength = 0;
-//        file.read((char*)&clipLength, sizeof(float));
-//
-//        br.FindTag("<KeyframeCount>:");
-//        int keyCount = 0;
-//        file.read((char*)&keyCount, sizeof(int));
-//
-//        AnimationClip clip;
-//        clip.bone_animations.resize(boneCount);
-//
-//        for (int k = 0; k < keyCount; ++k)
-//        {
-//            br.FindTag("<Keyframe>:");
-//            br.FindTag("<Time>:");
-//            float time = 0;
-//            file.read((char*)&time, sizeof(float));
-//
-//            // 모든 bone에 대해 TRS 읽기
-//            for (int b = 0; b < boneCount; ++b)
-//            {
-//                br.FindTag("<Bone>:");
-//                int boneIndex = 0;
-//                file.read((char*)&boneIndex, sizeof(int));
-//
-//                Keyframe key;
-//                key.time_pos = time;
-//
-//                br.FindTag("<T>:");
-//                key.translation = br.Read<XMFLOAT3>();
-//
-//                br.FindTag("<R>:");
-//                key.rotation = br.Read<XMFLOAT4>();
-//
-//                br.FindTag("<S>:");
-//                key.scale = br.Read<XMFLOAT3>();
-//
-//                clip.bone_animations[boneIndex].key_frames.push_back(key);
-//            }
-//
-//            br.FindTag("</Keyframe>");
-//        }
-//
-//        animations.emplace(clipName, clip);
-//    }
-//
-//    return animations;
-//}
 
 std::unordered_map<std::string, AnimationClip> CGeometryLoader::LoadAnimations(const std::string& filename, int boneCount)
 {
@@ -221,6 +151,8 @@ void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>&
             if (!br.ReadTag(tag))
                 break;
 
+            if (br.IsTag(tag, "</Material>"))
+                break;
             if (br.IsTag(tag, "</Materials>"))
                 return;
             if (br.IsTag(tag, "<AlbedoColor>:"))
@@ -317,14 +249,35 @@ Mesh CGeometryLoader::LoadMesh(BinaryReader& br)
     if(br.FindTag("<Normals>:")) br.ReadVectors<XMFLOAT3>(mesh.normals);
     if (br.FindTag("<SubMeshes>:")) {
         int subMeshCount = br.Read<UINT>();
-        mesh.indices.reserve(subMeshCount);
+        mesh.submeshes.reserve(subMeshCount);
+
+        UINT currentStartIndex = 0;
+
         for (int i = 0; i < subMeshCount; ++i)
         {
             std::string tag;
             br.ReadTag(tag);
-            
-            int index = br.Read<int>();
-            br.ReadVectors<UINT>(mesh.indices);
+
+            // <SubMesh>: i indices...
+            UINT materialIndex = br.Read<int>();
+
+            std::vector<UINT> localIndices;
+            br.ReadVectors<UINT>(localIndices);
+
+            SubMesh sm;
+            sm.start_index = currentStartIndex;
+            sm.index_count = (UINT)localIndices.size();
+            sm.material_index = materialIndex;
+
+            mesh.submeshes.push_back(sm);
+
+            // giant index buffer append
+            mesh.indices.insert(
+                mesh.indices.end(),
+                localIndices.begin(),
+                localIndices.end());
+
+            currentStartIndex += sm.index_count;
         }
     }
     // meterial 정보 read

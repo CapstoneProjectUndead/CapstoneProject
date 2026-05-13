@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "AnimationManager.h"
 
 class BinaryReader {
@@ -200,6 +200,13 @@ namespace CGeometryLoader {
     };
 
     // Load 용 Mesh, 사용X
+    struct SubMesh
+    {
+        UINT start_index = 0;
+        UINT index_count = 0;
+        UINT material_index = 0;
+    };
+
     struct Mesh
     {
         std::vector<XMFLOAT3> positions;
@@ -208,6 +215,7 @@ namespace CGeometryLoader {
         std::vector<XMFLOAT3> normals;
         std::vector<MaterialData> materials;
         std::vector<UINT> indices;
+        std::vector<SubMesh> submeshes;
         std::vector<BoneWeightData> bone_weights;
         BoundingBox bounds;
     };
