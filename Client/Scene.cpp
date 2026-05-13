@@ -37,20 +37,7 @@ CScene::~CScene()
 void CScene::Initialize()
 {
 	factory->GetMaterial(CSceneManager::GetInstance().GetShaders()[EShaderName::UI]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
-	shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
-	auto& shaders = CSceneManager::GetInstance().GetShaders();
-	auto instHeap = shaders[EShaderName::Inst]->GetHeapManager();
-	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
-	auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
-
-	shadow_map->CreateDescriptors(
-		shadowHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx),
-		shadowHeap->GetSRVGPUHandle(DescriptorSlot::ShadowMapIdx),
-		shadowHeap->GetDSVCPUHandle(0)
-	);
-
-	shadow_map->CreateSRV(instHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
-	shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+	
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -97,16 +84,17 @@ void CScene::Update(float elapsedTime)
 
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 {
-	if (!shadow_map) return;
+	auto& shadowMap = CSceneManager::GetInstance().GetShadowMap();
+	if (!shadowMap || !light) return;
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
 	shaders[EShaderName::Shadow]->RenderBegin(commandList);
-	shadow_map->RenderBegin(commandList);
+	shadowMap->RenderBegin(commandList);
 	light->Render(commandList);
 	renderers[EShaderName::Shadow]->Render(commandList);
 
-	shadow_map->RenderEnd(commandList);
+	shadowMap->RenderEnd(commandList);
 	shaders[EShaderName::Shadow]->RenderEnd(commandList);
 }
 

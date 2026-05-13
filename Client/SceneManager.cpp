@@ -7,6 +7,7 @@
 #include "GameFramework.h"
 #include "AnimationManager.h"
 #include "KeyManager.h"
+#include "ShadowMap.h"
 
 void CSceneManager::Init(ID3D12Device* device)
 {
@@ -90,6 +91,23 @@ void CSceneManager::Init(ID3D12Device* device)
 		auto textRenderer = std::make_unique<CTextRenderer>();
 		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetSRVCPUHandle(20), heap->GetSRVGPUHandle(20));
 		renderers[EShaderName::Text] = std::move(textRenderer);
+	}
+
+	// shadow map
+	{
+		shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
+		auto instHeap = shaders[EShaderName::Inst]->GetHeapManager();
+		auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
+		auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
+
+		shadow_map->CreateDescriptors(
+			shadowHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx),
+			shadowHeap->GetSRVGPUHandle(DescriptorSlot::ShadowMapIdx),
+			shadowHeap->GetDSVCPUHandle(0)
+		);
+
+		shadow_map->CreateSRV(instHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 	}
 }
 
