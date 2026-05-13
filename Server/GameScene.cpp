@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 // Server쪽 GameScene
 #include "GameScene.h"
 #include "Player.h"
@@ -179,6 +179,15 @@ void CGameScene::LoadGameScene()
 			LoadFrameNode(prototypes, children);
 		}
 	}
+	{
+		std::string fileName{ "../Modeling/map_all_3.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(prototypes, children);
+		}
+	}
 }
 
 void CGameScene::CreateGameScene()
@@ -236,13 +245,11 @@ void CGameScene::CreateGameScene()
 			XMStoreFloat4x4(&obj->GetWorldMatrix(), world);
 
 			// collider copy
-			if (CMapAssetManager::GetInstance().RequiresCollider(name)) {
-				if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
-					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
-					obj->SetComponent(copyCollider);
-					copyCollider->Update(0.0f);
-					GetPhysicsManager()->SetCollider(copyCollider);
-				}
+			if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
+				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
+				obj->SetComponent(copyCollider);
+				copyCollider->Update(0.0f);
+				GetPhysicsManager()->SetCollider(copyCollider);
 			}
 
 			// 파괴 불가 오브젝트만 static_objects로, mineable은 별도 관리

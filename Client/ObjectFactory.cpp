@@ -348,13 +348,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 
 			auto collider = proto->GetComponent<CColliderComponent>();
 
-			// collider copy(잔디, 돌은 필요X)
-			if (CMapAssetManager::GetInstance().RequiresCollider(name)) {
-				if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
-					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
-					obj->SetComponent(copyCollider);
-					CPhysicsManager::GetInstance().SetCollider(copyCollider);
-				}
+			// collider copy
+			if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
+				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
+				obj->SetComponent(copyCollider);
+				CPhysicsManager::GetInstance().SetCollider(copyCollider);
 			}
 
 			obj->Initialize();

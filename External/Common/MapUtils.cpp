@@ -94,9 +94,6 @@ void CMapAssetManager::initialize()
     // 서버 전용 마커 (렌더링 없음)
     asset_table[EModelType::MONSTER_HUMAN] = { {}, {} };
     asset_table[EModelType::MONSTER_GHOST] = { {}, {} };
-
-    // 콜라이더 제외 키워드 설정
-    no_collider_set = { "grass", "stone" };
 }
 
 std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelVariant serverModelId)
@@ -128,15 +125,6 @@ std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelV
     }
 
     return results;
-}
-
-bool CMapAssetManager::RequiresCollider(const std::string& meshName)
-{
-    for (const auto& keyword : no_collider_set) {
-        if (meshName.find(keyword) != std::string::npos) return false;
-    }
-
-    return true;
 }
 
 EModelVariant CMapAssetManager::GetVariantFromName(const std::string& meshName)
