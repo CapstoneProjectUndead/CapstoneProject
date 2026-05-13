@@ -292,6 +292,15 @@ void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
 			LoadFrameNode(heapManager, prototypes, children);
 		}
 	}
+	{
+		std::string fileName{ "../Modeling/map_all_3.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(heapManager, prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(heapManager, prototypes, children);
+		}
+	}
 }
 
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)

@@ -1,4 +1,4 @@
-﻿//#define _WITH_SKINNED_BONES_ANIMATION
+//#define _WITH_SKINNED_BONES_ANIMATION
 
 using System.Collections;
 using System.Collections.Generic;
@@ -611,6 +611,7 @@ public class BinaryHierarchicalModelExtract : MonoBehaviour
                 Texture detailNormalMap = materials[i].GetTexture("_DetailNormalMap");
                 WriteTextureName("<DetailNormalMap>:", detailNormalMap);
             }
+            WriteString("</Material>");
         }
         WriteString("</Materials>");
     }

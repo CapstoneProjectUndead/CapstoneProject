@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GeometryLoader.h"
 
 using namespace CGeometryLoader;
@@ -221,6 +221,8 @@ void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>&
             if (!br.ReadTag(tag))
                 break;
 
+            if (br.IsTag(tag, "</Material>"))
+                break;
             if (br.IsTag(tag, "</Materials>"))
                 return;
             if (br.IsTag(tag, "<AlbedoColor>:"))
