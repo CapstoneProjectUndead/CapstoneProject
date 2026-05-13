@@ -5,6 +5,9 @@
 #include "Animator.h"
 #include "MyPlayer.h"
 #include "SceneManager.h"
+#include "AIComponent.h"
+#include "State.h"
+#include "SoundManager.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CCharacter(OBJECT_TYPE::MONSTER)
@@ -61,6 +64,33 @@ void CMonster::UpdateMulti(float elapsedTime)
     }
 
     CCharacter::Update(elapsedTime);
+}
+
+void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
+{
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    awayDir.y = 0.0f;
+    float len = Vector3::Length(awayDir);
+    if (len < 0.001f) 
+        return;
+
+    CSoundManager::GetInstance().Play(SOUND_ID::surprising_girl);
+
+    melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
+    melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
+    velocity.x = melee_knockback_vel.x;
+    velocity.z = melee_knockback_vel.z;
+
+    auto nearest = FindNearestPlayer();
+    if (nearest) 
+        SetTarget(nearest);
+
+    auto* ai = GetComponent<CAIComponent>();
+    if (ai) {
+        auto cur = ai->GetCurrentState();
+        if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+    }
 }
 
 void CMonster::RecordMonsterFrameHistory(const MonsterFrameHistory& state)

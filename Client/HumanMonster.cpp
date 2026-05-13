@@ -22,6 +22,14 @@ CHumanMonster::~CHumanMonster()
 void CHumanMonster::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+
+	if (melee_knockback_timer > 0.0f) {
+		float ratio = melee_knockback_timer / MELEE_KNOCKBACK_DURATION;
+		velocity.x = melee_knockback_vel.x * ratio;
+		velocity.z = melee_knockback_vel.z * ratio;
+		melee_knockback_timer -= elapsedTime;
+		if (melee_knockback_timer < 0.0f) melee_knockback_timer = 0.0f;
+	}
 }
 
 void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
@@ -36,6 +44,9 @@ void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers
 
 void CHumanMonster::OnIdleMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
      // 시야 범위에 플레이어가 들어오는지 체크
     auto target = FindNearestPlayer();
 
@@ -133,6 +144,9 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
 void CHumanMonster::OnPatrolMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     // (순찰 상태)
     // 타겟 탐색 (TRACE 전환)
     auto target = FindNearestPlayer();
@@ -194,6 +208,9 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
 
 void CHumanMonster::OnTraceMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     auto AIComponent = GetComponent<CAIComponent>();
 
     auto targetPlayer = target_player.lock();
@@ -285,6 +302,9 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 

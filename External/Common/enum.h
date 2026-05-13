@@ -163,4 +163,8 @@ enum class SOUND_ID : uint16_t
 	jab,
 	ghost_spray,
 	devil_scared1,
+	surprising_girl,
+	ridicule,
+	swing2,
+	sword,
 };

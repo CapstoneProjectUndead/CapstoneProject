@@ -397,9 +397,6 @@ void CGameScene::ProcessMining(float elapsedTime)
 	if (!g_is_single)
 		return;
 
-	if (!my_player)
-		return;
-
 	bool isDigging = (my_player->GetState() == PLAYER_STATE::DIG);
 
 	if (dig_sound_timer >= 0.0f) {
@@ -522,11 +519,6 @@ void CGameScene::ProcessMining(float elapsedTime)
 
 void CGameScene::ProcessAttack(float elapsedTime)
 {
-	if (!g_is_single) 
-		return;
-	if (!my_player)  
-		return;
-
 	auto qs = my_player->GetQuickSlot();
 	if (!qs) 
 		return;
@@ -545,10 +537,70 @@ void CGameScene::ProcessAttack(float elapsedTime)
 
 void CGameScene::ProcessMeleeAttack(float elapsedTime)
 {
-	if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed())
+	if (melee_attack_cooldown > 0.0f)
+		melee_attack_cooldown -= elapsedTime;
+
+	// 공격 소리는 서버의 허락을 받지 않고 바로 적용한다.
+	if (KEY_TAP(KEY::LBTN) && !g_is_single && melee_attack_cooldown <= 0.0f) {
+		melee_attack_cooldown = 1.5f;
+		PlayMeleeAttackSound();
+		return;
+	}
+
+	// 클릭: 애니메이션 시작 + 타이머 세팅
+	if (KEY_TAP(KEY::LBTN) && melee_attack_cooldown <= 0.0f
+		&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+
 		my_player->OnAttack();
+		melee_attack_timer    = 0.4f;
+		melee_attack_cooldown = 1.5f;
+		PlayMeleeAttackSound();
+	}
 
+	// 타이머 감소 → 만료 시 범위 판정
+	if (melee_attack_timer > 0.0f) {
+		melee_attack_timer -= elapsedTime;
+		if (melee_attack_timer <= 0.0f) {
+			melee_attack_timer = -1.0f;
 
+			XMFLOAT3 playerPos = my_player->GetPosition();
+			XMFLOAT3 look      = my_player->look;
+			look.y = 0.0f;
+			float lookLen = sqrtf(look.x * look.x + look.z * look.z);
+			if (lookLen >= 0.001f) {
+				look.x /= lookLen;
+				look.z /= lookLen;
+
+				XMFLOAT3 right = { look.z, 0.0f, -look.x };
+
+				constexpr float MELEE_DEPTH      = 1.1f;
+				constexpr float MELEE_HALF_WIDTH = 0.6f;
+
+				for (auto& obj : objects) {
+					if (obj->GetObjectType() != OBJECT_TYPE::MONSTER) 
+						continue;
+
+					auto* monster = static_cast<CMonster*>(obj.get());
+					MON_TYPE mType = monster->GetMonsterType();
+					if (mType != MON_TYPE::HUMAN_MONSTER && mType != MON_TYPE::ANIMAL_MONSTER) 
+						continue;
+
+					XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+					toMonster.y = 0.0f;
+
+					float forwardDist = look.x * toMonster.x + look.z * toMonster.z;
+					if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH) 
+						continue;
+
+					float lateralDist = fabsf(right.x * toMonster.x + right.z * toMonster.z);
+					if (lateralDist > MELEE_HALF_WIDTH) 
+						continue;
+
+					monster->ApplyMeleeHit(playerPos);
+				}
+			}
+		}
+	}
 }
 
 void CGameScene::ProcessRangedAttack(float elapsedTime)
@@ -764,6 +816,17 @@ void CGameScene::DrawDePossessProgressBar()
 
 	ImGui::End();
 	ImGui::PopStyleVar(3);
+}
+
+void CGameScene::PlayMeleeAttackSound()
+{
+	uint16 equippedID = my_player->GetEquippedItemId();
+	if (equippedID == 14) {
+		CSoundManager::GetInstance().Play(SOUND_ID::swing2);
+	}
+	else if (equippedID == 19) {
+		CSoundManager::GetInstance().Play(SOUND_ID::sword);
+	}
 }
 
 void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)

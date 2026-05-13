@@ -66,6 +66,9 @@ private:
     void ReleasePossession(float elapsedTime);
     void DrawDePossessProgressBar();
 
+    // 사운드 관련
+    void PlayMeleeAttackSound();
+
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;
@@ -75,13 +78,15 @@ private:
     static constexpr float  PICKUP_RANGE       = 2.0f;
     static constexpr float  MINING_RANGE       = 1.0f;
     static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값
-    uint32            world_item_id_counter = WORLD_ITEM_ID_BASE;
+    uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
 
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;
     float             dig_sound_timer       = -1.0f;
 
 private:
+    float             melee_attack_timer    = -1.0f;
+    float             melee_attack_cooldown = -1.0f;
     float             spray_attack_timer    = -1.0f;
     float             spray_attack_cooldown = -1.0f;
 };

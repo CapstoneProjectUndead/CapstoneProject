@@ -13,6 +13,14 @@ CDogMonster::~CDogMonster()
 void CDogMonster::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+
+	if (melee_knockback_timer > 0.0f) {
+		float ratio = melee_knockback_timer / MELEE_KNOCKBACK_DURATION;
+		velocity.x = melee_knockback_vel.x * ratio;
+		velocity.z = melee_knockback_vel.z * ratio;
+		melee_knockback_timer -= elapsedTime;
+		if (melee_knockback_timer < 0.0f) melee_knockback_timer = 0.0f;
+	}
 }
 
 void CDogMonster::OnIdleMove(float elapsedTime)
