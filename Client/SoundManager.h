@@ -41,9 +41,13 @@ public:
 	void StopAll();
 	void SetVolume(SOUND_ID key, float volume, int channelIdx);
 
+	void  SetMasterVolume(float volume) { master_volume = volume; }
+	float GetMasterVolume() const       { return master_volume; }
+
 	FMOD::System* GetFMODSystem() { return fmod_system; }
 
 private:
-	FMOD::System*                                        fmod_system = nullptr;
-	std::unordered_map<SOUND_ID, std::unique_ptr<CSound>>   sound_map;
+	FMOD::System*                                         fmod_system   = nullptr;
+	std::unordered_map<SOUND_ID, std::unique_ptr<CSound>> sound_map;
+	float                                                 master_volume = 0.2f;
 };

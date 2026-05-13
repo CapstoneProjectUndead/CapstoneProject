@@ -5,6 +5,7 @@
 #include "Room.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
+#include "Item.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CObject(OBJECT_TYPE::MONSTER)
@@ -71,4 +72,20 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
     }
 
     return nullptr;
+}
+
+void CMonster::DropItem(uint16 itemID)
+{
+    auto item = current_scene->GetItemManager()->SpawnItem(itemID, GetPosition());
+    S_SpawnItem spawnPkt;
+    spawnPkt.item_id = item->item->GetItemId();
+    spawnPkt.item_type = item->item->GetItemType();
+    spawnPkt.item_world_id = item->world_id;
+    spawnPkt.scene_type = current_scene_type;
+    spawnPkt.x = item->position.x;
+    spawnPkt.y = 0;
+    spawnPkt.z = item->position.z;
+
+    auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+    current_scene->BroadCast(sendBuffer);
 }

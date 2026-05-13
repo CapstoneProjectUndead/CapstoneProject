@@ -74,6 +74,8 @@ public:
 	shared_ptr<CPhysicsManager> GetPhysicsManager() const { return physics_manager.lock(); }
 	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
 
+	CItemManager* GetItemManager() const { return item_manager.get(); }
+
 public:
 	// IOCP 스레드들이 호출 (패킷 받자마자 실행)
 	template<typename T, typename PacketType>

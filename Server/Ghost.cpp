@@ -494,6 +494,8 @@ void CGhost::OnFleeEnter()
 	nav_path.clear();
 	velocity.x = 0.0f;
 	velocity.z = 0.0f;
+
+	DropItem(20);
 }
 
 void CGhost::OnFleeMove(float elapsedTime)

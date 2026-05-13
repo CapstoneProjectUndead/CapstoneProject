@@ -195,7 +195,7 @@
     {
         "item_id": 16,
         "item_type": 0,
-        "item_sub_type": 150,
+        "item_sub_type": 151,
         "item_name": "유령 퇴치 스프레이",
         "weight": 2.0,
         "price": 350,
@@ -207,7 +207,7 @@
     {
         "item_id": 17,
         "item_type": 0,
-        "item_sub_type": 150,
+        "item_sub_type": 151,
         "item_name": "마법 지팡이",
         "weight": 2.0,
         "price": 350,
@@ -219,7 +219,7 @@
     {
         "item_id": 18,
         "item_type": 0,
-        "item_sub_type": 150,
+        "item_sub_type": 151,
         "item_name": "비비탄 총",
         "weight": 2.0,
         "price": 400,

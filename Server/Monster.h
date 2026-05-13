@@ -71,6 +71,8 @@ protected:
         cos_threshold = cosf(XMConvertToRadians(fov_angle * 0.5f));
     }
 
+    void DropItem(uint16 itemID);
+
 protected:
     XMFLOAT3 origin_position;
     AI_STATE AI_state;

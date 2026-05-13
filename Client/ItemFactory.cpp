@@ -100,7 +100,7 @@ namespace ItemFactory
 
 		switch (e.base.item_type) {
 		case ITEM_TYPE::EQUIPMENT:
-			if (e.base.item_sub_type >= ITEM_SUB_TYPE::WEAPON)
+			if (e.base.item_sub_type >= ITEM_SUB_TYPE::MELEE_WEAPON)
 				return std::make_shared<CWeapon>(data, e.max_durability);
 			else
 				return std::make_shared<CTool>(data, e.max_durability);

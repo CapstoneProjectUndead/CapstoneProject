@@ -115,7 +115,8 @@ enum class ITEM_SUB_TYPE : uint16_t
 	TOOL = 100,
 
 	// (Equipment 시리즈)-무기 시리즈 (150번대)
-	WEAPON = 150, 
+	MELEE_WEAPON  = 150,
+	RANGED_WEAPON = 151,
 
 	// 소비 아이템 시리즈 (200번대)
 	HEAL = 200,

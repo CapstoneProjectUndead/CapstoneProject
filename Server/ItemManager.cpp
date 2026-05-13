@@ -1,4 +1,5 @@
 #include "pch.h"
+// Server에만 있는 클래스 (ItemManager)
 #include "ItemManager.h"
 #include "ItemFactory.h"
 #include "Item.h"

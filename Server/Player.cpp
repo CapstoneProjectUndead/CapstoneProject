@@ -163,7 +163,8 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
             ProcessMining(input, elapsedTime, isMoving);
         }
 
-        if (equipped_item_sub_type == ITEM_SUB_TYPE::WEAPON
+        if ((equipped_item_sub_type == ITEM_SUB_TYPE::MELEE_WEAPON
+            || equipped_item_sub_type == ITEM_SUB_TYPE::RANGED_WEAPON)
             && current_scene_type == SCENE_TYPE::GAME) {
             ProcessAttack(input, elapsedTime);
         }

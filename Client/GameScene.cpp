@@ -114,13 +114,13 @@ void CGameScene::Initialize()
 	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
 
 	// 테스트 (임시코드)
-	//CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-	//auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::ANIMAL_MONSTER, scene_type);
-	//if (dog) {
-	//	dog->SetPosition(2, 0.1f, 2.f);
-	//	dog->SetOriginPos({ 2, 0.1f, 2.f });
-	//	AddObject(dog, dog->GetID());
-	//}
+	CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
+	auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
+	if (dog) {
+		dog->SetPosition(2, 0.1f, 2.f);
+		dog->SetOriginPos({ 2, 0.1f, 2.f });
+		AddObject(dog, dog->GetID());
+	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -217,7 +217,8 @@ void CGameScene::Update(float elapsedTime)
 		// 플레이어가 장착하고 있는 아이템에 따라 행동 분기
 		auto qs = my_player->GetQuickSlot();
 		bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
-		bool hasWeapon = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::WEAPON;
+		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
+			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
 
 		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || my_player->GetEquippedItemId() == 0)) {
 			ProcessMining(elapsedTime);
@@ -521,39 +522,81 @@ void CGameScene::ProcessMining(float elapsedTime)
 
 void CGameScene::ProcessAttack(float elapsedTime)
 {
-	// 싱글 전용 
-	if (!g_is_single)
+	if (!g_is_single) 
+		return;
+	if (!my_player)  
 		return;
 
-	if (!my_player)
+	auto qs = my_player->GetQuickSlot();
+	if (!qs) 
 		return;
 
-	if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f 
-		&& !my_player->GetIsKnockedBack()
-		&& !my_player->GetIsPossessed()) {
+	// 퀵슬롯에서 선택된 아이템의 타입(근접 or 원거리)
+	switch (qs->GetSelectedSubType())
+	{
+	case ITEM_SUB_TYPE::MELEE_WEAPON:
+		ProcessMeleeAttack(elapsedTime);
+		break;
+	case ITEM_SUB_TYPE::RANGED_WEAPON:
+		ProcessRangedAttack(elapsedTime);
+		break;
+	}
+}
 
+void CGameScene::ProcessMeleeAttack(float elapsedTime)
+{
+	if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed())
 		my_player->OnAttack();
 
-		uint16 equippedID = my_player->GetEquippedItemId();
 
-		if (equippedID == 16) {
-			CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
-			spray_attack_timer    = 0.8f;
-			spray_attack_cooldown = 1.5f;
+}
+
+void CGameScene::ProcessRangedAttack(float elapsedTime)
+{
+	uint16 equippedID = my_player->GetEquippedItemId();
+
+	switch (equippedID)
+	{
+		case 16: // 스프레이
+		{
+			if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f
+				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+				my_player->OnAttack();
+				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
+				spray_attack_timer = 0.8f;
+				spray_attack_cooldown = 1.5f;
+			}
+
+			// 0.8초 후 데미지 적용
+			if (spray_attack_timer > 0.0f) {
+				spray_attack_timer -= elapsedTime;
+				if (spray_attack_timer <= 0.0f) {
+					spray_attack_timer = -1.0f;
+					SprayAttack(elapsedTime);
+				}
+			}
+
+			if (spray_attack_cooldown > 0.0f)
+				spray_attack_cooldown -= elapsedTime;
 		}
-	}
-
-	// 스프레이 공격을 시작하면 0.8초 후에 데미지가 들어간다.
-	if (spray_attack_timer > 0.0f) {
-		spray_attack_timer -= elapsedTime;
-		if (spray_attack_timer <= 0.0f) {
-			spray_attack_timer = -1.0f;
-			SprayAttack(elapsedTime);
+		break;
+		case 17: // 마법 지팡이
+		{
+			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
+				&& !my_player->GetIsPossessed()) {
+				my_player->OnAttack();
+			}
 		}
+		break;
+		case 18: // 비비탄총
+		{
+			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
+				&& !my_player->GetIsPossessed()) {
+				my_player->OnAttack();
+			}
+		}
+		break;
 	}
-
-	if (spray_attack_cooldown > 0.0f)
-		spray_attack_cooldown -= elapsedTime;
 }
 
 void CGameScene::SprayAttack(float elapsedTime)

@@ -56,6 +56,8 @@ private:
 
     // 공격
     void ProcessAttack(float elapsedTime);
+    void ProcessMeleeAttack(float elapsedTime);
+    void ProcessRangedAttack(float elapsedTime);
     void SprayAttack(float elapsedTime);
 
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);

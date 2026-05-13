@@ -720,7 +720,7 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 	switch (item->GetItemType())
 	{
 	case ITEM_TYPE::EQUIPMENT:
-		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+		if (item->GetSubType() >= ITEM_SUB_TYPE::MELEE_WEAPON)
 			worldItem = std::make_shared<CWorldWeapon>(item);
 		else
 			worldItem = std::make_shared<CWorldTool>(item);
