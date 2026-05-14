@@ -1,6 +1,8 @@
 #pragma once
+// Server쪽 DogMonster
 #include "Monster.h"
-#include "MapGenerator/MapGenerator.h"
+
+class CPlayer;
 
 class CDogMonster :
     public CMonster
@@ -23,13 +25,13 @@ public:
     virtual void OnFleeMove(float elapsedTime) override;
     virtual void OnFleeExit() override;
 
-    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos) override;
+    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player) override;
 
 private:
     bool  hit_damage_dealt      = false;
     float attack_cooldown_timer = 9999.f;
     float path_fail_timer       = 0.0f;
-    float give_up_cooldown      = 0.0f;  // 포기 후 재추격 차단 타이머
+    float give_up_cooldown      = 0.0f;
 
     int   melee_hit_count = 0;
     float flee_timer      = 0.0f;

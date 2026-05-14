@@ -115,7 +115,7 @@ void CGameScene::Initialize()
 
 	// 테스트 (임시코드)
 	//CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-	//auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
+	//auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::ANIMAL_MONSTER, scene_type);
 	//if (dog) {
 	//	dog->SetPosition(2, 0.1f, 2.f);
 	//	dog->SetOriginPos({ 2, 0.1f, 2.f });
@@ -475,6 +475,7 @@ void CGameScene::ProcessMining(float elapsedTime)
 					objects.pop_back();
 				}
 
+				pos.y = 0.2f;
 				SpawnWorldItem(110, pos);
 			}
 		}

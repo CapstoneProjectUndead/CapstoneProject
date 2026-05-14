@@ -1,12 +1,11 @@
-#include "stdafx.h"
+#include "pch.h"
+// Server쪽 DogMonster
 #include "DogMonster.h"
 #include "Player.h"
 #include "AIComponent.h"
 #include "Movement.h"
-#include "SceneManager.h"
-#include "MyPlayer.h"
-#include "SoundManager.h"
-#include "GameScene.h"
+#include "Room.h"
+#include "Scene.h"
 #include "State.h"
 
 CDogMonster::CDogMonster()
@@ -25,10 +24,10 @@ CDogMonster::~CDogMonster()
 
 void CDogMonster::Update(float elapsedTime)
 {
-	CMonster::Update(elapsedTime);
-
 	if (give_up_cooldown > 0.0f)
 		give_up_cooldown -= elapsedTime;
+
+	CMonster::Update(elapsedTime);
 
 	if (melee_knockback_timer > 0.0f) {
 		float ratio = melee_knockback_timer / MELEE_KNOCKBACK_DURATION;
@@ -47,7 +46,7 @@ void CDogMonster::OnIdleMove(float elapsedTime)
 	// 플레이어 감지 (포기 쿨다운 중에는 스킵)
 	auto target = FindNearestPlayer();
 	if (target && give_up_cooldown <= 0.0f) {
-		XMFLOAT3 dirVec = Vector3::Subtract(target->position, position);
+		XMFLOAT3 dirVec = Vector3::Subtract(target->GetPosition(), position);
 		dirVec.y = 0.0f;
 		float dist = Vector3::Length(dirVec);
 
@@ -161,7 +160,7 @@ void CDogMonster::OnPatrolMove(float elapsedTime)
 	// 플레이어 감지 (포기 쿨다운 중에는 스킵)
 	auto target = FindNearestPlayer();
 	if (target && give_up_cooldown <= 0.0f) {
-		XMFLOAT3 dirVec = Vector3::Subtract(target->position, position);
+		XMFLOAT3 dirVec = Vector3::Subtract(target->GetPosition(), position);
 		dirVec.y = 0.0f;
 		float dist = Vector3::Length(dirVec);
 
@@ -216,7 +215,7 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 		return;
 	}
 
-	XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
+	XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
 	dirVec.y = 0.0f;
 	float dist = Vector3::Length(dirVec);
 
@@ -243,8 +242,9 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 	const float TILE_SIZE = 2.0f;
 	int sx = (int)roundf(position.x / TILE_SIZE);
 	int sz = (int)roundf(position.z / TILE_SIZE);
-	int ex = (int)roundf(targetPlayer->position.x / TILE_SIZE);
-	int ez = (int)roundf(targetPlayer->position.z / TILE_SIZE);
+	XMFLOAT3 targetPos = targetPlayer->GetPosition();
+	int ex = (int)roundf(targetPos.x / TILE_SIZE);
+	int ez = (int)roundf(targetPos.z / TILE_SIZE);
 
 	// 항상 BFS로 경로 탐색
 	path_refresh_timer += elapsedTime;
@@ -262,8 +262,8 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 		XMFLOAT3 toWp = Vector3::Subtract(wpWorld, position);
 		toWp.y = 0.0f;
 		if (Vector3::Length(toWp) > 0.3f) {
-			moveDir  = toWp;
-			hasDir   = true;
+			moveDir = toWp;
+			hasDir  = true;
 		}
 	}
 
@@ -333,8 +333,8 @@ void CDogMonster::OnAttackMove(float elapsedTime)
 		hit_damage_dealt = true;
 
 		auto targetPlayer = target_player.lock();
-		if (targetPlayer && targetPlayer->GetIsMyPlayer()) {
-			XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->position, position);
+		if (targetPlayer) {
+			XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
 			dirVec.y = 0.0f;
 
 			XMFLOAT3 fwd       = Vector3::Normalize(XMFLOAT3{ look.x,  0.0f, look.z  });
@@ -347,11 +347,13 @@ void CDogMonster::OnAttackMove(float elapsedTime)
 			constexpr float width = 0.7f;
 
 			if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
-				CSoundManager::GetInstance().Play(SOUND_ID::damaged1);
+				SendSoundPacket(false, SOUND_ID::damaged1, targetPlayer->GetPosition());
+
 				uint32 hp = targetPlayer->GetHp();
 				targetPlayer->SetHp(hp > 8 ? hp - 8 : 0);
-				XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->position, position);
-				static_cast<CMyPlayer*>(targetPlayer.get())->ApplyKnockback(knockbackDir, 0.5f, 0.f);
+
+				XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->GetPosition(), position);
+				targetPlayer->ApplyKnockback(knockbackDir, 0.5f, 0.f);
 			}
 		}
 	}
@@ -394,7 +396,7 @@ void CDogMonster::OnAttackEnter()
 
 	auto targetPlayer = target_player.lock();
 	if (targetPlayer) {
-		XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
+		XMFLOAT3 dir = Vector3::Subtract(targetPlayer->GetPosition(), position);
 		dir.y = 0.0f;
 		float len = Vector3::Length(dir);
 		if (len > 0.001f) {
@@ -405,9 +407,9 @@ void CDogMonster::OnAttackEnter()
 	}
 }
 
-void CDogMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
+void CDogMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
 {
-	CMonster::ApplyMeleeHit(fromPos);
+	CMonster::ApplyMeleeHit(fromPos, player);
 
 	melee_hit_count++;
 	if (melee_hit_count >= MAX_MELEE_HITS) {
@@ -437,7 +439,7 @@ void CDogMonster::OnFleeEnter()
 	}
 
 	if (targetPlayer) {
-		XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+		XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->GetPosition());
 		awayDir.y = 0.0f;
 		float len = Vector3::Length(awayDir);
 		if (len > 0.001f) {
@@ -447,12 +449,7 @@ void CDogMonster::OnFleeEnter()
 		}
 	}
 
-	auto scene = CSceneManager::GetInstance().GetActiveScene();
-	if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
-		XMFLOAT3 itemSpawnPos = position;
-		itemSpawnPos.y = 0.2f;
-		gameScene->SpawnWorldItem(20, itemSpawnPos);
-	}
+	DropItem(20);
 }
 
 void CDogMonster::OnFleeMove(float elapsedTime)
@@ -467,7 +464,7 @@ void CDogMonster::OnFleeMove(float elapsedTime)
 
 	auto targetPlayer = target_player.lock();
 	if (targetPlayer) {
-		XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+		XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->GetPosition());
 		awayDir.y = 0.0f;
 		float len = Vector3::Length(awayDir);
 		if (len > 0.001f) {

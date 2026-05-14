@@ -31,6 +31,7 @@ public:
     static void InitializeUndeadCharacter(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager);
     static void InitializeHumanMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager);
     static void InitializeGhost(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager);
+    static void InitializeDogMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager);
 
     static void ProcessNode(shared_ptr<CPhysicsManager> physicsManager, shared_ptr<CObject>& object, const std::unique_ptr<CGeometryLoader::FrameNode>& node, bool isPlayer,
         EColLayer colMask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND));

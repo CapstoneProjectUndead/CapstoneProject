@@ -9,6 +9,7 @@
 #include "GeometryLoader.h"
 #include "HumanMonster.h"
 #include "Ghost.h"
+#include "DogMonster.h"
 #include "ServerObjectFactory.h"
 #include "MapUtils.h"
 #include "Item.h"

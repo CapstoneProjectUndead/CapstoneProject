@@ -10,6 +10,7 @@
 #include "Inventory.h"
 #include "HumanMonster.h"
 #include "Ghost.h"
+#include "DogMonster.h"
 #include "AIComponent.h"
 #include "AIStates.h"
 
@@ -103,6 +104,10 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	}
 		break;
 	case MON_TYPE::ANIMAL_MONSTER:
+	{
+		monster = make_shared<CDogMonster>();
+		InitializeDogMonster(monster, physicsManager);
+	}
 		break;
 	case MON_TYPE::GHOST:
 	{
@@ -127,10 +132,7 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	AIComp->AddState(std::make_shared<CPatrolState>());
 	AIComp->AddState(std::make_shared<CTraceState>());
 	AIComp->AddState(std::make_shared<CAttackState>());
-
-	// FLEE 상태는 Ghost와 HumanMonster가 사용한다.
-	if (monType == MON_TYPE::GHOST || monType == MON_TYPE::HUMAN_MONSTER)
-		AIComp->AddState(std::make_shared<CFleeState>());
+	AIComp->AddState(std::make_shared<CFleeState>());
 
 	// 항상 IDLE 로 시작.
 	AIComp->SetState(AI_STATE::MONSTER_IDLE);
@@ -194,6 +196,13 @@ void CServerObjectFactory::InitializeGhost(shared_ptr<CObject> object, shared_pt
 {
 	std::string fileName{ "../Modeling/Ghost3.bin" };
 	InitializeCharacter(fileName, object, physicsManager, false, static_cast<EColLayer>(EColLayer::WALL | EColLayer::GROUND));
+}
+
+void CServerObjectFactory::InitializeDogMonster(shared_ptr<CObject> object, shared_ptr<CPhysicsManager> physicsManager)
+{
+	std::string fileName{ "../Modeling/Dog.bin" };
+	InitializeCharacter(fileName, object, physicsManager, false,
+		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::PLAYER));
 }
 
 void CServerObjectFactory::ProcessNode(shared_ptr<CPhysicsManager> physicsManager, shared_ptr<CObject>& object, const std::unique_ptr<CGeometryLoader::FrameNode>& node, bool isPlayer, EColLayer colMask)

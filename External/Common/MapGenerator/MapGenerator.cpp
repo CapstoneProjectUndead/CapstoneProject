@@ -708,7 +708,8 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
 
     auto passable = [](int x, int y) {
         return IsWalkableFloor(x, y)
-            && !IsBlockedStructure(x, y);
+            && !IsBlockedStructure(x, y)
+            && !IsBlockedObject(x, y);
         };
 
     if (!passable(ex, ey)) {
@@ -759,5 +760,29 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
         }
     }
 
-    return {};
+    // 목적지에 도달 불가 (예: 펜스로 완전히 막힌 공원) → 탐색된 타일 중 목적지에 가장 가까운 타일로 경로 반환
+    Cell best = { sx, sy };
+    int  bestDistSq = INT_MAX;
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            if (!visited[y][x]) continue;
+            int dx = x - ex, dy = y - ey;
+            int distSq = dx * dx + dy * dy;
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                best = { x, y };
+            }
+        }
+    }
+
+    if (best.x == sx && best.y == sy) return {};
+
+    std::vector<Cell> path;
+    Cell c = best;
+    while (c.x != sx || c.y != sy) {
+        path.push_back(c);
+        c = parent[c.y][c.x];
+    }
+    std::reverse(path.begin(), path.end());
+    return path;
 }
