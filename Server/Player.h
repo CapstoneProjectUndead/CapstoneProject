@@ -132,6 +132,7 @@ private:
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
 
 	void SprayAttack(float elapsedTime);
+	void ApplySprayHitWhilePossessed(const XMFLOAT3& fromPos);
 	void MeleeAttack();
 
 private:
@@ -170,6 +171,7 @@ private:
 	float       c_hold_timer;
 	bool        last_c_input;
 	bool        start_jump;
+	int         possessed_spray_hit_count;
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
 	float    possessed_path_refresh_timer;
@@ -186,8 +188,10 @@ private:
 	const float DIG_DURATION = 1.03f;
 
 	// 스프레이 공격 상태 유지 타이머
-	float       spray_attack_timer{ 0.0f };
+	float       ranged_attack_timer{ 0.0f };
 	const float SPRAY_ATTACK_DURATION = 1.5f;
+	const float MAGIC_ATTACK_DURATION = 1.5f;
+	const float GUN_ATTACK_DURATION = 1.5f;
 
 	// 근접 공격 상태 유지 타이머
 	float       melee_attack_timer{ 0.0f };
