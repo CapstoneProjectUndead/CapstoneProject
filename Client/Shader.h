@@ -132,6 +132,7 @@ public:
 
 class CShadowShader : public CSkinningShader {
 public:
+	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_BLEND_DESC CreateBlendState() override;
 	void CreateShader(ID3D12Device* device) override;

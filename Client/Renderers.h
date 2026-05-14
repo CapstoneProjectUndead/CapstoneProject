@@ -15,10 +15,10 @@ public:
     virtual void Initialize(ID3D12Device* dev, UINT instSize) = 0;
     virtual void Render(ID3D12GraphicsCommandList* cmdList) = 0;
     // bool 인자로 batch 배열 선택
-    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) {};
+    virtual void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) {};
     // white texture 사용(사용 시 힙 0번에 tex set)
-    virtual void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) {};
-    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) {};
+    virtual void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) {};
+    virtual void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) {};
 };
 
 template<typename T>
@@ -30,9 +30,9 @@ public:
     }
 
     // bool 인자로 batch 배열 선택
-    virtual void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
+    virtual void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     // white texture 사용(사용 시 힙 0번에 tex set)
-    virtual void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+    virtual void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
 
     void Initialize(ID3D12Device* dev, UINT instSize);
     void ResizeBuffer(UINT requiredSize);
@@ -42,7 +42,7 @@ public:
 protected:
     struct RenderKey
     {
-        CMesh* mesh{};
+        std::shared_ptr<CMesh> mesh{};
         UINT submesh_index{};
 
         bool operator<(const RenderKey& other) const
@@ -72,16 +72,16 @@ public:
 
 class CAniRenderer : public CRenderer<AniCB> {
 public:
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) override;
+    void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
+    void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 };
 
 class CUIRenderer : public CRenderer<UIInstCB> {
 public:
     CUIRenderer();
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
-    void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+    void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
+    void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:
     std::shared_ptr<CRectangleMesh> quad_mesh;
@@ -90,8 +90,8 @@ private:
 class CBillboardRenderer : public CRenderer<BillboardInstCB> {
 public:
     CBillboardRenderer();
-    void AddInstance(CMesh* mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
-    void AddInstance(CMesh* mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+    void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
+    void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:
     std::shared_ptr<CBillboardMesh> b_mesh;
