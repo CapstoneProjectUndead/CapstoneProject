@@ -8,6 +8,8 @@
 #include "AnimationManager.h"
 #include "Collider.h"
 #include "SoundManager.h"
+#include "GameScene.h"
+#include "State.h"
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
@@ -38,16 +40,29 @@ void CGhost::Update(float elapsedTime)
     //    std::cout << "Ghost_attack total_frames: " << clip.total_frames << std::endl;
     //    printed = true;
     //}
-    
+
     CMonster::Update(elapsedTime);
-    
+
     contact_damage_timer += elapsedTime;
-    
+
     CheckContactDamage();
+
+    // AI가 velocity를 설정한 뒤 덮어써야 다음 프레임에 넉백이 적용된다
+    if (knockback_timer > 0.0f) {
+        float ratio = knockback_timer / KNOCKBACK_DURATION;
+        velocity.x = knockback_vel.x * ratio;
+        velocity.z = knockback_vel.z * ratio;
+        knockback_timer -= elapsedTime;
+        if (knockback_timer < 0.0f)
+            knockback_timer = 0.0f;
+    }
 }
 
 void CGhost::OnIdleMove(float elapsedTime)
 {
+    if (knockback_timer > 0.0f) 
+        return;
+
      // 시야 범위에 플레이어가 들어오는지 체크
     auto target = FindNearestPlayer();
 
@@ -144,6 +159,9 @@ void CGhost::OnIdleMove(float elapsedTime)
 
 void CGhost::OnPatrolMove(float elapsedTime)
 {
+    if (knockback_timer > 0.0f) 
+        return;
+
     // 플레이어 감지 (TRACE 전환)
     auto target = FindNearestPlayer();
     if (target) {
@@ -171,6 +189,9 @@ void CGhost::OnPatrolMove(float elapsedTime)
 
 void CGhost::OnTraceMove(float elapsedTime)
 {
+    if (knockback_timer > 0.0f) 
+        return;
+
     auto AIComponent = GetComponent<CAIComponent>();
     auto targetPlayer = target_player.lock();
 
@@ -278,6 +299,9 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 void CGhost::OnAttackMove(float elapsedTime)
 {
+    if (knockback_timer > 0.0f) 
+        return;
+
     constexpr float DASH_SPEED    = 6.0f;
     constexpr float DASH_DURATION = 0.5f;
     constexpr float STOP_DIST     = 0.7f;
@@ -334,6 +358,34 @@ void CGhost::OnAttackMove(float elapsedTime)
     }
 }
 
+void CGhost::OnFleeMove(float elapsedTime)
+{
+    if (knockback_timer > 0.0f) 
+        return;
+
+    flee_timer -= elapsedTime;
+
+    if (flee_timer <= 0.0f) {
+        MarkForDelete();
+        return;
+    }
+
+    auto targetPlayer = target_player.lock();
+    if (targetPlayer) {
+        XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+        awayDir.y = 0.0f;
+        float len = Vector3::Length(awayDir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
+
+    velocity.x = look.x * FLEE_SPEED;
+    velocity.z = look.z * FLEE_SPEED;
+}
+
 void CGhost::OnIdleEnter()
 {
     ResetIdleTimer();
@@ -384,6 +436,83 @@ void CGhost::OnAttackEnter()
     }
 }
 
+void CGhost::OnFleeEnter()
+{
+    flee_timer = FLEE_DURATION;
+    nav_path.clear();
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
+
+    auto targetPlayer = target_player.lock();
+    if (!targetPlayer) {
+        auto nearest = FindNearestPlayer();
+        if (nearest) 
+            SetTarget(nearest);
+        targetPlayer = target_player.lock();
+    }
+
+    if (targetPlayer) {
+        XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+        awayDir.y = 0.0f;
+        float len = Vector3::Length(awayDir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
+
+    auto scene = CSceneManager::GetInstance().GetActiveScene();
+    if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
+        XMFLOAT3 itemSpawnPos = position;
+        itemSpawnPos.y = 0.2f;
+        gameScene->SpawnWorldItem(20, itemSpawnPos);
+    }
+}
+
+void CGhost::OnFleeExit()
+{
+    flee_timer = 0.0f;
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
+}
+
+void CGhost::ApplySprayHit(const XMFLOAT3& fromPos)
+{
+    CSoundManager::GetInstance().Play(SOUND_ID::devil_scared1);
+
+    target_player = CSceneManager::GetInstance().GetActiveScene()->GetMyPlayer();
+
+    // 넉백
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    awayDir.y = 0.0f;
+    float len = Vector3::Length(awayDir);
+    if (len > 0.001f) {
+        knockback_vel   = { awayDir.x / len * KNOCKBACK_FORCE, 0.0f, awayDir.z / len * KNOCKBACK_FORCE };
+        knockback_timer = KNOCKBACK_DURATION;
+        velocity.x = knockback_vel.x;
+        velocity.z = knockback_vel.z;
+    }
+
+    spray_hit_count++;
+
+    // 격분: 단계별 속도 증가
+    if (spray_hit_count == 1)      
+        trace_speed *= 1.3f;
+    else if (spray_hit_count == 2) 
+        trace_speed *= 1.7f;
+
+    auto* ai = GetComponent<CAIComponent>();
+    if (ai) {
+        if (spray_hit_count >= MAX_SPRAY_HITS)
+            ai->ChangeState(AI_STATE::MONSTER_FLEE);
+        else {
+            auto cur = ai->GetCurrentState();
+            if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+                ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        }
+    }
+}
 
 void CGhost::PatrolRadiusWander(float elapsedTime)
 {
@@ -470,23 +599,16 @@ XMFLOAT3 CGhost::GetRandomWanderTarget()
 
 void CGhost::CheckContactDamage()
 {
+    if (!g_is_single) 
+        return;
+
     if (AI_state != AI_STATE::MONSTER_ATTACK) {
         auto nearPlayer = FindNearestPlayer();
         if (nearPlayer) {
-
             bool inContact = false;
-            if (g_is_single) {
-                auto* ghostCol = GetComponent<CColliderComponent>();
-                auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
-                inContact = ghostCol && playerCol && ghostCol->Intersects(playerCol);
-            }
-            else {
-                // 멀티에서 유령 위치가 보간 지연으로 최대 0.8m 뒤처지므로,
-                // GJK 대신 XZ 거리 비교로 판정 (임계값 = 캡슐 반지름 합 + 보간 여유)
-                XMFLOAT3 diff = Vector3::Subtract(nearPlayer->position, position);
-                diff.y = 0.0f;
-                inContact = Vector3::Length(diff) < 1.0f;
-            }
+            auto* ghostCol = GetComponent<CColliderComponent>();
+            auto* playerCol = nearPlayer->GetComponent<CColliderComponent>();
+            inContact = ghostCol && playerCol && ghostCol->Intersects(playerCol);
 
             if (inContact) {
 

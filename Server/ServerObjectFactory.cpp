@@ -128,6 +128,10 @@ shared_ptr<CMonster> CServerObjectFactory::CreateMonster(MON_TYPE monType, SCENE
 	AIComp->AddState(std::make_shared<CTraceState>());
 	AIComp->AddState(std::make_shared<CAttackState>());
 
+	// FLEE 상태는 Ghost와 HumanMonster가 사용한다.
+	if (monType == MON_TYPE::GHOST || monType == MON_TYPE::HUMAN_MONSTER)
+		AIComp->AddState(std::make_shared<CFleeState>());
+
 	// 항상 IDLE 로 시작.
 	AIComp->SetState(AI_STATE::MONSTER_IDLE);
 

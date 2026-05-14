@@ -183,6 +183,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="CustomScene.h" />
     <ClInclude Include="DataManager.h" />
     <ClInclude Include="DogMonster.h" />
+    <ClInclude Include="FleeState.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="GeometryLoader.h" />
     <ClInclude Include="CollisionAlgorithm.h" />
@@ -287,6 +288,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="CustomScene.cpp" />
     <ClCompile Include="DataManager.cpp" />
     <ClCompile Include="DogMonster.cpp" />
+    <ClCompile Include="FleeState.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GeometryLoader.cpp" />
     <ClCompile Include="CollisionAlgorithm.cpp" />

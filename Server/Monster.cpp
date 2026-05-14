@@ -5,6 +5,9 @@
 #include "Room.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
+#include "Item.h"
+#include "AIComponent.h"
+#include "State.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CObject(OBJECT_TYPE::MONSTER)
@@ -30,6 +33,14 @@ CMonster::~CMonster()
 void CMonster::Update(float elapsedTime)
 {
 	last_simulated_time = static_cast<float>(g_server_total_time);
+
+    auto nearest = FindNearestPlayer();
+    if (nearest) {
+        constexpr float SLEEP_DIST_SQ = 20.0f * 20.0f;
+        XMFLOAT3 diff = Vector3::Subtract(nearest->GetPosition(), position);
+        if (diff.x * diff.x + diff.z * diff.z > SLEEP_DIST_SQ)
+            return;
+    }
 
 	CObject::Update(elapsedTime);
 }
@@ -71,4 +82,44 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
     }
 
     return nullptr;
+}
+
+void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
+{
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    awayDir.y = 0.0f;
+    float len = Vector3::Length(awayDir);
+    if (len < 0.001f) 
+        return;
+
+    target_player = player;
+    SendSoundPacket(false, SOUND_ID::surprising_girl, GetPosition());
+
+    melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
+    melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
+    velocity.x = melee_knockback_vel.x;
+    velocity.z = melee_knockback_vel.z;
+
+    auto* ai = GetComponent<CAIComponent>();
+    if (ai) {
+        auto cur = ai->GetCurrentState();
+        if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+    }
+}
+
+void CMonster::DropItem(uint16 itemID)
+{
+    auto item = current_scene->GetItemManager()->SpawnItem(itemID, GetPosition());
+    S_SpawnItem spawnPkt;
+    spawnPkt.item_id = item->item->GetItemId();
+    spawnPkt.item_type = item->item->GetItemType();
+    spawnPkt.item_world_id = item->world_id;
+    spawnPkt.scene_type = current_scene_type;
+    spawnPkt.x = item->position.x;
+    spawnPkt.y = 0.2f;
+    spawnPkt.z = item->position.z;
+
+    auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+    current_scene->BroadCast(sendBuffer);
 }

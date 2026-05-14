@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "Player.h"
 #include "MyPlayer.h"
@@ -116,7 +116,8 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			a2r.to_state = run;
 			a2r.duration = 0.2f;
 			a2r.condition = [this]() {
-				return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
+					auto s = static_cast<CMonster*>(owner)->GetAIState();
+					return s == AI_STATE::MONSTER_TRACE || s == AI_STATE::MONSTER_FLEE;
 			};
 			controller.AddTransition(attack, a2r);
 
@@ -180,7 +181,8 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
 		}
 		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
-			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
+			auto s = static_cast<CMonster*>(owner)->GetAIState();
+			return s == AI_STATE::MONSTER_TRACE || s == AI_STATE::MONSTER_FLEE;
 		}
 		return false;
 		};
@@ -208,8 +210,10 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	i2r.condition = [this]() {
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
 			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
-		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER)
-			return static_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_TRACE;
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
+			auto s = static_cast<CMonster*>(owner)->GetAIState();
+			return s == AI_STATE::MONSTER_TRACE || s == AI_STATE::MONSTER_FLEE;
+		}
 		return false;
 		};
 	controller.AddTransition(idle, i2r);

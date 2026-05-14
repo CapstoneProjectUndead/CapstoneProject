@@ -149,8 +149,9 @@ void CMyPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 				animator->RenderSocketModel(CAnimatorComponent::HAND_ROD_L, NULL, "dowsing_rod_0307");
 			}
 		}
-		else if (!is_dowsing && equipped_item_id > 0)
+		else if (equipped_item_id > 0) {
 			animator->RenderSocketModel(CAnimatorComponent::HAND_R, equipped_item_id);
+		}
 	}
 }
 

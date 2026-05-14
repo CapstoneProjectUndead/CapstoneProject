@@ -19,6 +19,7 @@ enum class PLAYER_STATE : uint8_t
 	RUN,
 	JUMP,
 	DIG,
+	ATTACK,
 	DEAD,
 };
 
@@ -47,6 +48,7 @@ enum class AI_STATE // 어떤 애니메이션을 재생할지 결정한다.
 	MONSTER_PATROL,
 	MONSTER_TRACE,
 	MONSTER_ATTACK,
+	MONSTER_FLEE,
 	MONSTER_DEAD,
 };
 
@@ -87,6 +89,19 @@ enum class EModelVariant : uint16_t
 	TRASHCAN_001, TRASHCAN_002,
 	MANHOLE,
 
+	BOOKSHELF,
+	FENCE_WOOD,
+	REFRIGERATOR,
+	REFRIGERATOR_DOOR_LOWER,
+	REFRIGERATOR_DOOR_UPPER,
+	SOFA,
+	STREETLAMP,
+	TABLE_LOW,
+	CHAIR_001,
+	TABLE_001,
+
+	PARK_SAND,
+
 	COUNT
 };
 
@@ -112,7 +127,8 @@ enum class ITEM_SUB_TYPE : uint16_t
 	TOOL = 100,
 
 	// (Equipment 시리즈)-무기 시리즈 (150번대)
-	WEAPON = 150, 
+	MELEE_WEAPON  = 150,
+	RANGED_WEAPON = 151,
 
 	// 소비 아이템 시리즈 (200번대)
 	HEAL = 200,
@@ -143,6 +159,10 @@ enum class TREASURE_GRADE : uint8_t
 	LEGENDARY	// 전설
 };
 
+//=======
+// 사운드
+//=======
+
 enum class SOUND_ID : uint16_t
 {
 	button01a,
@@ -154,4 +174,10 @@ enum class SOUND_ID : uint16_t
 	devil_laugh1,
 	flying_pan,
 	jab,
+	ghost_spray,
+	devil_scared1,
+	surprising_girl,
+	ridicule,
+	swing2,
+	sword,
 };

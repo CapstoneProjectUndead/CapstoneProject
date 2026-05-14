@@ -7,6 +7,8 @@
 #include "MyPlayer.h"
 #include "Animator.h"
 #include "SoundManager.h"
+#include "GameScene.h"
+#include "State.h"
 
 CHumanMonster::CHumanMonster()
     : CMonster(MON_TYPE::HUMAN_MONSTER)
@@ -22,6 +24,17 @@ CHumanMonster::~CHumanMonster()
 void CHumanMonster::Update(float elapsedTime)
 {
 	CMonster::Update(elapsedTime);
+
+	if (melee_knockback_timer > 0.0f) {
+		float ratio = melee_knockback_timer / MELEE_KNOCKBACK_DURATION;
+		velocity.x = melee_knockback_vel.x * ratio;
+		velocity.z = melee_knockback_vel.z * ratio;
+
+		melee_knockback_timer -= elapsedTime;
+
+		if (melee_knockback_timer < 0.0f) 
+            melee_knockback_timer = 0.0f;
+	}
 }
 
 void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
@@ -36,6 +49,9 @@ void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers
 
 void CHumanMonster::OnIdleMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
      // 시야 범위에 플레이어가 들어오는지 체크
     auto target = FindNearestPlayer();
 
@@ -133,6 +149,9 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
 void CHumanMonster::OnPatrolMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     // (순찰 상태)
     // 타겟 탐색 (TRACE 전환)
     auto target = FindNearestPlayer();
@@ -194,6 +213,9 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
 
 void CHumanMonster::OnTraceMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     auto AIComponent = GetComponent<CAIComponent>();
 
     auto targetPlayer = target_player.lock();
@@ -285,6 +307,9 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
 {
+    if (melee_knockback_timer > 0.0f) 
+        return;
+
     velocity.x = 0.0f;
     velocity.z = 0.0f;
 
@@ -325,6 +350,89 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
         if (AIComponent)
             AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
     }
+}
+
+void CHumanMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
+{
+    CMonster::ApplyMeleeHit(fromPos);
+
+    melee_hit_count++;
+    if (melee_hit_count >= MAX_MELEE_HITS) {
+        auto* ai = GetComponent<CAIComponent>();
+        if (ai) {
+            auto cur = ai->GetCurrentState();
+            if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)
+                ai->ChangeState(AI_STATE::MONSTER_FLEE);
+        }
+    }
+}
+
+void CHumanMonster::OnFleeEnter()
+{
+    flee_timer = FLEE_DURATION;
+    nav_path.clear();
+    path_refresh_timer = 0.0f;
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
+
+    auto targetPlayer = target_player.lock();
+    if (!targetPlayer) {
+        auto nearest = FindNearestPlayer();
+        if (nearest)
+            SetTarget(nearest);
+        targetPlayer = target_player.lock();
+    }
+
+    if (targetPlayer) {
+        XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+        awayDir.y = 0.0f;
+        float len = Vector3::Length(awayDir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
+
+    auto scene = CSceneManager::GetInstance().GetActiveScene();
+    if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
+        XMFLOAT3 itemSpawnPos = position;
+        itemSpawnPos.y = 0.2f;
+        gameScene->SpawnWorldItem(20, itemSpawnPos);
+    }
+}
+
+void CHumanMonster::OnFleeMove(float elapsedTime)
+{
+    if (melee_knockback_timer > 0.0f) return;
+
+    flee_timer -= elapsedTime;
+    if (flee_timer <= 0.0f) {
+        MarkForDelete();
+        return;
+    }
+
+    auto targetPlayer = target_player.lock();
+    if (targetPlayer) {
+        XMFLOAT3 awayDir = Vector3::Subtract(position, targetPlayer->position);
+        awayDir.y = 0.0f;
+        float len = Vector3::Length(awayDir);
+        if (len > 0.001f) {
+            float yaw = XMConvertToDegrees(atan2f(awayDir.x, awayDir.z));
+            SetYaw(yaw);
+            SetYawPitch(yaw, 0.0f);
+        }
+    }
+
+    velocity.x = look.x * FLEE_SPEED;
+    velocity.z = look.z * FLEE_SPEED;
+}
+
+void CHumanMonster::OnFleeExit()
+{
+    flee_timer = 0.0f;
+    velocity.x = 0.0f;
+    velocity.z = 0.0f;
 }
 
 void CHumanMonster::OnIdleEnter()

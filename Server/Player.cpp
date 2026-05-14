@@ -10,6 +10,8 @@
 #include "PhysicsManager.h"
 #include "Item.h"
 #include "Inventory.h"
+#include "Ghost.h"
+#include "HumanMonster.h"
 
 
 CPlayer::CPlayer()
@@ -38,6 +40,7 @@ CPlayer::CPlayer()
     , possessed_is_waiting(false)
     , possessed_wait_timer(0.0f)
     , possession_contact_timer(0.0f)
+    , possessed_spray_hit_count(0)
 {
 
 }
@@ -126,6 +129,21 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updateState)
 {
     if (is_possessed) {
+        if (knockback_timer > 0.0f) {
+            float ratio = knockback_timer / 0.3f;
+            velocity.x = knockback_vel.x * ratio;
+            velocity.z = knockback_vel.z * ratio;
+            knockback_timer -= elapsedTime;
+            if (knockback_timer < 0.0f)
+                knockback_timer = 0.0f;
+        }
+        else if (stun_timer > 0.0f) {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
+            stun_timer -= elapsedTime;
+            if (stun_timer < 0.0f)
+                stun_timer = 0.0f;
+        }
         CObject::Update(elapsedTime);
         return;
     }
@@ -157,13 +175,32 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     if (updateState) {
 
-        ProcessMining(input, elapsedTime, isMoving);
+        if (equipped_item_sub_type == ITEM_SUB_TYPE::TOOL
+            && current_scene_type == SCENE_TYPE::GAME) {
+            ProcessMining(input, elapsedTime, isMoving);
+        }
+
+        if (current_scene_type == SCENE_TYPE::GAME) {
+            switch (equipped_item_sub_type) 
+            {
+                case ITEM_SUB_TYPE::MELEE_WEAPON:
+                {
+                    ProcessMeleeAttack(input, elapsedTime);
+                }
+                break;
+                case ITEM_SUB_TYPE::RANGED_WEAPON:
+                {
+                    ProcessRangedAttack(input, elapsedTime);
+                }
+                break;
+            }
+        }
 
         if (grounded_timer > 0.0f) {
 
             if (!isMoving) {
 
-                if (state != PLAYER_STATE::DIG)
+                if (state != PLAYER_STATE::DIG && state != PLAYER_STATE::ATTACK)
                     state = PLAYER_STATE::IDLE;
 
                 if (is_grounded && knockback_timer <= 0.0f) {
@@ -177,11 +214,13 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
                 dig_sound_timer = -1.0f;
                 if (auto move = GetComponent<CMovementComponent>()) {
                     if (input.shift && !stamina_exhausted) {
-                        state = PLAYER_STATE::RUN;
+                        if (state != PLAYER_STATE::ATTACK)
+                            state = PLAYER_STATE::RUN;
                         move->Run();
                     }
                     else {
-                        state = PLAYER_STATE::WALK;
+                        if (state != PLAYER_STATE::ATTACK)
+                            state = PLAYER_STATE::WALK;
                         move->UnRun();
                     }
                 }
@@ -260,11 +299,12 @@ void CPlayer::ApplyPossession()
     stat.stamina       = 0;
 
     possessed_nav_path.clear();
-    possessed_path_refresh_timer = 0.0f;
-    possessed_wander_target      = GetRandomPossessedTarget();
-    possessed_is_waiting         = false;
-    possessed_wait_timer         = 0.0f;
-    possession_contact_timer     = 0.0f;
+    possessed_path_refresh_timer  = 0.0f;
+    possessed_wander_target       = GetRandomPossessedTarget();
+    possessed_is_waiting          = false;
+    possessed_wait_timer          = 0.0f;
+    possession_contact_timer      = 0.0f;
+    possessed_spray_hit_count     = 0;
 }
 
 void CPlayer::UpdatePossession(float elapsedTime)
@@ -273,23 +313,8 @@ void CPlayer::UpdatePossession(float elapsedTime)
     possession_contact_timer += elapsedTime;
 
     if (possession_timer <= 0.0f) {
-
-        S_PlaySound soundPkt;
-        soundPkt.is_global = false;
-        soundPkt.scene_type = current_scene_type;
-        soundPkt.sound_id = SOUND_ID::devil_laugh1;
-
-        XMFLOAT3 targetPos = GetPosition();
-        soundPkt.x = targetPos.x;
-        soundPkt.y = targetPos.y;
-        soundPkt.z = targetPos.z;
-
-        auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-        if (auto r = room.lock()) {
-            auto& scenes = r->GetScenes();
-            auto currentScene = scenes[(UINT)current_scene_type].get();
-            currentScene->BroadCast(sendBuffer);
-        }
+        // 빙의 해제 Sound 패킷 전송
+        SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
 
         possession_timer = 0.0f;
         is_possessed     = false;
@@ -336,21 +361,7 @@ void CPlayer::UpdatePossession(float elapsedTime)
         {
             if (possession_contact_timer >= ATTACK_INTERVAL) {
 
-                S_PlaySound soundPkt;
-                soundPkt.scene_type = current_scene_type;
-                soundPkt.sound_id = SOUND_ID::damaged1;
-
-                XMFLOAT3 pos = GetPosition();
-                soundPkt.x = pos.x;
-                soundPkt.y = pos.y;
-                soundPkt.z = pos.z;
-
-                auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                if (auto r = room.lock()) {
-                    auto& scenes = r->GetScenes();
-                    auto currentScene = scenes[(UINT)current_scene_type].get();
-                    currentScene->BroadCast(sendBuffer);
-                }
+                SendSoundPacket(false, SOUND_ID::damaged1, GetPosition());
 
                 uint32 hp = nearOther->GetHp();
                 nearOther->SetHp(hp > 10 ? hp - 10 : 0);
@@ -471,22 +482,7 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
         if (c_hold_timer >= 5.0f) {
 
             // 빙의 해제 Sound 패킷 전송
-            {
-                S_PlaySound soundPkt;
-                soundPkt.is_global = false;
-                soundPkt.scene_type = current_scene_type;
-                soundPkt.sound_id = SOUND_ID::devil_laugh1;
-
-                XMFLOAT3 targetPos = GetPosition();
-                soundPkt.x = targetPos.x;
-                soundPkt.y = targetPos.y;
-                soundPkt.z = targetPos.z;
-
-                auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                auto& scenes = room->GetScenes();
-                auto currentScene = scenes[(UINT)current_scene_type].get();
-                currentScene->BroadCast(sendBuffer);
-            }
+            SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
 
             c_hold_timer = 0.0f;
             target->SetPossessed(false);
@@ -569,17 +565,11 @@ XMFLOAT3 CPlayer::GetRandomPossessedTarget()
 
 void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMoving)
 {
-    // 채굴 시작: lbtn 클릭 + 정지 + 착지 + 도구 장착 + Game 씬
+    // 채굴 시작: lbtn 탭 + 정지 + 착지
     if (input.lbtn && !isMoving && !is_possessed && grounded_timer > 0.0f) {
-
-        if (equipped_item_id != 0 
-            && equipped_item_sub_type == ITEM_SUB_TYPE::TOOL 
-            && current_scene_type == SCENE_TYPE::GAME) {
-
-            state = PLAYER_STATE::DIG;
-            dig_timer = DIG_DURATION;
-            dig_sound_timer = 0.0f;
-        }
+        state = PLAYER_STATE::DIG;
+        dig_timer = DIG_DURATION;
+        dig_sound_timer = 0.0f;
     }
 
     // 채굴 소리 타이머: DIG 시작 후 0.5초 시점에 PlaySound 패킷 전송
@@ -591,21 +581,7 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
             if (auto r = room.lock()) {
                 auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
                 if (gameScene && gameScene->FindNearestMineable(position, CGameScene::MINING_RANGE)) {
-
-                    S_PlaySound soundPkt;
-                    soundPkt.is_global = false;
-                    soundPkt.scene_type = current_scene_type;
-                    soundPkt.sound_id = SOUND_ID::flying_pan;
-
-                    XMFLOAT3 targetPos = GetPosition();
-                    soundPkt.x = targetPos.x;
-                    soundPkt.y = targetPos.y;
-                    soundPkt.z = targetPos.z;
-
-                    auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                    auto& scenes = r->GetScenes();
-                    auto currentScene = scenes[(UINT)current_scene_type].get();
-                    currentScene->BroadCast(sendBuffer);
+                    SendSoundPacket(false, SOUND_ID::flying_pan, GetPosition());
                 }
             }
         }
@@ -692,6 +668,230 @@ void CPlayer::ProcessMining(const InputData& input, float elapsedTime, bool isMo
                 }
             }
         }
+    }
+}
+
+void CPlayer::ProcessMeleeAttack(const InputData& input, float elapsedTime)
+{
+    if (input.lbtn && !is_possessed && grounded_timer > 0.0f && melee_attack_timer <= 0.0f) {
+        state = PLAYER_STATE::ATTACK;
+        melee_attack_timer = MELEE_ATTACK_DURATION;
+    }
+
+    if (melee_attack_timer > 0.0f) {
+        float prev = melee_attack_timer;
+        melee_attack_timer -= elapsedTime;
+
+        // 0.4초 경과 시 데미지 (1.5 - 0.4 = 1.1 threshold)
+        if (prev > 1.1f && melee_attack_timer <= 1.1f)
+            MeleeAttack();
+
+        state = (melee_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+    }
+}
+
+void CPlayer::MeleeAttack()
+{
+    auto r = GetRoom();
+    if (!r) 
+        return;
+
+    auto scene = r->GetScenes()[(UINT)current_scene_type].get();
+    if (!scene) 
+        return;
+
+    XMFLOAT3 playerPos  = position;
+    XMFLOAT3 playerLook = look;
+    playerLook.y = 0.0f;
+    float lookLen = sqrtf(playerLook.x * playerLook.x + playerLook.z * playerLook.z);
+    if (lookLen < 0.001f) 
+        return;
+
+    playerLook.x /= lookLen;
+    playerLook.z /= lookLen;
+
+    XMFLOAT3 right = { playerLook.z, 0.0f, -playerLook.x };
+
+    constexpr float MELEE_DEPTH      = 1.3f;
+    constexpr float MELEE_HALF_WIDTH = 0.6f;
+
+    for (auto& [id, monster] : scene->GetMonsters()) {
+        if (!monster) 
+            continue;
+
+        MON_TYPE mType = monster->GetMonsterType();
+        if (mType != MON_TYPE::HUMAN_MONSTER && mType != MON_TYPE::ANIMAL_MONSTER) 
+            continue;
+
+        XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+        toMonster.y = 0.0f;
+
+        float forwardDist = playerLook.x * toMonster.x + playerLook.z * toMonster.z;
+        if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH) 
+            continue;
+
+        float lateralDist = fabsf(right.x * toMonster.x + right.z * toMonster.z);
+        if (lateralDist > MELEE_HALF_WIDTH) 
+            continue;
+
+        monster->ApplyMeleeHit(playerPos, static_pointer_cast<CPlayer>(shared_from_this()));
+    }
+
+    // 빙의된 플레이어 근접 공격: 넉백 + 스턴만 적용 (체력 감소 없음)
+    for (auto& [id, player] : scene->GetPlayers()) {
+        if (!player || id == obj_id)
+            continue;
+        if (!player->GetIsPossessed())
+            continue;
+
+        XMFLOAT3 toPlayer = Vector3::Subtract(player->GetPosition(), playerPos);
+        toPlayer.y = 0.0f;
+
+        float forwardDist = playerLook.x * toPlayer.x + playerLook.z * toPlayer.z;
+        if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH)
+            continue;
+
+        float lateralDist = fabsf(right.x * toPlayer.x + right.z * toPlayer.z);
+        if (lateralDist > MELEE_HALF_WIDTH)
+            continue;
+
+        player->ApplyKnockback(toPlayer, 3.0f, 4.0f);
+        SendSoundPacket(false, SOUND_ID::damaged1, player->GetPosition());
+    }
+}
+
+void CPlayer::ProcessRangedAttack(const InputData& input, float elapsedTime)
+{
+    switch (equipped_item_id)
+    {
+        case 16:  // 스프레이
+        {
+            if (input.lbtn && !is_possessed && grounded_timer > 0.0f && ranged_attack_timer <= 0.0f) {
+                SendSoundPacket(false, SOUND_ID::ghost_spray, GetPosition());
+                state = PLAYER_STATE::ATTACK;
+                ranged_attack_timer = SPRAY_ATTACK_DURATION;
+            }
+
+            if (ranged_attack_timer > 0.0f) {
+                float prev = ranged_attack_timer;
+                ranged_attack_timer -= elapsedTime;
+
+                // 0.8초 경과 시 데미지 (1.5 - 0.8 = 0.7 threshold)
+                if (prev > 0.7f && ranged_attack_timer <= 0.7f)
+                    SprayAttack(elapsedTime);
+
+                state = (ranged_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+            }
+        }
+        break;
+        case 17: // 마법 지팡이
+        {
+            if (input.lbtn && !is_possessed && grounded_timer > 0.0f && ranged_attack_timer <= 0.0f) {
+                state = PLAYER_STATE::ATTACK;
+                ranged_attack_timer = MAGIC_ATTACK_DURATION;
+            }
+
+            if (ranged_attack_timer > 0.0f) {
+                float prev = ranged_attack_timer;
+                ranged_attack_timer -= elapsedTime;
+
+                state = (ranged_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+            }
+        }
+        break;
+        case 18: // 비비탄총
+        {
+            if (input.lbtn && !is_possessed && grounded_timer > 0.0f && ranged_attack_timer <= 0.0f) {
+                state = PLAYER_STATE::ATTACK;
+                ranged_attack_timer = GUN_ATTACK_DURATION;
+            }
+
+            if (ranged_attack_timer > 0.0f) {
+                float prev = ranged_attack_timer;
+                ranged_attack_timer -= elapsedTime;
+
+                state = (ranged_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
+            }
+        }
+        break;
+    }
+}
+
+void CPlayer::SprayAttack(float elapsedTime)
+{
+    constexpr float SPRAY_RANGE = 1.5f;
+
+    auto r = GetRoom();
+    if (!r) 
+        return;
+
+    auto scene = r->GetScenes()[(UINT)current_scene_type].get();
+    if (!scene) 
+        return;
+
+    XMFLOAT3 playerPos  = position;
+    XMFLOAT3 playerLook = look;
+
+    for (auto& [id, monster] : scene->GetMonsters()) {
+        if (!monster || monster->GetMonsterType() != MON_TYPE::GHOST)
+            continue;
+        if (monster->GetAIState() == AI_STATE::MONSTER_FLEE)
+            continue;
+
+        XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+        toMonster.y = 0.0f;
+        float dist = Vector3::Length(toMonster);
+
+        if (dist > SPRAY_RANGE || dist < 0.001f)
+            continue;
+
+        // 전방 체크: 플레이어 정면 방향에 있는지
+        float dot = playerLook.x * (toMonster.x / dist) + playerLook.z * (toMonster.z / dist);
+        if (dot <= 0.0f)
+            continue;
+
+        static_cast<CGhost*>(monster.get())->ApplySprayHit(playerPos, static_pointer_cast<CPlayer>(shared_from_this()));
+    }
+
+    // 빙의된 플레이어 스프레이 히트
+    for (auto& [id, player] : scene->GetPlayers()) {
+        if (!player || id == obj_id)
+            continue;
+        if (!player->GetIsPossessed())
+            continue;
+
+        XMFLOAT3 toPlayer = Vector3::Subtract(player->GetPosition(), playerPos);
+        toPlayer.y = 0.0f;
+        float dist = Vector3::Length(toPlayer);
+
+        if (dist > SPRAY_RANGE || dist < 0.001f)
+            continue;
+
+        float dot = playerLook.x * (toPlayer.x / dist) + playerLook.z * (toPlayer.z / dist);
+        if (dot <= 0.0f)
+            continue;
+
+        player->ApplySprayHitWhilePossessed(playerPos);
+    }
+}
+
+void CPlayer::ApplySprayHitWhilePossessed(const XMFLOAT3& fromPos)
+{
+    constexpr int   MAX_SPRAY_HITS  = 3;
+    constexpr float KNOCKBACK_FORCE = 3.0f;
+
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    ApplyKnockback(awayDir, KNOCKBACK_FORCE, 0.0f);
+
+    SendSoundPacket(false, SOUND_ID::devil_scared1, GetPosition());
+
+    possessed_spray_hit_count++;
+
+    if (possessed_spray_hit_count >= MAX_SPRAY_HITS) {
+        SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
+        possessed_spray_hit_count = 0;
+        is_possessed     = false;
+        possession_timer = 0.0f;
     }
 }
 

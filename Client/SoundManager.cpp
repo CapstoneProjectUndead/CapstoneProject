@@ -38,7 +38,7 @@ int CSoundManager::Play(SOUND_ID key, int loopCount, float volume, bool overlap)
 	if (it == sound_map.end())
 		return -1;
 
-	return it->second->Play(loopCount, volume, overlap);
+	return it->second->Play(loopCount, volume * master_volume, overlap);
 }
 
 void CSoundManager::Stop(SOUND_ID key)

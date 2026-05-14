@@ -64,6 +64,7 @@ public:
 
 	SCENE_TYPE GetSceneType() const { return scene_type; }
 	map<uint64, shared_ptr<CPlayer>>& GetPlayers() { return players; }
+	map<uint64, shared_ptr<CMonster>>& GetMonsters() { return monsters; }
 
 	weak_ptr<CRoom>      GetRoomWeak() const { return room; }
 	shared_ptr<CRoom>    GetRoom() const { return room.lock(); }
@@ -72,6 +73,8 @@ public:
 	weak_ptr<CPhysicsManager>   GetPhysicsManagerWeak() const { return physics_manager; }
 	shared_ptr<CPhysicsManager> GetPhysicsManager() const { return physics_manager.lock(); }
 	void						SetPhysicsManager(shared_ptr<CPhysicsManager> manager) { physics_manager = manager; }
+
+	CItemManager* GetItemManager() const { return item_manager.get(); }
 
 public:
 	// IOCP 스레드들이 호출 (패킷 받자마자 실행)

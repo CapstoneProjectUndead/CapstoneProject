@@ -86,6 +86,9 @@ public:
 	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
 	uint16 GetEquippedItemId() const { return equipped_item_id; }
 
+	PLAYER_STATE GetLastNetState() const { return last_net_state; }
+	void SetLastNetState(PLAYER_STATE s) { last_net_state = s; }
+
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
@@ -97,7 +100,8 @@ protected:
 	XMFLOAT3 direction{};
 
 	PLAYER_STATE state = PLAYER_STATE::IDLE;
-	bool is_my_player = false;	
+	PLAYER_STATE last_net_state = PLAYER_STATE::IDLE;
+	bool is_my_player = false;
 	PlayerInfo dest_info{};		// 서버로부터 받은 캐릭터의 위치, 회전 값
 
 	float smoothed_delay = 0.1f;

@@ -14,6 +14,7 @@
 #include "ImGuiManager.h"
 #include "Monster.h"
 
+#include "Animator.h"
 #include "UIComponent.h"
 #include "Renderers.h"
 #include "SceneManager.h"
@@ -261,6 +262,9 @@ void CScene::RemoveObject(UINT id)
 	UINT idx = id_To_Index[id];
 	UINT last = objects.size() - 1;
 
+	if (auto* col = objects[idx]->GetComponent<CColliderComponent>())
+		CPhysicsManager::GetInstance().EraseCollider(col);
+
 	std::swap(objects[idx], objects[last]);
 	id_To_Index[objects[idx]->GetID()] = idx;
 
@@ -381,7 +385,12 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 	if (myPlayer != nullptr && myPlayer->GetID() == pkt.info.player_id) {
 
 		myPlayer->SetServerVelocity(XMFLOAT3{pkt.info.vx, pkt.info.vy, pkt.info.vz});
+		PLAYER_STATE prevState = myPlayer->GetState();
 		myPlayer->SetState(pkt.info.state);
+
+		if (prevState != PLAYER_STATE::ATTACK && pkt.info.state == PLAYER_STATE::ATTACK)
+			myPlayer->OnAttack();
+
 		myPlayer->SetIsGrounded((pkt.info.state != PLAYER_STATE::JUMP));
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
@@ -418,6 +427,15 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
 		otherPlayer->SetYaw(pkt.info.yaw);
 		otherPlayer->SetPitch(pkt.info.pitch);
+
+		PLAYER_STATE prevNetState = otherPlayer->GetLastNetState();
+		otherPlayer->SetLastNetState(pkt.info.state);
+		if (prevNetState != PLAYER_STATE::ATTACK && pkt.info.state == PLAYER_STATE::ATTACK) {
+			auto* animator = otherPlayer->GetComponent<CAnimatorComponent>();
+			if (animator) 
+				animator->PlayAction(animator->GetAttackClipByItem(otherPlayer->GetEquippedItemId()));
+		}
+
 		otherPlayer->SetState(pkt.info.state);
 		otherPlayer->SetPossessed(pkt.info.is_possessed);
 
@@ -498,7 +516,7 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 
 	auto monster = std::static_pointer_cast<CMonster>(vec[idx]);
 
-	// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
+	// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간
 	MonsterFrameHistory state{};
 	state.monster_id = pkt.info.monster_id;
 	state.AI_state = pkt.info.AI_state;

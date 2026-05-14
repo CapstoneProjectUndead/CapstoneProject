@@ -7,7 +7,7 @@ class CUser;
 class CComponent;
 class CRoom;
 
-class CObject
+class CObject : public enable_shared_from_this<CObject>
 {
     friend class CMovementComponent;
     friend class CColliderComponent;
@@ -93,6 +93,9 @@ public:
     void UpdateWorldMatrix();
     void UpdateLookRightFromYaw();
     //=================================
+
+    // 유틸 함수
+    void SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& generatePos, float range = 0.f);
 
 protected:
     weak_ptr<CUser>                     user;

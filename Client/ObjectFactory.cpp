@@ -702,6 +702,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 		AIComp->AddState(std::make_shared<CPatrolState>());
 		AIComp->AddState(std::make_shared<CTraceState>());
 		AIComp->AddState(std::make_shared<CAttackState>());
+		AIComp->AddState(std::make_shared<CFleeState>());
 
 		// 항상 IDLE 로 시작.
 		AIComp->SetState(AI_STATE::MONSTER_IDLE);
@@ -727,7 +728,7 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 	switch (item->GetItemType())
 	{
 	case ITEM_TYPE::EQUIPMENT:
-		if (item->GetSubType() >= ITEM_SUB_TYPE::WEAPON)
+		if (item->GetSubType() >= ITEM_SUB_TYPE::MELEE_WEAPON)
 			worldItem = std::make_shared<CWorldWeapon>(item);
 		else
 			worldItem = std::make_shared<CWorldTool>(item);

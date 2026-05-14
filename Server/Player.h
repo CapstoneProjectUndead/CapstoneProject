@@ -123,12 +123,17 @@ public:
 private:
 	void UpdateStamina(float elapsedTime);
 	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
+	void ProcessMeleeAttack(const InputData& input, float elapsedTime);
+	void ProcessRangedAttack(const InputData& input, float elapsedTime);
 	void UpdatePossession(float elapsedTime);
-
 	void ReleasePossession(const InputData& input, const float elapsedTime);
 
 	XMFLOAT3            GetRandomPossessedTarget();
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
+
+	void SprayAttack(float elapsedTime);
+	void ApplySprayHitWhilePossessed(const XMFLOAT3& fromPos);
+	void MeleeAttack();
 
 private:
 	weak_ptr<CUser>				user;
@@ -166,6 +171,7 @@ private:
 	float       c_hold_timer;
 	bool        last_c_input;
 	bool        start_jump;
+	int         possessed_spray_hit_count;
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
 	float    possessed_path_refresh_timer;
@@ -180,6 +186,16 @@ private:
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;
 	const float DIG_DURATION = 1.03f;
+
+	// 스프레이 공격 상태 유지 타이머
+	float       ranged_attack_timer{ 0.0f };
+	const float SPRAY_ATTACK_DURATION = 1.5f;
+	const float MAGIC_ATTACK_DURATION = 1.5f;
+	const float GUN_ATTACK_DURATION = 1.5f;
+
+	// 근접 공격 상태 유지 타이머
+	float       melee_attack_timer{ 0.0f };
+	const float MELEE_ATTACK_DURATION = 1.5f;
 
 	float       dig_sound_timer = -1.0f;
 };

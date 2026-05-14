@@ -5,6 +5,9 @@
 #include "Animator.h"
 #include "MyPlayer.h"
 #include "SceneManager.h"
+#include "AIComponent.h"
+#include "State.h"
+#include "SoundManager.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CCharacter(OBJECT_TYPE::MONSTER)
@@ -35,6 +38,15 @@ void CMonster::Update(float elapsedTime)
 
 void CMonster::UpdateSingle(float elapsedTime)
 {
+    // 주변(20.f)에 플레이어가 없다면 몬스터 Update 생략!
+    auto player = FindNearestPlayer();
+    if (player) {
+        constexpr float SLEEP_DIST_SQ = 20.0f * 20.0f;
+        XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), position);
+        if (diff.x * diff.x + diff.z * diff.z > SLEEP_DIST_SQ)
+            return;
+    }
+
     // 물리 엔진이 돌기 전의 현재 Y 좌표를 기억합니다.
     float beforeY = position.y;
 
@@ -61,6 +73,33 @@ void CMonster::UpdateMulti(float elapsedTime)
     }
 
     CCharacter::Update(elapsedTime);
+}
+
+void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
+{
+    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
+    awayDir.y = 0.0f;
+    float len = Vector3::Length(awayDir);
+    if (len < 0.001f) 
+        return;
+
+    CSoundManager::GetInstance().Play(SOUND_ID::surprising_girl);
+
+    melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
+    melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
+    velocity.x = melee_knockback_vel.x;
+    velocity.z = melee_knockback_vel.z;
+
+    auto nearest = FindNearestPlayer();
+    if (nearest) 
+        SetTarget(nearest);
+
+    auto* ai = GetComponent<CAIComponent>();
+    if (ai) {
+        auto cur = ai->GetCurrentState();
+        if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+    }
 }
 
 void CMonster::RecordMonsterFrameHistory(const MonsterFrameHistory& state)

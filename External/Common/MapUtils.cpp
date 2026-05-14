@@ -31,6 +31,8 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::TENT_CORNER_CLOTH] = "tent_corner_cloth";
     id_to_file[EModelVariant::TENT_CORNER] = "tent_corner";
 
+    id_to_file[EModelVariant::PARK_SAND] = "park_sand";
+
     // Grass (ID 반복문 처리)
     for (int i = 0; i <= 2; ++i) {
         EModelVariant var = static_cast<EModelVariant>(static_cast<int>(EModelVariant::GRASS_1) + (i));
@@ -57,6 +59,17 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::TRASHCAN_002] = "trashcan002";
     id_to_file[EModelVariant::MANHOLE] = "manhole";
 
+    id_to_file[EModelVariant::BOOKSHELF] = "bookshelf";
+    id_to_file[EModelVariant::FENCE_WOOD] = "fence_wood";
+    id_to_file[EModelVariant::REFRIGERATOR] = "refrigerator";
+    id_to_file[EModelVariant::REFRIGERATOR_DOOR_LOWER] = "refrigerator_door_lower";
+    id_to_file[EModelVariant::REFRIGERATOR_DOOR_UPPER] = "refrigerator_door_upper";
+    id_to_file[EModelVariant::SOFA] = "sofa";
+    id_to_file[EModelVariant::STREETLAMP] = "streetlamp";
+    id_to_file[EModelVariant::TABLE_LOW] = "table_low";
+    id_to_file[EModelVariant::CHAIR_001] = "chair.001";
+    id_to_file[EModelVariant::TABLE_001] = "table.001";
+
     // 카테고리별 랜덤 풀 설정 (추가 장식물용 - 파일명 기반)
     random_pools["grass"] = { "park_grass_1", "park_grass_2", "park_grass_3"};
     random_pools["stone"] = { "stone011", "stone012", "stone013", "stone014", "stone015", "stone016", "stone017",
@@ -65,10 +78,16 @@ void CMapAssetManager::initialize()
     random_pools["bench"] = { "park_bench002", "park_bench003" };
     random_pools["bush"] = { "park_bush", "park_shrub" };
     random_pools["trashcan"] = { "trashcan001", "trashcan002" };
+    random_pools["indoor_furniture"] = {
+        "bookshelf", "sofa", "table_low", "chair.001", "table.001", "refrigerator"
+    };
+    random_pools["village_deco"] = { "streetlamp" };
+
 
     // 모델 타입별 메쉬 매핑 (EModelType -> {EModelVariant 후보들(실제 모델 enum), 추가 풀 키})
-    asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {"stone"} };
-    asset_table[EModelType::PARK_GREEN] = { {EModelVariant::PARK_GREEN}, {"grass"} };
+    asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {} };
+    asset_table[EModelType::PARK_GREEN] = { {EModelVariant::PARK_GREEN}, {} };
+
     asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {} };
     //asset_table[EModelType::WALL] = { {EModelVariant::STONE_WALL}, {} };
     asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
@@ -85,6 +104,13 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
     asset_table[EModelType::TREASURE] = { {}, {"trashcan"} };
+
+    asset_table[EModelType::GRASS] = { {}, {"grass"} };
+
+    asset_table[EModelType::DECO_STONE] = { {}, {"stone"} };
+
+    asset_table[EModelType::PARK_SAND_DECO] = { {EModelVariant::PARK_SAND}, {} };
+
     //asset_table[EModelType::MANHOLE] = { {EModelVariant::MANHOLE} };  // entry나 manhole로 설정 필요
 
     // 천막 상점 관련
@@ -94,36 +120,65 @@ void CMapAssetManager::initialize()
     // 서버 전용 마커 (렌더링 없음)
     asset_table[EModelType::MONSTER_HUMAN] = { {}, {} };
     asset_table[EModelType::MONSTER_GHOST] = { {}, {} };
+
+    // [집 내부 바닥] 바닥 위에 가구가 랜덤하게 생성됨
+    asset_table[EModelType::HOUSE_INNTER] = { {EModelVariant::HOUSE_PLACE}, {"indoor_furniture"} };
+
+    // [마을 길] 마을 길바닥에 가로등이 가끔씩
+    asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {"village_deco"} };
+
+    asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
+    asset_table[EModelType::FENCE_WOOD_STR] = { {EModelVariant::FENCE_WOOD}, {} };
 }
 
 std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelVariant serverModelId)
 {
     std::vector<std::string> results;
 
-    // 메인 모델 결정
     if (serverModelId != EModelVariant::NONE) {
-        // 서버에서 준 ID가 있으면 우선 사용
         if (id_to_file.contains(serverModelId)) {
             results.push_back(id_to_file[serverModelId]);
         }
     }
     else if (asset_table.contains(type)) {
-        // 서버 ID가 없으면(싱글) main 전부 생성
-        const auto& main_pool = asset_table[type].main_variants;
-        if (!main_pool.empty()) {
-            for (auto& main : main_pool) {
+        const auto& asset_entry = asset_table[type];
+
+        // [메인 모델] 바닥/벽 등은 100% 생성
+        if (!asset_entry.main_variants.empty()) {
+            for (auto& main : asset_entry.main_variants) {
                 results.push_back(id_to_file[main]);
             }
         }
-        // 추가 장식물(Extra) 결정
-        for (const auto& pool_key : asset_table[type].extra_pools) {
-            if (random_pools.contains(pool_key)) {
-                const auto& pool = random_pools[pool_key];
-                results.push_back(pool[rand() % pool.size()]);
+
+        // [추가 장식물] 중복 및 확률 로직
+        for (const auto& pool_key : asset_entry.extra_pools) {
+            int probability = 15; // 기본 확률
+
+            if (pool_key == "village_deco") {
+                probability = 5;
+            }
+            else if (type == EModelType::TREASURE || type == EModelType::PARK_GREEN || type == EModelType::BENCH || type == EModelType::TREE) {
+                probability = 100;
+            }
+            else if (pool_key == "indoor_furniture") {
+                probability = 45;
+            }
+
+            // 확률 체크
+            if (rand() % 100 < probability) {
+                if (random_pools.contains(pool_key)) {
+                    const auto& pool = random_pools[pool_key];
+                    if (!pool.empty()) {
+                        results.push_back(pool[rand() % pool.size()]);
+
+                        if (type == EModelType::PARK_GREEN && pool_key == "grass") {
+                            results.push_back(pool[rand() % pool.size()]);
+                        }
+                    }
+                }
             }
         }
     }
-
     return results;
 }
 

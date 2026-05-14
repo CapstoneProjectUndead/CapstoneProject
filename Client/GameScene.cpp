@@ -12,6 +12,7 @@
 #include "HumanMonster.h"
 #include "Ghost.h"
 #include "DogMonster.h"
+#include "AIComponent.h"
 
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
@@ -91,6 +92,7 @@ void CGameScene::Initialize()
 	SetButtonEvents();
 
 	// 아이템 생성 (테스트)
+	SpawnWorldItem(1, XMFLOAT3{ -1, 2, -1 });
 	SpawnWorldItem(5, XMFLOAT3{ -1, 2, -1 });
 	SpawnWorldItem(9, XMFLOAT3{ -1, 2, -2 });
 	SpawnWorldItem(14, XMFLOAT3{ -1, 2, -3 });
@@ -113,7 +115,7 @@ void CGameScene::Initialize()
 
 	// 테스트 (임시코드)
 	//CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-	//auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::ANIMAL_MONSTER, scene_type);
+	//auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
 	//if (dog) {
 	//	dog->SetPosition(2, 0.1f, 2.f);
 	//	dog->SetOriginPos({ 2, 0.1f, 2.f });
@@ -207,10 +209,24 @@ void CGameScene::Update(float elapsedTime)
 
 	CScene::Update(elapsedTime);
 
-	ProcessPickup();
-
 	if (my_player) {
-		ProcessMining(elapsedTime);
+
+		// 아이템 줍기
+		ProcessPickup();
+
+		// 플레이어가 장착하고 있는 아이템에 따라 행동 분기
+		auto qs = my_player->GetQuickSlot();
+		bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
+		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
+			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
+
+		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || my_player->GetEquippedItemId() == 0)) {
+			ProcessMining(elapsedTime);
+		}
+		else if(!ImGui::GetIO().WantCaptureMouse && hasWeapon) {
+			ProcessAttack(elapsedTime);
+		}
+
 		my_player->BeginSendInputPacket(elapsedTime);
 
 		// (멀티 전용) 빙의 해제 progress bar UI는 클라이언트 예측 기법 적용
@@ -287,7 +303,7 @@ void CGameScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
 		camera->SetTarget(my_player.get());
-		if(g_is_single)
+		if (g_is_single)
 			my_player->SetPosition(1.f, 5.0f, 1.5f);	// Lobby 위치 그대로 가져오는 거 방지
 
 		// 다우징 로드가 관리하는 treasuer_position(vector)에 보물 위치 정보를 넣는다.
@@ -300,81 +316,78 @@ void CGameScene::Enter()
 
 void CGameScene::ProcessPickup()
 {
-	if (!my_player)
-		return;
+	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) == KEY_STATE::TAP) {
 
-	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) != KEY_STATE::TAP)
-		return;
+		XMFLOAT3 playerPos = my_player->GetPosition();
 
-	XMFLOAT3 playerPos = my_player->GetPosition();
-
-	// Objects에는 플레이어, 몬스터, 맵 오브젝트, 아이템 모두 들어있다.
-	// 여기서 아이템만 필터링한다.
-	std::vector<std::shared_ptr<CObject>> worldItems;
-	for (auto& obj : objects) {
-		if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
-			worldItems.push_back(obj);
+		// Objects에는 플레이어, 몬스터, 맵 오브젝트, 아이템 모두 들어있다.
+		// 여기서 아이템만 필터링한다.
+		std::vector<std::shared_ptr<CObject>> worldItems;
+		for (auto& obj : objects) {
+			if (obj->GetObjectType() == OBJECT_TYPE::WORLD_ITEM) {
+				worldItems.push_back(obj);
+			}
 		}
-	}
 
-	// 플레이어 근처에 있는 아이템을 찾는다.
-	auto it = std::find_if(worldItems.begin(), worldItems.end(),
-		[&](const std::shared_ptr<CObject>& item) {
-			XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), playerPos);
-			return Vector3::Length(diff) <= PICKUP_RANGE;
-		});
+		// 플레이어 근처에 있는 아이템을 찾는다.
+		auto it = std::find_if(worldItems.begin(), worldItems.end(),
+			[&](const std::shared_ptr<CObject>& item) {
+				XMFLOAT3 diff = Vector3::Subtract(item->GetPosition(), playerPos);
+				return Vector3::Length(diff) <= PICKUP_RANGE;
+			});
 
-	if (it == worldItems.end())
-		return;
-
-	auto worldItem = static_cast<CWorldItem*>(it->get());
-
-	// 싱글환경
-	if (g_is_single) {
-
-		auto inv = my_player->GetInventory();
-		if (!inv)
+		if (it == worldItems.end())
 			return;
 
-		// 보물이라면 
-		if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
+		auto worldItem = static_cast<CWorldItem*>(it->get());
 
-			// 아이템 줍기 시도
-			if (inv->AddItem(worldItem->GetItem())) {
+		// 싱글환경
+		if (g_is_single) {
 
-				// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
-				uint32 id = worldItem->GetID();
-				auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
-					[id](const TreasureInfo& info) {
-						return info.world_id == id;
-					});
+			auto inv = my_player->GetInventory();
+			if (!inv)
+				return;
 
-				if (treasure_it != treasures.end())
-					treasures.erase(treasure_it);
+			// 보물이라면 
+			if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
 
-				// 다우징로드에 있는 보물 컨테이너 갱신
-				// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
-				my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+				// 아이템 줍기 시도
+				if (inv->AddItem(worldItem->GetItem())) {
 
+					// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
+					uint32 id = worldItem->GetID();
+					auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
+						[id](const TreasureInfo& info) {
+							return info.world_id == id;
+						});
+
+					if (treasure_it != treasures.end())
+						treasures.erase(treasure_it);
+
+					// 다우징로드에 있는 보물 컨테이너 갱신
+					// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
+					my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
+
+					RemoveObject(worldItem->GetID());
+				}
+			}
+			else {
+				inv->AddItem(worldItem->GetItem());
 				RemoveObject(worldItem->GetID());
 			}
 		}
 		else {
-			inv->AddItem(worldItem->GetItem());
-			RemoveObject(worldItem->GetID());
-		}
-	}
-	else {
-		// (멀티) 서버에 줍기 요청만 보낸다.
-		// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
-		C_PickupItem pickupPkt;
-		pickupPkt.player_id = my_player->GetUser()->GetUserID();
-		pickupPkt.item_world_id = worldItem->GetID();
-		pickupPkt.item_type = worldItem->GetItem()->GetItemType();
-		pickupPkt.scene_type = my_player->GetCurrentSceneType();
+			// (멀티) 서버에 줍기 요청만 보낸다.
+			// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
+			C_PickupItem pickupPkt;
+			pickupPkt.player_id = my_player->GetUser()->GetUserID();
+			pickupPkt.item_world_id = worldItem->GetID();
+			pickupPkt.item_type = worldItem->GetItem()->GetItemType();
+			pickupPkt.scene_type = my_player->GetCurrentSceneType();
 
-		auto sendBuffer = MAKE_SEND_BUFFER(pickupPkt);
-		my_player->GetSession()->DoSend(sendBuffer);
+			auto sendBuffer = MAKE_SEND_BUFFER(pickupPkt);
+			my_player->GetSession()->DoSend(sendBuffer);
+		}
 	}
 }
 
@@ -382,9 +395,6 @@ void CGameScene::ProcessMining(float elapsedTime)
 {
 	// 싱글 전용 
 	if (!g_is_single)
-		return;
-
-	if (!my_player)
 		return;
 
 	bool isDigging = (my_player->GetState() == PLAYER_STATE::DIG);
@@ -475,16 +485,12 @@ void CGameScene::ProcessMining(float elapsedTime)
 
 	was_digging = isDigging;
 
-	// 플레이어가 도구를 장착하고 있는지 검사
-	auto qs = my_player->GetQuickSlot();
-	bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
-
 	// 이동 중에는 채굴 시작 불가 
 	bool isMoving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
 	              || KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
 
 	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
-	if (KEY_TAP(KEY::LBTN) && !isDigging && (hasTool || my_player->GetEquippedItemId() == 0) && !ImGui::GetIO().WantCaptureMouse && !isMoving) {
+	if (KEY_TAP(KEY::LBTN) && !isDigging && !isMoving) {
 
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
@@ -511,6 +517,172 @@ void CGameScene::ProcessMining(float elapsedTime)
 	}
 }
 
+void CGameScene::ProcessAttack(float elapsedTime)
+{
+	auto qs = my_player->GetQuickSlot();
+	if (!qs) 
+		return;
+
+	// 퀵슬롯에서 선택된 아이템의 타입(근접 or 원거리)
+	switch (qs->GetSelectedSubType())
+	{
+	case ITEM_SUB_TYPE::MELEE_WEAPON:
+		ProcessMeleeAttack(elapsedTime);
+		break;
+	case ITEM_SUB_TYPE::RANGED_WEAPON:
+		ProcessRangedAttack(elapsedTime);
+		break;
+	}
+}
+
+void CGameScene::ProcessMeleeAttack(float elapsedTime)
+{
+	if (melee_attack_cooldown > 0.0f)
+		melee_attack_cooldown -= elapsedTime;
+
+	// 공격 소리는 서버의 허락을 받지 않고 바로 적용한다.
+	if (KEY_TAP(KEY::LBTN) && !g_is_single && melee_attack_cooldown <= 0.0f) {
+		melee_attack_cooldown = 1.5f;
+		PlayMeleeAttackSound();
+		return;
+	}
+
+	// 클릭: 애니메이션 시작 + 타이머 세팅
+	if (KEY_TAP(KEY::LBTN) && melee_attack_cooldown <= 0.0f
+		&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+
+		my_player->OnAttack();
+		melee_attack_timer    = 0.4f;
+		melee_attack_cooldown = 1.5f;
+		PlayMeleeAttackSound();
+	}
+
+	// 타이머 감소 → 만료 시 범위 판정
+	if (melee_attack_timer > 0.0f) {
+		melee_attack_timer -= elapsedTime;
+		if (melee_attack_timer <= 0.0f) {
+			melee_attack_timer = -1.0f;
+
+			XMFLOAT3 playerPos = my_player->GetPosition();
+			XMFLOAT3 look      = my_player->look;
+			look.y = 0.0f;
+			float lookLen = sqrtf(look.x * look.x + look.z * look.z);
+			if (lookLen >= 0.001f) {
+				look.x /= lookLen;
+				look.z /= lookLen;
+
+				XMFLOAT3 right = { look.z, 0.0f, -look.x };
+
+				constexpr float MELEE_DEPTH      = 1.1f;
+				constexpr float MELEE_HALF_WIDTH = 0.6f;
+
+				for (auto& obj : objects) {
+					if (obj->GetObjectType() != OBJECT_TYPE::MONSTER) 
+						continue;
+
+					auto* monster = static_cast<CMonster*>(obj.get());
+					MON_TYPE mType = monster->GetMonsterType();
+					if (mType != MON_TYPE::HUMAN_MONSTER && mType != MON_TYPE::ANIMAL_MONSTER) 
+						continue;
+
+					XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+					toMonster.y = 0.0f;
+
+					float forwardDist = look.x * toMonster.x + look.z * toMonster.z;
+					if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH) 
+						continue;
+
+					float lateralDist = fabsf(right.x * toMonster.x + right.z * toMonster.z);
+					if (lateralDist > MELEE_HALF_WIDTH) 
+						continue;
+
+					monster->ApplyMeleeHit(playerPos);
+				}
+			}
+		}
+	}
+}
+
+void CGameScene::ProcessRangedAttack(float elapsedTime)
+{
+	uint16 equippedID = my_player->GetEquippedItemId();
+
+	switch (equippedID)
+	{
+		case 16: // 스프레이
+		{
+			if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f
+				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+				my_player->OnAttack();
+				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
+				spray_attack_timer = 0.8f;
+				spray_attack_cooldown = 1.5f;
+			}
+
+			// 0.8초 후 데미지 적용
+			if (spray_attack_timer > 0.0f) {
+				spray_attack_timer -= elapsedTime;
+				if (spray_attack_timer <= 0.0f) {
+					spray_attack_timer = -1.0f;
+					SprayAttack(elapsedTime);
+				}
+			}
+
+			if (spray_attack_cooldown > 0.0f)
+				spray_attack_cooldown -= elapsedTime;
+		}
+		break;
+		case 17: // 마법 지팡이
+		{
+			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
+				&& !my_player->GetIsPossessed()) {
+				my_player->OnAttack();
+			}
+		}
+		break;
+		case 18: // 비비탄총
+		{
+			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
+				&& !my_player->GetIsPossessed()) {
+				my_player->OnAttack();
+			}
+		}
+		break;
+	}
+}
+
+void CGameScene::SprayAttack(float elapsedTime)
+{
+	constexpr float SPRAY_RANGE = 1.5f;
+
+	XMFLOAT3 playerPos  = my_player->GetPosition();
+	XMFLOAT3 playerLook = my_player->look;
+
+	for (auto& obj : objects) {
+		if (obj->GetObjectType() != OBJECT_TYPE::MONSTER) 
+			continue;
+
+		auto* monster = static_cast<CMonster*>(obj.get());
+		if (monster->GetMonsterType() != MON_TYPE::GHOST) 
+			continue;
+		if (monster->GetAIState() == AI_STATE::MONSTER_FLEE) 
+			continue;
+
+		XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
+		toMonster.y = 0.0f;
+		float dist = Vector3::Length(toMonster);
+
+		if (dist > SPRAY_RANGE || dist < 0.001f) 
+			continue;
+
+		// 전방 체크: 플레이어 정면 방향에 있는지
+		float dot = playerLook.x * (toMonster.x / dist) + playerLook.z * (toMonster.z / dist);
+		if (dot <= 0.0f) 
+			continue;
+
+		static_cast<CGhost*>(monster)->ApplySprayHit(playerPos);
+	}
+}
 
 // 싱글환경
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
@@ -521,7 +693,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
 		return;
-
+	
 	worldItem->Initialize();
 
 	// 아이템의 위치
@@ -644,6 +816,17 @@ void CGameScene::DrawDePossessProgressBar()
 
 	ImGui::End();
 	ImGui::PopStyleVar(3);
+}
+
+void CGameScene::PlayMeleeAttackSound()
+{
+	uint16 equippedID = my_player->GetEquippedItemId();
+	if (equippedID == 14) {
+		CSoundManager::GetInstance().Play(SOUND_ID::swing2);
+	}
+	else if (equippedID == 19) {
+		CSoundManager::GetInstance().Play(SOUND_ID::sword);
+	}
 }
 
 void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)
