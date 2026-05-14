@@ -38,6 +38,15 @@ void CMonster::Update(float elapsedTime)
 
 void CMonster::UpdateSingle(float elapsedTime)
 {
+    // 주변(20.f)에 플레이어가 없다면 몬스터 Update 생략!
+    auto player = FindNearestPlayer();
+    if (player) {
+        constexpr float SLEEP_DIST_SQ = 20.0f * 20.0f;
+        XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), position);
+        if (diff.x * diff.x + diff.z * diff.z > SLEEP_DIST_SQ)
+            return;
+    }
+
     // 물리 엔진이 돌기 전의 현재 Y 좌표를 기억합니다.
     float beforeY = position.y;
 

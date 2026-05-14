@@ -34,6 +34,14 @@ void CMonster::Update(float elapsedTime)
 {
 	last_simulated_time = static_cast<float>(g_server_total_time);
 
+    auto nearest = FindNearestPlayer();
+    if (nearest) {
+        constexpr float SLEEP_DIST_SQ = 20.0f * 20.0f;
+        XMFLOAT3 diff = Vector3::Subtract(nearest->GetPosition(), position);
+        if (diff.x * diff.x + diff.z * diff.z > SLEEP_DIST_SQ)
+            return;
+    }
+
 	CObject::Update(elapsedTime);
 }
 
