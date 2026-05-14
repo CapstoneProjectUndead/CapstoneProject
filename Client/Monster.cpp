@@ -83,7 +83,12 @@ void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
     if (len < 0.001f) 
         return;
 
-    CSoundManager::GetInstance().Play(SOUND_ID::surprising_girl);
+    if (monster_type == MON_TYPE::HUMAN_MONSTER) {
+        CSoundManager::GetInstance().Play(SOUND_ID::surprising_girl);
+    }
+    else if(monster_type == MON_TYPE::ANIMAL_MONSTER) {
+        CSoundManager::GetInstance().Play(SOUND_ID::dog_moan);
+    }
 
     melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
     melee_knockback_timer = MELEE_KNOCKBACK_DURATION;

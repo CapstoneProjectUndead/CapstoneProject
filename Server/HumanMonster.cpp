@@ -309,20 +309,7 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
         auto targetPlayer = target_player.lock();
         if (targetPlayer) {
 
-            S_PlaySound soundPkt;
-            soundPkt.is_global = false;
-            soundPkt.scene_type = current_scene_type;
-            soundPkt.sound_id = SOUND_ID::jab;
-
-            XMFLOAT3 monsterPos = GetPosition();
-            soundPkt.x = monsterPos.x;
-            soundPkt.y = monsterPos.y;
-            soundPkt.z = monsterPos.z;
-
-            auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-            if (auto scene = GetScene()) {
-                scene->BroadCast(sendBuffer);
-            }
+            SendSoundPacket(false, SOUND_ID::jab, GetPosition());
 
             XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
             dirVec.y = 0.0f;
@@ -338,19 +325,7 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
 
             if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
 
-                soundPkt.is_global = false;
-                soundPkt.scene_type = current_scene_type;
-                soundPkt.sound_id = SOUND_ID::damaged1;
-
-                XMFLOAT3 targetPos = targetPlayer->GetPosition();
-                soundPkt.x = targetPos.x;
-                soundPkt.y = targetPos.y;
-                soundPkt.z = targetPos.z;
-
-                sendBuffer = MAKE_SEND_BUFFER(soundPkt);
-                if (auto scene = GetScene()) {
-                    scene->BroadCast(sendBuffer);
-                }
+                SendSoundPacket(false, SOUND_ID::damaged1, GetPosition());
 
                 uint32 hp = targetPlayer->GetHp();
                 targetPlayer->SetHp(hp > 10 ? hp - 10 : 0);
@@ -400,6 +375,8 @@ void CHumanMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> p
 
 void CHumanMonster::OnFleeEnter()
 {
+    SendSoundPacket(false, SOUND_ID::girl_flee, GetPosition());
+
     flee_timer = FLEE_DURATION;
     nav_path.clear();
     path_refresh_timer = 0.0f;

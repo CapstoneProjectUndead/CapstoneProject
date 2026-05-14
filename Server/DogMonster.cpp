@@ -215,6 +215,17 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 		return;
 	}
 
+	dog_bark_time -= elapsedTime;
+	if (dog_bark_time <= 0.f && dog_bark) {
+		dog_bark = false;
+	}
+
+	if (!dog_bark) {
+		SendSoundPacket(false, SOUND_ID::dog_bark, GetPosition());
+		dog_bark = true;
+		dog_bark_time = 1.8f;
+	}
+
 	XMFLOAT3 dirVec = Vector3::Subtract(targetPlayer->GetPosition(), position);
 	dirVec.y = 0.0f;
 	float dist = Vector3::Length(dirVec);
@@ -424,6 +435,8 @@ void CDogMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> pla
 
 void CDogMonster::OnFleeEnter()
 {
+	SendSoundPacket(false, SOUND_ID::dog_howling, GetPosition());
+
 	flee_timer = FLEE_DURATION;
 	nav_path.clear();
 	path_refresh_timer = 0.0f;

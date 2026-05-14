@@ -82,7 +82,12 @@ void CResourceManager::LoadSounds()
     CSoundManager::GetInstance().LoadSound(SOUND_ID::ghost_spray,   "../Resource/Sound/ghost_spray.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::devil_scared1,   "../Resource/Sound/devil_scared1.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::surprising_girl,   "../Resource/Sound/surprising_girl.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::girl_flee,   "../Resource/Sound/girl_flee.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::ridicule,   "../Resource/Sound/ridicule.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::swing2,   "../Resource/Sound/swing2.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::sword,   "../Resource/Sound/sword.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_bark,   "../Resource/Sound/dog_bark.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_attack,   "../Resource/Sound/dog_attack.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_moan,   "../Resource/Sound/dog_moan.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_howling,   "../Resource/Sound/dog_howling.mp3");
 }

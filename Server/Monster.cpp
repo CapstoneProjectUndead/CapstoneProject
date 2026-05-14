@@ -93,7 +93,13 @@ void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player
         return;
 
     target_player = player;
-    SendSoundPacket(false, SOUND_ID::surprising_girl, GetPosition());
+
+    if (monster_type == MON_TYPE::HUMAN_MONSTER) {
+        SendSoundPacket(false, SOUND_ID::surprising_girl, GetPosition());
+    }
+    else if (monster_type == MON_TYPE::ANIMAL_MONSTER) {
+        SendSoundPacket(false, SOUND_ID::dog_moan, GetPosition());
+    }
 
     melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
     melee_knockback_timer = MELEE_KNOCKBACK_DURATION;

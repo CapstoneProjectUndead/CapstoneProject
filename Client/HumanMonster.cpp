@@ -369,6 +369,8 @@ void CHumanMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
 
 void CHumanMonster::OnFleeEnter()
 {
+    CSoundManager::GetInstance().Play(SOUND_ID::girl_flee);
+
     flee_timer = FLEE_DURATION;
     nav_path.clear();
     path_refresh_timer = 0.0f;

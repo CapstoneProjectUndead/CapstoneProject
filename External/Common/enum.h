@@ -180,4 +180,9 @@ enum class SOUND_ID : uint16_t
 	ridicule,
 	swing2,
 	sword,
+	dog_bark,
+	dog_attack,
+	dog_moan,
+	dog_howling,
+	girl_flee,
 };

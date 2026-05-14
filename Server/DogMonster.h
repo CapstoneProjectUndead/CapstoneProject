@@ -47,4 +47,8 @@ private:
     static constexpr int   MAX_MELEE_HITS     = 5;
     static constexpr float FLEE_DURATION      = 1.0f;
     static constexpr float FLEE_SPEED         = 0.5f;
+
+    // 개 짖는 소리
+    bool dog_bark = false;
+    float dog_bark_time = 0.f;
 };
