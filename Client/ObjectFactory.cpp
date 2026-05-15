@@ -311,6 +311,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	treasures.clear();
 	humanMonster_spawn_positions.clear();
 	ghost_spawn_positions.clear();
+	dog_spawn_positions.clear();
 
 	uint32 treasure_id = 0;
 
@@ -324,6 +325,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 		}
 		else if (inst.type == MapGenerator::EModelType::MONSTER_GHOST) {
 			ghost_spawn_positions.push_back(inst.position);
+		}
+		else if (inst.type == MapGenerator::EModelType::MONSTER_DOG) {
+			dog_spawn_positions.push_back(inst.position);
 		}
 	}
 
@@ -365,6 +369,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 	treasures.clear();
 	humanMonster_spawn_positions.clear();
 	ghost_spawn_positions.clear();
+	dog_spawn_positions.clear();
 
 	std::vector<std::shared_ptr<CObject>> objects;
 

@@ -19,12 +19,12 @@ void CCustomScene::Initialize()
 
 void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    // í”Œë ˆì´ì–´ ìƒì„±
+    // ÇÃ·¹ÀÌ¾î »ı¼º
     if (!my_player) {
         CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
         my_player = factory->CreateMyPlayer(skinningHeapManager);
     }
-    my_player->SetPitch(-10);   // ì–¼êµ´ì´ ì˜ë³´ì´ë„ë¡ ìˆ˜ì¹˜ ì¡°ì •
+    my_player->SetPitch(-10);   // ¾ó±¼ÀÌ Àßº¸ÀÌµµ·Ï ¼öÄ¡ Á¶Á¤
 
     if (!camera) {
         camera = std::make_shared<CCamera>();
@@ -34,7 +34,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
         camera->SetMode(CCamera::EMode::FIXED);
     }
 
-    // light ìƒì„±
+    // light »ı¼º
     if (!light) {
         light = std::make_unique<CLightManager>();
         light->Initialize(device, commandList);
@@ -83,12 +83,12 @@ void CCustomScene::DrawUI()
 	if (currentScene->GetSceneType() != SCENE_TYPE::CUSTOMS)
 		return;
 
-    // ë¡œë”© íŒì—… (ìµœìš°ì„  ìˆœìœ„)
+    // ·Îµù ÆË¾÷ (ÃÖ¿ì¼± ¼øÀ§)
     if (loading_type != LoadingType::None) {
         DrawLoadingPopUp();
     }
 
-    // ê²°ê³¼ íŒì—…
+    // °á°ú ÆË¾÷
     if (pop_up_result.is_visible) {
         DrawLoadingPopUpResult();
     }
@@ -100,14 +100,14 @@ void CCustomScene::DrawCustomizingWindow()
 {
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 
-    // í™”ë©´ í¬ê¸°ì— ë§ê²Œ ìŠ¤ì¼€ì¼ë§
+    // È­¸é Å©±â¿¡ ¸Â°Ô ½ºÄÉÀÏ¸µ
     float scale = G_RATIO_Y;
 
-    // ì°½ í¬ê¸°ë¥¼ ì¡°ê¸ˆ ë” ì¤„ì˜€ìŠµë‹ˆë‹¤.
+    // Ã¢ Å©±â¸¦ Á¶±İ ´õ ÁÙ¿´½À´Ï´Ù.
     ImVec2 winSize = ImVec2(300.0f * scale, 250.0f * scale);
     float margin = 30.0f * scale;
 
-    // ì˜¤ë¥¸ìª½ í•˜ë‹¨ ì—¬ë°± ì¡°ì •
+    // ¿À¸¥ÂÊ ÇÏ´Ü ¿©¹é Á¶Á¤
     ImGui::SetNextWindowPos(ImVec2(screenSize.x - winSize.x - margin, screenSize.y - winSize.y - margin));
     ImGui::SetNextWindowSize(winSize);
 
@@ -119,20 +119,20 @@ void CCustomScene::DrawCustomizingWindow()
 
     if (ImGui::Begin("CustomUI", nullptr, winFlags))
     {
-        // ê¸€ì”¨ í¬ê¸°ë„ ìŠ¤ì¼€ì¼ë§
+        // ±Û¾¾ Å©±âµµ ½ºÄÉÀÏ¸µ
         ImGui::SetWindowFontScale(scale);
 
         auto DrawSimpleSelector = [&](const char* partName, int& currentIdx, int maxCount, const char* names[], std::function<void(int)> onChange) {
             ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), partName);
 
-            // ëŒë‹¤ ë‚´ë¶€ì˜ ì‘ì€ ì¢Œìš° í™”ì‚´í‘œ ë²„íŠ¼ í¬ê¸°ì™€ ë†’ì´ ì˜¤í”„ì…‹ë„ ìŠ¤ì¼€ì¼ë§
+            // ¶÷´Ù ³»ºÎÀÇ ÀÛÀº ÁÂ¿ì È­»ìÇ¥ ¹öÆ° Å©±â¿Í ³ôÀÌ ¿ÀÇÁ¼Âµµ ½ºÄÉÀÏ¸µ
             ImVec2 smallBtnSize = ImVec2(30.0f * scale, 30.0f * scale);
             float yOffset = 5.0f * scale;
 
-            // ì™¼ìª½ ë²„íŠ¼
+            // ¿ŞÂÊ ¹öÆ°
             if (ImGui::Button((std::string("<##") + partName).c_str(), smallBtnSize)) {
                 currentIdx = (currentIdx - 1 + maxCount) % maxCount;
-                if (onChange) onChange(currentIdx); // ë³€ê²½ ì‹œ ì½œë°± í˜¸ì¶œ
+                if (onChange) onChange(currentIdx); // º¯°æ ½Ã Äİ¹é È£Ãâ
             }
             ImGui::SameLine();
 
@@ -141,10 +141,10 @@ void CCustomScene::DrawCustomizingWindow()
             ImGui::SameLine();
 
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() - yOffset);
-            // ì˜¤ë¥¸ìª½ ë²„íŠ¼
+            // ¿À¸¥ÂÊ ¹öÆ°
             if (ImGui::Button((std::string(">##") + partName).c_str(), smallBtnSize)) {
                 currentIdx = (currentIdx + 1) % maxCount;
-                if (onChange) onChange(currentIdx); // ë³€ê²½ ì‹œ ì½œë°± í˜¸ì¶œ
+                if (onChange) onChange(currentIdx); // º¯°æ ½Ã Äİ¹é È£Ãâ
             }
             ImGui::Spacing();
             };
@@ -165,10 +165,10 @@ void CCustomScene::DrawCustomizingWindow()
             if (my_player) my_player->ChangeMouth(idx);
             });
 
-        ImGui::Separator(); // ì–‡ì€ êµ¬ë¶„ì„  í•˜ë‚˜ ì¶”ê°€
+        ImGui::Separator(); // ¾ãÀº ±¸ºĞ¼± ÇÏ³ª Ãß°¡
         ImGui::Spacing();
 
-        // ì™„ë£Œ ë²„íŠ¼ë„ ì ë‹¹í•œ í¬ê¸°ë¡œ ìˆ˜ì •
+        // ¿Ï·á ¹öÆ°µµ Àû´çÇÑ Å©±â·Î ¼öÁ¤
         if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150 * scale, 40 * scale))) {
 
             if (g_is_single) {
@@ -191,7 +191,7 @@ void CCustomScene::DrawCustomizingWindow()
             }
         }
 
-        // í°íŠ¸ ìŠ¤ì¼€ì¼ ì›ìƒ ë³µêµ¬
+        // ÆùÆ® ½ºÄÉÀÏ ¿ø»ó º¹±¸
         ImGui::SetWindowFontScale(1.0f);
     }
 
@@ -215,9 +215,9 @@ void CCustomScene::DrawLoadingPopUp()
         CImGuiManager::LoadingIndicatorCircle("spinner", 20.0f, ImVec4(0.2f, 0.5f, 1.0f, 1.0f), ImVec4(0.1f, 0.1f, 0.1f, 1.0f), 10, 5.0f);
         ImGui::SameLine(); ImGui::Spacing(); ImGui::SameLine();
 
-        const char* txt = (const char*)u8"ë¡œë”© ì¤‘...";
+        const char* txt = (const char*)u8"·Îµù Áß...";
         switch (loading_type) {
-        case LoadingType::SelectResult:      txt = (const char*)u8"ë¡œë”© ì¤‘..."; break;
+        case LoadingType::SelectResult:      txt = (const char*)u8"·Îµù Áß..."; break;
         }
         ImGui::Text("%s", txt);
 
@@ -227,7 +227,7 @@ void CCustomScene::DrawLoadingPopUp()
             ImGui::CloseCurrentPopup();
         }
 
-        // í°íŠ¸ ìŠ¤ì¼€ì¼ ì›ìƒ ë³µêµ¬
+        // ÆùÆ® ½ºÄÉÀÏ ¿ø»ó º¹±¸
         ImGui::SetWindowFontScale(1.0f);
 
         ImGui::EndPopup();
@@ -264,9 +264,9 @@ void CCustomScene::DrawLoadingPopUpResult()
         ImGui::Text("%s", CP949ToUTF8(pop_up_result.message).c_str());
         ImGui::Spacing();
 
-        if (ImGui::Button((const char*)u8"í™•ì¸")) {
+        if (ImGui::Button((const char*)u8"È®ÀÎ")) {
 
-            pop_up_result.is_visible = false; // íŒì—… ë‹«ê¸°
+            pop_up_result.is_visible = false; // ÆË¾÷ ´İ±â
             ImGui::CloseCurrentPopup();
 
             if (pop_up_result.is_success) {    
@@ -275,17 +275,17 @@ void CCustomScene::DrawLoadingPopUpResult()
             }
         }
 
-        // í°íŠ¸ ìŠ¤ì¼€ì¼ ì›ìƒ ë³µêµ¬
+        // ÆùÆ® ½ºÄÉÀÏ ¿ø»ó º¹±¸
         ImGui::SetWindowFontScale(1.0f);
 
         ImGui::EndPopup();
     }
 }
 
-// ì„œë²„ íŒ¨í‚· ê´€ë ¨ ì²˜ë¦¬ í•¨ìˆ˜ë“¤
+// ¼­¹ö ÆĞÅ¶ °ü·Ã Ã³¸® ÇÔ¼öµé
 void CCustomScene::Handle_S_Custom_Select(std::shared_ptr<Session> session, S_CustomSelect& pkt)
 {
-    ShowResultPopup(true, "ì„¤ì • ì™„ë£Œ!");
+    ShowResultPopup(true, "¼³Á¤ ¿Ï·á!");
 
     CImGuiManager::GetInstance().ReserveResetFocus();
 

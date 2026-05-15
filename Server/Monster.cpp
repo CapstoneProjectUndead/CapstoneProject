@@ -124,7 +124,7 @@ void CMonster::DropItem(uint16 itemID)
     spawnPkt.item_world_id = item->world_id;
     spawnPkt.scene_type = current_scene_type;
     spawnPkt.x = item->position.x;
-    spawnPkt.y = 0.2f;
+    spawnPkt.y = 0.1f;
     spawnPkt.z = item->position.z;
 
     auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);

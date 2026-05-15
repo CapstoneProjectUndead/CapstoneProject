@@ -62,6 +62,8 @@ void CGameScene::Initialize()
 			monster_spawn_info.push_back({ pos, MON_TYPE::HUMAN_MONSTER, 0.f, -1.f, {} });
 		for (const auto& pos : factory->GetGhostSpawnPositions())
 			monster_spawn_info.push_back({ pos, MON_TYPE::GHOST, 0.f, -1.f, {} });
+		for (const auto& pos : factory->GetDogMonsterSpawnPositions())
+			monster_spawn_info.push_back({ pos, MON_TYPE::ANIMAL_MONSTER, 0.f, -1.f, {} });
 
 		factory->LoadItemFrame(heapManager);
 		// 우선 게임씬에서 load
@@ -566,7 +568,10 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 		melee_attack_cooldown -= elapsedTime;
 
 	// 공격 소리는 서버의 허락을 받지 않고 바로 적용한다.
-	if (KEY_TAP(KEY::LBTN) && !g_is_single && melee_attack_cooldown <= 0.0f) {
+	if (KEY_TAP(KEY::LBTN) && !g_is_single && !my_player->GetIsKnockedBack() 
+		&& !my_player->GetIsPossessed()
+		&& melee_attack_cooldown <= 0.0f) {
+
 		melee_attack_cooldown = 1.5f;
 		PlayMeleeAttackSound();
 		return;
@@ -641,7 +646,7 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 				my_player->OnAttack();
 				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
 				spray_attack_timer = 0.8f;
-				spray_attack_cooldown = 1.8f;
+				spray_attack_cooldown = 1.6f;
 			}
 
 			// 0.8초 후 데미지 적용

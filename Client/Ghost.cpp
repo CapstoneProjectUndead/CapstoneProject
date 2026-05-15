@@ -22,7 +22,7 @@ CGhost::CGhost()
 {
     friction = 0.0f;
     trace_speed = 4.0f;
-    recog_range = 6.0f;
+    recog_range = 4.0f;
     attack_range = 1.5f;
     SetFOV(120);
     respawn_time = 20.f;
@@ -410,7 +410,7 @@ void CGhost::OnTraceEnter()
 {
     nav_path.clear();
     path_refresh_timer = 0.0f;
-    attack_cooldown_timer = 1.5f;
+    attack_cooldown_timer = 1.2f;
 }
 
 void CGhost::OnAttackEnter()
@@ -467,7 +467,7 @@ void CGhost::OnFleeEnter()
     auto scene = CSceneManager::GetInstance().GetActiveScene();
     if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
         XMFLOAT3 itemSpawnPos = position;
-        itemSpawnPos.y = 0.2f;
+        itemSpawnPos.y = 0.1f;
         gameScene->SpawnWorldItem(20, itemSpawnPos);
     }
 }
@@ -604,7 +604,7 @@ void CGhost::CheckContactDamage()
     if (!g_is_single) 
         return;
 
-    if (AI_state != AI_STATE::MONSTER_ATTACK) {
+    if (AI_state != AI_STATE::MONSTER_ATTACK && AI_state != AI_STATE::MONSTER_FLEE) {
         auto nearPlayer = FindNearestPlayer();
         if (nearPlayer) {
             bool inContact = false;

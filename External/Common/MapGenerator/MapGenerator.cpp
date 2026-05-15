@@ -21,6 +21,8 @@ int GetRandomInt(int min, int max) {
 // Store centers tracked during PlaceMediumStore, used by PlaceMonster
 std::vector<Cell> g_store_centers;
 
+std::vector<Cell> g_treasure_positions;
+
 std::vector<Cell> m_placedCenters; // 구조물 간 거리 체크
 
 
@@ -76,6 +78,7 @@ void SetBuildingArea(int cx, int cy, int size, EModelType structType) {
 // --- 메인 API 함수 ---
 std::vector<InstanceData> MapGenerator::Generate3DMap() {
     g_store_centers.clear();
+    g_treasure_positions.clear();
 
     float areaRatio = (WIDTH * HEIGHT) / 2500.0f;
     int halfHeight = HEIGHT / 2;
@@ -528,23 +531,54 @@ void MapGenerator::PlaceMonster() {
             }
         }
     }
+
+    // DogMonster: 보물 인접 타일에 40% 확률로 배치
+    for (const Cell& tc : g_treasure_positions) {
+        if (GetRandomInt(0, 99) >= 40) continue;
+
+        for (int i = 0; i < 4; i++) {
+            int nx = tc.x + ndx[i], ny = tc.y + ndy[i];
+            if (!IsValid(nx, ny)) continue;
+            if (!IsWalkableFloor(nx, ny)) continue;
+            if (IsBlockedStructure(nx, ny)) continue;
+            if (GetTile(ELayer::OBJECT, nx, ny) != EModelType::UNKNOWN) continue;
+
+            mapGrid[(int)ELayer::OBJECT][ny][nx] = EModelType::MONSTER_DOG;
+            break;
+        }
+    }
 }
 
 void MapGenerator::PlaceTreasure() {
-    const int BLOCK_SIZE = 6;
-    for (int by = 0; by < HEIGHT; by += BLOCK_SIZE) {
-        for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
-            if (GetRandomInt(0, 99) < 40) {
-                int rx = GetRandomInt(bx, min(bx + BLOCK_SIZE - 1, WIDTH - 1));
-                int ry = GetRandomInt(by, min(by + BLOCK_SIZE - 1, HEIGHT - 1));
-
-                if (IsValid(rx, ry) && GetTile(ELayer::OBJECT, rx, ry) == EModelType::UNKNOWN
-                    && mapGrid[(int)ELayer::FLOOR][ry][rx] != EModelType::WALL
-                    && !IsBlockedStructure(rx, ry)) {
-                    mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::TREASURE;
-                }
+    std::vector<Cell> candidates;
+    for (int y = 1; y < HEIGHT - 1; y++) {
+        for (int x = 1; x < WIDTH - 1; x++) {
+            if (IsWalkableFloor(x, y) && !IsBlockedStructure(x, y) &&
+                GetTile(ELayer::OBJECT, x, y) == EModelType::UNKNOWN) {
+                candidates.push_back({ x, y });
             }
         }
+    }
+
+    std::shuffle(candidates.begin(), candidates.end(), gen);
+
+    const int MIN_DIST = 3;
+    const int target   = GetRandomInt(30, 40);
+
+    for (const auto& c : candidates) {
+        if ((int)g_treasure_positions.size() >= target) break;
+
+        bool tooClose = false;
+        for (const auto& p : g_treasure_positions) {
+            if (std::abs(c.x - p.x) + std::abs(c.y - p.y) < MIN_DIST) {
+                tooClose = true;
+                break;
+            }
+        }
+        if (tooClose) continue;
+
+        mapGrid[(int)ELayer::OBJECT][c.y][c.x] = EModelType::TREASURE;
+        g_treasure_positions.push_back(c);
     }
 }
 

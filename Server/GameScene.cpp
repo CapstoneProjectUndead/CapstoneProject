@@ -235,6 +235,8 @@ void CGameScene::CreateGameScene()
 			monster_spawn_info.push_back({ inst.position, MON_TYPE::HUMAN_MONSTER, 0.f, -1.f, {} });
 		else if (inst.type == MapGenerator::EModelType::MONSTER_GHOST)
 			monster_spawn_info.push_back({ inst.position, MON_TYPE::GHOST, 0.f, -1.f, {} });
+		else if (inst.type == MapGenerator::EModelType::MONSTER_DOG)
+			monster_spawn_info.push_back({ inst.position, MON_TYPE::ANIMAL_MONSTER, 0.f, -1.f, {} });
 	}
 
 	for (auto& inst : instanceData) {

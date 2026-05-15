@@ -189,7 +189,7 @@ private:
 
 	// 스프레이 공격 상태 유지 타이머
 	float       ranged_attack_timer{ 0.0f };
-	const float SPRAY_ATTACK_DURATION = 1.8f;
+	const float SPRAY_ATTACK_DURATION = 1.6f;
 	const float MAGIC_ATTACK_DURATION = 1.5f;
 	const float GUN_ATTACK_DURATION = 1.5f;
 

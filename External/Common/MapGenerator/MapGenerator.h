@@ -40,6 +40,7 @@ namespace MapGenerator
         // Monster spawn markers
         MONSTER_HUMAN,
         MONSTER_GHOST,
+        MONSTER_DOG,
 
         UNKNOWN
     };
