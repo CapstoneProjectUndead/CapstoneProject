@@ -39,6 +39,8 @@ public:
     CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range);
     void DestroyMineable(uint32 world_id);
 
+    const vector<MonsterSpawnInfo>& GetMonsterSpawnInfo() const { return monster_spawn_info; }
+
 private:
     map<string, shared_ptr<CObject>>                prototypes;
     vector<MapGenerator::InstanceData>              map_instance_data;

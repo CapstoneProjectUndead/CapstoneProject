@@ -532,9 +532,9 @@ void MapGenerator::PlaceMonster() {
         }
     }
 
-    // DogMonster: 보물 인접 타일에 40% 확률로 배치
+    // DogMonster: 보물 인접 타일에 50% 확률로 배치
     for (const Cell& tc : g_treasure_positions) {
-        if (GetRandomInt(0, 99) >= 40) continue;
+        if (GetRandomInt(0, 99) >= 50) continue;
 
         for (int i = 0; i < 4; i++) {
             int nx = tc.x + ndx[i], ny = tc.y + ndy[i];
@@ -563,7 +563,7 @@ void MapGenerator::PlaceTreasure() {
     std::shuffle(candidates.begin(), candidates.end(), gen);
 
     const int MIN_DIST = 3;
-    const int target   = GetRandomInt(30, 40);
+    const int target   = GetRandomInt(50, 60);
 
     for (const auto& c : candidates) {
         if ((int)g_treasure_positions.size() >= target) break;

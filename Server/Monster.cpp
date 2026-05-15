@@ -2,6 +2,7 @@
 // Server쪽 Monster
 #include "Monster.h"
 #include "Scene.h"
+#include "GameScene.h"
 #include "Room.h"
 #include "Collider.h"
 #include "PhysicsManager.h"
@@ -44,6 +45,37 @@ void CMonster::Update(float elapsedTime)
     }
 
 	CObject::Update(elapsedTime);
+}
+
+void CMonster::ApplySeparation(float scale)
+{
+    constexpr float SEPARATION_RADIUS = 1.5f;
+    constexpr float SEPARATION_FORCE  = 4.0f;
+
+    auto r = GetRoom();
+    if (!r) return;
+    auto scene = r->GetScenes()[(UINT)current_scene_type].get();
+    auto gameScene = dynamic_cast<CGameScene*>(scene);
+    if (!gameScene) return;
+
+    XMFLOAT3 push = { 0.f, 0.f, 0.f };
+    for (const auto& info : gameScene->GetMonsterSpawnInfo()) {
+        if (info.type != monster_type) continue;
+        auto other = info.monster.lock();
+        if (!other || other.get() == this) continue;
+
+        XMFLOAT3 diff = Vector3::Subtract(position, other->GetPosition());
+        diff.y = 0.0f;
+        float dist = Vector3::Length(diff);
+        if (dist > 0.01f && dist < SEPARATION_RADIUS) {
+            float invDist  = 1.0f / dist;
+            float strength = (SEPARATION_RADIUS - dist) / SEPARATION_RADIUS;
+            push.x += diff.x * invDist * strength * SEPARATION_FORCE;
+            push.z += diff.z * invDist * strength * SEPARATION_FORCE;
+        }
+    }
+    velocity.x += push.x * scale;
+    velocity.z += push.z * scale;
 }
 
 shared_ptr<CPlayer> CMonster::FindNearestPlayer()

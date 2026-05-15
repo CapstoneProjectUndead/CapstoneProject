@@ -44,6 +44,8 @@ public:
     // 싱글용 (Ghost 드롭 등 외부에서 호출 가능)
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
 
+    const std::vector<MonsterSpawnInfo>& GetMonsterSpawnInfo() const { return monster_spawn_info; }
+
 private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
     void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position);

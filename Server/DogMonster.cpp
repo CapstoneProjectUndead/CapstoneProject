@@ -6,6 +6,7 @@
 #include "Movement.h"
 #include "Room.h"
 #include "Scene.h"
+#include "GameScene.h"
 #include "State.h"
 
 CDogMonster::CDogMonster()
@@ -16,7 +17,7 @@ CDogMonster::CDogMonster()
 	recog_range  = 5.0f;
 	attack_range = 1.0f;
 	SetFOV(180);
-	respawn_time = 20.f;
+	respawn_time = 50.f;
 }
 
 CDogMonster::~CDogMonster()
@@ -338,6 +339,9 @@ void CDogMonster::OnAttackMove(float elapsedTime)
 
 	velocity.x = 0.0f;
 	velocity.z = 0.0f;
+
+	// 같은 자리에 박힌 다른 Dog와 분리
+	ApplySeparation(0.4f);
 
 	attack_timer += elapsedTime;
 

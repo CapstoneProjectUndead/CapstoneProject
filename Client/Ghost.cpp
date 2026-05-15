@@ -25,7 +25,7 @@ CGhost::CGhost()
     recog_range = 4.0f;
     attack_range = 1.5f;
     SetFOV(120);
-    respawn_time = 20.f;
+    respawn_time = 50.f;
 }
 
 CGhost::~CGhost()

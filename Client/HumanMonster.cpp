@@ -15,7 +15,7 @@ CHumanMonster::CHumanMonster()
 {
     friction = 0.0f;
     SetFOV(120);
-    respawn_time = 20.f;
+    respawn_time = 30.f;
 }
 
 CHumanMonster::~CHumanMonster()
@@ -308,11 +308,14 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
 void CHumanMonster::OnAttackMove(float elapsedTime)
 {
-    if (melee_knockback_timer > 0.0f) 
+    if (melee_knockback_timer > 0.0f)
         return;
 
     velocity.x = 0.0f;
     velocity.z = 0.0f;
+
+    // 같은 자리에 박힌 다른 Human과 분리
+    ApplySeparation(0.5f);
 
     attack_timer += elapsedTime;
 

@@ -71,6 +71,9 @@ protected:
 
     std::shared_ptr<CPlayer> FindNearestPlayer();
 
+    // 같은 종 몬스터끼리 겹침 방지 (Separation Steering)
+    void ApplySeparation(float scale = 1.0f);
+
     void SetTarget(std::shared_ptr<CPlayer> player) { target_player = player; }
 
     void ResetPatrolTimers()
