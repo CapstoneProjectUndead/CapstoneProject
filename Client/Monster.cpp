@@ -18,6 +18,7 @@ CMonster::CMonster(MON_TYPE type)
     , patrol_timer(0.0f)
     , attack_timer(0.0f)
     , turn_timer(0.0f)
+    , respawn_time(20.f)
 {
 }
 

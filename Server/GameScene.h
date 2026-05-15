@@ -26,6 +26,7 @@ private:
     void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
     void LoadGameScene();
     void CreateGameScene();
+    void UpdateMonsters(float elapsedTime);
 
 public:
     virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;
@@ -41,8 +42,7 @@ public:
 private:
     map<string, shared_ptr<CObject>>                prototypes;
     vector<MapGenerator::InstanceData>              map_instance_data;
-    vector<XMFLOAT3>                                humanMonster_spawn_positions;
-    vector<XMFLOAT3>                                ghost_spawn_positions;
+    vector<MonsterSpawnInfo>                        monster_spawn_info;
 
     map<uint64, shared_ptr<CMineableObject>>        mineable_objects;
     uint64                                          mineable_id_counter;

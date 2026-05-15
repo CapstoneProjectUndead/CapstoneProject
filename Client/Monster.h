@@ -56,6 +56,8 @@ public:
 
     MON_TYPE GetMonsterType() const { return monster_type; }
 
+    float GetRespawnTime() const { return respawn_time; }
+
     void            SetOriginPos(const XMFLOAT3& pos) { origin_position = pos; }
     const XMFLOAT3& GetOriginPos() const { return origin_position; }
 
@@ -91,6 +93,7 @@ protected:
     XMFLOAT3 origin_position;
     AI_STATE AI_state;
     MON_TYPE monster_type;
+    float    respawn_time;
 
     std::weak_ptr<CPlayer> target_player;
 

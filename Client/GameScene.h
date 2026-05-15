@@ -48,6 +48,9 @@ private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
     void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position);
 
+    // 몬스터 respawn 관리
+    void UpdateMonsters(float elapsedTime);
+
     // 플레이어 아이템 줍기
     void ProcessPickup();
 
@@ -72,8 +75,7 @@ private:
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;
-    std::vector<XMFLOAT3>                    humanMonster_spawn_positions;
-    std::vector<XMFLOAT3>                    ghost_spawn_positions;
+    std::vector<MonsterSpawnInfo>            monster_spawn_info;
 
     static constexpr float  PICKUP_RANGE       = 2.0f;
     static constexpr float  MINING_RANGE       = 1.0f;

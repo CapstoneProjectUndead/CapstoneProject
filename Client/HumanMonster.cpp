@@ -15,6 +15,7 @@ CHumanMonster::CHumanMonster()
 {
     friction = 0.0f;
     SetFOV(120);
+    respawn_time = 20.f;
 }
 
 CHumanMonster::~CHumanMonster()

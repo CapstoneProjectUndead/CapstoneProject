@@ -64,6 +64,43 @@ void CGameScene::Initialize()
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
+	UpdateMonsters(elapsedTime);
+}
+
+void CGameScene::UpdateMonsters(float elapsedTime)
+{
+	for (auto& info : monster_spawn_info) {
+		if (!info.monster.expired())
+			continue;
+
+		if (info.respawn_timer < 0.f)
+			info.respawn_timer = info.respawn_time;
+
+		info.respawn_timer -= elapsedTime;
+
+		if (info.respawn_timer <= 0.f) {
+			auto monster = CServerObjectFactory::CreateMonster(info.type, scene_type, GetRoom(), GetPhysicsManager());
+			if (!monster)
+				continue;
+
+			monster->SetPosition(info.position.x, 0.1f, info.position.z);
+			monster->SetOriginPos(info.position);
+			monster->SetScene(this);
+			AddMonster(monster);
+			info.monster = monster;
+			info.respawn_time  = monster->GetRespawnTime();
+			info.respawn_timer = -1.f;
+
+			S_SpawnMonster spawnPkt;
+			spawnPkt.room_id    = room_id;
+			spawnPkt.scene_type = scene_type;
+			spawnPkt.info = NetMonsterInfo(monster->GetID(), room_id, info.type,
+				info.position.x, 0.1f, info.position.z);
+
+			auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
+			BroadCast(sendBuffer);
+		}
+	}
 }
 
 void CGameScene::OnSceneActivate()
@@ -75,26 +112,17 @@ void CGameScene::OnSceneActivate()
 	if (active_player_count > 1)
 		return;
 
-	for (const auto& pos : humanMonster_spawn_positions) {
-		shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
-		if (!humanMonster)
+	for (auto& info : monster_spawn_info) {
+		auto monster = CServerObjectFactory::CreateMonster(info.type, scene_type, GetRoom(), GetPhysicsManager());
+		if (!monster)
 			continue;
-	
-		humanMonster->SetPosition(pos.x, 0.1f, pos.z);
-		humanMonster->SetOriginPos({ pos.x, 0.1f, pos.z });
-		humanMonster->SetScene(this);
-		AddMonster(humanMonster);
-	}
-	
-	for (const auto& pos : ghost_spawn_positions) {
-		shared_ptr<CGhost> ghost = static_pointer_cast<CGhost>(CServerObjectFactory::CreateMonster(MON_TYPE::GHOST, scene_type, GetRoom(), GetPhysicsManager()));
-		if (!ghost)
-			continue;
-	
-		ghost->SetPosition(pos.x, 0.1f, pos.z);
-		ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
-		ghost->SetScene(this);
-		AddMonster(ghost);
+
+		monster->SetPosition(info.position.x, 0.1f, info.position.z);
+		monster->SetOriginPos(info.position);
+		monster->SetScene(this);
+		AddMonster(monster);
+		info.monster = monster;
+		info.respawn_time = monster->GetRespawnTime();
 	}
 }
 
@@ -200,14 +228,13 @@ void CGameScene::CreateGameScene()
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 
 	// 몬스터 스폰 위치 추출 (서버만 사용)
-	humanMonster_spawn_positions.clear();
-	ghost_spawn_positions.clear();
+	monster_spawn_info.clear();
 
 	for (auto& inst : instanceData) {
 		if (inst.type == MapGenerator::EModelType::MONSTER_HUMAN)
-			humanMonster_spawn_positions.push_back(inst.position);
+			monster_spawn_info.push_back({ inst.position, MON_TYPE::HUMAN_MONSTER, 0.f, -1.f, {} });
 		else if (inst.type == MapGenerator::EModelType::MONSTER_GHOST)
-			ghost_spawn_positions.push_back(inst.position);
+			monster_spawn_info.push_back({ inst.position, MON_TYPE::GHOST, 0.f, -1.f, {} });
 	}
 
 	for (auto& inst : instanceData) {

@@ -198,3 +198,12 @@ struct ItemData
 	float           weight;			// 무게
 	bool            is_throwable;	// 던질 수 있는지.
 };
+
+struct MonsterSpawnInfo
+{
+	XMFLOAT3 position;
+	MON_TYPE  type;
+	float     respawn_time;   // 몬스터별 고정 리스폰 시간
+	float     respawn_timer;  // 카운트다운 (-1 = 살아있음)
+	std::weak_ptr<class CMonster> monster;
+};

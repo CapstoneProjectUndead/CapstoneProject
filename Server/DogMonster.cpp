@@ -16,6 +16,7 @@ CDogMonster::CDogMonster()
 	recog_range  = 10.0f;
 	attack_range = 1.0f;
 	SetFOV(180);
+	respawn_time = 20.f;
 }
 
 CDogMonster::~CDogMonster()

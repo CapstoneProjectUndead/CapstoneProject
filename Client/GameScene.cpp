@@ -58,8 +58,10 @@ void CGameScene::Initialize()
 		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
 
-		humanMonster_spawn_positions = factory->GetHumanMonsterSpawnPositions();
-		ghost_spawn_positions = factory->GetGhostSpawnPositions();
+		for (const auto& pos : factory->GetHumanMonsterSpawnPositions())
+			monster_spawn_info.push_back({ pos, MON_TYPE::HUMAN_MONSTER, 0.f, -1.f, {} });
+		for (const auto& pos : factory->GetGhostSpawnPositions())
+			monster_spawn_info.push_back({ pos, MON_TYPE::GHOST, 0.f, -1.f, {} });
 
 		factory->LoadItemFrame(heapManager);
 		// 우선 게임씬에서 load
@@ -164,24 +166,16 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	// 싱글 전용: 몬스터 스폰
 	if (g_is_single) {
 		CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-		for (const auto& pos : humanMonster_spawn_positions) {
-			auto humanMonster = factory->CreateMonster(skinningHeapManager, MON_TYPE::HUMAN_MONSTER, scene_type);
-			if (!humanMonster)
+		for (auto& info : monster_spawn_info) {
+			auto monster = factory->CreateMonster(skinningHeapManager, info.type, scene_type);
+			if (!monster)
 				continue;
 
-			humanMonster->SetPosition(pos.x, 0.1f, pos.z);
-			humanMonster->SetOriginPos({ pos.x, 0.1f, pos.z });
-			AddObject(humanMonster, humanMonster->GetID());
-		}
-
-		for (const auto& pos : ghost_spawn_positions) {
-			auto ghost = factory->CreateMonster(skinningHeapManager, MON_TYPE::GHOST, scene_type);
-			if (!ghost)
-				continue;
-
-			ghost->SetPosition(pos.x, 0.1f, pos.z);
-			ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
-			AddObject(ghost, ghost->GetID());
+			monster->SetPosition(info.position.x, 0.1f, info.position.z);
+			monster->SetOriginPos(info.position);
+			AddObject(monster, monster->GetID());
+			info.monster = monster;
+			info.respawn_time = monster->GetRespawnTime();
 		}
 	}
 
@@ -208,6 +202,9 @@ void CGameScene::Update(float elapsedTime)
 	}
 
 	CScene::Update(elapsedTime);
+
+	if (g_is_single)
+		UpdateMonsters(elapsedTime);
 
 	if (my_player) {
 
@@ -310,6 +307,33 @@ void CGameScene::Enter()
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
 		if (itemFinder) {
 			itemFinder->RegisterTreasures(treasures);
+		}
+	}
+}
+
+void CGameScene::UpdateMonsters(float elapsedTime)
+{
+	CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
+
+	for (auto& info : monster_spawn_info) {
+		if (!info.monster.expired())
+			continue;
+
+		if (info.respawn_timer < 0.f)
+			info.respawn_timer = info.respawn_time;
+
+		info.respawn_timer -= elapsedTime;
+
+		if (info.respawn_timer <= 0.f) {
+			auto monster = factory->CreateMonster(skinningHeapManager, info.type, scene_type);
+			if (monster) {
+				monster->SetPosition(info.position.x, 0.1f, info.position.z);
+				monster->SetOriginPos(info.position);
+				AddObject(monster, monster->GetID());
+				info.monster = monster;
+				info.respawn_time  = monster->GetRespawnTime();
+				info.respawn_timer = -1.f;
+			}
 		}
 	}
 }
@@ -863,8 +887,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	// 보물 & 몬스터 spawn 위치들 모두 clear
 	treasures.clear();
-	humanMonster_spawn_positions.clear();
-	ghost_spawn_positions.clear();
+	monster_spawn_info.clear();
 
 	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Inst]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
@@ -900,28 +923,15 @@ void CGameScene::Handle_S_DeSpawnItem(std::shared_ptr<Session> session, const S_
 
 void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddItem& pkt)
 {
-	if (pkt.item_type == ITEM_TYPE::TREASURE) {
-		auto treasure = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
-			return obj->GetID() == pkt.item_world_id;
-			});
+	auto it = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
+		return obj->GetID() == pkt.item_world_id;
+		});
 
-		if (treasure == objects.end())
-			return;
+	if (it == objects.end())
+		return;
 
-		auto worldTreasure = static_cast<CWorldTreasure*>(treasure->get());
-		my_player->GetInventory()->AddItemWithId(worldTreasure->GetItem(), pkt.inventory_id);
-	}
-	else {
-		auto item = std::find_if(objects.begin(), objects.end(), [&](const std::shared_ptr<CObject>& obj) {
-			return obj->GetID() == pkt.item_world_id;
-			});
-
-		if (item == objects.end())
-			return;
-
-		auto worldItem = static_cast<CWorldItem*>(item->get());
-		my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
-	}
+	auto worldItem = static_cast<CWorldItem*>(it->get());
+	my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
 }
 
 void CGameScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemList& pkt)
