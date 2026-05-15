@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "CustomScene.h"
 #include "Shader.h"
 #include "GameFramework.h"
@@ -12,7 +12,7 @@
 void CCustomScene::Initialize()
 {
     if (objects.empty()) {
-        CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Inst]->GetHeapManager() };
+        CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
         objects = factory->CreateLobby(staticHeapManager);
     }
 }

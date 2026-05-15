@@ -60,5 +60,5 @@ public:
     EShaderName GetShader() const { return shader_name; }
 private:
     std::vector<RenderUnit> render_units;
-    EShaderName shader_name{ EShaderName::Inst };	// 적용 쉐이더 이름
+    EShaderName shader_name{ EShaderName::Skinning };	// 적용 쉐이더 이름
 };

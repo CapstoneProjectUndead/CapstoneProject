@@ -42,6 +42,8 @@ float CalcShadowFactor(float4 shadowPosH)
 
     // Depth in NDC space.
     float depth = shadowPosH.z;
+    float bias = 0.001f;
+    depth += bias;
 
     uint width, height, numMips;
     texDiffuse[49].GetDimensions(0, width, height, numMips);

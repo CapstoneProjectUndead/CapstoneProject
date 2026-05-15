@@ -54,7 +54,7 @@ void CGameScene::Initialize()
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 
 	if (objects.empty()) {
-		CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
+		CDescriptorHeapManager* heapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 		objects = factory->CreateGameScene(heapManager);
 		treasures = factory->GetTreauseres();
 
@@ -713,7 +713,7 @@ void CGameScene::SprayAttack(float elapsedTime)
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 {
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
+	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 
 	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
@@ -737,7 +737,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
 {
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
+	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 
 	auto worldItem = factory->CreateWorldItem(itemID, heapManager);
 	if (!worldItem)
@@ -889,7 +889,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 	treasures.clear();
 	monster_spawn_info.clear();
 
-	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Inst]->GetHeapManager() };
+	CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
 	objects = factory->CreateGameSceneByServer(staticHeapManager, instance_data);
 }
 

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "LobbyScene.h"
 #include "CustomScene.h"
 #include "SceneManager.h"
@@ -30,7 +30,7 @@ void CLobbyScene::Initialize()
 	CScene::Initialize();
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Inst]->GetHeapManager() };
+	CDescriptorHeapManager* heapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
 	if (objects.empty()) {
 		objects = factory->CreateLobby(heapManager);
 	}

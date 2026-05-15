@@ -507,7 +507,6 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 // CTwoSideShader
 D3D12_RASTERIZER_DESC CTwoSideShader::CreateRasterizerState()
 {
-
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
@@ -525,6 +524,24 @@ D3D12_RASTERIZER_DESC CTwoSideShader::CreateRasterizerState()
 }
 
 // CShadowShader
+D3D12_RASTERIZER_DESC CShadowShader::CreateRasterizerState()
+{
+	D3D12_RASTERIZER_DESC rasterizerDesc{};
+	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
+	rasterizerDesc.FrontCounterClockwise = FALSE;
+	rasterizerDesc.DepthBias = 0;
+	rasterizerDesc.DepthBiasClamp = 0.0f;
+	rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+	rasterizerDesc.DepthClipEnable = TRUE;
+	rasterizerDesc.MultisampleEnable = FALSE;
+	rasterizerDesc.AntialiasedLineEnable = FALSE;
+	rasterizerDesc.ForcedSampleCount = 0;
+	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+	return rasterizerDesc;
+}
+
 D3D12_SHADER_BYTECODE CShadowShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
 	return CompileShaderFromFile(L"ShadowShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
@@ -570,9 +587,9 @@ void CShadowShader::CreateShader(ID3D12Device* device)
 
 	// shadow acne 방지
 	pipelineStateDesc.RasterizerState = CreateRasterizerState();
-	pipelineStateDesc.RasterizerState.DepthBias = 10000;
-	pipelineStateDesc.RasterizerState.DepthBiasClamp = 0.2f;
-	pipelineStateDesc.RasterizerState.SlopeScaledDepthBias = 0.3f;
+	pipelineStateDesc.RasterizerState.DepthBias = 500;
+	pipelineStateDesc.RasterizerState.DepthBiasClamp = 0.0f;
+	pipelineStateDesc.RasterizerState.SlopeScaledDepthBias = 2.0f;
 	HRESULT hr = device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pipeline_states));
 	if (pipelineStateDesc.InputLayout.pInputElementDescs) delete[] pipelineStateDesc.InputLayout.pInputElementDescs;
 }

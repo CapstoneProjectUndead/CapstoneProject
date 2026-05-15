@@ -9,7 +9,6 @@ class CObject;
 class CShader;
 class CObjectFactory;
 class CUIManager;
-class CShadowMap;
 
 class CScene
 {
@@ -118,5 +117,4 @@ protected:
 
 	// for shadow
 	BoundingSphere scene_bounds{};
-	std::shared_ptr<CShadowMap> shadow_map;
 };

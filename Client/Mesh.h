@@ -31,8 +31,8 @@ public:
 	CSkinnedVertex() : CMatVertex() {}
 	CSkinnedVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal);
 
-	XMUINT4  bone_indices{};
-	XMFLOAT4 bone_weights{};
+	XMUINT4  bone_indices{ XMUINT4(0,0,0,0) };
+	XMFLOAT4 bone_weights{ XMFLOAT4(1,0,0,0) };
 };
 
 class CBillBoardVertex {
