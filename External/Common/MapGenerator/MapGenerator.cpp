@@ -477,6 +477,7 @@ void MapGenerator::PlaceMonster() {
                 if (!IsValid(rx, ry)) continue;
                 if (GetTile(ELayer::FLOOR, rx, ry) != EModelType::ROAD) continue;
                 if (GetTile(ELayer::OBJECT, rx, ry) != EModelType::UNKNOWN) continue;
+                if (IsBlockedStructure(rx, ry)) continue;
 
                 mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::MONSTER_GHOST;
                 break;

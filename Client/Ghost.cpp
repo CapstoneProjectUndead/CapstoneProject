@@ -410,6 +410,7 @@ void CGhost::OnTraceEnter()
 {
     nav_path.clear();
     path_refresh_timer = 0.0f;
+    attack_cooldown_timer = 1.5f;
 }
 
 void CGhost::OnAttackEnter()

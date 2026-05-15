@@ -641,7 +641,7 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 				my_player->OnAttack();
 				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
 				spray_attack_timer = 0.8f;
-				spray_attack_cooldown = 1.5f;
+				spray_attack_cooldown = 1.8f;
 			}
 
 			// 0.8초 후 데미지 적용
