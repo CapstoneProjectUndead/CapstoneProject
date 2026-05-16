@@ -173,9 +173,13 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 	obj->GetWorldMatrix() = node->local_matrix;
 
 	bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
+	bool isMonsterPassable = (node->name == "streetlamp");
 
 	if (isRoad) {
 		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
+	}
+	else if (isMonsterPassable) {
+		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::OBJECT, EColLayer::PLAYER);
 	}
 	else {
 		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
@@ -280,6 +284,8 @@ void CGameScene::CreateGameScene()
 				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
 				obj->SetComponent(copyCollider);
 				copyCollider->Update(0.0f);
+				if (isMineable)
+					copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
 				GetPhysicsManager()->SetCollider(copyCollider);
 			}
 

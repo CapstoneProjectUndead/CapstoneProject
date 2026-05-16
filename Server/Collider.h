@@ -1,4 +1,5 @@
 ﻿#pragma once
+// Server쪽 Collider
 #include "Component.h"
 #include "CollisionAlgorithm.h"
 
@@ -185,6 +186,7 @@ public:
 
     void Update(const float deltaTime) override;
     bool Intersects(const CColliderComponent* other);
+    const CollisionFilter& GetCollisionFilter() const { return filter; }
 private:
     friend class CPhysicsManager;
     friend class CMovementComponent;

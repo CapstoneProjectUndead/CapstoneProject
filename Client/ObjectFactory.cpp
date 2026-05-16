@@ -185,9 +185,13 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	// 싱글일 때만 collider 생성(멀티면 서버에서 생성)
 	if (g_is_single) {
 		bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
+		bool isMonsterPassable = (node->name == "streetlamp");
 
 		if (isRoad) {
 			AddCollider(obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
+		}
+		else if (isMonsterPassable) {
+			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::PLAYER);
 		}
 		else {
 			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
@@ -352,6 +356,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 			if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
 				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
 				obj->SetComponent(copyCollider);
+				if (inst.type == MapGenerator::EModelType::TREASURE)
+					copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
 				CPhysicsManager::GetInstance().SetCollider(copyCollider);
 			}
 

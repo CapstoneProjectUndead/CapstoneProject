@@ -192,6 +192,7 @@ public:
     CColliderShape* GetShape() const { return shape.get(); }
     void SetFillter(const CollisionFilter& f) { filter = f; }
     BoundingBox GetWorldAABB() const { return world_aabb; }
+    const CollisionFilter& GetCollisionFilter() const { return filter; }
 
     void Update(const float deltaTime) override;
     // 디버깅용(aabb 출력)
