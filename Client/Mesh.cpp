@@ -129,6 +129,13 @@ void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCo
 		vertices.push_back(v);
 	}
 
+	for (const auto& m : mesh.materials) {
+		if (!m.normalMap.empty()) {
+			CalculateTangents<CSkinnedVertex>(vertices, mesh.indices);
+			break;
+		}
+	}
+
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
 
@@ -152,8 +159,16 @@ void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsComman
 		vertices.push_back(v);
 	}
 
+	for (const auto& m : mesh.materials) {
+		if (!m.normalMap.empty()) {
+			CalculateTangents<CMatVertex>(vertices, mesh.indices);
+			break;
+		}
+	}
+
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
+
 
 // CTriangleMesh
 CTriangleMesh::CTriangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

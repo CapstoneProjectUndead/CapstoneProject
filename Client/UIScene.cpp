@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "UIScene.h"
 #include "UIComponent.h"
 #include "ImGuiManager.h"
@@ -221,11 +221,8 @@ void CUIScene::RenderInspectorWindow()
 
                         auto& shaders = CSceneManager::GetInstance().GetShaders();
 
-                        // 현재 UI의 셰이더 이름으로 힙 매니저를 가져옴
-                        auto heapManager = shaders[imageUI->GetShaderName()]->GetHeapManager();
-
                         std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
-                        m->SetMaterial(factory->GetMaterial(heapManager, fileName));
+                        m->SetMaterial(factory->GetMaterial(fileName, imageUI->GetShaderName()));
 
                         imageUI->SetMaterial(m);
                         imageUI->Invalidate(); // 변경 사항 반영

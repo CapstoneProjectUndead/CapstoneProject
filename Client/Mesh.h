@@ -24,6 +24,7 @@ public:
 	CMatVertex(XMFLOAT3 position, XMFLOAT2 tex, XMFLOAT3 normal);
 
 	XMFLOAT2 tex{};
+	XMFLOAT3 tangent{ XMFLOAT3{0,0,0} };
 };
 
 class CSkinnedVertex : public CMatVertex {
@@ -65,8 +66,11 @@ public:
 
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node);
+	// collider
 	template<typename T>
 	void BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const CGeometryLoader::MeshCollider& collider);
+	template<typename T>
+	void CalculateTangents(std::vector<T>& vertices, const std::vector<uint32_t>& indices);
 
 	struct SubMesh
 	{
@@ -172,6 +176,12 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 		vertices.push_back(v);
 	}
 
+	for (const auto& m : mesh.materials) {
+		if (!m.normalMap.empty()) {
+			CalculateTangents<T>(vertices, mesh.indices);
+			break;
+		}
+	}
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 }
 
@@ -190,9 +200,66 @@ inline void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList
 
 		vertices.push_back(v);
 	}
-
+	
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 	primitive_topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+}
+
+template<typename T>
+inline void CMesh::CalculateTangents(std::vector<T>& vertices, const std::vector<uint32_t>& indices)
+{
+	for (size_t i = 0; i < indices.size(); i += 3) {
+		uint32_t i0 = indices[i + 0];
+		uint32_t i1 = indices[i + 1];
+		uint32_t i2 = indices[i + 2];
+
+		const XMFLOAT3& p0 = vertices[i0].position;
+		const XMFLOAT3& p1 = vertices[i1].position;
+		const XMFLOAT3& p2 = vertices[i2].position;
+
+		const XMFLOAT2& uv0 = vertices[i0].tex;
+		const XMFLOAT2& uv1 = vertices[i1].tex;
+		const XMFLOAT2& uv2 = vertices[i2].tex;
+
+		XMVECTOR P0 = XMLoadFloat3(&p0);
+		XMVECTOR P1 = XMLoadFloat3(&p1);
+		XMVECTOR P2 = XMLoadFloat3(&p2);
+
+		XMVECTOR edge1 = P1 - P0;
+		XMVECTOR edge2 = P2 - P0;
+
+		float du1 = uv1.x - uv0.x;
+		float dv1 = uv1.y - uv0.y;
+
+		float du2 = uv2.x - uv0.x;
+		float dv2 = uv2.y - uv0.y;
+
+		float det = du1 * dv2 - du2 * dv1;
+
+		// UV가 degenerate한 경우 방어
+		if (fabs(det) < 1e-6f)
+			continue;
+
+		float f = 1.0f / det;
+
+		XMFLOAT3 tangent;
+		tangent.x = f * (dv2 * XMVectorGetX(edge1) - dv1 * XMVectorGetX(edge2));
+		tangent.y = f * (dv2 * XMVectorGetY(edge1) - dv1 * XMVectorGetY(edge2));
+		tangent.z = f * (dv2 * XMVectorGetZ(edge1) - dv1 * XMVectorGetZ(edge2));
+
+		// tangent 누적
+		vertices[i0].tangent.x += tangent.x;
+		vertices[i0].tangent.y += tangent.y;
+		vertices[i0].tangent.z += tangent.z;
+
+		vertices[i1].tangent.x += tangent.x;
+		vertices[i1].tangent.y += tangent.y;
+		vertices[i1].tangent.z += tangent.z;
+
+		vertices[i2].tangent.x += tangent.x;
+		vertices[i2].tangent.y += tangent.y;
+		vertices[i2].tangent.z += tangent.z;
+	}
 }
 
 template<>

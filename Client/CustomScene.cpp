@@ -12,8 +12,7 @@
 void CCustomScene::Initialize()
 {
     if (objects.empty()) {
-        CDescriptorHeapManager* staticHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-        objects = factory->CreateLobby(staticHeapManager);
+        objects = factory->CreateLobby();
     }
 }
 
@@ -21,8 +20,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
 {
     // 플레이어 생성
     if (!my_player) {
-        CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-        my_player = factory->CreateMyPlayer(skinningHeapManager);
+        my_player = factory->CreateMyPlayer();
     }
     my_player->SetPitch(-10);   // 얼굴이 잘보이도록 수치 조정
 

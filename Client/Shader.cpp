@@ -35,7 +35,7 @@ void CShader::CreateDescriptorHeap(ID3D12Device* device, UINT numDescriptors)
 
 D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
 {
-	const UINT inputElementDescNum = 3;
+	const UINT inputElementDescNum = 4;
 	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
 
 	UINT offset = 0;
@@ -45,6 +45,8 @@ D3D12_INPUT_LAYOUT_DESC CShader::CreateInputLayout()
 	offset += sizeof(XMFLOAT3);
 	inputElementDescs[2] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	offset += sizeof(XMFLOAT2);
+	inputElementDescs[3] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += sizeof(XMFLOAT3);
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -275,7 +277,7 @@ void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
 // CSkinningShader
 D3D12_INPUT_LAYOUT_DESC CSkinningShader::CreateInputLayout()
 {
-	const UINT inputElementDescNum = 5;
+	const UINT inputElementDescNum = 6;
 	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
 
 	UINT offset = 0;
@@ -285,9 +287,11 @@ D3D12_INPUT_LAYOUT_DESC CSkinningShader::CreateInputLayout()
 	offset += sizeof(XMFLOAT3);
 	inputElementDescs[2] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	offset += sizeof(XMFLOAT2);
-	inputElementDescs[3] = { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	inputElementDescs[3] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	offset += sizeof(XMFLOAT3);
+	inputElementDescs[4] = { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	offset += sizeof(XMFLOAT4);
-	inputElementDescs[4] = { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	inputElementDescs[5] = { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	offset += sizeof(XMFLOAT4);
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
@@ -622,26 +626,6 @@ D3D12_RASTERIZER_DESC CUIShader::CreateRasterizerState()
 	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
 	return rasterizerDesc;
-}
-
-D3D12_INPUT_LAYOUT_DESC CUIShader::CreateInputLayout()
-{
-	const UINT inputElementDescNum = 3;
-	D3D12_INPUT_ELEMENT_DESC* inputElementDescs = new D3D12_INPUT_ELEMENT_DESC[inputElementDescNum];
-
-	UINT offset = 0;
-	inputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += sizeof(XMFLOAT3);
-	inputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += sizeof(XMFLOAT3);
-	inputElementDescs[2] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	offset += sizeof(XMFLOAT2);
-
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
-	inputLayoutDesc.pInputElementDescs = inputElementDescs;
-	inputLayoutDesc.NumElements = inputElementDescNum;
-
-	return inputLayoutDesc;
 }
 
 ID3D12RootSignature* CUIShader::CreateGraphicsRootSignature(ID3D12Device* device)

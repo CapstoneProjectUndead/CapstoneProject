@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Component.h"
 
 class CTexture;
@@ -10,6 +10,7 @@ struct MaterialData
     XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
     float glossiness{ 0.25f };
     UINT tex_idx;
+    UINT normal_idx{ UINT_MAX };
 };
 
 class CMaterial
@@ -17,9 +18,11 @@ class CMaterial
 public:
     CMaterial() = default;
     void SetTexture(const std::shared_ptr<CTexture>& tex);
+    void SetNormalIndex(const std::shared_ptr<CTexture>& tex);
     MaterialData GetMaterialData() const { return material; }
     void SetMaterialData(MaterialData other) { material = other; }
     UINT GetTexIndex() const { return material.tex_idx; };
+    UINT GetNormaIndex() const { return material.normal_idx; };
 public:
     MaterialData material{};  // meterial Data
 

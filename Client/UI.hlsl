@@ -8,6 +8,7 @@ struct VS_INPUT
     float3 position : POSITION;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD;
+    float3 tangent_local : TANGENT;
 };
 
 struct VS_OUTPUT
@@ -24,6 +25,7 @@ struct MaterialData
     float3 fresnel;
     float glossiness;
     uint tex_idx;
+    uint normal_idx;
 };
 
 struct InstanceData
