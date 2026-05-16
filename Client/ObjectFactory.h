@@ -6,7 +6,6 @@
 #include <MapGenerator/MapGenerator.h>
 #include <CollisionAlgorithm.h>
 
-class CDescriptorHeapManager;
 class CCharacter;
 class CObject;
 class CPlayer;
@@ -28,61 +27,72 @@ class CObjectFactory
 public:
 	CObjectFactory() = default;
 	~CObjectFactory() = default;
+
 public:
-	std::shared_ptr<CMaterial> GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name);
+	// heapManager 인자 제거, 셰이더 이름을 받아 내부에서 힙 매니저를 찾음
+	std::shared_ptr<CMaterial> GetMaterial(const std::string& name, const EShaderName shaderName);
+
 	// init component(공통 컴포넌트 구성 초기화 헬퍼 함수)
-	void InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName);
-	void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
+	void InitStaticComponents(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName);
+
+	void ProcessNode(std::shared_ptr<CCharacter> character, const std::unique_ptr<CGeometryLoader::FrameNode>& node, std::shared_ptr<CMeshRendererComponent> renderer,
 		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer,
 		EColLayer colMask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND));
-	void InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
+
+	void InitCharacterComponents(std::shared_ptr<CCharacter> character, const std::string& modelFileName,
 		std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
 		CharacterAnimSet aniSet, bool isPlayer,
 		EColLayer colMask = static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND));
+
 	// concave는 따로 생성 필요
 	void AddCollider(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EColLayer category, EColLayer mask);
+
 	// MovementComp Set
 	void SetComponent(std::shared_ptr<CPlayer>& player);
 
 	// Create Map
-	void LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName = EShaderName::Skinning);
+	void LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName = EShaderName::Skinning);
+
 	// Lobby
-	std::vector<std::shared_ptr<CObject>> CreateLobby(CDescriptorHeapManager* heapManager);
+	std::vector<std::shared_ptr<CObject>> CreateLobby();
+
 	// GameScene 모델 파츠 load
 	// Collider Component는 별도로 설정 필요
 	void CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY);
-	void LoadGameScene(CDescriptorHeapManager* heapManager);
-	std::vector<std::shared_ptr<CObject>> CreateGameScene(CDescriptorHeapManager* heapManager);
-	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData);
+	void LoadGameScene();
+	std::vector<std::shared_ptr<CObject>> CreateGameScene();
+	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(const std::vector<MapGenerator::InstanceData>& instanceData);
+
 	// Load model
-	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager);
-	void CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
-	void CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
-	void CreateDogCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager);
-	std::shared_ptr<CCharacter> CreateReaper(CDescriptorHeapManager* heapManager);
+	void CreateUndeadCharacter(std::shared_ptr<CPlayer> character);
+	void CreateHumanCharacter(std::shared_ptr<CCharacter> character);
+	void CreateGhostCharacter(std::shared_ptr<CCharacter> character);
+	void CreateDogCharacter(std::shared_ptr<CCharacter> character);
+	std::shared_ptr<CCharacter> CreateReaper();
 
 	// Create character
-	std::shared_ptr<CMyPlayer> CreateMyPlayer(CDescriptorHeapManager* heapManager);
-	std::shared_ptr<CPlayer> CreatePlayer(CDescriptorHeapManager* heapManager);
-	std::shared_ptr<CMonster> CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType);
+	std::shared_ptr<CMyPlayer> CreateMyPlayer();
+	std::shared_ptr<CPlayer> CreatePlayer();
+	std::shared_ptr<CMonster> CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType);
 
 	// WorldItem 생성
-	std::shared_ptr<CWorldItem> CreateWorldItem(uint16 itemID, CDescriptorHeapManager* heapManager);
+	std::shared_ptr<CWorldItem> CreateWorldItem(uint16 itemID);
 	// 미리 prototypes에 적재
-	void LoadItemFrame(CDescriptorHeapManager* heapManager);
+	void LoadItemFrame();
 	// 은면이 보여야하는 오브젝트 prototypes에 적재
-	void LoadTwoSideFrame(CDescriptorHeapManager* heapManager);
+	void LoadTwoSideFrame();
 
 	// getter&setter
 	std::vector<TreasureInfo>& GetTreauseres() { return treasures; }
-	std::vector<XMFLOAT3>&    GetHumanMonsterSpawnPositions() { return humanMonster_spawn_positions; }
-	std::vector<XMFLOAT3>&    GetGhostSpawnPositions() { return ghost_spawn_positions; }
+	std::vector<XMFLOAT3>& GetHumanMonsterSpawnPositions() { return humanMonster_spawn_positions; }
+	std::vector<XMFLOAT3>& GetGhostSpawnPositions() { return ghost_spawn_positions; }
 
 	// 외부 참조용
 	std::shared_ptr<CObject> GetPrototype(const std::string& name) {
 		auto it = prototypes.find(name);
 		return (it != prototypes.end()) ? it->second : nullptr;
 	}
+
 private:
 	enum class UndeadMeshName {
 		body,
@@ -102,10 +112,11 @@ private:
 		Unknown
 	};
 
-	void LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName = EShaderName::Skinning);
+	void LoadNode(const std::string fileName, EShaderName shaderName = EShaderName::Skinning);
 	// string to enum mapping
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
 	LobbyMeshName stringToLobbyMeshName(const std::string& str);
+
 private:
 	CMaterialManager matManager;
 	CTextureManager texManager;
@@ -118,4 +129,3 @@ private:
 	std::vector<XMFLOAT3>    humanMonster_spawn_positions;
 	std::vector<XMFLOAT3>    ghost_spawn_positions;
 };
-

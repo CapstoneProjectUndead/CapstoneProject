@@ -37,8 +37,7 @@ CScene::~CScene()
 
 void CScene::Initialize()
 {
-	factory->GetMaterial(CSceneManager::GetInstance().GetShaders()[EShaderName::UI]->GetHeapManager(), "white");	// 인덱스 0에 생성하기 위해 먼저 생성
-	
+	factory->GetMaterial("white", EShaderName::UI);	// 인덱스 0에 생성하기 위해 먼저 생성
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -292,8 +291,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 
 	if (pkt.is_my_player) {
 		{
-			CDescriptorHeapManager* skinningHeapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
-			my_player = factory->CreateMyPlayer(skinningHeapManager);
+			my_player = factory->CreateMyPlayer();
 
 			// 세션 저장
 			my_player->SetSession(session);
@@ -320,8 +318,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		}
 	}
 	else {
-		CDescriptorHeapManager* skinningHeapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
-		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer(skinningHeapManager);
+		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer();
 		otherPlayer->SetID(pkt.info.player_id);
 		otherPlayer->SetRoomID(pkt.room_id);
 		otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
@@ -345,8 +342,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
-		CDescriptorHeapManager* skinningHeapManager{ shaders[EShaderName::Skinning]->GetHeapManager() };
-		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer(skinningHeapManager);
+		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer();
 
 		// 다른 유저의 Player ID 부여
 		otherPlayer->SetID(userList[i].info.player_id);
@@ -475,15 +471,12 @@ void CScene::Handle_S_Remove_Player(std::shared_ptr<Session>& session, const S_R
 
 void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_SpawnMonster& pkt)
 {
-	CDescriptorHeapManager* skinningHeapManager{
-			CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-	
 	uint32 monsterId = pkt.info.monster_id;
 	MON_TYPE type = pkt.info.monster_type;
 	NetMonsterInfo info = pkt.info;
 	XMFLOAT3 pos{ pkt.info.x, pkt.info.y, pkt.info.z };
 	
-	auto monster = factory->CreateMonster(skinningHeapManager, type, scene_type);
+	auto monster = factory->CreateMonster(type, scene_type);
 	monster->SetID(monsterId);
 	monster->SetPosition(pos);
 	monster->SetOriginPos(pos);

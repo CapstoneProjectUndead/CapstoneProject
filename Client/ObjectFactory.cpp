@@ -16,6 +16,8 @@
 #include "Animator.h"
 #include "Movement.h"
 
+#include "Shader.h"
+
 #include "PhysicsManager.h"
 #include "GameFramework.h"
 #include "MyPlayer.h"
@@ -28,11 +30,16 @@
 #include "MapUtils.h"
 #include "Inventory.h"
 #include "QuickSlot.h"
+#include "SceneManager.h" // CSceneManager 사용을 위해 포함 확인 필요
 
 uint32 CObjectFactory::s_monster_id_generator = 1001;
 
-std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(CDescriptorHeapManager* heapManager, const std::string& name)
+std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(const std::string& name, const EShaderName shaderName)
 {
+	// SceneManager를 통해 현재 사용하고자 하는 셰이더의 HeapManager를 직접 획득
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
+
 	std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
 	std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex, heapManager);
 
@@ -40,7 +47,7 @@ std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(CDescriptorHeapManager* h
 }
 
 // mesh/material component set
-void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescriptorHeapManager* heapManager, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName)
+void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName)
 {
 	if (!node || node->mesh.positions.empty()) return;
 
@@ -64,12 +71,14 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 		const std::string& texName = material.albedoMap;
 		std::shared_ptr<CMaterial> mat;
 		if (!texName.empty()) {
-			mat = GetMaterial(heapManager, texName); // 기존 GetMaterial 활용
+			mat = GetMaterial(texName, shaderName); // 내부에서 shaderName 기반으로 처리
 			mat->material.albedo = material.albedoColor;
 			mat->material.glossiness = material.glossiness;
 			matComp->SetMaterial(mat);
 		}
-		if (!material.normalMap.empty()) {
+		if (!material.normalMap.empty() && mat) {
+			auto shaders = CSceneManager::GetInstance().GetShaders();
+			CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, material.normalMap);
 			mat->SetNormalIndex(tex);
 		}
@@ -100,7 +109,7 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 	}
 }
 
-void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager, const std::string& modelFileName,
+void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> character, const std::string& modelFileName,
 	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor,
 	CharacterAnimSet aniSet, bool isPlayer, EColLayer colMask)
 {
@@ -118,7 +127,7 @@ void CObjectFactory::InitCharacterComponents(std::shared_ptr<CCharacter> charact
 	for (const auto& child : frameRoot->childrens) {
 		ProcessNode(character, child, renderer, partProcessor, aniSet, isPlayer, colMask);
 	}
-	
+
 	// 애니메이터 설정
 	if (!aniSet.idle.empty()) {
 		auto animator = std::make_shared<CAnimatorComponent>();
@@ -140,7 +149,7 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 			auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 			collider->SetFillter({ category, mask });
 			obj->SetComponent(collider);
-			if (g_is_single) 
+			if (g_is_single)
 				CPhysicsManager::GetInstance().SetCollider(collider);
 		}
 	}
@@ -151,7 +160,7 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		collider->SetFillter({ category, mask });
 		obj->SetComponent(collider);
-		if (g_is_single) 
+		if (g_is_single)
 			CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 
@@ -161,7 +170,7 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		collider->SetFillter({ category, mask });
 		obj->SetComponent(collider);
-		if (g_is_single) 
+		if (g_is_single)
 			CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 
@@ -171,7 +180,7 @@ void CObjectFactory::AddCollider(std::shared_ptr<CObject> obj, const std::unique
 		auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
 		collider->SetFillter({ category, mask });
 		obj->SetComponent(collider);
-		if (g_is_single) 
+		if (g_is_single)
 			CPhysicsManager::GetInstance().SetCollider(collider);
 	}
 }
@@ -181,11 +190,11 @@ void CObjectFactory::SetComponent(std::shared_ptr<CPlayer>& player)
 	player->SetComponent(std::make_shared<CMovementComponent>());
 }
 
-void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName)
+void CObjectFactory::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node, EShaderName shaderName)
 {
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
-	InitStaticComponents(obj, heapManager, node, shaderName);
+	InitStaticComponents(obj, node, shaderName);
 
 	// 싱글일 때만 collider 생성(멀티면 서버에서 생성)
 	if (g_is_single) {
@@ -203,7 +212,7 @@ void CObjectFactory::LoadFrameNode(CDescriptorHeapManager* heapManager, std::map
 	objects.emplace(node->name, std::move(obj));
 }
 
-std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHeapManager* heapManager)
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby()
 {
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::string fileName{ "../Modeling/lobby_0305.bin" };
@@ -211,7 +220,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby(CDescriptorHea
 
 	for (const auto& children : frameRoot->childrens) {
 		auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
-		InitStaticComponents(obj, heapManager, children, EShaderName::Skinning);
+		InitStaticComponents(obj, children, EShaderName::Skinning);
 
 		// Lobby 특화 Collider 로직
 		float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&children->mesh.bounds.Extents))) * 1.5f;
@@ -261,7 +270,7 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	// Renderer에 Mesh/Material 설정
 	for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
 		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-		meshRenderer->SetShader(EShaderName::Skinning);
+		meshRenderer->SetShader(renderer->GetShader());
 		for (const RenderUnit originUnit : renderer->GetRenderUnits()) {
 			meshRenderer->SetRenderUnit(originUnit);
 		}
@@ -271,7 +280,7 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	obj->Initialize();
 }
 
-void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
+void CObjectFactory::LoadGameScene()
 {
 	CMapAssetManager::GetInstance().initialize();
 
@@ -280,34 +289,37 @@ void CObjectFactory::LoadGameScene(CDescriptorHeapManager* heapManager)
 		std::string fileName{ "../Modeling/all_map.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-		LoadFrameNode(heapManager, prototypes, frameRoot);
+		LoadFrameNode(prototypes, frameRoot);
 		for (const auto& children : frameRoot->childrens) {
-			LoadFrameNode(heapManager, prototypes, children);
+			LoadFrameNode(prototypes, children);
 		}
 	}
 	{
 		std::string fileName{ "../Modeling/all_map_2.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-		LoadFrameNode(heapManager, prototypes, frameRoot);
+		LoadFrameNode(prototypes, frameRoot);
 		for (const auto& children : frameRoot->childrens) {
-			LoadFrameNode(heapManager, prototypes, children);
+			LoadFrameNode(prototypes, children);
 		}
 	}
 	{
 		std::string fileName{ "../Modeling/map_all_3.bin" };
 		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
-		LoadFrameNode(heapManager, prototypes, frameRoot);
+		LoadFrameNode(prototypes, frameRoot);
 		for (const auto& children : frameRoot->childrens) {
-			LoadFrameNode(heapManager, prototypes, children);
+			if (children->name == "tree_1" || children->name == "tree_2")
+				LoadFrameNode(prototypes, children, EShaderName::TwoSide);
+			else
+				LoadFrameNode(prototypes, children);
 		}
 	}
 }
 
-std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescriptorHeapManager* heapManager)
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 {
-	if (prototypes.empty()) LoadGameScene(heapManager);
+	if (prototypes.empty()) LoadGameScene();
 
 	std::vector<std::shared_ptr<CObject>> objects;
 	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
@@ -347,8 +359,6 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 
 			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 
-			auto collider = proto->GetComponent<CColliderComponent>();
-
 			// collider copy
 			if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
 				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
@@ -363,9 +373,9 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene(CDescripto
 	return objects;
 }
 
-std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CDescriptorHeapManager* heapManager, const std::vector<MapGenerator::InstanceData>& instanceData)
+std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(const std::vector<MapGenerator::InstanceData>& instanceData)
 {
-	if (prototypes.empty()) LoadGameScene(heapManager);
+	if (prototypes.empty()) LoadGameScene();
 
 	treasures.clear();
 	humanMonster_spawn_positions.clear();
@@ -393,9 +403,13 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(CD
 	return objects;
 }
 
-void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
+
+	// 기본적으로 캐릭터용 스킨드 셰이더 힙매니저 획득
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
 
 	// material 미리 Load
 	std::vector<std::string> resourceNames = {
@@ -411,71 +425,70 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
-			
-		// 머티리얼 생성 및 렌더 유닛 등록 후 material return
-		auto CreateUnit = [&](const std::string& texName) {
-			auto matComp = std::make_shared<CMaterialComponent>();
-			auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-			auto mat = matManager.GetMaterial(texName, tex, heapManager);
-			matComp->SetMaterial(mat);
 
-			RenderUnit unit{ meshComp, matComp, 0 };
-			renderer->SetRenderUnit(unit);
-			return matComp;
-			};
+			// 머티리얼 생성 및 렌더 유닛 등록 후 material return
+			auto CreateUnit = [&](const std::string& texName) {
+				auto matComp = std::make_shared<CMaterialComponent>();
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
+				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				matComp->SetMaterial(mat);
 
-		// 0: dog, 1: cat, 2: buddy
-		// 처음에 강아지만 enable true
-		switch (stringToUndeadMeshName(node->name)) {
-		case UndeadMeshName::body:
-			character->body_materials[0] = CreateUnit(resourceNames[0]);
-			character->body_materials[1] = CreateUnit(resourceNames[1]);
-			character->body_materials[1]->SetEnable(false);
-			character->body_materials[2] = CreateUnit(resourceNames[2]);
-			character->body_materials[2]->SetEnable(false);
-			break;
-		case UndeadMeshName::Bunny_ear:
-		case UndeadMeshName::Bunny_tail:
-			CreateUnit(resourceNames[3]);
-			character->eartail_parts[2].push_back(meshComp);
-			meshComp->SetEnable(false);
-			break;
-		case UndeadMeshName::Cat_ear:
-		case UndeadMeshName::Cat_tail:
-			CreateUnit(resourceNames[3]);
-			character->eartail_parts[1].push_back(meshComp);
-			meshComp->SetEnable(false);
-			break;
-		case UndeadMeshName::Dog_ear:
-		case UndeadMeshName::Dog_tail:
-			CreateUnit(resourceNames[3]);
-			character->eartail_parts[0].push_back(meshComp);
-			break;
-		case UndeadMeshName::eyes:
-			character->eyes_material[0] = CreateUnit(resourceNames[4]);
-			character->eyes_material[1] = CreateUnit(resourceNames[5]);
-			character->eyes_material[1]->SetEnable(false);
-			character->eyes_material[2] = CreateUnit(resourceNames[6]);
-			character->eyes_material[2]->SetEnable(false);
-			break;
-		case UndeadMeshName::mouse:
-			character->mouth_material[0] = CreateUnit(resourceNames[7]);
-			character->mouth_material[1] = CreateUnit(resourceNames[8]);
-			character->mouth_material[1]->SetEnable(false);
-			character->mouth_material[2] = CreateUnit(resourceNames[9]);
-			character->mouth_material[2]->SetEnable(false);
-			break;
-		case UndeadMeshName::Unknown:
-			for (auto& material : node->mesh.materials) {
-				CreateUnit(material.albedoMap);
+				RenderUnit unit{ meshComp, matComp, 0 };
+				renderer->SetRenderUnit(unit);
+				return matComp;
+				};
+
+			// 0: dog, 1: cat, 2: buddy
+			// 처음에 강아지만 enable true
+			switch (stringToUndeadMeshName(node->name)) {
+			case UndeadMeshName::body:
+				character->body_materials[0] = CreateUnit(resourceNames[0]);
+				character->body_materials[1] = CreateUnit(resourceNames[1]);
+				character->body_materials[1]->SetEnable(false);
+				character->body_materials[2] = CreateUnit(resourceNames[2]);
+				character->body_materials[2]->SetEnable(false);
+				break;
+			case UndeadMeshName::Bunny_ear:
+			case UndeadMeshName::Bunny_tail:
+				CreateUnit(resourceNames[3]);
+				character->eartail_parts[2].push_back(meshComp);
+				meshComp->SetEnable(false);
+				break;
+			case UndeadMeshName::Cat_ear:
+			case UndeadMeshName::Cat_tail:
+				CreateUnit(resourceNames[3]);
+				character->eartail_parts[1].push_back(meshComp);
+				meshComp->SetEnable(false);
+				break;
+			case UndeadMeshName::Dog_ear:
+			case UndeadMeshName::Dog_tail:
+				CreateUnit(resourceNames[3]);
+				character->eartail_parts[0].push_back(meshComp);
+				break;
+			case UndeadMeshName::eyes:
+				character->eyes_material[0] = CreateUnit(resourceNames[4]);
+				character->eyes_material[1] = CreateUnit(resourceNames[5]);
+				character->eyes_material[1]->SetEnable(false);
+				character->eyes_material[2] = CreateUnit(resourceNames[6]);
+				character->eyes_material[2]->SetEnable(false);
+				break;
+			case UndeadMeshName::mouse:
+				character->mouth_material[0] = CreateUnit(resourceNames[7]);
+				character->mouth_material[1] = CreateUnit(resourceNames[8]);
+				character->mouth_material[1]->SetEnable(false);
+				character->mouth_material[2] = CreateUnit(resourceNames[9]);
+				character->mouth_material[2]->SetEnable(false);
+				break;
+			case UndeadMeshName::Unknown:
+				for (auto& material : node->mesh.materials) {
+					CreateUnit(material.albedoMap);
+				}
+				break;
 			}
-			break;
-		}
-	};
+		};
 
 	InitCharacterComponents(
 		character,
-		heapManager,
 		fileName,
 		undeadProcessor,
 		{ "Ganga_idle", "Ganga_walk", "Ganga_run", "Ganga_expect" },
@@ -484,9 +497,12 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character, C
 	);
 }
 
-void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character)
 {
 	std::string fileName{ "../Modeling/Human_monster.bin" };
+
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
@@ -508,7 +524,6 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 
 	InitCharacterComponents(
 		character,
-		heapManager,
 		fileName,
 		Processor,
 		{ "Human_monster_idle", "Human_monster_walk", "Human_monster_run", "Human_monster_attack" },
@@ -517,9 +532,12 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character,
 	);
 }
 
-void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character)
 {
 	std::string fileName{ "../Modeling/Dog.bin" };
+
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
@@ -541,7 +559,6 @@ void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, C
 
 	InitCharacterComponents(
 		character,
-		heapManager,
 		fileName,
 		Processor,
 		{ "idle", "walk", "run", "bite" },
@@ -550,9 +567,12 @@ void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character, C
 	);
 }
 
-void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character, CDescriptorHeapManager* heapManager)
+void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character)
 {
 	std::string fileName{ "../Modeling/Ghost3.bin" };
+
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
@@ -574,7 +594,6 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 
 	InitCharacterComponents(
 		character,
-		heapManager,
 		fileName,
 		Processor,
 		{ "Ghost_idle", "Ghost_walk", "Ghost_run", "Ghost_attack" },
@@ -583,11 +602,13 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character,
 	);
 }
 
-std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager* heapManager)
+std::shared_ptr<CCharacter> CObjectFactory::CreateReaper()
 {
 	std::shared_ptr<CCharacter> character = std::make_shared<CCharacter>(OBJECT_TYPE::STATIC_OBJECT);
-
 	std::string fileName{ "../Modeling/Reaper.bin" };
+
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
@@ -610,7 +631,6 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 
 	InitCharacterComponents(
 		character,
-		heapManager,
 		fileName,
 		undeadProcessor,
 		{},
@@ -620,10 +640,10 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper(CDescriptorHeapManager*
 	return character;
 }
 
-std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager* heapManager)
+std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer()
 {
 	auto player = std::make_shared<CMyPlayer>();
-	CreateUndeadCharacter(player, heapManager);
+	CreateUndeadCharacter(player);
 
 	// 싱글 모드에서만 CMovementComponent를 추가한다.
 	if (g_is_single) {
@@ -650,14 +670,14 @@ std::shared_ptr<CMyPlayer> CObjectFactory::CreateMyPlayer(CDescriptorHeapManager
 	return player;
 }
 
-std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer(CDescriptorHeapManager* heapManager)
+std::shared_ptr<CPlayer> CObjectFactory::CreatePlayer()
 {
 	auto player = std::make_shared<CPlayer>();
-	CreateUndeadCharacter(player, heapManager);
+	CreateUndeadCharacter(player);
 	return player;
 }
 
-std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* heapManager, MON_TYPE monType, SCENE_TYPE sceneType)
+std::shared_ptr<CMonster> CObjectFactory::CreateMonster(MON_TYPE monType, SCENE_TYPE sceneType)
 {
 	std::shared_ptr<CMonster>     monster;
 	std::shared_ptr<CAIComponent> AIComp;
@@ -672,32 +692,30 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	{
 		monster = std::make_shared<CHumanMonster>();
 		monster->SetCurrentSceneType(sceneType);
-		CreateHumanCharacter(monster, heapManager);
+		CreateHumanCharacter(monster);
 	}
 	break;
 	case MON_TYPE::ANIMAL_MONSTER:
 	{
 		monster = std::make_shared<CDogMonster>();
 		monster->SetCurrentSceneType(sceneType);
-		CreateDogCharacter(monster, heapManager);
+		CreateDogCharacter(monster);
 	}
-		break;
+	break;
 	case MON_TYPE::GHOST:
 	{
 		monster = std::make_shared<CGhost>();
 		monster->SetCurrentSceneType(sceneType);
-		CreateGhostCharacter(monster, heapManager);
+		CreateGhostCharacter(monster);
 	}
-		break;
+	break;
 	default:
 		return nullptr;
 		break;
 	}
 
 	// monster ID, AI, Movement 셋팅 (싱글 모드일 때만)
-	// ID 값은 멀티 모드일 때도 여전히 필요하지만 다른 곳에서 셋팅된다. 
 	if (g_is_single) {
-
 		// ID 설정
 		monster->SetID(s_monster_id_generator);
 		++s_monster_id_generator;
@@ -722,7 +740,7 @@ std::shared_ptr<CMonster> CObjectFactory::CreateMonster(CDescriptorHeapManager* 
 	return monster;
 }
 
-std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDescriptorHeapManager* heapManager)
+std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID)
 {
 	auto item = ItemFactory::Create(itemID);
 	if (!item)
@@ -758,42 +776,42 @@ std::shared_ptr<CWorldItem> CObjectFactory::CreateWorldItem(uint16 itemID, CDesc
 	return worldItem;
 }
 
-void CObjectFactory::LoadNode(CDescriptorHeapManager* heapManager, const std::string fileName, EShaderName shaderName)
+void CObjectFactory::LoadNode(const std::string fileName, EShaderName shaderName)
 {
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 	if (!frameRoot) return;
 
-	LoadFrameNode(heapManager, prototypes, frameRoot, shaderName);
+	LoadFrameNode(prototypes, frameRoot, shaderName);
 	for (const auto& children : frameRoot->childrens) {
-		LoadFrameNode(heapManager, prototypes, children, shaderName);
+		LoadFrameNode(prototypes, children, shaderName);
 	}
 }
 
-void CObjectFactory::LoadItemFrame(CDescriptorHeapManager* heapManager)
+void CObjectFactory::LoadItemFrame()
 {
 	{
 		std::string fileName{ "../Modeling/Equip.bin" };
-		LoadNode(heapManager, fileName);
+		LoadNode(fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/Food.bin" };
-		LoadNode(heapManager, fileName);
+		LoadNode(fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/dowsing_rod_model.bin" };
-		LoadNode(heapManager, fileName);
+		LoadNode(fileName);
 	}
 	{
 		std::string fileName{ "../Modeling/treasure.bin" };
-		LoadNode(heapManager, fileName);
+		LoadNode(fileName);
 	}
 }
 
-void CObjectFactory::LoadTwoSideFrame(CDescriptorHeapManager* heapManager)
+void CObjectFactory::LoadTwoSideFrame()
 {
 	{
 		std::string fileName{ "../Modeling/flapper.bin" };
-		LoadNode(heapManager, fileName, EShaderName::TwoSide);
+		LoadNode(fileName, EShaderName::TwoSide);
 	}
 }
 
