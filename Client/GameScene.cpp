@@ -169,15 +169,15 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			AddObject(humanMonster, humanMonster->GetID());
 		}
 
-		/*for (const auto& pos : ghost_spawn_positions) {
-			auto ghost = factory->CreateMonster(skinningHeapManager, MON_TYPE::GHOST, scene_type);
+		for (const auto& pos : ghost_spawn_positions) {
+			auto ghost = factory->CreateMonster(MON_TYPE::GHOST, scene_type);
 			if (!ghost)
 				continue;
 
 			ghost->SetPosition(pos.x, 0.1f, pos.z);
 			ghost->SetOriginPos({ pos.x, 0.1f, pos.z });
 			AddObject(ghost, ghost->GetID());
-		}*/
+		}
 	}
 
 	if (!camera) {
