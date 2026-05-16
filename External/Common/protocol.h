@@ -660,10 +660,10 @@ static_assert(sizeof(S_UpdateDurability) == 4 + 22, "S_UpdateDurability size mis
 struct S_PlaySound : public PacketHeader
 {
 	bool is_global = false;
-	float range;
+	float range = -1.f;
 	float x, y, z;
 	SOUND_ID sound_id;
-	uint64 player_id = -1;
+	int64 player_id = -1;
 	SCENE_TYPE scene_type;
 
 	S_PlaySound() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_PLAY_SOUND) {}

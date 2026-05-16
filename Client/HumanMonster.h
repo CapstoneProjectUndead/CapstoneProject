@@ -28,13 +28,31 @@ public:
     virtual void ApplyMeleeHit(const XMFLOAT3& fromPos) override;
     virtual void OnFleeMove(float elapsedTime) override;
 
+public:
+    // Dog 소환
+    void SetSpawnCallback(std::function<void(MON_TYPE, XMFLOAT3)> fn) { spawn_callback = std::move(fn); }
+
 private:
     bool  hit_damage_dealt      = false;
     float attack_cooldown_timer = 9999.f;
 
+    float dog_spawn_timer = 0.f;
+    bool  has_called_dogs = false;
+
     int   melee_hit_count = 0;
     float flee_timer      = 0.0f;
 
+    XMFLOAT3 store_center_world = {};
+    bool     has_store_center   = false;
+    void     InitStoreCenter();
+    void     UpdateStoreAlert(float elapsedTime);
+
+    std::function<void(MON_TYPE, XMFLOAT3)> spawn_callback;
+
+    void SpawnCallDogs();
+
+    static constexpr float  DOG_SPAWN_DELAY       = 1.5f;
+    static constexpr float  STORE_TRIGGER_RADIUS = 4.0f;
     static constexpr int    MAX_MELEE_HITS = 5;
     static constexpr float  FLEE_DURATION  = 1.0f;
     static constexpr float  FLEE_SPEED     = 0.5f;

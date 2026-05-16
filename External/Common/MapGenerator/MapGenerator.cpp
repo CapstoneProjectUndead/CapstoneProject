@@ -21,6 +21,8 @@ int GetRandomInt(int min, int max) {
 // Store centers tracked during PlaceMediumStore, used by PlaceMonster
 std::vector<Cell> g_store_centers;
 
+const std::vector<Cell>& MapGenerator::GetStoreCenters() { return g_store_centers; }
+
 std::vector<Cell> g_treasure_positions;
 
 std::vector<Cell> m_placedCenters; // 구조물 간 거리 체크
@@ -532,9 +534,9 @@ void MapGenerator::PlaceMonster() {
         }
     }
 
-    // DogMonster: 보물 인접 타일에 50% 확률로 배치
+    // DogMonster: 보물 인접 타일에 45% 확률로 배치
     for (const Cell& tc : g_treasure_positions) {
-        if (GetRandomInt(0, 99) >= 50) continue;
+        if (GetRandomInt(0, 99) >= 45) continue;
 
         for (int i = 0; i < 4; i++) {
             int nx = tc.x + ndx[i], ny = tc.y + ndy[i];

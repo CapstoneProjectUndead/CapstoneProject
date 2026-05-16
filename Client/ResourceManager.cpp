@@ -90,4 +90,7 @@ void CResourceManager::LoadSounds()
     CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_attack,   "../Resource/Sound/dog_attack.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_moan,   "../Resource/Sound/dog_moan.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::dog_howling,   "../Resource/Sound/dog_howling.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::clock_alarm,   "../Resource/Sound/clock_alarm.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::pick_up,   "../Resource/Sound/pick_up.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::warning_bell,   "../Resource/Sound/warning_bell.mp3");
 }

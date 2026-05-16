@@ -88,6 +88,7 @@ namespace MapGenerator
     static std::mt19937 gen(rd());
 
     std::vector<InstanceData> Generate3DMap();
+    const std::vector<Cell>& GetStoreCenters();
     bool IsValid(int x, int y);
     bool IsWalkableFloor(int x, int y);
     bool IsBlockedObject(int x, int y);

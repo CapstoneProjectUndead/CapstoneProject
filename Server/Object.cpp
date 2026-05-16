@@ -102,6 +102,10 @@ void CObject::SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& genera
 	soundPkt.y = generatePos.y;
 	soundPkt.z = generatePos.z;
 
+	if (range > 0) {
+		soundPkt.range = range;
+	}
+
 	auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
 
 	if (auto room = GetRoom()) {

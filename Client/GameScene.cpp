@@ -175,6 +175,22 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
 			monster->SetPosition(info.position.x, 0.1f, info.position.z);
 			monster->SetOriginPos(info.position);
+
+			// 콜백함수 등록
+			if (info.type == MON_TYPE::HUMAN_MONSTER) {
+				if (auto human = std::dynamic_pointer_cast<CHumanMonster>(monster)) {
+					human->SetSpawnCallback([this](MON_TYPE type, XMFLOAT3 pos) {
+						auto heapManager = CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager();
+						auto dog = factory->CreateMonster(heapManager, type, scene_type);
+						if (!dog) 
+							return;
+						dog->SetPosition(pos.x, pos.y, pos.z);
+						dog->SetOriginPos(pos);
+						AddObject(dog, dog->GetID());
+					});
+				}
+			}
+
 			AddObject(monster, monster->GetID());
 			info.monster = monster;
 			info.respawn_time = monster->GetRespawnTime();
@@ -331,6 +347,18 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 			if (monster) {
 				monster->SetPosition(info.position.x, 0.1f, info.position.z);
 				monster->SetOriginPos(info.position);
+				if (info.type == MON_TYPE::HUMAN_MONSTER) {
+					if (auto human = std::dynamic_pointer_cast<CHumanMonster>(monster)) {
+						human->SetSpawnCallback([this](MON_TYPE type, XMFLOAT3 pos) {
+							auto heapManager = CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager();
+							auto dog = factory->CreateMonster(heapManager, type, scene_type);
+							if (!dog) return;
+							dog->SetPosition(pos.x, pos.y, pos.z);
+							dog->SetOriginPos(pos);
+							AddObject(dog, dog->GetID());
+						});
+					}
+				}
 				AddObject(monster, monster->GetID());
 				info.monster = monster;
 				info.respawn_time  = monster->GetRespawnTime();
@@ -366,6 +394,7 @@ void CGameScene::ProcessPickup()
 			return;
 
 		auto worldItem = static_cast<CWorldItem*>(it->get());
+		CSoundManager::GetInstance().Play(SOUND_ID::pick_up);
 
 		// 싱글환경
 		if (g_is_single) {
@@ -1134,7 +1163,13 @@ void CGameScene::Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySoun
 		XMFLOAT3 diff = Vector3::Subtract(soundPos, myPos);
 		diff.y = 0.0f;
 
-		if (Vector3::Length(diff) <= 4.0f)
-			CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		if(pkt.range > 0.f){
+			if (Vector3::Length(diff) <= pkt.range)
+				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		}
+		else {
+			if (Vector3::Length(diff) <= 4.0f)
+				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		}
 	}
 }

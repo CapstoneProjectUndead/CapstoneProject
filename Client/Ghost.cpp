@@ -22,7 +22,6 @@ CGhost::CGhost()
 {
     friction = 0.0f;
     trace_speed = 4.0f;
-    recog_range = 4.0f;
     attack_range = 1.5f;
     SetFOV(120);
     respawn_time = 50.f;
@@ -467,7 +466,7 @@ void CGhost::OnFleeEnter()
     auto scene = CSceneManager::GetInstance().GetActiveScene();
     if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
         XMFLOAT3 itemSpawnPos = position;
-        itemSpawnPos.y = 0.1f;
+        itemSpawnPos.y = 0.04f;
         gameScene->SpawnWorldItem(20, itemSpawnPos);
     }
 }

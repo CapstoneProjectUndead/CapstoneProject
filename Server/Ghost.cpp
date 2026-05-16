@@ -19,7 +19,6 @@ CGhost::CGhost()
 {
 	friction = 0.0f;
 	trace_speed = 4.0f;
-	recog_range = 4.0f;
 	attack_range = 1.5f;
 	SetFOV(120);
 	respawn_time = 50.f;

@@ -94,7 +94,7 @@ protected:
     float attack_timer; // 공격 상태에서 시간을 잴 타이머
     float turn_timer;
 
-    float recog_range = 3.0f; // 인지 범위
+    float recog_range = 5.0f; // 인지 범위
     float fov_angle = 120.f; // 시야각
     float cos_threshold; // 미리 계산된 코사인 임계값
 

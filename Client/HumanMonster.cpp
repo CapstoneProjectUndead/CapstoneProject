@@ -33,9 +33,11 @@ void CHumanMonster::Update(float elapsedTime)
 
 		melee_knockback_timer -= elapsedTime;
 
-		if (melee_knockback_timer < 0.0f) 
+		if (melee_knockback_timer < 0.0f)
             melee_knockback_timer = 0.0f;
 	}
+
+    UpdateStoreAlert(elapsedTime);
 }
 
 void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
@@ -48,39 +50,68 @@ void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers
     }
 }
 
+void CHumanMonster::UpdateStoreAlert(float elapsedTime)
+{
+    if (!has_store_center) 
+        InitStoreCenter();
+
+    if (dog_spawn_timer > 0.f) {
+        dog_spawn_timer -= elapsedTime;
+        if (dog_spawn_timer <= 0.f) {
+            dog_spawn_timer = 0.f;
+            SpawnCallDogs();
+        }
+    }
+    else if (!has_called_dogs) {
+        auto target = FindNearestPlayer();
+        if (target) {
+            XMFLOAT3 diff = Vector3::Subtract(store_center_world, target->position);
+            diff.y = 0.f;
+            float distSq = diff.x * diff.x + diff.z * diff.z;
+            if (distSq <= STORE_TRIGGER_RADIUS * STORE_TRIGGER_RADIUS) {
+                SetTarget(target);
+                CSoundManager::GetInstance().Play(SOUND_ID::warning_bell);
+                dog_spawn_timer = DOG_SPAWN_DELAY;
+                if (auto ai = GetComponent<CAIComponent>())
+                    ai->ChangeState(AI_STATE::MONSTER_TRACE);
+            }
+        }
+    }
+}
+
+
+void CHumanMonster::InitStoreCenter()
+{
+    const auto& centers = MapGenerator::GetStoreCenters();
+    float minDistSq = FLT_MAX;
+    for (const auto& cell : centers) {
+        XMFLOAT3 wp = { cell.x * 2.f, 0.f, cell.y * 2.f };
+        float dx = wp.x - origin_position.x;
+        float dz = wp.z - origin_position.z;
+        float dSq = dx * dx + dz * dz;
+        if (dSq < minDistSq) {
+            minDistSq = dSq;
+            store_center_world = wp;
+        }
+    }
+    has_store_center = true;
+}
+
 void CHumanMonster::OnIdleMove(float elapsedTime)
 {
-    if (melee_knockback_timer > 0.0f) 
+    if (melee_knockback_timer > 0.0f)
         return;
 
-     // 시야 범위에 플레이어가 들어오는지 체크
-    auto target = FindNearestPlayer();
-
-    if (target) {
-
-        // 타겟을 향하는 방향 벡터 및 평면(XZ) 거리 계산
-        XMFLOAT3 dirVec = Vector3::Subtract(target->position, position);
-        dirVec.y = 0.0f; // Y축(높이) 차이는 무시
-        float dist = Vector3::Length(dirVec);
-
-        // 인식 거리(recog_range) 내에 있는지 1차 확인
-        if (dist <= recog_range && dist > 0.001f) {
-
-            // 타겟 방향 벡터 정규화 (길이를 1로 만듦)
-            XMFLOAT3 dirNorm = { dirVec.x / dist, 0.0f, dirVec.z / dist };
-
-            // 내적(Dot Product) 계산 (Object의 look 벡터 활용)
-            float dotProduct = (look.x * dirNorm.x) + (look.z * dirNorm.z);
-
-            // 플레이어가 시야각 안에 들어왔다면 추적 시작
-            if (dotProduct >= cos_threshold) {
+    if (has_called_dogs) {
+        auto target = FindNearestPlayer();
+        if (target) {
+            XMFLOAT3 diff = Vector3::Subtract(target->position, position);
+            diff.y = 0.f;
+            if (diff.x * diff.x + diff.z * diff.z <= recog_range * recog_range) {
                 SetTarget(target);
-
-                auto AIComponent = GetComponent<CAIComponent>();
-                if (AIComponent) {
-                    AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
-                    return;
-                }
+                if (auto ai = GetComponent<CAIComponent>())
+                    ai->ChangeState(AI_STATE::MONSTER_TRACE);
+                return;
             }
         }
     }
@@ -150,56 +181,22 @@ void CHumanMonster::OnIdleMove(float elapsedTime)
 
 void CHumanMonster::OnPatrolMove(float elapsedTime)
 {
-    if (melee_knockback_timer > 0.0f) 
+    if (melee_knockback_timer > 0.0f)
         return;
-
-    // (순찰 상태)
-    // 타겟 탐색 (TRACE 전환)
-    auto target = FindNearestPlayer();
-    if (target) {
-
-        // 타겟을 향하는 벡터 및 평면(XZ) 거리 계산
-        XMFLOAT3 dirVec = Vector3::Subtract(target->position, position);
-        dirVec.y = 0.0f; // 높이 차이는 무시 (위아래는 안 보고 평면 시야만 체크)
-        float dist = Vector3::Length(dirVec);
-
-        // 일단 인식 거리(recog_range) 안에 들어왔는지 1차 확인
-        if (dist <= recog_range && dist > 0.001f) {
-
-            // 타겟 방향 벡터 정규화 (길이를 1로 만듦)
-            XMFLOAT3 dirNorm = { dirVec.x / dist, 0.0f, dirVec.z / dist };
-
-            // 내적(Dot Product) 계산 (Object의 look 벡터 활용)
-            // (내적 = x끼리 곱 + z끼리 곱)
-            float dotProduct = (look.x * dirNorm.x) + (look.z * dirNorm.z);
-
-            // 내적값이 임계값 이상이면 시야각 안에 있는 것!
-            if (dotProduct >= cos_threshold) {
-
-                // 발각!
-                SetTarget(target);
-                auto AIComponent = GetComponent<CAIComponent>();
-                if (AIComponent) {
-                    AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
-                    return;
-                }
-            }
-        }
-    }
 
     patrol_timer += elapsedTime;
     turn_timer += elapsedTime;
 
-    // 전체 배회 시간 (5초)
-    if (patrol_timer >= 5.0f) {
+    // 전체 배회 시간 (15초)
+    if (patrol_timer >= 15.0f) {
         auto AIComponent = GetComponent<CAIComponent>();
         if (AIComponent)
             AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
-    // 방향 전환 (2초)
-    if (turn_timer >= 2.0f) {
+    // 방향 전환 (6초)
+    if (turn_timer >= 6.0f) {
         float newYaw = yaw + 180.0f;
         SetYaw(newYaw);
         SetYawPitch(newYaw, 0.0f);
@@ -439,6 +436,18 @@ void CHumanMonster::OnFleeExit()
     flee_timer = 0.0f;
     velocity.x = 0.0f;
     velocity.z = 0.0f;
+}
+
+void CHumanMonster::SpawnCallDogs()
+{
+    has_called_dogs = true;
+    if (!spawn_callback) 
+        return;
+
+    for (int i = 0; i < 2; i++) {
+        float offset = (i == 0) ? 1.f : -1.f;
+        spawn_callback(MON_TYPE::ANIMAL_MONSTER, { position.x + offset, 0.1f, position.z });
+    }
 }
 
 void CHumanMonster::OnIdleEnter()

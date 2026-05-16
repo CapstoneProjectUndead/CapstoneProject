@@ -185,4 +185,7 @@ enum class SOUND_ID : uint16_t
 	dog_moan,
 	dog_howling,
 	girl_flee,
+	clock_alarm,
+	pick_up,
+	warning_bell,
 };
