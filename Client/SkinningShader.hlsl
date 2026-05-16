@@ -1,33 +1,13 @@
 #include "Common.hlsli"
 #define SKINNED
 
-struct VS_INPUT
+struct BONE_INPUT
 {
-    float3 position : POSITION;
-    float3 normal : NORMAL;
-    float2 tex : TEXCOORD;
+    VS_INPUT v;
 #ifdef SKINNED
     uint4 bone_indices : BLENDINDICES;
     float4 bone_weights : BLENDWEIGHT;
 #endif
-};
-
-struct VS_OUTPUT
-{
-    float4 position_clip : SV_POSITION;
-    float4 shadow_pos : POSITION0;
-    float3 position_world : POSITION1;
-    float3 normal : NORMAL;
-    float2 tex : TEXCOORD;
-    nointerpolation uint instanceID : INSTANCEID;
-};
-
-struct MaterialData
-{
-    float4 albedo;
-    float3 fresnel;
-    float glossiness;
-    uint tex_idx;
 };
 
 struct AnimationData
@@ -58,7 +38,7 @@ StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 // 예: 0번~10번 본은 0.0(하반신), 11번~20번 본은 1.0(상반신)
 StructuredBuffer<float> gBoneMasks : register(t2, space1);
 
-VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
+VS_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
 {
     VS_OUTPUT output;
 
@@ -105,21 +85,23 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     
             float4x4 blendedMatrix = lerp(matA, matB, finalWeight);
 
-            posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
-            normalL += weights[i] * mul(input.normal, (float3x3) blendedMatrix);
+            posL += weights[i] * mul(float4(input.v.position, 1.0f), blendedMatrix).xyz;
+            normalL += weights[i] * mul(input.v.normal, (float3x3) blendedMatrix);
         }
     
-        input.position = posL;
-        input.normal = normalL;
+        input.v.position = posL;
+        input.v.normal = normalL;
     }
 #endif
-    float4 posW = mul(float4(input.position, 1.0f), finalWorld);
+    float4 posW = mul(float4(input.v.position, 1.0f), finalWorld);
     output.position_world = posW.xyz;
 
-    output.normal = mul(input.normal, (float3x3) finalWorld);
+    output.normal = mul(input.v.normal, (float3x3) finalWorld);
     
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
-    output.tex = input.tex;
+    output.tex = input.v.tex;
+    output.tangent_world = mul(input.v.tangent_local, (float3x3) finalWorld);
+    
     output.shadow_pos = mul(posW, gShadowTransform);
     
     return output;
@@ -133,20 +115,34 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
 
     // light
     input.normal = normalize(input.normal);
+    input.tangent_world = normalize(input.tangent_world);
 
+    float3 bumpedNormalW = input.normal;
+    float4 normalMapSample = float4(0.5f, 0.5f, 1.0f, 1.0f);
+    if (instMat.normal_idx != 0xffffffff)   // 나중에 수정(오버헤드 큼)
+    {
+        normalMapSample = texDiffuse[instMat.normal_idx].Sample(sample, input.tex);
+        bumpedNormalW = NormalSampleToWorldSpace(normalMapSample.rgb, bumpedNormalW, input.tangent_world);
+    }
+    
     float3 toEyeW = normalize(eyePosWorld - input.position_world);
-
     float4 ambient = ambientLight * diffuseAlbedo;
     
     // Only the first light casts a shadow
     float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
     shadowFactor[0] = CalcShadowFactor(input.shadow_pos);
 
-    Material mat = { diffuseAlbedo, instMat.fresnel, instMat.glossiness };
-    float4 directLight = ComputeLighting(gLights, mat, input.position_world, input.normal, toEyeW, shadowFactor);
+    const float shininess = instMat.glossiness * normalMapSample.a;
+    Material mat = { diffuseAlbedo, instMat.fresnel, shininess };
+    float4 directLight = ComputeLighting(gLights, mat, input.position_world, bumpedNormalW, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;
     
+    //float3 r = reflect(-toEyeW, bumpedNormalW);
+    //float3 fresnelFactor = SchlickFresnel(instMat.fresnel, bumpedNormalW, r);
+    //litColor.rgb += shininess * fresnelFactor;
+    
+    // Common convention to take alpha from diffuse albedo.
     litColor.a = diffuseAlbedo.a;
 
     return litColor;

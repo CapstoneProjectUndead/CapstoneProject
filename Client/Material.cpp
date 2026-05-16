@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Material.h"
 #include "Texture.h"
 #include "Shader.h"
@@ -11,6 +11,12 @@ void CMaterial::SetTexture(const std::shared_ptr<CTexture>& tex)
 	// index 값 저장
 	UINT srvIndex = texture->GetDescriptorIndex();
 	material.tex_idx = srvIndex;
+}
+
+void CMaterial::SetNormalIndex(const std::shared_ptr<CTexture>& tex)
+{
+	UINT srvIndex = tex->GetDescriptorIndex();
+	material.normal_idx = srvIndex;
 }
 
 std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap)

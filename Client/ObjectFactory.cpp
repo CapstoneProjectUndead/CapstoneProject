@@ -62,11 +62,16 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, CDescrip
 		auto& material = node->mesh.materials[i];
 		auto matComp = std::make_shared<CMaterialComponent>();
 		const std::string& texName = material.albedoMap;
+		std::shared_ptr<CMaterial> mat;
 		if (!texName.empty()) {
-			auto mat = GetMaterial(heapManager, texName); // 기존 GetMaterial 활용
+			mat = GetMaterial(heapManager, texName); // 기존 GetMaterial 활용
 			mat->material.albedo = material.albedoColor;
 			mat->material.glossiness = material.glossiness;
 			matComp->SetMaterial(mat);
+		}
+		if (!material.normalMap.empty()) {
+			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, material.normalMap);
+			mat->SetNormalIndex(tex);
 		}
 		meshRenderer->SetRenderUnit(meshComp, matComp, i);
 	}

@@ -12,6 +12,35 @@
 
 #include "Light.hlsl"
 
+struct VS_INPUT
+{
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
+    float3 tangent_local : TANGENT;
+};
+
+struct VS_OUTPUT
+{
+    float4 position_clip : SV_POSITION;
+    float4 shadow_pos : POSITION0;
+    float3 position_world : POSITION1;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
+    float3 tangent_world : TANGENT;
+
+    nointerpolation uint instanceID : INSTANCEID;
+};
+
+struct MaterialData
+{
+    float4 albedo;
+    float3 fresnel;
+    float glossiness;
+    uint tex_idx;
+    uint normal_idx;
+};
+
 cbuffer CameraInfo : register(b0)
 {
     float4x4 viewMatrix : packoffset(c0);
@@ -67,4 +96,22 @@ float CalcShadowFactor(float4 shadowPosH)
     }
     
     return percentLit / 9.0f;
+}
+
+float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float3 tangentW)
+{
+	// Uncompress each component from [0,1] to [-1,1].
+    float3 normalT = 2.0f * normalMapSample - 1.0f;
+
+	// Build orthonormal basis.
+    float3 N = unitNormalW;
+    float3 T = normalize(tangentW - dot(tangentW, N) * N);
+    float3 B = cross(N, T);
+
+    float3x3 TBN = float3x3(T, B, N);
+
+	// Transform from tangent space to world space.
+    float3 bumpedNormalW = mul(normalT, TBN);
+
+    return bumpedNormalW;
 }

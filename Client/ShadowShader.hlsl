@@ -1,28 +1,18 @@
 #include "Common.hlsli"
 #define SKINNED
 
-struct VS_INPUT
+struct BONE_INPUT
 {
-    float3 position : POSITION;
-    float3 normal : NORMAL;
-    float2 tex : TEXCOORD;
+    VS_INPUT v;
 #ifdef SKINNED
     uint4 bone_indices : BLENDINDICES;
     float4 bone_weights : BLENDWEIGHT;
 #endif
 };
 
-struct VS_OUTPUT
+struct VS_SHADOW_OUTPUT
 {
     float4 position_clip : SV_POSITION;
-};
-
-struct MaterialData
-{
-    float4 albedo;
-    float3 fresnel;
-    float glossiness;
-    uint tex_idx;
 };
 
 struct AnimationData
@@ -48,9 +38,9 @@ struct InstanceData
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 
-VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
+VS_SHADOW_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
 {
-    VS_OUTPUT output;
+    VS_SHADOW_OUTPUT output;
     
     InstanceData instData = gInstanceData[instanceID];
 #ifdef SKINNED
@@ -78,12 +68,12 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 
             float4x4 blendedMatrix = lerp(matA, matB, alpha);
 
-            posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
+            posL += weights[i] * mul(float4(input.v.position, 1.0f), blendedMatrix).xyz;
         }
-        input.position = posL;
+        input.v.position = posL;
     }
 #endif
-    float4 posW = mul(float4(input.position, 1.0f), instData.world_matrix);
+    float4 posW = mul(float4(input.v.position, 1.0f), instData.world_matrix);
     output.position_clip = mul(posW, gShadowViewProj);
 
     return output;
