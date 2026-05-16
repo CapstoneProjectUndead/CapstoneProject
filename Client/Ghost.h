@@ -27,25 +27,9 @@ public:
     void ApplySprayHit(const XMFLOAT3& fromPos);
 
 private:
-    void     PatrolRadiusWander(float elapsedTime);
-    XMFLOAT3 GetRandomWanderTarget();
-
     void CheckContactDamage();
 
 private:
-    // Stuck 감지
-    float    stuck_check_timer = 0.0f;
-    XMFLOAT3 last_stuck_pos    = {};
-
-    // RADIUS_WANDER
-    XMFLOAT3    wander_target        = {};
-    float       wander_wait_timer    = 0.0f;
-    float       wander_wait_duration = 1.5f;
-
-    bool        is_waiting        = false;
-    const float wander_radius     = 4.0f;
-    float       patrol_speed      = 1.2f;
-
     // ATTACK
     bool  hit_damage_dealt      = false;
     bool  stun_applied          = false;

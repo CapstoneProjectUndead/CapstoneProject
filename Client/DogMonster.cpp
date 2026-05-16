@@ -14,6 +14,7 @@ CDogMonster::CDogMonster()
 {
 	friction     = 0.0f;
 	trace_speed  = 6.0f;
+	patrol_speed = 2.0f;
 	attack_range = 1.0f;
 	SetFOV(180);
 	respawn_time = 50.f;
@@ -180,27 +181,7 @@ void CDogMonster::OnPatrolMove(float elapsedTime)
 		}
 	}
 
-	patrol_timer += elapsedTime;
-	turn_timer   += elapsedTime;
-
-	// 순찰 시간 완료 -> IDLE
-	if (patrol_timer >= PATROL_DURATION) {
-		auto AIComp = GetComponent<CAIComponent>();
-		if (AIComp)
-			AIComp->ChangeState(AI_STATE::MONSTER_IDLE);
-		return;
-	}
-
-	// 2초마다 180도 방향 전환 (앞뒤 왕복)
-	if (turn_timer >= TURN_INTERVAL) {
-		float newYaw = yaw + 180.0f;
-		SetYaw(newYaw);
-		SetYawPitch(newYaw, 0.0f);
-		turn_timer = 0.0f;
-	}
-
-	velocity.x = look.x * PATROL_SPEED;
-	velocity.z = look.z * PATROL_SPEED;
+	PatrolRadiusWander(elapsedTime);
 }
 
 void CDogMonster::OnTraceMove(float elapsedTime)
@@ -387,6 +368,13 @@ void CDogMonster::OnIdleEnter()
 void CDogMonster::OnPatrolEnter()
 {
 	ResetPatrolTimers();
+
+	stuck_check_timer    = 0.0f;
+	last_stuck_pos       = position;
+	wander_target        = GetRandomWanderTarget();
+	is_waiting           = false;
+	wander_wait_timer    = 0.0f;
+	wander_wait_duration = 1.0f + (rand() % 11) * 0.1f;
 }
 
 void CDogMonster::OnTraceEnter()
@@ -463,12 +451,7 @@ void CDogMonster::OnFleeEnter()
 		}
 	}
 
-	auto scene = CSceneManager::GetInstance().GetActiveScene();
-	if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
-		XMFLOAT3 itemSpawnPos = position;
-		itemSpawnPos.y = 0.2f;
-		gameScene->SpawnWorldItem(20, itemSpawnPos);
-	}
+	DropItem(20);
 }
 
 void CDogMonster::OnFleeMove(float elapsedTime)

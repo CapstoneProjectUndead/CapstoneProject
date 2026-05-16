@@ -80,6 +80,10 @@ protected:
 
     void DropItem(uint16 itemID);
 
+    // 배회 (Wander) — Ghost·Dog 공용
+    void     PatrolRadiusWander(float elapsedTime);
+    XMFLOAT3 GetRandomWanderTarget();
+
 protected:
     XMFLOAT3 origin_position;
     AI_STATE AI_state;
@@ -110,5 +114,14 @@ protected:
     // BFS 경로 탐색 (TRACE 추적 / IDLE 복귀 공용)
     std::vector<MapGenerator::Cell> nav_path;
     float path_refresh_timer = 0.0f;
+
+    // 배회 상태 변수 — PatrolRadiusWander 공용
+    float    stuck_check_timer    = 0.0f;
+    XMFLOAT3 last_stuck_pos       = {};
+    XMFLOAT3 wander_target        = {};
+    float    wander_wait_timer    = 0.0f;
+    float    wander_wait_duration = 1.5f;
+    bool     is_waiting           = false;
+    float    patrol_speed         = 1.2f;
 };
 

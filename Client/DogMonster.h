@@ -35,9 +35,7 @@ private:
     float flee_timer      = 0.0f;
 
     static constexpr float IDLE_DURATION      = 4.0f;
-    static constexpr float PATROL_DURATION    = 5.0f;
-    static constexpr float TURN_INTERVAL      = 2.0f;
-    static constexpr float PATROL_SPEED       = 4.0f;
+    static constexpr float PATROL_SPEED       = 4.0f;  // origin 복귀 속도
     static constexpr float ATTACK_HIT_TIME    = 0.7f;
     static constexpr float ATTACK_DURATION    = 1.0f;
     static constexpr float CHASE_GIVE_UP_TIME = 1.5f;

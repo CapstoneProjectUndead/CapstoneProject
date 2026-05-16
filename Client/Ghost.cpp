@@ -13,12 +13,6 @@
 
 CGhost::CGhost()
     : CMonster(MON_TYPE::GHOST)
-    , stuck_check_timer(0.0f)
-    , last_stuck_pos{}
-    , wander_target{}
-    , wander_wait_timer(0.0f)
-    , wander_wait_duration(1.5f)
-    , is_waiting(false)
 {
     friction = 0.0f;
     trace_speed = 4.0f;
@@ -463,12 +457,7 @@ void CGhost::OnFleeEnter()
         }
     }
 
-    auto scene = CSceneManager::GetInstance().GetActiveScene();
-    if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
-        XMFLOAT3 itemSpawnPos = position;
-        itemSpawnPos.y = 0.04f;
-        gameScene->SpawnWorldItem(20, itemSpawnPos);
-    }
+    DropItem(20);
 }
 
 void CGhost::OnFleeExit()
@@ -513,89 +502,6 @@ void CGhost::ApplySprayHit(const XMFLOAT3& fromPos)
                 ai->ChangeState(AI_STATE::MONSTER_TRACE);
         }
     }
-}
-
-void CGhost::PatrolRadiusWander(float elapsedTime)
-{
-    const float arrive_threshold    = 0.3f;
-    const float stuck_check_interval = 0.1f;
-    const float stuck_threshold     = 0.03f;
-
-    // 대기 중
-    if (is_waiting) {
-        velocity.x = 0.0f;
-        velocity.z = 0.0f;
-        wander_wait_timer += elapsedTime;
-        if (wander_wait_timer >= wander_wait_duration) {
-            wander_target        = GetRandomWanderTarget();
-            wander_wait_duration = 1.0f + (rand() % 11) * 0.1f;
-            is_waiting           = false;
-            wander_wait_timer    = 0.0f;
-            stuck_check_timer    = 0.0f;
-            last_stuck_pos       = position;
-        }
-        return;
-    }
-
-    // Stuck 감지
-    stuck_check_timer += elapsedTime;
-    if (stuck_check_timer >= stuck_check_interval) {
-        XMFLOAT3 moved = Vector3::Subtract(position, last_stuck_pos);
-        moved.y = 0.0f;
-        if (Vector3::Length(moved) < stuck_threshold) {
-            wander_target = GetRandomWanderTarget();
-        }
-        stuck_check_timer = 0.0f;
-        last_stuck_pos    = position;
-    }
-
-    // 목적지 도달 체크
-    XMFLOAT3 dirVec = Vector3::Subtract(wander_target, position);
-    dirVec.y = 0.0f;
-    float dist = Vector3::Length(dirVec);
-
-    if (dist < arrive_threshold) {
-        velocity.x           = 0.0f;
-        velocity.z           = 0.0f;
-        is_waiting           = true;
-        wander_wait_timer    = 0.0f;
-        return;
-    }
-
-    // 목적지 방향으로 이동
-    float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
-    SetYaw(targetYaw);
-    SetYawPitch(targetYaw, 0.0f);
-
-    velocity.x = look.x * patrol_speed;
-    velocity.z = look.z * patrol_speed;
-}
-
-XMFLOAT3 CGhost::GetRandomWanderTarget()
-{
-    const float TILE_SIZE = 2.0f;
-
-    int cx = (int)roundf(position.x / TILE_SIZE);
-    int cz = (int)roundf(position.z / TILE_SIZE);
-
-    // 4방향 인접 타일만 검사 (미로 구조상 인접 타일 사이엔 벽 없음)
-    const int dx[] = { 0, 0, -1, 1 };
-    const int dz[] = { -1, 1,  0, 0 };
-
-    std::vector<MapGenerator::Cell> candidates;
-    for (int i = 0; i < 4; i++) {
-        int nx = cx + dx[i];
-        int nz = cz + dz[i];
-        if (MapGenerator::IsWalkableFloor(nx, nz) && !MapGenerator::IsBlockedStructure(nx, nz))
-            candidates.push_back({ nx, nz });
-    }
-
-    if (candidates.empty())
-        return position;
-
-    int idx = rand() % (int)candidates.size();
-
-    return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
 void CGhost::CheckContactDamage()

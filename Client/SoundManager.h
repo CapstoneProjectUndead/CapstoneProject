@@ -49,5 +49,5 @@ public:
 private:
 	FMOD::System*                                         fmod_system   = nullptr;
 	std::unordered_map<SOUND_ID, std::unique_ptr<CSound>> sound_map;
-	float                                                 master_volume = 0.2f;
+	float                                                 master_volume = 0.3f;
 };
