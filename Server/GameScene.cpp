@@ -388,7 +388,7 @@ void CGameScene::DestroyMineable(uint32 world_id)
 	spawnPkt.item_type = ITEM_TYPE::TREASURE;
 	spawnPkt.scene_type = scene_type;
 	spawnPkt.x = pos.x;
-	spawnPkt.y = pos.y;
+	spawnPkt.y = 0.05f;
 	spawnPkt.z = pos.z;
 
 	sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
