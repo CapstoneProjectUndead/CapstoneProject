@@ -222,6 +222,15 @@ void CGameScene::LoadGameScene()
 			LoadFrameNode(prototypes, children);
 		}
 	}
+	{
+		std::string fileName{ "../Modeling/obj_treasure.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(prototypes, children);
+		}
+	}
 }
 
 void CGameScene::CreateGameScene()
