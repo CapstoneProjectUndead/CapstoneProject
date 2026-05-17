@@ -389,7 +389,7 @@ void CHumanMonster::OnFleeEnter()
         }
     }
 
-    DropItem(20);
+    DropItem();
 }
 
 void CHumanMonster::OnFleeMove(float elapsedTime)

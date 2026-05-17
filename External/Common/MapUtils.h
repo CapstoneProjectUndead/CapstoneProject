@@ -34,3 +34,9 @@ private:
     // 추가 소품용 랜덤 풀 (파일명 기반) - 클라에서만 사용
     std::unordered_map<std::string, std::vector<std::string>> random_pools;
 };
+
+// 보물 테이블
+extern uint16 g_TreasureTable[];
+
+// 드랍 테이블
+extern uint16 g_DropTable[];

@@ -9,6 +9,7 @@
 #include "AIComponent.h"
 #include "State.h"
 #include "SoundManager.h"
+#include "MapUtils.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CCharacter(OBJECT_TYPE::MONSTER)
@@ -364,12 +365,14 @@ XMFLOAT3 CMonster::GetRandomWanderTarget()
     return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
-void CMonster::DropItem(uint16 itemID)
+void CMonster::DropItem()
 {
+    uint16 picked = g_DropTable[rand() % 27];
+
     auto scene = CSceneManager::GetInstance().GetActiveScene();
     if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {
         XMFLOAT3 itemSpawnPos = position;
         itemSpawnPos.y = 0.04f;
-        gameScene->SpawnWorldItem(itemID, itemSpawnPos);
+        gameScene->SpawnWorldItem(picked, itemSpawnPos);
     }
 }

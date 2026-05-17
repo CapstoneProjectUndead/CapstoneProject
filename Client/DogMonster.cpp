@@ -436,7 +436,7 @@ void CDogMonster::OnFleeEnter()
 		}
 	}
 
-	DropItem(20);
+	DropItem();
 }
 
 void CDogMonster::OnFleeMove(float elapsedTime)

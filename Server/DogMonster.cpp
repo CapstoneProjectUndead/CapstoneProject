@@ -17,7 +17,7 @@ CDogMonster::CDogMonster()
 	patrol_speed = 2.0f;
 	attack_range = 1.0f;
 	SetFOV(180);
-	respawn_time = 50.f;
+	respawn_time = 90.f;
 }
 
 CDogMonster::~CDogMonster()
@@ -439,7 +439,7 @@ void CDogMonster::OnFleeEnter()
 		}
 	}
 
-	DropItem(20);
+	DropItem();
 }
 
 void CDogMonster::OnFleeMove(float elapsedTime)

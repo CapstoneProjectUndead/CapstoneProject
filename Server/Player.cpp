@@ -332,7 +332,7 @@ void CPlayer::ApplyStun(float time)
 void CPlayer::ApplyPossession()
 {
     is_possessed    = true;
-    possession_timer = 40.0f;
+    possession_timer = 100.0f;
 
     accumulate_stamina = 0.0f;
     stamina_exhausted  = true;

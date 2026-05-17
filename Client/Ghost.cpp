@@ -457,7 +457,7 @@ void CGhost::OnFleeEnter()
         }
     }
 
-    DropItem(20);
+    DropItem();
 }
 
 void CGhost::OnFleeExit()

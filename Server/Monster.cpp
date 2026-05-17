@@ -9,6 +9,7 @@
 #include "Item.h"
 #include "AIComponent.h"
 #include "State.h"
+#include "MapUtils.h"
 
 CMonster::CMonster(MON_TYPE type)
 	: CObject(OBJECT_TYPE::MONSTER)
@@ -236,11 +237,13 @@ XMFLOAT3 CMonster::GetRandomWanderTarget()
     return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
 }
 
-void CMonster::DropItem(uint16 itemID)
+void CMonster::DropItem()
 {
-    auto item = current_scene->GetItemManager()->SpawnItem(itemID, GetPosition());
+    uint16 picked = g_DropTable[rand() % 27];
+
+    auto item = current_scene->GetItemManager()->SpawnItem(picked, GetPosition());
     S_SpawnItem spawnPkt;
-    spawnPkt.item_id = item->item->GetItemId();
+    spawnPkt.item_id = picked;
     spawnPkt.item_type = item->item->GetItemType();
     spawnPkt.item_world_id = item->world_id;
     spawnPkt.scene_type = current_scene_type;

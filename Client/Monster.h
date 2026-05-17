@@ -92,7 +92,7 @@ protected:
         cos_threshold = cosf(XMConvertToRadians(fov_angle * 0.5f));
     }
 
-    void DropItem(uint16 itemID);
+    void DropItem();
 
     // 배회 (Wander) — Ghost·Dog 공용
     void     PatrolRadiusWander(float elapsedTime);

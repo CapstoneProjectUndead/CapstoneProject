@@ -37,6 +37,7 @@
 #include "DataManager.h"
 #include "SoundManager.h"
 #include "ItemFactory.h"
+#include "MapUtils.h"
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -521,8 +522,9 @@ void CGameScene::ProcessMining(float elapsedTime)
 					objects.pop_back();
 				}
 
-				pos.y = 0.2f;
-				SpawnWorldItem(110, pos);
+				pos.y = 0.05f;
+				uint16 picked = g_TreasureTable[rand() % 13];
+				SpawnWorldItem(picked, pos);
 			}
 		}
 		else {

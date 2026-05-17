@@ -15,7 +15,7 @@ CGhost::CGhost()
 	trace_speed = 4.0f;
 	attack_range = 1.5f;
 	SetFOV(120);
-	respawn_time = 50.f;
+	respawn_time = 120.f;
 }
 
 CGhost::~CGhost()
@@ -407,7 +407,7 @@ void CGhost::OnFleeEnter()
 	velocity.x = 0.0f;
 	velocity.z = 0.0f;
 
-	DropItem(20);
+	DropItem();
 }
 
 void CGhost::OnFleeMove(float elapsedTime)
