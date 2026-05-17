@@ -319,6 +319,15 @@ void CObjectFactory::LoadGameScene()
 				LoadFrameNode(prototypes, children);
 		}
 	}
+	{
+		std::string fileName{ "../Modeling/obj_treasure.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(prototypes, frameRoot);
+		for (const auto& children : frameRoot->childrens) {
+			LoadFrameNode(prototypes, children);
+		}
+	}
 }
 
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
@@ -356,6 +365,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type);
 		for (const std::string& name : meshNames) {
 			if (!prototypes.contains(name)) continue;
+			
 			auto proto = prototypes[name];
 
 			// 보물이면 CMineableObject 생성
@@ -368,7 +378,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
 
 			// collider copy
-			if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
+			for(auto protoCollider : proto->GetComponents<CColliderComponent>()) {
 				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
 				obj->SetComponent(copyCollider);
 				if (inst.type == MapGenerator::EModelType::TREASURE)
