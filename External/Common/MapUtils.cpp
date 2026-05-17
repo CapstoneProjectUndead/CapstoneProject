@@ -30,6 +30,9 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::TENT_CLOTH] = "tent_cloth";
     id_to_file[EModelVariant::TENT_CORNER_CLOTH] = "tent_corner_cloth";
     id_to_file[EModelVariant::TENT_CORNER] = "tent_corner";
+    id_to_file[EModelVariant::CRATE_1] = "crate_1";
+    id_to_file[EModelVariant::CRATE_2] = "crate_2";
+    id_to_file[EModelVariant::DRUM] = "drum";
 
     id_to_file[EModelVariant::PARK_SAND] = "park_sand";
 
@@ -82,6 +85,7 @@ void CMapAssetManager::initialize()
         "bookshelf", "sofa", "table_low", "chair.001", "table.001", "refrigerator"
     };
     random_pools["village_deco"] = { "streetlamp" };
+    random_pools["treasure"] = { "crate_1","crate_2", "drum"};
 
 
     // 모델 타입별 메쉬 매핑 (EModelType -> {EModelVariant 후보들(실제 모델 enum), 추가 풀 키})
@@ -103,12 +107,10 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::BENCH] = { {}, {"bench"} };
     asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
-    asset_table[EModelType::TREASURE] = { {}, {"trashcan"} };
+    asset_table[EModelType::TREASURE] = { {}, {"treasure"} };
 
     asset_table[EModelType::GRASS] = { {}, {"grass"} };
-
     asset_table[EModelType::DECO_STONE] = { {}, {"stone"} };
-
     asset_table[EModelType::PARK_SAND_DECO] = { {EModelVariant::PARK_SAND}, {} };
 
     //asset_table[EModelType::MANHOLE] = { {EModelVariant::MANHOLE} };  // entry나 manhole로 설정 필요

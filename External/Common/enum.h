@@ -102,6 +102,10 @@ enum class EModelVariant : uint16_t
 
 	PARK_SAND,
 
+	CRATE_1,
+	CRATE_2,
+	DRUM,
+
 	COUNT
 };
 

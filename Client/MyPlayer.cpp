@@ -58,21 +58,23 @@ void CMyPlayer::Update(float elapsedTime)
 	if (KEY_TAP(KEY::F)) {
 
 		if (g_is_single) {
-			auto itemFinder = GetComponent<CItemFinder>();
-			if (itemFinder) {
-				itemFinder->Toggle();
-				// 애니메이션 호출
-				if (itemFinder->is_enable) {
-					is_dowsing = true;
-					auto animator = GetComponent<CAnimatorComponent>();
-					if (animator)
-						animator->PlayAction("Ganga_search");
-				}
-				else {
-					is_dowsing = false;
-					auto animator = GetComponent<CAnimatorComponent>();
-					if (animator)
-						animator->PlayAction("");
+			if (!GetIsPossessed()) {
+				auto itemFinder = GetComponent<CItemFinder>();
+				if (itemFinder) {
+					itemFinder->Toggle();
+					// 애니메이션 호출
+					if (itemFinder->is_enable) {
+						is_dowsing = true;
+						auto animator = GetComponent<CAnimatorComponent>();
+						if (animator)
+							animator->PlayAction("Ganga_search", true);
+					}
+					else {
+						is_dowsing = false;
+						auto animator = GetComponent<CAnimatorComponent>();
+						if (animator)
+							animator->PlayAction("");
+					}
 				}
 			}
 		}

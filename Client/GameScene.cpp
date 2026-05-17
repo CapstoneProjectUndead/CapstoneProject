@@ -996,7 +996,7 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 
 			itemFinder->Toggle();
 
-			animator->PlayAction("Ganga_search");
+			animator->PlayAction("Ganga_search", true);
 		}
 		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
 			my_player->SetDowsing(false);
