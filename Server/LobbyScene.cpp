@@ -13,6 +13,13 @@
 #undef min
 #undef max
 
+static constexpr XMFLOAT3 LOBBY_SPAWN_POINTS[] = {
+	{ 0.7f, 0.f,  0.f },
+	{  1.f, 0.f,  0.f },
+	{ -1.f, 0.f, -0.5f },
+	{  1.5f, 0.f, -1.f },
+};
+
 
 CLobbyScene::CLobbyScene(uint32 roomId)
 	: CScene(SCENE_TYPE::LOBBY, roomId)
@@ -33,6 +40,9 @@ void CLobbyScene::Initialize()
 
 void CLobbyScene::Update(float elapsedTime)
 {
+	for (auto& [id, player] : players)
+		player->ApplySeparation(players);
+
 	CScene::Update(elapsedTime);
 
 	CheckReady();
@@ -62,6 +72,13 @@ void CLobbyScene::CheckReady()
 			player_ready_cnt = 0;
 		}
 	}
+}
+
+void CLobbyScene::EnterScene(shared_ptr<CPlayer> player)
+{
+	int idx = (int)players.size() % (int)std::size(LOBBY_SPAWN_POINTS);
+	player->SetPosition(LOBBY_SPAWN_POINTS[idx]);
+	CScene::EnterScene(player);
 }
 
 void CLobbyScene::SendPlayerToGameScene()

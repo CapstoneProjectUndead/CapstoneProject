@@ -20,6 +20,8 @@ public:
 public:
     void CheckReady();
 
+    virtual void EnterScene(shared_ptr<CPlayer> player) override;
+
 public:
     //=================
     // 테스트용 함수
