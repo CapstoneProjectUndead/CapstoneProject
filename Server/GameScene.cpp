@@ -270,11 +270,15 @@ void CGameScene::CreateGameScene()
 			auto proto = prototypes[name];
 			auto collider = proto->GetComponent<CColliderComponent>();
 
-			// TREASURE는 CMineableObject로, 나머지는 일반 STATIC_OBJECT로 생성
+			// TREASURE / TREASURE_HIDDEN은 CMineableObject로, 나머지는 일반 STATIC_OBJECT로 생성
+			bool isMineable = (inst.type == MapGenerator::EModelType::TREASURE
+				|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+
 			shared_ptr<CObject> obj;
-			bool isMineable = (inst.type == MapGenerator::EModelType::TREASURE);
 			if (isMineable) {
-				auto mineable = make_shared<CMineableObject>();
+				auto mineableType = isHidden ? MINEABLEOBJECT_TYPE::NONE_VISIBLE : MINEABLEOBJECT_TYPE::VISIBLE;
+				auto mineable = make_shared<CMineableObject>(mineableType);
 				mineable->SetID(mineable_id_counter);
 				mineable_objects[mineable_id_counter] = mineable;
 				++mineable_id_counter;
@@ -288,14 +292,16 @@ void CGameScene::CreateGameScene()
 			XMMATRIX world = XMLoadFloat4x4(&proto->GetWorldMatrix()) * XMMatrixRotationY(XMConvertToRadians(inst.rotationY)) * XMMatrixTranslation(inst.position.x, inst.position.y, inst.position.z);
 			XMStoreFloat4x4(&obj->GetWorldMatrix(), world);
 
-			// collider copy
-			if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
-				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
-				obj->SetComponent(copyCollider);
-				copyCollider->Update(0.0f);
-				if (isMineable)
-					copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
-				GetPhysicsManager()->SetCollider(copyCollider);
+			// collider copy (땅속 보물은 콜라이더 스킵 - 플레이어가 위로 지나갈 수 있게)
+			if (!isHidden) {
+				if (auto protoCollider = proto->GetComponent<CColliderComponent>()) {
+					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
+					obj->SetComponent(copyCollider);
+					copyCollider->Update(0.0f);
+					if (isMineable)
+						copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
+					GetPhysicsManager()->SetCollider(copyCollider);
+				}
 			}
 
 			// 파괴 불가 오브젝트만 static_objects로, mineable은 별도 관리

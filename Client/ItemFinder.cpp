@@ -53,9 +53,10 @@ void CItemFinder::RegisterTreasures(const std::vector<MapGenerator::InstanceData
 {
     treasures.clear();
 
-    // 맵 데이터를 순회하며 보물만 찾아 벡터에 저장
+    // 맵 데이터를 순회하며 보물만 찾아 벡터에 저장 (땅속 보물 포함)
     for (const auto& instance : mapData) {
-        if (instance.type == MapGenerator::EModelType::TREASURE) {
+        if (instance.type == MapGenerator::EModelType::TREASURE
+            || instance.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
             treasures.emplace_back(TreasureInfo{ instance.position });
         }
     }

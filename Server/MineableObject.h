@@ -1,11 +1,17 @@
 #pragma once
-// ServerÂÊ MineableObject
+// Serverï¿½ï¿½ MineableObject
 #include "Object.h"
+
+enum class MINEABLEOBJECT_TYPE
+{
+    VISIBLE,
+    NONE_VISIBLE
+};
 
 class CMineableObject : public CObject
 {
 public:
-    CMineableObject();
+    CMineableObject(MINEABLEOBJECT_TYPE _type);
     ~CMineableObject();
 
     virtual void Initialize() override;
@@ -15,8 +21,10 @@ public:
     void TakeDamage();
     bool IsDestroyed() const { return hp <= 0; }
     int GetHp() const { return hp; }
+    MINEABLEOBJECT_TYPE GetMineableType() const { return type; }
 
 private:
+    MINEABLEOBJECT_TYPE type;
     int hp = 5;
     const int max_hp = 5;
 };

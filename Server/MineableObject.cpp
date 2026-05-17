@@ -1,9 +1,10 @@
 #include "pch.h"
-// ServerÂÊ MineableObject
+// Serverï¿½ï¿½ MineableObject
 #include "MineableObject.h"
 
-CMineableObject::CMineableObject()
+CMineableObject::CMineableObject(MINEABLEOBJECT_TYPE _type)
 	: CObject(OBJECT_TYPE::MINEABLE_OBJECT)
+	, type(_type)
 {
 }
 

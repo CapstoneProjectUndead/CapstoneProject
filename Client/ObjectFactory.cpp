@@ -254,7 +254,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby()
 	return objects;
 }
 
-void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY)
+void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY, bool copyMesh)
 {
 	auto it = prototypes.find(name);
 	if (it == prototypes.end()) {
@@ -271,14 +271,16 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);
 	XMStoreFloat4x4(&obj->world_matrix, world);
 
-	// Renderer에 Mesh/Material 설정
-	for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
-		auto meshRenderer = std::make_shared<CMeshRendererComponent>();
-		meshRenderer->SetShader(renderer->GetShader());
-		for (const RenderUnit originUnit : renderer->GetRenderUnits()) {
-			meshRenderer->SetRenderUnit(originUnit);
+	// Renderer에 Mesh/Material 설정 (땅속 보물 등 안 보이는 객체는 스킵)
+	if (copyMesh) {
+		for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {
+			auto meshRenderer = std::make_shared<CMeshRendererComponent>();
+			meshRenderer->SetShader(renderer->GetShader());
+			for (const RenderUnit originUnit : renderer->GetRenderUnits()) {
+				meshRenderer->SetRenderUnit(originUnit);
+			}
+			obj->SetComponent(meshRenderer);
 		}
-		obj->SetComponent(meshRenderer);
 	}
 
 	obj->Initialize();
@@ -347,7 +349,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 	for (const auto& inst : instData) {
 
-		if (inst.type == MapGenerator::EModelType::TREASURE) {
+		if (inst.type == MapGenerator::EModelType::TREASURE
+			|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
 			treasures.push_back(TreasureInfo{ treasure_id++, inst.position });
 		}
 		else if (inst.type == MapGenerator::EModelType::MONSTER_HUMAN) {
@@ -365,25 +368,34 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type);
 		for (const std::string& name : meshNames) {
 			if (!prototypes.contains(name)) continue;
-			
+
 			auto proto = prototypes[name];
 
-			// 보물이면 CMineableObject 생성
+			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE
+				|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+
+			// 보물이면 CMineableObject 생성 (땅속 보물은 NONE_VISIBLE)
 			std::shared_ptr<CObject> obj;
-			if (inst.type == MapGenerator::EModelType::TREASURE)
-				obj = std::make_shared<CMineableObject>();
+			if (isTreasure) {
+				auto mineableType = isHidden ? MINEABLEOBJECT_TYPE::NONE_VISIBLE : MINEABLEOBJECT_TYPE::VISIBLE;
+				obj = std::make_shared<CMineableObject>(mineableType);
+			}
 			else
 				obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
-			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
+			// 땅속 보물은 메시 컴포넌트 스킵 (안 보이게)
+			CopyFromPrototype(obj, name, inst.position, inst.rotationY, !isHidden);
 
-			// collider copy
-			for(auto protoCollider : proto->GetComponents<CColliderComponent>()) {
-				auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
-				obj->SetComponent(copyCollider);
-				if (inst.type == MapGenerator::EModelType::TREASURE)
-					copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
-				CPhysicsManager::GetInstance().SetCollider(copyCollider);
+			// collider copy (땅속 보물은 콜라이더도 스킵 - 플레이어가 위로 지나갈 수 있게)
+			if (!isHidden) {
+				for(auto protoCollider : proto->GetComponents<CColliderComponent>()) {
+					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
+					obj->SetComponent(copyCollider);
+					if (isTreasure)
+						copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
+					CPhysicsManager::GetInstance().SetCollider(copyCollider);
+				}
 			}
 
 			obj->Initialize();
@@ -409,14 +421,21 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(co
 		for (const std::string& name : meshNames) {
 			auto proto = prototypes[name];
 
-			// 보물이면 CMineableObject 생성
+			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE
+				|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+
+			// 보물이면 CMineableObject 생성 (땅속 보물은 NONE_VISIBLE)
 			std::shared_ptr<CObject> obj;
-			if (inst.type == MapGenerator::EModelType::TREASURE)
-				obj = std::make_shared<CMineableObject>();
+			if (isTreasure) {
+				auto mineableType = isHidden ? MINEABLEOBJECT_TYPE::NONE_VISIBLE : MINEABLEOBJECT_TYPE::VISIBLE;
+				obj = std::make_shared<CMineableObject>(mineableType);
+			}
 			else
 				obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
 
-			CopyFromPrototype(obj, name, inst.position, inst.rotationY);
+			// 땅속 보물은 메시 컴포넌트 스킵 (안 보이게)
+			CopyFromPrototype(obj, name, inst.position, inst.rotationY, !isHidden);
 			obj->Initialize();
 			objects.push_back(obj);
 		}

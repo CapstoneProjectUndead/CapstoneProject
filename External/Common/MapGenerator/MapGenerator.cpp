@@ -579,7 +579,9 @@ void MapGenerator::PlaceTreasure() {
         }
         if (tooClose) continue;
 
-        mapGrid[(int)ELayer::OBJECT][c.y][c.x] = EModelType::TREASURE;
+        // 시드 기반으로 보이는 보물(TREASURE)과 땅속 보물(TREASURE_HIDDEN)을 결정
+        EModelType treasureType = (GetRandomInt(0, 1) == 0) ? EModelType::TREASURE_HIDDEN : EModelType::TREASURE;
+        mapGrid[(int)ELayer::OBJECT][c.y][c.x] = treasureType;
         g_treasure_positions.push_back(c);
     }
 }

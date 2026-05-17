@@ -121,6 +121,8 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
     asset_table[EModelType::TREASURE] = { {}, {"treasure"} };
+    // 땅속 보물: 프로토타입 룩업(콜라이더/위치)을 위해 동일 풀 사용. 메시는 ObjectFactory에서 스킵.
+    asset_table[EModelType::TREASURE_HIDDEN] = { {}, {"treasure"} };
 
     asset_table[EModelType::GRASS] = { {}, {"grass"} };
     asset_table[EModelType::DECO_STONE] = { {}, {"stone"} };
@@ -172,7 +174,7 @@ std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelV
             if (pool_key == "village_deco") {
                 probability = 5;
             }
-            else if (type == EModelType::TREASURE || type == EModelType::PARK_GREEN || type == EModelType::BENCH || type == EModelType::TREE) {
+            else if (type == EModelType::TREASURE || type == EModelType::TREASURE_HIDDEN || type == EModelType::PARK_GREEN || type == EModelType::BENCH || type == EModelType::TREE) {
                 probability = 100;
             }
             else if (pool_key == "indoor_furniture") {

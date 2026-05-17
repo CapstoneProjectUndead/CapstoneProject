@@ -42,6 +42,9 @@ namespace MapGenerator
         MONSTER_GHOST,
         MONSTER_DOG,
 
+        // 땅속에 묻혀있는 보물 (렌더 X, 콜라이더 X, 채굴 가능)
+        TREASURE_HIDDEN,
+
         UNKNOWN
     };
 

@@ -58,7 +58,7 @@ public:
 
 	// GameScene 모델 파츠 load
 	// Collider Component는 별도로 설정 필요
-	void CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY);
+	void CopyFromPrototype(std::shared_ptr<CObject> obj, const std::string& name, const XMFLOAT3& position, float rotationY, bool copyMesh = true);
 	void LoadGameScene();
 	std::vector<std::shared_ptr<CObject>> CreateGameScene();
 	std::vector<std::shared_ptr<CObject>> CreateGameSceneByServer(const std::vector<MapGenerator::InstanceData>& instanceData);
