@@ -142,7 +142,7 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
                         rotY = snapRots[GetRandomInt(0, 3)];
                     }
                 }
-                else if (type == EModelType::HOUSE_INNTER) {
+                else if (type == EModelType::HOUSE_INNTER || type == EModelType::PARK_WALL) {
                     static float snapRots[] = { 0.0f, 90.0f, 180.0f, 270.0f };
                     rotY = snapRots[GetRandomInt(0, 3)];
                 }
