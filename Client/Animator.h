@@ -13,6 +13,8 @@ struct AnimLayer {
 	// animationManager.bone_masks의 인덱스와 일치시키기(-1이면 전체 적용)
 	int mask_id{ -1 };
 	float start_time{};
+	float elapsed_time{};
+	bool is_loop{ false };
 };
 
 // 캐릭터별 애니메이션 셋
@@ -41,7 +43,7 @@ public:
 	void PlayerSetState(const std::string& idle, const std::string& walk, const std::string& run);
 
 	// layer 1
-	void PlayAction(const std::string& clipName);
+	void PlayAction(const std::string& clipName, bool isLoop = false);
 	// 렌더링 시에 호출
 	AnimationData GetAnimationData();
 
@@ -92,5 +94,6 @@ private:
 	// pitch를 위한 클립(플레이어만 사용)
 	AnimationClip up_clip;
 	AnimationClip down_clip;
+	std::string prev_action{ "" };
 };
 

@@ -26,6 +26,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	// 상태 등록
 	std::string idle{ "IdleState" }, walk{ "WalkState" }, run{ "RunState" };
 	State walkState{ walk, animSet.walk };
+	State runState{ run, animSet.run };
 
 	// 전이 규칙
 	AddLocomotionTransitions(idle, walk, run);
@@ -41,7 +42,8 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		down_clip = CAnimationManager::GetInstance().GetClip("Ganga_down");
 
 		// 발 속도 맞추기
-		walkState.play_speed = 2.5f;
+		walkState.play_speed = 2.2f;
+		runState.play_speed = 2.2f;
 
 		controller.AddState({ idle, animSet.idle });
 
@@ -52,7 +54,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 
 		int rHandIdx = CAnimationManager::GetInstance().GetBoneIndex(objType, NULL, "handR");
 		// 손에 직선으로 위치
-		XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(XMConvertToRadians(-90.0), XMConvertToRadians(0.0f), XMConvertToRadians(90.0f));
+		XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(XMConvertToRadians(0.0), XMConvertToRadians(70.0f), XMConvertToRadians(-70.0f));
 		Socket rHandSocket{ rHandIdx,rotMat };
 		sockets[HAND_R] = rHandSocket;
 
@@ -136,7 +138,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 
 	controller.AddState({ idle, animSet.idle });
 	controller.AddState(walkState);
-	controller.AddState({ run, animSet.run });
+	controller.AddState(runState);
 }
 
 void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run)
@@ -348,7 +350,12 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		any2p.to_state = possess;
 		any2p.duration = 0.1f;
 		any2p.condition = [this]() {
-			return static_cast<CPlayer*>(owner)->GetIsPossessed();
+			if (static_cast<CPlayer*>(owner)->GetIsPossessed()) {
+				prev_action = layers[1].current_clip;
+				PlayAction("");
+				return true;
+			}
+			return false;
 			};
 		controller.AddTransition(from, any2p);
 	}
@@ -357,19 +364,24 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	p2i.to_state = idle;
 	p2i.duration = 0.2f;
 	p2i.condition = [this]() {
-		return !static_cast<CPlayer*>(owner)->GetIsPossessed();
+		auto player = static_cast<CPlayer*>(owner);
+		if (!player->GetIsPossessed()) {
+			PlayAction(prev_action);
+			return true;
+		}
+		return false;
 		};
 	controller.AddTransition(possess, p2i);
 }
 
-void CAnimatorComponent::PlayAction(const std::string& clipName)
+void CAnimatorComponent::PlayAction(const std::string& clipName, bool isLoop)
 {
 	if (layers[1].current_clip == clipName) return;
 
 	layers[1].current_clip = clipName;
-	// 현재 흐르고 있는 전체 시간을 시작 시간으로
-	layers[1].start_time = current_time;
+	layers[1].elapsed_time = 0.0f;
 	layers[1].weight = 0.0f;
+	layers[1].is_loop = isLoop;
 }
 
 XMVECTOR CAnimatorComponent::GetHeadPosition()
@@ -381,7 +393,7 @@ XMVECTOR CAnimatorComponent::GetHeadPosition()
 	std::string activeClip = layers[0].current_clip;
 	if (activeClip.empty()) return XMVECTOR{};
 
-	float relativeTime = current_time - layers[0].start_time;
+	float relativeTime = layers[0].elapsed_time;
 	XMMATRIX matrix = CAnimationManager::GetInstance().GetBoneSocketMatrix(activeClip, relativeTime, boneIndex);
 	return matrix.r[3];
 }
@@ -399,16 +411,15 @@ XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 
 	// 행렬 계산(base + action)
 	// Layer 0 (Base)
-	float relTime0 = current_time - layers[0].start_time;
+	float relTime0 = layers[0].elapsed_time;
 	XMMATRIX mat0 = manager.GetBoneSocketMatrix(layers[0].current_clip, relTime0, socket.bone_index);
 
 	XMMATRIX finalLocalMat = mat0;
 
 	// Layer 1 (Action)이 재생 중이라면 블렌딩
 	if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
-		float relTime1 = current_time - layers[1].start_time;
+		float relTime1 = layers[1].elapsed_time;
 		XMMATRIX mat1 = manager.GetBoneSocketMatrix(layers[1].current_clip, relTime1, socket.bone_index);
-		// Simple Blending
 		finalLocalMat = mat0 * (1.0f - layers[1].weight) + mat1 * layers[1].weight;
 	}
 	
@@ -467,16 +478,32 @@ void CAnimatorComponent::UpdateLayerWeights(float deltaTime)
 	if (!layers[1].current_clip.empty()) {
 		auto& anim = CAnimationManager::GetInstance().GetClip(layers[1].current_clip);
 		float duration = (float)anim.total_frames / 60.0f;
-		float elapsed = current_time - layers[1].start_time;
+		
+		layers[1].elapsed_time += deltaTime;
+		float elapsed = layers[1].elapsed_time;
 
 		// 애니메이션 재생 중 (Fade-in)
-		if (elapsed < duration) {
-			layers[1].weight += deltaTime * 10.0f;
+		if (layers[1].is_loop) {
+			// 페이드 인 상태 유지
+			if (layers[1].weight < 1.0f) {
+				layers[1].weight += deltaTime * 10.0f;
+			}
+
+			// 시간이 duration을 넘어가면 다시 0비슷하게 되돌려서 무한 재생되도록 함
+			if (layers[1].elapsed_time >= duration) {
+				layers[1].elapsed_time = fmodf(layers[1].elapsed_time, duration);
+			}
 		}
-		else {	// fade out
-			layers[1].weight -= deltaTime * 5.0f;
-			if (layers[1].weight <= 0.0f) {
-				layers[1].current_clip = "";
+		else {
+			if (elapsed < duration) {
+				layers[1].weight += deltaTime * 10.0f;
+			}
+			else {	// fade out
+				layers[1].weight -= deltaTime * 5.0f;
+				if (layers[1].weight <= 0.0f) {
+					layers[1].current_clip = "";
+					layers[1].elapsed_time = 0.0f;
+				}
 			}
 		}
 
@@ -497,7 +524,7 @@ AnimationData CAnimatorComponent::GetAnimationData()
 	auto& animA = manager.GetClip(baseClip);
 	data.start_offset_A = animA.start_matrix_offset;
 
-	float relativeTimeA = current_time - layers[0].start_time;
+	float relativeTimeA = layers[0].elapsed_time;
 	data.cur_frame_A = (uint32_t)(relativeTimeA * 60.0f) % animA.total_frames;
 	data.bone_count = animA.bone_count;
 
@@ -507,8 +534,7 @@ AnimationData CAnimatorComponent::GetAnimationData()
 	if (!up_clip.name.empty()) {
 		// pitch 정규화
 		float pitch = owner->pitch / 90.f;
-		if(pitch <= 0.0f)
-			isUp = true;
+		if(pitch <= 0.0f) isUp = true;
 		pitchWeight = std::abs(pitch);
 	}
 
@@ -518,7 +544,8 @@ AnimationData CAnimatorComponent::GetAnimationData()
 		// 상반신 액션 모드
 		auto& animB = manager.GetClip(layers[1].current_clip);
 		data.start_offset_B = animB.start_matrix_offset;
-		float relativeTimeB = current_time - layers[1].start_time;
+
+		float relativeTimeB = layers[1].elapsed_time;
 		data.cur_frame_B = (uint32_t)(relativeTimeB * 60.0f) % animB.total_frames;
 
 		data.blend_weight = layers[1].weight;
@@ -535,13 +562,11 @@ AnimationData CAnimatorComponent::GetAnimationData()
 		}
 	}
 	else if (pitchWeight > 0.0f) {
-		if(isUp)
-			data.start_offset_B = up_clip.start_matrix_offset;
-		else
-			data.start_offset_B = down_clip.start_matrix_offset;
+		if (isUp) data.start_offset_B = up_clip.start_matrix_offset;
+		else data.start_offset_B = down_clip.start_matrix_offset;
 		data.cur_frame_B = 0;
 		data.blend_weight = pitchWeight;
-		data.mask_id = 0; // 상반신 마스크 ID 적용 (상체만 고개 들게)
+		data.mask_id = 0;	// 상반신 마스크 ID 적용 (상체만 고개 들게)
 	}
 	else {
 		data.blend_weight = 0.0f;
@@ -562,7 +587,6 @@ void CAnimatorComponent::Update(float deltaTime)
 	controller.Update(deltaTime);
 	UpdateLayerWeights(deltaTime);
 
-	float clipTime = controller.GetCurrentClipTime();
 	layers[0].current_clip = controller.GetCurrentClip();
-	layers[0].start_time = current_time - clipTime;
+	layers[0].elapsed_time = controller.GetCurrentClipTime();
 }

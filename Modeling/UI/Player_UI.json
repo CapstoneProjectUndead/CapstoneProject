@@ -127,36 +127,7 @@
                 1.0,
                 -1.0
             ],
-            "Children": [
-                {
-                    "Anchor": [
-                        0.0,
-                        0.0
-                    ],
-                    "Children": [],
-                    "Color": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "Name": "Bag",
-                    "Pivot": [
-                        0.5,
-                        0.5
-                    ],
-                    "RelativePos": [
-                        0.0,
-                        0.0
-                    ],
-                    "Size": [
-                        100.0,
-                        100.0
-                    ],
-                    "Text": "임시가방",
-                    "Type": "Text"
-                }
-            ],
+            "Children": [],
             "Color": [
                 1.0,
                 1.0,
@@ -177,7 +148,7 @@
                 150.0,
                 150.0
             ],
-            "TextureName": "white",
+            "TextureName": "backpack",
             "Type": "Image"
         },
         {
