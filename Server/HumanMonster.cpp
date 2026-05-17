@@ -341,37 +341,6 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
     }
 }
 
-void CHumanMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
-{
-    XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
-    awayDir.y = 0.0f;
-    float len = Vector3::Length(awayDir);
-    if (len < 0.001f) return;
-
-    target_player = player;
-    SendSoundPacket(false, SOUND_ID::surprising_girl, GetPosition());
-
-    melee_hit_count++;
-
-    // ChangeState 먼저 (OnFleeEnter가 velocity를 0으로 초기화하므로)
-    auto* ai = GetComponent<CAIComponent>();
-    if (ai) {
-        if (melee_hit_count >= MAX_MELEE_HITS) {
-            ai->ChangeState(AI_STATE::MONSTER_FLEE);
-        } else {
-            auto cur = ai->GetCurrentState();
-            if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
-                ai->ChangeState(AI_STATE::MONSTER_TRACE);
-        }
-    }
-
-    // 넉백 velocity는 ChangeState 이후에 적용 (OnFleeEnter의 velocity 초기화를 덮어씀)
-    melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
-    melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
-    velocity.x = melee_knockback_vel.x;
-    velocity.z = melee_knockback_vel.z;
-}
-
 void CHumanMonster::OnFleeEnter()
 {
     SendSoundPacket(false, SOUND_ID::girl_flee, GetPosition());

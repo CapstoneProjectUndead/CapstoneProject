@@ -89,7 +89,8 @@ protected:
     AI_STATE AI_state;
     MON_TYPE monster_type;
     float    respawn_time;
-    CScene* current_scene;
+    CScene*  current_scene;
+    bool     is_dead;
 
     std::weak_ptr<CPlayer> target_player;
 
@@ -105,9 +106,11 @@ protected:
     float attack_range = 1.2f; // 공격 범위
     float trace_speed = 2.0f;  // 추격 속도
 
-    // 근접 피격 넉백
+    // 근접 피격
+    int       melee_hit_count       = 0;
     float     melee_knockback_timer = 0.0f;
     XMFLOAT3  melee_knockback_vel   = {};
+    static constexpr int   MAX_MELEE_HITS           = 5;
     static constexpr float MELEE_KNOCKBACK_DURATION = 0.25f;
     static constexpr float MELEE_KNOCKBACK_FORCE    = 3.0f;
 

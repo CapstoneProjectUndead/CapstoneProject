@@ -25,7 +25,6 @@ public:
     virtual void OnFleeEnter() override;
     virtual void OnFleeExit() override;
 
-    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos) override;
     virtual void OnFleeMove(float elapsedTime) override;
 
 public:
@@ -39,8 +38,7 @@ private:
     float dog_spawn_timer = 0.f;
     bool  has_called_dogs = false;
 
-    int   melee_hit_count = 0;
-    float flee_timer      = 0.0f;
+    float flee_timer = 0.0f;
 
     XMFLOAT3 store_center_world = {};
     bool     has_store_center   = false;
@@ -53,7 +51,6 @@ private:
 
     static constexpr float  DOG_SPAWN_DELAY       = 1.5f;
     static constexpr float  STORE_TRIGGER_RADIUS = 4.0f;
-    static constexpr int    MAX_MELEE_HITS = 5;
     static constexpr float  FLEE_DURATION  = 1.0f;
     static constexpr float  FLEE_SPEED     = 0.5f;
 };

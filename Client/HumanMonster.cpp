@@ -52,8 +52,11 @@ void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers
 
 void CHumanMonster::UpdateStoreAlert(float elapsedTime)
 {
-    if (!has_store_center) 
+    if (!has_store_center)
         InitStoreCenter();
+
+    if (!has_store_center)
+        return;
 
     if (dog_spawn_timer > 0.f) {
         dog_spawn_timer -= elapsedTime;
@@ -79,9 +82,13 @@ void CHumanMonster::UpdateStoreAlert(float elapsedTime)
     }
 }
 
-
 void CHumanMonster::InitStoreCenter()
 {
+    // SetOriginPos가 아직 호출되지 않은 상태라면 초기화를 미룬다.
+    // (CObject::Initialize()→Update(0.f) 경로에서 origin이 (0,0)인 채로 호출되는 것을 방지)
+    if (fabsf(origin_position.x) < 0.001f && fabsf(origin_position.z) < 0.001f)
+        return;
+
     const auto& centers = MapGenerator::GetStoreCenters();
     float minDistSq = FLT_MAX;
     for (const auto& cell : centers) {
@@ -350,21 +357,6 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
         auto AIComponent = GetComponent<CAIComponent>();
         if (AIComponent)
             AIComponent->ChangeState(AI_STATE::MONSTER_TRACE);
-    }
-}
-
-void CHumanMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
-{
-    CMonster::ApplyMeleeHit(fromPos);
-
-    melee_hit_count++;
-    if (melee_hit_count >= MAX_MELEE_HITS) {
-        auto* ai = GetComponent<CAIComponent>();
-        if (ai) {
-            auto cur = ai->GetCurrentState();
-            if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)
-                ai->ChangeState(AI_STATE::MONSTER_FLEE);
-        }
     }
 }
 

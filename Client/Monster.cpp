@@ -20,6 +20,7 @@ CMonster::CMonster(MON_TYPE type)
     , attack_timer(0.0f)
     , turn_timer(0.0f)
     , respawn_time(20.f)
+    , is_dead(false)
 {
 }
 
@@ -94,19 +95,31 @@ void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
 
     melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
     melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
-    velocity.x = melee_knockback_vel.x;
-    velocity.z = melee_knockback_vel.z;
 
     auto nearest = FindNearestPlayer();
-    if (nearest) 
+    if (nearest)
         SetTarget(nearest);
 
+    melee_hit_count++;
+
+    // ChangeState 먼저 (OnFleeEnter가 velocity를 0으로 초기화하므로)
     auto* ai = GetComponent<CAIComponent>();
     if (ai) {
-        auto cur = ai->GetCurrentState();
-        if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
-            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        if (melee_hit_count >= MAX_MELEE_HITS && !is_dead) {
+            is_dead = true;
+            auto cur = ai->GetCurrentState();
+            if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)
+                ai->ChangeState(AI_STATE::MONSTER_FLEE);
+        } else {
+            auto cur = ai->GetCurrentState();
+            if (!cur || cur->GetType() != AI_STATE::MONSTER_TRACE)
+                ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        }
     }
+
+    // 넉백 velocity는 ChangeState 이후에 적용 (OnFleeEnter의 velocity 초기화를 덮어씀)
+    velocity.x = melee_knockback_vel.x;
+    velocity.z = melee_knockback_vel.z;
 }
 
 void CMonster::RecordMonsterFrameHistory(const MonsterFrameHistory& state)

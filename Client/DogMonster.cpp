@@ -407,21 +407,6 @@ void CDogMonster::OnAttackEnter()
 	}
 }
 
-void CDogMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
-{
-	CMonster::ApplyMeleeHit(fromPos);
-
-	melee_hit_count++;
-	if (melee_hit_count >= MAX_MELEE_HITS) {
-		auto* ai = GetComponent<CAIComponent>();
-		if (ai) {
-			auto cur = ai->GetCurrentState();
-			if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)
-				ai->ChangeState(AI_STATE::MONSTER_FLEE);
-		}
-	}
-}
-
 void CDogMonster::OnFleeEnter()
 {
 	CSoundManager::GetInstance().Play(SOUND_ID::dog_howling);

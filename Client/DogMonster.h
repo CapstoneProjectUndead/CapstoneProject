@@ -23,16 +23,13 @@ public:
     virtual void OnFleeMove(float elapsedTime) override;
     virtual void OnFleeExit() override;
 
-    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos) override;
-
 private:
     bool  hit_damage_dealt      = false;
     float attack_cooldown_timer = 9999.f;
     float path_fail_timer       = 0.0f;
     float give_up_cooldown      = 0.0f;  // 포기 후 재추격 차단 타이머
 
-    int   melee_hit_count = 0;
-    float flee_timer      = 0.0f;
+    float flee_timer = 0.0f;
 
     static constexpr float IDLE_DURATION      = 4.0f;
     static constexpr float PATROL_SPEED       = 4.0f;  // origin 복귀 속도
@@ -40,7 +37,6 @@ private:
     static constexpr float ATTACK_DURATION    = 1.0f;
     static constexpr float CHASE_GIVE_UP_TIME = 1.5f;
     static constexpr float GIVE_UP_COOLDOWN   = 4.0f;
-    static constexpr int   MAX_MELEE_HITS     = 5;
     static constexpr float FLEE_DURATION      = 1.0f;
     static constexpr float FLEE_SPEED         = 0.5f;
 

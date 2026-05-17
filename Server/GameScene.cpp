@@ -64,7 +64,7 @@ void CGameScene::Initialize()
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	UpdateMonsters(elapsedTime);
+	//UpdateMonsters(elapsedTime);
 }
 
 void CGameScene::UpdateMonsters(float elapsedTime)
