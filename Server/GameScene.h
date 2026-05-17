@@ -36,6 +36,7 @@ public:
 
     // 채굴 가능 오브젝트 관련
     static constexpr float MINING_RANGE = 1.0f;
+    XMFLOAT3 FindSpawnPoint() const;
     CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range);
     void DestroyMineable(uint32 world_id);
 

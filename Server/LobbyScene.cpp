@@ -89,14 +89,23 @@ void CLobbyScene::SendPlayerToGameScene()
 		CGameScene* gameScene = (CGameScene*)r->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
 		gameScene->CreateGameScene();
 
+		static constexpr XMFLOAT3 GAME_SPAWN_OFFSETS[4] = {
+			{ -0.3f, 0.f, -0.3f },
+			{  0.3f, 0.f, -0.3f },
+			{ -0.3f, 0.f,  0.3f },
+			{  0.3f, 0.f,  0.3f },
+		};
+
+		XMFLOAT3 spawnBase = gameScene->FindSpawnPoint();
+		int spawnIdx = 0;
+
 		for (auto& [id, player] : players) {
 
 			auto session = player->GetSession();
 
-			// 임시)
-			static float i = 0.f;
-			player->SetPosition(XMFLOAT3{ i, 2.0f, 0.0f });
-			++i;
+			XMFLOAT3 offset = (spawnIdx < 4) ? GAME_SPAWN_OFFSETS[spawnIdx] : XMFLOAT3{ spawnIdx * 0.3f, 0.f, 0.f };
+			player->SetPosition(XMFLOAT3{ spawnBase.x + offset.x, spawnBase.y, spawnBase.z + offset.z });
+			++spawnIdx;
 
 			// GameScene Map 데이터를 클라이언트로 전송
 			{

@@ -34,22 +34,22 @@ void CGameScene::Initialize()
 	CScene::Initialize();
 
 	// 장비(무기, 도구)
-	item_manager->SpawnItem(5, XMFLOAT3{ 2, 0, 1 });
-	item_manager->SpawnItem(9, XMFLOAT3{ 2, 0, 1.2 });
-	item_manager->SpawnItem(14, XMFLOAT3{ 2, 0, 1.3 });
-	item_manager->SpawnItem(15, XMFLOAT3{ 2, 0, 1.4 });
-	item_manager->SpawnItem(17, XMFLOAT3{ 2, 0, 1.5 });
-	item_manager->SpawnItem(19, XMFLOAT3{ 2, 0, 1.6 });
+	//item_manager->SpawnItem(5, XMFLOAT3{ 2, 0, 1 });
+	//item_manager->SpawnItem(9, XMFLOAT3{ 2, 0, 1.2 });
+	//item_manager->SpawnItem(14, XMFLOAT3{ 2, 0, 1.3 });
+	//item_manager->SpawnItem(15, XMFLOAT3{ 2, 0, 1.4 });
+	//item_manager->SpawnItem(17, XMFLOAT3{ 2, 0, 1.5 });
+	//item_manager->SpawnItem(19, XMFLOAT3{ 2, 0, 1.6 });
 
 	// 소비
-	item_manager->SpawnItem(25, XMFLOAT3{ 2.1, 0, 1.4 });
-	item_manager->SpawnItem(24, XMFLOAT3{ 2.1, 0, 1.5 });
-	item_manager->SpawnItem(45, XMFLOAT3{ 2.1, 0, 1.6 });
+	//item_manager->SpawnItem(25, XMFLOAT3{ 2.1, 0, 1.4 });
+	//item_manager->SpawnItem(24, XMFLOAT3{ 2.1, 0, 1.5 });
+	//item_manager->SpawnItem(45, XMFLOAT3{ 2.1, 0, 1.6 });
 
 	// 기타
-	item_manager->SpawnItem(47, XMFLOAT3{ 2.2, 0, 1.7 });
-	item_manager->SpawnItem(48, XMFLOAT3{ 2.2, 0, 1.8 });
-	item_manager->SpawnItem(49, XMFLOAT3{ 2.2, 0, 1.9 });
+	//item_manager->SpawnItem(47, XMFLOAT3{ 2.2, 0, 1.7 });
+	//item_manager->SpawnItem(48, XMFLOAT3{ 2.2, 0, 1.8 });
+	//item_manager->SpawnItem(49, XMFLOAT3{ 2.2, 0, 1.9 });
 
 	// 테스트 (임시코드)
 	//shared_ptr<CHumanMonster> humanMonster = static_pointer_cast<CHumanMonster>(CServerObjectFactory::CreateMonster(MON_TYPE::HUMAN_MONSTER, scene_type, GetRoom(), GetPhysicsManager()));
@@ -294,6 +294,32 @@ void CGameScene::CreateGameScene()
 				static_objects.push_back(obj);
 		}
 	}
+}
+
+XMFLOAT3 CGameScene::FindSpawnPoint() const
+{
+	constexpr float TILE_SIZE = 2.0f;
+	float minDist = FLT_MAX;
+	int bestX = 1, bestY = 1;
+
+	for (int y = 0; y < MapGenerator::HEIGHT; ++y) {
+		for (int x = 0; x < MapGenerator::WIDTH; ++x) {
+			if (!MapGenerator::IsWalkableFloor(x, y)) continue;
+			if (MapGenerator::IsBlockedObject(x, y)) continue;
+			if (MapGenerator::IsBlockedStructure(x, y)) continue;
+
+			float wx = x * TILE_SIZE;
+			float wz = y * TILE_SIZE;
+			float dist = wx * wx + wz * wz;
+			if (dist < minDist) {
+				minDist = dist;
+				bestX = x;
+				bestY = y;
+			}
+		}
+	}
+
+	return XMFLOAT3{ bestX * TILE_SIZE, 2.0f, bestY * TILE_SIZE };
 }
 
 CMineableObject* CGameScene::FindNearestMineable(const XMFLOAT3& pos, float range)
