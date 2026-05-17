@@ -182,11 +182,10 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
-	const int numDesc{ 50 };
 	D3D12_DESCRIPTOR_RANGE descriptorRanges{};
 	// texture
 	descriptorRanges.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges.NumDescriptors = numDesc;
+	descriptorRanges.NumDescriptors = DescriptorSlot::Count;
 	descriptorRanges.BaseShaderRegister = 0;
 	descriptorRanges.RegisterSpace = 0;
 	descriptorRanges.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -249,7 +248,7 @@ ID3D12RootSignature* CShader::CreateGraphicsRootSignature(ID3D12Device* device)
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 
 	// CreateHeap
-	CreateDescriptorHeap(device, numDesc);
+	CreateDescriptorHeap(device, DescriptorSlot::Count);
 
 	return graphicsRootSignature;
 }
@@ -315,11 +314,10 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
-	const int numDesc{ 50 };
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
 	// texture
 	descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges[0].NumDescriptors = numDesc;
+	descriptorRanges[0].NumDescriptors = DescriptorSlot::Count;
 	descriptorRanges[0].BaseShaderRegister = 0;
 	descriptorRanges[0].RegisterSpace = 0;
 	descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -405,7 +403,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 
 	// CreateHeap
-	CreateDescriptorHeap(device, numDesc);
+	CreateDescriptorHeap(device, DescriptorSlot::Count);
 
 	return graphicsRootSignature;
 }
@@ -425,11 +423,10 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
-	const int numDesc{ 50 };
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
 	// texture
 	descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges[0].NumDescriptors = numDesc;
+	descriptorRanges[0].NumDescriptors = DescriptorSlot::Count;
 	descriptorRanges[0].BaseShaderRegister = 0;
 	descriptorRanges[0].RegisterSpace = 0;
 	descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -503,7 +500,7 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 
 	// CreateHeap
-	CreateDescriptorHeap(device, numDesc);
+	CreateDescriptorHeap(device, DescriptorSlot::Count);
 
 	return graphicsRootSignature;
 }

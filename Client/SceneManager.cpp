@@ -87,6 +87,7 @@ void CSceneManager::Init(ID3D12Device* device)
 	{
 		shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
 		auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
+		auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
 		auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
 
 		shadow_map->CreateDescriptors(
@@ -96,6 +97,7 @@ void CSceneManager::Init(ID3D12Device* device)
 		);
 
 		shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 	}
 }
 

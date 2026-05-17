@@ -14,8 +14,8 @@ class CCamera;
 namespace DescriptorSlot {
 	enum {
 		DiffuseIdx = 0,
-		ShadowMapIdx = 49,
-		Count = 50
+		ShadowMapIdx = 68,
+		Count = 70
 	};
 }
 

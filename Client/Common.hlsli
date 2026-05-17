@@ -58,7 +58,7 @@ cbuffer LightInfo : register(b1)
     Light gLights[MaxLights];
 };
 
-Texture2D texDiffuse[50] : register(t0);
+Texture2D texDiffuse[70] : register(t0);
 
 SamplerState sample : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
@@ -75,7 +75,7 @@ float CalcShadowFactor(float4 shadowPosH)
     depth += bias;
 
     uint width, height, numMips;
-    texDiffuse[49].GetDimensions(0, width, height, numMips);
+    texDiffuse[68].GetDimensions(0, width, height, numMips);
 
     // Texel size.
     float dx = 1.0f / (float) width;
@@ -91,7 +91,7 @@ float CalcShadowFactor(float4 shadowPosH)
     [unroll]
     for (int i = 0; i < 9; ++i)
     {
-        percentLit += texDiffuse[49].SampleCmpLevelZero(gsamShadow,
+        percentLit += texDiffuse[68].SampleCmpLevelZero(gsamShadow,
             shadowPosH.xy + offsets[i], depth).r;
     }
     
