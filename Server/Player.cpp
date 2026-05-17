@@ -265,8 +265,48 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
             stun_timer = 0.0f;
     }
 
+    velocity.x += separation_push.x;
+    velocity.z += separation_push.z;
+    separation_push = {};
+
     // Movement와 Collider Update
     CObject::Update(elapsedTime);
+
+    // separation push로 인한 velocity가 broadcast에 누출되지 않도록
+    if (state == PLAYER_STATE::IDLE) {
+        velocity.x = 0.f;
+        velocity.z = 0.f;
+    }
+}
+
+void CPlayer::ApplySeparation(const map<uint64, shared_ptr<CPlayer>>& allPlayers, float scale)
+{
+	constexpr float SEPARATION_RADIUS = 0.5f;
+	constexpr float SEPARATION_FORCE  = 4.0f;
+
+	XMFLOAT3 push = { 0.f, 0.f, 0.f };
+	for (const auto& [id, other] : allPlayers) {
+		if (other.get() == this)
+			continue;
+
+		XMFLOAT3 diff = Vector3::Subtract(position, other->GetPosition());
+		diff.y = 0.0f;
+		float dist = Vector3::Length(diff);
+
+		if (dist < 0.01f) {
+			// 완전히 겹쳐있을 때: ID 대소로 방향 결정하여 강제 분리
+			float sign = (GetID() > other->GetID()) ? 1.0f : -1.0f;
+			push.x += sign * SEPARATION_FORCE;
+		}
+		else if (dist < SEPARATION_RADIUS) {
+			float invDist  = 1.0f / dist;
+			float strength = (SEPARATION_RADIUS - dist) / SEPARATION_RADIUS;
+			push.x += diff.x * invDist * strength * SEPARATION_FORCE;
+			push.z += diff.z * invDist * strength * SEPARATION_FORCE;
+		}
+	}
+	separation_push.x = push.x * scale;
+	separation_push.z = push.z * scale;
 }
 
 void CPlayer::ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration)
