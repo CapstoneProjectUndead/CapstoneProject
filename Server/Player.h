@@ -124,9 +124,18 @@ public:
 
 private:
 	void UpdateStamina(float elapsedTime);
-	void ProcessMining(const InputData& input, float elapsedTime, bool isMoving);
+
+	// 채굴
+	void ProcessVisibleObjectMining(const InputData& input, float elapsedTime, bool isMoving);
+	void ProcessUnVisibleObjectMining(const InputData& input, float elapsedTime, bool isMoving);
+	void ProcessToolMining();
+	void ProcessBareHandMining(float elapsedTime, const InputData& input, bool isMoving);
+
+	// 공격
 	void ProcessMeleeAttack(const InputData& input, float elapsedTime);
 	void ProcessRangedAttack(const InputData& input, float elapsedTime);
+
+	// 빙의
 	void UpdatePossession(float elapsedTime);
 	void ReleasePossession(const InputData& input, const float elapsedTime);
 
@@ -174,6 +183,7 @@ private:
 	bool        last_c_input;
 	bool        start_jump;
 	int         possessed_spray_hit_count;
+	float       bare_hand_dig_timer;
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
 	float    possessed_path_refresh_timer;

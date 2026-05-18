@@ -719,7 +719,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 
 						pos.y = 0.05f;
 						uint16 picked = g_TreasureTable[rand() % 13];
-						SpawnWorldItem(80, pos);
+						SpawnWorldItem(picked, pos);
 					}
 				}
 			}
@@ -758,7 +758,14 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 void CGameScene::FindNearestMineTarget(MINEABLEOBJECT_TYPE type)
 {
 	XMFLOAT3 playerPos = my_player->GetPosition();
-	float minDist = MINING_RANGE;
+
+	float minDist = 0.0f;
+	if (type == MINEABLEOBJECT_TYPE::VISIBLE) {
+		minDist = MINING_RANGE;
+	}
+	else {
+		minDist = BARE_HAND_MINING_RANGE;
+	}
 
 	for (auto& obj : objects) {
 

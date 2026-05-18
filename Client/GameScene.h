@@ -83,7 +83,8 @@ private:
     std::vector<MonsterSpawnInfo>            monster_spawn_info;
 
     static constexpr float  PICKUP_RANGE       = 2.0f;
-    static constexpr float  MINING_RANGE       = 0.4f;
+    static constexpr float  MINING_RANGE       = 0.45f;
+    static constexpr float  BARE_HAND_MINING_RANGE = 0.25f;
     static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값
     uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
 

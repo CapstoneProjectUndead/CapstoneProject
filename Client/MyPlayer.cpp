@@ -233,6 +233,8 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 	currentInput.shift = KEY_PRESSED(KEY::LSHIFT);
 	currentInput.lbtn  = KEY_TAP(KEY::LBTN) && !ImGui::GetIO().WantCaptureMouse
 										    && current_scene_type == SCENE_TYPE::GAME;
+	currentInput.lbtn_held = KEY_PRESSED(KEY::LBTN) && !ImGui::GetIO().WantCaptureMouse
+											         && current_scene_type == SCENE_TYPE::GAME;
 	currentInput.c     = KEY_PRESSED(KEY::C);
 }
 
@@ -360,8 +362,9 @@ void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 	inputPkt.info.d = input.d;
 	inputPkt.info.space = input.space;
 	inputPkt.info.shift = input.shift;
-	inputPkt.info.lbtn  = input.lbtn;
-	inputPkt.info.c     = input.c;
+	inputPkt.info.lbtn      = input.lbtn;
+	inputPkt.info.lbtn_held = input.lbtn_held;
+	inputPkt.info.c         = input.c;
 
 	inputPkt.info.yaw = yaw;
 	inputPkt.info.pitch = pitch;

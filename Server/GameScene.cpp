@@ -64,7 +64,7 @@ void CGameScene::Initialize()
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	//UpdateMonsters(elapsedTime);
+	UpdateMonsters(elapsedTime);
 }
 
 void CGameScene::UpdateMonsters(float elapsedTime)
@@ -138,9 +138,9 @@ void CGameScene::EnterScene(shared_ptr<CPlayer> player)
 {
 	CScene::EnterScene(player);
 
-	uint32 itemList[13] = { 5,9,14,15,16,17,19,25,24,45,47,48,49 };
+	uint32 itemList[14] = { 1,5,9,14,15,16,17,19,25,24,45,47,48,49 };
 	vector<shared_ptr<CItem>> items;
-	for (int i = 0; i < 12; ++i) {
+	for (int i = 0; i < 14; ++i) {
 		auto item = item_manager->CreateItem(itemList[i]);
 		items.push_back(item);
 	}
@@ -337,7 +337,7 @@ XMFLOAT3 CGameScene::FindSpawnPoint() const
 	return XMFLOAT3{ bestX * TILE_SIZE, 2.0f, bestY * TILE_SIZE };
 }
 
-CMineableObject* CGameScene::FindNearestMineable(const XMFLOAT3& pos, float range)
+CMineableObject* CGameScene::FindNearestMineable(const XMFLOAT3& pos, float range, MINEABLEOBJECT_TYPE type)
 {
 	CMineableObject* nearest = nullptr;
 	float min_dist_sq = range * range;
@@ -345,6 +345,8 @@ CMineableObject* CGameScene::FindNearestMineable(const XMFLOAT3& pos, float rang
 	for (auto& [id, obj] : mineable_objects) {
 
 		if (!obj || obj->IsDestroyed())
+			continue;
+		if (obj->GetMineableType() != type)
 			continue;
 
 		XMFLOAT3 op = obj->GetPosition();

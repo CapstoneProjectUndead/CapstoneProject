@@ -35,9 +35,10 @@ public:
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
 
     // 채굴 가능 오브젝트 관련
-    static constexpr float MINING_RANGE = 1.0f;
+    static constexpr float MINING_RANGE = 0.45f;
+    static constexpr float BARE_HAND_MINING_RANGE = 0.25f;
     XMFLOAT3 FindSpawnPoint() const;
-    CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range);
+    CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range, MINEABLEOBJECT_TYPE type);
     void DestroyMineable(uint32 world_id);
 
     const vector<MonsterSpawnInfo>& GetMonsterSpawnInfo() const { return monster_spawn_info; }
