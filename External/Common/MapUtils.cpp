@@ -121,6 +121,7 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
     asset_table[EModelType::TREASURE] = { {}, {"treasure"} };
+
     // 땅속 보물: 프로토타입 룩업(콜라이더/위치)을 위해 동일 풀 사용. 메시는 ObjectFactory에서 스킵.
     asset_table[EModelType::TREASURE_HIDDEN] = { {}, {"treasure"} };
 

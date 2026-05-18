@@ -144,8 +144,7 @@ void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player
     // ChangeState 먼저 (OnFleeEnter가 velocity를 0으로 초기화하므로)
     auto* ai = GetComponent<CAIComponent>();
     if (ai) {
-        if (melee_hit_count >= MAX_MELEE_HITS && !is_dead) {
-            is_dead = true;
+        if (melee_hit_count >= MAX_MELEE_HITS) {
             auto cur = ai->GetCurrentState();
             if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)
                 ai->ChangeState(AI_STATE::MONSTER_FLEE);

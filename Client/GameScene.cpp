@@ -168,10 +168,10 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			auto monster = factory->CreateMonster(info.type, scene_type);
 			if (!monster)
 				continue;
-
+		
 			monster->SetPosition(info.position.x, 0.1f, info.position.z);
 			monster->SetOriginPos(info.position);
-
+		
 			// 콜백함수 등록
 			if (info.type == MON_TYPE::HUMAN_MONSTER) {
 				if (auto human = std::dynamic_pointer_cast<CHumanMonster>(monster)) {
@@ -185,7 +185,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 					});
 				}
 			}
-
+		
 			AddObject(monster, monster->GetID());
 			info.monster = monster;
 			info.respawn_time = monster->GetRespawnTime();
@@ -227,11 +227,22 @@ void CGameScene::Update(float elapsedTime)
 		// 플레이어가 장착하고 있는 아이템에 따라 행동 분기
 		auto qs = my_player->GetQuickSlot();
 		bool hasTool = qs && qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL;
+		bool isBareHand = (my_player->GetEquippedItemId() == 0);
 		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
 			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
 
-		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || my_player->GetEquippedItemId() == 0)) {
-			ProcessMining(elapsedTime);
+		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand)) {
+			uint16 equippedId = my_player->GetEquippedItemId();
+			bool isShovel = equippedId >= 1 && equippedId <= 4;
+
+			if (isBareHand || isShovel) {
+				// 보이지 않는 보물 파밍
+				ProcessUnVisibleObjectMining(elapsedTime);
+			}
+			else {
+				// 보이는 보물 파밍
+				ProcessVisibleObjectMining(elapsedTime);
+			}
 		}
 		else if(!ImGui::GetIO().WantCaptureMouse && hasWeapon) {
 			ProcessAttack(elapsedTime);
@@ -438,7 +449,7 @@ void CGameScene::ProcessPickup()
 	}
 }
 
-void CGameScene::ProcessMining(float elapsedTime)
+void CGameScene::ProcessVisibleObjectMining(float elapsedTime)
 {
 	// 싱글 전용 
 	if (!g_is_single)
@@ -490,6 +501,7 @@ void CGameScene::ProcessMining(float elapsedTime)
 						// 내구도가 0이 되어 파괴되었는지 체크
 						if (tool->GetCurrentDurability() <= 0) {
 							inv->RemoveItem(qs->GetSelectedInvId());
+							my_player->SetEquippedItemId(0);
 						}
 					}
 			}
@@ -544,25 +556,224 @@ void CGameScene::ProcessMining(float elapsedTime)
 		mining_target = nullptr;
 		my_player->SetDigAnimFinished(false);
 
-		XMFLOAT3 playerPos = my_player->GetPosition();
-		float minDist = MINING_RANGE;
-
-		for (auto& obj : objects) {
-
-			if (obj->GetObjectType() != OBJECT_TYPE::MINEABLE_OBJECT) 
-				continue;
-
-			float dist = Vector3::Length(Vector3::Subtract(obj->GetPosition(), playerPos));
-			if (dist < minDist) {
-				minDist = dist;
-				mining_target = static_cast<CMineableObject*>(obj.get());
-			}
-		}
+		FindNearestMineTarget(MINEABLEOBJECT_TYPE::VISIBLE);
 
 		if (mining_target)
 			dig_sound_timer = 0.0f;
 
 		my_player->SetState(PLAYER_STATE::DIG);
+	}
+}
+
+void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
+{
+	// 싱글 전용 
+	if (!g_is_single)
+		return;
+
+	bool isDigging = (my_player->GetState() == PLAYER_STATE::DIG);
+
+	uint16 equippedId = my_player->GetEquippedItemId();
+	bool isShovel = equippedId >= 1 && equippedId <= 4;
+	bool isBareHand = (equippedId == 0);
+
+	// 이동 중에는 채굴 시작 불가 
+	bool isMoving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
+		|| KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
+
+	if (dig_sound_timer >= 0.0f) {
+		dig_sound_timer += elapsedTime;
+		if (dig_sound_timer >= 0.5f) {
+			if (isShovel) {
+				CSoundManager::GetInstance().Play(SOUND_ID::flying_pan);
+			}
+			dig_sound_timer = -1.0f;
+		}
+	}
+
+	// DIG→IDLE 전이 감지 = 애니메이션 1회 재생 완료(인터럽트 제외) → 데미지 처리
+	if (was_digging && !isDigging && mining_target && !isBareHand && my_player->GetDigAnimFinished()) {
+
+		my_player->SetDigAnimFinished(false);
+
+		bool stillExist = false;
+		for (auto& obj : objects) {
+
+			if (obj.get() == mining_target) {
+				stillExist = true;
+				break;
+			}
+		}
+
+		if (stillExist) {
+
+			// 채굴 가능한 오브젝트에 데미지를 입힌다.
+			mining_target->TakeDamage();
+
+			// 플레이어의 도구 내구도를 감소 시킨다. 
+			auto qs = my_player->GetQuickSlot();
+			auto inv = my_player->GetInventory();
+			bool isTool = inv && qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::TOOL);
+
+			if (isTool) {
+				const auto& items = inv->GetItems();
+				auto it = items.find(qs->GetSelectedInvId());
+				if (it != items.end())
+					if (auto tool = dynamic_cast<CTool*>(it->second.get())) {
+
+						// 도구 내구도 닳기
+						tool->ReduceDurability();
+
+						// 내구도가 0이 되어 파괴되었는지 체크
+						if (tool->GetCurrentDurability() <= 0) {
+							inv->RemoveItem(qs->GetSelectedInvId());
+							my_player->SetEquippedItemId(0);
+						}
+					}
+			}
+
+			if (mining_target->IsDestroyed()) {
+				CMineableObject* toRemove = mining_target;
+				mining_target = nullptr;
+				XMFLOAT3 pos = toRemove->GetPosition();
+
+				auto it = std::find_if(objects.begin(), objects.end(),
+					[toRemove](const std::shared_ptr<CObject>& obj) {
+						return obj.get() == toRemove;
+					});
+
+				if (it != objects.end()) {
+
+					if (auto col = toRemove->GetComponent<CColliderComponent>())
+						CPhysicsManager::GetInstance().EraseCollider(col);
+
+					size_t idx = std::distance(objects.begin(), it);
+					size_t last = objects.size() - 1;
+
+					if (idx != last) {
+						std::swap(objects[idx], objects[last]);
+						uint64 moved_id = objects[idx]->GetID();
+						auto map_it = id_To_Index.find(moved_id);
+						if (map_it != id_To_Index.end())
+							map_it->second = idx;
+					}
+					objects.pop_back();
+				}
+
+				pos.y = 0.05f;
+				uint16 picked = g_TreasureTable[rand() % 13];
+				SpawnWorldItem(picked, pos);
+			}
+		}
+		else {
+			mining_target = nullptr;
+		}
+	}
+
+	if (isBareHand) {
+		if (KEY_PRESSED(KEY::LBTN) && !isMoving && mining_target) {
+			bare_hand_dig_timer += elapsedTime;
+			if (bare_hand_dig_timer >= 4.0f) {
+				bare_hand_dig_timer = 0.0f;
+
+				bool stillExist = false;
+				for (auto& obj : objects) {
+
+					if (obj.get() == mining_target) {
+						stillExist = true;
+						break;
+					}
+				}
+
+				if (stillExist) {
+
+					mining_target->DestroyImmediate();
+					my_player->SetState(PLAYER_STATE::IDLE);
+					if (mining_target->IsDestroyed()) {
+						CMineableObject* toRemove = mining_target;
+						mining_target = nullptr;
+						XMFLOAT3 pos = toRemove->GetPosition();
+
+						auto it = std::find_if(objects.begin(), objects.end(),
+							[toRemove](const std::shared_ptr<CObject>& obj) {
+								return obj.get() == toRemove;
+							});
+
+						if (it != objects.end()) {
+
+							if (auto col = toRemove->GetComponent<CColliderComponent>())
+								CPhysicsManager::GetInstance().EraseCollider(col);
+
+							size_t idx = std::distance(objects.begin(), it);
+							size_t last = objects.size() - 1;
+
+							if (idx != last) {
+								std::swap(objects[idx], objects[last]);
+								uint64 moved_id = objects[idx]->GetID();
+								auto map_it = id_To_Index.find(moved_id);
+								if (map_it != id_To_Index.end())
+									map_it->second = idx;
+							}
+							objects.pop_back();
+						}
+
+						pos.y = 0.05f;
+						uint16 picked = g_TreasureTable[rand() % 13];
+						SpawnWorldItem(80, pos);
+					}
+				}
+			}
+		}
+		else {
+			bare_hand_dig_timer = 0.0f;  // 버튼 뗌 or 이동 시 리셋
+		}
+	}
+
+	was_digging = isDigging;
+
+	// 즉, IDLE 상태이고 좌클릭 눌렀고 (홀딩x), 도구 장착 시에만 채굴 애니메이션 재생
+	if (KEY_TAP(KEY::LBTN) && isShovel && !isDigging && !isMoving) {
+
+		mining_target = nullptr;
+		my_player->SetDigAnimFinished(false);
+
+		FindNearestMineTarget(MINEABLEOBJECT_TYPE::NONE_VISIBLE);
+
+		if (mining_target)
+			dig_sound_timer = 0.0f;
+
+		my_player->SetState(PLAYER_STATE::DIG);
+	}
+	else if (KEY_PRESSED(KEY::LBTN) && (equippedId == 0) && !isDigging && !isMoving) {
+		mining_target = nullptr;
+		my_player->SetDigAnimFinished(false);
+
+		FindNearestMineTarget(MINEABLEOBJECT_TYPE::NONE_VISIBLE);
+
+		if(mining_target)
+			my_player->SetState(PLAYER_STATE::DIG);
+	}
+}
+
+void CGameScene::FindNearestMineTarget(MINEABLEOBJECT_TYPE type)
+{
+	XMFLOAT3 playerPos = my_player->GetPosition();
+	float minDist = MINING_RANGE;
+
+	for (auto& obj : objects) {
+
+		if (obj->GetObjectType() != OBJECT_TYPE::MINEABLE_OBJECT)
+			continue;
+
+		auto mineObj = std::static_pointer_cast<CMineableObject>(obj);
+		if (mineObj->GetMineableType() != type)
+			continue;
+
+		float dist = Vector3::Length(Vector3::Subtract(obj->GetPosition(), playerPos));
+		if (dist < minDist) {
+			minDist = dist;
+			mining_target = mineObj.get();
+		}
 	}
 }
 

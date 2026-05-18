@@ -5,6 +5,7 @@
 class CWorldItem;
 class CItem;
 class CMineableObject;
+enum class MINEABLEOBJECT_TYPE;
 
 class CGameScene : public CScene
 {
@@ -57,7 +58,9 @@ private:
     void ProcessPickup();
 
     // 채굴 상호작용
-    void ProcessMining(float elapsedTime);
+    void ProcessVisibleObjectMining(float elapsedTime);
+    void ProcessUnVisibleObjectMining(float elapsedTime);
+    void FindNearestMineTarget(MINEABLEOBJECT_TYPE type);
 
     // 공격
     void ProcessAttack(float elapsedTime);
@@ -80,13 +83,14 @@ private:
     std::vector<MonsterSpawnInfo>            monster_spawn_info;
 
     static constexpr float  PICKUP_RANGE       = 2.0f;
-    static constexpr float  MINING_RANGE       = 1.0f;
+    static constexpr float  MINING_RANGE       = 0.4f;
     static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값
     uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
 
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;
     float             dig_sound_timer       = -1.0f;
+    float             bare_hand_dig_timer   = 0.0f;
 
 private:
     float             melee_attack_timer    = -1.0f;
