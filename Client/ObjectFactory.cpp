@@ -315,7 +315,7 @@ void CObjectFactory::LoadGameScene()
 
 		LoadFrameNode(prototypes, frameRoot);
 		for (const auto& children : frameRoot->childrens) {
-			if (children->name == "tree_1" || children->name == "tree_2")
+			if (children->name == "tree_1" || children->name == "tree_2" || children->name == "park_wall")
 				LoadFrameNode(prototypes, children, EShaderName::TwoSide);
 			else
 				LoadFrameNode(prototypes, children);
