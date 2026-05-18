@@ -68,6 +68,9 @@ enum : uint16
 	PKT_S_PLAY_SOUND,
 
 	PKT_S_POSSESSION_RELEASE_FAIL,
+
+	// 정산 시스템
+	PKT_S_RETURN_ZONE_ACTIVE,
 };
 
 // Custom Handlers

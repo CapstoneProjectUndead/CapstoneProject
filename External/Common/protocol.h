@@ -76,6 +76,9 @@ enum PacketType : uint16_t
 	_S_PLAY_SOUND,
 
 	_S_POSSESSION_RELEASE_FAIL,
+
+	// 정산 시스템
+	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
 };
 
 #pragma pack (push, 1)
@@ -680,5 +683,17 @@ struct S_PossessionReleaseFail : public PacketHeader
 	S_PossessionReleaseFail() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_POSSESSION_RELEASE_FAIL) {}
 };
 static_assert(sizeof(S_PossessionReleaseFail) == 4 + 8, "S_PossessionReleaseFail size mismatch!");
+
+// 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회 브로드캐스트)
+// 확장 대비: 위치/반경을 패킷으로 전달 (지금은 spawn point 고정이지만, 추후 랜덤 지점 변경 가능)
+struct S_ReturnZoneActive : public PacketHeader
+{
+	float      x, y, z;   // 복귀존 중심
+	float      range;     // 반경
+	SCENE_TYPE scene_type;
+
+	S_ReturnZoneActive() : PacketHeader(sizeof(S_ReturnZoneActive), (UINT)PacketType::_S_RETURN_ZONE_ACTIVE) {}
+};
+static_assert(sizeof(S_ReturnZoneActive) == 4 + 17, "S_ReturnZoneActive size mismatch!");
 
 #pragma pack (pop)

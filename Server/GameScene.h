@@ -27,6 +27,7 @@ private:
     void LoadGameScene();
     void CreateGameScene();
     void UpdateMonsters(float elapsedTime);
+    void AnnounceReturnPosition();
 
 public:
     virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;
@@ -35,7 +36,10 @@ public:
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
 
     // 라운드 타이머 (정산 시스템)
-    static constexpr float ROUND_DURATION = 300.f; // 5분
+    static constexpr float ROUND_DURATION = 300.f;        
+    static constexpr float RETURN_ACTIVATE_REMAIN = 60.f; // 종료 60초 전 복귀존 활성화
+    static constexpr float RETURN_RANGE = 1.5f;           // 복귀존 반경
+
     float GetRoundTimer() const { return round_timer; }
     bool  IsRoundEnded() const { return round_ended; }
 
@@ -60,8 +64,12 @@ private:
     uint64                                          mineable_id_counter;
 
     // 라운드 타이머 상태
-    float                                           round_timer{ 0.f };
-    bool                                            round_started{ false };
-    bool                                            round_ended{ false };
+    float                                           round_timer;
+    bool                                            round_started;
+    bool                                            round_ended;
+
+    // 복귀존 상태 (60초 시점 1회만 활성화 송신)
+    bool                                            return_active;
+    XMFLOAT3                                        return_center{};
 };
 

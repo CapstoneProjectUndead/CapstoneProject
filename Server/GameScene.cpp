@@ -23,6 +23,8 @@ CGameScene::CGameScene(uint32 roomId)
 	, round_timer(0.f)
 	, round_started(false)
 	, round_ended(false)
+	, return_active(false)
+	, return_center{}
 {
 
 }
@@ -72,6 +74,12 @@ void CGameScene::Update(float elapsedTime)
 	// 라운드 타이머 진행
 	if (round_started && !round_ended) {
 		round_timer -= elapsedTime;
+
+		// 종료 60초 전 복귀존 활성화 (1회 송신)
+		if (!return_active && round_timer <= RETURN_ACTIVATE_REMAIN) {
+			AnnounceReturnPosition();
+		}
+
 		if (round_timer <= 0.f) {
 			round_timer = 0.f;
 			round_ended = true;
@@ -116,6 +124,22 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 	}
 }
 
+void CGameScene::AnnounceReturnPosition()
+{
+	return_active = true;
+	return_center = FindSpawnPoint();
+
+	S_ReturnZoneActive pkt;
+	pkt.x = return_center.x;
+	pkt.y = return_center.y;
+	pkt.z = return_center.z;
+	pkt.range = RETURN_RANGE;
+	pkt.scene_type = scene_type;
+
+	auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+	BroadCast(sendBuffer);
+}
+
 void CGameScene::OnSceneActivate()
 {
 	CScene::OnSceneActivate();
@@ -129,6 +153,8 @@ void CGameScene::OnSceneActivate()
 	round_timer = ROUND_DURATION;
 	round_started = true;
 	round_ended = false;
+	return_active = false;
+	return_center = {};
 
 	for (auto& info : monster_spawn_info) {
 		auto monster = CServerObjectFactory::CreateMonster(info.type, scene_type, GetRoom(), GetPhysicsManager());

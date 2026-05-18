@@ -653,3 +653,17 @@ bool Handle_S_POSSESSION_RELEASE_FAIL(std::shared_ptr<Session> session, S_Posses
 
 	return true;
 }
+
+bool Handle_S_RETURN_ZONE_ACTIVE(std::shared_ptr<Session> session, S_ReturnZoneActive& pkt)
+{
+	if (pkt.scene_type != SCENE_TYPE::GAME)
+		return true;
+
+	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	if (!gameScene)
+		return true;
+
+	gameScene->Handle_S_ReturnZoneActive(session, pkt);
+
+	return true;
+}

@@ -41,6 +41,7 @@ public:
     virtual void Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt) override;
     virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) override;
     void Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
+    void Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt);
 
     // 싱글용 (Ghost 드롭 등 외부에서 호출 가능)
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
@@ -50,6 +51,11 @@ public:
     // 서버 권위 라운드 타이머 적용 (S_PlayerMove에서 받은 값)
     void  SetRoundTimer(float t) { round_timer = t; round_active = true; }
     float GetRoundTimer() const { return round_timer; }
+
+    // 복귀존 (S_ReturnZoneActive에서 받은 값)
+    bool            IsReturnActive()  const { return return_active; }
+    const XMFLOAT3& GetReturnCenter() const { return return_center; }
+    float           GetReturnRange()  const { return return_range; }
 
 private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
@@ -78,6 +84,9 @@ private:
     void ReleasePossession(float elapsedTime);
     void DrawDePossessProgressBar();
 
+    // 복귀존 월드 마커 (수평 원형 링, 카메라 view/proj로 투영)
+    void DrawReturnMarker();
+
     // 사운드 관련
     void PlayMeleeAttackSound();
 
@@ -96,6 +105,11 @@ private:
     static constexpr float  ROUND_DURATION = 300.f; // 5분
     float                   round_timer    = 0.f;
     bool                    round_active   = false;
+
+    // 복귀존 (서버 패킷으로 활성화)
+    bool      return_active = false;
+    XMFLOAT3  return_center {};
+    float     return_range  = 0.f;
 
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;

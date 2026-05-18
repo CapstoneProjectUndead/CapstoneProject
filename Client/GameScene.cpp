@@ -220,7 +220,15 @@ void CGameScene::Update(float elapsedTime)
 	// - 멀티: 서버가 매 틱 S_PlayerMove에 round_timer를 실어 보내므로 Handle_S_Move_Player가 덮어씀
 	if (g_is_single && round_active && round_timer > 0.f) {
 		round_timer -= elapsedTime;
-		if (round_timer < 0.f) round_timer = 0.f;
+
+		if (round_timer <= 60.f) {
+			return_active = true;
+			return_center = XMFLOAT3{ 1.8f, 0.f, 2.f };
+			return_range = 1.5f;
+		}
+
+		if (round_timer < 0.f) 
+			round_timer = 0.f;
 	}
 
 	CScene::Update(elapsedTime);
@@ -271,6 +279,11 @@ void CGameScene::DrawUI()
 	// 라운드 타이머 오버레이 (화면 상단 중앙)
 	if (round_active) {
 		CImGuiManager::DrawRoundTimer(round_timer);
+	}
+
+	// 복귀존 마커 (월드 원형 링, 60초 시점 활성화 이후)
+	if (return_active && camera) {
+		DrawReturnMarker();
 	}
 
 	if (my_player) {
@@ -342,6 +355,11 @@ void CGameScene::Enter()
 		round_timer  = ROUND_DURATION;
 		round_active = true;
 	}
+
+	// 복귀존 상태 리셋 (재진입 시 이전 라운드 잔여값 제거) (싱글/멀티 모두 유효)
+	return_active = false;
+	return_center = {};
+	return_range  = 0.f;
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
@@ -1123,6 +1141,64 @@ void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session
 	my_player->ResetCHoldTimer();
 }
 
+void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt)
+{
+	return_active = true;
+	return_center = XMFLOAT3{ pkt.x, pkt.y, pkt.z };
+	return_range  = pkt.range;
+}
+
+void CGameScene::DrawReturnMarker()
+{
+	constexpr int   SEGMENTS = 48;
+	constexpr float TWO_PI   = 6.28318530718f;
+
+	ImGuiIO&    io = ImGui::GetIO();
+	ImDrawList* dl = ImGui::GetBackgroundDrawList();
+
+	// 펄스 효과 (0.6 ~ 1.0 알파, 2Hz)
+	float t     = (float)ImGui::GetTime();
+	float pulse = 0.5f + 0.5f * sinf(t * 2.0f);
+	float alpha = 0.6f + 0.4f * pulse;
+
+	XMFLOAT4X4 view = camera->GetViewMatrix();
+	XMFLOAT4X4 proj = camera->GetProjectionMatrix();
+	XMMATRIX   vp   = XMMatrixMultiply(XMLoadFloat4x4(&view), XMLoadFloat4x4(&proj));
+
+	ImVec2 pts[SEGMENTS];
+	bool   valid[SEGMENTS];
+
+	for (int i = 0; i < SEGMENTS; ++i) {
+		float    theta = (float)i / (float)SEGMENTS * TWO_PI;
+		XMVECTOR wp    = XMVectorSet(return_center.x + cosf(theta) * return_range,
+		                             return_center.y + 0.05f,   // z-fight 방지
+		                             return_center.z + sinf(theta) * return_range,
+		                             1.f);
+		XMVECTOR clip  = XMVector4Transform(wp, vp);
+		float    cw    = XMVectorGetW(clip);
+
+		if (cw <= 0.01f) {
+			valid[i] = false;
+			pts[i]   = {};
+			continue;
+		}
+		float ndcX = XMVectorGetX(clip) / cw;
+		float ndcY = XMVectorGetY(clip) / cw;
+		pts[i]   = ImVec2((ndcX * 0.5f + 0.5f) * io.DisplaySize.x,
+		                  (1.f - (ndcY * 0.5f + 0.5f)) * io.DisplaySize.y);
+		valid[i] = true;
+	}
+
+	// 노란 링 (두께 3px, 카메라 뒤 정점 구간은 스킵)
+	ImU32 color     = ImGui::GetColorU32(ImVec4(1.0f, 0.85f, 0.25f, alpha));
+	float thickness = 3.0f * G_RATIO_Y;
+	for (int i = 0; i < SEGMENTS; ++i) {
+		int j = (i + 1) % SEGMENTS;
+		if (valid[i] && valid[j])
+			dl->AddLine(pts[i], pts[j], color, thickness);
+	}
+}
+
 void CGameScene::Exit()
 {
 	CScene::Exit();
@@ -1132,6 +1208,11 @@ void CGameScene::Exit()
 		round_active = false;
 		round_timer = 0.f;
 	}
+
+	// 복귀존 정리 (싱글/멀티 모두 유효)
+	return_active = false;
+	return_center = {};
+	return_range  = 0.f;
 
 	my_player = nullptr;
 }
