@@ -100,6 +100,9 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
                 continue;
             if (player->GetIsPossessed())
                 continue;
+            // 복귀 완료 플레이어는 안전지대로 간주하여 타겟 후보 제외
+            if (player->GetReturned())
+                continue;
 
             // MathHelper를 활용해 직관적으로 두 좌표의 차이 벡터를 구함
             XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);

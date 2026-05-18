@@ -28,6 +28,7 @@ private:
     void CreateGameScene();
     void UpdateMonsters(float elapsedTime);
     void AnnounceReturnPosition();
+    void DetectPlayerReturns();
 
 public:
     virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;

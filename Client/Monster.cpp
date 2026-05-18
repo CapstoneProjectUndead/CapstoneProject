@@ -251,7 +251,7 @@ std::shared_ptr<CPlayer> CMonster::FindNearestPlayer()
     CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
     auto player = currentScene->GetMyPlayer();
 
-    if (!player || player->GetIsPossessed())
+    if (!player || player->GetIsPossessed() || player->GetReturned())
         return nullptr;
 
     return player;

@@ -80,6 +80,11 @@ void CGameScene::Update(float elapsedTime)
 			AnnounceReturnPosition();
 		}
 
+		// 복귀존 도달 감지 (활성화 이후 매 틱)
+		if (return_active) {
+			DetectPlayerReturns();
+		}
+
 		if (round_timer <= 0.f) {
 			round_timer = 0.f;
 			round_ended = true;
@@ -140,6 +145,31 @@ void CGameScene::AnnounceReturnPosition()
 	BroadCast(sendBuffer);
 }
 
+void CGameScene::DetectPlayerReturns()
+{
+	const float rangeSq = RETURN_RANGE * RETURN_RANGE;
+
+	for (auto& [id, player] : players) {
+		if (!player || player->GetReturned())
+			continue;
+
+		const XMFLOAT3& pp = player->GetPosition();
+		float dx = pp.x - return_center.x;
+		float dz = pp.z - return_center.z;
+
+		if (dx * dx + dz * dz <= rangeSq) {
+			player->SetReturned(true);
+
+			S_PlayerReturned pkt;
+			pkt.player_id  = id;
+			pkt.scene_type = scene_type;
+
+			auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+			BroadCast(sendBuffer);
+		}
+	}
+}
+
 void CGameScene::OnSceneActivate()
 {
 	CScene::OnSceneActivate();
@@ -181,6 +211,9 @@ void CGameScene::OnSceneDeactivate()
 void CGameScene::EnterScene(shared_ptr<CPlayer> player)
 {
 	CScene::EnterScene(player);
+
+	// 라운드 진입 시 복귀 상태 리셋 (재라운드 대비)
+	player->SetReturned(false);
 
 	uint32 itemList[14] = { 1,5,9,14,15,16,17,19,25,24,45,47,48,49 };
 	vector<shared_ptr<CItem>> items;

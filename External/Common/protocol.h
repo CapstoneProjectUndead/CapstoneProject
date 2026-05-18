@@ -79,6 +79,7 @@ enum PacketType : uint16_t
 
 	// 정산 시스템
 	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
+	_S_PLAYER_RETURNED,    // 서버 → 클라: 특정 플레이어가 복귀존 진입 (1회)
 };
 
 #pragma pack (push, 1)
@@ -695,5 +696,15 @@ struct S_ReturnZoneActive : public PacketHeader
 	S_ReturnZoneActive() : PacketHeader(sizeof(S_ReturnZoneActive), (UINT)PacketType::_S_RETURN_ZONE_ACTIVE) {}
 };
 static_assert(sizeof(S_ReturnZoneActive) == 4 + 17, "S_ReturnZoneActive size mismatch!");
+
+// 서버 → 클라: 특정 플레이어가 복귀존 진입 (1회 브로드캐스트)
+struct S_PlayerReturned : public PacketHeader
+{
+	uint64     player_id;
+	SCENE_TYPE scene_type;
+
+	S_PlayerReturned() : PacketHeader(sizeof(S_PlayerReturned), (UINT)PacketType::_S_PLAYER_RETURNED) {}
+};
+static_assert(sizeof(S_PlayerReturned) == 4 + 9, "S_PlayerReturned size mismatch!");
 
 #pragma pack (pop)

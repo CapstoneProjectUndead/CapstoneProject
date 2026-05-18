@@ -233,8 +233,10 @@ void CGameScene::Update(float elapsedTime)
 
 	CScene::Update(elapsedTime);
 
-	if (g_is_single)
+	if (g_is_single) {
 		UpdateMonsters(elapsedTime);
+		DetectMyPlayerReturn(); // 싱글 전용: 복귀존 도달 감지 (멀티는 서버 권위)
+	}
 
 	if (my_player) {
 
@@ -285,6 +287,9 @@ void CGameScene::DrawUI()
 	if (return_active && camera) {
 		DrawReturnMarker();
 	}
+
+	// 복귀 토스트 (S_PlayerReturned 받을 때마다 누적, 2.5초 자동 만료)
+	DrawReturnToasts();
 
 	if (my_player) {
 
@@ -360,6 +365,8 @@ void CGameScene::Enter()
 	return_active = false;
 	return_center = {};
 	return_range  = 0.f;
+	return_toasts.clear();
+	my_player->SetReturned(false);
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
@@ -1148,6 +1155,103 @@ void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, con
 	return_range  = pkt.range;
 }
 
+void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt)
+{
+	const bool isSelf = (my_player && my_player->GetID() == pkt.player_id);
+
+	ReturnToast toast;
+	toast.is_self = isSelf;
+	toast.timer   = RETURN_TOAST_DURATION;
+
+	// ImGui는 UTF-8을 요구. 소스 인코딩 의존을 피하기 위해 한글을 UTF-8 hex 바이트로 직접 작성.
+	if (isSelf) {
+		my_player->SetReturned(true);
+
+		// "복귀 완료"
+		toast.text = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
+	}
+	else {
+		// "%llu 플레이어 복귀"
+		char buf[64];
+		snprintf(buf, sizeof(buf),
+			"%llu \xED\x94\x8C\xEB\xA0\x88\xEC\x9D\xB4\xEC\x96\xB4 \xEB\xB3\xB5\xEA\xB7\x80",
+			(unsigned long long)pkt.player_id);
+		toast.text = buf;
+	}
+
+	return_toasts.push_back(std::move(toast));
+}
+
+// 싱글 전용
+void CGameScene::DetectMyPlayerReturn()
+{
+	if (!return_active || my_player->GetReturned() || !my_player)
+		return;
+
+	const XMFLOAT3& pp = my_player->GetPosition();
+	float dx = pp.x - return_center.x;
+	float dz = pp.z - return_center.z;
+	if (dx * dx + dz * dz > return_range * return_range)
+		return;
+
+	my_player->SetReturned(true);
+
+	ReturnToast toast;
+	toast.is_self = true;
+	toast.timer   = RETURN_TOAST_DURATION;
+	// "복귀 완료"
+	toast.text    = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
+	return_toasts.push_back(std::move(toast));
+}
+
+void CGameScene::DrawReturnToasts()
+{
+	if (return_toasts.empty())
+		return;
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	// 타이머 감소 + 만료 제거 (ImGui 자체 DeltaTime 사용)
+	for (auto& t : return_toasts) t.timer -= io.DeltaTime;
+	return_toasts.erase(
+		std::remove_if(return_toasts.begin(), return_toasts.end(),
+			[](const ReturnToast& t) { return t.timer <= 0.f; }),
+		return_toasts.end());
+
+	if (return_toasts.empty())
+		return;
+
+	ImDrawList* dl   = ImGui::GetForegroundDrawList();
+	ImFont*     font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+	const float scale = G_RATIO_Y;
+
+	// 라운드 타이머 아래에서 시작
+	float yCursor = 80.f * scale;
+
+	for (const auto& toast : return_toasts) {
+		float fontPx = toast.is_self ? 48.f * scale : 24.f * scale;
+
+		// 마지막 0.5초 페이드 아웃
+		float alpha = (toast.timer < 0.5f) ? (toast.timer / 0.5f) : 1.f;
+
+		ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, toast.text.c_str());
+		ImVec2 pos      = ImVec2(io.DisplaySize.x * 0.5f - textSize.x * 0.5f, yCursor);
+
+		ImVec4 color  = toast.is_self ? ImVec4(1.f, 0.85f, 0.25f, alpha)
+		                              : ImVec4(0.9f, 0.9f, 0.9f, alpha);
+		ImU32  shadow = ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.7f * alpha));
+		const float off = 1.5f * scale;
+
+		dl->AddText(font, fontPx, ImVec2(pos.x - off, pos.y), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, ImVec2(pos.x + off, pos.y), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, ImVec2(pos.x, pos.y - off), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, ImVec2(pos.x, pos.y + off), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, pos, ImGui::GetColorU32(color), toast.text.c_str());
+
+		yCursor += textSize.y + 8.f * scale;
+	}
+}
+
 void CGameScene::DrawReturnMarker()
 {
 	constexpr int   SEGMENTS = 48;
@@ -1213,6 +1317,8 @@ void CGameScene::Exit()
 	return_active = false;
 	return_center = {};
 	return_range  = 0.f;
+	return_toasts.clear();
+	my_player->SetReturned(false);
 
 	my_player = nullptr;
 }

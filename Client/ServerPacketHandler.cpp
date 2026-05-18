@@ -667,3 +667,17 @@ bool Handle_S_RETURN_ZONE_ACTIVE(std::shared_ptr<Session> session, S_ReturnZoneA
 
 	return true;
 }
+
+bool Handle_S_PLAYER_RETURNED(std::shared_ptr<Session> session, S_PlayerReturned& pkt)
+{
+	if (pkt.scene_type != SCENE_TYPE::GAME)
+		return true;
+
+	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	if (!gameScene)
+		return true;
+
+	gameScene->Handle_S_PlayerReturned(session, pkt);
+
+	return true;
+}

@@ -122,10 +122,14 @@ public:
 	bool GetDowsing() const { return is_dowsing; }
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 
-	// 코인 
+	// 코인
 	uint32 GetCoin() const { return coin; }
 	void   SetCoin(uint32 amount) { coin = amount; }
 	void   AddCoin(uint32 amount) { coin += amount; }
+
+	// 복귀 상태 (정산 시스템)
+	bool   GetReturned() const { return returned; }
+	void   SetReturned(bool r) { returned = r; }
 
 private:
 	void UpdateStamina(float elapsedTime);
@@ -204,6 +208,9 @@ private:
 
 	// 소지금
 	uint32      coin{ 0 };
+
+	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
+	bool        returned{ false };
 
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;

@@ -404,6 +404,10 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
 
+	// 복귀 완료 상태: 이동/점프/공격 입력은 무시 (회전·카메라만 허용)
+	if (mover->GetReturned())
+		return;
+
 	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space, pkt.info.shift, pkt.info.lbtn, pkt.info.c, pkt.info.lbtn_held };
 	PendingInput pInput{ input, pkt.seq_num };

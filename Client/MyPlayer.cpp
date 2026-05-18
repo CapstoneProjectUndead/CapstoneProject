@@ -264,8 +264,8 @@ void CMyPlayer::ProcessRotation()
 
 void CMyPlayer::PredictMove(const InputData& input, float dt)
 {
-	// 플레이어가 몬스터 공격을 받아서 넉백 상태이면 return
-	if (is_knocked_back || is_stunned || is_possessed)
+	// 플레이어가 (넉백, 스턴, 빙의, 복귀) 상태이면 return
+	if (is_knocked_back || is_stunned || is_possessed || returned)
 		return;
 
 	auto move = GetComponent<CMovementComponent>();

@@ -205,7 +205,8 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
     auto AIComponent = GetComponent<CAIComponent>();
     auto targetPlayer = target_player.lock();
 
-    if (!targetPlayer) {
+    if (!targetPlayer || targetPlayer->GetReturned()) {
+        target_player.reset();
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }

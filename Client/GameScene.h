@@ -42,6 +42,7 @@ public:
     virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) override;
     void Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
     void Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt);
+    void Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt);
 
     // 싱글용 (Ghost 드롭 등 외부에서 호출 가능)
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
@@ -87,6 +88,12 @@ private:
     // 복귀존 월드 마커 (수평 원형 링, 카메라 view/proj로 투영)
     void DrawReturnMarker();
 
+    // 복귀 토스트 (본인 "복귀 완료" + 타 플레이어 "{id} 플레이어 복귀")
+    void DrawReturnToasts();
+
+    // 싱글 전용: my_player 위치를 매 틱 체크해서 복귀존 진입 감지 (멀티는 서버가 권위)
+    void DetectMyPlayerReturn();
+
     // 사운드 관련
     void PlayMeleeAttackSound();
 
@@ -110,6 +117,16 @@ private:
     bool      return_active = false;
     XMFLOAT3  return_center {};
     float     return_range  = 0.f;
+
+    // 복귀 토스트 (멀티: S_PlayerReturned로 트리거 / 싱글: DetectMyPlayerReturn으로 트리거)
+    struct ReturnToast
+    {
+        std::string text;
+        float timer;
+        bool is_self;
+    };
+    std::vector<ReturnToast> return_toasts;
+    static constexpr float   RETURN_TOAST_DURATION = 2.5f;
 
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;
