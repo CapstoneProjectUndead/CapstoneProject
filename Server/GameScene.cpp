@@ -20,6 +20,9 @@
 CGameScene::CGameScene(uint32 roomId)
 	: CScene(SCENE_TYPE::GAME)
 	, mineable_id_counter(10000)
+	, round_timer(0.f)
+	, round_started(false)
+	, round_ended(false)
 {
 
 }
@@ -65,6 +68,16 @@ void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
 	UpdateMonsters(elapsedTime);
+
+	// 라운드 타이머 진행
+	if (round_started && !round_ended) {
+		round_timer -= elapsedTime;
+		if (round_timer <= 0.f) {
+			round_timer = 0.f;
+			round_ended = true;
+			// TODO: 정산 트리거 (다음 작업)
+		}
+	}
 }
 
 void CGameScene::UpdateMonsters(float elapsedTime)
@@ -111,6 +124,11 @@ void CGameScene::OnSceneActivate()
 	// active_player_count는 CScene::OnSceneActivate()에서 증가하므로 > 1이면 이미 스폰된 상태
 	if (active_player_count > 1)
 		return;
+
+	// 라운드 타이머 시작
+	round_timer = ROUND_DURATION;
+	round_started = true;
+	round_ended = false;
 
 	for (auto& info : monster_spawn_info) {
 		auto monster = CServerObjectFactory::CreateMonster(info.type, scene_type, GetRoom(), GetPhysicsManager());

@@ -122,6 +122,11 @@ public:
 	bool GetDowsing() const { return is_dowsing; }
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 
+	// 코인 
+	uint32 GetCoin() const { return coin; }
+	void   SetCoin(uint32 amount) { coin = amount; }
+	void   AddCoin(uint32 amount) { coin += amount; }
+
 private:
 	void UpdateStamina(float elapsedTime);
 
@@ -196,6 +201,9 @@ private:
 
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };
+
+	// 소지금
+	uint32      coin{ 0 };
 
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;

@@ -13,6 +13,7 @@
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
 #include "Monster.h"
+#include "GameScene.h"
 
 #include "Animator.h"
 #include "UIComponent.h"
@@ -391,6 +392,14 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
 		myPlayer->SetPossessed(pkt.info.is_possessed);
+
+		// 라운드 타이머 동기화 (GameScene일 때만 유효한 값이 들어옴)
+		if (pkt.round_timer >= 0.f) {
+			CScene* active = CSceneManager::GetInstance().GetActiveScene();
+			if (active && active->GetSceneType() == SCENE_TYPE::GAME) {
+				static_cast<CGameScene*>(active)->SetRoundTimer(pkt.round_timer);
+			}
+		}
 
 		// 예측 이동을 없애고
 		// 아래의 코드가 추가되었다.

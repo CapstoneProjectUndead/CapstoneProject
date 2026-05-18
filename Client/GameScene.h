@@ -47,6 +47,10 @@ public:
 
     const std::vector<MonsterSpawnInfo>& GetMonsterSpawnInfo() const { return monster_spawn_info; }
 
+    // 서버 권위 라운드 타이머 적용 (S_PlayerMove에서 받은 값)
+    void  SetRoundTimer(float t) { round_timer = t; round_active = true; }
+    float GetRoundTimer() const { return round_timer; }
+
 private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
     void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position);
@@ -87,6 +91,11 @@ private:
     static constexpr float  BARE_HAND_MINING_RANGE = 0.25f;
     static constexpr uint32 WORLD_ITEM_ID_BASE = 50000; // 플레이어/몬스터 ID 범위와 겹치지 않는 값
     uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
+
+    // 라운드 타이머
+    static constexpr float  ROUND_DURATION = 300.f; // 5분
+    float                   round_timer    = 0.f;
+    bool                    round_active   = false;
 
     bool              was_digging           = false;
     CMineableObject*  mining_target         = nullptr;

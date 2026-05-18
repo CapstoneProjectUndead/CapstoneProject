@@ -328,10 +328,13 @@ struct S_PlayerMove : public PacketHeader
 	SCENE_TYPE		scene_type;
 	uint32			stamina;
 	uint32			hp;
+	float			round_timer;  // 게임씬일 때만 유효 (>=0). 그 외 -1
 
-	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
+	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE)
+		, round_timer(-1.f)
+	{}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 85, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 89, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {

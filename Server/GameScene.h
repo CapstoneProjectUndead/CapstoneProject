@@ -34,6 +34,14 @@ public:
     virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) override;
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
 
+    // 라운드 타이머 (정산 시스템)
+    static constexpr float ROUND_DURATION = 300.f; // 5분
+    float GetRoundTimer() const { return round_timer; }
+    bool  IsRoundEnded() const { return round_ended; }
+
+    // S_PlayerMove에 실어 보낼 동기화 값 (Scene::GetSyncedRoundTimer override)
+    virtual float GetSyncedRoundTimer() const override { return round_started ? round_timer : -1.f; }
+
     // 채굴 가능 오브젝트 관련
     static constexpr float MINING_RANGE = 0.45f;
     static constexpr float BARE_HAND_MINING_RANGE = 0.25f;
@@ -50,5 +58,10 @@ private:
 
     map<uint64, shared_ptr<CMineableObject>>        mineable_objects;
     uint64                                          mineable_id_counter;
+
+    // 라운드 타이머 상태
+    float                                           round_timer{ 0.f };
+    bool                                            round_started{ false };
+    bool                                            round_ended{ false };
 };
 

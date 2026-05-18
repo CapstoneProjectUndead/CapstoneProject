@@ -16,6 +16,7 @@
 
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
+#include "ImGuiManager.h"
 #include "NetworkManager.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
@@ -214,6 +215,14 @@ void CGameScene::Update(float elapsedTime)
 		}
 	}
 
+	// 라운드 타이머 진행
+	// - 싱글: 클라가 자체 카운트
+	// - 멀티: 서버가 매 틱 S_PlayerMove에 round_timer를 실어 보내므로 Handle_S_Move_Player가 덮어씀
+	if (g_is_single && round_active && round_timer > 0.f) {
+		round_timer -= elapsedTime;
+		if (round_timer < 0.f) round_timer = 0.f;
+	}
+
 	CScene::Update(elapsedTime);
 
 	if (g_is_single)
@@ -259,6 +268,11 @@ void CGameScene::Update(float elapsedTime)
 
 void CGameScene::DrawUI()
 {
+	// 라운드 타이머 오버레이 (화면 상단 중앙)
+	if (round_active) {
+		CImGuiManager::DrawRoundTimer(round_timer);
+	}
+
 	if (my_player) {
 
 		// 인벤토리
@@ -320,6 +334,14 @@ void CGameScene::Enter()
 	CScene::Enter();
 
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
+
+	// 라운드 타이머 시작
+	// - 싱글: 클라가 즉시 ROUND_DURATION으로 시작 (자체 카운트)
+	// - 멀티: 서버 권위. 첫 S_PlayerMove의 round_timer가 도착하면 SetRoundTimer가 활성화.
+	if (g_is_single) {
+		round_timer  = ROUND_DURATION;
+		round_active = true;
+	}
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
@@ -1104,6 +1126,12 @@ void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session
 void CGameScene::Exit()
 {
 	CScene::Exit();
+
+	// 라운드 타이머 정리
+	if (g_is_single) {
+		round_active = false;
+		round_timer = 0.f;
+	}
 
 	my_player = nullptr;
 }

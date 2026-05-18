@@ -103,6 +103,7 @@ void CScene::SendPlayersResult()
 			movePkt.timestamp = player->GetLastSimulatedTime();
 			movePkt.stamina = player->GetStamina();
 			movePkt.hp      = player->GetHp();
+			movePkt.round_timer = GetSyncedRoundTimer();
 
 			SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_PlayerMove>(movePkt);
 			BroadCast(sendBuffer);
