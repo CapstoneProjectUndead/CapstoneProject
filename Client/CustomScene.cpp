@@ -168,9 +168,8 @@ void CCustomScene::DrawCustomizingWindow()
 
         // 완료 버튼도 적당한 크기로 수정
         if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150 * scale, 40 * scale))) {
-
             if (g_is_single) {
-                CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+                ShowResultPopup(true, "설정 완료!");
             }
             else {
                 auto session = my_player->GetSession();
@@ -268,7 +267,22 @@ void CCustomScene::DrawLoadingPopUpResult()
             ImGui::CloseCurrentPopup();
 
             if (pop_up_result.is_success) {    
-                CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+                if (g_is_single) {
+                    CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+                }
+                else {
+                    auto session = my_player->GetSession();
+                    if (session) {
+                        C_SceneChange changeScenePkt;
+                        changeScenePkt.player_id = my_player->GetID();
+                        changeScenePkt.current_scene = scene_type;
+                        changeScenePkt.target_scene = SCENE_TYPE::LOBBY;
+
+                        auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
+                        session->DoSend(sendBuffer);
+                    }
+                }
+
                 CloseResultPopup();
             }
         }

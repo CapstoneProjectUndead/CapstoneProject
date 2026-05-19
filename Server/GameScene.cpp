@@ -88,7 +88,7 @@ void CGameScene::Update(float elapsedTime)
 		if (round_timer <= 0.f) {
 			round_timer = 0.f;
 			round_ended = true;
-			// TODO: 정산 트리거 (다음 작업)
+			TriggerSettlement();
 		}
 	}
 }
@@ -167,6 +167,71 @@ void CGameScene::DetectPlayerReturns()
 			auto sendBuffer = MAKE_SEND_BUFFER(pkt);
 			BroadCast(sendBuffer);
 		}
+	}
+}
+
+void CGameScene::TriggerSettlement()
+{
+	// 전원 복귀 여부
+	bool all_returned = !players.empty();
+	for (auto& [id, player] : players) {
+		if (!player->GetReturned()) {
+			all_returned = false;
+			break;
+		}
+	}
+
+	for (auto& [id, player] : players) {
+		auto inv = player->GetInventory();
+		if (!inv)
+			continue;
+
+		// item_id별 묶음 (price, count)
+		map<uint16, std::pair<uint32, uint16>> grouped; // [item_id] → (price, count)
+		uint32 base_coin = 0;
+
+		vector<uint32> to_remove;
+		for (auto& [invId, item] : inv->GetItems()) {
+			if (item->GetItemType() != ITEM_TYPE::TREASURE)
+				continue;
+
+			auto treasure = static_pointer_cast<CTreasure>(item);
+			uint16 iid    = static_cast<uint16>(treasure->GetItemId());
+			uint32 price  = treasure->GetPrice();
+
+			grouped[iid].first  = price;
+			grouped[iid].second += 1;
+			base_coin           += price;
+			to_remove.push_back(invId);
+		}
+
+		for (auto invId : to_remove)
+			inv->RemoveItem(invId);
+
+		float rate      = player->GetReturned() ? 1.0f : 0.5f;
+		float bonus     = all_returned ? 2.0f : 1.0f;
+		uint32 final_coin = static_cast<uint32>(base_coin * rate * bonus);
+		player->AddCoin(final_coin);
+
+		// 플레이어에게 개별 정산 패킷 전송
+		uint16 entry_count = static_cast<uint16>(grouped.size());
+		S_GAMESETTLEMENT_WRITE writer(base_coin, final_coin,
+		                              player->GetReturned(), all_returned,
+		                              scene_type);
+
+		auto list = writer.ReserveTreasureList(entry_count);
+
+		uint16 i = 0;
+		for (auto& [iid, pc] : grouped) {
+			list[i].item_id = iid;
+			list[i].price   = pc.first;
+			list[i].count   = pc.second;
+			++i;
+		}
+
+		auto sendBuffer = writer.CloseAndReturn();
+		if (auto session = player->GetSession())
+			session->DoSend(sendBuffer);
 	}
 }
 

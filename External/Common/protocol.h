@@ -80,6 +80,7 @@ enum PacketType : uint16_t
 	// 정산 시스템
 	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
 	_S_PLAYER_RETURNED,    // 서버 → 클라: 특정 플레이어가 복귀존 진입 (1회)
+	_S_GAME_SETTLEMENT,    // 서버 → 클라: 라운드 종료 정산 결과
 };
 
 #pragma pack (push, 1)
@@ -706,5 +707,37 @@ struct S_PlayerReturned : public PacketHeader
 	S_PlayerReturned() : PacketHeader(sizeof(S_PlayerReturned), (UINT)PacketType::_S_PLAYER_RETURNED) {}
 };
 static_assert(sizeof(S_PlayerReturned) == 4 + 9, "S_PlayerReturned size mismatch!");
+
+// 서버 → 클라: 라운드 종료 정산 결과 (가변길이, unicast per player)
+// 복귀자 100%, 미복귀자 50%, 전원 복귀 시 ×2 보너스
+// TreasureEntry는 서버가 item_id별로 묶어서 전송 (검증값)
+struct S_GameSettlement : public PacketHeader
+{
+	struct TreasureEntry
+	{
+		uint16 item_id;
+		uint32 price;    // 개당 가격 (서버 검증값)
+		uint16 count;
+	};  // 8 bytes
+
+	uint32     base_coin;           // 보물 합산
+	uint32     final_coin;          // 보너스/복귀 적용 후 최종
+	bool       returned;
+	bool       all_returned_bonus;
+	SCENE_TYPE scene_type;
+	uint16     buff_offset;
+	uint16     treasure_count;
+
+	S_GameSettlement() : PacketHeader(sizeof(S_GameSettlement), (UINT)PacketType::_S_GAME_SETTLEMENT) {}
+
+	using TreasureList = PacketList<S_GameSettlement::TreasureEntry>;
+	TreasureList GetTreasureList()
+	{
+		BYTE* data = reinterpret_cast<BYTE*>(this);
+		data += buff_offset;
+		return TreasureList(reinterpret_cast<TreasureEntry*>(data), treasure_count);
+	}
+};
+static_assert(sizeof(S_GameSettlement) == 4 + 15, "S_GameSettlement size mismatch!");
 
 #pragma pack (pop)

@@ -43,6 +43,7 @@ public:
     void Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
     void Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt);
     void Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt);
+    void Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt);
 
     // 싱글용 (Ghost 드롭 등 외부에서 호출 가능)
     void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
@@ -97,6 +98,10 @@ private:
     // 사운드 관련
     void PlayMeleeAttackSound();
 
+    // 정산 모달
+    void DrawSettlementModal();
+    void TriggerSinglePlayerSettlement();
+
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;
@@ -138,5 +143,27 @@ private:
     float             melee_attack_cooldown = -1.0f;
     float             spray_attack_timer    = -1.0f;
     float             spray_attack_cooldown = -1.0f;
+
+    // 정산 결과 (S_GameSettlement 수신 또는 싱글 자체 계산)
+    struct SettlementEntry
+    {
+        uint16      item_id;
+        uint32      price;
+        uint16      count;
+        std::string name;
+        std::string icon_path;
+    };
+
+    struct SettlementResult
+    {
+        std::vector<SettlementEntry> entries;
+        uint32 base_coin          = 0;
+        uint32 final_coin         = 0;
+        bool   returned           = false;
+        bool   all_returned_bonus = false;
+    };
+
+    SettlementResult  settlement_result;
+    bool              show_settlement_modal = false;
 };
 

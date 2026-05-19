@@ -119,6 +119,7 @@ public:
 	virtual ~CTreasure() override;
 
 	TREASURE_GRADE GetGrade() const { return grade; }
+	uint32         GetPrice() const { return price; }
 
 private:
 	const uint32		 price;

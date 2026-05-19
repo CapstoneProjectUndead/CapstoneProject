@@ -259,14 +259,28 @@ void CScene::RemoveObject(UINT id)
 	if (iter == id_To_Index.end())
 		return;
 
-	UINT idx = id_To_Index[id];
-	UINT last = objects.size() - 1;
+	UINT idx = iter->second;
+
+	// [DEBUG] stale idx 진단 — 디버깅 끝나면 cout/가드 제거 가능
+	std::cout << "[RemoveObject] id=" << id
+	          << " idx=" << idx
+	          << " objects.size=" << objects.size() << "\n";
+
+	if (idx >= objects.size() || !objects[idx]) {
+		std::cout << "[RemoveObject] STALE INDEX — id_To_Index만 정리하고 skip\n";
+		id_To_Index.erase(id);
+		return;
+	}
+
+	UINT last = (UINT)objects.size() - 1;
 
 	if (auto* col = objects[idx]->GetComponent<CColliderComponent>())
 		CPhysicsManager::GetInstance().EraseCollider(col);
 
 	std::swap(objects[idx], objects[last]);
-	id_To_Index[objects[idx]->GetID()] = idx;
+	if (objects[idx]) {
+		id_To_Index[objects[idx]->GetID()] = idx;
+	}
 
 	objects.pop_back();
 	id_To_Index.erase(id);

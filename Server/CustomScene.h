@@ -16,6 +16,8 @@ public:
     virtual void OnSceneActivate() override;
     virtual void OnSceneDeactivate() override;
 
+    virtual void EnterScene(shared_ptr<CPlayer> player) override;
+
 public:
     void C_Handle_Enter_CustomScene(shared_ptr<Session> session, const C_EnterRoom& pkt);
     void C_Handle_Custom_Select(shared_ptr<Session> session, const C_CustomSelect& pkt);

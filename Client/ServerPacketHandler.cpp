@@ -148,7 +148,7 @@ bool Handle_S_PLAYER_MOVE(std::shared_ptr<Session> session, S_PlayerMove& pkt)
 {
 	// Title 씬과 Custom 씬에는 플레이어가 없다.
 	if (pkt.scene_type == SCENE_TYPE::TITLE || pkt.scene_type == SCENE_TYPE::CUSTOMS)
-		assert(nullptr);
+		return true;
 
 	CScene* targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)pkt.scene_type].get();
 	assert(targetScene);
@@ -678,6 +678,20 @@ bool Handle_S_PLAYER_RETURNED(std::shared_ptr<Session> session, S_PlayerReturned
 		return true;
 
 	gameScene->Handle_S_PlayerReturned(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_GAME_SETTLEMENT(std::shared_ptr<Session> session, S_GameSettlement& pkt)
+{
+	if (pkt.scene_type != SCENE_TYPE::GAME)
+		return true;
+
+	CGameScene* gameScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	if (!gameScene)
+		return true;
+
+	gameScene->Handle_S_GameSettlement(session, pkt);
 
 	return true;
 }

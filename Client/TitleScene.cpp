@@ -585,7 +585,8 @@ void CTitleScene::DrawLoadingPopUpResult()
                     if (is_room_enter) {
                         is_room_enter = false;
 
-                        // 여기서 씬 전환!
+                        // 서버는 EnterRoom 처리 시 이미 player를 CUSTOMS에 만들어 둠.
+                        // 클라는 그 사실에 맞춰 화면만 전환.
                         CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
                     }
                 }

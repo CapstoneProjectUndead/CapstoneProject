@@ -177,3 +177,34 @@ public:
 		return ItemList(firstItem, itemCount);
 	}
 };
+
+class S_GAMESETTLEMENT_WRITE : public S_WRITE<S_GameSettlement>
+{
+public:
+	using Entry = S_GameSettlement::TreasureEntry;
+	using TreasureList = PacketList<S_GameSettlement::TreasureEntry>;
+
+	S_GAMESETTLEMENT_WRITE(uint32 baseCoin, uint32 finalCoin,
+	                       bool returned, bool allReturnedBonus,
+	                       SCENE_TYPE sceneType)
+	{
+		sendBuffer = std::make_shared<SendBuffer>(4096);
+		bw = BufferWriter(sendBuffer->Buffer(), 4096);
+
+		pkt = bw.Reserve<S_GameSettlement>(1);
+		pkt->SetPacketType((UINT)PacketType::_S_GAME_SETTLEMENT);
+		pkt->base_coin          = baseCoin;
+		pkt->final_coin         = finalCoin;
+		pkt->returned           = returned;
+		pkt->all_returned_bonus = allReturnedBonus;
+		pkt->scene_type         = sceneType;
+	}
+
+	TreasureList ReserveTreasureList(uint16 count)
+	{
+		Entry* first = bw.Reserve<Entry>(count);
+		pkt->buff_offset      = (uint16)((uint64)first - (uint64)pkt);
+		pkt->treasure_count   = count;
+		return TreasureList(first, count);
+	}
+};

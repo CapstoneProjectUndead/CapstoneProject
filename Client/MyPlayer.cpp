@@ -269,7 +269,8 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 		return;
 
 	auto move = GetComponent<CMovementComponent>();
-	if (!move || current_scene_type == SCENE_TYPE::CUSTOMS) return;
+	if (!move || current_scene_type == SCENE_TYPE::CUSTOMS) 
+		return;
 	
 	// 키 처리
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };

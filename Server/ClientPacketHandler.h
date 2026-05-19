@@ -72,6 +72,7 @@ enum : uint16
 	// 정산 시스템
 	PKT_S_RETURN_ZONE_ACTIVE,
 	PKT_S_PLAYER_RETURNED,
+	PKT_S_GAME_SETTLEMENT,
 };
 
 // Custom Handlers

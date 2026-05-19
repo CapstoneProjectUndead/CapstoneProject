@@ -74,6 +74,7 @@ enum : uint16
 	// 정산 시스템
 	PKT_S_RETURN_ZONE_ACTIVE,
 	PKT_S_PLAYER_RETURNED,
+	PKT_S_GAME_SETTLEMENT,
 };
 
 // Custom Handlers
@@ -113,6 +114,7 @@ bool Handle_S_PLAY_SOUND(std::shared_ptr<Session> session, S_PlaySound& pkt);
 bool Handle_S_POSSESSION_RELEASE_FAIL(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
 bool Handle_S_RETURN_ZONE_ACTIVE(std::shared_ptr<Session> session, S_ReturnZoneActive& pkt);
 bool Handle_S_PLAYER_RETURNED(std::shared_ptr<Session> session, S_PlayerReturned& pkt);
+bool Handle_S_GAME_SETTLEMENT(std::shared_ptr<Session> session, S_GameSettlement& pkt);
 
 class CServerPacketHandler
 {
@@ -157,6 +159,7 @@ public:
 		GPacketHandler[PKT_S_POSSESSION_RELEASE_FAIL] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PossessionReleaseFail>(Handle_S_POSSESSION_RELEASE_FAIL, session, buffer, len); };
 		GPacketHandler[PKT_S_RETURN_ZONE_ACTIVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_ReturnZoneActive>(Handle_S_RETURN_ZONE_ACTIVE, session, buffer, len); };
 		GPacketHandler[PKT_S_PLAYER_RETURNED]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PlayerReturned>(Handle_S_PLAYER_RETURNED, session, buffer, len); };
+		GPacketHandler[PKT_S_GAME_SETTLEMENT]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_GameSettlement>(Handle_S_GAME_SETTLEMENT, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)

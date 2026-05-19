@@ -227,8 +227,10 @@ void CGameScene::Update(float elapsedTime)
 			return_range = 1.5f;
 		}
 
-		if (round_timer < 0.f) 
+		if (round_timer <= 0.f) {
 			round_timer = 0.f;
+			TriggerSinglePlayerSettlement();
+		}
 	}
 
 	CScene::Update(elapsedTime);
@@ -290,6 +292,9 @@ void CGameScene::DrawUI()
 
 	// 복귀 토스트 (S_PlayerReturned 받을 때마다 누적, 2.5초 자동 만료)
 	DrawReturnToasts();
+
+	// 정산 결과 모달
+	DrawSettlementModal();
 
 	if (my_player) {
 
@@ -367,6 +372,10 @@ void CGameScene::Enter()
 	return_range  = 0.f;
 	return_toasts.clear();
 	my_player->SetReturned(false);
+
+	// 정산 모달 리셋
+	show_settlement_modal = false;
+	settlement_result     = SettlementResult{};
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
@@ -1182,6 +1191,106 @@ void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const
 	return_toasts.push_back(std::move(toast));
 }
 
+void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt)
+{
+	settlement_result = SettlementResult{};
+	settlement_result.base_coin          = pkt.base_coin;
+	settlement_result.final_coin         = pkt.final_coin;
+	settlement_result.returned           = pkt.returned;
+	settlement_result.all_returned_bonus = pkt.all_returned_bonus;
+
+	auto list = pkt.GetTreasureList();
+	for (uint16 i = 0; i < list.Count(); ++i) {
+		SettlementEntry e;
+		e.item_id = list[i].item_id;
+		e.price   = list[i].price;
+		e.count   = list[i].count;
+
+		// 이름/아이콘 조회
+		auto item = ItemFactory::Create(e.item_id);
+		if (item) {
+			e.name      = item->GetName();
+			e.icon_path = item->GetIconPath();
+		}
+		settlement_result.entries.push_back(std::move(e));
+	}
+
+	// 소지금 반영 + 인벤토리에서 보물 제거
+	if (my_player) {
+		my_player->SetGold(my_player->GetGold() + pkt.final_coin);
+
+		auto inv = my_player->GetInventory();
+		if (inv) {
+			std::vector<uint32> to_remove;
+			for (auto& [invId, item] : inv->GetItems()) {
+				if (item->GetItemType() == ITEM_TYPE::TREASURE)
+					to_remove.push_back(invId);
+			}
+			for (auto id : to_remove)
+				inv->RemoveItem(id);
+		}
+	}
+
+	show_settlement_modal = true;
+}
+
+void CGameScene::TriggerSinglePlayerSettlement()
+{
+	if (show_settlement_modal || !my_player)
+		return;
+
+	settlement_result = SettlementResult{};
+	settlement_result.returned = my_player->GetReturned();
+	// 싱글 1인 = 복귀했으면 전원 복귀 보너스 적용
+	settlement_result.all_returned_bonus = my_player->GetReturned();
+
+	auto inv = my_player->GetInventory();
+	if (inv) {
+		// item_id별 묶음
+		std::unordered_map<uint16, SettlementEntry> grouped;
+		for (auto& [invId, item] : inv->GetItems()) {
+			if (item->GetItemType() != ITEM_TYPE::TREASURE)
+				continue;
+
+			auto treasure = std::dynamic_pointer_cast<CTreasure>(item);
+			if (!treasure)
+				continue;
+
+			uint16 iid = static_cast<uint16>(treasure->GetItemId());
+			if (grouped.find(iid) == grouped.end()) {
+				SettlementEntry e;
+				e.item_id   = iid;
+				e.price     = treasure->GetPrice();
+				e.count     = 0;
+				e.name      = treasure->GetName();
+				e.icon_path = treasure->GetIconPath();
+				grouped[iid] = std::move(e);
+			}
+			grouped[iid].count += 1;
+			settlement_result.base_coin += treasure->GetPrice();
+		}
+		for (auto& [iid, e] : grouped)
+			settlement_result.entries.push_back(e);
+
+		float rate  = settlement_result.returned ? 1.0f : 0.5f;
+		float bonus = settlement_result.all_returned_bonus ? 2.0f : 1.0f;
+		settlement_result.final_coin = static_cast<uint32>(settlement_result.base_coin * rate * bonus);
+
+		my_player->SetGold(my_player->GetGold() + settlement_result.final_coin);
+
+		// 보물 인벤토리에서 제거
+		std::vector<uint32> to_remove;
+		for (auto& [invId, item] : inv->GetItems()) {
+			if (item->GetItemType() == ITEM_TYPE::TREASURE)
+				to_remove.push_back(invId);
+		}
+		for (auto id : to_remove)
+			inv->RemoveItem(id);
+	}
+
+	show_settlement_modal = true;
+}
+
 // 싱글 전용
 void CGameScene::DetectMyPlayerReturn()
 {
@@ -1303,6 +1412,147 @@ void CGameScene::DrawReturnMarker()
 	}
 }
 
+void CGameScene::DrawSettlementModal()
+{
+	if (!show_settlement_modal)
+		return;
+
+	ImGuiIO& io = ImGui::GetIO();
+	const float scale = G_RATIO_Y;
+
+	// 매 프레임 OpenPopup (BeginPopupModal 전에 호출해야 처음에 열림)
+	ImGui::OpenPopup("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC");  // "정산 결과"
+
+	ImVec2 winSize = ImVec2(560.f * G_RATIO_X, 0.f);
+	ImGui::SetNextWindowSize(winSize, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(
+		ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
+		ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+	                       | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize;
+
+	if (!ImGui::BeginPopupModal("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC", nullptr, flags))
+		return;
+
+	ImFont* boldFont = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+	const float rowH  = 40.f * scale;
+	const float iconSz = 32.f * scale;
+
+	// 보물 목록 테이블
+	ImGui::PushFont(boldFont);
+	if (!settlement_result.entries.empty()) {
+		ImGuiTableFlags tblFlags = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg;
+		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags)) {
+			ImGui::TableSetupColumn("",    ImGuiTableColumnFlags_WidthFixed, iconSz + 8.f * scale);
+			ImGui::TableSetupColumn("\xEB\xB3\xB4\xEB\xB3\xBC \xEC\x9D\xB4\xEB\xA6\x84",  // "보물 이름"
+			    ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("\xEA\xB0\x9C\xEB\x8B\xB9 \xEA\xB0\x80\xEA\xB2\xA9", // "개당 가격"
+			    ImGuiTableColumnFlags_WidthFixed, 110.f * scale);
+			ImGui::TableSetupColumn("\xEA\xB0\x9C\xEC\x88\x98",  // "개수"
+			    ImGuiTableColumnFlags_WidthFixed, 55.f * scale);
+			ImGui::TableHeadersRow();
+
+			for (const auto& e : settlement_result.entries) {
+				ImGui::TableNextRow(0, rowH);
+
+				// 아이콘
+				ImGui::TableSetColumnIndex(0);
+				ImTextureID tex = (ImTextureID)nullptr;
+				if (!e.icon_path.empty())
+					tex = CImGuiManager::GetInstance().GetTexture(e.icon_path);
+				if (tex) {
+					ImVec2 cursor = ImGui::GetCursorScreenPos();
+					ImGui::GetWindowDrawList()->AddImage(
+					    tex,
+					    ImVec2(cursor.x + 4.f * scale, cursor.y + 4.f * scale),
+					    ImVec2(cursor.x + iconSz + 4.f * scale, cursor.y + iconSz + 4.f * scale));
+				}
+				ImGui::Dummy(ImVec2(iconSz + 8.f * scale, rowH));
+
+				// 이름
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::TextUnformatted(e.name.c_str());
+
+				// 개당 가격
+				ImGui::TableSetColumnIndex(2);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::Text("%u", e.price);
+
+				// 개수
+				ImGui::TableSetColumnIndex(3);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::Text("x%u", e.count);
+			}
+			ImGui::EndTable();
+		}
+	}
+	else {
+		// "획득한 보물 없음"
+		ImGui::TextUnformatted("\xED\x9A\x8D\xEB\x93\x9D\xED\x95\x9C \xEB\xB3\xB4\xEB\xB3\xBC \xEC\x97\x86\xEC\x9D\x8C");
+	}
+	ImGui::PopFont();
+
+	ImGui::Separator();
+
+	// 보물 합계
+	ImGui::PushFont(boldFont);
+	// "보물 합계: %u 코인"
+	ImGui::Text("\xEB\xB3\xB4\xEB\xB3\xBC \xED\x95\xA9\xEA\xB3\x84: %u \xEC\xBD\x94\xEC\x9D\xB8",
+	    settlement_result.base_coin);
+	ImGui::PopFont();
+
+	// 보너스/배율
+	if (settlement_result.all_returned_bonus) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.2f, 1.f));
+		// "전원 복귀 보너스 x2!"
+		ImGui::TextUnformatted("\xEC\xA0\x84\xEC\x9B\x90 \xEB\xB3\xB5\xEA\xB7\x80 \xEB\xB3\xB4\xEB\x84\x88\xEC\x8A\xA4 x2!");
+		ImGui::PopStyleColor();
+	}
+	else if (!settlement_result.returned) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.4f, 0.4f, 1.f));
+		// "미복귀 x0.5"
+		ImGui::TextUnformatted("\xEB\xAF\xB8\xEB\xB3\xB5\xEA\xB7\x80 x0.5");
+		ImGui::PopStyleColor();
+	}
+
+	ImGui::Separator();
+
+	// 최종 코인
+	ImGui::PushFont(boldFont);
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.25f, 1.f));
+	// "최종 코인: %u"
+	ImGui::Text("\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
+	ImGui::PopStyleColor();
+	ImGui::PopFont();
+
+	ImGui::Spacing();
+
+	// "로비로 복귀" 버튼
+	float btnW = 200.f * G_RATIO_X;
+	ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - btnW) * 0.5f + ImGui::GetCursorPosX());
+	if (ImGui::Button("\xEB\xA1\xA0\xEB\xB9\x84\xEB\xA1\x9C \xEB\xB3\xB5\xEA\xB7\x80",  // "로비로 복귀"
+	    ImVec2(btnW, 40.f * scale))) {
+		show_settlement_modal = false;
+		ImGui::CloseCurrentPopup();
+
+		if (g_is_single) {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+		}
+		else {
+			C_SceneChange pkt;
+			pkt.player_id     = my_player->GetID();
+			pkt.current_scene = SCENE_TYPE::GAME;
+			pkt.target_scene  = SCENE_TYPE::LOBBY;
+			auto sendBuffer = CServerPacketHandler::MakeSendBuffer(pkt);
+			my_player->GetSession()->DoSend(sendBuffer);
+		}
+	}
+
+	ImGui::EndPopup();
+}
+
 void CGameScene::Exit()
 {
 	CScene::Exit();
@@ -1319,6 +1569,10 @@ void CGameScene::Exit()
 	return_range  = 0.f;
 	return_toasts.clear();
 	my_player->SetReturned(false);
+
+	// 정산 모달 정리
+	show_settlement_modal = false;
+	settlement_result     = SettlementResult{};
 
 	my_player = nullptr;
 }
