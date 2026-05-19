@@ -312,6 +312,7 @@ void CGameScene::LeaveScene(uint64 playerId)
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+	obj->SetCurrentSceneType(scene_type);
 	obj->GetWorldMatrix() = node->local_matrix;
 
 	bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");

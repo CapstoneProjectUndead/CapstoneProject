@@ -261,13 +261,7 @@ void CScene::RemoveObject(UINT id)
 
 	UINT idx = iter->second;
 
-	// [DEBUG] stale idx 진단 — 디버깅 끝나면 cout/가드 제거 가능
-	std::cout << "[RemoveObject] id=" << id
-	          << " idx=" << idx
-	          << " objects.size=" << objects.size() << "\n";
-
 	if (idx >= objects.size() || !objects[idx]) {
-		std::cout << "[RemoveObject] STALE INDEX — id_To_Index만 정리하고 skip\n";
 		id_To_Index.erase(id);
 		return;
 	}
