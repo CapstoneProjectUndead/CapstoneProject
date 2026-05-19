@@ -378,8 +378,14 @@ void CGameScene::LoadGameScene()
 
 void CGameScene::CreateGameScene()
 {
-	if (prototypes.empty()) 
+	if (prototypes.empty())
 		LoadGameScene();
+
+	// 이전 라운드 누적 상태 초기화 (재진입 대비)
+	map_instance_data.clear();
+	static_objects.clear();
+	mineable_objects.clear();
+	mineable_id_counter = 10000;
 
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 

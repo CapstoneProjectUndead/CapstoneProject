@@ -1596,8 +1596,10 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 	// 보물 & 몬스터 spawn 위치들 모두 clear
 	treasures.clear();
 	monster_spawn_info.clear();
+	id_To_Index.clear();
 
 	objects = factory->CreateGameSceneByServer(instance_data);
+	instance_data.clear();	// 다음 라운드 재진입 시 누적 방지
 }
 
 void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)

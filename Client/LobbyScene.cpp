@@ -253,9 +253,14 @@ void CLobbyScene::Enter()
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
+		my_player->SetIsReady(false);
 		my_player->SetReturned(false);
 		camera->SetTarget(my_player.get());
 	}
+
+	auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(1));
+	if (readyUI)
+		readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
 }
 
 void CLobbyScene::Exit()
