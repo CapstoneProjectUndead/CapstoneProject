@@ -74,6 +74,9 @@ private:
     void ProcessUnVisibleObjectMining(float elapsedTime);
     void FindNearestMineTarget(MINEABLEOBJECT_TYPE type);
 
+    // 채굴 오브젝트 파괴 시 다우징로드 추적 목록 갱신 (싱글 전용)
+    void RemoveTreasureFromDowsing(const XMFLOAT3& pos);
+
     // 공격
     void ProcessAttack(float elapsedTime);
     void ProcessMeleeAttack(float elapsedTime);

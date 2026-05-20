@@ -462,33 +462,9 @@ void CGameScene::ProcessPickup()
 			if (!inv)
 				return;
 
-			// 보물이라면 
-			if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
-
-				// 아이템 줍기 시도
-				if (inv->AddItem(worldItem->GetItem())) {
-
-					// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
-					uint32 id = worldItem->GetID();
-					auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
-						[id](const TreasureInfo& info) {
-							return info.world_id == id;
-						});
-
-					if (treasure_it != treasures.end())
-						treasures.erase(treasure_it);
-
-					// 다우징로드에 있는 보물 컨테이너 갱신
-					// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
-					my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
-
-					RemoveObject(worldItem->GetID());
-				}
-			}
-			else {
-				inv->AddItem(worldItem->GetItem());
+			// 인벤토리 추가에 성공한 경우에만 월드에서 아이템을 제거한다.
+			if (inv->AddItem(worldItem->GetItem()))
 				RemoveObject(worldItem->GetID());
-			}
 		}
 		else {
 			// (멀티) 서버에 줍기 요청만 보낸다.
@@ -589,6 +565,9 @@ void CGameScene::ProcessVisibleObjectMining(float elapsedTime)
 					}
 					objects.pop_back();
 				}
+
+				// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
+				RemoveTreasureFromDowsing(pos);
 
 				pos.y = 0.05f;
 				uint16 picked = g_TreasureTable[rand() % 13];
@@ -716,6 +695,9 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 					objects.pop_back();
 				}
 
+				// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
+				RemoveTreasureFromDowsing(pos);
+
 				pos.y = 0.05f;
 				uint16 picked = g_TreasureTable[rand() % 13];
 				SpawnWorldItem(picked, pos);
@@ -772,6 +754,9 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 							}
 							objects.pop_back();
 						}
+
+						// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
+						RemoveTreasureFromDowsing(pos);
 
 						pos.y = 0.05f;
 						uint16 picked = g_TreasureTable[rand() % 13];
@@ -837,6 +822,28 @@ void CGameScene::FindNearestMineTarget(MINEABLEOBJECT_TYPE type)
 			minDist = dist;
 			mining_target = mineObj.get();
 		}
+	}
+}
+
+// 채굴 오브젝트 파괴 시, 다우징로드가 추적하던 보물 정보를 제거하고 갱신한다. (싱글 전용)
+void CGameScene::RemoveTreasureFromDowsing(const XMFLOAT3& pos)
+{
+	// treasure_pos는 ObjectFactory에서 실제 객체 좌표(GetPosition)로 맞춰 두었으므로 위치로 매칭한다.
+	auto it = std::find_if(treasures.begin(), treasures.end(),
+		[&pos](const TreasureInfo& info) {
+			return info.treasure_pos.x == pos.x
+				&& info.treasure_pos.y == pos.y
+				&& info.treasure_pos.z == pos.z;
+		});
+
+	if (it == treasures.end())
+		return;
+
+	treasures.erase(it);
+
+	if (my_player) {
+		if (auto itemFinder = my_player->GetComponent<CItemFinder>())
+			itemFinder->RegisterTreasures(treasures);
 	}
 }
 

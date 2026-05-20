@@ -389,6 +389,19 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 			// 땅속 보물은 메시 컴포넌트 스킵 (안 보이게)
 			CopyFromPrototype(obj, name, inst.position, inst.rotationY, !isHidden);
 
+			// 다우징로드 위치 매칭용: treasure_pos를 실제 객체 좌표로 보정 (inst.position과 다름)
+			if (isTreasure) {
+				const XMFLOAT3 realPos = obj->GetPosition();
+				for (auto& treasure : treasures) {
+					if (treasure.treasure_pos.x == inst.position.x
+						&& treasure.treasure_pos.y == inst.position.y
+						&& treasure.treasure_pos.z == inst.position.z) {
+						treasure.treasure_pos = realPos;
+						break;
+					}
+				}
+			}
+
 			// collider copy (땅속 보물은 콜라이더도 스킵 - 플레이어가 위로 지나갈 수 있게)
 			if (!isHidden) {
 				for(auto protoCollider : proto->GetComponents<CColliderComponent>()) {
