@@ -349,9 +349,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 	for (const auto& inst : instData) {
 
-		if (inst.type == MapGenerator::EModelType::TREASURE
-			|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
-			treasures.push_back(TreasureInfo{ treasure_id++, inst.position });
+		if (inst.type == MapGenerator::EModelType::TREASURE) {
+			treasures.push_back(TreasureInfo{ treasure_id++, inst.position, MINEABLEOBJECT_TYPE::VISIBLE });
+		}
+		else if (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
+			treasures.push_back(TreasureInfo{ treasure_id++, inst.position, MINEABLEOBJECT_TYPE::NONE_VISIBLE });
 		}
 		else if (inst.type == MapGenerator::EModelType::MONSTER_HUMAN) {
 			humanMonster_spawn_positions.push_back(inst.position);

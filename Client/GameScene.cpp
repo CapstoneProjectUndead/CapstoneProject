@@ -866,6 +866,8 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 	// 공격 소리는 서버의 허락을 받지 않고 바로 적용한다.
 	if (KEY_TAP(KEY::LBTN) && !g_is_single && !my_player->GetIsKnockedBack() 
 		&& !my_player->GetIsPossessed()
+		&& !my_player->GetIsStunned()
+		&& !my_player->GetDowsing()
 		&& melee_attack_cooldown <= 0.0f) {
 
 		melee_attack_cooldown = 1.5f;
@@ -875,7 +877,9 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 
 	// 클릭: 애니메이션 시작 + 타이머 세팅
 	if (KEY_TAP(KEY::LBTN) && melee_attack_cooldown <= 0.0f
-		&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+		&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()
+		&& !my_player->GetIsStunned()
+		&& !my_player->GetDowsing()) {
 
 		my_player->OnAttack();
 		melee_attack_timer    = 0.4f;
@@ -938,7 +942,9 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 		case 16: // 스프레이
 		{
 			if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f
-				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()
+				&& !my_player->GetIsStunned()
+				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
 				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
 				spray_attack_timer = 0.8f;
@@ -961,7 +967,9 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 		case 17: // 마법 지팡이
 		{
 			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
-				&& !my_player->GetIsPossessed()) {
+				&& !my_player->GetIsPossessed()
+				&& !my_player->GetIsStunned()
+				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
 			}
 		}
@@ -969,7 +977,9 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 		case 18: // 비비탄총
 		{
 			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
-				&& !my_player->GetIsPossessed()) {
+				&& !my_player->GetIsPossessed()
+				&& !my_player->GetIsStunned()
+				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
 			}
 		}
@@ -1760,7 +1770,8 @@ void CGameScene::Handle_S_MineableList(std::shared_ptr<Session>& session, S_Mine
 			}
 		}
 
-		treasures.push_back(TreasureInfo{ mineableList[i].world_id, pos });
+		assert(mineableList[i].type != MINEABLEOBJECT_TYPE::NONE);
+		treasures.push_back(TreasureInfo{ mineableList[i].world_id, pos, mineableList[i].type });
 	}
 
 	// RegisterTreasures는 이후 GameScene::Enter → BuildObjects에서 호출됨 (my_player 유효 시점)

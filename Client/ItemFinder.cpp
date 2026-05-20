@@ -49,19 +49,6 @@ void CItemFinder::Update(const float deltaTime)
     }
 }
 
-void CItemFinder::RegisterTreasures(const std::vector<MapGenerator::InstanceData>& mapData)
-{
-    treasures.clear();
-
-    // 맵 데이터를 순회하며 보물만 찾아 벡터에 저장 (땅속 보물 포함)
-    for (const auto& instance : mapData) {
-        if (instance.type == MapGenerator::EModelType::TREASURE
-            || instance.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
-            treasures.emplace_back(TreasureInfo{ instance.position });
-        }
-    }
-}
-
 void CItemFinder::RegisterTreasures(const std::vector<TreasureInfo>& _treasures)
 {
     treasures.clear();
@@ -74,9 +61,10 @@ float CItemFinder::SearchNearbyTreasure(const XMFLOAT3& playerPos)
 
     for (const auto& treasure : treasures) {
 
-        // 유효한 상태(Vaild)인 보물만 검사
-        // 이미 누가 파고 있거나(Occupied), 사라진(Invalid) 보물은 감지되지 않는다.
-        if (treasure.treasure_state != TREASURE_STATE::Vaild) 
+        assert(treasure.is_visible_object != MINEABLEOBJECT_TYPE::NONE);
+
+        // 땅속(보이지 않는) 보물만 추적
+        if (treasure.is_visible_object == MINEABLEOBJECT_TYPE::VISIBLE)
             continue;
 
         // XZ 평면 거리 계산

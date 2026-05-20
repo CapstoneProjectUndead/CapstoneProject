@@ -1,12 +1,6 @@
 #pragma once
 #include "Object.h"
 
-enum class MINEABLEOBJECT_TYPE
-{
-    VISIBLE,
-    NONE_VISIBLE
-};
-
 class CMineableObject : public CObject
 {
 public:

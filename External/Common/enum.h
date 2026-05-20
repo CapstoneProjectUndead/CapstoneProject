@@ -52,13 +52,6 @@ enum class AI_STATE // 어떤 애니메이션을 재생할지 결정한다.
 	MONSTER_DEAD,
 };
 
-enum class TREASURE_STATE : uint8_t
-{
-	Vaild, // 파밍 가능한 보물
-	Invalid, // 파밍 불가능 
-	Occupied, // 누가 지금 파고있다.
-};
-
 // Map 관련
 enum class EModelVariant : uint16_t
 {
@@ -161,6 +154,13 @@ enum class TREASURE_GRADE : uint8_t
 	RARE,		// 레어
 	EPIC,		// 에픽
 	LEGENDARY	// 전설
+};
+
+enum class MINEABLEOBJECT_TYPE
+{
+	NONE,
+	VISIBLE,
+	NONE_VISIBLE
 };
 
 //=======

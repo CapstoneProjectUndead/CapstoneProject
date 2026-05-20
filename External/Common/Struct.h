@@ -162,22 +162,16 @@ struct RoomInfo
 
 struct TreasureInfo
 {
-	uint32         world_id;
-	XMFLOAT3       treasure_pos;
-	TREASURE_STATE treasure_state;
+	uint32				 world_id;
+	XMFLOAT3			 treasure_pos;
+	MINEABLEOBJECT_TYPE  is_visible_object;
 
 	TreasureInfo() = default;
 
-	TreasureInfo(const XMFLOAT3 pos)
-		: world_id(0)
-		, treasure_pos(pos)
-		, treasure_state(TREASURE_STATE::Vaild)
-	{}
-
-	TreasureInfo(uint32 id, const XMFLOAT3 pos)
+	TreasureInfo(uint32 id, const XMFLOAT3 pos, MINEABLEOBJECT_TYPE type)
 		: world_id(id)
 		, treasure_pos(pos)
-		, treasure_state(TREASURE_STATE::Vaild)
+		, is_visible_object(type)
 	{}
 };
 

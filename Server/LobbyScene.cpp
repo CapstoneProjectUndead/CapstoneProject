@@ -189,6 +189,7 @@ void CLobbyScene::SendPlayerToGameScene()
 					int i = 0;
 					for (auto& [id, mineable] : mineableMap) {
 						list[i].world_id = id;
+						list[i].type = mineable->GetMineableType();
 						const XMFLOAT3& pos = mineable->GetPosition();
 						list[i].x = pos.x;
 						list[i].y = pos.y;

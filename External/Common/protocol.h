@@ -439,7 +439,8 @@ struct S_MineableList : public PacketHeader
 	{
 		uint32 world_id;
 		float  x, y, z;
-	};  // 16 bytes
+		MINEABLEOBJECT_TYPE type;
+	}; 
 
 	uint32      buff_offset;
 	uint32      mineable_count;
