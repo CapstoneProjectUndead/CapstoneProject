@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <cstdio>
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "PhysicsManager.h"
@@ -227,7 +228,7 @@ void CGameScene::Update(float elapsedTime)
 			return_range = 1.5f;
 		}
 
-		if (round_timer <= 0.f) {
+		if (round_timer <= 0.f || my_player->GetReturned()) {
 			round_timer = 0.f;
 			TriggerSinglePlayerSettlement();
 		}
@@ -387,6 +388,23 @@ void CGameScene::Enter()
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
 		if (itemFinder) {
 			itemFinder->RegisterTreasures(treasures);
+		}
+
+		// 임시
+		{
+			auto inv = my_player->GetInventory();
+			if (!inv)
+				return;
+
+			for (int i = 0; i < 10; ++i) {
+				auto treasure = ItemFactory::Create(56 + i);
+				inv->AddItem(treasure);
+			}
+
+			for (int i = 0; i < 10; ++i) {
+				auto treasure = ItemFactory::Create(68 + i);
+				inv->AddItem(treasure);
+			}
 		}
 	}
 }
@@ -1435,43 +1453,60 @@ void CGameScene::DrawSettlementModal()
 		return;
 
 	ImGuiIO& io = ImGui::GetIO();
-	const float scale = G_RATIO_Y;
+	const float scale  = G_RATIO_Y;
+	const float wW     = io.DisplaySize.x * 0.60f;
+	const float wH     = io.DisplaySize.y * 0.60f;
+	const float tableH = wH * 0.54f;
 
 	// 매 프레임 OpenPopup (BeginPopupModal 전에 호출해야 처음에 열림)
 	ImGui::OpenPopup("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC");  // "정산 결과"
 
-	ImVec2 winSize = ImVec2(560.f * G_RATIO_X, 0.f);
-	ImGui::SetNextWindowSize(winSize, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(wW, wH), ImGuiCond_Always);
 	ImGui::SetNextWindowPos(
 		ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
 		ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
-	                       | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize;
+	                       | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 	if (!ImGui::BeginPopupModal("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC", nullptr, flags))
 		return;
 
+	// enlarge font for readability (proportional to UI scale)
+	ImGui::SetWindowFontScale(scale * 1.1f);
+
+	// helper: draw text right-aligned within the content region
+	char fmtBuf[128];
+	auto rightAlignedText = [](const char* text) {
+		float textWidth = ImGui::CalcTextSize(text).x;
+		float avail = ImGui::GetContentRegionAvail().x;
+		if (avail > textWidth)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + avail - textWidth);
+		ImGui::TextUnformatted(text);
+	};
+
 	ImFont* boldFont = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
-	const float rowH  = 40.f * scale;
+	const float rowH  = 35.f * scale;
 	const float iconSz = 32.f * scale;
 
 	// 보물 목록 테이블
 	ImGui::PushFont(boldFont);
 	if (!settlement_result.entries.empty()) {
-		ImGuiTableFlags tblFlags = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg;
-		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags)) {
-			ImGui::TableSetupColumn("",    ImGuiTableColumnFlags_WidthFixed, iconSz + 8.f * scale);
-			ImGui::TableSetupColumn("\xEB\xB3\xB4\xEB\xB3\xBC \xEC\x9D\xB4\xEB\xA6\x84",  // "보물 이름"
+		ImGuiTableFlags tblFlags = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags, ImVec2(ImGui::GetContentRegionAvail().x, tableH))) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+			ImGui::TableSetupColumn("",    ImGuiTableColumnFlags_WidthFixed, iconSz + 20.f * scale);
+			ImGui::TableSetupColumn("\xEB\xB3\xB4\xEB\xAC\xBC \xEC\x9D\xB4\xEB\xA6\x84",  // "보물 이름"
 			    ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("\xEA\xB0\x9C\xEB\x8B\xB9 \xEA\xB0\x80\xEA\xB2\xA9", // "개당 가격"
-			    ImGuiTableColumnFlags_WidthFixed, 110.f * scale);
+			    ImGuiTableColumnFlags_WidthFixed, 140.f * G_RATIO_X);
 			ImGui::TableSetupColumn("\xEA\xB0\x9C\xEC\x88\x98",  // "개수"
-			    ImGuiTableColumnFlags_WidthFixed, 55.f * scale);
+			    ImGuiTableColumnFlags_WidthFixed, 85.f * G_RATIO_X);
 			ImGui::TableHeadersRow();
 
 			for (const auto& e : settlement_result.entries) {
 				ImGui::TableNextRow(0, rowH);
+				ImGui::SetWindowFontScale(scale * 0.9f);
 
 				// 아이콘
 				ImGui::TableSetColumnIndex(0);
@@ -1507,7 +1542,7 @@ void CGameScene::DrawSettlementModal()
 	}
 	else {
 		// "획득한 보물 없음"
-		ImGui::TextUnformatted("\xED\x9A\x8D\xEB\x93\x9D\xED\x95\x9C \xEB\xB3\xB4\xEB\xB3\xBC \xEC\x97\x86\xEC\x9D\x8C");
+		ImGui::TextUnformatted("\xED\x9A\x8D\xEB\x93\x9D\xED\x95\x9C \xEB\xB3\xB4\xEB\xAC\xBC \xEC\x97\x86\xEC\x9D\x8C");
 	}
 	ImGui::PopFont();
 
@@ -1516,21 +1551,22 @@ void CGameScene::DrawSettlementModal()
 	// 보물 합계
 	ImGui::PushFont(boldFont);
 	// "보물 합계: %u 코인"
-	ImGui::Text("\xEB\xB3\xB4\xEB\xB3\xBC \xED\x95\xA9\xEA\xB3\x84: %u \xEC\xBD\x94\xEC\x9D\xB8",
+	snprintf(fmtBuf, sizeof(fmtBuf), "\xEB\xB3\xB4\xEB\xAC\xBC \xED\x95\xA9\xEA\xB3\x84: %u \xEC\xBD\x94\xEC\x9D\xB8",
 	    settlement_result.base_coin);
+	rightAlignedText(fmtBuf);
 	ImGui::PopFont();
 
 	// 보너스/배율
 	if (settlement_result.all_returned_bonus) {
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.2f, 1.f));
-		// "전원 복귀 보너스 x2!"
-		ImGui::TextUnformatted("\xEC\xA0\x84\xEC\x9B\x90 \xEB\xB3\xB5\xEA\xB7\x80 \xEB\xB3\xB4\xEB\x84\x88\xEC\x8A\xA4 x2!");
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.65f, 1.f, 1.f));
+		// "복귀 보너스 x2!"
+		rightAlignedText("\xEB\xB3\xB4\xEB\x84\x88\xEC\x8A\xA4 x2!");
 		ImGui::PopStyleColor();
 	}
 	else if (!settlement_result.returned) {
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.4f, 0.4f, 1.f));
 		// "미복귀 x0.5"
-		ImGui::TextUnformatted("\xEB\xAF\xB8\xEB\xB3\xB5\xEA\xB7\x80 x0.5");
+		rightAlignedText("\xEB\xAF\xB8\xEB\xB3\xB5\xEA\xB7\x80 x0.5");
 		ImGui::PopStyleColor();
 	}
 
@@ -1538,19 +1574,23 @@ void CGameScene::DrawSettlementModal()
 
 	// 최종 코인
 	ImGui::PushFont(boldFont);
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.25f, 1.f));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.65f, 1.f, 1.f));
 	// "최종 코인: %u"
-	ImGui::Text("\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
+	snprintf(fmtBuf, sizeof(fmtBuf), "\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
+	rightAlignedText(fmtBuf);
 	ImGui::PopStyleColor();
 	ImGui::PopFont();
 
-	ImGui::Spacing();
-
-	// "로비로 복귀" 버튼
-	float btnW = 200.f * G_RATIO_X;
+	// "로비로 복귀" 버튼 - 하단 고정
+	float btnW = 130.f * G_RATIO_X;
+	float btnH = 30.f * scale;
+	float pad  = 12.f * scale;
+	float remainY = ImGui::GetContentRegionAvail().y;
+	if (remainY > btnH + pad)
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + remainY - btnH - pad);
 	ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - btnW) * 0.5f + ImGui::GetCursorPosX());
-	if (ImGui::Button("\xEB\xA1\xA0\xEB\xB9\x84\xEB\xA1\x9C \xEB\xB3\xB5\xEA\xB7\x80",  // "로비로 복귀"
-	    ImVec2(btnW, 40.f * scale))) {
+	if (ImGui::Button("\xEB\xA1\x9C\xEB\xB9\x84\xEB\xA1\x9C \xEB\xB3\xB5\xEA\xB7\x80",  // "로비로 복귀"
+	    ImVec2(btnW, 30.f * scale))) {
 		show_settlement_modal = false;
 		ImGui::CloseCurrentPopup();
 
