@@ -392,19 +392,21 @@ void CMyPlayer::SendPingToServer(const float elapsedTime)
 void CMyPlayer::ResetAll()
 {
 	is_possessed = false;
-	is_dowsing = false;
 	is_returned = false;
 	is_ready = false;
 	state = PLAYER_STATE::IDLE;
 	stat.hp = 100;
 	stat.stamina = 100;
 
-	auto itemFinder = GetComponent<CItemFinder>();
-	if (itemFinder) {
-		itemFinder->Toggle();
-		auto animator = GetComponent<CAnimatorComponent>();
-		if (animator)
-			animator->PlayAction("");
+	if (is_dowsing) {
+		is_dowsing = false;
+		auto itemFinder = GetComponent<CItemFinder>();
+		if (itemFinder) {
+			itemFinder->Toggle();
+			auto animator = GetComponent<CAnimatorComponent>();
+			if (animator)
+				animator->PlayAction("");
+		}
 	}
 }
 

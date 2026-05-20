@@ -254,14 +254,14 @@ void CLobbyScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		camera->SetTarget(my_player.get());
-
-		if(g_is_single)
-			my_player->ResetAll();
+		my_player->ResetAll();
 	}
 
-	auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(1));
-	if (readyUI)
-		readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
+	for (int i = 1; i <= 4; ++i) {
+		auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(i));
+		if (readyUI)
+			readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
+	}
 }
 
 void CLobbyScene::Exit()

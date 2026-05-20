@@ -1162,7 +1162,7 @@ void CPlayer::ResetAll()
 
     S_EquipItem equipPkt;
     equipPkt.is_dowsing_rod = false;
-    equipPkt.item_id = -1;
+    equipPkt.item_id = 0;
     equipPkt.scene_type = current_scene_type;
     equipPkt.player_id = GetID();
     auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);

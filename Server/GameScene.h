@@ -38,7 +38,7 @@ public:
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
 
     // 라운드 타이머 (정산 시스템)
-    static constexpr float ROUND_DURATION = 65.f;        
+    static constexpr float ROUND_DURATION = 300.f;        
     static constexpr float RETURN_ACTIVATE_REMAIN = 60.f; // 종료 60초 전 복귀존 활성화
     static constexpr float RETURN_RANGE = 1.5f;           // 복귀존 반경
 

@@ -1728,14 +1728,14 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 		if (!itemFinder || !animator)
 			return;
 
-		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0) {
+		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id <= 0) {
 			my_player->SetDowsing(true);
 
 			itemFinder->Toggle();
 
 			animator->PlayAction("Ganga_search", true);
 		}
-		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
+		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id <= 0) {
 			my_player->SetDowsing(false);
 
 			itemFinder->Toggle();

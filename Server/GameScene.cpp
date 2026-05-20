@@ -168,6 +168,20 @@ void CGameScene::DetectPlayerReturns()
 			BroadCast(sendBuffer);
 		}
 	}
+
+	// 전원 복귀 시 타이머 만료 전이라도 즉시 정산
+	bool all_returned = !players.empty();
+	for (auto& [id, player] : players) {
+		if (!player || !player->GetReturned()) {
+			all_returned = false;
+			break;
+		}
+	}
+	if (all_returned) {
+		round_timer = 0.f;
+		round_ended = true;
+		TriggerSettlement();
+	}
 }
 
 void CGameScene::TriggerSettlement()
