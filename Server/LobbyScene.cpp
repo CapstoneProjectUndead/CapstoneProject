@@ -78,7 +78,7 @@ void CLobbyScene::EnterScene(shared_ptr<CPlayer> player)
 {
 	int idx = (int)players.size() % (int)std::size(LOBBY_SPAWN_POINTS);
 	player->SetPosition(LOBBY_SPAWN_POINTS[idx]);
-	player->SetReturned(false);
+	player->ResetAll();
 	CScene::EnterScene(player);
 }
 

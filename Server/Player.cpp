@@ -130,6 +130,9 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 
 void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updateState)
 {
+    if (is_returned)
+        return;
+
     if (is_possessed) {
         if (knockback_timer > 0.0f) {
             float ratio = knockback_timer / 0.3f;
@@ -1145,6 +1148,27 @@ void CPlayer::UpdateStamina(float elapsedTime)
     }
 
     stat.stamina = static_cast<uint32>(accumulate_stamina);
+}
+
+void CPlayer::ResetAll()
+{
+    is_possessed = false;
+    is_dowsing = false;
+    is_returned = false;
+    is_ready = false;
+    state = PLAYER_STATE::IDLE;
+    stat.hp = 100;
+    stat.stamina = 100;
+
+    S_EquipItem equipPkt;
+    equipPkt.is_dowsing_rod = false;
+    equipPkt.item_id = -1;
+    equipPkt.scene_type = current_scene_type;
+    equipPkt.player_id = GetID();
+    auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+    if (auto session = GetSession()) {
+        session->DoSend(sendBuffer);
+    }
 }
 
 void CPlayer::AddStamina(uint32 amount)

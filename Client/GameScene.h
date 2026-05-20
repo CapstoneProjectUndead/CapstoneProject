@@ -117,7 +117,7 @@ private:
     uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
 
     // 라운드 타이머
-    static constexpr float  ROUND_DURATION = 300.f; // 5분
+    static constexpr float  ROUND_DURATION = 63.f; // 5분
     float                   round_timer    = 0.f;
     bool                    round_active   = false;
 
@@ -162,7 +162,7 @@ private:
         std::vector<SettlementEntry> entries;
         uint32 base_coin          = 0;
         uint32 final_coin         = 0;
-        bool   returned           = false;
+        bool   is_returned           = false;
         bool   all_returned_bonus = false;
     };
 

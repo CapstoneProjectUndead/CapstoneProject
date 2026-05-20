@@ -723,7 +723,7 @@ struct S_GameSettlement : public PacketHeader
 
 	uint32     base_coin;           // 보물 합산
 	uint32     final_coin;          // 보너스/복귀 적용 후 최종
-	bool       returned;
+	bool       is_returned;
 	bool       all_returned_bonus;
 	SCENE_TYPE scene_type;
 	uint16     buff_offset;

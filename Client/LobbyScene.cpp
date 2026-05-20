@@ -253,9 +253,10 @@ void CLobbyScene::Enter()
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
-		my_player->SetIsReady(false);
-		my_player->SetReturned(false);
 		camera->SetTarget(my_player.get());
+
+		if(g_is_single)
+			my_player->ResetAll();
 	}
 
 	auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(1));

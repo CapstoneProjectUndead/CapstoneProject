@@ -83,6 +83,8 @@ public:
 	bool GetIsReady() const { return is_ready; }
 	void SetIsReady(bool ready) { is_ready = ready; }
 
+	void ResetAll();
+
 public:
 	// 캐릭터 스텟 관련 함수들
 	uint32 GetMaxHp() const { return stat.maxHp; }
@@ -128,8 +130,8 @@ public:
 	void   AddCoin(uint32 amount) { coin += amount; }
 
 	// 복귀 상태 (정산 시스템)
-	bool   GetReturned() const { return returned; }
-	void   SetReturned(bool r) { returned = r; }
+	bool   GetReturned() const { return is_returned; }
+	void   SetReturned(bool r) { is_returned = r; }
 
 private:
 	void UpdateStamina(float elapsedTime);
@@ -210,7 +212,7 @@ private:
 	uint32      coin{ 0 };
 
 	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
-	bool        returned{ false };
+	bool        is_returned{ false };
 
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;

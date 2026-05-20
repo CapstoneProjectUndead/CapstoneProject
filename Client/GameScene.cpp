@@ -230,6 +230,7 @@ void CGameScene::Update(float elapsedTime)
 
 		if (round_timer <= 0.f || my_player->GetReturned()) {
 			round_timer = 0.f;
+			CKeyManager::GetInstance().SetMouseMode(false);
 			TriggerSinglePlayerSettlement();
 		}
 	}
@@ -1218,7 +1219,7 @@ void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_Gam
 	settlement_result = SettlementResult{};
 	settlement_result.base_coin          = pkt.base_coin;
 	settlement_result.final_coin         = pkt.final_coin;
-	settlement_result.returned           = pkt.returned;
+	settlement_result.is_returned        = pkt.is_returned;
 	settlement_result.all_returned_bonus = pkt.all_returned_bonus;
 
 	auto list = pkt.GetTreasureList();
@@ -1254,6 +1255,7 @@ void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_Gam
 	}
 
 	show_settlement_modal = true;
+	CKeyManager::GetInstance().SetMouseMode(false);
 }
 
 void CGameScene::TriggerSinglePlayerSettlement()
@@ -1262,7 +1264,7 @@ void CGameScene::TriggerSinglePlayerSettlement()
 		return;
 
 	settlement_result = SettlementResult{};
-	settlement_result.returned = my_player->GetReturned();
+	settlement_result.is_returned = my_player->GetReturned();
 	// 싱글 1인 = 복귀했으면 전원 복귀 보너스 적용
 	settlement_result.all_returned_bonus = my_player->GetReturned();
 
@@ -1294,7 +1296,7 @@ void CGameScene::TriggerSinglePlayerSettlement()
 		for (auto& [iid, e] : grouped)
 			settlement_result.entries.push_back(e);
 
-		float rate  = settlement_result.returned ? 1.0f : 0.5f;
+		float rate  = settlement_result.is_returned ? 1.0f : 0.5f;
 		float bonus = settlement_result.all_returned_bonus ? 2.0f : 1.0f;
 		settlement_result.final_coin = static_cast<uint32>(settlement_result.base_coin * rate * bonus);
 
@@ -1550,7 +1552,7 @@ void CGameScene::DrawSettlementModal()
 		rightAlignedText("\xEB\xB3\xB4\xEB\x84\x88\xEC\x8A\xA4 x2!");
 		ImGui::PopStyleColor();
 	}
-	else if (!settlement_result.returned) {
+	else if (!settlement_result.is_returned) {
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.4f, 0.4f, 1.f));
 		// "미복귀 x0.5"
 		rightAlignedText("\xEB\xAF\xB8\xEB\xB3\xB5\xEA\xB7\x80 x0.5");

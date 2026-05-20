@@ -185,7 +185,7 @@ public:
 	using TreasureList = PacketList<S_GameSettlement::TreasureEntry>;
 
 	S_GAMESETTLEMENT_WRITE(uint32 baseCoin, uint32 finalCoin,
-	                       bool returned, bool allReturnedBonus,
+	                       bool is_returned, bool allReturnedBonus,
 	                       SCENE_TYPE sceneType)
 	{
 		sendBuffer = std::make_shared<SendBuffer>(4096);
@@ -195,7 +195,7 @@ public:
 		pkt->SetPacketType((UINT)PacketType::_S_GAME_SETTLEMENT);
 		pkt->base_coin          = baseCoin;
 		pkt->final_coin         = finalCoin;
-		pkt->returned           = returned;
+		pkt->is_returned           = is_returned;
 		pkt->all_returned_bonus = allReturnedBonus;
 		pkt->scene_type         = sceneType;
 	}
