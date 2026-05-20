@@ -117,7 +117,7 @@ private:
     uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
 
     // 라운드 타이머
-    static constexpr float  ROUND_DURATION = 60.f; // 5분
+    static constexpr float  ROUND_DURATION = 300.f; // 5분
     float                   round_timer    = 0.f;
     bool                    round_active   = false;
 

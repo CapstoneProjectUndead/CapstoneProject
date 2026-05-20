@@ -225,7 +225,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
                 bare_hand_dig_timer = 0.0f;
 
                 if (auto move = GetComponent<CMovementComponent>()) {
-                    if (input.shift && !stamina_exhausted) {
+                    if (input.shift && !stamina_exhausted && !is_dowsing) {
                         if (state != PLAYER_STATE::ATTACK)
                             state = PLAYER_STATE::RUN;
                         move->Run();

@@ -295,7 +295,7 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 				state = PLAYER_STATE::IDLE;
 		}
 		else {
-			if (input.shift && !stamina_exhausted) {
+			if (input.shift && !stamina_exhausted && !is_dowsing) {
 				state = PLAYER_STATE::RUN;
 				move->Run();
 			}

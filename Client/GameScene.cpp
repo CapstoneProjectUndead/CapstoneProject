@@ -253,7 +253,11 @@ void CGameScene::Update(float elapsedTime)
 		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
 			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
 
-		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand)) {
+		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand) 
+			&& !my_player->GetIsPossessed()
+			&& !my_player->GetIsStunned()
+			&& !my_player->GetIsKnockedBack()) {
+
 			uint16 equippedId = my_player->GetEquippedItemId();
 			bool isShovel = equippedId >= 1 && equippedId <= 4;
 
@@ -388,23 +392,6 @@ void CGameScene::Enter()
 		auto itemFinder = my_player->GetComponent<CItemFinder>();
 		if (itemFinder) {
 			itemFinder->RegisterTreasures(treasures);
-		}
-
-		// 임시
-		{
-			auto inv = my_player->GetInventory();
-			if (!inv)
-				return;
-
-			for (int i = 0; i < 10; ++i) {
-				auto treasure = ItemFactory::Create(56 + i);
-				inv->AddItem(treasure);
-			}
-
-			for (int i = 0; i < 10; ++i) {
-				auto treasure = ItemFactory::Create(68 + i);
-				inv->AddItem(treasure);
-			}
 		}
 	}
 }
