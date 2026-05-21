@@ -130,9 +130,6 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 
 void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updateState)
 {
-    if (is_returned)
-        return;
-
     if (is_possessed) {
         if (knockback_timer > 0.0f) {
             float ratio = knockback_timer / 0.3f;
@@ -793,6 +790,7 @@ void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, b
 {
     if (!input.lbtn_held || isMoving || is_possessed || is_dowsing || grounded_timer <= 0.0f) {
         bare_hand_dig_timer = 0.0f;
+        bare_hand_sound_timer = -1.0f;
         state = PLAYER_STATE::IDLE;
         return;
     }
@@ -805,8 +803,21 @@ void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, b
             if (target) {
                 state = PLAYER_STATE::DIG;
                 bare_hand_dig_timer += elapsedTime;
+
+                // 채굴 사운드: 홀딩 중 일정 간격마다 PlaySound 패킷 전송 (시작 즉시 1회 재생)
+                if (bare_hand_sound_timer < 0.0f)
+                    bare_hand_sound_timer = BARE_HAND_SOUND_INTERVAL;
+
+                bare_hand_sound_timer += elapsedTime;
+
+                if (bare_hand_sound_timer >= BARE_HAND_SOUND_INTERVAL) {
+                    bare_hand_sound_timer -= BARE_HAND_SOUND_INTERVAL;
+                    SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition());
+                }
+
                 if (bare_hand_dig_timer >= 4.0f) {
                     bare_hand_dig_timer = 0.0f;
+                    bare_hand_sound_timer = -1.0f;
                     state = PLAYER_STATE::IDLE;
                     target->DestroyImmediate();
                     if (target->IsDestroyed())
@@ -815,6 +826,7 @@ void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, b
             }
             else {
                 bare_hand_dig_timer = 0.0f;
+                bare_hand_sound_timer = -1.0f;
             }
         }
     }

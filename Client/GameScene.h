@@ -100,6 +100,7 @@ private:
 
     // 사운드 관련
     void PlayMeleeAttackSound();
+    void PlayBareHandDigSound(bool isBareHand, bool isMoving);
 
     // 정산 모달
     void DrawSettlementModal();
@@ -137,6 +138,7 @@ private:
     static constexpr float   RETURN_TOAST_DURATION = 2.5f;
 
     bool              was_digging           = false;
+    bool              bare_hand_dig_loop_playing      = true;
     CMineableObject*  mining_target         = nullptr;
     float             dig_sound_timer       = -1.0f;
     float             bare_hand_dig_timer   = 0.0f;

@@ -192,4 +192,5 @@ enum class SOUND_ID : uint16_t
 	clock_alarm,
 	pick_up,
 	warning_bell,
+	bare_hand_dig,
 };

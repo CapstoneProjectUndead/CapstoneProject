@@ -229,5 +229,9 @@ private:
 	const float MELEE_ATTACK_DURATION = 1.5f;
 
 	float       dig_sound_timer = -1.0f;
+
+	// 맨손 채굴 사운드: 홀딩 중 일정 간격마다 PlaySound 패킷 전송
+	float       bare_hand_sound_timer = -1.0f;
+	const float BARE_HAND_SOUND_INTERVAL = 0.5f;
 };
 

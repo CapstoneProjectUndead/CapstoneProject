@@ -316,6 +316,7 @@ void CGameScene::DrawUI()
 
 		// 빙의 해제 진행 바 (멀티 전용)
 		if (!g_is_single && my_player->GetCHoldProgress() > 0.0f) {
+			CSoundManager::GetInstance().Play(SOUND_ID::clock_alarm, 0);
 			DrawDePossessProgressBar();
 		}
 	}
@@ -621,6 +622,8 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 	// 이동 중에는 채굴 시작 불가 
 	bool isMoving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
 		|| KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
+
+	PlayBareHandDigSound(isBareHand, isMoving);
 
 	if (dig_sound_timer >= 0.0f) {
 		dig_sound_timer += elapsedTime;
@@ -1114,8 +1117,10 @@ void CGameScene::ReleasePossession(float elapsedTime)
 
 	if (canRelease)
 		my_player->UpdateCHoldTimer(elapsedTime);
-	else
+	else {
+		CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
 		my_player->ResetCHoldTimer();
+	}
 }
 
 void CGameScene::DrawDePossessProgressBar()
@@ -1169,6 +1174,19 @@ void CGameScene::PlayMeleeAttackSound()
 	}
 	else if (equippedID == 19) {
 		CSoundManager::GetInstance().Play(SOUND_ID::sword);
+	}
+}
+
+void CGameScene::PlayBareHandDigSound(bool isBareHand, bool isMoving)
+{
+	bool bareHandDigging = isBareHand && KEY_PRESSED(KEY::LBTN) && !isMoving && mining_target;
+	if (bareHandDigging && !bare_hand_dig_loop_playing) {
+		CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 0, 1.0f); // 0 = 무한 반복
+		bare_hand_dig_loop_playing = true;
+	}
+	else if (!bareHandDigging && bare_hand_dig_loop_playing) {
+		CSoundManager::GetInstance().Stop(SOUND_ID::bare_hand_dig);
+		bare_hand_dig_loop_playing = false;
 	}
 }
 
