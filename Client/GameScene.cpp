@@ -232,6 +232,7 @@ void CGameScene::Update(float elapsedTime)
 			round_timer = 0.f;
 			CKeyManager::GetInstance().SetMouseMode(false);
 			TriggerSinglePlayerSettlement();
+			CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
 		}
 	}
 
@@ -1230,6 +1231,7 @@ void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const
 	}
 
 	return_toasts.push_back(std::move(toast));
+	CSoundManager::GetInstance().Play(SOUND_ID::Return);
 }
 
 void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt)
@@ -1274,6 +1276,7 @@ void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_Gam
 
 	show_settlement_modal = true;
 	CKeyManager::GetInstance().SetMouseMode(false);
+	CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
 }
 
 void CGameScene::TriggerSinglePlayerSettlement()
@@ -1346,6 +1349,7 @@ void CGameScene::DetectMyPlayerReturn()
 		return;
 
 	my_player->SetReturned(true);
+	CSoundManager::GetInstance().Play(SOUND_ID::Return);
 
 	ReturnToast toast;
 	toast.is_self = true;
@@ -1599,6 +1603,7 @@ void CGameScene::DrawSettlementModal()
 	if (ImGui::Button("\xEB\xA1\x9C\xEB\xB9\x84\xEB\xA1\x9C \xEB\xB3\xB5\xEA\xB7\x80",  // "로비로 복귀"
 	    ImVec2(btnW, 30.f * scale))) {
 		show_settlement_modal = false;
+		PlayClickSound();
 		ImGui::CloseCurrentPopup();
 
 		if (g_is_single) {
@@ -1613,6 +1618,7 @@ void CGameScene::DrawSettlementModal()
 			my_player->GetSession()->DoSend(sendBuffer);
 		}
 	}
+	CheckHoverSound();
 
 	ImGui::EndPopup();
 }

@@ -193,4 +193,7 @@ enum class SOUND_ID : uint16_t
 	pick_up,
 	warning_bell,
 	bare_hand_dig,
+	Settlement,
+	TaDa,
+	Return,
 };
