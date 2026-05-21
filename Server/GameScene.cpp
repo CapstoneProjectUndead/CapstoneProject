@@ -69,7 +69,8 @@ void CGameScene::Initialize()
 void CGameScene::Update(float elapsedTime)
 {
 	CScene::Update(elapsedTime);
-	UpdateMonsters(elapsedTime);
+	if (!round_ended)
+		UpdateMonsters(elapsedTime);
 
 	// 라운드 타이머 진행
 	if (round_started && !round_ended) {
@@ -247,6 +248,12 @@ void CGameScene::TriggerSettlement()
 		if (auto session = player->GetSession())
 			session->DoSend(sendBuffer);
 	}
+
+	// 정산 완료 후 전원 복귀 상태로 전환 → 몬스터 타겟에서 제외
+	for (auto& [id, player] : players) {
+		if (player && !player->GetReturned())
+			player->SetReturned(true);
+	}
 }
 
 void CGameScene::OnSceneActivate()
@@ -282,9 +289,6 @@ void CGameScene::OnSceneActivate()
 void CGameScene::OnSceneDeactivate()
 {
 	CScene::OnSceneDeactivate();
-
-	monsters.clear();
-	monster_cnt = 0;
 }
 
 void CGameScene::EnterScene(shared_ptr<CPlayer> player)
@@ -400,6 +404,8 @@ void CGameScene::CreateGameScene()
 	static_objects.clear();
 	mineable_objects.clear();
 	mineable_id_counter = 10000;
+	monsters.clear();
+	monster_cnt = 0;
 
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 

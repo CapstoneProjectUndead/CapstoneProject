@@ -339,6 +339,9 @@ void CScene::OnSceneDeactivate()
 	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MINEABLE_OBJECT, scene_type);
 	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::WORLD_ITEM, scene_type);
 	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
+
+	monsters.clear();
+	monster_cnt = 0;
 }
 
 void CScene::SendExistingUsers(shared_ptr<CPlayer> player)

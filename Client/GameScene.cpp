@@ -239,7 +239,8 @@ void CGameScene::Update(float elapsedTime)
 	CScene::Update(elapsedTime);
 
 	if (g_is_single) {
-		UpdateMonsters(elapsedTime);
+		if (!show_settlement_modal)
+			UpdateMonsters(elapsedTime);
 		DetectMyPlayerReturn(); // 싱글 전용: 복귀존 도달 감지 (멀티는 서버 권위)
 	}
 
@@ -1334,6 +1335,10 @@ void CGameScene::TriggerSinglePlayerSettlement()
 	}
 
 	show_settlement_modal = true;
+
+	// 정산 완료 후 복귀 상태로 전환 → 몬스터 타겟에서 제외
+	if (my_player && !my_player->GetReturned())
+		my_player->SetReturned(true);
 }
 
 // 싱글 전용
@@ -1752,14 +1757,14 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 		if (!itemFinder || !animator)
 			return;
 
-		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id <= 0) {
+		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0) {
 			my_player->SetDowsing(true);
 
 			itemFinder->Toggle();
 
 			animator->PlayAction("Ganga_search", true);
 		}
-		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id <= 0) {
+		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
 			my_player->SetDowsing(false);
 
 			itemFinder->Toggle();

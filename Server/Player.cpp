@@ -1164,6 +1164,7 @@ void CPlayer::UpdateStamina(float elapsedTime)
 
 void CPlayer::ResetAll()
 {
+    bool was_dowsing = is_dowsing;
     is_possessed = false;
     is_dowsing = false;
     is_returned = false;
@@ -1174,7 +1175,7 @@ void CPlayer::ResetAll()
 
     S_EquipItem equipPkt;
     equipPkt.is_dowsing_rod = false;
-    equipPkt.item_id = 0;
+    equipPkt.item_id = was_dowsing ? -1 : 0;
     equipPkt.scene_type = current_scene_type;
     equipPkt.player_id = GetID();
     auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
