@@ -264,6 +264,15 @@ void CPlayer::OpponentRotateSync(float elapsedTime)
     UpdateWorldMatrix();
 }
 
+void CPlayer::SetEquippedItemId(uint16 id)
+{
+    equipped_item_id = id;
+
+    if (auto animator = GetComponent<CAnimatorComponent>()) {
+        animator->OnChangeEquippedItem(id);
+    }
+}
+
 void CPlayer::ChangeModelSet(int setIndex)
 {
     for (int i = 0; i < eartail_parts.size(); ++i) {

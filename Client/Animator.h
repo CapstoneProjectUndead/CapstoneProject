@@ -41,6 +41,7 @@ public:
 	void Init(const CharacterAnimSet& animSet);
 	void AddLocomotionTransitions(const std::string& idle, const std::string& walk, const std::string& run);
 	void PlayerSetState(const std::string& idle, const std::string& walk, const std::string& run);
+	void OnChangeEquippedItem(int itemId);
 
 	// layer 1
 	void PlayAction(const std::string& clipName, bool isLoop = false);
