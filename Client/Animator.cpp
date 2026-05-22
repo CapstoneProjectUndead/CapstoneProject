@@ -372,6 +372,67 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		return false;
 		};
 	controller.AddTransition(possess, p2i);
+
+	// 탈진 상태
+	const std::string almostDead{ "AlmostDeadState" };
+	controller.AddState({ almostDead, "Ganga_tired", 1.0f, true });
+
+	std::vector<std::string> activeStates = { idle, walk, run, "JumpState", "DigState" };
+	for (const auto& from : activeStates) {
+		Transition any2ad;
+		any2ad.to_state = almostDead;
+		any2ad.duration = 0.2f;
+		any2ad.condition = [this]() {
+			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::ALMOST_DEAD;
+			};
+		controller.AddTransition(from, any2ad);
+	}
+
+	Transition ad2i;
+	ad2i.to_state = idle;
+	ad2i.duration = 0.2f;
+	ad2i.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::ALMOST_DEAD &&
+			static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DEAD;
+		};
+	controller.AddTransition(almostDead, ad2i);
+
+
+	// DEAD 상태(Collapse 재생 후 Dead 연속 시퀀스)
+	const std::string collapse{ "CollapseState" };
+	const std::string dead{ "DeadState" };
+
+	controller.AddState({ collapse, "Collapse", 1.0f, false });
+	controller.AddState({ dead, "Dead", 1.0f, true });
+
+	std::vector<std::string> completelyAllStates = { idle, walk, run, "JumpState", "DigState", "PossessState", almostDead };
+	for (const auto& from : completelyAllStates) {
+		Transition any2death;
+		any2death.to_state = collapse;
+		any2death.duration = 0.1f;
+		any2death.condition = [this]() {
+			if (static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DEAD) {
+				// 사망 시 상체 Action 레이어가 섞여서 기괴하게 죽는 것을 방지
+				PlayAction("");
+				return true;
+			}
+			return false;
+			};
+		controller.AddTransition(from, any2death);
+	}
+
+	// Collapse 애니메이션이 완전히 끝났을(1회 재생 완동) 때 DeadState로 자동 전이
+	Transition c2d;
+	c2d.to_state = dead;
+	c2d.duration = 0.2f;
+	c2d.condition = [this]() {
+		// 현재 제어기 상태가 CollapseState이고 플레이 횟수가 1회 이상 완료되었을 때
+		if (controller.GetCurrentState() == "CollapseState" && controller.GetPlayCount() >= 1) {
+			return true;
+		}
+		return false;
+		};
+	controller.AddTransition(collapse, c2d);
 }
 
 void CAnimatorComponent::PlayAction(const std::string& clipName, bool isLoop)

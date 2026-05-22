@@ -20,6 +20,7 @@ enum class PLAYER_STATE : uint8_t
 	JUMP,
 	DIG,
 	ATTACK,
+	ALMOST_DEAD,
 	DEAD,
 };
 
