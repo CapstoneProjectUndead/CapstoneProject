@@ -580,7 +580,14 @@ void MapGenerator::PlaceTreasure() {
         if (tooClose) continue;
 
         // 시드 기반으로 보이는 보물(TREASURE)과 땅속 보물(TREASURE_HIDDEN)을 결정
-        EModelType treasureType = (GetRandomInt(0, 1) == 0) ? EModelType::TREASURE_HIDDEN : EModelType::TREASURE;
+        EModelType treasureType;
+        EModelType currentFloor = mapGrid[(int)ELayer::FLOOR][c.y][c.x]; // 현재 배치될 바닥 타일 확인
+        if (currentFloor == EModelType::VILLAGE_ROAD) { // 상점가는 무조건 일반 보물로 생성
+            treasureType = EModelType::TREASURE_VILLAGE;
+        }
+        else {
+            treasureType = (GetRandomInt(0, 1) == 0) ? EModelType::TREASURE_HIDDEN : EModelType::TREASURE;
+        }
         mapGrid[(int)ELayer::OBJECT][c.y][c.x] = treasureType;
         g_treasure_positions.push_back(c);
     }

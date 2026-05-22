@@ -330,6 +330,12 @@ void CObjectFactory::LoadGameScene()
 			LoadFrameNode(prototypes, children);
 		}
 	}
+	{
+		std::string fileName{ "../Modeling/stone_treasure.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(prototypes, frameRoot);
+	}
 }
 
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
@@ -349,7 +355,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 	for (const auto& inst : instData) {
 
-		if (inst.type == MapGenerator::EModelType::TREASURE) {
+		if (inst.type == MapGenerator::EModelType::TREASURE
+			|| inst.type == MapGenerator::EModelType::TREASURE_VILLAGE) {
 			treasures.push_back(TreasureInfo{ treasure_id++, inst.position, MINEABLEOBJECT_TYPE::VISIBLE });
 		}
 		else if (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
@@ -373,8 +380,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 			auto proto = prototypes[name];
 
-			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE
-				|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE || inst.type == MapGenerator::EModelType::TREASURE_HIDDEN || 
+				inst.type == MapGenerator::EModelType::TREASURE_VILLAGE);
 			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
 
 			// 보물이면 CMineableObject 생성 (땅속 보물은 NONE_VISIBLE)
@@ -436,8 +443,8 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameSceneByServer(co
 		for (const std::string& name : meshNames) {
 			auto proto = prototypes[name];
 
-			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE
-				|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE || inst.type == MapGenerator::EModelType::TREASURE_HIDDEN ||
+				inst.type == MapGenerator::EModelType::TREASURE_VILLAGE);
 			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
 
 			// 보물이면 CMineableObject 생성 (땅속 보물은 NONE_VISIBLE)

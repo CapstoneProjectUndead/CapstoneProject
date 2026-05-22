@@ -395,6 +395,12 @@ void CGameScene::LoadGameScene()
 			LoadFrameNode(prototypes, children);
 		}
 	}
+	{
+		std::string fileName{ "../Modeling/stone_treasure.bin" };
+		auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
+
+		LoadFrameNode(prototypes, frameRoot);
+	}
 }
 
 void CGameScene::CreateGameScene()
@@ -443,8 +449,8 @@ void CGameScene::CreateGameScene()
 			auto collider = proto->GetComponent<CColliderComponent>();
 
 			// TREASURE / TREASURE_HIDDEN은 CMineableObject로, 나머지는 일반 STATIC_OBJECT로 생성
-			bool isMineable = (inst.type == MapGenerator::EModelType::TREASURE
-				|| inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
+			bool isMineable = (inst.type == MapGenerator::EModelType::TREASURE || inst.type == MapGenerator::EModelType::TREASURE_HIDDEN ||
+				inst.type == MapGenerator::EModelType::TREASURE_VILLAGE);
 			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
 
 			shared_ptr<CObject> obj;
