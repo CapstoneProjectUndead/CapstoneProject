@@ -76,6 +76,11 @@ enum PacketType : uint16_t
 	_S_PLAY_SOUND,
 
 	_S_POSSESSION_RELEASE_FAIL,
+
+	// 정산 시스템
+	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
+	_S_PLAYER_RETURNED,    // 서버 → 클라: 특정 플레이어가 복귀존 진입 (1회)
+	_S_GAME_SETTLEMENT,    // 서버 → 클라: 라운드 종료 정산 결과
 };
 
 #pragma pack (push, 1)
@@ -328,10 +333,13 @@ struct S_PlayerMove : public PacketHeader
 	SCENE_TYPE		scene_type;
 	uint32			stamina;
 	uint32			hp;
+	float			round_timer;  // 게임씬일 때만 유효 (>=0). 그 외 -1
 
-	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE) {}
+	S_PlayerMove() : PacketHeader(sizeof(S_PlayerMove), (UINT)PacketType::_S_PLAYER_MOVE)
+		, round_timer(-1.f)
+	{}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 85, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 89, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {
@@ -431,7 +439,8 @@ struct S_MineableList : public PacketHeader
 	{
 		uint32 world_id;
 		float  x, y, z;
-	};  // 16 bytes
+		MINEABLEOBJECT_TYPE type;
+	}; 
 
 	uint32      buff_offset;
 	uint32      mineable_count;
@@ -677,5 +686,59 @@ struct S_PossessionReleaseFail : public PacketHeader
 	S_PossessionReleaseFail() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_POSSESSION_RELEASE_FAIL) {}
 };
 static_assert(sizeof(S_PossessionReleaseFail) == 4 + 8, "S_PossessionReleaseFail size mismatch!");
+
+// 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회 브로드캐스트)
+// 확장 대비: 위치/반경을 패킷으로 전달 (지금은 spawn point 고정이지만, 추후 랜덤 지점 변경 가능)
+struct S_ReturnZoneActive : public PacketHeader
+{
+	float      x, y, z;   // 복귀존 중심
+	float      range;     // 반경
+	SCENE_TYPE scene_type;
+
+	S_ReturnZoneActive() : PacketHeader(sizeof(S_ReturnZoneActive), (UINT)PacketType::_S_RETURN_ZONE_ACTIVE) {}
+};
+static_assert(sizeof(S_ReturnZoneActive) == 4 + 17, "S_ReturnZoneActive size mismatch!");
+
+// 서버 → 클라: 특정 플레이어가 복귀존 진입 (1회 브로드캐스트)
+struct S_PlayerReturned : public PacketHeader
+{
+	uint64     player_id;
+	SCENE_TYPE scene_type;
+
+	S_PlayerReturned() : PacketHeader(sizeof(S_PlayerReturned), (UINT)PacketType::_S_PLAYER_RETURNED) {}
+};
+static_assert(sizeof(S_PlayerReturned) == 4 + 9, "S_PlayerReturned size mismatch!");
+
+// 서버 → 클라: 라운드 종료 정산 결과 (가변길이, unicast per player)
+// 복귀자 100%, 미복귀자 50%, 전원 복귀 시 ×2 보너스
+// TreasureEntry는 서버가 item_id별로 묶어서 전송 (검증값)
+struct S_GameSettlement : public PacketHeader
+{
+	struct TreasureEntry
+	{
+		uint16 item_id;
+		uint32 price;    // 개당 가격 (서버 검증값)
+		uint16 count;
+	};  // 8 bytes
+
+	uint32     base_coin;           // 보물 합산
+	uint32     final_coin;          // 보너스/복귀 적용 후 최종
+	bool       is_returned;
+	bool       all_returned_bonus;
+	SCENE_TYPE scene_type;
+	uint16     buff_offset;
+	uint16     treasure_count;
+
+	S_GameSettlement() : PacketHeader(sizeof(S_GameSettlement), (UINT)PacketType::_S_GAME_SETTLEMENT) {}
+
+	using TreasureList = PacketList<S_GameSettlement::TreasureEntry>;
+	TreasureList GetTreasureList()
+	{
+		BYTE* data = reinterpret_cast<BYTE*>(this);
+		data += buff_offset;
+		return TreasureList(reinterpret_cast<TreasureEntry*>(data), treasure_count);
+	}
+};
+static_assert(sizeof(S_GameSettlement) == 4 + 15, "S_GameSettlement size mismatch!");
 
 #pragma pack (pop)

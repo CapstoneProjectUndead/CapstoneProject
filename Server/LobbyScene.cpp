@@ -78,6 +78,7 @@ void CLobbyScene::EnterScene(shared_ptr<CPlayer> player)
 {
 	int idx = (int)players.size() % (int)std::size(LOBBY_SPAWN_POINTS);
 	player->SetPosition(LOBBY_SPAWN_POINTS[idx]);
+	player->ResetAll();
 	CScene::EnterScene(player);
 }
 
@@ -188,6 +189,7 @@ void CLobbyScene::SendPlayerToGameScene()
 					int i = 0;
 					for (auto& [id, mineable] : mineableMap) {
 						list[i].world_id = id;
+						list[i].type = mineable->GetMineableType();
 						const XMFLOAT3& pos = mineable->GetPosition();
 						list[i].x = pos.x;
 						list[i].y = pos.y;
@@ -212,17 +214,6 @@ void CLobbyScene::SendPlayerToGameScene()
 
 		for (auto& player : vecPlayers) {
 			ChangeScene(player, SCENE_TYPE::GAME);
-
-			// 클라이언트에게 GameScene으로 전환해야함을 알림.
-			S_SceneChange changeScenePkt;
-			changeScenePkt.player_id = player->GetID();
-			changeScenePkt.current_scene = scene_type;
-			changeScenePkt.target_scene = SCENE_TYPE::GAME;
-
-			auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
-			if (auto session = player->GetSession()) {
-				session->DoSend(sendBuffer);
-			}
 		}
 	}
 }

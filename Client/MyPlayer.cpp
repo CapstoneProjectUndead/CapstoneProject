@@ -58,7 +58,7 @@ void CMyPlayer::Update(float elapsedTime)
 	if (KEY_TAP(KEY::F)) {
 
 		if (g_is_single) {
-			if (!GetIsPossessed()) {
+			if (!GetIsPossessed() && current_scene_type == SCENE_TYPE::GAME) {
 				auto itemFinder = GetComponent<CItemFinder>();
 				if (itemFinder) {
 					itemFinder->Toggle();
@@ -264,12 +264,13 @@ void CMyPlayer::ProcessRotation()
 
 void CMyPlayer::PredictMove(const InputData& input, float dt)
 {
-	// 플레이어가 몬스터 공격을 받아서 넉백 상태이면 return
-	if (is_knocked_back || is_stunned || is_possessed)
+	// 플레이어가 (넉백, 스턴, 빙의, 복귀) 상태이면 return
+	if (is_knocked_back || is_stunned || is_possessed || is_returned)
 		return;
 
 	auto move = GetComponent<CMovementComponent>();
-	if (!move || current_scene_type == SCENE_TYPE::CUSTOMS) return;
+	if (!move || current_scene_type == SCENE_TYPE::CUSTOMS) 
+		return;
 	
 	// 키 처리
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
@@ -294,7 +295,7 @@ void CMyPlayer::PredictMove(const InputData& input, float dt)
 				state = PLAYER_STATE::IDLE;
 		}
 		else {
-			if (input.shift && !stamina_exhausted) {
+			if (input.shift && !stamina_exhausted && !is_dowsing) {
 				state = PLAYER_STATE::RUN;
 				move->Run();
 			}
@@ -384,6 +385,27 @@ void CMyPlayer::SendPingToServer(const float elapsedTime)
 		if (GetSession()) {
 			CNetworkClockManager::GetInstance().SendPing(GetSession());
 			dt_ping_accumulator -= 1.0f;
+		}
+	}
+}
+
+void CMyPlayer::ResetAll()
+{
+	is_possessed = false;
+	is_returned = false;
+	is_ready = false;
+	state = PLAYER_STATE::IDLE;
+	stat.hp = 100;
+	stat.stamina = 100;
+
+	if (is_dowsing) {
+		is_dowsing = false;
+		auto itemFinder = GetComponent<CItemFinder>();
+		if (itemFinder) {
+			itemFinder->Toggle();
+			auto animator = GetComponent<CAnimatorComponent>();
+			if (animator)
+				animator->PlayAction("");
 		}
 	}
 }

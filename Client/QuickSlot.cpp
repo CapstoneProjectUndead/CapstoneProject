@@ -53,6 +53,15 @@ int CQuickSlot::GetSelectedInvId() const
 	return static_cast<int>(slots[selected_slot].inv_id);
 }
 
+void CQuickSlot::Reset()
+{
+	for (int i = 0; i < SLOT_COUNT; ++i) {
+		slots[i] = SlotEntry{};
+	}
+
+	selected_slot = -1;
+}
+
 void CQuickSlot::Draw()
 {
 	float  scale  = G_RATIO_Y;

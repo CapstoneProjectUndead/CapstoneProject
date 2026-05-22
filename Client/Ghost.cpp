@@ -189,7 +189,7 @@ void CGhost::OnTraceMove(float elapsedTime)
     auto AIComponent = GetComponent<CAIComponent>();
     auto targetPlayer = target_player.lock();
 
-    if (!targetPlayer || targetPlayer->GetIsPossessed()) {
+    if (!targetPlayer || targetPlayer->GetIsPossessed() || targetPlayer->GetReturned()) {
         // 타겟이 사라졌거나 이미 빙의 상태면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;

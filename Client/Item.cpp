@@ -61,6 +61,8 @@ void CWeapon::Equip(CMyPlayer* player)
 
 void CWeapon::ReduceDurability()
 {
+	if (current_durability > 0)
+		current_durability -= 1;
 }
 
 // 소비(회복템)

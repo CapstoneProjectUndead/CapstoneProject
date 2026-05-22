@@ -73,6 +73,8 @@ public:
     void ApplyStun(float time);
     void ApplyPossession();
 
+    void ResetAll();
+
 private:
     void ProcessRotation();
     void ProcessInput();

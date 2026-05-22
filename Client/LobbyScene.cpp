@@ -185,7 +185,13 @@ void CLobbyScene::SetButtonEvents()
 
 	if (menuToCustomBtn) {
 		menuToCustomBtn->OnClick = [this]() {
-			if (!g_is_single) {
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+
+			if (g_is_single) {
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
+			}
+			else {
+				// 멀티는 서버 응답(S_SceneChange) 받을 때 전환됨
 				C_SceneChange changeScenePkt;
 				changeScenePkt.player_id = my_player->GetID();
 				changeScenePkt.current_scene = scene_type;
@@ -197,8 +203,6 @@ void CLobbyScene::SetButtonEvents()
 				auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
 				session->DoSend(sendBuffer);
 			}
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
 			};
 	}
 
@@ -250,6 +254,13 @@ void CLobbyScene::Enter()
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		camera->SetTarget(my_player.get());
+		my_player->ResetAll();
+	}
+
+	for (int i = 1; i <= 4; ++i) {
+		auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(i));
+		if (readyUI)
+			readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
 	}
 }
 

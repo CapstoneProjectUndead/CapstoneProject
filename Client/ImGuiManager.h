@@ -59,6 +59,9 @@ public:
         , const ImVec4& main_color, const ImVec4& backdrop_color
         , const int circle_count, const float speed);
 
+    // 라운드 타이머 오버레이 (화면 상단 중앙 MM:SS)
+    static void DrawRoundTimer(float remainSec);
+
 private:
     ID3D12DescriptorHeap*   srv_desc_heap = nullptr;
     static HIMC             default_IMC; // IME 핸들 저장

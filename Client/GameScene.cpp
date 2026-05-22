@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <cstdio>
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "PhysicsManager.h"
@@ -16,6 +17,7 @@
 
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
+#include "ImGuiManager.h"
 #include "NetworkManager.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
@@ -214,10 +216,33 @@ void CGameScene::Update(float elapsedTime)
 		}
 	}
 
+	// 라운드 타이머 진행
+	// - 싱글: 클라가 자체 카운트
+	// - 멀티: 서버가 매 틱 S_PlayerMove에 round_timer를 실어 보내므로 Handle_S_Move_Player가 덮어씀
+	if (g_is_single && round_active && round_timer > 0.f) {
+		round_timer -= elapsedTime;
+
+		if (round_timer <= 60.f) {
+			return_active = true;
+			return_center = XMFLOAT3{ 1.8f, 0.f, 2.f };
+			return_range = 1.5f;
+		}
+
+		if (round_timer <= 0.f || my_player->GetReturned()) {
+			round_timer = 0.f;
+			CKeyManager::GetInstance().SetMouseMode(false);
+			TriggerSinglePlayerSettlement();
+			CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
+		}
+	}
+
 	CScene::Update(elapsedTime);
 
-	if (g_is_single)
-		UpdateMonsters(elapsedTime);
+	if (g_is_single) {
+		if (!show_settlement_modal)
+			UpdateMonsters(elapsedTime);
+		DetectMyPlayerReturn(); // 싱글 전용: 복귀존 도달 감지 (멀티는 서버 권위)
+	}
 
 	if (my_player) {
 
@@ -231,7 +256,11 @@ void CGameScene::Update(float elapsedTime)
 		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
 			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
 
-		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand)) {
+		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand) 
+			&& !my_player->GetIsPossessed()
+			&& !my_player->GetIsStunned()
+			&& !my_player->GetIsKnockedBack()) {
+
 			uint16 equippedId = my_player->GetEquippedItemId();
 			bool isShovel = equippedId >= 1 && equippedId <= 4;
 
@@ -259,6 +288,22 @@ void CGameScene::Update(float elapsedTime)
 
 void CGameScene::DrawUI()
 {
+	// 라운드 타이머 오버레이 (화면 상단 중앙)
+	if (round_active) {
+		CImGuiManager::DrawRoundTimer(round_timer);
+	}
+
+	// 복귀존 마커 (월드 원형 링, 60초 시점 활성화 이후)
+	if (return_active && camera) {
+		DrawReturnMarker();
+	}
+
+	// 복귀 토스트 (S_PlayerReturned 받을 때마다 누적, 2.5초 자동 만료)
+	DrawReturnToasts();
+
+	// 정산 결과 모달
+	DrawSettlementModal();
+
 	if (my_player) {
 
 		// 인벤토리
@@ -273,6 +318,7 @@ void CGameScene::DrawUI()
 
 		// 빙의 해제 진행 바 (멀티 전용)
 		if (!g_is_single && my_player->GetCHoldProgress() > 0.0f) {
+			CSoundManager::GetInstance().Play(SOUND_ID::clock_alarm, 0);
 			DrawDePossessProgressBar();
 		}
 	}
@@ -320,6 +366,25 @@ void CGameScene::Enter()
 	CScene::Enter();
 
 	BuildObjects(GET_DEVICE, GET_CMD_LIST);
+
+	// 라운드 타이머 시작
+	// - 싱글: 클라가 즉시 ROUND_DURATION으로 시작 (자체 카운트)
+	// - 멀티: 서버 권위. 첫 S_PlayerMove의 round_timer가 도착하면 SetRoundTimer가 활성화.
+	if (g_is_single) {
+		round_timer  = ROUND_DURATION;
+		round_active = true;
+	}
+
+	// 복귀존 상태 리셋 (재진입 시 이전 라운드 잔여값 제거) (싱글/멀티 모두 유효)
+	return_active = false;
+	return_center = {};
+	return_range  = 0.f;
+	return_toasts.clear();
+	my_player->SetReturned(false);
+
+	// 정산 모달 리셋
+	show_settlement_modal = false;
+	settlement_result     = SettlementResult{};
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
@@ -406,33 +471,9 @@ void CGameScene::ProcessPickup()
 			if (!inv)
 				return;
 
-			// 보물이라면 
-			if (worldItem->GetItem()->GetItemType() == ITEM_TYPE::TREASURE) {
-
-				// 아이템 줍기 시도
-				if (inv->AddItem(worldItem->GetItem())) {
-
-					// 보물의 위치정보를 담고있는 벡터에서 찾은 보물을 삭제한다.
-					uint32 id = worldItem->GetID();
-					auto treasure_it = std::find_if(treasures.begin(), treasures.end(),
-						[id](const TreasureInfo& info) {
-							return info.world_id == id;
-						});
-
-					if (treasure_it != treasures.end())
-						treasures.erase(treasure_it);
-
-					// 다우징로드에 있는 보물 컨테이너 갱신
-					// 다우징로드가 찾은 보물을 더이상 추적하지 말아야 하기 때문이다.
-					my_player->GetComponent<CItemFinder>()->RegisterTreasures(treasures);
-
-					RemoveObject(worldItem->GetID());
-				}
-			}
-			else {
-				inv->AddItem(worldItem->GetItem());
+			// 인벤토리 추가에 성공한 경우에만 월드에서 아이템을 제거한다.
+			if (inv->AddItem(worldItem->GetItem()))
 				RemoveObject(worldItem->GetID());
-			}
 		}
 		else {
 			// (멀티) 서버에 줍기 요청만 보낸다.
@@ -534,6 +575,9 @@ void CGameScene::ProcessVisibleObjectMining(float elapsedTime)
 					objects.pop_back();
 				}
 
+				// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
+				RemoveTreasureFromDowsing(pos);
+
 				pos.y = 0.05f;
 				uint16 picked = g_TreasureTable[rand() % 13];
 				SpawnWorldItem(picked, pos);
@@ -580,6 +624,8 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 	// 이동 중에는 채굴 시작 불가 
 	bool isMoving = KEY_PRESSED(KEY::W) || KEY_PRESSED(KEY::A)
 		|| KEY_PRESSED(KEY::S) || KEY_PRESSED(KEY::D);
+
+	PlayBareHandDigSound(isBareHand, isMoving);
 
 	if (dig_sound_timer >= 0.0f) {
 		dig_sound_timer += elapsedTime;
@@ -660,6 +706,9 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 					objects.pop_back();
 				}
 
+				// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
+				RemoveTreasureFromDowsing(pos);
+
 				pos.y = 0.05f;
 				uint16 picked = g_TreasureTable[rand() % 13];
 				SpawnWorldItem(picked, pos);
@@ -716,6 +765,9 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 							}
 							objects.pop_back();
 						}
+
+						// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
+						RemoveTreasureFromDowsing(pos);
 
 						pos.y = 0.05f;
 						uint16 picked = g_TreasureTable[rand() % 13];
@@ -784,6 +836,28 @@ void CGameScene::FindNearestMineTarget(MINEABLEOBJECT_TYPE type)
 	}
 }
 
+// 채굴 오브젝트 파괴 시, 다우징로드가 추적하던 보물 정보를 제거하고 갱신한다. (싱글 전용)
+void CGameScene::RemoveTreasureFromDowsing(const XMFLOAT3& pos)
+{
+	// treasure_pos는 ObjectFactory에서 실제 객체 좌표(GetPosition)로 맞춰 두었으므로 위치로 매칭한다.
+	auto it = std::find_if(treasures.begin(), treasures.end(),
+		[&pos](const TreasureInfo& info) {
+			return info.treasure_pos.x == pos.x
+				&& info.treasure_pos.y == pos.y
+				&& info.treasure_pos.z == pos.z;
+		});
+
+	if (it == treasures.end())
+		return;
+
+	treasures.erase(it);
+
+	if (my_player) {
+		if (auto itemFinder = my_player->GetComponent<CItemFinder>())
+			itemFinder->RegisterTreasures(treasures);
+	}
+}
+
 void CGameScene::ProcessAttack(float elapsedTime)
 {
 	auto qs = my_player->GetQuickSlot();
@@ -810,6 +884,8 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 	// 공격 소리는 서버의 허락을 받지 않고 바로 적용한다.
 	if (KEY_TAP(KEY::LBTN) && !g_is_single && !my_player->GetIsKnockedBack() 
 		&& !my_player->GetIsPossessed()
+		&& !my_player->GetIsStunned()
+		&& !my_player->GetDowsing()
 		&& melee_attack_cooldown <= 0.0f) {
 
 		melee_attack_cooldown = 1.5f;
@@ -819,7 +895,9 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 
 	// 클릭: 애니메이션 시작 + 타이머 세팅
 	if (KEY_TAP(KEY::LBTN) && melee_attack_cooldown <= 0.0f
-		&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+		&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()
+		&& !my_player->GetIsStunned()
+		&& !my_player->GetDowsing()) {
 
 		my_player->OnAttack();
 		melee_attack_timer    = 0.4f;
@@ -875,15 +953,27 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 
 void CGameScene::ProcessRangedAttack(float elapsedTime)
 {
+	if (!g_is_single)
+		return;
+
 	uint16 equippedID = my_player->GetEquippedItemId();
+	auto inv = my_player->GetInventory();
+	auto qs = my_player->GetQuickSlot();
+	const auto& items = inv->GetItems();
+	auto it = items.find(qs->GetSelectedInvId());
 
 	switch (equippedID)
 	{
 		case 16: // 스프레이
 		{
+			auto spray = std::static_pointer_cast<CWeapon>(it->second);
+
 			if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f
-				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()) {
+				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()
+				&& !my_player->GetIsStunned()
+				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
+				spray->ReduceDurability();
 				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
 				spray_attack_timer = 0.8f;
 				spray_attack_cooldown = 1.6f;
@@ -895,6 +985,10 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 				if (spray_attack_timer <= 0.0f) {
 					spray_attack_timer = -1.0f;
 					SprayAttack(elapsedTime);
+					if (spray->GetCurrentDurability() <= 0) {
+						inv->RemoveItem(qs->GetSelectedInvId());
+						my_player->SetEquippedItemId(0);
+					}
 				}
 			}
 
@@ -905,7 +999,9 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 		case 17: // 마법 지팡이
 		{
 			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
-				&& !my_player->GetIsPossessed()) {
+				&& !my_player->GetIsPossessed()
+				&& !my_player->GetIsStunned()
+				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
 			}
 		}
@@ -913,7 +1009,9 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 		case 18: // 비비탄총
 		{
 			if (KEY_TAP(KEY::LBTN) && !my_player->GetIsKnockedBack()
-				&& !my_player->GetIsPossessed()) {
+				&& !my_player->GetIsPossessed()
+				&& !my_player->GetIsStunned()
+				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
 			}
 		}
@@ -1035,8 +1133,10 @@ void CGameScene::ReleasePossession(float elapsedTime)
 
 	if (canRelease)
 		my_player->UpdateCHoldTimer(elapsedTime);
-	else
+	else {
+		CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
 		my_player->ResetCHoldTimer();
+	}
 }
 
 void CGameScene::DrawDePossessProgressBar()
@@ -1093,6 +1193,19 @@ void CGameScene::PlayMeleeAttackSound()
 	}
 }
 
+void CGameScene::PlayBareHandDigSound(bool isBareHand, bool isMoving)
+{
+	bool bareHandDigging = isBareHand && KEY_PRESSED(KEY::LBTN) && !isMoving && mining_target;
+	if (bareHandDigging && !bare_hand_dig_loop_playing) {
+		CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 0, 1.0f); // 0 = 무한 반복
+		bare_hand_dig_loop_playing = true;
+	}
+	else if (!bareHandDigging && bare_hand_dig_loop_playing) {
+		CSoundManager::GetInstance().Stop(SOUND_ID::bare_hand_dig);
+		bare_hand_dig_loop_playing = false;
+	}
+}
+
 void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)
 {
 	if (my_player->GetID() != pkt.player_id)
@@ -1101,9 +1214,457 @@ void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session
 	my_player->ResetCHoldTimer();
 }
 
+void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt)
+{
+	return_active = true;
+	return_center = XMFLOAT3{ pkt.x, pkt.y, pkt.z };
+	return_range  = pkt.range;
+}
+
+void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt)
+{
+	const bool isSelf = (my_player && my_player->GetID() == pkt.player_id);
+
+	ReturnToast toast;
+	toast.is_self = isSelf;
+	toast.timer   = RETURN_TOAST_DURATION;
+
+	// ImGui는 UTF-8을 요구. 소스 인코딩 의존을 피하기 위해 한글을 UTF-8 hex 바이트로 직접 작성.
+	if (isSelf) {
+		my_player->SetReturned(true);
+
+		// "복귀 완료"
+		toast.text = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
+	}
+	else {
+		// "%llu 플레이어 복귀"
+		char buf[64];
+		snprintf(buf, sizeof(buf),
+			"%llu \xED\x94\x8C\xEB\xA0\x88\xEC\x9D\xB4\xEC\x96\xB4 \xEB\xB3\xB5\xEA\xB7\x80",
+			(unsigned long long)pkt.player_id);
+		toast.text = buf;
+	}
+
+	return_toasts.push_back(std::move(toast));
+	CSoundManager::GetInstance().Play(SOUND_ID::Return);
+}
+
+void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt)
+{
+	settlement_result = SettlementResult{};
+	settlement_result.base_coin          = pkt.base_coin;
+	settlement_result.final_coin         = pkt.final_coin;
+	settlement_result.is_returned        = pkt.is_returned;
+	settlement_result.all_returned_bonus = pkt.all_returned_bonus;
+
+	auto list = pkt.GetTreasureList();
+	for (uint16 i = 0; i < list.Count(); ++i) {
+		SettlementEntry e;
+		e.item_id = list[i].item_id;
+		e.price   = list[i].price;
+		e.count   = list[i].count;
+
+		// 이름/아이콘 조회
+		auto item = ItemFactory::Create(e.item_id);
+		if (item) {
+			e.name      = item->GetName();
+			e.icon_path = item->GetIconPath();
+		}
+		settlement_result.entries.push_back(std::move(e));
+	}
+
+	// 소지금 반영 + 인벤토리에서 보물 제거
+	if (my_player) {
+		my_player->SetGold(my_player->GetGold() + pkt.final_coin);
+
+		auto inv = my_player->GetInventory();
+		if (inv) {
+			std::vector<uint32> to_remove;
+			for (auto& [invId, item] : inv->GetItems()) {
+				if (item->GetItemType() == ITEM_TYPE::TREASURE)
+					to_remove.push_back(invId);
+			}
+			for (auto id : to_remove)
+				inv->RemoveItem(id);
+		}
+	}
+
+	show_settlement_modal = true;
+	CKeyManager::GetInstance().SetMouseMode(false);
+	CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
+}
+
+void CGameScene::TriggerSinglePlayerSettlement()
+{
+	if (show_settlement_modal || !my_player)
+		return;
+
+	settlement_result = SettlementResult{};
+	settlement_result.is_returned = my_player->GetReturned();
+	// 싱글 1인 = 복귀했으면 전원 복귀 보너스 적용
+	settlement_result.all_returned_bonus = my_player->GetReturned();
+
+	auto inv = my_player->GetInventory();
+	if (inv) {
+		// item_id별 묶음
+		std::unordered_map<uint16, SettlementEntry> grouped;
+		for (auto& [invId, item] : inv->GetItems()) {
+			if (item->GetItemType() != ITEM_TYPE::TREASURE)
+				continue;
+
+			auto treasure = std::dynamic_pointer_cast<CTreasure>(item);
+			if (!treasure)
+				continue;
+
+			uint16 iid = static_cast<uint16>(treasure->GetItemId());
+			if (grouped.find(iid) == grouped.end()) {
+				SettlementEntry e;
+				e.item_id   = iid;
+				e.price     = treasure->GetPrice();
+				e.count     = 0;
+				e.name      = treasure->GetName();
+				e.icon_path = treasure->GetIconPath();
+				grouped[iid] = std::move(e);
+			}
+			grouped[iid].count += 1;
+			settlement_result.base_coin += treasure->GetPrice();
+		}
+		for (auto& [iid, e] : grouped)
+			settlement_result.entries.push_back(e);
+
+		float rate  = settlement_result.is_returned ? 1.0f : 0.5f;
+		float bonus = settlement_result.all_returned_bonus ? 2.0f : 1.0f;
+		settlement_result.final_coin = static_cast<uint32>(settlement_result.base_coin * rate * bonus);
+
+		my_player->SetGold(my_player->GetGold() + settlement_result.final_coin);
+
+		// 보물 인벤토리에서 제거
+		std::vector<uint32> to_remove;
+		for (auto& [invId, item] : inv->GetItems()) {
+			if (item->GetItemType() == ITEM_TYPE::TREASURE)
+				to_remove.push_back(invId);
+		}
+		for (auto id : to_remove)
+			inv->RemoveItem(id);
+	}
+
+	show_settlement_modal = true;
+
+	// 정산 완료 후 복귀 상태로 전환 → 몬스터 타겟에서 제외
+	if (my_player && !my_player->GetReturned())
+		my_player->SetReturned(true);
+}
+
+// 싱글 전용
+void CGameScene::DetectMyPlayerReturn()
+{
+	if (!return_active || my_player->GetReturned() || !my_player)
+		return;
+
+	const XMFLOAT3& pp = my_player->GetPosition();
+	float dx = pp.x - return_center.x;
+	float dz = pp.z - return_center.z;
+	if (dx * dx + dz * dz > return_range * return_range)
+		return;
+
+	my_player->SetReturned(true);
+	CSoundManager::GetInstance().Play(SOUND_ID::Return);
+
+	ReturnToast toast;
+	toast.is_self = true;
+	toast.timer   = RETURN_TOAST_DURATION;
+	// "복귀 완료"
+	toast.text    = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
+	return_toasts.push_back(std::move(toast));
+}
+
+void CGameScene::DrawReturnToasts()
+{
+	if (return_toasts.empty())
+		return;
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	// 타이머 감소 + 만료 제거 (ImGui 자체 DeltaTime 사용)
+	for (auto& t : return_toasts) t.timer -= io.DeltaTime;
+	return_toasts.erase(
+		std::remove_if(return_toasts.begin(), return_toasts.end(),
+			[](const ReturnToast& t) { return t.timer <= 0.f; }),
+		return_toasts.end());
+
+	if (return_toasts.empty())
+		return;
+
+	ImDrawList* dl   = ImGui::GetForegroundDrawList();
+	ImFont*     font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+	const float scale = G_RATIO_Y;
+
+	// 라운드 타이머 아래에서 시작
+	float yCursor = 80.f * scale;
+
+	for (const auto& toast : return_toasts) {
+		float fontPx = toast.is_self ? 48.f * scale : 24.f * scale;
+
+		// 마지막 0.5초 페이드 아웃
+		float alpha = (toast.timer < 0.5f) ? (toast.timer / 0.5f) : 1.f;
+
+		ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, toast.text.c_str());
+		ImVec2 pos      = ImVec2(io.DisplaySize.x * 0.5f - textSize.x * 0.5f, yCursor);
+
+		ImVec4 color  = toast.is_self ? ImVec4(1.f, 0.85f, 0.25f, alpha)
+		                              : ImVec4(0.9f, 0.9f, 0.9f, alpha);
+		ImU32  shadow = ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.7f * alpha));
+		const float off = 1.5f * scale;
+
+		dl->AddText(font, fontPx, ImVec2(pos.x - off, pos.y), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, ImVec2(pos.x + off, pos.y), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, ImVec2(pos.x, pos.y - off), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, ImVec2(pos.x, pos.y + off), shadow, toast.text.c_str());
+		dl->AddText(font, fontPx, pos, ImGui::GetColorU32(color), toast.text.c_str());
+
+		yCursor += textSize.y + 8.f * scale;
+	}
+}
+
+void CGameScene::DrawReturnMarker()
+{
+	constexpr int   SEGMENTS = 48;
+	constexpr float TWO_PI   = 6.28318530718f;
+
+	ImGuiIO&    io = ImGui::GetIO();
+	ImDrawList* dl = ImGui::GetBackgroundDrawList();
+
+	// 펄스 효과 (0.6 ~ 1.0 알파, 2Hz)
+	float t     = (float)ImGui::GetTime();
+	float pulse = 0.5f + 0.5f * sinf(t * 2.0f);
+	float alpha = 0.6f + 0.4f * pulse;
+
+	XMFLOAT4X4 view = camera->GetViewMatrix();
+	XMFLOAT4X4 proj = camera->GetProjectionMatrix();
+	XMMATRIX   vp   = XMMatrixMultiply(XMLoadFloat4x4(&view), XMLoadFloat4x4(&proj));
+
+	ImVec2 pts[SEGMENTS];
+	bool   valid[SEGMENTS];
+
+	for (int i = 0; i < SEGMENTS; ++i) {
+		float    theta = (float)i / (float)SEGMENTS * TWO_PI;
+		XMVECTOR wp    = XMVectorSet(return_center.x + cosf(theta) * return_range,
+		                             return_center.y + 0.05f,   // z-fight 방지
+		                             return_center.z + sinf(theta) * return_range,
+		                             1.f);
+		XMVECTOR clip  = XMVector4Transform(wp, vp);
+		float    cw    = XMVectorGetW(clip);
+
+		if (cw <= 0.01f) {
+			valid[i] = false;
+			pts[i]   = {};
+			continue;
+		}
+		float ndcX = XMVectorGetX(clip) / cw;
+		float ndcY = XMVectorGetY(clip) / cw;
+		pts[i]   = ImVec2((ndcX * 0.5f + 0.5f) * io.DisplaySize.x,
+		                  (1.f - (ndcY * 0.5f + 0.5f)) * io.DisplaySize.y);
+		valid[i] = true;
+	}
+
+	// 노란 링 (두께 3px, 카메라 뒤 정점 구간은 스킵)
+	ImU32 color     = ImGui::GetColorU32(ImVec4(1.0f, 0.85f, 0.25f, alpha));
+	float thickness = 3.0f * G_RATIO_Y;
+	for (int i = 0; i < SEGMENTS; ++i) {
+		int j = (i + 1) % SEGMENTS;
+		if (valid[i] && valid[j])
+			dl->AddLine(pts[i], pts[j], color, thickness);
+	}
+}
+
+void CGameScene::DrawSettlementModal()
+{
+	if (!show_settlement_modal)
+		return;
+
+	ImGuiIO& io = ImGui::GetIO();
+	const float scale  = G_RATIO_Y;
+	const float wW     = io.DisplaySize.x * 0.60f;
+	const float wH     = io.DisplaySize.y * 0.60f;
+	const float tableH = wH * 0.54f;
+
+	// 매 프레임 OpenPopup (BeginPopupModal 전에 호출해야 처음에 열림)
+	ImGui::OpenPopup("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC");  // "정산 결과"
+
+	ImGui::SetNextWindowSize(ImVec2(wW, wH), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(
+		ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
+		ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+	                       | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
+	if (!ImGui::BeginPopupModal("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC", nullptr, flags))
+		return;
+
+	// enlarge font for readability (proportional to UI scale)
+	ImGui::SetWindowFontScale(scale * 1.1f);
+
+	// helper: draw text right-aligned within the content region
+	char fmtBuf[128];
+	auto rightAlignedText = [](const char* text) {
+		float textWidth = ImGui::CalcTextSize(text).x;
+		float avail = ImGui::GetContentRegionAvail().x;
+		if (avail > textWidth)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + avail - textWidth);
+		ImGui::TextUnformatted(text);
+	};
+
+	ImFont* boldFont = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+	const float rowH  = 35.f * scale;
+	const float iconSz = 32.f * scale;
+
+	// 보물 목록 테이블
+	ImGui::PushFont(boldFont);
+	if (!settlement_result.entries.empty()) {
+		ImGuiTableFlags tblFlags = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags, ImVec2(ImGui::GetContentRegionAvail().x, tableH))) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+			ImGui::TableSetupColumn("",    ImGuiTableColumnFlags_WidthFixed, iconSz + 20.f * scale);
+			ImGui::TableSetupColumn("\xEB\xB3\xB4\xEB\xAC\xBC \xEC\x9D\xB4\xEB\xA6\x84",  // "보물 이름"
+			    ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("\xEA\xB0\x9C\xEB\x8B\xB9 \xEA\xB0\x80\xEA\xB2\xA9", // "개당 가격"
+			    ImGuiTableColumnFlags_WidthFixed, 140.f * G_RATIO_X);
+			ImGui::TableSetupColumn("\xEA\xB0\x9C\xEC\x88\x98",  // "개수"
+			    ImGuiTableColumnFlags_WidthFixed, 85.f * G_RATIO_X);
+			ImGui::TableHeadersRow();
+
+			for (const auto& e : settlement_result.entries) {
+				ImGui::TableNextRow(0, rowH);
+				ImGui::SetWindowFontScale(scale * 0.9f);
+
+				// 아이콘
+				ImGui::TableSetColumnIndex(0);
+				ImTextureID tex = (ImTextureID)nullptr;
+				if (!e.icon_path.empty())
+					tex = CImGuiManager::GetInstance().GetTexture(e.icon_path);
+				if (tex) {
+					ImVec2 cursor = ImGui::GetCursorScreenPos();
+					ImGui::GetWindowDrawList()->AddImage(
+					    tex,
+					    ImVec2(cursor.x + 4.f * scale, cursor.y + 4.f * scale),
+					    ImVec2(cursor.x + iconSz + 4.f * scale, cursor.y + iconSz + 4.f * scale));
+				}
+				ImGui::Dummy(ImVec2(iconSz + 8.f * scale, rowH));
+
+				// 이름
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::TextUnformatted(e.name.c_str());
+
+				// 개당 가격
+				ImGui::TableSetColumnIndex(2);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::Text("%u", e.price);
+
+				// 개수
+				ImGui::TableSetColumnIndex(3);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::Text("x%u", e.count);
+			}
+			ImGui::EndTable();
+		}
+	}
+	else {
+		// "획득한 보물 없음"
+		ImGui::TextUnformatted("\xED\x9A\x8D\xEB\x93\x9D\xED\x95\x9C \xEB\xB3\xB4\xEB\xAC\xBC \xEC\x97\x86\xEC\x9D\x8C");
+	}
+	ImGui::PopFont();
+
+	ImGui::Separator();
+
+	// 보물 합계
+	ImGui::PushFont(boldFont);
+	// "보물 합계: %u 코인"
+	snprintf(fmtBuf, sizeof(fmtBuf), "\xEB\xB3\xB4\xEB\xAC\xBC \xED\x95\xA9\xEA\xB3\x84: %u \xEC\xBD\x94\xEC\x9D\xB8",
+	    settlement_result.base_coin);
+	rightAlignedText(fmtBuf);
+	ImGui::PopFont();
+
+	// 보너스/배율
+	if (settlement_result.all_returned_bonus) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.65f, 1.f, 1.f));
+		// "복귀 보너스 x2!"
+		rightAlignedText("\xEB\xB3\xB4\xEB\x84\x88\xEC\x8A\xA4 x2!");
+		ImGui::PopStyleColor();
+	}
+	else if (!settlement_result.is_returned) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.4f, 0.4f, 1.f));
+		// "미복귀 x0.5"
+		rightAlignedText("\xEB\xAF\xB8\xEB\xB3\xB5\xEA\xB7\x80 x0.5");
+		ImGui::PopStyleColor();
+	}
+
+	ImGui::Separator();
+
+	// 최종 코인
+	ImGui::PushFont(boldFont);
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.65f, 1.f, 1.f));
+	// "최종 코인: %u"
+	snprintf(fmtBuf, sizeof(fmtBuf), "\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
+	rightAlignedText(fmtBuf);
+	ImGui::PopStyleColor();
+	ImGui::PopFont();
+
+	// "로비로 복귀" 버튼 - 하단 고정
+	float btnW = 130.f * G_RATIO_X;
+	float btnH = 30.f * scale;
+	float pad  = 12.f * scale;
+	float remainY = ImGui::GetContentRegionAvail().y;
+	if (remainY > btnH + pad)
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + remainY - btnH - pad);
+	ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - btnW) * 0.5f + ImGui::GetCursorPosX());
+	if (ImGui::Button("\xEB\xA1\x9C\xEB\xB9\x84\xEB\xA1\x9C \xEB\xB3\xB5\xEA\xB7\x80",  // "로비로 복귀"
+	    ImVec2(btnW, 30.f * scale))) {
+		show_settlement_modal = false;
+		PlayClickSound();
+		ImGui::CloseCurrentPopup();
+
+		if (g_is_single) {
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
+		}
+		else {
+			C_SceneChange pkt;
+			pkt.player_id     = my_player->GetID();
+			pkt.current_scene = SCENE_TYPE::GAME;
+			pkt.target_scene  = SCENE_TYPE::LOBBY;
+			auto sendBuffer = CServerPacketHandler::MakeSendBuffer(pkt);
+			my_player->GetSession()->DoSend(sendBuffer);
+		}
+	}
+	CheckHoverSound();
+
+	ImGui::EndPopup();
+}
+
 void CGameScene::Exit()
 {
 	CScene::Exit();
+
+	// 라운드 타이머 정리
+	if (g_is_single) {
+		round_active = false;
+		round_timer = 0.f;
+	}
+
+	// 복귀존 정리 (싱글/멀티 모두 유효)
+	return_active = false;
+	return_center = {};
+	return_range  = 0.f;
+	return_toasts.clear();
+	my_player->SetReturned(false);
+
+	// 정산 모달 정리
+	show_settlement_modal = false;
+	settlement_result     = SettlementResult{};
+
+	// 퀵슬롯 초기화
+	my_player->GetQuickSlot()->Reset();
 
 	my_player = nullptr;
 }
@@ -1127,8 +1688,10 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 	// 보물 & 몬스터 spawn 위치들 모두 clear
 	treasures.clear();
 	monster_spawn_info.clear();
+	id_To_Index.clear();
 
 	objects = factory->CreateGameSceneByServer(instance_data);
+	instance_data.clear();	// 다음 라운드 재진입 시 누적 방지
 }
 
 void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)
@@ -1248,7 +1811,7 @@ void CGameScene::Handle_S_EquipItem(std::shared_ptr<Session>& session, const S_E
 
 		if (!wasDowsing && pkt.is_dowsing_rod && pkt.item_id < 0){
 			player->SetDowsing(true);
-			animator->PlayAction("Ganga_search");
+			animator->PlayAction("Ganga_search", true);
 		}
 		else if (wasDowsing && !pkt.is_dowsing_rod && pkt.item_id < 0) {
 			player->SetDowsing(false);
@@ -1289,7 +1852,8 @@ void CGameScene::Handle_S_MineableList(std::shared_ptr<Session>& session, S_Mine
 			}
 		}
 
-		treasures.push_back(TreasureInfo{ mineableList[i].world_id, pos });
+		assert(mineableList[i].type != MINEABLEOBJECT_TYPE::NONE);
+		treasures.push_back(TreasureInfo{ mineableList[i].world_id, pos, mineableList[i].type });
 	}
 
 	// RegisterTreasures는 이후 GameScene::Enter → BuildObjects에서 호출됨 (my_player 유효 시점)
@@ -1342,9 +1906,10 @@ void CGameScene::Handle_S_UpdateDurability(std::shared_ptr<Session>& session, co
 			if (it == items.end())
 				return;
 
-			if (pkt.item_type == ITEM_TYPE::EQUIPMENT && pkt.item_sub_type == ITEM_SUB_TYPE::TOOL) {
-				auto tool = std::static_pointer_cast<CTool>(it->second);
-				tool->SetCurrentDurability(pkt.current_durability);
+			// 도구·무기 모두 내구도를 가질 수 있다. CEquipment 공통으로 처리
+			if (pkt.item_type == ITEM_TYPE::EQUIPMENT) {
+				auto equip = std::static_pointer_cast<CEquipment>(it->second);
+				equip->SetCurrentDurability(pkt.current_durability);
 			}
 		}
 	}

@@ -69,6 +69,10 @@ public:
 		return mult;
 	}
 
+	// 복귀 상태 (정산 시스템)
+	bool   GetReturned() const { return is_returned; }
+	void   SetReturned(bool r) { is_returned = r; }
+
 public:
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
@@ -120,6 +124,9 @@ protected:
 	float    stun_timer    = { 0.0f };
 
 	bool     is_knocked_back = false;
+
+	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
+	bool        is_returned{ false };
 
 public:
 	bool GetIsKnockedBack() const { return is_knocked_back; }

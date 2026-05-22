@@ -76,6 +76,9 @@ public:
 
 	CItemManager* GetItemManager() const { return item_manager.get(); }
 
+	// 매 틱 S_PlayerMove에 실어 보낼 라운드 타이머 (GameScene만 override). 그 외 -1
+	virtual float GetSyncedRoundTimer() const { return -1.f; }
+
 public:
 	// IOCP 스레드들이 호출 (패킷 받자마자 실행)
 	template<typename T, typename PacketType>

@@ -13,6 +13,7 @@
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
 #include "Monster.h"
+#include "GameScene.h"
 
 #include "Animator.h"
 #include "UIComponent.h"
@@ -258,14 +259,22 @@ void CScene::RemoveObject(UINT id)
 	if (iter == id_To_Index.end())
 		return;
 
-	UINT idx = id_To_Index[id];
-	UINT last = objects.size() - 1;
+	UINT idx = iter->second;
+
+	if (idx >= objects.size() || !objects[idx]) {
+		id_To_Index.erase(id);
+		return;
+	}
+
+	UINT last = (UINT)objects.size() - 1;
 
 	if (auto* col = objects[idx]->GetComponent<CColliderComponent>())
 		CPhysicsManager::GetInstance().EraseCollider(col);
 
 	std::swap(objects[idx], objects[last]);
-	id_To_Index[objects[idx]->GetID()] = idx;
+	if (objects[idx]) {
+		id_To_Index[objects[idx]->GetID()] = idx;
+	}
 
 	objects.pop_back();
 	id_To_Index.erase(id);
@@ -391,6 +400,14 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
 		myPlayer->SetPossessed(pkt.info.is_possessed);
+
+		// 라운드 타이머 동기화 (GameScene일 때만 유효한 값이 들어옴)
+		if (pkt.round_timer >= 0.f) {
+			CScene* active = CSceneManager::GetInstance().GetActiveScene();
+			if (active && active->GetSceneType() == SCENE_TYPE::GAME) {
+				static_cast<CGameScene*>(active)->SetRoundTimer(pkt.round_timer);
+			}
+		}
 
 		// 예측 이동을 없애고
 		// 아래의 코드가 추가되었다.

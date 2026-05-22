@@ -20,6 +20,11 @@
 CGameScene::CGameScene(uint32 roomId)
 	: CScene(SCENE_TYPE::GAME)
 	, mineable_id_counter(10000)
+	, round_timer(0.f)
+	, round_started(false)
+	, round_ended(false)
+	, return_active(false)
+	, return_center{}
 {
 
 }
@@ -63,8 +68,33 @@ void CGameScene::Initialize()
 
 void CGameScene::Update(float elapsedTime)
 {
+	for (auto& [id, player] : players)
+		player->ApplySeparation(players);
+
 	CScene::Update(elapsedTime);
-	UpdateMonsters(elapsedTime);
+	if (!round_ended)
+		UpdateMonsters(elapsedTime);
+
+	// 라운드 타이머 진행
+	if (round_started && !round_ended) {
+		round_timer -= elapsedTime;
+
+		// 종료 60초 전 복귀존 활성화 (1회 송신)
+		if (!return_active && round_timer <= RETURN_ACTIVATE_REMAIN) {
+			AnnounceReturnPosition();
+		}
+
+		// 복귀존 도달 감지 (활성화 이후 매 틱)
+		if (return_active) {
+			DetectPlayerReturns();
+		}
+
+		if (round_timer <= 0.f) {
+			round_timer = 0.f;
+			round_ended = true;
+			TriggerSettlement();
+		}
+	}
 }
 
 void CGameScene::UpdateMonsters(float elapsedTime)
@@ -103,6 +133,132 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 	}
 }
 
+void CGameScene::AnnounceReturnPosition()
+{
+	return_active = true;
+	return_center = FindSpawnPoint();
+
+	S_ReturnZoneActive pkt;
+	pkt.x = return_center.x;
+	pkt.y = return_center.y;
+	pkt.z = return_center.z;
+	pkt.range = RETURN_RANGE;
+	pkt.scene_type = scene_type;
+
+	auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+	BroadCast(sendBuffer);
+}
+
+void CGameScene::DetectPlayerReturns()
+{
+	const float rangeSq = RETURN_RANGE * RETURN_RANGE;
+
+	for (auto& [id, player] : players) {
+		if (!player || player->GetReturned())
+			continue;
+
+		const XMFLOAT3& pp = player->GetPosition();
+		float dx = pp.x - return_center.x;
+		float dz = pp.z - return_center.z;
+
+		if (dx * dx + dz * dz <= rangeSq) {
+			player->SetReturned(true);
+
+			S_PlayerReturned pkt;
+			pkt.player_id  = id;
+			pkt.scene_type = scene_type;
+
+			auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+			BroadCast(sendBuffer);
+		}
+	}
+
+	// 전원 복귀 시 타이머 만료 전이라도 즉시 정산
+	bool all_returned = !players.empty();
+	for (auto& [id, player] : players) {
+		if (!player || !player->GetReturned()) {
+			all_returned = false;
+			break;
+		}
+	}
+	if (all_returned) {
+		round_timer = 0.f;
+		round_ended = true;
+		TriggerSettlement();
+	}
+}
+
+void CGameScene::TriggerSettlement()
+{
+	// 전원 복귀 여부
+	bool all_returned = !players.empty();
+	for (auto& [id, player] : players) {
+		if (!player->GetReturned()) {
+			all_returned = false;
+			break;
+		}
+	}
+
+	for (auto& [id, player] : players) {
+		auto inv = player->GetInventory();
+		if (!inv)
+			continue;
+
+		// item_id별 묶음 (price, count)
+		map<uint16, std::pair<uint32, uint16>> grouped; // [item_id] → (price, count)
+		uint32 base_coin = 0;
+
+		vector<uint32> to_remove;
+		for (auto& [invId, item] : inv->GetItems()) {
+			if (item->GetItemType() != ITEM_TYPE::TREASURE)
+				continue;
+
+			auto treasure = static_pointer_cast<CTreasure>(item);
+			uint16 iid    = static_cast<uint16>(treasure->GetItemId());
+			uint32 price  = treasure->GetPrice();
+
+			grouped[iid].first  = price;
+			grouped[iid].second += 1;
+			base_coin           += price;
+			to_remove.push_back(invId);
+		}
+
+		for (auto invId : to_remove)
+			inv->RemoveItem(invId);
+
+		float rate      = player->GetReturned() ? 1.0f : 0.5f;
+		float bonus     = all_returned ? 2.0f : 1.0f;
+		uint32 final_coin = static_cast<uint32>(base_coin * rate * bonus);
+		player->AddCoin(final_coin);
+
+		// 플레이어에게 개별 정산 패킷 전송
+		uint16 entry_count = static_cast<uint16>(grouped.size());
+		S_GAMESETTLEMENT_WRITE writer(base_coin, final_coin,
+		                              player->GetReturned(), all_returned,
+		                              scene_type);
+
+		auto list = writer.ReserveTreasureList(entry_count);
+
+		uint16 i = 0;
+		for (auto& [iid, pc] : grouped) {
+			list[i].item_id = iid;
+			list[i].price   = pc.first;
+			list[i].count   = pc.second;
+			++i;
+		}
+
+		auto sendBuffer = writer.CloseAndReturn();
+		if (auto session = player->GetSession())
+			session->DoSend(sendBuffer);
+	}
+
+	// 정산 완료 후 전원 복귀 상태로 전환 → 몬스터 타겟에서 제외
+	for (auto& [id, player] : players) {
+		if (player && !player->GetReturned())
+			player->SetReturned(true);
+	}
+}
+
 void CGameScene::OnSceneActivate()
 {
 	CScene::OnSceneActivate();
@@ -111,6 +267,13 @@ void CGameScene::OnSceneActivate()
 	// active_player_count는 CScene::OnSceneActivate()에서 증가하므로 > 1이면 이미 스폰된 상태
 	if (active_player_count > 1)
 		return;
+
+	// 라운드 타이머 시작
+	round_timer = ROUND_DURATION;
+	round_started = true;
+	round_ended = false;
+	return_active = false;
+	return_center = {};
 
 	for (auto& info : monster_spawn_info) {
 		auto monster = CServerObjectFactory::CreateMonster(info.type, scene_type, GetRoom(), GetPhysicsManager());
@@ -129,14 +292,14 @@ void CGameScene::OnSceneActivate()
 void CGameScene::OnSceneDeactivate()
 {
 	CScene::OnSceneDeactivate();
-
-	monsters.clear();
-	monster_cnt = 0;
 }
 
 void CGameScene::EnterScene(shared_ptr<CPlayer> player)
 {
 	CScene::EnterScene(player);
+
+	// 라운드 진입 시 복귀 상태 리셋 (재라운드 대비)
+	player->SetReturned(false);
 
 	uint32 itemList[14] = { 1,5,9,14,15,16,17,19,25,24,45,47,48,49 };
 	vector<shared_ptr<CItem>> items;
@@ -170,6 +333,7 @@ void CGameScene::LeaveScene(uint64 playerId)
 void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& objects, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
 	auto obj = std::make_shared<CObject>(OBJECT_TYPE::STATIC_OBJECT);
+	obj->SetCurrentSceneType(scene_type);
 	obj->GetWorldMatrix() = node->local_matrix;
 
 	bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
@@ -241,8 +405,16 @@ void CGameScene::LoadGameScene()
 
 void CGameScene::CreateGameScene()
 {
-	if (prototypes.empty()) 
+	if (prototypes.empty())
 		LoadGameScene();
+
+	// 이전 라운드 누적 상태 초기화 (재진입 대비)
+	map_instance_data.clear();
+	static_objects.clear();
+	mineable_objects.clear();
+	mineable_id_counter = 10000;
+	monsters.clear();
+	monster_cnt = 0;
 
 	vector<MapGenerator::InstanceData> instanceData = MapGenerator::Generate3DMap();
 

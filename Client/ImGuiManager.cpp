@@ -293,6 +293,65 @@ void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indica
     }
 }
 
+void CImGuiManager::DrawRoundTimer(float remainSec)
+{
+    if (remainSec < 0.f) remainSec = 0.f;
+
+    int m = (int)remainSec / 60;
+    int s = (int)remainSec % 60;
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%02d:%02d", m, s);
+
+    // 색상: 30초 이하 빨강 / 60초 이하 노랑 / 그 외 흰색
+    ImVec4 color = ImVec4(1.f, 1.f, 1.f, 1.f);
+    if (remainSec <= 30.f) color = ImVec4(1.0f, 0.25f, 0.25f, 1.0f);
+    else if (remainSec <= 60.f) color = ImVec4(1.0f, 0.85f, 0.25f, 1.0f);
+
+    ImGuiIO& io = ImGui::GetIO();
+    const float scale = G_RATIO_Y;
+
+    // ForegroundDrawList 사용: 윈도우 없이 화면 위에 직접 그림 (클리핑 없음 = 전체화면에서도 짤림 없음)
+    ImDrawList* dl = ImGui::GetForegroundDrawList();
+    ImFont* font = elephnt_font ? elephnt_font : ImGui::GetFont();
+
+    // 800x600 기준 폰트 픽셀 크기. 시계는 보통 큼직한 게 어울리되, 화면을 잡아먹지 않게 32px가 적당.
+    const float fontPx = 40.f * scale;
+
+    // 텍스트 크기 측정 (폰트와 사이즈를 명시 → SetWindowFontScale 의존 X)
+    ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, buf);
+
+    // 위치: 화면 상단 중앙, Y는 12px 상단 마진
+    const float topMargin = 12.f * scale;
+    ImVec2 textPos = ImVec2(io.DisplaySize.x * 0.5f - textSize.x * 0.5f, topMargin);
+
+    // 배경 박스 (반투명 검정 + 외곽선)
+    const float padX     = 14.f * scale;
+    const float padY     = 6.f  * scale;
+    const float rounding = 8.f  * scale;
+    ImVec2 bgMin = ImVec2(textPos.x - padX, textPos.y - padY);
+    ImVec2 bgMax = ImVec2(textPos.x + textSize.x + padX, textPos.y + textSize.y + padY);
+
+    // 1) 채움 (어두운 반투명)
+    dl->AddRectFilled(bgMin, bgMax, ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.55f)), rounding);
+
+    // 2) 외곽선 - 색상 단계와 같은 테두리 (강조)
+    ImVec4 borderColor = color;
+    borderColor.w = 0.9f;
+    dl->AddRect(bgMin, bgMax, ImGui::GetColorU32(borderColor), rounding, 0, 1.5f * scale);
+
+    // 3) 텍스트 그림자 (4방향)
+    ImU32 shadow = ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.9f));
+    const float off = 1.5f * scale;
+    dl->AddText(font, fontPx, ImVec2(textPos.x - off, textPos.y), shadow, buf);
+    dl->AddText(font, fontPx, ImVec2(textPos.x + off, textPos.y), shadow, buf);
+    dl->AddText(font, fontPx, ImVec2(textPos.x, textPos.y - off), shadow, buf);
+    dl->AddText(font, fontPx, ImVec2(textPos.x, textPos.y + off), shadow, buf);
+
+    // 4) 본문 텍스트
+    dl->AddText(font, fontPx, textPos, ImGui::GetColorU32(color), buf);
+}
+
 bool ImageButtonWithText(long long texturePtr, const char* label, const ImVec2& size)
 {
     // 1. 현재 커서 위치(버튼이 그려질 위치)를 저장해둡니다.

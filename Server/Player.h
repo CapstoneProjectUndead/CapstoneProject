@@ -83,6 +83,8 @@ public:
 	bool GetIsReady() const { return is_ready; }
 	void SetIsReady(bool ready) { is_ready = ready; }
 
+	void ResetAll();
+
 public:
 	// 캐릭터 스텟 관련 함수들
 	uint32 GetMaxHp() const { return stat.maxHp; }
@@ -122,6 +124,15 @@ public:
 	bool GetDowsing() const { return is_dowsing; }
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 
+	// 코인
+	uint32 GetCoin() const { return coin; }
+	void   SetCoin(uint32 amount) { coin = amount; }
+	void   AddCoin(uint32 amount) { coin += amount; }
+
+	// 복귀 상태 (정산 시스템)
+	bool   GetReturned() const { return is_returned; }
+	void   SetReturned(bool r) { is_returned = r; }
+
 private:
 	void UpdateStamina(float elapsedTime);
 
@@ -134,6 +145,9 @@ private:
 	// 공격
 	void ProcessMeleeAttack(const InputData& input, float elapsedTime);
 	void ProcessRangedAttack(const InputData& input, float elapsedTime);
+
+	// 장착 장비 내구도 소모 (채굴/공격 공용). 내구도 0이면 제거 후 true 반환
+	bool ConsumeEquippedDurability();
 
 	// 빙의
 	void UpdatePossession(float elapsedTime);
@@ -197,6 +211,12 @@ private:
 	// 공중 판정 디바운스 (is_grounded 떨림 방지)
 	float       grounded_timer{ 0.1f };
 
+	// 소지금
+	uint32      coin{ 0 };
+
+	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
+	bool        is_returned{ false };
+
 	// 채굴 애니메이션 유지 타이머
 	float       dig_timer;
 	const float DIG_DURATION = 1.03f;
@@ -212,5 +232,9 @@ private:
 	const float MELEE_ATTACK_DURATION = 1.5f;
 
 	float       dig_sound_timer = -1.0f;
+
+	// 맨손 채굴 사운드: 홀딩 중 일정 간격마다 PlaySound 패킷 전송
+	float       bare_hand_sound_timer = -1.0f;
+	const float BARE_HAND_SOUND_INTERVAL = 0.5f;
 };
 

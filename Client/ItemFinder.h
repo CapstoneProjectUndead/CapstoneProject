@@ -15,7 +15,6 @@ public:
 	std::vector<TreasureInfo>& GetTreasuerPositions() { return treasures; }
 
 	// 맵 데이터에서 보물 위치만 추출하여 등록하는 함수
-	void RegisterTreasures(const std::vector<MapGenerator::InstanceData>& mapData);
 	void RegisterTreasures(const std::vector<TreasureInfo>& _treasures);
 
 	// F키를 눌렀을 때 주변(radius 반경 내)에 보물이 있는지 탐색하는 함수

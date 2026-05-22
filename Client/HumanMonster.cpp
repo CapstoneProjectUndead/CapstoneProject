@@ -225,7 +225,7 @@ void CHumanMonster::OnTraceMove(float elapsedTime)
 
     auto targetPlayer = target_player.lock();
 
-    if (!targetPlayer) {
+    if (!targetPlayer || targetPlayer->GetReturned()) {
         // 타겟이 사라졌으면 IDLE로 복귀
         AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
         return;

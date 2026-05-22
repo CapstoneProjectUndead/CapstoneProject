@@ -27,12 +27,26 @@ private:
     void LoadGameScene();
     void CreateGameScene();
     void UpdateMonsters(float elapsedTime);
+    void AnnounceReturnPosition();
+    void DetectPlayerReturns();
+    void TriggerSettlement();
 
 public:
     virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;
     virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) override;
     virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) override;
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
+
+    // 라운드 타이머 (정산 시스템)
+    static constexpr float ROUND_DURATION = 300.f;        
+    static constexpr float RETURN_ACTIVATE_REMAIN = 60.f; // 종료 60초 전 복귀존 활성화
+    static constexpr float RETURN_RANGE = 1.5f;           // 복귀존 반경
+
+    float GetRoundTimer() const { return round_timer; }
+    bool  IsRoundEnded() const { return round_ended; }
+
+    // S_PlayerMove에 실어 보낼 동기화 값 (Scene::GetSyncedRoundTimer override)
+    virtual float GetSyncedRoundTimer() const override { return round_started ? round_timer : -1.f; }
 
     // 채굴 가능 오브젝트 관련
     static constexpr float MINING_RANGE = 0.45f;
@@ -50,5 +64,14 @@ private:
 
     map<uint64, shared_ptr<CMineableObject>>        mineable_objects;
     uint64                                          mineable_id_counter;
+
+    // 라운드 타이머 상태
+    float                                           round_timer;
+    bool                                            round_started;
+    bool                                            round_ended;
+
+    // 복귀존 상태 (60초 시점 1회만 활성화 송신)
+    bool                                            return_active;
+    XMFLOAT3                                        return_center{};
 };
 

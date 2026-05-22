@@ -103,6 +103,7 @@ void CScene::SendPlayersResult()
 			movePkt.timestamp = player->GetLastSimulatedTime();
 			movePkt.stamina = player->GetStamina();
 			movePkt.hp      = player->GetHp();
+			movePkt.round_timer = GetSyncedRoundTimer();
 
 			SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer<S_PlayerMove>(movePkt);
 			BroadCast(sendBuffer);
@@ -301,23 +302,23 @@ void CScene::LeaveScene(uint64 playerId)
 
 void CScene::OnSceneActivate()
 {
-	if (scene_type != SCENE_TYPE::TITLE && scene_type != SCENE_TYPE::CUSTOMS) {
+	if ((scene_type == SCENE_TYPE::TITLE) || (scene_type == SCENE_TYPE::CUSTOMS))
+		return;
 
-		active_player_count++;
+	active_player_count++;
 
-		// 이미 다른 플레이어가 있으면 충돌체 이미 등록됨
-		if (active_player_count > 1)
-			return;
+	// 이미 다른 플레이어가 있으면 충돌체 이미 등록됨
+	if (active_player_count > 1)
+		return;
 
-		// GameScene은 CreateGameScene()에서 충돌체를 생성과 동시에 PhysicsManager에 등록하므로
-		// 여기서 다시 등록하면 중복 등록된다.
-		// Lobby 등 다른 씬은 Create 시점에 static_objects에만 저장하므로 여기서 등록한다.
-		if (scene_type != SCENE_TYPE::GAME) {
-			for (const auto& obj : static_objects) {
-				CColliderComponent* col = obj->GetComponent<CColliderComponent>();
-				if (col) {
-					GetPhysicsManager()->SetCollider(col);
-				}
+	// GameScene은 CreateGameScene()에서 충돌체를 생성과 동시에 PhysicsManager에 등록하므로
+	// 여기서 다시 등록하면 중복 등록된다.
+	// Lobby 등 다른 씬은 Create 시점에 static_objects에만 저장하므로 여기서 등록한다.
+	if (scene_type != SCENE_TYPE::GAME) {
+		for (const auto& obj : static_objects) {
+			CColliderComponent* col = obj->GetComponent<CColliderComponent>();
+			if (col) {
+				GetPhysicsManager()->SetCollider(col);
 			}
 		}
 	}
@@ -325,17 +326,22 @@ void CScene::OnSceneActivate()
 
 void CScene::OnSceneDeactivate()
 {
-	if (scene_type != SCENE_TYPE::TITLE && scene_type != SCENE_TYPE::CUSTOMS) {
+	if ((scene_type == SCENE_TYPE::TITLE) || (scene_type == SCENE_TYPE::CUSTOMS))
+		return;
 
-		active_player_count--;
+	active_player_count--;
 
-		// 아직 다른 플레이어가 남아있으면 충돌체 유지
-		if (active_player_count > 0)
-			return;
+	// 아직 다른 플레이어가 남아있으면 충돌체 유지
+	if (active_player_count > 0)
+		return;
 
-		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT, scene_type);
-		GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
-	}
+	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::STATIC_OBJECT, scene_type);
+	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MINEABLE_OBJECT, scene_type);
+	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::WORLD_ITEM, scene_type);
+	GetPhysicsManager()->EraseCollider(OBJECT_TYPE::MONSTER, scene_type);
+
+	monsters.clear();
+	monster_cnt = 0;
 }
 
 void CScene::SendExistingUsers(shared_ptr<CPlayer> player)
@@ -403,6 +409,10 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
 
+	// 복귀 완료 상태: 이동/점프/공격 입력은 무시 (회전·카메라만 허용)
+	if (mover->GetReturned())
+		return;
+
 	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장
 	InputData input{ pkt.info.w, pkt.info.a, pkt.info.s, pkt.info.d, pkt.info.space, pkt.info.shift, pkt.info.lbtn, pkt.info.c, pkt.info.lbtn_held };
 	PendingInput pInput{ input, pkt.seq_num };
@@ -448,6 +458,9 @@ void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoo
 void CScene::Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt)
 {
 	auto player = players[pkt.player_id];
+	if (!player)
+		return;
+
 	ChangeScene(player, pkt.target_scene);
 }
 
@@ -462,12 +475,7 @@ void CScene::ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType)
 	// 입장할 씬에 입장 전 처리할 것들 처리
 	targetScene->OnSceneActivate();
 
-	if (targetSceneType == SCENE_TYPE::CUSTOMS) {
-		player->SetCurrentSceneType(SCENE_TYPE::CUSTOMS);
-	}
-	else {
-		targetScene->EnterScene(player);
-	}
+	targetScene->EnterScene(player);
 
 	LeaveScene(player->GetID());
 
@@ -479,4 +487,12 @@ void CScene::ChangeScene(shared_ptr<CPlayer> player, SCENE_TYPE targetSceneType)
 		auto sendBuffer = MAKE_SEND_BUFFER(removePkt);
 		player->GetSession()->DoSend(sendBuffer);
 	}
+
+	S_SceneChange changeScenePkt;
+	changeScenePkt.player_id    = player->GetID();
+	changeScenePkt.current_scene = scene_type;
+	changeScenePkt.target_scene  = targetSceneType;
+	auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
+	if (auto s = player->GetSession())
+		s->DoSend(sendBuffer);
 }
