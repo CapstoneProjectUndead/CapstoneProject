@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 //==================================
 // **** 클라/서버 공동 참조 파일 ****
 //==================================
@@ -35,7 +35,10 @@ namespace MapGenerator
         STORE_WALL_EMPTY,
 
         // Props
-        KIOSK, TREE, TREASURE, BENCH, SMALL_BUSH, SEESAW,
+        KIOSK, TREE, 
+        TREASURE, 
+        TREASURE_VILLAGE,
+        BENCH, SMALL_BUSH, SEESAW,
 
         // Monster spawn markers
         MONSTER_HUMAN,

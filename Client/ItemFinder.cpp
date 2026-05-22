@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "ItemFinder.h"
 #include "KeyManager.h"
 #include "MyPlayer.h"
@@ -55,8 +55,8 @@ void CItemFinder::RegisterTreasures(const std::vector<MapGenerator::InstanceData
 
     // 맵 데이터를 순회하며 보물만 찾아 벡터에 저장 (땅속 보물 포함)
     for (const auto& instance : mapData) {
-        if (instance.type == MapGenerator::EModelType::TREASURE
-            || instance.type == MapGenerator::EModelType::TREASURE_HIDDEN) {
+        if (instance.type == MapGenerator::EModelType::TREASURE || instance.type == MapGenerator::EModelType::TREASURE_HIDDEN || 
+            instance.type == MapGenerator::EModelType::TREASURE_VILLAGE) {
             treasures.emplace_back(TreasureInfo{ instance.position });
         }
     }

@@ -83,8 +83,8 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::SOFA] = "sofa";
     id_to_file[EModelVariant::STREETLAMP] = "streetlamp";
     id_to_file[EModelVariant::TABLE_LOW] = "table_low";
-    id_to_file[EModelVariant::CHAIR_001] = "chair.001";
-    id_to_file[EModelVariant::TABLE_001] = "table.001";
+    id_to_file[EModelVariant::CHAIR_001] = "chair001";
+    id_to_file[EModelVariant::TABLE_001] = "table001";
 
     // 카테고리별 랜덤 풀 설정 (추가 장식물용 - 파일명 기반)
     random_pools["grass"] = { "park_grass_1", "park_grass_2", "park_grass_3"};
@@ -98,8 +98,9 @@ void CMapAssetManager::initialize()
         "bookshelf", "sofa", "table_low", "chair.001", "table.001", "refrigerator"
     };
     random_pools["village_deco"] = { "streetlamp" };
-    random_pools["treasure"] = { "crate_1","crate_2", "drum"};
-
+    random_pools["treasure"] = { "crate_1"};
+    random_pools["treasure_village"] = { "crate_1", "crate_2", "drum" };
+    random_pools["treasure_field"] = { "crate_1", "crate_2", "drum", "stone_treasure" };
 
     // 모델 타입별 메쉬 매핑 (EModelType -> {EModelVariant 후보들(실제 모델 enum), 추가 풀 키})
     asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {} };
@@ -120,7 +121,9 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::BENCH] = { {}, {"bench"} };
     asset_table[EModelType::SMALL_BUSH] = { {}, {"bush"} };
     asset_table[EModelType::SEESAW] = { {EModelVariant::SEESAW_001}, {} };
-    asset_table[EModelType::TREASURE] = { {}, {"treasure"} };
+    asset_table[EModelType::TREASURE_VILLAGE] = { {}, {"treasure_village"} };
+    asset_table[EModelType::TREASURE] = { {}, {"treasure_field"} };
+    asset_table[EModelType::TREASURE_HIDDEN] = { {}, {"treasure"} };
 
     // 땅속 보물: 프로토타입 룩업(콜라이더/위치)을 위해 동일 풀 사용. 메시는 ObjectFactory에서 스킵.
     asset_table[EModelType::TREASURE_HIDDEN] = { {}, {"treasure"} };
@@ -175,7 +178,8 @@ std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelV
             if (pool_key == "village_deco") {
                 probability = 5;
             }
-            else if (type == EModelType::TREASURE || type == EModelType::TREASURE_HIDDEN || type == EModelType::PARK_GREEN || type == EModelType::BENCH || type == EModelType::TREE) {
+            else if (type == EModelType::TREASURE || type == EModelType::TREASURE_VILLAGE || type == EModelType::TREASURE_HIDDEN || 
+                type == EModelType::PARK_GREEN || type == EModelType::BENCH || type == EModelType::TREE) {
                 probability = 100;
             }
             else if (pool_key == "indoor_furniture") {
