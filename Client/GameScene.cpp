@@ -953,17 +953,27 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 
 void CGameScene::ProcessRangedAttack(float elapsedTime)
 {
+	if (!g_is_single)
+		return;
+
 	uint16 equippedID = my_player->GetEquippedItemId();
+	auto inv = my_player->GetInventory();
+	auto qs = my_player->GetQuickSlot();
+	const auto& items = inv->GetItems();
+	auto it = items.find(qs->GetSelectedInvId());
 
 	switch (equippedID)
 	{
 		case 16: // 스프레이
 		{
+			auto spray = std::static_pointer_cast<CWeapon>(it->second);
+
 			if (KEY_TAP(KEY::LBTN) && spray_attack_cooldown <= 0.0f
 				&& !my_player->GetIsKnockedBack() && !my_player->GetIsPossessed()
 				&& !my_player->GetIsStunned()
 				&& !my_player->GetDowsing()) {
 				my_player->OnAttack();
+				spray->ReduceDurability();
 				CSoundManager::GetInstance().Play(SOUND_ID::ghost_spray);
 				spray_attack_timer = 0.8f;
 				spray_attack_cooldown = 1.6f;
@@ -975,6 +985,10 @@ void CGameScene::ProcessRangedAttack(float elapsedTime)
 				if (spray_attack_timer <= 0.0f) {
 					spray_attack_timer = -1.0f;
 					SprayAttack(elapsedTime);
+					if (spray->GetCurrentDurability() <= 0) {
+						inv->RemoveItem(qs->GetSelectedInvId());
+						my_player->SetEquippedItemId(0);
+					}
 				}
 			}
 
@@ -1649,6 +1663,9 @@ void CGameScene::Exit()
 	show_settlement_modal = false;
 	settlement_result     = SettlementResult{};
 
+	// 퀵슬롯 초기화
+	my_player->GetQuickSlot()->Reset();
+
 	my_player = nullptr;
 }
 
@@ -1889,9 +1906,10 @@ void CGameScene::Handle_S_UpdateDurability(std::shared_ptr<Session>& session, co
 			if (it == items.end())
 				return;
 
-			if (pkt.item_type == ITEM_TYPE::EQUIPMENT && pkt.item_sub_type == ITEM_SUB_TYPE::TOOL) {
-				auto tool = std::static_pointer_cast<CTool>(it->second);
-				tool->SetCurrentDurability(pkt.current_durability);
+			// 도구·무기 모두 내구도를 가질 수 있다. CEquipment 공통으로 처리
+			if (pkt.item_type == ITEM_TYPE::EQUIPMENT) {
+				auto equip = std::static_pointer_cast<CEquipment>(it->second);
+				equip->SetCurrentDurability(pkt.current_durability);
 			}
 		}
 	}

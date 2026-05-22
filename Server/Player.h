@@ -146,6 +146,9 @@ private:
 	void ProcessMeleeAttack(const InputData& input, float elapsedTime);
 	void ProcessRangedAttack(const InputData& input, float elapsedTime);
 
+	// 장착 장비 내구도 소모 (채굴/공격 공용). 내구도 0이면 제거 후 true 반환
+	bool ConsumeEquippedDurability();
+
 	// 빙의
 	void UpdatePossession(float elapsedTime);
 	void ReleasePossession(const InputData& input, const float elapsedTime);

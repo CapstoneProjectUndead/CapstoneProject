@@ -68,6 +68,9 @@ void CGameScene::Initialize()
 
 void CGameScene::Update(float elapsedTime)
 {
+	for (auto& [id, player] : players)
+		player->ApplySeparation(players);
+
 	CScene::Update(elapsedTime);
 	if (!round_ended)
 		UpdateMonsters(elapsedTime);

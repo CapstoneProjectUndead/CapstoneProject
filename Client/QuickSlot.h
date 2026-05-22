@@ -39,6 +39,8 @@ public:
     ITEM_SUB_TYPE GetSelectedSubType()  const;
     int           GetSelectedInvId()    const;
 
+    void Reset();
+
 private:
     void DrawSlotCells(float cellSz, float pad, float scale);
 

@@ -726,64 +726,79 @@ void CPlayer::ProcessToolMining()
                 if (target->IsDestroyed())
                     gameScene->DestroyMineable(target->GetID());
 
-                if (equipped_item && equipped_item->GetSubType() == ITEM_SUB_TYPE::TOOL) {
-                    auto tool = std::static_pointer_cast<CTool>(equipped_item);
-
-                    // 내구도 닳기
-                    tool->ReduceDurability();
-
-                    // 플레이어에게 내구도 상태 알려주기
-                    S_UpdateDurability updateDurPkt;
-                    updateDurPkt.player_id = GetID();
-                    updateDurPkt.item_id = equipped_item_id;
-                    updateDurPkt.inventory_id = equipped_item->GetInventoryID();
-                    updateDurPkt.current_durability = tool->GetCurrentDurability();
-                    updateDurPkt.item_type = equipped_item->GetItemType();
-                    updateDurPkt.item_sub_type = equipped_item_sub_type;
-                    updateDurPkt.scene_type = GetCurrentSceneType();
-
-                    if (GetSession()) {
-                        auto sendBuffer = MAKE_SEND_BUFFER(updateDurPkt);
-                        GetSession()->DoSend(sendBuffer);
-                    }
-
-                    // 내구도가 0인지 체크
-                    if (tool->GetCurrentDurability() <= 0) {
-
-                        // 인벤토리에서 도구 제거
-                        if (inventory && inventory->RemoveItem(equipped_item->GetInventoryID())) {
-
-                            // 내구도 0이라서 플레이어에게 해당 아이템 없애라고 지시
-                            S_RemoveItem removeItemPkt;
-                            removeItemPkt.item_id = equipped_item_id;
-                            removeItemPkt.inventory_id = equipped_item->GetInventoryID();
-                            removeItemPkt.player_id = GetID();
-                            removeItemPkt.scene_type = GetCurrentSceneType();
-
-                            if (GetSession()) {
-                                auto sendBuffer = MAKE_SEND_BUFFER(removeItemPkt);
-                                GetSession()->DoSend(sendBuffer);
-                            }
-
-                            // 해당 유저와 다른 유저들에게 해당 유저가 들고있던 무기 없어졌다고 알려야한다.
-                            S_EquipItem equipPkt;
-                            equipPkt.player_id = GetID();
-                            equipPkt.item_id = 0;
-                            equipPkt.scene_type = GetCurrentSceneType();
-
-                            auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
-                            gameScene->BroadCast(sendBuffer);
-
-                            // 장착 해제
-                            equipped_item = nullptr;
-                            equipped_item_id = 0;
-                            equipped_item_sub_type = ITEM_SUB_TYPE::NONE;
-                        }
-                    }
-                }
+                // 도구 내구도 소모 (0이면 자동 제거)
+                ConsumeEquippedDurability();
             }
         }
     }
+}
+
+// 장착 장비의 내구도를 1단계 소모한다. 0이 되면 인벤토리에서 제거하고 장착 해제한다.
+// 반환값: 내구도 0으로 파괴되어 제거됐으면 true
+bool CPlayer::ConsumeEquippedDurability()
+{
+    if (!equipped_item)
+        return false;
+
+    auto equip = std::dynamic_pointer_cast<CEquipment>(equipped_item);
+    if (!equip || equip->GetMaxDurability() == 0)
+        return false;   // 내구도 개념이 없는 장비는 건너뜀
+
+    equip->ReduceDurability(); 
+
+    // 플레이어에게 내구도 상태 알려주기
+    S_UpdateDurability updateDurPkt;
+    updateDurPkt.player_id = GetID();
+    updateDurPkt.item_id = equipped_item_id;
+    updateDurPkt.inventory_id = equipped_item->GetInventoryID();
+    updateDurPkt.current_durability = equip->GetCurrentDurability();
+    updateDurPkt.item_type = equipped_item->GetItemType();
+    updateDurPkt.item_sub_type = equipped_item_sub_type;
+    updateDurPkt.scene_type = GetCurrentSceneType();
+
+    if (GetSession()) {
+        auto sendBuffer = MAKE_SEND_BUFFER(updateDurPkt);
+        GetSession()->DoSend(sendBuffer);
+    }
+
+    // 내구도가 남아 있으면 종료
+    if (equip->GetCurrentDurability() > 0)
+        return false;
+
+    // 내구도 0 → 인벤토리에서 제거
+    if (!inventory || !inventory->RemoveItem(equipped_item->GetInventoryID()))
+        return false;
+
+    // 본인에게: 인벤토리에서 아이템 없애라고 지시
+    S_RemoveItem removeItemPkt;
+    removeItemPkt.item_id = equipped_item_id;
+    removeItemPkt.inventory_id = equipped_item->GetInventoryID();
+    removeItemPkt.player_id = GetID();
+    removeItemPkt.scene_type = GetCurrentSceneType();
+
+    if (GetSession()) {
+        auto sendBuffer = MAKE_SEND_BUFFER(removeItemPkt);
+        GetSession()->DoSend(sendBuffer);
+    }
+
+    // 전체에게: 해당 유저의 장착이 해제됐다고 알린다
+    S_EquipItem equipPkt;
+    equipPkt.player_id = GetID();
+    equipPkt.item_id = 0;
+    equipPkt.scene_type = GetCurrentSceneType();
+
+    if (auto r = GetRoom()) {
+        if (auto sc = r->GetScenes()[(UINT)current_scene_type].get()) {
+            auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+            sc->BroadCast(sendBuffer);
+        }
+    }
+
+    // 장착 해제
+    equipped_item = nullptr;
+    equipped_item_id = 0;
+    equipped_item_sub_type = ITEM_SUB_TYPE::NONE;
+    return true;
 }
 
 void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, bool isMoving)
@@ -928,7 +943,7 @@ void CPlayer::ProcessRangedAttack(const InputData& input, float elapsedTime)
     {
         case 16:  // 스프레이
         {
-            if (input.lbtn && !is_possessed && !is_dowsing 
+            if (input.lbtn && !is_possessed && !is_dowsing
                 && grounded_timer > 0.0f && ranged_attack_timer <= 0.0f) {
                 SendSoundPacket(false, SOUND_ID::ghost_spray, GetPosition());
                 state = PLAYER_STATE::ATTACK;
@@ -940,8 +955,13 @@ void CPlayer::ProcessRangedAttack(const InputData& input, float elapsedTime)
                 ranged_attack_timer -= elapsedTime;
 
                 // 0.8초 경과 시 데미지 (1.5 - 0.8 = 0.7 threshold)
-                if (prev > 0.7f && ranged_attack_timer <= 0.7f)
+                if (prev > 0.7f && ranged_attack_timer <= 0.7f) {
                     SprayAttack(elapsedTime);
+
+                    // 스프레이 내구도 소모 (0이면 자동 제거)
+                    if (ConsumeEquippedDurability())
+                        ranged_attack_timer = 0.0f;
+                }
 
                 state = (ranged_attack_timer > 0.0f) ? PLAYER_STATE::ATTACK : PLAYER_STATE::IDLE;
             }

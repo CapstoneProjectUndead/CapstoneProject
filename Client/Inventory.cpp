@@ -651,11 +651,13 @@ void CInventory::DrawItemTooltip(CItem* item)
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.88f, 0.88f, 0.88f, 1.0f));
 			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + descW);
 
-			auto* tool = dynamic_cast<CTool*>(item);
-			if (tool) {
-				// 도구: 설명 표시
-				// 도구: 설명 표시
-				const std::string& desc = tool->GetDescription();
+			// 장비(도구/무기) 중 내구도가 있는 것만 내구도 UI 표시
+			auto* equip         = dynamic_cast<CEquipment*>(item);
+			bool  hasDurability = equip && equip->GetMaxDurability() > 0;
+
+			if (hasDurability) {
+				// 설명 표시
+				const std::string& desc = item->GetDescription();
 				if (!desc.empty()) {
 					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.78f, 0.88f, 1.0f, 0.92f));
 					ImGui::TextWrapped("%s", desc.c_str());
@@ -669,8 +671,8 @@ void CInventory::DrawItemTooltip(CItem* item)
 				}
 
 				// 내구도 표시
-				uint32 cur = tool->GetCurrentDurability();
-				uint32 max = tool->GetMaxDurability();
+				uint32 cur = equip->GetCurrentDurability();
+				uint32 max = equip->GetMaxDurability();
 				float  ratio = (max > 0) ? (float)cur / (float)max : 0.0f;
 
 				// 내구도 바 색상 (높으면 초록, 낙으면 빨강)
@@ -701,7 +703,7 @@ void CInventory::DrawItemTooltip(CItem* item)
 				ImGui::Dummy(ImVec2(descW, 10.0f * scale));
 			}
 			else {
-				// 무기 / 소비 / 기타 / 보물: description
+				// 내구도 없는 장비 / 소비 / 기타 / 보물: 설명만 표시
 				const std::string& desc = item->GetDescription();
 				if (!desc.empty())
 					ImGui::TextWrapped("%s", desc.c_str());

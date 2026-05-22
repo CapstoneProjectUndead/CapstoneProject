@@ -193,16 +193,17 @@
         "description": "**뿅뿅**"
     },
     {
-        "item_id": 16,
-        "item_type": 0,
-        "item_sub_type": 151,
-        "item_name": "유령 퇴치 스프레이",
-        "weight": 2.0,
-        "price": 350,
-        "max_stack": 1,
-        "is_throwable": true,
-        "icon_path": "Equip_ghostspray",
-        "description": "유령을 퇴치하는 스프레이"
+      "item_id": 16,
+      "item_type": 0,
+      "item_sub_type": 151,
+      "item_name": "유령 퇴치 스프레이",
+      "weight": 2.0,
+      "max_durability": 10,
+      "price": 350,
+      "max_stack": 1,
+      "is_throwable": true,
+      "icon_path": "Equip_ghostspray",
+      "description": "유령을 퇴치하는 스프레이"
     },
     {
         "item_id": 17,
