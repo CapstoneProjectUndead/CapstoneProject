@@ -179,15 +179,18 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 				if (auto human = std::dynamic_pointer_cast<CHumanMonster>(monster)) {
 					human->SetSpawnCallback([this](MON_TYPE type, XMFLOAT3 pos) {
 						auto dog = factory->CreateMonster(type, scene_type);
-						if (!dog) 
+						if (!dog)
 							return;
 						dog->SetPosition(pos.x, pos.y, pos.z);
 						dog->SetOriginPos(pos);
 						AddObject(dog, dog->GetID());
+						// ApplySeparation이 monster_spawn_info를 순회하므로 소환몹도 등록
+						// 마지막 인자 true = 1회성 소환 (사망 시 리스폰 대신 entry 제거)
+						monster_spawn_info.push_back({ pos, type, 0.f, -1.f, dog, true });
 					});
 				}
 			}
-		
+
 			AddObject(monster, monster->GetID());
 			info.monster = monster;
 			info.respawn_time = monster->GetRespawnTime();
@@ -402,9 +405,20 @@ void CGameScene::Enter()
 
 void CGameScene::UpdateMonsters(float elapsedTime)
 {
-	for (auto& info : monster_spawn_info) {
-		if (!info.monster.expired())
+	for (size_t i = 0; i < monster_spawn_info.size(); ) {
+		auto& info = monster_spawn_info[i];
+
+		if (!info.monster.expired()) {
+			++i;
 			continue;
+		}
+
+		// 1회성 소환몹은 죽으면 그대로 entry 제거 (리스폰 안 함)
+		if (info.is_summoned) {
+			std::swap(info, monster_spawn_info.back());
+			monster_spawn_info.pop_back();
+			continue;
+		}
 
 		if (info.respawn_timer < 0.f)
 			info.respawn_timer = info.respawn_time;
@@ -424,6 +438,7 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 							dog->SetPosition(pos.x, pos.y, pos.z);
 							dog->SetOriginPos(pos);
 							AddObject(dog, dog->GetID());
+							monster_spawn_info.push_back({ pos, type, 0.f, -1.f, dog, true });
 						});
 					}
 				}
@@ -433,6 +448,7 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 				info.respawn_timer = -1.f;
 			}
 		}
+		++i;
 	}
 }
 

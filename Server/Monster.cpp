@@ -57,14 +57,13 @@ void CMonster::ApplySeparation(float scale)
     auto r = GetRoom();
     if (!r) return;
     auto scene = r->GetScenes()[(UINT)current_scene_type].get();
-    auto gameScene = dynamic_cast<CGameScene*>(scene);
-    if (!gameScene) return;
+    if (!scene) return;
 
     XMFLOAT3 push = { 0.f, 0.f, 0.f };
-    for (const auto& info : gameScene->GetMonsterSpawnInfo()) {
-        if (info.type != monster_type) continue;
-        auto other = info.monster.lock();
+    // 맵 배치/소환 구분 없이 씬에 살아있는 모든 같은 종 몬스터와 분리
+    for (const auto& [id, other] : scene->GetMonsters()) {
         if (!other || other.get() == this) continue;
+        if (other->GetMonsterType() != monster_type) continue;
 
         XMFLOAT3 diff = Vector3::Subtract(position, other->GetPosition());
         diff.y = 0.0f;

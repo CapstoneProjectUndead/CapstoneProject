@@ -202,4 +202,5 @@ struct MonsterSpawnInfo
 	float     respawn_time;   // 몬스터별 고정 리스폰 시간
 	float     respawn_timer;  // 카운트다운 (-1 = 살아있음)
 	std::weak_ptr<class CMonster> monster;
+	bool      is_summoned = false; // true = HumanMonster가 소환한 1회성 (리스폰 안 함, 사망 시 entry 제거)
 };
