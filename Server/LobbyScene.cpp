@@ -51,6 +51,13 @@ void CLobbyScene::Update(float elapsedTime)
 void CLobbyScene::OnSceneActivate()
 {
 	CScene::OnSceneActivate();
+
+	if (active_player_count > 1)
+		return;
+
+	if (auto r = room.lock()) {
+		r->SetIsGameStart(false);
+	}
 }
 
 void CLobbyScene::OnSceneDeactivate()
