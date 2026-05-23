@@ -435,6 +435,39 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	controller.AddTransition(collapse, c2d);
 }
 
+void CAnimatorComponent::OnChangeEquippedItem(int itemId)
+{
+	if (owner == nullptr || owner->GetObjectType() != OBJECT_TYPE::PLAYER)
+		return;
+
+	bool isShovel = (itemId == 1);
+
+	if (isShovel) {
+		// 유니티 X=0, Y=180, Z=70
+		XMMATRIX baseRotation = XMMatrixRotationRollPitchYaw(XMConvertToRadians(0.0f), XMConvertToRadians(180.0f), XMConvertToRadians(70.0f));
+
+		constexpr float tiltAngle = XMConvertToRadians(-90.0f);
+		XMMATRIX matTilt = XMMatrixRotationX(tiltAngle);
+		XMMATRIX finalRotation = matTilt * baseRotation;
+		sockets[HAND_R].local_offset = finalRotation;
+
+		controller.ModifyStateClip("IdleState", "shovel_idle");
+	}
+	else {
+		sockets[HAND_R].local_offset = XMMatrixRotationRollPitchYaw(
+			XMConvertToRadians(0.0f),
+			XMConvertToRadians(70.0f),
+			XMConvertToRadians(-70.0f)
+		);
+
+		controller.ModifyStateClip("IdleState", anim_set.idle);
+	}
+
+	if (controller.GetCurrentState() == "IdleState") {
+		controller.ResetPlayCount();
+	}
+}
+
 void CAnimatorComponent::PlayAction(const std::string& clipName, bool isLoop)
 {
 	if (layers[1].current_clip == clipName) return;
@@ -643,7 +676,7 @@ void CAnimatorComponent::Update(float deltaTime)
 		return;
 
 	current_time += deltaTime;
-	
+
 	// 애니메이션 상태 머신 update
 	controller.Update(deltaTime);
 	UpdateLayerWeights(deltaTime);

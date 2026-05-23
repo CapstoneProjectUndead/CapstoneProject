@@ -87,7 +87,7 @@ public:
 
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 	bool GetDowsing() const { return is_dowsing; }
-	void SetEquippedItemId(uint16 id) { equipped_item_id = id; }
+	void SetEquippedItemId(uint16 id);
 	uint16 GetEquippedItemId() const { return equipped_item_id; }
 
 	PLAYER_STATE GetLastNetState() const { return last_net_state; }
