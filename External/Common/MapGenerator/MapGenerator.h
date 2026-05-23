@@ -48,6 +48,9 @@ namespace MapGenerator
         // 땅속에 묻혀있는 보물 (렌더 X, 콜라이더 X, 채굴 가능)
         TREASURE_HIDDEN,
 
+        // 복귀 지점 표시용 데코 (1셀, 라운드 시작부터 표시)
+        MANHOLE,
+
         UNKNOWN
     };
 
@@ -95,6 +98,7 @@ namespace MapGenerator
 
     std::vector<InstanceData> Generate3DMap();
     const std::vector<Cell>& GetStoreCenters();
+    const XMFLOAT3& GetManholePosition(); // 복귀 지점 = 맨홀 좌표 (Generate3DMap 호출 후 유효)
     bool IsValid(int x, int y);
     bool IsWalkableFloor(int x, int y);
     bool IsBlockedObject(int x, int y);
@@ -117,6 +121,7 @@ namespace MapGenerator
     void PlaceParkPlaza(int cx, int cy);
     void PlaceTreasure();
     void PlaceMonster();
+    void PlaceManhole();
  
 
     struct Rect {

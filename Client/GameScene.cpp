@@ -226,9 +226,8 @@ void CGameScene::Update(float elapsedTime)
 		round_timer -= elapsedTime;
 
 		if (round_timer <= 60.f) {
+			// 좌표/범위는 Enter()에서 이미 확정됨. 여기선 활성화만 트리거 (노란 원 표시 시작)
 			return_active = true;
-			return_center = XMFLOAT3{ 1.8f, 0.f, 2.f };
-			return_range = 1.5f;
 		}
 
 		if (round_timer <= 0.f || my_player->GetReturned()) {
@@ -381,9 +380,15 @@ void CGameScene::Enter()
 	// 복귀존 상태 리셋 (재진입 시 이전 라운드 잔여값 제거) (싱글/멀티 모두 유효)
 	return_active = false;
 	return_center = {};
-	return_range  = 0.f;
 	return_toasts.clear();
 	my_player->SetReturned(false);
+
+	// 복귀 지점 = 맨홀 위치 (MapGenerator::PlaceManhole이 결정). 라운드 시작 시 1회 확정.
+	// 활성화(return_active)는 60초 전 Update에서 트리거됨. 멀티는 서버 S_ReturnZoneActive로 받음.
+	if (g_is_single) {
+		return_center = MapGenerator::GetManholePosition();
+		return_range  = RETURN_RANGE;
+	}
 
 	// 정산 모달 리셋
 	show_settlement_modal = false;

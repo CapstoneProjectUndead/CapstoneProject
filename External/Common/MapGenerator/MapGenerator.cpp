@@ -23,6 +23,10 @@ std::vector<Cell> g_store_centers;
 
 const std::vector<Cell>& MapGenerator::GetStoreCenters() { return g_store_centers; }
 
+// 복귀 지점 = 맨홀 좌표 (PlaceManhole에서 채워짐, Generate3DMap 호출 후 유효)
+XMFLOAT3 g_manhole_pos{ 0.f, 0.01f, 0.f };
+const XMFLOAT3& MapGenerator::GetManholePosition() { return g_manhole_pos; }
+
 std::vector<Cell> g_treasure_positions;
 
 std::vector<Cell> m_placedCenters; // 구조물 간 거리 체크
@@ -105,6 +109,7 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
     PlaceTreasure();
     RefineBuildingTiles();
     PlaceMonster();
+    PlaceManhole(); // 복귀 지점 = 맨홀 (원점 최근접 walkable 셀, 추후 랜덤화 예정)
 
     // 인스턴스 데이터 변환
     std::vector<InstanceData> instanceList;
@@ -465,8 +470,6 @@ void MapGenerator::PlaceSmallKiosk(int cx, int cy) {
 
     mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::KIOSK;
 }
-
-
 
 void MapGenerator::PlaceMonster() {
     const int size = 1;
@@ -831,4 +834,66 @@ std::vector<MapGenerator::Cell> MapGenerator::FindPath(int sx, int sy, int ex, i
     }
     std::reverse(path.begin(), path.end());
     return path;
+}
+
+// PlaceManhole 내부 헬퍼들 (익명 namespace로 외부 노출 없음)
+// 결과를 mapGrid에 표시 + g_manhole_pos에 저장하는 공통 후처리는 helper로 분리
+namespace
+{
+    constexpr float MANHOLE_TILE_SIZE = 2.0f;
+
+    void CommitManholeAt(int bx, int by) {
+        mapGrid[(int)ELayer::OBJECT][by][bx] = EModelType::MANHOLE;
+        // InstanceData 변환 루프가 (x*TILE_SIZE, OBJECT*0.01, y*TILE_SIZE)로 만드므로 그와 일치
+        g_manhole_pos = XMFLOAT3(bx * MANHOLE_TILE_SIZE, (int)ELayer::OBJECT * 0.01f, by * MANHOLE_TILE_SIZE);
+    }
+
+    bool IsManholeCandidate(int x, int y) {
+        if (!IsWalkableFloor(x, y)) return false;
+        if (IsBlockedObject(x, y)) return false;
+        if (IsBlockedStructure(x, y)) return false;
+        // OBJECT 점유 가드: 보물/몬스터 마커가 있는 셀은 후보에서 제외 (덮어쓰기 방지)
+        if (GetTile(ELayer::OBJECT, x, y) != EModelType::UNKNOWN) return false;
+        return true;
+    }
+
+    // [테스트용] 원점 최근접 셀 — 스폰 지점과 동일.
+    void PlaceManholeNearOrigin() {
+        float minDist = FLT_MAX;
+        int bestX = 1, bestY = 1;
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                if (!IsManholeCandidate(x, y)) continue;
+                float wx = x * MANHOLE_TILE_SIZE;
+                float wz = y * MANHOLE_TILE_SIZE;
+                float dist = wx * wx + wz * wz;
+                if (dist < minDist) { minDist = dist; bestX = x; bestY = y; }
+            }
+        }
+        CommitManholeAt(bestX, bestY);
+    }
+
+    // [랜덤] 후보 셀 풀에서 랜덤 선택. 후보가 0개일 때만 (1,1) fallback.
+    void PlaceManholeRandom() {
+        std::vector<Cell> candidates;
+        candidates.reserve(WIDTH * HEIGHT / 4);
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                if (IsManholeCandidate(x, y)) candidates.push_back({ x, y });
+            }
+        }
+        if (candidates.empty()) {
+            CommitManholeAt(1, 1);
+            return;
+        }
+        int idx = GetRandomInt(0, (int)candidates.size() - 1);
+        CommitManholeAt(candidates[idx].x, candidates[idx].y);
+    }
+}
+
+// 복귀 지점 = 맨홀 위치 단일 결정
+// IsManholeCandidate에 OBJECT 점유 가드 포함 — 보물/몬스터 셀과 겹치지 않음.
+void MapGenerator::PlaceManhole() {
+    //PlaceManholeRandom();
+    PlaceManholeNearOrigin(); // 테스트용: 원점 최근접(=스폰 지점) 결정적 배치
 }

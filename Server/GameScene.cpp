@@ -136,7 +136,7 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 void CGameScene::AnnounceReturnPosition()
 {
 	return_active = true;
-	return_center = FindSpawnPoint();
+	return_center = MapGenerator::GetManholePosition();
 
 	S_ReturnZoneActive pkt;
 	pkt.x = return_center.x;

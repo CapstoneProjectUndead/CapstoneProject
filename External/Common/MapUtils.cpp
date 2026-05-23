@@ -132,7 +132,7 @@ void CMapAssetManager::initialize()
     asset_table[EModelType::DECO_STONE] = { {}, {"stone"} };
     asset_table[EModelType::PARK_SAND_DECO] = { {EModelVariant::PARK_SAND}, {} };
 
-    //asset_table[EModelType::MANHOLE] = { {EModelVariant::MANHOLE} };  // entry나 manhole로 설정 필요
+    asset_table[EModelType::MANHOLE] = { {EModelVariant::MANHOLE} };  // entry나 manhole로 설정 필요
 
     // 천막 상점 관련
     asset_table[EModelType::STORE_WALL_EMPTY] = { {EModelVariant::TENT_CLOTH}, {} };
