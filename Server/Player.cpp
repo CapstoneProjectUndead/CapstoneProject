@@ -29,6 +29,7 @@ CPlayer::CPlayer()
     , dig_timer(0.f)
     , knockback_vel{}
     , knockback_timer(0.0f)
+    , is_stunned(false)
     , stun_timer(0.0f)
     , is_possessed(false)
     , possession_timer(0.0f)
@@ -1186,12 +1187,20 @@ void CPlayer::ResetAll()
 {
     bool was_dowsing = is_dowsing;
     is_possessed = false;
+    possession_timer = 0.0f;
     is_dowsing = false;
+    is_stunned = false;
+    stun_timer = 0.0f;
     is_returned = false;
     is_ready = false;
     state = PLAYER_STATE::IDLE;
     stat.hp = 100;
     stat.stamina = 100;
+    accumulate_stamina = 100;
+    stamina_exhausted = false;
+    equipped_item = nullptr;
+    equipped_item_id = 0;
+    equipped_item_sub_type = ITEM_SUB_TYPE::NONE;
 
     S_EquipItem equipPkt;
     equipPkt.is_dowsing_rod = false;

@@ -189,6 +189,7 @@ private:
 	XMFLOAT3    knockback_vel;
 	float       knockback_timer;
 
+	bool        is_stunned;
 	float       stun_timer;
 
 	bool        is_possessed;

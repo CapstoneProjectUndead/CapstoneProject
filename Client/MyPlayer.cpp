@@ -50,7 +50,8 @@ void CMyPlayer::Update(float elapsedTime)
 	UseItem();
 
 	// "E" 키를 누르면 인벤토리를 열고/닫기
-	if (current_scene_type == SCENE_TYPE::GAME && KEY_TAP(KEY::E)) {
+	if (KEY_TAP(KEY::E) 
+		&& (current_scene_type == SCENE_TYPE::LOBBY || current_scene_type == SCENE_TYPE::GAME)) {
 		CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
 		inventory->ToggleOpen();
 	}
@@ -392,11 +393,17 @@ void CMyPlayer::SendPingToServer(const float elapsedTime)
 void CMyPlayer::ResetAll()
 {
 	is_possessed = false;
+	possession_timer = 0.0f;
 	is_returned = false;
 	is_ready = false;
+	is_stunned = false;
+	stun_timer = 0.0f;
 	state = PLAYER_STATE::IDLE;
 	stat.hp = 100;
 	stat.stamina = 100;
+	accumulate_stamina = 100;
+	stamina_exhausted = false;
+	equipped_item_id = 0;
 
 	if (is_dowsing) {
 		is_dowsing = false;
