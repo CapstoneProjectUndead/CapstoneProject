@@ -6,6 +6,7 @@
 #include "ImGuiManager.h"
 
 #include "MyPlayer.h"
+#include "Inventory.h"
 #include "Camera.h"
 #include "Shader.h"
 #include "ObjectFactory.h"
@@ -255,6 +256,7 @@ void CLobbyScene::Enter()
 		my_player->SetCurrentSceneType(SCENE_TYPE::LOBBY);
 		camera->SetTarget(my_player.get());
 		my_player->ResetAll();
+		my_player->SetPosition(XMFLOAT3{ 0, 0, 0 });
 	}
 
 	for (int i = 1; i <= 4; ++i) {
@@ -280,8 +282,18 @@ bool CLobbyScene::IsUIInputEnabled()
 
 	if (scene->GetSceneType() == SCENE_TYPE::LOBBY)
 		state = false;
-		
+
 	return state;
+}
+
+void CLobbyScene::DrawUI()
+{
+	// LobbyScene은 인벤토리 조회 전용 (드래그/드롭/퀵슬롯 등록 차단)
+	if (my_player) {
+		auto inventory = my_player->GetInventory();
+		if (inventory)
+			inventory->Draw(true);
+	}
 }
 
 // 서버 패킷 처리 관련 함수들

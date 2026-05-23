@@ -224,6 +224,9 @@ bool Handle_C_PICKUP_ITEM(std::shared_ptr<Session> session, C_PickupItem& pkt)
 
 bool Handle_C_DROP_ITEM(std::shared_ptr<Session> session, C_DropItem& pkt)
 {
+	if (pkt.scene_type != SCENE_TYPE::GAME)
+		return true;
+
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
 	assert(room->IsActive());
 	CScene* targetScene = room->GetScenes()[(UINT)pkt.scene_type].get();

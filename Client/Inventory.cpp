@@ -76,11 +76,12 @@ void CInventory::RemoveItem(uint32 inventoryId)
 	items.erase(it);
 }
 
-void CInventory::Draw()
+void CInventory::Draw(bool viewOnly)
 {
 	if (!is_open)
 		return;
 
+	view_only = viewOnly;
 	BeginDrawInventory();
 }
 
@@ -239,22 +240,9 @@ void CInventory::DrawTitleBar(float winW, float titleH)
 		ImGui::Text(title);
 		ImGui::PopStyleColor();
 
-		if (CImGuiManager::bold_font) 
+		if (CImGuiManager::bold_font)
 			ImGui::PopFont();
 
-		// 우상단 빨간 X 버튼
-		float btnSize = 26.0f * scale;
-		ImGui::SetCursorPos(ImVec2(winW - btnSize - 15.0f * scale, (titleH - btnSize) * 0.5f));
-		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.85f, 0.10f, 0.10f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.00f, 0.25f, 0.25f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.60f, 0.00f, 0.00f, 1.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-
-		if (ImGui::Button("X##close", ImVec2(btnSize, btnSize)))
-			is_open = false;
-
-		ImGui::PopStyleVar();
-		ImGui::PopStyleColor(3);
 		ImGui::SetWindowFontScale(1.0f);
 	}
 	ImGui::EndChild();
@@ -400,7 +388,7 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 				ImGui::InvisibleButton(btnId, ImVec2(cellSz, cellSz));
 
 				if (displayItem) {
-					if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
+					if (!view_only && ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
 						is_dragging  = true;
 						dragged_item = displayItem;
 					}
@@ -507,7 +495,7 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 					ImGui::InvisibleButton(btnId, ImVec2(imgColW, rowH));
 
 					if (i < (int)filtered.size()) {
-						if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
+						if (!view_only && ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 3.0f)) {
 							is_dragging  = true;
 							dragged_item = filtered[i];
 						}

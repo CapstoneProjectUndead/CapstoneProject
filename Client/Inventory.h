@@ -25,7 +25,7 @@ public:
 	uint32 GetMaxWeight() const { return max_weight; }
 	void   UpgradeMaxWeight(float amount) { max_weight += amount; }
 
-	void  Draw();
+	void  Draw(bool viewOnly = false); // view_only=true: 드래그/드롭/퀵슬롯 등록 차단 (LobbyScene 등 조회 전용)
 
 	void  SetDropCallback(std::function<void(std::shared_ptr<CItem>)> cb) { on_drop_callback = cb; }
 	void  SetQuickSlot(std::shared_ptr<CQuickSlot> qs) { quick_slot = qs; }
@@ -48,6 +48,7 @@ private:
 	uint32												max_weight = 200; // 기본값, 업그레이드로 증가
 
 	bool												is_open        = false;
+	bool												view_only      = false; // true: 드래그/드롭/퀵슬롯 등록 차단 (LobbyScene 등)
 	ITEM_TYPE											active_tab     = ITEM_TYPE::EQUIPMENT;
 
 	// 드래그 상태
