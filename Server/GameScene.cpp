@@ -89,7 +89,7 @@ void CGameScene::Update(float elapsedTime)
 			DetectPlayerReturns();
 		}
 
-		if (round_timer <= 0.f) {
+		if (!round_ended && round_timer <= 0.f) {
 			round_timer = 0.f;
 			round_ended = true;
 			TriggerSettlement();
