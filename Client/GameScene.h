@@ -46,7 +46,7 @@ public:
     void Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt);
 
     // 싱글용 (Ghost 드롭 등 외부에서 호출 가능)
-    void SpawnWorldItem(uint16 itemID, XMFLOAT3 position);
+    void SpawnWorldItem(uint16 itemID, XMFLOAT3 position, int16 dur = -1);
 
     const std::vector<MonsterSpawnInfo>& GetMonsterSpawnInfo() const { return monster_spawn_info; }
 

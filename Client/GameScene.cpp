@@ -1074,12 +1074,12 @@ void CGameScene::SprayAttack(float elapsedTime)
 }
 
 // 싱글환경
-void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
+void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position, int16 dur)
 {
 	auto worldItem = factory->CreateWorldItem(itemID);
 	if (!worldItem)
 		return;
-	
+
 	worldItem->Initialize();
 
 	// 아이템의 위치
@@ -1087,6 +1087,12 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 
 	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
 	worldItem->SetID(world_item_id_counter);
+
+	// 내구도 복원 (드롭으로 떨어진 장비의 내구도 보존)
+	if (dur > 0) {
+		auto equipment = std::static_pointer_cast<CEquipment>(worldItem->GetItem());
+		equipment->SetCurrentDurability((uint16)dur);
+	}
 
 	// Scene의 objects 컨테이너에 추가
 	AddObject(worldItem, world_item_id_counter);
@@ -1130,7 +1136,14 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	pos.y           = max(pos.y, 0.0f);
 	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
 
-	SpawnWorldItem(item->GetItemId(), pos);   // 내부에서 world_item_id_counter 증가
+	// 장비면 현재 내구도를 보존해서 넘긴다 (재픽업 시 내구도 복구 버그 방지)
+	int16 dur = -1;
+	if (item->GetItemType() == ITEM_TYPE::EQUIPMENT) {
+		auto equipment = std::static_pointer_cast<CEquipment>(item);
+		dur = (int16)equipment->GetCurrentDurability();
+	}
+
+	SpawnWorldItem(item->GetItemId(), pos, dur);  // 내부에서 world_item_id_counter 증가
 }
 
 void CGameScene::ReleasePossession(float elapsedTime)
