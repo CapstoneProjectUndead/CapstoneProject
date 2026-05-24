@@ -192,7 +192,7 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 	auto AIComp = GetComponent<CAIComponent>();
 	auto targetPlayer = target_player.lock();
 
-	if (!targetPlayer || targetPlayer->GetReturned()) {
+	if (!targetPlayer || targetPlayer->GetReturned() || targetPlayer->IsIncapacitated()) {
 		target_player.reset();
 		AIComp->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;

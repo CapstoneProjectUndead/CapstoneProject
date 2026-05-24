@@ -91,7 +91,12 @@ public:
 	uint32 GetMaxStamina() const { return stat.maxStamina; }
 
 	uint32 GetHp()      const { return stat.hp; }
-	void   SetHp(uint32 hp) { stat.hp = hp; }
+	void   SetHp(uint32 hp) 
+	{
+		stat.hp = hp;
+		if (hp == 0 && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD)
+			state = PLAYER_STATE::ALMOST_DEAD;
+	}
 
 	uint32 GetStamina() const { return stat.stamina; }
 	void   SetStamina(uint32 stamina) { stat.stamina = stamina; }
@@ -132,6 +137,11 @@ public:
 	// 복귀 상태 (정산 시스템)
 	bool   GetReturned() const { return is_returned; }
 	void   SetReturned(bool r) { is_returned = r; }
+
+	// 빈사/사망: 무력 상태 (몬스터 타겟 제외 + 입력/패킷 차단 공용)
+	bool   IsIncapacitated() const {
+		return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD;
+	}
 
 private:
 	void UpdateStamina(float elapsedTime);

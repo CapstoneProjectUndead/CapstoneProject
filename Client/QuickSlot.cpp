@@ -105,6 +105,11 @@ void CQuickSlot::Draw()
 
 	for (int i = 0; i < SLOT_COUNT; i++) {
 		if (KEY_TAP(keys[i]) && slots[i].has_item) {
+
+			// 빈사/사망 시 장착/해제 차단
+			if (auto p = owner.lock(); p && p->IsIncapacitated())
+				continue;
+
 			if (selected_slot == i) {
 
 				// 같은 슬롯 재입력 → 장착 해제

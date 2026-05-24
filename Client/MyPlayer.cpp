@@ -16,6 +16,10 @@
 #include "Movement.h"
 #include "Animator.h"
 
+#include "SceneManager.h"
+#include "Scene.h"
+#include "Camera.h"
+
 #undef min
 #undef max
 
@@ -46,58 +50,89 @@ void CMyPlayer::Update(float elapsedTime)
 		UpdateStamina(elapsedTime);
 	}
 
-	// (싱글) 우클릭: 퀵슬롯에 등록된 소비 아이템 사용 
-	UseItem();
-
-	// "E" 키를 누르면 인벤토리를 열고/닫기
-	if (KEY_TAP(KEY::E) 
-		&& (current_scene_type == SCENE_TYPE::LOBBY || current_scene_type == SCENE_TYPE::GAME)) {
-		CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
-		inventory->ToggleOpen();
-	}
-
-	if (KEY_TAP(KEY::F)) {
-
-		if (g_is_single) {
-			if (!GetIsPossessed() && current_scene_type == SCENE_TYPE::GAME) {
-				auto itemFinder = GetComponent<CItemFinder>();
-				if (itemFinder) {
-					itemFinder->Toggle();
-					// 애니메이션 호출
-					if (itemFinder->is_enable) {
-						is_dowsing = true;
-						auto animator = GetComponent<CAnimatorComponent>();
-						if (animator)
-							animator->PlayAction("Ganga_search", true);
-					}
-					else {
-						is_dowsing = false;
-						auto animator = GetComponent<CAnimatorComponent>();
-						if (animator)
-							animator->PlayAction("");
-					}
+	// 빈사/사망 카메라 모드 전환 (3인칭 궤도 ↔ 기본)
+	bool isIncap = IsIncapacitated();
+	if (isIncap != incap_camera_active) {
+		if (auto scene = CSceneManager::GetInstance().GetActiveScene()) {
+			if (auto& cam = scene->GetCamera()) {
+				if (isIncap) {
+					// 3인칭 거리 2.5, 자체 yaw/pitch로 plr 주위 궤도
+					XMFLOAT3 thirdOffset{ 0.0f, 0.0f, -2.5f };
+					cam->SetCameraOffset(thirdOffset);
+					// 초기 orbit 각도: 플레이어 yaw + 약간 위에서 내려다보는 pitch
+					cam->SetOrbitMode(true, yaw, 20.0f);
+				}
+				else {
+					cam->SetOrbitMode(false);
+					XMFLOAT3 firstOffset{ 0.0f, 0.0f, 0.0f };
+					cam->SetCameraOffset(firstOffset);
 				}
 			}
 		}
-		else {
-			C_EquipItem equipPkt;
+		incap_camera_active = isIncap;
+	}
 
-			if (!is_dowsing) {
-				equipPkt.player_id = GetID();
-				equipPkt.item_id = -1;
-				equipPkt.is_dowsing_rod = true;
-				equipPkt.scene_type = current_scene_type;
+	// 빈사/사망: 행동 입력 차단 + 인벤토리 강제 닫기
+	if (IsIncapacitated()) {
+		if (inventory && inventory->IsOpen()) {
+			inventory->ToggleOpen();
+			CKeyManager::GetInstance().SetMouseMode(false);
+		}
+	}
+	else {
+		// 우클릭: 퀵슬롯에 등록된 소비 아이템 사용
+		UseItem();
+
+		// "E" 키를 누르면 인벤토리를 열고/닫기
+		if (KEY_TAP(KEY::E)
+			&& (current_scene_type == SCENE_TYPE::LOBBY || current_scene_type == SCENE_TYPE::GAME)) {
+			CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
+			inventory->ToggleOpen();
+		}
+
+		if (KEY_TAP(KEY::F)) {
+
+			if (g_is_single) {
+				if (!GetIsPossessed() && current_scene_type == SCENE_TYPE::GAME) {
+					auto itemFinder = GetComponent<CItemFinder>();
+					if (itemFinder) {
+						itemFinder->Toggle();
+						// 애니메이션 호출
+						if (itemFinder->is_enable) {
+							is_dowsing = true;
+							auto animator = GetComponent<CAnimatorComponent>();
+							if (animator)
+								animator->PlayAction("Ganga_search", true);
+						}
+						else {
+							is_dowsing = false;
+							auto animator = GetComponent<CAnimatorComponent>();
+							if (animator)
+								animator->PlayAction("");
+						}
+					}
+				}
 			}
 			else {
-				equipPkt.player_id = GetID();
-				equipPkt.item_id = -1;
-				equipPkt.is_dowsing_rod = false;
-				equipPkt.scene_type = current_scene_type;
-			}
+				C_EquipItem equipPkt;
 
-			auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
-			if (auto s = session.lock()) {
-				s->DoSend(sendBuffer);
+				if (!is_dowsing) {
+					equipPkt.player_id = GetID();
+					equipPkt.item_id = -1;
+					equipPkt.is_dowsing_rod = true;
+					equipPkt.scene_type = current_scene_type;
+				}
+				else {
+					equipPkt.player_id = GetID();
+					equipPkt.item_id = -1;
+					equipPkt.is_dowsing_rod = false;
+					equipPkt.scene_type = current_scene_type;
+				}
+
+				auto sendBuffer = MAKE_SEND_BUFFER(equipPkt);
+				if (auto s = session.lock()) {
+					s->DoSend(sendBuffer);
+				}
 			}
 		}
 	}
@@ -214,7 +249,8 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	ProcessRotation();
 
 	// 3. 점프 시작 판정 + 효과음 (싱글/멀티 공통, 서버 허락 없이 즉시)
-	start_jump = (current_input.space && is_grounded && !stamina_exhausted && !is_possessed);
+	start_jump = (current_input.space && is_grounded && !stamina_exhausted && !is_possessed 
+		&& state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD);
 	if (start_jump)
 		CSoundManager::GetInstance().Play(SOUND_ID::jump12);
 
@@ -253,11 +289,19 @@ void CMyPlayer::ProcessRotation()
 		else
 			mouseDelta = (keyManager.GetMousePos() - keyManager.GetPrevMousePos()) / 3.0f;
 		if (mouseDelta.x || mouseDelta.y) {
-			yaw += mouseDelta.x;
-			pitch += mouseDelta.y;
-			pitch = std::clamp(pitch, -89.9f, 89.9f);
-			SetYawPitch(yaw, 0.0f);
-			UpdateWorldMatrix();
+			if (IsIncapacitated()) {
+				// 빈사: body는 회전하지 않고 카메라 orbit만 갱신
+				if (auto scene = CSceneManager::GetInstance().GetActiveScene())
+					if (auto& cam = scene->GetCamera())
+						cam->AddOrbitDelta(mouseDelta.x, mouseDelta.y);
+			}
+			else {
+				yaw += mouseDelta.x;
+				pitch += mouseDelta.y;
+				pitch = std::clamp(pitch, -89.9f, 89.9f);
+				SetYawPitch(yaw, 0.0f);
+				UpdateWorldMatrix();
+			}
 		}
 	}
 }
@@ -605,7 +649,6 @@ void CMyPlayer::ApplyStun(float time)
 {
 	is_stunned = true;
 	stun_timer = time;
-	SetState(PLAYER_STATE::IDLE);
 }
 
 void CMyPlayer::ApplyPossession()

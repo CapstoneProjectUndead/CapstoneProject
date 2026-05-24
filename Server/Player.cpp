@@ -144,8 +144,10 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
             velocity.x = 0.0f;
             velocity.z = 0.0f;
             stun_timer -= elapsedTime;
-            if (stun_timer < 0.0f)
+            if (stun_timer < 0.0f) {
+                is_stunned = false;
                 stun_timer = 0.0f;
+            }
         }
         CObject::Update(elapsedTime);
         return;
@@ -163,11 +165,16 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     if (input.a) dir.x--;
     if (input.d) dir.x++;
 
-    // 점프
-    start_jump = (input.space && is_grounded && !stamina_exhausted);
-    if (input.space && !stamina_exhausted) {
-        if (auto move = GetComponent<CMovementComponent>())
-            move->Jump();
+    // 점프 (빈사/사망 시 차단)
+    if (state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD) {
+        start_jump = false;
+    }
+    else {
+        start_jump = (input.space && is_grounded && !stamina_exhausted);
+        if (input.space && !stamina_exhausted) {
+            if (auto move = GetComponent<CMovementComponent>())
+                move->Jump();
+        }
     }
 
     // 상태 갱신
@@ -176,7 +183,7 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     // 움찔거리는 거 방지 (Client PredictMove와 동일 로직)
     grounded_timer = is_grounded ? 0.1f : (grounded_timer - elapsedTime);
 
-    if (updateState) {
+    if (updateState && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD) {
 
         bool isBareHand = (equipped_item_id == 0);
         bool isShovel = equipped_item_id >= 1 && equipped_item_id <= 4;
@@ -255,7 +262,9 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     UpdateStamina(elapsedTime);
 
-    if (knockback_timer <= 0.0f && stun_timer <= 0.0f && (dir.x != 0 || dir.z != 0)) {
+    if (knockback_timer <= 0.0f && stun_timer <= 0.0f
+        && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD
+        && (dir.x != 0 || dir.z != 0)) {
         if (auto move = GetComponent<CMovementComponent>())
             move->Move(dir, elapsedTime);
     }
@@ -274,8 +283,10 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
 
     if (stun_timer > 0.0f) {
         stun_timer -= elapsedTime;
-        if (stun_timer < 0.0f)
+        if (stun_timer < 0.0f) {
+            is_stunned = false;
             stun_timer = 0.0f;
+        }
     }
 
     velocity.x += separation_push.x;
@@ -338,8 +349,8 @@ void CPlayer::ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration)
 
 void CPlayer::ApplyStun(float time)
 {
+    is_stunned = true;
     stun_timer = time;
-    state = PLAYER_STATE::IDLE;
 }
 
 void CPlayer::ApplyPossession()

@@ -62,10 +62,19 @@ public:
 	void SetTarget(CObject* object) { target_object = object; }
 	void SetMode(EMode m) { mode = m; }
 
+	// 빈사 시 사용: 플레이어 회전과 독립된 궤도(Orbit) 카메라.
+	// 활성화되면 카메라가 자체 orbit_yaw/orbit_pitch로 플레이어 주변을 돌며 머리를 바라봄.
+	void SetOrbitMode(bool enable, float initYaw = 0.0f, float initPitch = 0.0f);
+	void AddOrbitDelta(float yawDelta, float pitchDelta);
+	bool IsOrbitMode() const { return orbit_mode; }
+
 	void UpdateFrustum();
 	BoundingFrustum GetFrustum() const { return frustum; }
 protected:
 	EMode mode{ EMode::THIRD_PERSON };
+	bool  orbit_mode{ false };
+	float orbit_yaw{ 0.0f };
+	float orbit_pitch{ 0.0f };
 
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;

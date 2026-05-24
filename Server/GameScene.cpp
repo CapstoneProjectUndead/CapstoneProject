@@ -587,6 +587,10 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 	// 그래서 클라의 C_Pickup_Item 패킷 처리를 오는 순서대로 처리하기 때문에
 	// 먼저 Pickup_Item 패킷 들어온 유저가 아이템을 소유한다.
 
+	// 빈사/사망 상태 플레이어는 아이템 줍기 불가
+	if (auto& p = players[pkt.player_id]; !p || p->IsIncapacitated())
+		return;
+
 	if (pkt.item_type == ITEM_TYPE::TREASURE) {
 
 		auto& player = players[pkt.player_id];
@@ -680,7 +684,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt)
 {
 	auto& player = players[pkt.player_id];
-	if (!player)
+	if (!player || player->IsIncapacitated())
 		return;
 
 	auto inv = player->GetInventory();
@@ -810,7 +814,8 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt)
 {
 	auto& player = players[pkt.player_id];
-	if (!player)
+
+	if (!player || player->IsIncapacitated())
 		return;
 
 	bool wasDowsing = player->GetDowsing();

@@ -54,6 +54,7 @@ public:
 	void  SetPossessionTimer(float t) { possession_timer = t; }
 
 	bool  GetIsStunned() const { return is_stunned; }
+	void  SetStunned(bool stun) { is_stunned = stun; }
 
 	uint16 GetMiningSpeed() const { return stat.miningSpeed; }
 	void   SetMiningSpeed(const uint16 speed) { stat.miningSpeed = speed; }
@@ -72,6 +73,11 @@ public:
 	// 복귀 상태 (정산 시스템)
 	bool   GetReturned() const { return is_returned; }
 	void   SetReturned(bool r) { is_returned = r; }
+
+	// 빈사/사망: 무력 상태 (입력 차단 공용)
+	bool   IsIncapacitated() const {
+		return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD;
+	}
 
 public:
 	// 커스터마이징용

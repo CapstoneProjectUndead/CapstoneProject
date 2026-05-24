@@ -459,6 +459,9 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 
 void CGameScene::ProcessPickup()
 {
+	if (my_player->IsIncapacitated())
+		return;
+
 	if (CKeyManager::GetInstance().GetKeyState(KEY::Z) == KEY_STATE::TAP) {
 
 		XMFLOAT3 playerPos = my_player->GetPosition();
@@ -881,8 +884,12 @@ void CGameScene::RemoveTreasureFromDowsing(const XMFLOAT3& pos)
 
 void CGameScene::ProcessAttack(float elapsedTime)
 {
+	// 빈사/사망 시 공격 애니메이션·트리거 일체 차단
+	if (my_player->IsIncapacitated())
+		return;
+
 	auto qs = my_player->GetQuickSlot();
-	if (!qs) 
+	if (!qs)
 		return;
 
 	// 퀵슬롯에서 선택된 아이템의 타입(근접 or 원거리)
@@ -907,6 +914,8 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 		&& !my_player->GetIsPossessed()
 		&& !my_player->GetIsStunned()
 		&& !my_player->GetDowsing()
+		&& my_player->GetState() != PLAYER_STATE::ALMOST_DEAD
+		&& my_player->GetState() != PLAYER_STATE::DEAD
 		&& melee_attack_cooldown <= 0.0f) {
 
 		melee_attack_cooldown = 1.5f;

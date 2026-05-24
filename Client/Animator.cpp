@@ -373,66 +373,72 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		};
 	controller.AddTransition(possess, p2i);
 
-	// 탈진 상태
-	const std::string almostDead{ "AlmostDeadState" };
-	controller.AddState({ almostDead, "Ganga_tired", 1.0f, true });
+	// 기절 상태 (STUNNED): is_stunned bool로 전이, 클립은 Ganga_tired
+	const std::string stunned{ "StunnedState" };
+	controller.AddState({ stunned, "Ganga_tired", 1.0f, true });
 
 	std::vector<std::string> activeStates = { idle, walk, run, "JumpState", "DigState" };
 	for (const auto& from : activeStates) {
-		Transition any2ad;
-		any2ad.to_state = almostDead;
-		any2ad.duration = 0.2f;
-		any2ad.condition = [this]() {
-			return static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::ALMOST_DEAD;
+		Transition any2s;
+		any2s.to_state = stunned;
+		any2s.duration = 0.2f;
+		any2s.condition = [this]() {
+			return static_cast<CPlayer*>(owner)->GetIsStunned();
 			};
-		controller.AddTransition(from, any2ad);
+		controller.AddTransition(from, any2s);
 	}
 
-	Transition ad2i;
-	ad2i.to_state = idle;
-	ad2i.duration = 0.2f;
-	ad2i.condition = [this]() {
-		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::ALMOST_DEAD &&
-			static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DEAD;
+	Transition s2i;
+	s2i.to_state = idle;
+	s2i.duration = 0.2f;
+	s2i.condition = [this]() {
+		return !static_cast<CPlayer*>(owner)->GetIsStunned();
 		};
-	controller.AddTransition(almostDead, ad2i);
+	controller.AddTransition(stunned, s2i);
 
-
-	// DEAD 상태(Collapse 재생 후 Dead 연속 시퀀스)
+	// 빈사 상태 (ALMOST_DEAD): Collapse(쓰러짐 1회) → AlmostDeadState(엎드린 채 유지)
 	const std::string collapse{ "CollapseState" };
-	const std::string dead{ "DeadState" };
+	const std::string almostDead{ "AlmostDeadState" };
 
 	controller.AddState({ collapse, "Collapse", 1.0f, false });
-	controller.AddState({ dead, "Dead", 1.0f, true });
+	controller.AddState({ almostDead, "Dead", 1.0f, true });
 
-	std::vector<std::string> completelyAllStates = { idle, walk, run, "JumpState", "DigState", "PossessState", almostDead };
-	for (const auto& from : completelyAllStates) {
-		Transition any2death;
-		any2death.to_state = collapse;
-		any2death.duration = 0.1f;
-		any2death.condition = [this]() {
-			if (static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::DEAD) {
-				// 사망 시 상체 Action 레이어가 섞여서 기괴하게 죽는 것을 방지
+	std::vector<std::string> allStatesForAlmostDead = { idle, walk, run, "JumpState", "DigState", "PossessState", stunned };
+	for (const auto& from : allStatesForAlmostDead) {
+		Transition any2c;
+		any2c.to_state = collapse;
+		any2c.duration = 0.1f;
+		any2c.condition = [this]() {
+			if (static_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::ALMOST_DEAD) {
+				// 빈사 진입 시 상체 Action 레이어가 섞여서 기괴해지는 것을 방지
 				PlayAction("");
 				return true;
 			}
 			return false;
 			};
-		controller.AddTransition(from, any2death);
+		controller.AddTransition(from, any2c);
 	}
 
-	// Collapse 애니메이션이 완전히 끝났을(1회 재생 완동) 때 DeadState로 자동 전이
-	Transition c2d;
-	c2d.to_state = dead;
-	c2d.duration = 0.2f;
-	c2d.condition = [this]() {
-		// 현재 제어기 상태가 CollapseState이고 플레이 횟수가 1회 이상 완료되었을 때
+	// Collapse 1회 재생 완료 시 AlmostDeadState(유지)로 자동 전이
+	Transition c2ad;
+	c2ad.to_state = almostDead;
+	c2ad.duration = 0.2f;
+	c2ad.condition = [this]() {
 		if (controller.GetCurrentState() == "CollapseState" && controller.GetPlayCount() >= 1) {
 			return true;
 		}
 		return false;
 		};
-	controller.AddTransition(collapse, c2d);
+	controller.AddTransition(collapse, c2ad);
+
+	// 구조 복귀: 상태가 ALMOST_DEAD가 아니게 되면 idle로
+	Transition ad2i;
+	ad2i.to_state = idle;
+	ad2i.duration = 0.2f;
+	ad2i.condition = [this]() {
+		return static_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::ALMOST_DEAD;
+		};
+	controller.AddTransition(almostDead, ad2i);
 }
 
 void CAnimatorComponent::OnChangeEquippedItem(int itemId)

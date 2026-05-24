@@ -200,12 +200,50 @@ void CCamera::Move(const XMFLOAT3 shift)
 	XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&shift)));
 }
 
+void CCamera::SetOrbitMode(bool enable, float initYaw, float initPitch)
+{
+	// 처음 활성화될 때만 초기 각도 적용 (이미 켜져있다면 현재 각도 유지)
+	if (enable && !orbit_mode) {
+		orbit_yaw = initYaw;
+		orbit_pitch = initPitch;
+	}
+	orbit_mode = enable;
+}
+
+void CCamera::AddOrbitDelta(float yawDelta, float pitchDelta)
+{
+	orbit_yaw += yawDelta;
+	orbit_pitch += pitchDelta;
+	orbit_pitch = std::clamp(orbit_pitch, -80.0f, 80.0f);
+}
+
 void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 {
 	// 캐릭터의 머리 위치를 기준
 	XMVECTOR localEye = target_object->GetHeadPosition();
 	XMMATRIX world = XMLoadFloat4x4(&target_object->world_matrix);
 	XMVECTOR worldHeadPos = XMVector3TransformCoord(localEye, world);
+
+	if (orbit_mode) {
+		// 빈사: 플레이어 회전과 무관한 궤도 카메라.
+		// orbit_yaw(좌우)/orbit_pitch(상하)로 offset 벡터를 회전 → 머리 주변 sphere 위 카메라 위치.
+		XMMATRIX rot = XMMatrixRotationRollPitchYaw(
+			XMConvertToRadians(orbit_pitch),
+			XMConvertToRadians(orbit_yaw),
+			0.0f);
+		XMVECTOR offsetWorld = XMVector3TransformCoord(XMLoadFloat3(&offset), rot);
+		XMStoreFloat3(&position, worldHeadPos + offsetWorld);
+
+		// 항상 플레이어 머리를 바라봄. up은 월드 기준(누운 자세에도 안정).
+		XMFLOAT3 lookTarget;
+		XMStoreFloat3(&lookTarget, worldHeadPos);
+		XMFLOAT3 worldUp{ 0.0f, 1.0f, 0.0f };
+		SetLookAt(position, lookTarget, worldUp);
+
+		GenerateViewMatrix();
+		UpdateFrustum();
+		return;
+	}
 
 	// target 행렬 적용
 	XMMATRIX baseRotate;

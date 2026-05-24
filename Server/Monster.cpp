@@ -94,8 +94,8 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
             if (!player)
                 continue;
 
-            // 추가 조건: 플레이어가 죽었거나 빙의 상태라면 무시
-            if (player->GetState() == PLAYER_STATE::DEAD)
+            // 추가 조건: 빈사/사망 또는 빙의 상태라면 무시
+            if (player->IsIncapacitated())
                 continue;
             if (player->GetIsPossessed())
                 continue;

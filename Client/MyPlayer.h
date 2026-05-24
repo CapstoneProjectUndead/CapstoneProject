@@ -124,6 +124,9 @@ private:
     bool                              is_ready;
     bool                              dig_anim_finished{ false };
 
+    // 빈사/사망 시 3인칭 궤도 카메라로 전환했는지 추적 (전이 감지용)
+    bool                              incap_camera_active{ false };
+
     float grounded_timer{ 0.1 };
     float accumulate_stamina{ 100.0f };
     bool  stamina_exhausted{ false };

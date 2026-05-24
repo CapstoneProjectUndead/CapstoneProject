@@ -150,7 +150,7 @@ void CGhost::OnTraceMove(float elapsedTime)
 
 	auto targetPlayer = target_player.lock();
 
-	if (!targetPlayer || targetPlayer->GetIsPossessed() || targetPlayer->GetReturned()) {
+	if (!targetPlayer || targetPlayer->GetIsPossessed() || targetPlayer->GetReturned() || targetPlayer->IsIncapacitated()) {
 		target_player.reset();
 		AIComponent->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
