@@ -778,6 +778,8 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 					// 드롭한 아이템이 장착 중이었으면 해제 브로드캐스트
 					if (player->GetEquippedItemId() == itemId) {
 						player->SetEquippedItemId(0);
+						player->SetEquippedItemSubType(ITEM_SUB_TYPE::NONE);
+						player->SetEquipedItem(nullptr);
 						S_EquipItem unequipPkt;
 						unequipPkt.player_id  = player->GetID();
 						unequipPkt.item_id    = 0;
