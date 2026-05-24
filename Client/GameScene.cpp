@@ -1095,7 +1095,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position)
 }
 
 // 멀티환경
-void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position)
+void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position, int16 dur)
 {
 	auto worldItem = factory->CreateWorldItem(itemID);
 	if (!worldItem)
@@ -1108,6 +1108,11 @@ void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 posi
 
 	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
 	worldItem->SetID(itemWorldId);
+
+	if (dur > 0) {
+		auto equipment = std::static_pointer_cast<CEquipment>(worldItem->GetItem());
+		equipment->SetCurrentDurability((uint16)dur);
+	}
 
 	// Scene의 objects 컨테이너에 추가
 	AddObject(worldItem, itemWorldId);
@@ -1718,7 +1723,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 void CGameScene::Handle_S_SpawnItem(std::shared_ptr<Session> session, const S_SpawnItem& pkt)
 {
 	XMFLOAT3 pos{ pkt.x, pkt.y, pkt.z };
-	SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos);
+	SpawnWorldItem(pkt.item_id, pkt.item_world_id, pos, pkt.durability);
 }
 
 // 아이템 리스트 (가변인자)
@@ -1753,6 +1758,11 @@ void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddI
 		return;
 
 	auto worldItem = static_cast<CWorldItem*>(it->get());
+	if (pkt.durability > 0) {
+		auto equipment = std::static_pointer_cast<CEquipment>(worldItem->GetItem());
+		equipment->SetCurrentDurability((uint16)pkt.durability);
+	}
+
 	my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
 }
 

@@ -22,11 +22,16 @@ shared_ptr<CItem> CItemManager::CreateItem(uint16 itemId)
 	return item;
 }
 
-shared_ptr<WorldItem> CItemManager::SpawnItem(uint16 itemId, const XMFLOAT3& pos)
+shared_ptr<WorldItem> CItemManager::SpawnItem(uint16 itemId, const XMFLOAT3& pos, int16 dur)
 {
-	auto item = ItemFactory::Create(itemId);
+	auto item = CreateItem(itemId);
 
 	shared_ptr<WorldItem> worldItem = make_shared<WorldItem>(item, world_id_counter, pos);
+
+	if (dur > 0) {
+		auto equipment = static_pointer_cast<CEquipment>(worldItem->item);
+		equipment->SetCurrentDurability((uint16)dur);
+	}
 
 	items[world_id_counter] = worldItem;
 	++world_id_counter;

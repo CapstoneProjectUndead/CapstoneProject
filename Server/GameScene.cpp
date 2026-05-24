@@ -637,6 +637,12 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 
 				// 아이템 도감 번호
 				uint16 itemID = it->GetItemId();
+				int16  durability = -1;
+
+				if (it->GetItemType() == ITEM_TYPE::EQUIPMENT) {
+					auto equipment = static_pointer_cast<CEquipment>(it);
+					durability = equipment->GetCurrentDurability();
+				}
 
 				// S_AddItem 패킷 보낸다.
 				S_AddItem addItem;
@@ -645,6 +651,7 @@ void CGameScene::Handle_C_Pickup_Item(shared_ptr<Session> session, const C_Picku
 				addItem.inventory_id = it->GetInventoryID();
 				addItem.player_id = pkt.player_id;
 				addItem.item_type = pkt.item_type;
+				addItem.durability = durability;
 				addItem.scene_type = scene_type;
 
 				SendBufferRef sendBuffer = MAKE_SEND_BUFFER(addItem);
@@ -740,6 +747,12 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 				uint16 itemId      = item->second->GetItemId();
 				uint32 inventoryId = item->second->GetInventoryID();
 				auto   dropItem    = item->second;
+				int16 durability   = -1;
+
+				if (item->second->GetItemType() == ITEM_TYPE::EQUIPMENT) {
+					auto equipment = static_pointer_cast<CEquipment>(item->second);
+					durability = equipment->GetCurrentDurability();
+				}
 
 				if (inv->RemoveItem(pkt.inventory_id)) {
 
@@ -761,7 +774,7 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 					pos.x            += sinf(yawRad) * 0.4f;
 					pos.z            += cosf(yawRad) * 0.4f;
 					pos.y             = max(pos.y, 0.0f);
-					auto spawnedItem  = item_manager->SpawnItem(itemId, pos);
+					auto spawnedItem  = item_manager->SpawnItem(itemId, pos, durability);
 
 					S_SpawnItem spawnItemPkt;
 					spawnItemPkt.item_id       = itemId;
@@ -771,6 +784,7 @@ void CGameScene::Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropIte
 					spawnItemPkt.x             = pos.x;
 					spawnItemPkt.y             = pos.y;
 					spawnItemPkt.z             = pos.z;
+					spawnItemPkt.durability    = durability;
 
 					auto sendBuffer = MAKE_SEND_BUFFER(spawnItemPkt);
 					BroadCast(sendBuffer);

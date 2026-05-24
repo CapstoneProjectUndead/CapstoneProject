@@ -42,8 +42,9 @@ public:
 	virtual void Equip(CMyPlayer* player) = 0;
 
 public:
-	uint32 GetCurrentDurability() const { return current_durability; }
 	uint32 GetMaxDurability() const { return max_durability; }
+	uint32 GetCurrentDurability() const { return current_durability; }
+	void   SetCurrentDurability(const uint16 dur) { current_durability = dur; }
 
 	virtual void ReduceDurability() {};
 

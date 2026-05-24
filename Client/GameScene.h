@@ -61,7 +61,7 @@ public:
 
 private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
-    void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position);
+    void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position, int16 dur = -1);
 
     // 몬스터 respawn 관리
     void UpdateMonsters(float elapsedTime);

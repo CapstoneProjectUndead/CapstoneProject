@@ -483,10 +483,11 @@ struct S_SpawnItem : public PacketHeader
 	ITEM_TYPE item_type;
 	SCENE_TYPE scene_type;
 	float  x, y, z;
+	int16 durability = -1;  // 내구도가 존재하지 않는 아이템은 -1
 
 	S_SpawnItem() : PacketHeader(sizeof(S_SpawnItem), (UINT)PacketType::_S_SPAWN_ITEM) {}
 };
-static_assert(sizeof(S_SpawnItem) == 4 + 20, "S_SpawnItem size mismatch!");
+static_assert(sizeof(S_SpawnItem) == 4 + 22, "S_SpawnItem size mismatch!");
 
 struct S_Spawn_Item_List : public PacketHeader
 {
@@ -545,10 +546,11 @@ struct S_AddItem : public PacketHeader
 	uint32 inventory_id;
 	ITEM_TYPE item_type;
 	SCENE_TYPE scene_type;
+	int16 durability = -1;
 
 	S_AddItem() : PacketHeader(sizeof(S_AddItem), (UINT)PacketType::_S_ADD_ITEM) {}
 };
-static_assert(sizeof(S_AddItem) == 4 + 20, "S_AddItem size mismatch!");
+static_assert(sizeof(S_AddItem) == 4 + 22, "S_AddItem size mismatch!");
 
 struct S_AddItemList : public PacketHeader
 {
