@@ -30,6 +30,7 @@ private:
     void AnnounceReturnPosition();
     void DetectPlayerReturns();
     void TriggerSettlement();
+    void CheckEarlySettlement();
 
 public:
     virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) override;

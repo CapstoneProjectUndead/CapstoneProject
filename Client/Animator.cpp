@@ -374,10 +374,11 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	controller.AddTransition(possess, p2i);
 
 	// 기절 상태 (STUNNED): is_stunned bool로 전이, 클립은 Ganga_tired
+	// 빙의(possess)보다 우선 — 빙의된 플레이어가 맞으면 기절 애니메이션이 빙의를 덮어쓴다
 	const std::string stunned{ "StunnedState" };
 	controller.AddState({ stunned, "Ganga_tired", 1.0f, true });
 
-	std::vector<std::string> activeStates = { idle, walk, run, "JumpState", "DigState" };
+	std::vector<std::string> activeStates = { idle, walk, run, "JumpState", "DigState", possess };
 	for (const auto& from : activeStates) {
 		Transition any2s;
 		any2s.to_state = stunned;
@@ -387,6 +388,16 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 			};
 		controller.AddTransition(from, any2s);
 	}
+
+	// 스턴 풀린 직후 여전히 빙의 중이면 idle 경유 없이 바로 possess로 (블렌딩 2단 방지)
+	Transition s2p;
+	s2p.to_state = possess;
+	s2p.duration = 0.2f;
+	s2p.condition = [this]() {
+		auto player = static_cast<CPlayer*>(owner);
+		return !player->GetIsStunned() && player->GetIsPossessed();
+		};
+	controller.AddTransition(stunned, s2p);
 
 	Transition s2i;
 	s2i.to_state = idle;

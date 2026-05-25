@@ -86,6 +86,7 @@ void CScene::SendPlayersResult()
 			movePkt.scene_type = player->GetCurrentSceneType();
 
 			movePkt.info.is_possessed = player->GetIsPossessed();
+			movePkt.info.is_stunned   = player->GetIsStunned();
 
 			movePkt.info.x = player->GetPosition().x;
 			movePkt.info.y = player->GetPosition().y;

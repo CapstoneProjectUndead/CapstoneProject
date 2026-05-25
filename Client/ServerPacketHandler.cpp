@@ -640,7 +640,7 @@ bool Handle_S_PLAY_SOUND(std::shared_ptr<Session> session, S_PlaySound& pkt)
 	return true;
 }
 
-bool Handle_S_POSSESSION_RELEASE_FAIL(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)
+bool Handle_S_CHOLD_FAIL(std::shared_ptr<Session> session, S_CHoldFail& pkt)
 {
 	CGameScene* gameScene = nullptr;
 
@@ -649,7 +649,7 @@ bool Handle_S_POSSESSION_RELEASE_FAIL(std::shared_ptr<Session> session, S_Posses
 	if (!gameScene)
 		return true;
 
-	gameScene->Handle_S_PossessionReleaseFail(session, pkt);
+	gameScene->Handle_S_CHoldFail(session, pkt);
 
 	return true;
 }

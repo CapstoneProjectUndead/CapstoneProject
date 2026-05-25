@@ -61,6 +61,11 @@ void CMyPlayer::Update(float elapsedTime)
 					cam->SetCameraOffset(thirdOffset);
 					// 초기 orbit 각도: 플레이어 yaw + 약간 위에서 내려다보는 pitch
 					cam->SetOrbitMode(true, yaw, 20.0f);
+
+					// 빈사 진입 시 C-홀드 진행 상태 초기화 (본인 화면에 잔존 진행바 방지)
+					ResetCHoldTimer();
+					SetCHoldTarget(CHOLD_TARGET::NONE);
+					CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
 				}
 				else {
 					cam->SetOrbitMode(false);
@@ -448,6 +453,9 @@ void CMyPlayer::ResetAll()
 	accumulate_stamina = 100;
 	stamina_exhausted = false;
 	equipped_item_id = 0;
+
+	// 빈사 카메라 전이 플래그 리셋 (실제 카메라 모드는 CGameScene::Exit에서 처리)
+	incap_camera_active = false;
 
 	if (is_dowsing) {
 		is_dowsing = false;

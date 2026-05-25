@@ -50,6 +50,7 @@ struct NetPlayerInfo
 
 	PLAYER_STATE	state;
 	bool			is_possessed = false;
+	bool			is_stunned   = false;
 
 	NetPlayerInfo() = default;
 	NetPlayerInfo(uint64 _id, uint32 roomId, uint8 bodyType, uint8 eyeType, uint8 mouthType 
@@ -97,10 +98,11 @@ struct NetPlayerInfo
 		, pitch(other.pitch)
 		, roll(other.roll)
 		, is_possessed(other.is_possessed)
+		, is_stunned(other.is_stunned)
 	{ }
 };
 
-static_assert(sizeof(NetPlayerInfo) == 64, "NetObjectInfo size mismatch!");
+static_assert(sizeof(NetPlayerInfo) == 65, "NetObjectInfo size mismatch!");
 
 struct NetMonsterInfo
 {

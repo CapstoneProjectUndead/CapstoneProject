@@ -94,8 +94,13 @@ public:
 	void   SetHp(uint32 hp) 
 	{
 		stat.hp = hp;
-		if (hp == 0 && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD)
+		if (hp == 0 && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD) {
 			state = PLAYER_STATE::ALMOST_DEAD;
+			is_possessed = false;
+			possession_timer = 0.0f;
+			is_stunned = false;
+			stun_timer = 0.0f;
+		}
 	}
 
 	uint32 GetStamina() const { return stat.stamina; }
@@ -123,6 +128,8 @@ public:
 	bool  GetIsPossessed() const { return is_possessed; }
 	void  SetPossessed(bool val) { is_possessed = val; }
 
+	bool  GetIsStunned() const { return is_stunned; }
+
 	float GetPossessionTimer() const { return possession_timer; }
 	void  SetPossessionTimer(float t) { possession_timer = t; }
 
@@ -139,9 +146,7 @@ public:
 	void   SetReturned(bool r) { is_returned = r; }
 
 	// 빈사/사망: 무력 상태 (몬스터 타겟 제외 + 입력/패킷 차단 공용)
-	bool   IsIncapacitated() const {
-		return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD;
-	}
+	bool   IsIncapacitated() const { return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD; }
 
 private:
 	void UpdateStamina(float elapsedTime);
@@ -161,7 +166,7 @@ private:
 
 	// 빙의
 	void UpdatePossession(float elapsedTime);
-	void ReleasePossession(const InputData& input, const float elapsedTime);
+	void UpdateCHoldAction(const InputData& input, const float elapsedTime);
 
 	XMFLOAT3            GetRandomPossessedTarget();
 	shared_ptr<CPlayer> FindNearestOtherPlayer();
@@ -192,23 +197,24 @@ private:
 	ITEM_SUB_TYPE	  equipped_item_sub_type;
 	shared_ptr<CItem> equipped_item;
 
-	PlayerStat  stat;
-	float       accumulate_stamina;
-	bool        stamina_exhausted;
+	PlayerStat	 stat;
+	float		 accumulate_stamina;
+	bool		 stamina_exhausted;
+				 
+	XMFLOAT3	 knockback_vel;
+	float		 knockback_timer;
+				 
+	bool		 is_stunned;
+	float		 stun_timer;
 
-	XMFLOAT3    knockback_vel;
-	float       knockback_timer;
-
-	bool        is_stunned;
-	float       stun_timer;
-
-	bool        is_possessed;
-	float       possession_timer;
-	float       c_hold_timer;
-	bool        last_c_input;
-	bool        start_jump;
-	int         possessed_spray_hit_count;
-	float       bare_hand_dig_timer;
+	bool         is_possessed;
+	float        possession_timer;
+	float        c_hold_timer;
+	CHOLD_TARGET c_hold_target_type{ CHOLD_TARGET::NONE };  // 현재 C-홀드 중인 대상 종류 (POSSESSION/RESCUE)
+	bool         last_c_input;
+	bool         start_jump;
+	int          possessed_spray_hit_count;
+	float        bare_hand_dig_timer;
 
 	std::vector<MapGenerator::Cell> possessed_nav_path;
 	float    possessed_path_refresh_timer;

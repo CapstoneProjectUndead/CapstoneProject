@@ -40,7 +40,7 @@ public:
     virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) override;
     virtual void Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt) override;
     virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) override;
-    void Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt);
+    void Handle_S_CHoldFail(std::shared_ptr<Session> session, S_CHoldFail& pkt);
     void Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt);
     void Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt);
     void Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt);
@@ -85,9 +85,10 @@ private:
 
     void DropItemAtPlayerFeet(std::shared_ptr<CItem> item);
 
-    // 빙의 해제 (멀티 전용)
-    void ReleasePossession(float elapsedTime);
+    // 빙의 해제 & 빈사 소생 (멀티 전용, 같은 C-홀드 메커니즘 공유)
+    void UpdateCHoldAction(float elapsedTime);
     void DrawDePossessProgressBar();
+    void DrawRescueProgressBar();
 
     // 복귀존 월드 마커 (수평 원형 링, 카메라 view/proj로 투영)
     void DrawReturnMarker();

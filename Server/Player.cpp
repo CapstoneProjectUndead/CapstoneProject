@@ -153,8 +153,8 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
         return;
     }
 
-    // C키 홀드 → 인접 빙의 플레이어 해제
-    ReleasePossession(input, elapsedTime);
+    // C키 홀드 → 인접 빙의 플레이어 해제 OR 빈사 플레이어 소생
+    UpdateCHoldAction(input, elapsedTime);
 
     // --------------------
     // 입력 처리 및 방향 계산
@@ -356,7 +356,7 @@ void CPlayer::ApplyStun(float time)
 void CPlayer::ApplyPossession()
 {
     is_possessed    = true;
-    possession_timer = 50.0f;
+    possession_timer = 40.0f;
 
     accumulate_stamina = 0.0f;
     stamina_exhausted  = true;
@@ -431,7 +431,7 @@ void CPlayer::UpdatePossession(float elapsedTime)
                 nearOther->SetHp(hp > 10 ? hp - 10 : 0);
 
                 uint32 myHp = GetHp();
-                SetHp(myHp > 10 ? hp - 10 : 0);
+                SetHp(myHp > 10 ? myHp - 10 : 0);
 
                 possession_contact_timer = 0.0f;
 
@@ -507,30 +507,39 @@ void CPlayer::UpdatePossession(float elapsedTime)
     state      = PLAYER_STATE::RUN;
 }
 
-void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
+void CPlayer::UpdateCHoldAction(const InputData& input, const float elapsedTime)
 {
     if (current_scene_type != SCENE_TYPE::GAME)
         return;
 
-    if (is_possessed || is_dowsing)
-        return;
-
-    if (!input.c) {
+    // 본인이 빙의/다우징/빈사 중이면 C-홀드 액션 불가
+    if (is_possessed || is_dowsing || IsIncapacitated()) {
         c_hold_timer = 0.0f;
+        c_hold_target_type = CHOLD_TARGET::NONE;
         return;
     }
 
-    // C키가 눌린 상태에서 매 프레임 범위 내 빙의 플레이어 탐색
+    if (!input.c) {
+        c_hold_timer = 0.0f;
+        c_hold_target_type = CHOLD_TARGET::NONE;
+        return;
+    }
+
+    // C키가 눌린 상태에서 매 프레임 범위 내 후보 탐색 (빙의 플레이어 OR 빈사 플레이어)
     shared_ptr<CPlayer> target = nullptr;
+    CHOLD_TARGET targetType = CHOLD_TARGET::NONE;
     auto room = GetRoom();
     if (room) {
         CScene* scene = room->GetScenes()[(UINT)current_scene_type].get();
         if (scene) {
             for (auto& [id, player] : scene->GetPlayers()) {
 
-                if (!player || id == obj_id) 
+                if (!player || id == obj_id)
                     continue;
-                if (!player->GetIsPossessed()) 
+
+                bool isPossessed = player->GetIsPossessed();
+                bool isRescuable = (player->GetState() == PLAYER_STATE::ALMOST_DEAD);
+                if (!isPossessed && !isRescuable)
                     continue;
 
                 XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), position);
@@ -538,6 +547,7 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
 
                 if (Vector3::Length(diff) <= 0.9f) {
                     target = player;
+                    targetType = isPossessed ? CHOLD_TARGET::POSSESSION : CHOLD_TARGET::RESCUE;
                     break;
                 }
             }
@@ -545,21 +555,36 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
     }
 
     if (target) {
-        c_hold_timer += elapsedTime;
-        if (c_hold_timer >= 5.0f) {
+        // 대상 종류가 바뀌면 타이머 리셋 (예: 빙의 대상 → 빈사 대상으로 시선 이동)
+        if (c_hold_target_type != targetType) {
+            c_hold_timer = 0.0f;
+            c_hold_target_type = targetType;
+        }
 
-            // 빙의 해제 Sound 패킷 전송
-            SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
+        c_hold_timer += elapsedTime;
+
+        float threshold = (targetType == CHOLD_TARGET::RESCUE) ? 7.0f : 5.0f;
+        if (c_hold_timer >= threshold) {
+            if (targetType == CHOLD_TARGET::POSSESSION) {
+                // 빙의 해제 Sound 패킷 전송
+                SendSoundPacket(false, SOUND_ID::devil_laugh1, GetPosition());
+                target->SetPossessed(false);
+                target->SetPossessionTimer(0.0f);
+            }
+            else { // RESCUE
+                // 빈사 소생: HP 50% 복원 + 상태 IDLE (클라가 다음 S_Move_Player에서 카메라 1인칭 자동 복귀)
+                target->SetHp(target->GetMaxHp() / 2);
+                target->SetState(PLAYER_STATE::IDLE);
+            }
 
             c_hold_timer = 0.0f;
-            target->SetPossessed(false);
-            target->SetPossessionTimer(0.0f);
+            c_hold_target_type = CHOLD_TARGET::NONE;
         }
     }
     else {
-        // 클라이언트가 C키를 누르고 있었지만 빙의 플레이어가 범위를 벗어났으면 빙의 해제 실패 패킷 전송
+        // 클라이언트가 C키를 누르고 있었지만 대상이 범위를 벗어났으면 실패 패킷 전송 (클라 진행바 리셋)
         if (c_hold_timer > 0.0f) {
-            S_PossessionReleaseFail failPkt;
+            S_CHoldFail failPkt;
             failPkt.player_id = GetID();
             auto sendBuffer = MAKE_SEND_BUFFER(failPkt);
             if (auto s = session.lock())
@@ -567,6 +592,7 @@ void CPlayer::ReleasePossession(const InputData& input, const float elapsedTime)
         }
 
         c_hold_timer = 0.0f;
+        c_hold_target_type = CHOLD_TARGET::NONE;
     }
 }
 
@@ -588,7 +614,7 @@ shared_ptr<CPlayer> CPlayer::FindNearestOtherPlayer()
 
         if (!player || id == obj_id)
             continue;
-        if (player->GetIsPossessed())
+        if (player->GetIsPossessed() || player->IsIncapacitated())
             continue;
 
         XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);

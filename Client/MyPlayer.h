@@ -64,9 +64,23 @@ public:
     bool GetDigAnimFinished() const   { return dig_anim_finished; }
     void SetDigAnimFinished(bool val) { dig_anim_finished = val; }
 
-    float GetCHoldProgress() const { return min(c_hold_timer / 5.0f, 1.0f); }
-    void  UpdateCHoldTimer(float delta) { c_hold_timer = min(c_hold_timer + delta, 5.0f); }
+    // C-홀드 진행률: 현재 대상 종류에 따라 임계 시간(POSSESSION=5s, RESCUE=7s)이 달라짐
+    float GetCHoldProgress() const 
+    {
+        float threshold = (c_hold_target == CHOLD_TARGET::RESCUE) ? 7.0f : 5.0f;
+        return min(c_hold_timer / threshold, 1.0f);
+    }
+
+    void  UpdateCHoldTimer(float delta) 
+    {
+        float threshold = (c_hold_target == CHOLD_TARGET::RESCUE) ? 7.0f : 5.0f;
+        c_hold_timer = min(c_hold_timer + delta, threshold);
+    }
+
     void  ResetCHoldTimer()             { c_hold_timer = 0.0f; }
+
+    CHOLD_TARGET GetCHoldTarget() const { return c_hold_target; }
+    void         SetCHoldTarget(CHOLD_TARGET t) { c_hold_target = t; }
 
     // 넉백 + 스턴 (기본값 1.3f) 스턴은 원치 않으면 인자를 0으로 쓰면 된다.
     void ApplyKnockback(XMFLOAT3 dir, float force, float stun_duration = 1.3f);
@@ -126,6 +140,9 @@ private:
 
     // 빈사/사망 시 3인칭 궤도 카메라로 전환했는지 추적 (전이 감지용)
     bool                              incap_camera_active{ false };
+
+    // 현재 C-홀드 중인 대상 종류 (POSSESSION/RESCUE) — UI 분기 + 임계 시간 결정에 사용
+    CHOLD_TARGET                      c_hold_target{ CHOLD_TARGET::NONE };
 
     float grounded_timer{ 0.1 };
     float accumulate_stamina{ 100.0f };

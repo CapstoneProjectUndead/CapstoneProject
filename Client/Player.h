@@ -42,7 +42,15 @@ public:
 	uint32 GetMaxStamina() const { return stat.maxStamina; }
 
 	uint32 GetHp() const { return stat.hp; }
-	void   SetHp(const uint32 hp) { stat.hp = hp; }
+	void   SetHp(const uint32 hp) 
+	{ 
+		stat.hp = hp; 
+		if (g_is_single && hp == 0 && state != PLAYER_STATE::DEAD) {
+			state = PLAYER_STATE::DEAD;
+			is_possessed = false;
+			possession_timer = 0.0f;
+		}
+	}
 
 	uint32 GetStamina() const { return stat.stamina; }
 	void   SetStamina(const uint32 stamina) { stat.stamina = stamina; }
@@ -75,9 +83,7 @@ public:
 	void   SetReturned(bool r) { is_returned = r; }
 
 	// 빈사/사망: 무력 상태 (입력 차단 공용)
-	bool   IsIncapacitated() const {
-		return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD;
-	}
+	bool   IsIncapacitated() const { return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD; }
 
 public:
 	// 커스터마이징용

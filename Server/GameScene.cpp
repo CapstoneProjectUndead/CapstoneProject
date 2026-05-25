@@ -68,8 +68,11 @@ void CGameScene::Initialize()
 
 void CGameScene::Update(float elapsedTime)
 {
-	for (auto& [id, player] : players)
+	for (auto& [id, player] : players) {
+		if (player->IsIncapacitated())
+			continue;
 		player->ApplySeparation(players);
+	}
 
 	CScene::Update(elapsedTime);
 	if (!round_ended)
@@ -88,6 +91,9 @@ void CGameScene::Update(float elapsedTime)
 		if (return_active) {
 			DetectPlayerReturns();
 		}
+
+		// 진행 불가능 상태 조기 감지 (전원 빈사, 또는 복귀+빈사 조합 등)
+		CheckEarlySettlement();
 
 		if (!round_ended && round_timer <= 0.f) {
 			round_timer = 0.f;
@@ -172,20 +178,28 @@ void CGameScene::DetectPlayerReturns()
 			BroadCast(sendBuffer);
 		}
 	}
+	// 전원 복귀 + 빈사/복귀 혼합 조기 정산 트리거는 CheckEarlySettlement에서 일괄 처리
+}
 
-	// 전원 복귀 시 타이머 만료 전이라도 즉시 정산
-	bool all_returned = !players.empty();
+void CGameScene::CheckEarlySettlement()
+{
+	if (round_ended || players.empty())
+		return;
+
+	// 모든 플레이어가 (복귀 OR 빈사) 상태이면 더 이상 라운드 진행 불가능 → 즉시 정산
+	// - 전원 복귀:        기존 동작 유지 (보너스 2배는 TriggerSettlement에서 별도 계산)
+	// - 전원 빈사:        구조해줄 사람 없음
+	// - 복귀 + 빈사 조합: 구조해줄 활동 가능한 플레이어 없음
 	for (auto& [id, player] : players) {
-		if (!player || !player->GetReturned()) {
-			all_returned = false;
-			break;
-		}
+		if (!player)
+			continue;
+		if (!player->GetReturned() && !player->IsIncapacitated())
+			return;  // 아직 활동 가능한 플레이어가 있음
 	}
-	if (all_returned) {
-		round_timer = 0.f;
-		round_ended = true;
-		TriggerSettlement();
-	}
+
+	round_timer = 0.f;
+	round_ended = true;
+	TriggerSettlement();
 }
 
 void CGameScene::TriggerSettlement()

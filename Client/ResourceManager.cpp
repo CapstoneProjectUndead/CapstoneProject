@@ -66,6 +66,9 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
 
     // 빙의 해제 UI
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "ghost_icon", L"../Resource/GameScene/ghost.png");
+
+    // 구조 UI
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "heal_icon", L"../Resource/GameScene/heal.png");
 }
 
 void CResourceManager::LoadSounds()

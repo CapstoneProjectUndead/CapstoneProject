@@ -179,8 +179,17 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
             state = PLAYER_STATE::IDLE;
         }
         else {
+            // [빈사/사망 최우선] 빈사·사망은 다른 어떤 행동(JUMP/DIG/ATTACK)보다 우선.
+            // 빈사 진입 직전 프레임(예: 공격 중 사망)이 보간 윈도우에 잡혀도 JUMP/DIG/ATTACK
+            // 보존 분기가 먼저 매칭되어 ALMOST_DEAD가 묻히는 것을 방지.
+            if (frameA->state == PLAYER_STATE::ALMOST_DEAD || frameB->state == PLAYER_STATE::ALMOST_DEAD) {
+                state = PLAYER_STATE::ALMOST_DEAD;
+            }
+            else if (frameA->state == PLAYER_STATE::DEAD || frameB->state == PLAYER_STATE::DEAD) {
+                state = PLAYER_STATE::DEAD;
+            }
             // [점프 우선] 서버가 grounded_timer 디바운스로 깔끔하게 결정한 JUMP state는 그대로 보존
-            if (frameA->state == PLAYER_STATE::JUMP || frameB->state == PLAYER_STATE::JUMP) {
+            else if (frameA->state == PLAYER_STATE::JUMP || frameB->state == PLAYER_STATE::JUMP) {
                 state = PLAYER_STATE::JUMP;
             }
             // [채굴 우선] 서버가 dig_timer로 결정한 DIG state 보존

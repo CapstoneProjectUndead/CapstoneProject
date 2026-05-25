@@ -24,6 +24,15 @@ enum class PLAYER_STATE : uint8_t
 	DEAD,
 };
 
+// C키 홀드 대상 종류 (서버/클라 공용)
+// 같은 C-홀드 메커니즘으로 빙의 해제(5초) 또는 빈사 소생(7초)을 처리
+enum class CHOLD_TARGET : uint8_t
+{
+	NONE,
+	POSSESSION,   // 빙의 플레이어 해제 (5초)
+	RESCUE,       // 빈사 플레이어 소생 (7초)
+};
+
 enum class SCENE_TYPE : uint8_t
 {
 	NONE,

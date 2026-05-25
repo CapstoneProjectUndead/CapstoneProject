@@ -230,7 +230,8 @@ void CGameScene::Update(float elapsedTime)
 			return_active = true;
 		}
 
-		if (round_timer <= 0.f || my_player->GetReturned()) {
+		if (round_timer <= 0.f || my_player->GetReturned()
+			|| my_player->GetState() == PLAYER_STATE::DEAD) {
 			round_timer = 0.f;
 			CKeyManager::GetInstance().SetMouseMode(false);
 			TriggerSinglePlayerSettlement();
@@ -281,9 +282,10 @@ void CGameScene::Update(float elapsedTime)
 
 		my_player->BeginSendInputPacket(elapsedTime);
 
-		// (멀티 전용) 빙의 해제 progress bar UI는 클라이언트 예측 기법 적용
-		if (!g_is_single && !my_player->GetIsPossessed()) {
-			ReleasePossession(elapsedTime);
+		// (멀티 전용) 빙의 해제 / 빈사 소생 progress bar UI는 클라이언트 예측 기법 적용
+		// 본인이 빙의/빈사 중이면 C-홀드 액션 불가
+		if (!g_is_single && !my_player->GetIsPossessed() && !my_player->IsIncapacitated()) {
+			UpdateCHoldAction(elapsedTime);
 		}
 	};
 }
@@ -318,10 +320,13 @@ void CGameScene::DrawUI()
 		if (quick_slot)
 			quick_slot->Draw();
 
-		// 빙의 해제 진행 바 (멀티 전용)
+		// 빙의 해제 / 빈사 소생 진행 바 (멀티 전용) — 대상 종류에 따라 다른 UI
 		if (!g_is_single && my_player->GetCHoldProgress() > 0.0f) {
 			CSoundManager::GetInstance().Play(SOUND_ID::clock_alarm, 0);
-			DrawDePossessProgressBar();
+			if (my_player->GetCHoldTarget() == CHOLD_TARGET::RESCUE)
+				DrawRescueProgressBar();
+			else
+				DrawDePossessProgressBar();
 		}
 	}
 }
@@ -1155,9 +1160,9 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	SpawnWorldItem(item->GetItemId(), pos, dur);  // 내부에서 world_item_id_counter 증가
 }
 
-void CGameScene::ReleasePossession(float elapsedTime)
+void CGameScene::UpdateCHoldAction(float elapsedTime)
 {
-	bool canRelease = false;
+	CHOLD_TARGET targetType = CHOLD_TARGET::NONE;
 
 	if (KEY_PRESSED(KEY::C)) {
 		XMFLOAT3 myPos = my_player->GetPosition();
@@ -1165,25 +1170,35 @@ void CGameScene::ReleasePossession(float elapsedTime)
 		for (auto& obj : objects) {
 			auto* player = dynamic_cast<CPlayer*>(obj.get());
 
-			if (!player || player == my_player.get()) 
+			if (!player || player == my_player.get())
 				continue;
-			if (!player->GetIsPossessed()) 
+
+			bool isPossessed = player->GetIsPossessed();
+			bool isRescuable = (player->GetState() == PLAYER_STATE::ALMOST_DEAD);
+			if (!isPossessed && !isRescuable)
 				continue;
 
 			XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), myPos);
 			diff.y = 0.0f;
-			if (Vector3::Length(diff) <= 0.9f) { 
-				canRelease = true; 
-				break; 
+			if (Vector3::Length(diff) <= 0.9f) {
+				targetType = isPossessed ? CHOLD_TARGET::POSSESSION : CHOLD_TARGET::RESCUE;
+				break;
 			}
 		}
 	}
 
-	if (canRelease)
+	if (targetType != CHOLD_TARGET::NONE) {
+		// 대상 종류가 바뀌면 타이머 리셋 (UI 진행률 점프 방지)
+		if (my_player->GetCHoldTarget() != targetType) {
+			my_player->ResetCHoldTimer();
+			my_player->SetCHoldTarget(targetType);
+		}
 		my_player->UpdateCHoldTimer(elapsedTime);
+	}
 	else {
 		CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
 		my_player->ResetCHoldTimer();
+		my_player->SetCHoldTarget(CHOLD_TARGET::NONE);
 	}
 }
 
@@ -1230,6 +1245,50 @@ void CGameScene::DrawDePossessProgressBar()
 	ImGui::PopStyleVar(3);
 }
 
+void CGameScene::DrawRescueProgressBar()
+{
+	// 빈사 소생 진행바. 빙의 해제 바와 구분하기 위해 초록색 + heal 아이콘 사용.
+	ImVec2 sz = ImGui::GetIO().DisplaySize;
+
+	// BASE_UI_HEIGHT(600) 기준, G_RATIO_Y로 해상도 대응
+	const float iconSize  = 120.f * G_RATIO_Y;
+	const float barWidth  = 407.f * G_RATIO_Y;
+	const float barHeight = 38.f  * G_RATIO_Y;
+
+	// 바가 아이콘 중간부터 시작 → 아이콘이 바를 덮는 겹침 효과
+	const float overlapX  = iconSize * 0.55f;
+	const float winWidth  = overlapX + barWidth;
+	const float winHeight = iconSize;
+
+	ImGui::SetNextWindowPos(ImVec2(sz.x * 0.5f - winWidth * 0.5f - 50.f, sz.y - 253.f * G_RATIO_Y), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(winWidth, winHeight));
+	ImGui::SetNextWindowBgAlpha(0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
+
+	ImGui::Begin("##rescue_progress", nullptr,
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoScrollWithMouse);
+
+	// 1. 진행 바를 먼저 그림 (아이콘 뒤에 렌더링)
+	float barY = (winHeight - barHeight) * 0.5f;
+	ImGui::SetCursorPos(ImVec2(overlapX, barY));
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.3f, 0.85f, 0.3f, 1.f));
+	ImGui::PushStyleColor(ImGuiCol_FrameBg,       ImVec4(0.3f, 0.85f, 0.3f, 0.4f));
+	ImGui::ProgressBar(my_player->GetCHoldProgress(), ImVec2(barWidth, barHeight), "");
+	ImGui::PopStyleColor(2);
+
+	// 2. heal 아이콘을 위에 그림 (진행 바를 덮음)
+	ImGui::SetCursorPos(ImVec2(0.f, 0.f));
+	ImTextureID healTex = CImGuiManager::GetInstance().GetTexture("heal_icon");
+	ImGui::Image(healTex, ImVec2(iconSize, iconSize));
+
+	ImGui::End();
+	ImGui::PopStyleVar(3);
+}
+
 void CGameScene::PlayMeleeAttackSound()
 {
 	uint16 equippedID = my_player->GetEquippedItemId();
@@ -1254,12 +1313,15 @@ void CGameScene::PlayBareHandDigSound(bool isBareHand, bool isMoving)
 	}
 }
 
-void CGameScene::Handle_S_PossessionReleaseFail(std::shared_ptr<Session> session, S_PossessionReleaseFail& pkt)
+void CGameScene::Handle_S_CHoldFail(std::shared_ptr<Session> session, S_CHoldFail& pkt)
 {
 	if (my_player->GetID() != pkt.player_id)
 		return;
 
+	// C-홀드 액션(빙의 해제/빈사 소생) 실패 → 타이머·대상 모두 리셋
 	my_player->ResetCHoldTimer();
+	my_player->SetCHoldTarget(CHOLD_TARGET::NONE);
+	CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
 }
 
 void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt)
@@ -1713,6 +1775,12 @@ void CGameScene::Exit()
 
 	// 퀵슬롯 초기화
 	my_player->GetQuickSlot()->Reset();
+
+	// 빈사 3인칭 궤도 카메라 잔재 정리
+	if (camera) {
+		camera->SetOrbitMode(false);
+		camera->SetCameraOffset(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
+	}
 
 	my_player = nullptr;
 }

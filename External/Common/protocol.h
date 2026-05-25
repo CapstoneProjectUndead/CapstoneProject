@@ -75,7 +75,7 @@ enum PacketType : uint16_t
 
 	_S_PLAY_SOUND,
 
-	_S_POSSESSION_RELEASE_FAIL,
+	_S_CHOLD_FAIL,
 
 	// 정산 시스템
 	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
@@ -260,7 +260,7 @@ struct S_SpawnPlayer : public PacketHeader
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 70, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 71, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -323,7 +323,7 @@ struct C_Input : public PacketHeader
 	{
 	};
 };
-static_assert(sizeof(C_Input) == 4 + 81, "C_PlayerInput size mismatch!");
+static_assert(sizeof(C_Input) == 4 + 82, "C_PlayerInput size mismatch!");
 
 struct S_PlayerMove : public PacketHeader
 {
@@ -339,7 +339,7 @@ struct S_PlayerMove : public PacketHeader
 		, round_timer(-1.f)
 	{}
 };
-static_assert(sizeof(S_PlayerMove) == 4 + 89, "S_PlayerMove size mismatch!");
+static_assert(sizeof(S_PlayerMove) == 4 + 90, "S_PlayerMove size mismatch!");
 
 struct C_CustomSelect : public PacketHeader
 {
@@ -681,13 +681,13 @@ struct S_PlaySound : public PacketHeader
 };
 static_assert(sizeof(S_PlaySound) == 4 + 28, "S_PlaySound size mismatch!");
 
-struct S_PossessionReleaseFail : public PacketHeader
+struct S_CHoldFail : public PacketHeader
 {
 	uint64 player_id = -1;
 
-	S_PossessionReleaseFail() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_POSSESSION_RELEASE_FAIL) {}
+	S_CHoldFail() : PacketHeader(sizeof(S_CHoldFail), (UINT)PacketType::_S_CHOLD_FAIL) {}
 };
-static_assert(sizeof(S_PossessionReleaseFail) == 4 + 8, "S_PossessionReleaseFail size mismatch!");
+static_assert(sizeof(S_CHoldFail) == 4 + 8, "S_CHoldFail size mismatch!");
 
 // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회 브로드캐스트)
 // 확장 대비: 위치/반경을 패킷으로 전달 (지금은 spawn point 고정이지만, 추후 랜덤 지점 변경 가능)

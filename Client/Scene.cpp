@@ -400,6 +400,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
 		myPlayer->SetPossessed(pkt.info.is_possessed);
+		myPlayer->SetStunned(pkt.info.is_stunned);
 
 		// 라운드 타이머 동기화 (GameScene일 때만 유효한 값이 들어옴)
 		if (pkt.round_timer >= 0.f) {
@@ -451,6 +452,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 
 		otherPlayer->SetState(pkt.info.state);
 		otherPlayer->SetPossessed(pkt.info.is_possessed);
+		otherPlayer->SetStunned(pkt.info.is_stunned);
 
 		// 회전을 위해 남겨둠
 		{
