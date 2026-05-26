@@ -76,6 +76,7 @@ enum PacketType : uint16_t
 	_S_PLAY_SOUND,
 
 	_S_CHOLD_FAIL,
+	_C_GIVE_UP_RESCUE,
 
 	// 정산 시스템
 	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
@@ -688,6 +689,14 @@ struct S_CHoldFail : public PacketHeader
 	S_CHoldFail() : PacketHeader(sizeof(S_CHoldFail), (UINT)PacketType::_S_CHOLD_FAIL) {}
 };
 static_assert(sizeof(S_CHoldFail) == 4 + 8, "S_CHoldFail size mismatch!");
+
+struct C_GiveUpRescue : public PacketHeader
+{
+	uint64 player_id = -1;
+
+	C_GiveUpRescue() : PacketHeader(sizeof(C_GiveUpRescue), (UINT)PacketType::_C_GIVE_UP_RESCUE) {}
+};
+static_assert(sizeof(C_GiveUpRescue) == 4 + 8, "C_GiveUpRescue size mismatch!");
 
 // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회 브로드캐스트)
 // 확장 대비: 위치/반경을 패킷으로 전달 (지금은 spawn point 고정이지만, 추후 랜덤 지점 변경 가능)

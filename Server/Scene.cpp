@@ -406,12 +406,16 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	if (pkt.seq_num <= mover->GetLastSequence())
 		return;
 
+	// 1) 사망 상태: 회전 포함 모든 입력 무시 (관전 카메라가 대상 따라감)
+	if (mover->GetState() == PLAYER_STATE::DEAD)
+		return;
+
 	// 회전은 클라 권위 방식이기 때문에, 클라에서 받은 회전값을 적용한다.
 	mover->SetYaw(pkt.info.yaw);
 	mover->SetPitch(pkt.info.pitch);
 
 	// 복귀 완료 상태: 이동/점프/공격 입력은 무시 (회전·카메라만 허용)
-	if (mover->GetReturned())
+	if (mover->GetReturned() || mover->IsIncapacitated())
 		return;
 
 	// 플레이어가 누른 입력과 시퀀스 넘버를 입력 큐에 저장

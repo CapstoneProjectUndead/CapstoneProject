@@ -113,6 +113,13 @@ private:
     void     UpdatePossession(float elapsedTime);
     XMFLOAT3 GetRandomPossessedTarget();
 
+    // 빈사/사망 카메라
+    void         UpdateIncapacitatedCamera();   // 빈사 진입/이탈 시 3인칭 궤도 ↔ 1인칭 전환
+    void         UpdateSpectatorMode();         // DEAD 관전 모드: 카메라 셋업 + 대상 토글 + 검증
+
+    // 관전
+    CPlayer*     FindSpectatorTarget(int direction);
+
 private:
     std::weak_ptr<Session> session;
     std::weak_ptr<CUser>   user;
@@ -158,5 +165,9 @@ private:
     XMFLOAT3                        possessed_wander_target      = {};
     bool                            possessed_is_waiting         = false;
     float                           possessed_wait_timer         = 0.0f;
+
+    // 관전 대상
+    uint64                          spectator_target_id          = 0;
+    bool                            spectator_camera_active      = false;
 };
 

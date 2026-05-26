@@ -949,3 +949,20 @@ void CGameScene::Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem&
 		}
 	}
 }
+
+void CGameScene::Handle_C_GiveUpRescue(shared_ptr<Session> session, const C_GiveUpRescue& pkt)
+{
+	auto player = CAST_CS(session)->GetUser()->GetPlayer();
+	if (!player) 
+		return;
+
+	if (player->GetState() != PLAYER_STATE::ALMOST_DEAD) 
+		return;
+
+	player->SetState(PLAYER_STATE::DEAD);
+
+	// 시체에 다른 플레이어가 막히지 않게 plr의 모든 collider mask=0
+	if (auto pm = GetPhysicsManager()) {
+		pm->SetMaskByOwner(player.get(), 0);
+	}
+}

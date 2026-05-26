@@ -37,6 +37,7 @@ public:
     virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) override;
     virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) override;
     virtual void Handle_C_Use_Item(shared_ptr<Session> session, const C_UseItem& pkt) override;
+    void Handle_C_GiveUpRescue(shared_ptr<Session> session, const C_GiveUpRescue& pkt);
 
     // 라운드 타이머 (정산 시스템)
     static constexpr float ROUND_DURATION = 300.f;        
