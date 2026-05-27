@@ -1779,8 +1779,8 @@ void CGameScene::DrawGiveUpButton()
 	const float scale = G_RATIO_Y;
 
 	// 버튼 윈도우 (임시 위치: 화면 중앙)
-	const float btnW   = 100.f * G_RATIO_X;
-	const float btnH   = 80.f  * G_RATIO_Y;
+	const float btnW   = 160.f * G_RATIO_X;
+	const float btnH   = 70.f  * G_RATIO_Y;
 	const float winPad = 10.f  * scale;
 	const ImVec2 winSize{ btnW + winPad * 2, btnH + winPad * 2 };
 	const ImVec2 winPos{
@@ -1798,8 +1798,17 @@ void CGameScene::DrawGiveUpButton()
 
 	if (ImGui::Begin("##GiveUpRescueWnd", nullptr, wFlags)) {
 		ImGui::SetWindowFontScale(1.3f * scale);
-		// "구조 포기"
-		if (ImGui::Button("\xEA\xB5\xAC\xEC\xA1\xB0 \xED\x8F\xAC\xEA\xB8\xB0", ImVec2(btnW, btnH))) {
+
+		// "구조 포기" 이미지 버튼 (프레임/배경 투명, 호버 시 약간 밝게)
+		ImTextureID giveupTex = CImGuiManager::GetInstance().GetTexture("giveup");
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0, 0, 0, 0));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.15f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(1, 1, 1, 0.30f));
+		bool clicked = ImGui::ImageButton("##GiveUpBtn", giveupTex, ImVec2(btnW, btnH));
+		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar();
+		if (clicked) {
 			ImGui::OpenPopup("##GiveUpRescueConfirm");
 		}
 

@@ -829,14 +829,16 @@ void CMyPlayer::UpdateIncapacitatedCamera()
 		return;
 
 	auto scene = CSceneManager::GetInstance().GetActiveScene();
-	if (!scene) return;
+	if (!scene) 
+		return;
 
 	auto& cam = scene->GetCamera();
-	if (!cam) return;
+	if (!cam) 
+		return;
 
 	if (isIncap) {
 		// 3인칭 거리 2.5, 자체 yaw/pitch로 plr 주위 궤도
-		XMFLOAT3 thirdOffset{ 0.0f, 0.0f, -2.5f };
+		XMFLOAT3 thirdOffset{ 0.0f, 0.0f, -2.0f };
 		cam->SetCameraOffset(thirdOffset);
 		// 초기 orbit 각도: 플레이어 yaw + 약간 위에서 내려다보는 pitch
 		cam->SetOrbitMode(true, yaw, 20.0f);
@@ -857,6 +859,7 @@ void CMyPlayer::UpdateIncapacitatedCamera()
 		// 게임 모드 복귀 (커서 숨김)
 		CKeyManager::GetInstance().SetMouseMode(true);
 	}
+
 	incap_camera_active = isIncap;
 }
 
@@ -877,7 +880,10 @@ CPlayer* CMyPlayer::FindSpectatorTarget(int direction)
 		if (!p || p->GetIsMyPlayer()) 
 			continue;
 
-		if (p->IsIncapacitated() || p->GetReturned()) 
+		if (p->GetState() == PLAYER_STATE::DEAD)
+			continue;
+
+		if (p->GetReturned()) 
 			continue; 
 
 		alive.push_back(p);

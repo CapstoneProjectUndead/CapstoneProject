@@ -69,6 +69,7 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
 
     // 구조 UI
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "heal_icon", L"../Resource/GameScene/heal.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "giveup", L"../Resource/GameScene/giveup_btn.png");
 }
 
 void CResourceManager::LoadSounds()
