@@ -86,6 +86,22 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::CHAIR_001] = "chair001";
     id_to_file[EModelVariant::TABLE_001] = "table001";
 
+    id_to_file[EModelVariant::BOXTABLE] = "boxtable";
+    id_to_file[EModelVariant::BURLAPBAG] = "burlapbag";
+    id_to_file[EModelVariant::JARS] = "jars";
+    id_to_file[EModelVariant::SACK_1] = "sack_1";
+    id_to_file[EModelVariant::SACK_2] = "sack_2";
+    id_to_file[EModelVariant::STALL_FRUIT_1] = "stall_fruit_1";
+    id_to_file[EModelVariant::STALL_FRUIT_2] = "stall_fruit_2";
+    id_to_file[EModelVariant::STALL_GRAIN] = "stall_grain";
+    id_to_file[EModelVariant::STALL_WATERMELON] = "stall_watermelon";
+    id_to_file[EModelVariant::STONE_VINE_1] = "stone_vine_1";
+    id_to_file[EModelVariant::STONE_VINE_2] = "stone_vine_2";
+    id_to_file[EModelVariant::STONE_VINE_3] = "stone_vine_3";
+    id_to_file[EModelVariant::STONE_WALLDECO_1] = "stone_walldeco_1";
+    id_to_file[EModelVariant::STONE_WALLDECO_2] = "stone_walldeco_2";
+    id_to_file[EModelVariant::STONE_WALLDECO_3] = "stone_walldeco_3";
+
     // 카테고리별 랜덤 풀 설정 (추가 장식물용 - 파일명 기반)
     random_pools["grass"] = { "park_grass_1", "park_grass_2", "park_grass_3"};
     random_pools["stone"] = { "stone011", "stone012", "stone013", "stone014", "stone015", "stone016", "stone017",
