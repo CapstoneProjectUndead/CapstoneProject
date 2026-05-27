@@ -219,6 +219,12 @@ void CGameScene::Update(float elapsedTime)
 		}
 	}
 
+	// DEAD 진입 시 Player_UI 캔버스 끄기 (HP/스태미나/가방/조준점 일괄)
+	if (my_player && my_player->GetState() == PLAYER_STATE::DEAD && !player_ui_disabled) {
+		ui_manager->ToggleUI("Player_UI", false, true);
+		player_ui_disabled = true;
+	}
+
 	// 라운드 타이머 진행
 	// - 싱글: 클라가 자체 카운트
 	// - 멀티: 서버가 매 틱 S_PlayerMove에 round_timer를 실어 보내므로 Handle_S_Move_Player가 덮어씀
@@ -317,7 +323,7 @@ void CGameScene::DrawUI()
 
 		// 퀵슬롯
 		auto quick_slot = my_player->GetQuickSlot();
-		if (quick_slot)
+		if (quick_slot && (my_player->GetState() != PLAYER_STATE::DEAD))
 			quick_slot->Draw();
 
 		// 빙의 해제 / 빈사 소생 진행 바 (멀티 전용) — 대상 종류에 따라 다른 UI
@@ -328,6 +334,9 @@ void CGameScene::DrawUI()
 			else
 				DrawDePossessProgressBar();
 		}
+
+		// 구조 포기 버튼 (멀티 전용, 빈사 본인 화면에 표시)
+		DrawGiveUpButton();
 	}
 }
 
@@ -398,6 +407,12 @@ void CGameScene::Enter()
 	// 정산 모달 리셋
 	show_settlement_modal = false;
 	settlement_result     = SettlementResult{};
+
+	// Player_UI 캔버스 복원 (이전 라운드에서 DEAD로 인해 꺼졌을 수 있음)
+	if (ui_manager) {
+		ui_manager->ToggleUI("Player_UI", true, false);
+	}
+	player_ui_disabled = false;
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);
@@ -1752,6 +1767,109 @@ void CGameScene::DrawSettlementModal()
 	ImGui::EndPopup();
 }
 
+void CGameScene::DrawGiveUpButton()
+{
+	// 멀티 전용, 본인이 빈사(ALMOST_DEAD) 상태일 때만 표시
+	if (g_is_single) return;
+	if (!my_player) return;
+	if (my_player->GetState() != PLAYER_STATE::ALMOST_DEAD) 
+		return;
+
+	ImGuiIO& io = ImGui::GetIO();
+	const float scale = G_RATIO_Y;
+
+	// 버튼 윈도우 (임시 위치: 화면 중앙)
+	const float btnW   = 160.f * G_RATIO_X;
+	const float btnH   = 70.f  * G_RATIO_Y;
+	const float winPad = 10.f  * scale;
+	const ImVec2 winSize{ btnW + winPad * 2, btnH + winPad * 2 };
+	const ImVec2 winPos{
+		io.DisplaySize.x * 0.8f - winSize.x * 0.8f,
+		io.DisplaySize.y * 0.5f - winSize.y * 0.5f
+	};
+
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(winSize, ImGuiCond_Always);
+
+	ImGuiWindowFlags wFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+	                        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
+	                        | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground
+	                        | ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("##GiveUpRescueWnd", nullptr, wFlags)) {
+		ImGui::SetWindowFontScale(1.3f * scale);
+
+		// "구조 포기" 이미지 버튼 (프레임/배경 투명, 호버 시 약간 밝게)
+		ImTextureID giveupTex = CImGuiManager::GetInstance().GetTexture("giveup");
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0, 0, 0, 0));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.15f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(1, 1, 1, 0.30f));
+		bool clicked = ImGui::ImageButton("##GiveUpBtn", giveupTex, ImVec2(btnW, btnH));
+		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar();
+		if (clicked) {
+			ImGui::OpenPopup("##GiveUpRescueConfirm");
+		}
+
+		// 확인 모달 (같은 ID 스택 안에서 BeginPopupModal 호출해야 OpenPopup과 매칭)
+		const ImVec2 modalSize{ 260.f * G_RATIO_X, 140.f * G_RATIO_Y };
+		ImGui::SetNextWindowSize(modalSize, ImGuiCond_Always);
+		ImGui::SetNextWindowPos(
+			ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
+			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+		ImGuiWindowFlags mFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+		                        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+
+		if (ImGui::BeginPopupModal("##GiveUpRescueConfirm", nullptr, mFlags)) {
+			ImGui::SetWindowFontScale(1.3f * scale);
+			// 메시지 (가로 가운데 정렬) — "정말 포기하시겠습니까?"
+			const char* msg = "\xEC\xA0\x95\xEB\xA7\x90 \xED\x8F\xAC\xEA\xB8\xB0\xED\x95\x98\xEC\x8B\x9C\xEA\xB2\xA0\xEC\x8A\xB5\xEB\x8B\x88\xEA\xB9\x8C?";
+			float msgW = ImGui::CalcTextSize(msg).x;
+			ImGui::SetCursorPosX((modalSize.x - msgW) * 0.5f);
+			ImGui::SetCursorPosY(25.f * scale);
+			ImGui::TextUnformatted(msg);
+
+			// 버튼 행 (하단 가운데 정렬)
+			const float cBtnW = 90.f * G_RATIO_X;
+			const float cBtnH = 35.f * G_RATIO_Y;
+			const float gap   = 20.f * G_RATIO_X;
+			const float totalW = cBtnW * 2 + gap;
+			ImGui::SetCursorPosX((modalSize.x - totalW) * 0.5f);
+			ImGui::SetCursorPosY(modalSize.y - cBtnH - 15.f * scale);
+
+			// "예"
+			if (ImGui::Button("\xEC\x98\x88", ImVec2(cBtnW, cBtnH))) {
+				SendGiveUpRescue();
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine(0, gap);
+			// "아니오"
+			if (ImGui::Button("\xEC\x95\x84\xEB\x8B\x88\xEC\x98\xA4", ImVec2(cBtnW, cBtnH))) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+	ImGui::End();
+}
+
+void CGameScene::SendGiveUpRescue()
+{
+	if (!my_player) 
+		return;
+
+	C_GiveUpRescue pkt;
+	pkt.player_id = my_player->GetID();
+
+	auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+	if (auto s = my_player->GetSession()) {
+		s->DoSend(sendBuffer);
+	}
+}
+
 void CGameScene::Exit()
 {
 	CScene::Exit();
@@ -1778,6 +1896,7 @@ void CGameScene::Exit()
 
 	// 빈사 3인칭 궤도 카메라 잔재 정리
 	if (camera) {
+		camera->SetTarget(my_player.get());
 		camera->SetOrbitMode(false);
 		camera->SetCameraOffset(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
 	}

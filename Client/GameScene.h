@@ -107,6 +107,10 @@ private:
     void DrawSettlementModal();
     void TriggerSinglePlayerSettlement();
 
+    // 구조 포기 (빈사 본인 화면에 표시되는 자진 사망 버튼, 멀티 전용)
+    void DrawGiveUpButton();
+    void SendGiveUpRescue();
+
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;
@@ -123,6 +127,9 @@ private:
     static constexpr float  RETURN_RANGE   = 1.0f; // 복귀존/맨홀 반경 (시각=판정)
     float                   round_timer    = 0.f;
     bool                    round_active   = false;
+
+    // DEAD 진입 시 Player_UI 캔버스 (HP/스태미나/가방/조준점) 끄기 edge-trigger flag
+    bool                    player_ui_disabled = false;
 
     // 복귀존 (서버 패킷으로 활성화)
     bool      return_active = false;

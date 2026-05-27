@@ -70,6 +70,7 @@ enum : uint16
 	PKT_S_PLAY_SOUND,
 
 	PKT_S_CHOLD_FAIL,
+	PKT_C_GIVE_UP_RESCUE,
 
 	// 정산 시스템
 	PKT_S_RETURN_ZONE_ACTIVE,

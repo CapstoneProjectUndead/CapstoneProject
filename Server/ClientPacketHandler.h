@@ -68,6 +68,7 @@ enum : uint16
 	PKT_S_PLAY_SOUND,
 
 	PKT_S_CHOLD_FAIL,
+	PKT_C_GIVE_UP_RESCUE,
 
 	// 정산 시스템
 	PKT_S_RETURN_ZONE_ACTIVE,
@@ -94,6 +95,7 @@ bool Handle_C_PICKUP_ITEM(std::shared_ptr<Session> session, C_PickupItem& pkt);
 bool Handle_C_DROP_ITEM(std::shared_ptr<Session> session, C_DropItem& pkt);
 bool Handle_C_EQUIP_ITEM(std::shared_ptr<Session> session, C_EquipItem& pkt);
 bool Handle_C_USE_ITEM(std::shared_ptr<Session> session, C_UseItem& pkt);
+bool Handle_C_GIVE_UP_RESCUE(std::shared_ptr<Session> session, C_GiveUpRescue& pkt);
 
 class CClientPacketHandler
 {
@@ -120,6 +122,7 @@ public:
 		GPacketHandler[PKT_C_DROP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_DropItem>(Handle_C_DROP_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_C_EQUIP_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_EquipItem>(Handle_C_EQUIP_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_C_USE_ITEM] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_UseItem>(Handle_C_USE_ITEM, session, buffer, len); };
+		GPacketHandler[PKT_C_GIVE_UP_RESCUE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<C_GiveUpRescue>(Handle_C_GIVE_UP_RESCUE, session, buffer, len); };
 	}
 
 	static bool HandlePacket(shared_ptr<Session> session, char* buffer, int32 len)

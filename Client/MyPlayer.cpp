@@ -50,32 +50,11 @@ void CMyPlayer::Update(float elapsedTime)
 		UpdateStamina(elapsedTime);
 	}
 
-	// 빈사/사망 카메라 모드 전환 (3인칭 궤도 ↔ 기본)
-	bool isIncap = IsIncapacitated();
-	if (isIncap != incap_camera_active) {
-		if (auto scene = CSceneManager::GetInstance().GetActiveScene()) {
-			if (auto& cam = scene->GetCamera()) {
-				if (isIncap) {
-					// 3인칭 거리 2.5, 자체 yaw/pitch로 plr 주위 궤도
-					XMFLOAT3 thirdOffset{ 0.0f, 0.0f, -2.5f };
-					cam->SetCameraOffset(thirdOffset);
-					// 초기 orbit 각도: 플레이어 yaw + 약간 위에서 내려다보는 pitch
-					cam->SetOrbitMode(true, yaw, 20.0f);
+	// DEAD: 관전 모드 (카메라 셋업 + 좌/우 토글 + 매 틱 대상 검증)
+	UpdateSpectatorMode();
 
-					// 빈사 진입 시 C-홀드 진행 상태 초기화 (본인 화면에 잔존 진행바 방지)
-					ResetCHoldTimer();
-					SetCHoldTarget(CHOLD_TARGET::NONE);
-					CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
-				}
-				else {
-					cam->SetOrbitMode(false);
-					XMFLOAT3 firstOffset{ 0.0f, 0.0f, 0.0f };
-					cam->SetCameraOffset(firstOffset);
-				}
-			}
-		}
-		incap_camera_active = isIncap;
-	}
+	// 빈사 진입/이탈 시 3인칭 궤도 ↔ 1인칭 카메라 전환
+	UpdateIncapacitatedCamera();
 
 	// 빈사/사망: 행동 입력 차단 + 인벤토리 강제 닫기
 	if (IsIncapacitated()) {
@@ -181,6 +160,10 @@ void CMyPlayer::PreUpdate(float elapsedTime)
 
 void CMyPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
+	// DEAD: 본인 모델 렌더링 안 함 (관전 모드)
+	if (state == PLAYER_STATE::DEAD) 
+		return;
+
 	CObject::OnCollect(renderers);
 
 	auto animator = GetComponent<CAnimatorComponent>();
@@ -267,6 +250,9 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
 {
+	if (state == PLAYER_STATE::DEAD)
+		return;
+
 	currentInput.w = KEY_PRESSED(KEY::W);
 	currentInput.a = KEY_PRESSED(KEY::A);
 	currentInput.s = KEY_PRESSED(KEY::S);
@@ -282,6 +268,9 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 
 void CMyPlayer::ProcessRotation()
 {
+	if (state == PLAYER_STATE::DEAD) 
+		return;
+
 	if (ImGui::GetIO().WantCaptureMouse)
 		return;
 
@@ -404,6 +393,9 @@ void CMyPlayer::BeginSendInputPacket(float elapsedTime)
 
 void CMyPlayer::SendInputPacket(C_Input& inputPkt, const InputData& input)
 {
+	if (state == PLAYER_STATE::DEAD)
+		return;
+
 	inputPkt.seq_num = ++client_seq_counter;
 	inputPkt.info.player_id = obj_id;
 	inputPkt.room_id = room_id;
@@ -453,6 +445,8 @@ void CMyPlayer::ResetAll()
 	accumulate_stamina = 100;
 	stamina_exhausted = false;
 	equipped_item_id = 0;
+	spectator_target_id = 0;
+	spectator_camera_active = false;
 
 	// 빈사 카메라 전이 플래그 리셋 (실제 카메라 모드는 CGameScene::Exit에서 처리)
 	incap_camera_active = false;
@@ -783,6 +777,134 @@ XMFLOAT3 CMyPlayer::GetRandomPossessedTarget()
 
     int idx = rand() % (int)candidates.size();
     return { candidates[idx].x * TILE_SIZE, position.y, candidates[idx].y * TILE_SIZE };
+}
+
+void CMyPlayer::UpdateSpectatorMode()
+{
+	// DEAD 상태일 때만 동작
+	if (state != PLAYER_STATE::DEAD)
+		return;
+
+	auto scene = CSceneManager::GetInstance().GetActiveScene();
+	if (!scene) return;
+
+	auto& cam = scene->GetCamera();
+	if (!cam) return;
+
+	// DEAD 첫 진입: 카메라 모드/오프셋/마우스만 한 번 설정 (target은 아래 매 틱 검증이 잡음)
+	if (!spectator_camera_active) {
+		cam->SetOrbitMode(false);
+		cam->SetCameraOffset(XMFLOAT3{ 0.f, 0.f, -1.0f });
+		CKeyManager::GetInstance().SetMouseMode(false);
+		spectator_camera_active = true;
+	}
+
+	// 좌/우 화살표로 대상 토글
+	if (KEY_TAP(KEY::LEFT)) {
+		if (auto t = FindSpectatorTarget(-1)) {
+			spectator_target_id = t->GetID();
+			cam->SetTarget(t);
+		}
+	}
+	else if (KEY_TAP(KEY::RIGHT)) {
+		if (auto t = FindSpectatorTarget(+1)) {
+			spectator_target_id = t->GetID();
+			cam->SetTarget(t);
+		}
+	}
+
+	// 매 틱 대상 검증 (대상이 빈사/복귀하면 자동으로 다음 alive로 전환)
+	auto t = FindSpectatorTarget(0);
+	if (t && t->GetID() != spectator_target_id) {
+		spectator_target_id = t->GetID();
+		cam->SetTarget(t);
+	}
+}
+
+void CMyPlayer::UpdateIncapacitatedCamera()
+{
+	// 빈사 진입/이탈 edge-trigger
+	bool isIncap = IsIncapacitated();
+	if (isIncap == incap_camera_active)
+		return;
+
+	auto scene = CSceneManager::GetInstance().GetActiveScene();
+	if (!scene) 
+		return;
+
+	auto& cam = scene->GetCamera();
+	if (!cam) 
+		return;
+
+	if (isIncap) {
+		// 3인칭 거리 2.5, 자체 yaw/pitch로 plr 주위 궤도
+		XMFLOAT3 thirdOffset{ 0.0f, 0.0f, -2.0f };
+		cam->SetCameraOffset(thirdOffset);
+		// 초기 orbit 각도: 플레이어 yaw + 약간 위에서 내려다보는 pitch
+		cam->SetOrbitMode(true, yaw, 20.0f);
+
+		// 빈사 진입 시 C-홀드 진행 상태 초기화 (본인 화면에 잔존 진행바 방지)
+		ResetCHoldTimer();
+		SetCHoldTarget(CHOLD_TARGET::NONE);
+		CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
+
+		// 구조 포기 버튼 클릭을 위해 마우스 커서 노출 (UI 모드)
+		CKeyManager::GetInstance().SetMouseMode(false);
+	}
+	else {
+		cam->SetOrbitMode(false);
+		XMFLOAT3 firstOffset{ 0.0f, 0.0f, 0.0f };
+		cam->SetCameraOffset(firstOffset);
+
+		// 게임 모드 복귀 (커서 숨김)
+		CKeyManager::GetInstance().SetMouseMode(true);
+	}
+
+	incap_camera_active = isIncap;
+}
+
+CPlayer* CMyPlayer::FindSpectatorTarget(int direction)
+{
+	auto activeScene = CSceneManager::GetInstance().GetActiveScene();
+	if (!activeScene)
+		return nullptr;
+
+	std::vector<CPlayer*> alive;
+
+	auto& objects = activeScene->GetObjects();
+	for (auto obj : objects) {
+		if (obj->GetObjectType() != OBJECT_TYPE::PLAYER)
+			continue;
+
+		auto p = static_cast<CPlayer*>(obj.get());
+		if (!p || p->GetIsMyPlayer()) 
+			continue;
+
+		if (p->GetState() == PLAYER_STATE::DEAD)
+			continue;
+
+		if (p->GetReturned()) 
+			continue; 
+
+		alive.push_back(p);
+	}
+
+	if (alive.empty()) 
+		return nullptr;
+
+	int curIdx = -1;
+	for (size_t i = 0; i < alive.size(); ++i) {
+		if (alive[i]->GetID() == spectator_target_id) {
+			curIdx = (int)i;
+			break;
+		}
+	}
+
+	if (curIdx == -1) 
+		return alive[0];
+
+	int sz = (int)alive.size();
+	return alive[(curIdx + direction + sz) % sz];
 }
 
 void CMyPlayer::ReconcileFromServer(uint64_t last_seq, XMFLOAT3 serverPos)

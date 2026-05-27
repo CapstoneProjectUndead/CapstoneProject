@@ -46,6 +46,11 @@ public:
     void EraseCollider(OBJECT_TYPE objType, SCENE_TYPE sceneType);
     void EraseCollider(CColliderComponent* coll);
 
+    // owner 객체가 가진 모든 collider의 충돌 mask를 일괄 변경
+    // (한 객체에 mesh/box/sphere/capsule 등 여러 collider가 등록될 수 있어
+    //  GetComponent<CColliderComponent>()로는 첫 번째만 잡힘 → 이 함수로 전체 처리)
+    void SetMaskByOwner(CObject* owner, uint32_t newMask);
+
 private:
     // 충돌 후보 추리기(자기 자신 제외)
     void BroadPhase(CColliderComponent* checkCol, const XMFLOAT3& delta, std::vector<CColliderComponent*>& candidates);

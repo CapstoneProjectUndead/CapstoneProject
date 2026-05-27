@@ -94,7 +94,7 @@ public:
 	void   SetHp(uint32 hp) 
 	{
 		stat.hp = hp;
-		if (hp == 0 && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD) {
+		if (hp <= 0 && state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD) {
 			state = PLAYER_STATE::ALMOST_DEAD;
 			is_possessed = false;
 			possession_timer = 0.0f;

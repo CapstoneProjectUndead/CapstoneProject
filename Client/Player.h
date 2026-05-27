@@ -45,7 +45,7 @@ public:
 	void   SetHp(const uint32 hp) 
 	{ 
 		stat.hp = hp; 
-		if (g_is_single && hp == 0 && state != PLAYER_STATE::DEAD) {
+		if (g_is_single && hp <= 0 && state != PLAYER_STATE::DEAD) {
 			state = PLAYER_STATE::DEAD;
 			is_possessed = false;
 			possession_timer = 0.0f;

@@ -55,6 +55,10 @@ void CPlayer::PreUpdate(float elapsedTime)
 
 void CPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
+    // DEAD: 상대방 모델 렌더링 안 함 (관전 모드)
+    if (state == PLAYER_STATE::DEAD)
+        return;
+
     CObject::OnCollect(renderers);
 
     auto animator = GetComponent<CAnimatorComponent>();

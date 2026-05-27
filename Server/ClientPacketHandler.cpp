@@ -4,6 +4,7 @@
 #include "TimeManager.h"
 #include "SceneManager.h"
 #include "LobbyScene.h"
+#include "GameScene.h"
 #include "Player.h"
 #include "TitleScene.h"
 #include "User.h"
@@ -265,6 +266,21 @@ bool Handle_C_USE_ITEM(std::shared_ptr<Session> session, C_UseItem& pkt)
 	targetScene->PushPacketJob(session,
 		(CScene*)targetScene,
 		&CScene::Handle_C_Use_Item,
+		pkt);
+
+	return true;
+}
+
+bool Handle_C_GIVE_UP_RESCUE(std::shared_ptr<Session> session, C_GiveUpRescue& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room->IsActive());
+	CScene* gameScene = room->GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+	assert(gameScene);
+
+	gameScene->PushPacketJob(session,
+		(CGameScene*)gameScene,
+		&CGameScene::Handle_C_GiveUpRescue,
 		pkt);
 
 	return true;

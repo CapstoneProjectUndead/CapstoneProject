@@ -313,6 +313,10 @@ void CPlayer::ApplySeparation(const map<uint64, shared_ptr<CPlayer>>& allPlayers
 		if (other.get() == this)
 			continue;
 
+		// 죽은 플레이어(시체)는 분리 대상에서 제외 (살아있는 plr가 시체에 밀려나지 않게)
+		if (other->GetState() == PLAYER_STATE::DEAD)
+			continue;
+
 		XMFLOAT3 diff = Vector3::Subtract(position, other->GetPosition());
 		diff.y = 0.0f;
 		float dist = Vector3::Length(diff);
@@ -1238,6 +1242,17 @@ void CPlayer::ResetAll()
     equipped_item = nullptr;
     equipped_item_id = 0;
     equipped_item_sub_type = ITEM_SUB_TYPE::NONE;
+
+    // 모든 collider mask 복구 (DEAD에서 0으로 만들었던 것)
+    // plr가 여러 collider를 가지므로 PhysicsManager에서 일괄 처리
+    if (auto r = room.lock()) {
+        if (auto pm = r->GetScenes()[(UINT)current_scene_type]->GetPhysicsManager()) {
+            uint32_t plrMask = static_cast<uint32_t>(
+                EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND |
+                EColLayer::PLAYER | EColLayer::CHARACTER);
+            pm->SetMaskByOwner(this, plrMask);
+        }
+    }
 
     S_EquipItem equipPkt;
     equipPkt.is_dowsing_rod = false;

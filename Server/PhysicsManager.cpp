@@ -37,6 +37,18 @@ void CPhysicsManager::EraseCollider(CColliderComponent* coll)
     }
 }
 
+void CPhysicsManager::SetMaskByOwner(CObject* owner, uint32_t newMask)
+{
+    // 같은 owner의 모든 collider를 순회하며 mask 변경
+    for (auto* col : colliders) {
+        if (col && col->GetOwner() == owner) {
+            CollisionFilter f = col->GetCollisionFilter();
+            f.mask = newMask;
+            col->SetFillter(f);
+        }
+    }
+}
+
 bool CPhysicsManager::CheckFilter(const CollisionFilter& a, const CollisionFilter& b)
 {
     // 서로의 마스크가 상대방의 카테고리를 포함하고 있는지 확인 (AND 연산)

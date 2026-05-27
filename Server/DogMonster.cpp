@@ -346,7 +346,7 @@ void CDogMonster::OnAttackMove(float elapsedTime)
 			if (forwardDist >= -0.3f && forwardDist <= depth && fabsf(sideDist) <= width) {
 				SendSoundPacket(false, SOUND_ID::damaged1, targetPlayer->GetPosition());
 
-				uint32 hp = targetPlayer->GetHp();
+				int32 hp = targetPlayer->GetHp();
 				targetPlayer->SetHp(hp > 8 ? hp - 8 : 0);
 
 				XMFLOAT3 knockbackDir = Vector3::Subtract(targetPlayer->GetPosition(), position);
