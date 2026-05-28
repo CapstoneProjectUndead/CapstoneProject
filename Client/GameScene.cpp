@@ -677,7 +677,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 		dig_sound_timer += elapsedTime;
 		if (dig_sound_timer >= 0.5f) {
 			if (isShovel) {
-				CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig);
+				CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 3.33f);
 			}
 			dig_sound_timer = -1.0f;
 		}
@@ -1321,7 +1321,7 @@ void CGameScene::PlayBareHandDigSound(bool isBareHand, bool isMoving)
 {
 	bool bareHandDigging = isBareHand && KEY_PRESSED(KEY::LBTN) && !isMoving && mining_target;
 	if (bareHandDigging && !bare_hand_dig_loop_playing) {
-		CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 0, 1.0f); // 0 = 무한 반복
+		CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 0, 3.33f); // 0 = 무한 반복
 		bare_hand_dig_loop_playing = true;
 	}
 	else if (!bareHandDigging && bare_hand_dig_loop_playing) {
@@ -2234,8 +2234,12 @@ void CGameScene::Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySoun
 		return;
 	}
 
+	float volume = 1.0f;
+	if (pkt.volume > 0)
+		volume = pkt.volume;
+
 	if (pkt.player_id != 0 && my_player->GetID() == pkt.player_id) {
-		CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+		CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id, 1, volume);
 		return;
 	}
 	else {
@@ -2246,11 +2250,11 @@ void CGameScene::Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySoun
 
 		if(pkt.range > 0.f){
 			if (Vector3::Length(diff) <= pkt.range)
-				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id, 1, volume);
 		}
 		else {
 			if (Vector3::Length(diff) <= 4.0f)
-				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id);
+				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id, 1, volume);
 		}
 	}
 }

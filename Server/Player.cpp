@@ -723,7 +723,7 @@ void CPlayer::ProcessUnVisibleObjectMining(const InputData& input, float elapsed
             if (auto r = room.lock()) {
                 auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
                 if (gameScene && gameScene->FindNearestMineable(position, CGameScene::BARE_HAND_MINING_RANGE, MINEABLEOBJECT_TYPE::NONE_VISIBLE)) {
-                    SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition());
+                    SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition(), 0, 3.33f);
                 }
             }
         }
@@ -869,7 +869,7 @@ void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, b
 
                 if (bare_hand_sound_timer >= BARE_HAND_SOUND_INTERVAL) {
                     bare_hand_sound_timer -= BARE_HAND_SOUND_INTERVAL;
-                    SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition());
+                    SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition(), 0, 3.33f);
                 }
 
                 if (bare_hand_dig_timer >= 4.0f) {

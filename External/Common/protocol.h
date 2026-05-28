@@ -673,6 +673,7 @@ struct S_PlaySound : public PacketHeader
 {
 	bool is_global = false;
 	float range = -1.f;
+	float volume = -1.f;
 	float x, y, z;
 	SOUND_ID sound_id;
 	int64 player_id = -1;
@@ -680,7 +681,7 @@ struct S_PlaySound : public PacketHeader
 
 	S_PlaySound() : PacketHeader(sizeof(S_PlaySound), (UINT)PacketType::_S_PLAY_SOUND) {}
 };
-static_assert(sizeof(S_PlaySound) == 4 + 28, "S_PlaySound size mismatch!");
+static_assert(sizeof(S_PlaySound) == 4 + 32, "S_PlaySound size mismatch!");
 
 struct S_CHoldFail : public PacketHeader
 {

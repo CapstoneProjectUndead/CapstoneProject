@@ -95,7 +95,7 @@ public:
     //=================================
 
     // 유틸 함수
-    void SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& generatePos, float range = 0.f);
+    void SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& generatePos, float range = 0.f, float volume = -1.f);
 
 protected:
     weak_ptr<CUser>                     user;

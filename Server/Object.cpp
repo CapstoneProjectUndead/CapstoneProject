@@ -91,7 +91,7 @@ void CObject::UpdateLookRightFromYaw()
 	);
 }
 
-void CObject::SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& generatePos, float range)
+void CObject::SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& generatePos, float range, float volume)
 {
 	S_PlaySound soundPkt;
 	soundPkt.is_global = isGlobal;
@@ -104,6 +104,9 @@ void CObject::SendSoundPacket(bool isGlobal, SOUND_ID id, const XMFLOAT3& genera
 
 	if (range > 0) {
 		soundPkt.range = range;
+	}
+	if (volume > 0) {
+		soundPkt.volume = volume;
 	}
 
 	auto sendBuffer = MAKE_SEND_BUFFER(soundPkt);
