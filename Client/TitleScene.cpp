@@ -254,7 +254,10 @@ void CTitleScene::DrawTitleMainWindow()
         {
             if (!is_online) {
                 // 오프라인 상태: 로그인 / 회원가입 / 뒤로가기
-                if (ImGui::Button((const char*)u8"로그인", btnSize)) {
+                ImTextureID loginTex    = CImGuiManager::GetInstance().GetTexture("login");
+                ImTextureID registerTex = CImGuiManager::GetInstance().GetTexture("register");
+
+                if (ImageButtonWithText((long long)loginTex, "##login", btnSize)) {
                     SetUIState(TitleUIState::Login);
                     PlayClickSound();
                 }
@@ -262,7 +265,7 @@ void CTitleScene::DrawTitleMainWindow()
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                if (ImGui::Button((const char*)u8"회원가입", btnSize)) {
+                if (ImageButtonWithText((long long)registerTex, "##register", btnSize)) {
                     SetUIState(TitleUIState::SignUp);
                     PlayClickSound();
                 }
@@ -270,7 +273,10 @@ void CTitleScene::DrawTitleMainWindow()
             }
             else {
                 // 온라인 상태: 방 검색 / 로그아웃
-                if (ImGui::Button((const char*)u8"방 검색", btnSize)) {
+                ImTextureID searchTex = CImGuiManager::GetInstance().GetTexture("search");
+                ImTextureID logoutTex = CImGuiManager::GetInstance().GetTexture("logout");
+
+                if (ImageButtonWithText((long long)searchTex, "##search", btnSize)) {
                     is_title_draw = false;
                     SetUIState(TitleUIState::RoomList);
                     PlayClickSound();
@@ -288,7 +294,7 @@ void CTitleScene::DrawTitleMainWindow()
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                if (ImGui::Button((const char*)u8"로그아웃", btnSize)) {
+                if (ImageButtonWithText((long long)logoutTex, "##logout", btnSize)) {
 
                     StartLoading(LoadingType::Logout);
                     PlayClickSound();
@@ -316,7 +322,8 @@ void CTitleScene::DrawTitleMainWindow()
             ImGui::Spacing();
             ImGui::Spacing();
 
-            if (ImGui::Button((const char*)u8"뒤로가기", btnSize)) {
+            ImTextureID goBackTex = CImGuiManager::GetInstance().GetTexture("goback");
+            if (ImageButtonWithText((long long)goBackTex, "##goback_main", btnSize)) {
                 SetUIState(TitleUIState::Main); // 메인으로 복귀
                 PlayClickSound();
             }
@@ -603,13 +610,22 @@ void CTitleScene::DrawLoadingPopUpResult()
 
 void CTitleScene::DrawRoomListUI()
 {
-    // 전체 배경 (파란 틴트)
-    ImGui::GetBackgroundDrawList()->AddRectFilled(
-        ImVec2(0, 0), ImGui::GetIO().DisplaySize,
-        ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.4f)));
+    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+
+    // 전체 배경 (bg 텍스처)
+    ImTextureID bgTex = CImGuiManager::GetInstance().GetTexture("bg");
+    if (bgTex) {
+        ImGui::GetBackgroundDrawList()->AddImage(bgTex, ImVec2(0, 0), screenSize);
+    }
+    else {
+        // 폴백: 어두운 회색
+        ImGui::GetBackgroundDrawList()->AddRectFilled(
+            ImVec2(0, 0), screenSize,
+            ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.4f)));
+    }
 
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(screenSize, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.0f);
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoResize;
@@ -619,20 +635,31 @@ void CTitleScene::DrawRoomListUI()
         float scale = G_RATIO_Y;
         ImGui::SetWindowFontScale(scale);
 
-        // 타이틀 (빨간 UNDEAD)
+        // 타이틀 (title 이미지, 크기는 기존 UNDEAD 텍스트와 동일)
         ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+
+        // 현재 elephnt_font + SetWindowFontScale 적용된 "UNDEAD" 렌더 크기 계산
         if (CImGuiManager::elephnt_font) ImGui::PushFont(CImGuiManager::elephnt_font);
+        ImVec2 titleSize = ImGui::CalcTextSize("UNDEAD");
+        if (CImGuiManager::elephnt_font) ImGui::PopFont();
 
-        const char* titleText = "UNDEAD";
-        float textWidth = ImGui::CalcTextSize(titleText).x;
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - textWidth) * 0.5f);
+        // 타이틀 이미지 크기 미세 조정 배율 (조금 작게)
+        const float titleImgScale = 0.9f;
+        ImVec2 titleImgSize = ImVec2(titleSize.x * titleImgScale, titleSize.y * titleImgScale);
 
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-        ImGui::Text(titleText);
-        ImGui::PopStyleColor();
-
-        if (CImGuiManager::elephnt_font)
-            ImGui::PopFont();
+        ImTextureID titleTex = CImGuiManager::GetInstance().GetTexture("title");
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - titleImgSize.x) * 0.5f);
+        if (titleTex) {
+            ImGui::Image(titleTex, titleImgSize);
+        }
+        else {
+            // 폴백: 기존 텍스트
+            if (CImGuiManager::elephnt_font) ImGui::PushFont(CImGuiManager::elephnt_font);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+            ImGui::TextUnformatted("UNDEAD");
+            ImGui::PopStyleColor();
+            if (CImGuiManager::elephnt_font) ImGui::PopFont();
+        }
 
         ImGui::Spacing(); ImGui::Spacing();
 
@@ -752,9 +779,8 @@ void CTitleScene::DrawRefreshButton()
     ImGui::SetCursorPosX((windowWidth + tableWidth) * 0.5f - btnSize);
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
 
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.1f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-    if (ImGui::Button((const char*)u8"새로\n고침", ImVec2(btnSize, btnSize))) {
+    ImTextureID refreshTex = CImGuiManager::GetInstance().GetTexture("refresh");
+    if (ImageButtonWithText((long long)refreshTex, "##refresh", ImVec2(btnSize, btnSize))) {
         PlayClickSound();
         // 새로고침 패킷 전송
         if (SERVER_SESSION) {
@@ -767,7 +793,6 @@ void CTitleScene::DrawRefreshButton()
         }
     }
     CheckHoverSound();
-    ImGui::PopStyleColor(2);
 }
 
 void CTitleScene::DrawThreeButton()
@@ -785,17 +810,18 @@ void CTitleScene::DrawThreeButton()
 
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x - totalWidth) * 0.5f);
 
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.55f, 0.25f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+    ImTextureID createRoomTex = CImGuiManager::GetInstance().GetTexture("createroom");
+    ImTextureID enterRoomTex  = CImGuiManager::GetInstance().GetTexture("enterroom");
+    ImTextureID goBackTex     = CImGuiManager::GetInstance().GetTexture("goback");
 
-    if (ImGui::Button((const char*)u8"방 만들기", ImVec2(btnWidth, btnHeight))) {
+    if (ImageButtonWithText((long long)createRoomTex, "##createroom", ImVec2(btnWidth, btnHeight))) {
         PlayClickSound();
         show_room_create_popup = true;
     }
     CheckHoverSound();
     ImGui::SameLine(0, spacing);
 
-    if (ImGui::Button((const char*)u8"방 입장", ImVec2(btnWidth, btnHeight))) {
+    if (ImageButtonWithText((long long)enterRoomTex, "##enterroom", ImVec2(btnWidth, btnHeight))) {
         if (selected_room_id != 0) {
             PlayClickSound();
             StartLoading(LoadingType::RoomEnter);
@@ -815,14 +841,12 @@ void CTitleScene::DrawThreeButton()
     CheckHoverSound();
     ImGui::SameLine(0, spacing);
 
-    if (ImGui::Button((const char*)u8"뒤로 가기", ImVec2(btnWidth, btnHeight))) {
+    if (ImageButtonWithText((long long)goBackTex, "##goback", ImVec2(btnWidth, btnHeight))) {
         PlayClickSound();
         is_title_draw = true;
         SetUIState(TitleUIState::MultiSelect); // 다시 메뉴 선택으로
     }
     CheckHoverSound();
-
-    ImGui::PopStyleColor(2);
 }
 
 void CTitleScene::DrawRoomCreatePopUp()

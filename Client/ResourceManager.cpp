@@ -22,6 +22,14 @@ void CResourceManager::LoadTitleSceneTextures(ID3D12Device* device, ID3D12Comman
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "single", L"../Resource/TitleScene/SinglePlayBtn.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "multi",  L"../Resource/TitleScene/MultiplayBtn.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "exit",   L"../Resource/TitleScene/ExitBtn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "login",   L"../Resource/TitleScene/LogIn_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "register",   L"../Resource/TitleScene/Register_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "goback",   L"../Resource/TitleScene/GoBack_Bnt.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "search",   L"../Resource/TitleScene/Search_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "logout",   L"../Resource/TitleScene/LogOut_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "createroom",   L"../Resource/TitleScene/Room_Create_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "enterroom",   L"../Resource/TitleScene/Entry_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "refresh",   L"../Resource/TitleScene/Refresh_Btn.png");
 }
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)

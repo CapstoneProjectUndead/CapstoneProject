@@ -675,7 +675,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 		dig_sound_timer += elapsedTime;
 		if (dig_sound_timer >= 0.5f) {
 			if (isShovel) {
-				CSoundManager::GetInstance().Play(SOUND_ID::flying_pan);
+				CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig);
 			}
 			dig_sound_timer = -1.0f;
 		}

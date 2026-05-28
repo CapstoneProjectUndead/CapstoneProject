@@ -723,7 +723,7 @@ void CPlayer::ProcessUnVisibleObjectMining(const InputData& input, float elapsed
             if (auto r = room.lock()) {
                 auto* gameScene = static_cast<CGameScene*>(r->GetScenes()[(UINT)SCENE_TYPE::GAME].get());
                 if (gameScene && gameScene->FindNearestMineable(position, CGameScene::BARE_HAND_MINING_RANGE, MINEABLEOBJECT_TYPE::NONE_VISIBLE)) {
-                    SendSoundPacket(false, SOUND_ID::flying_pan, GetPosition());
+                    SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition());
                 }
             }
         }
