@@ -60,6 +60,12 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
 
     float4 litColor = ambient + directLight;
     
+	// Add in specular reflections.
+    float3 r = reflect(-toEyeW, bumpedNormalW);
+    float4 reflectionColor = texDiffuse[SkyboxMapIdx].Sample(sample, r);
+    float3 fresnelFactor = SchlickFresnel(instMat.fresnel, bumpedNormalW, r);
+    litColor.rgb += shininess * fresnelFactor * reflectionColor.rgb;
+    
     litColor.a = diffuseAlbedo.a;
     return litColor;
     

@@ -7,8 +7,9 @@
 void CSkyBox::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, CDescriptorHeapManager* heapManager)
 {
     srv_index = 0;
+    d3d_device = device;
 
-    CreateCubeMapFromFiles(device, cmdList, heapManager);
+    CreateCubeMapFromFiles(cmdList, heapManager);
 
     float w = 1.0f; float h = 1.0f; float d = 1.0f;
     struct SkyboxVertex { XMFLOAT3 Pos; };
@@ -82,12 +83,12 @@ void CSkyBox::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLis
     index_buffer_view.SizeInBytes = (UINT)iBufferSize;
 }
 
-void CSkyBox::CreateCubeMapFromFiles(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, CDescriptorHeapManager* heapManager)
+void CSkyBox::CreateCubeMapFromFiles(ID3D12GraphicsCommandList* cmdList, CDescriptorHeapManager* heapManager)
 {
     std::wstring cubeMapFile = L"../Modeling/tex/skybox_cubemap.dds";
 
     ThrowIfFailed(CreateDDSTextureFromFile12(
-        device,
+        d3d_device,
         cmdList,
         cubeMapFile.c_str(),
         cubeMap,
@@ -106,8 +107,22 @@ void CSkyBox::CreateCubeMapFromFiles(ID3D12Device* device, ID3D12GraphicsCommand
 
     // SRV 생성
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = heapManager->GetSRVHeap().GetCPUHandle(srv_index);
-    device->CreateShaderResourceView(cubeMap.Get(), &srvDesc, cpuHandle);
+    d3d_device->CreateShaderResourceView(cubeMap.Get(), &srvDesc, cpuHandle);
 }
+
+void CSkyBox::CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu)
+{
+    D3D12_RESOURCE_DESC texDesc = cubeMap->GetDesc();
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = texDesc.Format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.TextureCube.MostDetailedMip = 0;
+    srvDesc.TextureCube.MipLevels = texDesc.MipLevels;
+
+    d3d_device->CreateShaderResourceView(cubeMap.Get(), &srvDesc, srvCpu);
+}
+
 void CSkyBox::Render(ID3D12GraphicsCommandList* cmdList, CDescriptorHeapManager* heapManager)
 {
     if (!heapManager || !cubeMap) return;

@@ -314,13 +314,13 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
+	D3D12_DESCRIPTOR_RANGE textureRange{};
 	// texture
-	descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges[0].NumDescriptors = DescriptorSlot::Count;
-	descriptorRanges[0].BaseShaderRegister = 0;
-	descriptorRanges[0].RegisterSpace = 0;
-	descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	textureRange.NumDescriptors = DescriptorSlot::Count;
+	textureRange.BaseShaderRegister = 0;
+	textureRange.RegisterSpace = 0;
+	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
 	D3D12_ROOT_PARAMETER rootParameters[6];
@@ -339,7 +339,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	// table(texture map + shasow map)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRanges;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &textureRange;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	// instData
@@ -392,7 +392,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.NumParameters = _countof(rootParameters);
 	rootSignatureDesc.pParameters = rootParameters;
-	rootSignatureDesc.NumStaticSamplers = 2;
+	rootSignatureDesc.NumStaticSamplers = _countof(samplerDescs);
 	rootSignatureDesc.pStaticSamplers = samplerDescs;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
@@ -423,13 +423,14 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 {
 	ID3D12RootSignature* graphicsRootSignature{};
 
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
+
+	D3D12_DESCRIPTOR_RANGE textureRange{};
 	// texture
-	descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRanges[0].NumDescriptors = DescriptorSlot::Count;
-	descriptorRanges[0].BaseShaderRegister = 0;
-	descriptorRanges[0].RegisterSpace = 0;
-	descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	textureRange.NumDescriptors = DescriptorSlot::Count;
+	textureRange.BaseShaderRegister = 0;
+	textureRange.RegisterSpace = 0;
+	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// root parameter
 	D3D12_ROOT_PARAMETER rootParameters[4];
@@ -448,7 +449,7 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	// table(texture map + shasow map)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRanges;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &textureRange;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	// instData
@@ -489,7 +490,7 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.NumParameters = _countof(rootParameters);
 	rootSignatureDesc.pParameters = rootParameters;
-	rootSignatureDesc.NumStaticSamplers = 2; // 샘플러 2개
+	rootSignatureDesc.NumStaticSamplers = _countof(samplerDescs); // 샘플러 2개
 	rootSignatureDesc.pStaticSamplers = samplerDescs;
 	rootSignatureDesc.Flags = rootSignatureFlags;
 
@@ -937,7 +938,6 @@ ID3D12RootSignature* CSkyBoxShader::CreateGraphicsRootSignature(ID3D12Device* de
 	rootParameters[2].DescriptorTable.pDescriptorRanges = &skyboxRange;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	// static sampler + shadow Comparison sampler
 	D3D12_STATIC_SAMPLER_DESC samplerDescs[2] = {};
 	samplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	samplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;

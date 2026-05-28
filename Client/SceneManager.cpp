@@ -90,11 +90,11 @@ void CSceneManager::Init(ID3D12Device* device)
 		renderers[EShaderName::Text] = std::move(textRenderer);
 	}
 
+	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
+	auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
 	// shadow map
 	{
 		shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
-		auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
-		auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
 		auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
 
 		shadow_map->CreateDescriptors(
@@ -108,8 +108,12 @@ void CSceneManager::Init(ID3D12Device* device)
 	}
 
 	// skyBox
-	skybox = std::make_shared<CSkyBox>();
-	skybox->Initialize(device, GET_CMD_LIST, shaders[EShaderName::SkyBox]->GetHeapManager());
+	{
+		skybox = std::make_shared<CSkyBox>();
+		skybox->Initialize(device, GET_CMD_LIST, shaders[EShaderName::SkyBox]->GetHeapManager());
+		skybox->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+		skybox->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+	}
 }
 
 void CSceneManager::Update()

@@ -61,6 +61,7 @@ cbuffer LightInfo : register(b1)
 Texture2D texDiffuse[70] : register(t0);
 
 static uint ShadowMapIdx = 69;
+static uint SkyboxMapIdx = 68;
 
 SamplerState sample : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
