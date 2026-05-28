@@ -829,7 +829,7 @@ void CGameScene::Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipI
 {
 	auto& player = players[pkt.player_id];
 
-	if (!player || player->IsIncapacitated())
+	if (!player || player->GetIsPossessed() || player->IsIncapacitated())
 		return;
 
 	bool wasDowsing = player->GetDowsing();
