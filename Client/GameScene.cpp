@@ -41,6 +41,8 @@
 #include "ItemFactory.h"
 #include "MapUtils.h"
 
+#undef min
+
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
 {
@@ -1621,11 +1623,36 @@ void CGameScene::DrawSettlementModal()
 		ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
 		ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
+	// === 다크 골드(보물) 테마: 컬러/변수 푸시 ===
+	ImGui::PushStyleColor(ImGuiCol_PopupBg,          ImVec4(0.10f, 0.10f, 0.13f, 0.97f));
+	ImGui::PushStyleColor(ImGuiCol_TitleBg,          ImVec4(0.22f, 0.16f, 0.08f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_TitleBgActive,    ImVec4(0.34f, 0.24f, 0.10f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_Border,           ImVec4(0.72f, 0.56f, 0.24f, 0.90f));
+	ImGui::PushStyleColor(ImGuiCol_TableHeaderBg,    ImVec4(0.23f, 0.18f, 0.10f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_TableRowBg,       ImVec4(0.13f, 0.12f, 0.14f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt,    ImVec4(0.17f, 0.15f, 0.17f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_TableBorderLight, ImVec4(0.45f, 0.38f, 0.22f, 0.55f));
+	ImGui::PushStyleColor(ImGuiCol_Separator,        ImVec4(0.72f, 0.56f, 0.24f, 0.75f));
+	ImGui::PushStyleColor(ImGuiCol_Button,           ImVec4(0.45f, 0.32f, 0.12f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered,    ImVec4(0.72f, 0.50f, 0.18f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive,     ImVec4(0.38f, 0.26f, 0.08f, 1.00f));
+	ImGui::PushStyleColor(ImGuiCol_Text,             ImVec4(0.95f, 0.92f, 0.85f, 1.00f));
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,   8.f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.f);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,    5.f);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,  1.f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,    ImVec2(14.f * scale, 10.f * scale));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,      ImVec2(8.f * scale, 5.f * scale));
+
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
 	                       | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
-	if (!ImGui::BeginPopupModal("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC", nullptr, flags))
+	if (!ImGui::BeginPopupModal("\xEC\xA0\x95\xEC\x82\xB0 \xEA\xB2\xB0\xEA\xB3\xBC", nullptr, flags)) {
+		ImGui::PopStyleVar(6);
+		ImGui::PopStyleColor(13);
 		return;
+	}
 
 	// enlarge font for readability (proportional to UI scale)
 	ImGui::SetWindowFontScale(scale * 1.1f);
@@ -1647,8 +1674,14 @@ void CGameScene::DrawSettlementModal()
 	// 보물 목록 테이블
 	ImGui::PushFont(boldFont);
 	if (!settlement_result.entries.empty()) {
+		// 보물 개수만큼 테이블 높이 동적 계산 (헤더 + 보이는 행, 최대 tableH로 캡)
+		const float headerRowH = ImGui::GetTextLineHeight() + 8.f * scale;
+		const int   visibleN   = (int)std::min<size_t>(settlement_result.entries.size(), 6);
+		const float wantTableH = headerRowH + visibleN * rowH + 6.f * scale;
+		const float useTableH  = std::min(tableH, wantTableH);
+
 		ImGuiTableFlags tblFlags = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
-		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags, ImVec2(ImGui::GetContentRegionAvail().x, tableH))) {
+		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags, ImVec2(ImGui::GetContentRegionAvail().x, useTableH))) {
 			ImGui::TableSetupScrollFreeze(0, 1);
 			ImGui::TableSetupColumn("",    ImGuiTableColumnFlags_WidthFixed, iconSz + 20.f * scale);
 			ImGui::TableSetupColumn("\xEB\xB3\xB4\xEB\xAC\xBC \xEC\x9D\xB4\xEB\xA6\x84",  // "보물 이름"
@@ -1663,17 +1696,25 @@ void CGameScene::DrawSettlementModal()
 				ImGui::TableNextRow(0, rowH);
 				ImGui::SetWindowFontScale(scale * 0.9f);
 
-				// 아이콘
+				// 아이콘 (어두운 라운드 슬롯 + 금테)
 				ImGui::TableSetColumnIndex(0);
-				ImTextureID tex = (ImTextureID)nullptr;
-				if (!e.icon_path.empty())
-					tex = CImGuiManager::GetInstance().GetTexture(e.icon_path);
-				if (tex) {
+				{
 					ImVec2 cursor = ImGui::GetCursorScreenPos();
-					ImGui::GetWindowDrawList()->AddImage(
-					    tex,
-					    ImVec2(cursor.x + 4.f * scale, cursor.y + 4.f * scale),
-					    ImVec2(cursor.x + iconSz + 4.f * scale, cursor.y + iconSz + 4.f * scale));
+					ImDrawList* dl = ImGui::GetWindowDrawList();
+
+					ImVec2 iconMin(cursor.x + 4.f * scale, cursor.y + 4.f * scale);
+					ImVec2 iconMax(cursor.x + iconSz + 4.f * scale, cursor.y + iconSz + 4.f * scale);
+					ImVec2 slotMin(iconMin.x - 2.f * scale, iconMin.y - 2.f * scale);
+					ImVec2 slotMax(iconMax.x + 2.f * scale, iconMax.y + 2.f * scale);
+
+					dl->AddRectFilled(slotMin, slotMax, IM_COL32(35, 30, 22, 230), 4.f * scale);
+					dl->AddRect      (slotMin, slotMax, IM_COL32(190, 150, 70, 220), 4.f * scale, 0, 1.f);
+
+					ImTextureID tex = (ImTextureID)nullptr;
+					if (!e.icon_path.empty())
+						tex = CImGuiManager::GetInstance().GetTexture(e.icon_path);
+					if (tex)
+						dl->AddImage(tex, iconMin, iconMax);
 				}
 				ImGui::Dummy(ImVec2(iconSz + 8.f * scale, rowH));
 
@@ -1682,10 +1723,12 @@ void CGameScene::DrawSettlementModal()
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
 				ImGui::TextUnformatted(e.name.c_str());
 
-				// 개당 가격
+				// 개당 가격 (골드 톤)
 				ImGui::TableSetColumnIndex(2);
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (rowH - ImGui::GetTextLineHeight()) * 0.5f);
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 0.85f, 0.45f, 1.f));
 				ImGui::Text("%u", e.price);
+				ImGui::PopStyleColor();
 
 				// 개수
 				ImGui::TableSetColumnIndex(3);
@@ -1697,7 +1740,9 @@ void CGameScene::DrawSettlementModal()
 	}
 	else {
 		// "획득한 보물 없음"
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.68f, 0.62f, 1.f));
 		ImGui::TextUnformatted("\xED\x9A\x8D\xEB\x93\x9D\xED\x95\x9C \xEB\xB3\xB4\xEB\xAC\xBC \xEC\x97\x86\xEC\x9D\x8C");
+		ImGui::PopStyleColor();
 	}
 	ImGui::PopFont();
 
@@ -1713,13 +1758,13 @@ void CGameScene::DrawSettlementModal()
 
 	// 보너스/배율
 	if (settlement_result.all_returned_bonus) {
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.65f, 1.f, 1.f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.85f, 1.00f, 1.f));
 		// "복귀 보너스 x2!"
 		rightAlignedText("\xEB\xB3\xB4\xEB\x84\x88\xEC\x8A\xA4 x2!");
 		ImGui::PopStyleColor();
 	}
 	else if (!settlement_result.is_returned) {
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.4f, 0.4f, 1.f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.45f, 0.45f, 1.f));
 		// "미복귀 x0.5"
 		rightAlignedText("\xEB\xAF\xB8\xEB\xB3\xB5\xEA\xB7\x80 x0.5");
 		ImGui::PopStyleColor();
@@ -1727,13 +1772,37 @@ void CGameScene::DrawSettlementModal()
 
 	ImGui::Separator();
 
-	// 최종 코인
+	// === 최종 코인: 골드 하이라이트 박스 ===
 	ImGui::PushFont(boldFont);
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.65f, 1.f, 1.f));
-	// "최종 코인: %u"
-	snprintf(fmtBuf, sizeof(fmtBuf), "\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
-	rightAlignedText(fmtBuf);
-	ImGui::PopStyleColor();
+	{
+		// "최종 코인: %u"
+		snprintf(fmtBuf, sizeof(fmtBuf), "\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
+
+		ImVec2 boxStart  = ImGui::GetCursorScreenPos();
+		float  boxLocalY = ImGui::GetCursorPosY();
+		float  boxW      = ImGui::GetContentRegionAvail().x;
+		float  boxH      = ImGui::GetTextLineHeight() * 1.45f;
+
+		ImDrawList* dl = ImGui::GetWindowDrawList();
+		dl->AddRectFilled(boxStart, ImVec2(boxStart.x + boxW, boxStart.y + boxH),
+		    IM_COL32(45, 35, 18, 240), 5.f * scale);
+		dl->AddRect      (boxStart, ImVec2(boxStart.x + boxW, boxStart.y + boxH),
+		    IM_COL32(225, 180, 80, 255), 5.f * scale, 0, 1.5f);
+
+		float textW    = ImGui::CalcTextSize(fmtBuf).x;
+		float textH    = ImGui::GetTextLineHeight();
+		float rightPad = 14.f * scale;
+		ImGui::SetCursorPosY(boxLocalY + (boxH - textH) * 0.5f);
+		float curX = ImGui::GetCursorPosX();
+		if (boxW > textW + rightPad)
+			ImGui::SetCursorPosX(curX + boxW - textW - rightPad);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 0.85f, 0.30f, 1.f));
+		ImGui::TextUnformatted(fmtBuf);
+		ImGui::PopStyleColor();
+
+		// 박스 하단으로 커서 이동
+		ImGui::SetCursorPosY(boxLocalY + boxH + 2.f * scale);
+	}
 	ImGui::PopFont();
 
 	// "로비로 복귀" 버튼 - 하단 고정
@@ -1745,7 +1814,7 @@ void CGameScene::DrawSettlementModal()
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + remainY - btnH - pad);
 	ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - btnW) * 0.5f + ImGui::GetCursorPosX());
 	if (ImGui::Button("\xEB\xA1\x9C\xEB\xB9\x84\xEB\xA1\x9C \xEB\xB3\xB5\xEA\xB7\x80",  // "로비로 복귀"
-	    ImVec2(btnW, 30.f * scale))) {
+	    ImVec2(btnW, btnH))) {
 		show_settlement_modal = false;
 		PlayClickSound();
 		ImGui::CloseCurrentPopup();
@@ -1765,6 +1834,9 @@ void CGameScene::DrawSettlementModal()
 	CheckHoverSound();
 
 	ImGui::EndPopup();
+
+	ImGui::PopStyleVar(6);
+	ImGui::PopStyleColor(13);
 }
 
 void CGameScene::DrawGiveUpButton()
