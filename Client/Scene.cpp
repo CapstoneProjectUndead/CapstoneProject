@@ -21,6 +21,7 @@
 #include "SceneManager.h"
 #include "SoundManager.h"
 #include "ShadowMap.h"
+#include "SkyBox.h"
 
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
@@ -129,6 +130,9 @@ void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 		}
 
 		// 인스턴싱 드로우
+		if (i == EShaderName::SkyBox) {
+			CSceneManager::GetInstance().GetSkybox()->Render(commandList, shaders[EShaderName::SkyBox]->GetHeapManager());
+		}
 		if (renderers[i]) {
 			renderers[i]->Render(commandList);
 			if (i == EShaderName::UI) {
@@ -138,6 +142,7 @@ void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 
 		shaders[i]->RenderEnd(commandList);
 	}
+
 }
 
 void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)

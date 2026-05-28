@@ -5,6 +5,7 @@
 #include "Renderers.h"
 
 class CShadowMap;
+class CSkyBox;
 
 class CSceneManager
 {
@@ -44,6 +45,7 @@ public:
     void SetRanderers(auto& otherShaders) { shaders = otherShaders; }
 
     auto& GetShadowMap() { return shadow_map; }
+    auto& GetSkybox() { return skybox; }
 private:
     std::vector<std::shared_ptr<CShader>>	shaders;
     std::vector<std::unique_ptr<IRenderer>> renderers;	// shader에 버퍼 설정하는 멤버 변수(rendering 담당)
@@ -51,5 +53,6 @@ private:
 
     std::unique_ptr<CScene> scenes[(UINT)SCENE_TYPE::END];
     CScene*                 active_scene = nullptr;
+    std::shared_ptr<CSkyBox> skybox;
 };
 

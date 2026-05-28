@@ -8,6 +8,7 @@
 #include "AnimationManager.h"
 #include "KeyManager.h"
 #include "ShadowMap.h"
+#include "SkyBox.h"
 
 void CSceneManager::Init(ID3D12Device* device)
 {
@@ -51,6 +52,12 @@ void CSceneManager::Init(ID3D12Device* device)
 		std::shared_ptr<CShader> shader = std::make_unique<CUIShader>();
 		shader->CreateShader(device);
 		shaders[EShaderName::UI] = std::move(shader);
+	}
+	{
+		// SkyBox
+		std::shared_ptr<CShader> shader = std::make_unique<CSkyBoxShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::SkyBox] = std::move(shader);
 	}
 
 	// renderer
@@ -99,8 +106,11 @@ void CSceneManager::Init(ID3D12Device* device)
 		shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 		shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 	}
-}
 
+	// skyBox
+	skybox = std::make_shared<CSkyBox>();
+	skybox->Initialize(device, GET_CMD_LIST, shaders[EShaderName::SkyBox]->GetHeapManager());
+}
 
 void CSceneManager::Update()
 {

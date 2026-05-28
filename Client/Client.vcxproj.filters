@@ -429,6 +429,9 @@
     <ClInclude Include="FleeState.h">
       <Filter>Component\AI\State</Filter>
     </ClInclude>
+    <ClInclude Include="SkyBox.h">
+      <Filter>Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -680,6 +683,9 @@
     <ClCompile Include="FleeState.cpp">
       <Filter>Component\AI\State</Filter>
     </ClCompile>
+    <ClCompile Include="SkyBox.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -714,6 +720,9 @@
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ShadowShader.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="SkyBox.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
   </ItemGroup>

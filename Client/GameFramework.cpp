@@ -46,8 +46,6 @@ bool CGameFramework::OnCreate()
 	CreateSwapChain();
 	CreateDepthStencilView();
 
-	CSceneManager::GetInstance().Init(d3d_device.Get());
-
 	// 아이템 도감 데이터 읽어오기 (순서 중요! 반드시 씬 초기화 이전에 해야한다.)
 	wchar_t exePath[MAX_PATH];
 	GetModuleFileNameW(nullptr, exePath, MAX_PATH);

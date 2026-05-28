@@ -14,7 +14,7 @@ class CCamera;
 namespace DescriptorSlot {
 	enum {
 		DiffuseIdx = 0,
-		ShadowMapIdx = 68,
+		ShadowMapIdx = 69,
 		Count = 70
 	};
 }
@@ -157,4 +157,16 @@ public:
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 	void CreateShader(ID3D12Device*) override;
 	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
+};
+
+class CSkyBoxShader : public CShader
+{
+public:
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
+	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+	void RenderBegin(ID3D12GraphicsCommandList*) override;
 };
