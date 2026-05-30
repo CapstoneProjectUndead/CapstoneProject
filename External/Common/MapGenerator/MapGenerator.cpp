@@ -894,6 +894,6 @@ namespace
 // 복귀 지점 = 맨홀 위치 단일 결정
 // IsManholeCandidate에 OBJECT 점유 가드 포함 — 보물/몬스터 셀과 겹치지 않음.
 void MapGenerator::PlaceManhole() {
-    //PlaceManholeRandom();
-    PlaceManholeNearOrigin(); // 테스트용: 원점 최근접(=스폰 지점) 결정적 배치
+    PlaceManholeRandom();
+    //PlaceManholeNearOrigin(); // 테스트용: 원점 최근접(=스폰 지점) 결정적 배치
 }
