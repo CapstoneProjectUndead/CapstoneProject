@@ -44,6 +44,11 @@ void CResourceManager::LoadCustomSceneTextures(ID3D12Device* device, ID3D12Comma
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
 {
+    // 상대 플레이어 상태 아이콘 (사망/빈사/빙의)
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "status_death",       L"../Resource/GameScene/death.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "status_almost_dead", L"../Resource/GameScene/almost_dead.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "status_possessed",   L"../Resource/GameScene/possessed.png");
+
     // 장비 아이템 이미지
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_shovel",         L"../Modeling/item/image/Equip_shovel.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Equip_ax",             L"../Modeling/item/image/Equip_ax.png");
