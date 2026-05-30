@@ -274,6 +274,13 @@ void CShader::Render(ID3D12GraphicsCommandList* commandList, CObject* object)
 }
 
 // CSkinningShader
+void CSkinningShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
+{
+	CShader::RenderBegin(commandList);
+	D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = heap_manager->GetSRVGPUHandle(DescriptorSlot::Count);
+	commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);
+}
+
 D3D12_INPUT_LAYOUT_DESC CSkinningShader::CreateInputLayout()
 {
 	const UINT inputElementDescNum = 6;
@@ -322,8 +329,16 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	textureRange.RegisterSpace = 0;
 	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	// cube
+	D3D12_DESCRIPTOR_RANGE cubeRange{};
+	cubeRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	cubeRange.NumDescriptors = 1;
+	cubeRange.BaseShaderRegister = 0;
+	cubeRange.RegisterSpace = 3;
+	cubeRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	// root parameter
-	D3D12_ROOT_PARAMETER rootParameters[6];
+	D3D12_ROOT_PARAMETER rootParameters[7];
 	// CameraInfo
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -336,7 +351,7 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	rootParameters[1].Descriptor.RegisterSpace = 0;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// table(texture map + shasow map)
+	// table(texture map)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = &textureRange;
@@ -348,17 +363,23 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	rootParameters[3].Descriptor.RegisterSpace = 1;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// gAnimBuffer
-	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParameters[4].Descriptor.ShaderRegister = 1;
-	rootParameters[4].Descriptor.RegisterSpace = 1;
-	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	// cube
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[4].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[4].DescriptorTable.pDescriptorRanges = &cubeRange;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	// gBoneMasks
+	// gAnimBuffer
 	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParameters[5].Descriptor.ShaderRegister = 2;
+	rootParameters[5].Descriptor.ShaderRegister = 1;
 	rootParameters[5].Descriptor.RegisterSpace = 1;
 	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// gBoneMasks
+	rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParameters[6].Descriptor.ShaderRegister = 2;
+	rootParameters[6].Descriptor.RegisterSpace = 1;
+	rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	// static sampler + shadow Comparison sampler
 	D3D12_STATIC_SAMPLER_DESC samplerDescs[2] = {};
@@ -403,12 +424,19 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 
 	// CreateHeap
-	CreateDescriptorHeap(device, DescriptorSlot::Count);
+	CreateDescriptorHeap(device, DescriptorSlot::Count + 1);
 
 	return graphicsRootSignature;
 }
 
 // CInstShader
+void CInstShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
+{
+	CShader::RenderBegin(commandList);
+	D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = heap_manager->GetSRVGPUHandle(DescriptorSlot::Count);
+	commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);
+}
+
 D3D12_SHADER_BYTECODE CInstShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
 	return CompileShaderFromFile(L"InstShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
@@ -432,8 +460,16 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	textureRange.RegisterSpace = 0;
 	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	// cube
+	D3D12_DESCRIPTOR_RANGE cubeRange{};
+	cubeRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	cubeRange.NumDescriptors = 1;
+	cubeRange.BaseShaderRegister = 0;
+	cubeRange.RegisterSpace = 3;
+	cubeRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	// root parameter
-	D3D12_ROOT_PARAMETER rootParameters[4];
+	D3D12_ROOT_PARAMETER rootParameters[5];
 	// CameraInfo
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -457,6 +493,12 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	rootParameters[3].Descriptor.ShaderRegister = 0;
 	rootParameters[3].Descriptor.RegisterSpace = 1;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// cube
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[4].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[4].DescriptorTable.pDescriptorRanges = &cubeRange;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// static sampler + shadow Comparison sampler
 	D3D12_STATIC_SAMPLER_DESC samplerDescs[2] = {};
@@ -501,7 +543,7 @@ ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* devi
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 
 	// CreateHeap
-	CreateDescriptorHeap(device, DescriptorSlot::Count);
+	CreateDescriptorHeap(device, DescriptorSlot::Count + 1);
 
 	return graphicsRootSignature;
 }
@@ -526,6 +568,27 @@ D3D12_RASTERIZER_DESC CTwoSideShader::CreateRasterizerState()
 }
 
 // CShadowShader
+D3D12_DEPTH_STENCIL_DESC CShadowShader::CreateDepthStencilState()
+{
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	depthStencilDesc.StencilEnable = FALSE;
+	depthStencilDesc.StencilReadMask = 0x00;
+	depthStencilDesc.StencilWriteMask = 0x00;
+	depthStencilDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+	depthStencilDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+
+	return depthStencilDesc;
+}
+
 D3D12_RASTERIZER_DESC CShadowShader::CreateRasterizerState()
 {
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
@@ -547,6 +610,11 @@ D3D12_RASTERIZER_DESC CShadowShader::CreateRasterizerState()
 D3D12_SHADER_BYTECODE CShadowShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
 	return CompileShaderFromFile(L"ShadowShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CShadowShader::CreateGeometryShader(ID3DBlob**)
+{
+	return {NULL, 0};
 }
 
 D3D12_BLEND_DESC CShadowShader::CreateBlendState()
@@ -577,6 +645,7 @@ void CShadowShader::CreateShader(ID3D12Device* device)
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
 	pipelineStateDesc.pRootSignature = graphics_root_signature.Get();
 	pipelineStateDesc.VS = CreateVertexShader(&shaderblo);
+	pipelineStateDesc.GS = CreateGeometryShader(&gsShaderBlob);
 	pipelineStateDesc.BlendState = CreateBlendState();
 	pipelineStateDesc.DepthStencilState = CreateDepthStencilState();
 	pipelineStateDesc.InputLayout = CreateInputLayout();
@@ -594,6 +663,92 @@ void CShadowShader::CreateShader(ID3D12Device* device)
 	pipelineStateDesc.RasterizerState.SlopeScaledDepthBias = 2.0f;
 	HRESULT hr = device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pipeline_states));
 	if (pipelineStateDesc.InputLayout.pInputElementDescs) delete[] pipelineStateDesc.InputLayout.pInputElementDescs;
+}
+
+// CCubeShadowShader
+D3D12_SHADER_BYTECODE CCubeShadowShader::CreateVertexShader(ID3DBlob** shaderBlob)
+{
+	// 💡 셰이더 내부에서 점조명 분기 코드가 활성화되도록 CUBE_SHADOW 매크로 주입 컴파일
+	UINT compileFlags{};
+#if defined(_DEBUG)
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+	D3D_SHADER_MACRO defines[] = {
+		{ "CUBE_SHADOW", "1" },
+		{ nullptr, nullptr }
+	};
+
+	ComPtr<ID3DBlob> error;
+	D3DCompileFromFile(L"ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"VSMain", "vs_5_1", compileFlags, 0, shaderBlob, error.GetAddressOf());
+
+	if (error) {
+		OutputDebugStringA("Cube Shadow VS Compile Error:\n");
+		OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));
+	}
+
+	D3D12_SHADER_BYTECODE shaderBytecode{};
+	shaderBytecode.BytecodeLength = (*shaderBlob)->GetBufferSize();
+	shaderBytecode.pShaderBytecode = (*shaderBlob)->GetBufferPointer();
+
+	return shaderBytecode;
+}
+
+D3D12_SHADER_BYTECODE CCubeShadowShader::CreatePixelShader(ID3DBlob** shaderBlob)
+{
+	UINT compileFlags{};
+#if defined(_DEBUG)
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+	D3D_SHADER_MACRO defines[] = {
+		{ "CUBE_SHADOW", "1" },
+		{ nullptr, nullptr }
+	};
+
+	ComPtr<ID3DBlob> error;
+	D3DCompileFromFile(L"ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"PSMain", "ps_5_1", compileFlags, 0, shaderBlob, error.GetAddressOf());
+
+	if (error) {
+		OutputDebugStringA("Cube Shadow PS Compile Error:\n");
+		OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));
+	}
+
+	D3D12_SHADER_BYTECODE shaderBytecode{};
+	shaderBytecode.BytecodeLength = (*shaderBlob)->GetBufferSize();
+	shaderBytecode.pShaderBytecode = (*shaderBlob)->GetBufferPointer();
+
+	return shaderBytecode;
+}
+
+D3D12_SHADER_BYTECODE CCubeShadowShader::CreateGeometryShader(ID3DBlob** shaderBlob)
+{
+	UINT compileFlags{};
+#if defined(_DEBUG)
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+	D3D_SHADER_MACRO defines[] = {
+		{ "CUBE_SHADOW", "1" },
+		{ nullptr, nullptr }
+	};
+
+	ComPtr<ID3DBlob> error;
+	D3DCompileFromFile(L"ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"GSMain", "gs_5_1", compileFlags, 0, shaderBlob, error.GetAddressOf());
+
+	if (error) {
+		OutputDebugStringA("Cube Shadow GS Compile Error:\n");
+		OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));
+	}
+
+	D3D12_SHADER_BYTECODE shaderBytecode{};
+	shaderBytecode.BytecodeLength = (*shaderBlob)->GetBufferSize();
+	shaderBytecode.pShaderBytecode = (*shaderBlob)->GetBufferPointer();
+
+	return shaderBytecode;
 }
 
 // CUIShader

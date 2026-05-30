@@ -501,7 +501,7 @@ void CGameFramework::Update()
 
 void CGameFramework::Render()
 {
-	CSceneManager::GetInstance().GetActiveScene()->RenderShadowPass(command_list.Get());
+	CSceneManager::GetInstance().GetActiveScene()->RenderBegin(command_list.Get());
 
 	RenderBegin();
 

@@ -109,6 +109,7 @@ protected:
 class CSkinningShader : public CShader
 {
 public:
+	void RenderBegin(ID3D12GraphicsCommandList*) override;
 	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
@@ -119,6 +120,7 @@ public:
 class CInstShader : public CShader
 {
 public:
+	void RenderBegin(ID3D12GraphicsCommandList*) override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
@@ -133,10 +135,19 @@ public:
 
 class CShadowShader : public CSkinningShader {
 public:
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
 	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**) override;
 	D3D12_BLEND_DESC CreateBlendState() override;
 	void CreateShader(ID3D12Device* device) override;
+};
+
+class CCubeShadowShader : public CShadowShader {
+public:
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**) override;
 };
 
 class CUIShader : public CShader

@@ -87,17 +87,34 @@ void CScene::Update(float elapsedTime)
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 {
 	auto& shadowMap = CSceneManager::GetInstance().GetShadowMap();
-	if (!shadowMap || !light) return;
+	auto& cubeShadowMap = CSceneManager::GetInstance().GetCubeShadowMaps();
+	if (!shadowMap || !light || cubeShadowMap.empty()) return;
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
+	// dir shadow map
 	shaders[EShaderName::Shadow]->RenderBegin(commandList);
 	shadowMap->RenderBegin(commandList);
 	light->Render(commandList);
 	renderers[EShaderName::Shadow]->Render(commandList);
-
 	shadowMap->RenderEnd(commandList);
 	shaders[EShaderName::Shadow]->RenderEnd(commandList);
+
+	// cube shadow map
+	shaders[EShaderName::CubeShadow]->RenderBegin(commandList);
+	auto cubeShadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
+	D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = cubeShadowHeap->GetSRVGPUHandle(0);
+
+	for (const auto& cubeMap: cubeShadowMap) {
+		cubeMap->RenderBegin(commandList);
+		light->Render(commandList);
+		commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);
+		renderers[EShaderName::Shadow]->Render(commandList);
+
+		cubeMap->RenderEnd(commandList);
+	}
+	shaders[EShaderName::CubeShadow]->RenderEnd(commandList);
+	renderers[EShaderName::Shadow]->ClearAllBatch();
 }
 
 void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
@@ -135,8 +152,10 @@ void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 		}
 		if (renderers[i]) {
 			renderers[i]->Render(commandList);
+			renderers[i]->ClearAllBatch();
 			if (i == EShaderName::UI) {
 				renderers[EShaderName::Text]->Render(commandList);
+				renderers[EShaderName::Text]->ClearAllBatch();
 			}
 		}
 
@@ -168,9 +187,14 @@ void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
 	ui_manager->Collect(renderers);
 }
 
-void CScene::Render(ID3D12GraphicsCommandList* commandList)
+void CScene::RenderBegin(ID3D12GraphicsCommandList* commandList)
 {
 	CollectObjects(commandList);
+	RenderShadowPass(commandList);
+}
+
+void CScene::Render(ID3D12GraphicsCommandList* commandList)
+{
 	RenderBasePass(commandList);
 }
 

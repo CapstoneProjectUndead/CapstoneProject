@@ -12,17 +12,25 @@ struct BONE_INPUT
 
 struct VS_SHADOW_OUTPUT
 {
+#ifdef CUBE_SHADOW
+    float4 position_world : TEXCOORD0;
+#else
     float4 position_clip : SV_POSITION;
+#endif
+};
+
+struct GS_SHADOW_OUTPUT
+{
+    uint layer_index : SV_RenderTargetArrayIndex;
+    float4 position_clip : SV_POSITION; // 하드웨어 래스터라이저용
 };
 
 struct AnimationData
 {
     uint start_offset_A;
     uint cur_frame_A;
-
     uint start_offset_B;
     uint cur_frame_B;
-
     uint bone_count;
     int mask_id;
     float blend_weight;
@@ -45,7 +53,8 @@ VS_SHADOW_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
     InstanceData instData = gInstanceData[instanceID];
 #ifdef SKINNED
     bool isAni = !(instData.animation.bone_count == 0);
-    if(isAni) {
+    if (isAni)
+    {
         uint frameBaseA = instData.animation.start_offset_A + (instData.animation.cur_frame_A * instData.animation.bone_count);
         uint frameBaseB = instData.animation.start_offset_B + (instData.animation.cur_frame_B * instData.animation.bone_count);
 
@@ -74,7 +83,32 @@ VS_SHADOW_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
     }
 #endif
     float4 posW = mul(float4(input.v.position, 1.0f), instData.world_matrix);
+
+#ifdef CUBE_SHADOW
+    output.position_world = posW;
+#else
     output.position_clip = mul(posW, gShadowViewProj);
+#endif
 
     return output;
 }
+
+#ifdef CUBE_SHADOW
+[maxvertexcount(18)]
+void GSMain(triangle VS_SHADOW_OUTPUT input[3], inout TriangleStream<GS_SHADOW_OUTPUT> outStream)
+{
+    for (int face = 0; face < 6; ++face)
+    {
+        GS_SHADOW_OUTPUT output;
+        output.layer_index = face;
+
+        for (int v = 0; v < 3; ++v)
+        {
+            output.position_clip = mul(float4(input[v].position_world.xyz, 1.0f), gCubeShadowTransforms[face]);
+            outStream.Append(output);
+        }
+        outStream.RestartStrip();
+    }
+}
+
+#endif

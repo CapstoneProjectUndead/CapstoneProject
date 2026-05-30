@@ -1,21 +1,4 @@
-#define MaxLights 16
-
-struct Light
-{
-    float3 strength;
-    float falloff_start;
-    float3 direction;
-    float falloff_end;
-    float3 position;
-    float spot_power;
-};
-
-struct Material
-{
-    float4 albedo;
-    float3 fresnel;
-    float glossiness;
-};
+#include "Common.hlsli"
 
 float CalcAttenuation(float distance, float falloffStart, float falloffEnd)
 {
@@ -103,22 +86,27 @@ float3 ComputeSpotLight(Light light, Material mat, float3 pos, float3 normal, fl
     return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
 }
 
-float4 ComputeLighting(Light gLights[MaxLights], Material mat, float3 pos, float3 normal, float3 toEye, float3 shadowFactor)
+float4 ComputeLighting(Light gLights[MaxLights], Material mat, float3 pos, float3 normal, float3 toEye, float4 shadowPosH)
 {
     float3 result = 0.0f;
     
     int i = 0;
+    float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
     
 #if (NUM_DIR_LIGHTS > 0)
+    shadowFactor[0] = CalcShadowFactor(shadowPosH);
     for(i = 0; i < NUM_DIR_LIGHTS; ++i) 
     {
         result += shadowFactor[i] * ComputeDirectionalLight(gLights[i], mat, normal, toEye);
-}
+    }
 #endif
 #if (NUM_POINT_LIGHTS > 0)
-    for(i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS+NUM_POINT_LIGHTS; ++i)
+    for (i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; ++i)
     {
-        result += ComputePointLight(gLights[i], mat, pos, normal, toEye);
+        int shadowIdx = i - NUM_DIR_LIGHTS;
+        float pointShadow = 1.0f;
+        pointShadow = CalcPointShadowFactor(shadowIdx, pos, gLights[i].position);
+        result += ComputePointLight(gLights[i], mat, pos, normal, toEye) * pointShadow;
     }
 #endif
 

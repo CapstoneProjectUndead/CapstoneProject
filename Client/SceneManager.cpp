@@ -19,6 +19,10 @@ void CSceneManager::Init(ID3D12Device* device)
 		std::shared_ptr<CShader> shader = std::make_unique<CShadowShader>();
 		shader->CreateShader(device);
 		shaders[EShaderName::Shadow] = std::move(shader);
+		// cubeShadow
+		std::shared_ptr<CShader> cubeShader = std::make_unique<CCubeShadowShader>();
+		cubeShader->CreateShader(device);
+		shaders[EShaderName::CubeShadow] = std::move(cubeShader);
 	}
 	{
 		// twoside(D3D12_CULL_MODE_NONE)
@@ -92,19 +96,34 @@ void CSceneManager::Init(ID3D12Device* device)
 
 	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
 	auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
-	// shadow map
+	// directional light shadow map
 	{
-		shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
+		dir_shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
 		auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
 
-		shadow_map->CreateDescriptors(
-			shadowHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx),
-			shadowHeap->GetSRVGPUHandle(DescriptorSlot::ShadowMapIdx),
+		dir_shadow_map->CreateDescriptors(
+			shadowHeap->GetSRVCPUHandle(0),
+			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
 
-		shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
-		shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		dir_shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		dir_shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+	}
+	// dot light shadow map
+	{
+		auto shadowMap = std::make_shared<CCubeShadowMap>(GET_DEVICE, 1024, 1024);
+		auto shadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
+
+		shadowMap->CreateDescriptors(
+			shadowHeap->GetSRVCPUHandle(0),
+			shadowHeap->GetSRVGPUHandle(0),
+			shadowHeap->GetDSVCPUHandle(0)
+		);
+
+		shadowMap->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::Count));
+		shadowMap->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::Count));
+		cube_shadow_maps.push_back(shadowMap);
 	}
 
 	// skyBox
