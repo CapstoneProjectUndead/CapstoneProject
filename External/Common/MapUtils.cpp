@@ -46,6 +46,7 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::CRATE_1] = "crate_1";
     id_to_file[EModelVariant::CRATE_2] = "crate_2";
     id_to_file[EModelVariant::DRUM] = "drum";
+    id_to_file[EModelVariant::STONE_TREASURE] = "stone_treasure";
 
     id_to_file[EModelVariant::PARK_SAND] = "park_sand";
 

@@ -116,6 +116,7 @@ enum class EModelVariant : uint16_t
 	CRATE_1,
 	CRATE_2,
 	DRUM,
+	STONE_TREASURE,
 
 	COUNT
 };
