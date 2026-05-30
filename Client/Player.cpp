@@ -288,6 +288,9 @@ void CPlayer::SetEquippedItemId(uint16 id)
 
 void CPlayer::ChangeModelSet(int setIndex)
 {
+    // 0->DOG, 1->CAT, 2->BUNNY (enum은 NONE=0 이므로 +1)
+    player_image = static_cast<PLAYER_IMAGE>(setIndex + 1);
+
     for (int i = 0; i < eartail_parts.size(); ++i) {
         bool active = (i == setIndex);
         

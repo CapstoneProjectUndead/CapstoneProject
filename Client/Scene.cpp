@@ -451,6 +451,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		}
 
 		otherPlayer->SetState(pkt.info.state);
+		otherPlayer->SetHp(pkt.hp);
 		otherPlayer->SetPossessed(pkt.info.is_possessed);
 		otherPlayer->SetStunned(pkt.info.is_stunned);
 

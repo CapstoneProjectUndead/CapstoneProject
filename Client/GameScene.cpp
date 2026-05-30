@@ -18,6 +18,7 @@
 #include "ItemFinder.h"
 #include "ImGui/imgui.h"
 #include "ImGuiManager.h"
+#include "ResourceManager.h"
 #include "NetworkManager.h"
 #include "ServerPacketHandler.h"
 #include "User.h"
@@ -340,6 +341,9 @@ void CGameScene::DrawUI()
 		// 구조 포기 버튼 (멀티 전용, 빈사 본인 화면에 표시)
 		DrawGiveUpButton();
 	}
+
+	// 상대 플레이어 상태 UI (오른쪽 상단)
+	DrawOpponentStatus();
 }
 
 void CGameScene::SetButtonEvents()
@@ -1839,6 +1843,97 @@ void CGameScene::DrawSettlementModal()
 	ImGui::PopStyleColor(13);
 }
 
+void CGameScene::DrawOpponentStatus()
+{
+	// 상대가 없으면(싱글/대기) 아무것도 그리지 않음
+	if (player_slot_ids.empty())
+		return;
+
+	ImGuiIO& io = ImGui::GetIO();
+	const float sx = G_RATIO_X;
+	const float sy = G_RATIO_Y;
+
+	// BackgroundDrawList: 3D 씬 위 + 모든 ImGui 윈도우(인벤토리 등) 아래에 그림
+	// → 인벤토리를 열면 상대 UI가 그 아래로 덮인다
+	ImDrawList* dl = ImGui::GetBackgroundDrawList();
+
+	// 800x600 기준 레이아웃 (×G_RATIO)
+	const float radius         = 24.f * sy;   // 원 반지름
+	const float rightMargin    = 12.f * sx;   // 우측 여백
+	const float topStart       = 25.f * sy;   // 첫 행 시작 Y (라운드 타이머 아래)
+	const float rowGap         = 78.f * sy;   // 행 간 세로 간격
+	const float gapCircleToBar = 2.5f * sx;   // 원-HP바 간격
+	const float barW           = 150.f * sx;  // HP바 너비
+	const float barH           = 16.f * sy;   // HP바 높이
+
+	int drawn = 0;
+	for (uint64 id : player_slot_ids) {
+		if (drawn >= 3) break;                 // 표시 가능한 상대는 최대 3명
+
+		auto it = id_To_Index.find(id);
+		if (it == id_To_Index.end()) continue;
+
+		// player_slot_ids는 플레이어 ID만 보유 → CPlayer 확정. null 슬롯 방어만 유지
+		auto player = std::static_pointer_cast<CPlayer>(objects[it->second]);
+		if (!player) 
+			continue;
+
+		// 행 중심 Y
+		const float rowCenterY = topStart + radius + rowGap * drawn;
+
+		// 전체(원+HP바)를 우측 정렬 → 원 중심 X 계산
+		const float circleCenterX = io.DisplaySize.x - rightMargin - barW - gapCircleToBar - radius;
+		const ImVec2 circleCenter = ImVec2(circleCenterX, rowCenterY);
+
+		// ── 원 안 사진 (완전한 원형 클리핑: 정사각형에 rounding=radius) ──
+		ImTextureID tex = 0;
+		const char* key = CResourceManager::GetInstance().PlayerImageKey(player->GetPlayerImage());
+		if (key) 
+			tex = CImGuiManager::GetInstance().GetTexture(key);
+
+		const ImVec2 imgMin = ImVec2(circleCenter.x - radius, circleCenter.y - radius);
+		const ImVec2 imgMax = ImVec2(circleCenter.x + radius, circleCenter.y + radius);
+
+		if (tex) {
+			dl->AddImageRounded(tex, imgMin, imgMax,
+				ImVec2(0, 0), ImVec2(1, 1),
+				ImGui::GetColorU32(ImVec4(1, 1, 1, 1)),
+				radius, ImDrawFlags_RoundCornersAll);
+		}
+		else {
+			// 텍스처 없을 때 플레이스홀더 (회색 원)
+			dl->AddCircleFilled(circleCenter, radius,
+				ImGui::GetColorU32(ImVec4(0.30f, 0.30f, 0.35f, 1.f)), 32);
+		}
+
+		// 원 테두리 링
+		dl->AddCircle(circleCenter, radius,
+			ImGui::GetColorU32(ImVec4(0.20f, 0.35f, 0.85f, 1.f)), 32, 2.5f * sy);
+
+		// ── HP바 ──
+		const float hpMax   = static_cast<float>(player->GetMaxHp());
+		float       hpRatio = (hpMax > 0.f) ? static_cast<float>(player->GetHp()) / hpMax : 0.f;
+		if (hpRatio < 0.f) hpRatio = 0.f;
+		if (hpRatio > 1.f) hpRatio = 1.f;
+
+		const float barX = circleCenter.x + radius + gapCircleToBar;
+		const float barY = rowCenterY - barH * 0.5f + (10 * sy);
+		const ImVec2 barMin  = ImVec2(barX, barY);
+		const ImVec2 barMax  = ImVec2(barX + barW, barY + barH);
+		const ImVec2 fillMax = ImVec2(barX + barW * hpRatio, barY + barH);
+
+		// 배경 → 빨강 채움 → 테두리
+		dl->AddRectFilled(barMin, barMax,
+			ImGui::GetColorU32(ImVec4(0.12f, 0.12f, 0.12f, 0.85f)), 3.f * sy);
+		dl->AddRectFilled(barMin, fillMax,
+			ImGui::GetColorU32(ImVec4(0.85f, 0.15f, 0.15f, 1.f)), 3.f * sy);
+		dl->AddRect(barMin, barMax,
+			ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.9f)), 3.f * sy, 0, 1.5f * sy);
+
+		drawn++;
+	}
+}
+
 void CGameScene::DrawGiveUpButton()
 {
 	// 멀티 전용, 본인이 빈사(ALMOST_DEAD) 상태일 때만 표시
@@ -1996,6 +2091,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 	treasures.clear();
 	monster_spawn_info.clear();
 	id_To_Index.clear();
+	player_slot_ids.clear();	// 다음 라운드 재진입 시 상대 UI 중복(누적) 방지
 
 	objects = factory->CreateGameSceneByServer(instance_data);
 	instance_data.clear();	// 다음 라운드 재진입 시 누적 방지

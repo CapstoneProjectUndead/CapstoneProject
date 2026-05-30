@@ -21,8 +21,25 @@ public:
     // 클라이언트 실행 시 한 번 호출. 모든 씬의 텍스처를 업로드한다.
     void LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
 
+public:
+    const char* PlayerImageKey(PLAYER_IMAGE img)
+    {
+        switch (img)
+        {
+        case PLAYER_IMAGE::DOG:
+            return "portrait_dog";
+        case PLAYER_IMAGE::CAT:
+            return "portrait_cat";
+        case PLAYER_IMAGE::BUNNY:
+            return "portrait_bunny";
+            default:
+                return nullptr;
+        }
+    }
+
 private:
     void LoadTitleSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
+    void LoadCustomSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
     void LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
     void LoadSounds();
 };

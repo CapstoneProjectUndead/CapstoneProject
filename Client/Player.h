@@ -92,6 +92,9 @@ public:
 	void ChangeEyes(int index);
 	void ChangeMouth(int index);
 
+	// 커스터마이즈한 캐릭터 종류(Dog/Cat/Bunny) → 상대 상태 UI 사진 매핑용
+	PLAYER_IMAGE GetPlayerImage() const { return player_image; }
+
 	std::array<std::shared_ptr<CMaterialComponent>, 3> body_materials;
 	std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
 	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
@@ -128,6 +131,7 @@ protected:
 	bool							 is_dowsing = false;
 	uint16							 equipped_item_id{ 0 };
 	PlayerStat stat;
+	PLAYER_IMAGE					 player_image = PLAYER_IMAGE::NONE;
 
 	bool  is_possessed    = false;
 	float possession_timer = 0.0f;
