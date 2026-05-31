@@ -581,7 +581,7 @@ void CGameScene::DestroyMineable(uint32 world_id)
 
 	// 드롭 아이템 스폰 (보물) (임시)
 	// 여기는 보물 확률 계산으로 다시 수정되어야 하는 부분
-	uint16 picked = g_TreasureTable[rand() % 13];
+	uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
 	auto dropped = item_manager->SpawnItem(picked, pos);
 
 	S_SpawnItem spawnPkt;

@@ -37,6 +37,8 @@ private:
 
 // 보물 테이블
 extern uint16 g_TreasureTable[];
+extern const int g_TreasureTableCount;  // g_TreasureTable 원소 수 (배열만 고치면 자동 반영)
 
 // 드랍 테이블
 extern uint16 g_DropTable[];
+extern const int g_DropTableCount;  // g_DropTable 원소 수 (배열만 고치면 자동 반영)

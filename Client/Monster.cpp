@@ -367,7 +367,7 @@ XMFLOAT3 CMonster::GetRandomWanderTarget()
 
 void CMonster::DropItem()
 {
-    uint16 picked = g_DropTable[rand() % 27];
+    uint16 picked = g_DropTable[rand() % g_DropTableCount];
 
     auto scene = CSceneManager::GetInstance().GetActiveScene();
     if (auto gameScene = dynamic_cast<CGameScene*>(scene)) {

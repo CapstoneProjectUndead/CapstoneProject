@@ -630,7 +630,7 @@ void CGameScene::ProcessVisibleObjectMining(float elapsedTime)
 				RemoveTreasureFromDowsing(pos);
 
 				pos.y = 0.05f;
-				uint16 picked = g_TreasureTable[rand() % 13];
+				uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
 				SpawnWorldItem(picked, pos);
 			}
 		}
@@ -761,7 +761,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 				RemoveTreasureFromDowsing(pos);
 
 				pos.y = 0.05f;
-				uint16 picked = g_TreasureTable[rand() % 13];
+				uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
 				SpawnWorldItem(picked, pos);
 			}
 		}
@@ -821,7 +821,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 						RemoveTreasureFromDowsing(pos);
 
 						pos.y = 0.05f;
-						uint16 picked = g_TreasureTable[rand() % 13];
+						uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
 						SpawnWorldItem(picked, pos);
 					}
 				}

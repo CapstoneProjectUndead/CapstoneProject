@@ -240,7 +240,7 @@ XMFLOAT3 CMonster::GetRandomWanderTarget()
 
 void CMonster::DropItem()
 {
-    uint16 picked = g_DropTable[rand() % 27];
+    uint16 picked = g_DropTable[rand() % g_DropTableCount];
 
     auto item = current_scene->GetItemManager()->SpawnItem(picked, GetPosition());
     S_SpawnItem spawnPkt;
