@@ -45,7 +45,7 @@ private:
 	std::unordered_map<uint32, std::shared_ptr<CItem>>  items;
 	uint32                                              inventory_id_counter = 0;
 	uint32                                              current_weight = 0;
-	uint32												max_weight = 200; // 기본값, 업그레이드로 증가
+	uint32												max_weight = 1000; // 기본값, 업그레이드로 증가
 
 	bool												is_open        = false;
 	bool												view_only      = false; // true: 드래그/드롭/퀵슬롯 등록 차단 (LobbyScene 등)

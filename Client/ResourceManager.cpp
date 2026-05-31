@@ -112,6 +112,18 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Brass_Canddlestick",     L"../Modeling/treasure/image/U_Brass_Canddlestick.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Ancient_Clay_Tablet",    L"../Modeling/treasure/image/U_Ancient_Clay_Tablet.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Bronze_Mirror",          L"../Modeling/treasure/image/U_Bronze_Mirror.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Amethyst_Shard",         L"../Modeling/treasure/image/U_Amethyst_Shard.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Frill_Ribbon",           L"../Modeling/treasure/image/U_Frill_Ribbon.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Leather_Belt",           L"../Modeling/treasure/image/U_Leather_Belt.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Ceramic_Vase",           L"../Modeling/treasure/image/U_Ceramic_Vase.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Golden Dice",            L"../Modeling/treasure/image/U_Golden Dice.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Boxing_Glove",           L"../Modeling/treasure/image/U_Boxing_Glove.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Car_Key",                L"../Modeling/treasure/image/U_Car_Key.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Luxury_Bag",             L"../Modeling/treasure/image/U_Luxury_Bag.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Silver_Ring",            L"../Modeling/treasure/image/R_Silver_Ring.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Emerald_Brooch",         L"../Modeling/treasure/image/R_Emerald_Brooch.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Crystal_Skull",          L"../Modeling/treasure/image/R_Crystal_Skull.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Viking_Helmet",          L"../Modeling/treasure/image/R_Viking_Helmet.png");
 
     // 빙의 해제 UI
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "ghost_icon", L"../Resource/GameScene/ghost.png");

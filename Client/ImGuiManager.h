@@ -68,7 +68,7 @@ private:
 
     // 4월 3일 추가
     // 유저 텍스처 힙 관리
-    static const UINT       MAX_DESCRIPTORS = 64;
+    static const UINT       MAX_DESCRIPTORS = 128;   // UI 텍스처 수(현재 93)보다 여유있게. 초과 시 힙 범위 밖 SRV 생성으로 아이콘 깨짐
     UINT                    descriptor_size = 0;
     UINT                    next_slot       = 0;
 
