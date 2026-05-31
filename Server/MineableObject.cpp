@@ -1,5 +1,5 @@
 #include "pch.h"
-// Server�� MineableObject
+// Server쪽 MineableObject
 #include "MineableObject.h"
 
 CMineableObject::CMineableObject(MINEABLEOBJECT_TYPE _type)

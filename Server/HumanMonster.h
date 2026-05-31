@@ -43,7 +43,7 @@ private:
     void SpawnCallDogs();
 
     static constexpr float  DOG_SPAWN_DELAY       = 1.5f;
-    static constexpr float  STORE_TRIGGER_RADIUS = 4.0f;
+    static constexpr int    STORE_TRIGGER_TILES   = 1;
     static constexpr float  FLEE_DURATION  = 1.0f;
     static constexpr float  FLEE_SPEED     = 0.5f;
 };

@@ -52,6 +52,9 @@ void CHumanMonster::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers
 
 void CHumanMonster::UpdateStoreAlert(float elapsedTime)
 {
+    if (!g_is_single)
+        return;
+
     if (!has_store_center)
         InitStoreCenter();
 
@@ -68,10 +71,14 @@ void CHumanMonster::UpdateStoreAlert(float elapsedTime)
     else if (!has_called_dogs) {
         auto target = FindNearestPlayer();
         if (target) {
-            XMFLOAT3 diff = Vector3::Subtract(store_center_world, target->position);
-            diff.y = 0.f;
-            float distSq = diff.x * diff.x + diff.z * diff.z;
-            if (distSq <= STORE_TRIGGER_RADIUS * STORE_TRIGGER_RADIUS) {
+            // 원형 반경(4.0f) 판정은 상점(3x3) 바깥 길까지 삐져나와 오작동했다.
+            // 플레이어 타일이 상점 중심 셀 기준 체비셰프 거리 <= 1 (상점 9칸 안)일 때만 트리거.
+            constexpr float TILE_SIZE = 2.0f;
+            XMFLOAT3 tp = target->position;
+            int dx = (int)roundf(tp.x / TILE_SIZE) - (int)roundf(store_center_world.x / TILE_SIZE);
+            int dz = (int)roundf(tp.z / TILE_SIZE) - (int)roundf(store_center_world.z / TILE_SIZE);
+            if (dx >= -STORE_TRIGGER_TILES && dx <= STORE_TRIGGER_TILES &&
+                dz >= -STORE_TRIGGER_TILES && dz <= STORE_TRIGGER_TILES) {
                 SetTarget(target);
                 CSoundManager::GetInstance().Play(SOUND_ID::warning_bell);
                 dog_spawn_timer = DOG_SPAWN_DELAY;
