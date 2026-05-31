@@ -1945,19 +1945,20 @@ void CGameScene::DrawOpponentStatus()
 		if (statusKey) {
 			ImTextureID statusTex = CImGuiManager::GetInstance().GetTexture(statusKey);
 			if (statusTex) {
-				const float iconSize = 28.f * sy;
-				const float iconX = barX;                       // HP바 왼쪽에 맞춤
+				const float iconSize = 18.f * sy;
+				const float iconX = barX + 5.f * sx;           // HP바 왼쪽에서 오른쪽으로 약간
 				const float iconY = barY - iconSize - 6.f * sy; // HP바 위 (배지 여백 포함)
 
-				// 배경 배지: 검정 아이콘이 또렷하게 보이도록 밝은 파란 배경 + 진한 파란 테두리
+				// 배경 배지: 검정 아이콘이 또렷하게 보이도록 / 사망만 빨강, 그 외는 밝은 파랑
 				const float  pad        = 4.f * sy;
 				const float  badgeRound = 6.f * sy;
 				const ImVec2 badgeMin = ImVec2(iconX - pad, iconY - pad);
 				const ImVec2 badgeMax = ImVec2(iconX + iconSize + pad, iconY + iconSize + pad);
+				const ImVec4 badgeColor = (player->GetState() == PLAYER_STATE::DEAD)
+					? ImVec4(0.92f, 0.30f, 0.30f, 0.95f)   // 사망: 빨강
+					: ImVec4(0.82f, 0.88f, 1.0f, 0.95f);   // 그 외: 밝은 파랑
 				dl->AddRectFilled(badgeMin, badgeMax,
-					ImGui::GetColorU32(ImVec4(0.82f, 0.88f, 1.0f, 0.95f)), badgeRound);
-				dl->AddRect(badgeMin, badgeMax,
-					ImGui::GetColorU32(ImVec4(0.20f, 0.35f, 0.85f, 1.0f)), badgeRound, 0, 1.5f * sy);
+					ImGui::GetColorU32(badgeColor), badgeRound);
 
 				// 아이콘 (배지 위)
 				dl->AddImage(statusTex,
