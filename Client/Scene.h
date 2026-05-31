@@ -23,8 +23,8 @@ public:
 	void AnimateObjects(float);
 
 	virtual void Initialize();
-	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList*);
+	virtual void RenderBegin(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
 	// Scene 이 전환될 때, 호출 될 함수
@@ -46,6 +46,7 @@ public:
 private:
 	// Rendering
 	void RenderBasePass(ID3D12GraphicsCommandList* commandList);
+	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
 	void CollectObjects(ID3D12GraphicsCommandList* commandList);
 protected:
 	// UI 관련 

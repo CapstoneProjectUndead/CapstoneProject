@@ -19,6 +19,9 @@ public:
     // white texture 사용(사용 시 힙 0번에 tex set)
     virtual void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) {};
     virtual void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) {};
+    virtual void ClearAllBatch() {};
+    virtual void ClearStaticBatch() {};
+    virtual void ClearDynamicBatch() {};
 };
 
 template<typename T>
@@ -39,6 +42,17 @@ public:
     // 데이터를 버퍼에 복사하고 Draw를 호출하는 공통 루프
     void RenderBatches(ID3D12GraphicsCommandList* cmdList, UINT rootSlot);
     virtual void Render(ID3D12GraphicsCommandList* cmdList) = 0;
+
+    virtual void ClearAllBatch() {
+        static_batches.clear();
+        dynamic_batches.clear();
+    };
+    virtual void ClearStaticBatch() {
+        static_batches.clear();
+    };
+    virtual void ClearDynamicBatch() {
+        dynamic_batches.clear();
+    };
 protected:
     struct RenderKey
     {

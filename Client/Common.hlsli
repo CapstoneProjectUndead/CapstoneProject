@@ -1,16 +1,35 @@
+#ifndef __COMMON_HLSLI__
+#define __COMMON_HLSLI__
+#define MaxLights 16
+
 #ifndef NUM_DIR_LIGHTS
     #define NUM_DIR_LIGHTS 1
 #endif
 
 #ifndef NUM_POINT_LIGHTS
-    #define NUM_POINT_LIGHTS 0
+    #define NUM_POINT_LIGHTS 1
 #endif
 
 #ifndef NUM_SPOT_LIGHTS
     #define NUM_SPOT_LIGHTS 0
 #endif
 
-#include "Light.hlsl"
+struct Light
+{
+    float3 strength;
+    float falloff_start;
+    float3 direction;
+    float falloff_end;
+    float3 position;
+    float spot_power;
+};
+
+struct Material
+{
+    float4 albedo;
+    float3 fresnel;
+    float glossiness;
+};
 
 struct VS_INPUT
 {
@@ -55,10 +74,16 @@ cbuffer LightInfo : register(b1)
     float3 eyePosWorld;
 	float pad;
     
+    float4x4 gCubeShadowTransforms[6];
     Light gLights[MaxLights];
 };
 
 Texture2D texDiffuse[70] : register(t0);
+TextureCubeArray pointShadowMap : register(t0, space3);
+
+static uint ShadowMapIdx = 69;
+static uint SkyboxMapIdx = 68;
+static uint CubeShadowMapIdx = 61;
 
 SamplerState sample : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
@@ -71,11 +96,9 @@ float CalcShadowFactor(float4 shadowPosH)
 
     // Depth in NDC space.
     float depth = shadowPosH.z;
-    float bias = 0.001f;
-    depth += bias;
 
     uint width, height, numMips;
-    texDiffuse[68].GetDimensions(0, width, height, numMips);
+    texDiffuse[ShadowMapIdx].GetDimensions(0, width, height, numMips);
 
     // Texel size.
     float dx = 1.0f / (float) width;
@@ -91,11 +114,49 @@ float CalcShadowFactor(float4 shadowPosH)
     [unroll]
     for (int i = 0; i < 9; ++i)
     {
-        percentLit += texDiffuse[68].SampleCmpLevelZero(gsamShadow,
+        percentLit += texDiffuse[ShadowMapIdx].SampleCmpLevelZero(gsamShadow,
             shadowPosH.xy + offsets[i], depth).r;
     }
     
     return percentLit / 9.0f;
+}
+
+float CalcPointShadowFactor(int cubeIndex, float3 fragPosWorld, float3 lightPosWorld)
+{
+    float3 fragToLight = fragPosWorld - lightPosWorld;
+
+    // pixel 좌표 -> cubeMap view 좌표
+    float n = gLights[cubeIndex + NUM_DIR_LIGHTS].falloff_start;
+    float f = gLights[cubeIndex + NUM_DIR_LIGHTS].falloff_end;
+    
+    // 큐브맵의 각 면은 원근 투영이므로, 방향 벡터 중 가장 축방향 성분이 큰 절대값이 뷰 공간의 Z축 거리
+    float maxAbsAxis = max(max(abs(fragToLight.x), abs(fragToLight.y)), abs(fragToLight.z));
+    // NDC 깊이(0~1)로 변환
+    float currentDepth = (f / (f - n)) - ((f * n) / (f - n)) / maxAbsAxis;
+
+    uint width, height, numMips, element;
+    pointShadowMap.GetDimensions(0, width, height, element, numMips);
+    float dx = 1.0f / (float) width;
+
+    const float3 sampleOffsetDirections[20] =
+    {
+        float3(1, 1, 1), float3(1, -1, 1), float3(-1, -1, 1), float3(-1, 1, 1),
+        float3(1, 1, -1), float3(1, -1, -1), float3(-1, -1, -1), float3(-1, 1, -1),
+        float3(1, 1, 0), float3(1, -1, 0), float3(-1, -1, 0), float3(-1, 1, 0),
+        float3(1, 0, 1), float3(-1, 0, 1), float3(1, 0, -1), float3(-1, 0, -1),
+        float3(0, 1, 1), float3(0, -1, 1), float3(0, -1, -1), float3(0, 1, -1)
+    };
+
+    float sumLit = 0.0f;
+    
+    [unroll]
+    for (int i = 0; i < 20; ++i)
+    {
+        float3 offsetDir = fragToLight + sampleOffsetDirections[i] * dx * 2.0f; // 오프셋 반경 조절
+        sumLit += pointShadowMap.SampleCmpLevelZero(gsamShadow, float4(offsetDir, cubeIndex), currentDepth);
+    }
+
+    return sumLit / 20.0f;
 }
 
 float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float3 tangentW)
@@ -115,3 +176,4 @@ float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, floa
 
     return bumpedNormalW;
 }
+#endif // __COMMON_HLSLI__

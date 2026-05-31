@@ -1,4 +1,4 @@
-#include "Common.hlsli"
+#include "Light.hlsl"
 
 struct InstanceData
 {
@@ -50,15 +50,17 @@ float4 PSMain(VS_OUTPUT input) : SV_TARGET
     float3 toEyeW = normalize(eyePosWorld - input.position_world);
     float4 ambient = ambientLight * diffuseAlbedo;
     
-    // Only the first light casts a shadow
-    float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
-    shadowFactor[0] = CalcShadowFactor(input.shadow_pos);
-
     const float shininess = instMat.glossiness * normalMapSample.a;
     Material mat = { diffuseAlbedo, instMat.fresnel, shininess };
-    float4 directLight = ComputeLighting(gLights, mat, input.position_world, bumpedNormalW, toEyeW, shadowFactor);
+    float4 directLight = ComputeLighting(gLights, mat, input.position_world, bumpedNormalW, toEyeW, input.shadow_pos);
 
     float4 litColor = ambient + directLight;
+    
+	// Add in specular reflections.
+    float3 r = reflect(-toEyeW, bumpedNormalW);
+    float4 reflectionColor = texDiffuse[SkyboxMapIdx].Sample(sample, r);
+    float3 fresnelFactor = SchlickFresnel(instMat.fresnel, bumpedNormalW, r);
+    litColor.rgb += shininess * fresnelFactor * reflectionColor.rgb;
     
     litColor.a = diffuseAlbedo.a;
     return litColor;
