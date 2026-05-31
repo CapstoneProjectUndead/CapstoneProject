@@ -10,13 +10,14 @@ namespace MapGenerator
         ROAD = 0,           // 공원 구역의 일반 길
         PARK_GREEN,         // 공원 구역의 수풀/벤치 아래 바닥
         VILLAGE_ROAD,       // 마을(상점) 구역의 일반 길
+        VILLAGE_ROAD_NODECO, // 상점 가로등 x
 
         WALL,
         VILLAGE_WALL,
         PARK_WALL,
         FENCE_WOOD_STR,
 
-        GRASS,      
+        GRASS,
         DECO_STONE,
         PARK_SAND_DECO,
 
@@ -35,8 +36,8 @@ namespace MapGenerator
         STORE_WALL_EMPTY,
 
         // Props
-        KIOSK, TREE, 
-        TREASURE, 
+        KIOSK, TREE,
+        TREASURE,
         TREASURE_VILLAGE,
         BENCH, SMALL_BUSH, SEESAW,
 
@@ -51,7 +52,10 @@ namespace MapGenerator
         // 복귀 지점 표시용 데코 (1셀, 라운드 시작부터 표시)
         MANHOLE,
 
-        // 마을 길 위 가로등 (빈 길에만 배치, 상점/오브젝트 위 제외)
+        //천막 가구
+        STORE_PROP,
+        WALL_DECO_VINE,
+        WALL_DECO_PROP,
         STREETLAMP,
 
         UNKNOWN
@@ -125,7 +129,7 @@ namespace MapGenerator
     void PlaceTreasure();
     void PlaceMonster();
     void PlaceManhole();
- 
+
 
     struct Rect {
         int x, y, w, h;

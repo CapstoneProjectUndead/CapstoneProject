@@ -130,19 +130,29 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
 
                 // 회전/ 위치 처리
                 if (type == EModelType::FENCE_WOOD_STR) {
-                    // 나무 울타리 0/90도 정렬
-                    bool hasGreenLeft = (GetTile(ELayer::FLOOR, x - 1, y) == EModelType::PARK_GREEN);
-                    bool hasGreenRight = (GetTile(ELayer::FLOOR, x + 1, y) == EModelType::PARK_GREEN);
-                    rotY = (hasGreenLeft && hasGreenRight) ? 0.0f : 90.0f;
+                    rotY = 0.0f; // 기본값
+
+                    // 현재 울타리가 속한 공원의 중심 좌표를 찾아서 방향을 결정합니다.
+                    for (const auto& center : m_placedCenters) {
+                        int dx = std::abs(center.x - x);
+                        int dy = std::abs(center.y - y);
+
+                        // 현재 타일이 공원(5x5, 즉 중심에서 2칸 거리 이내) 영역에 속한다면?
+                        if (dx <= 2 && dy <= 2) {
+                            if (dx == 2) rotY = 90.0f; // 좌우 테두리면 세로(90도)
+                            else rotY = 0.0f;          // 위아래 테두리면 가로(0도)
+                            break;
+                        }
+                    }
                 }
                 else if (type == EModelType::KIOSK) {
-                    // 주변 타일을 살펴서 자판기 뒷면이 벽을 향하도록 회전 설정
-                    if (GetTile(ELayer::FLOOR, x, y - 1) == EModelType::WALL) rotY = 0.0f;    // 뒤가 위쪽 벽
-                    else if (GetTile(ELayer::FLOOR, x, y + 1) == EModelType::WALL) rotY = 180.0f; // 뒤가 아래쪽 벽
-                    else if (GetTile(ELayer::FLOOR, x - 1, y) == EModelType::WALL) rotY = 270.0f; // 뒤가 왼쪽 벽
-                    else if (GetTile(ELayer::FLOOR, x + 1, y) == EModelType::WALL) rotY = 90.0f;  // 뒤가 오른쪽 벽
+                    // 모델링 정면 축이 반대이므로, 기존 각도에서 180도씩 뒤집어 줍니다.
+                    if (GetTile(ELayer::FLOOR, x, y - 1) == EModelType::WALL) rotY = 180.0f; // 뒤가 위쪽 벽
+                    else if (GetTile(ELayer::FLOOR, x, y + 1) == EModelType::WALL) rotY = 0.0f;   // 뒤가 아래쪽 벽
+                    else if (GetTile(ELayer::FLOOR, x - 1, y) == EModelType::WALL) rotY = 90.0f;  // 뒤가 왼쪽 벽
+                    else if (GetTile(ELayer::FLOOR, x + 1, y) == EModelType::WALL) rotY = 270.0f; // 뒤가 오른쪽 벽
                     else {
-                        // 벽을 못 찾았다면:: 기존처럼 90도 스냅 랜덤
+                        // 벽을 못 찾았다면:: 90도 스냅 랜덤
                         static float snapRots[] = { 0.0f, 90.0f, 180.0f, 270.0f };
                         rotY = snapRots[GetRandomInt(0, 3)];
                     }
@@ -153,8 +163,14 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
                 }
                 else if (l == (int)ELayer::OBJECT) {
                     rotY = (float)GetRandomInt(0, 359);
-                    if (type == EModelType::SMALL_BUSH) { // 덤불만 지터
-                        float jitter = TILE_SIZE * 0.3f;
+                    if (type == EModelType::SMALL_BUSH ||
+                        type == EModelType::TREASURE ||
+                        type == EModelType::TREASURE_VILLAGE ||
+                        type == EModelType::TREASURE_HIDDEN ||
+                        type == EModelType::SMALL_BUSH ||
+                        type == EModelType::TREE) {
+
+                        float jitter = TILE_SIZE * 0.25f; // 타일 크기의 25% 이내로 이동 (벽 뚫림 방지)
                         posX += (GetRandomInt(-100, 100) / 100.0f) * jitter;
                         posZ += (GetRandomInt(-100, 100) / 100.0f) * jitter;
                     }
@@ -167,6 +183,65 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
                 inst.rotationY = rotY;
                 instanceList.push_back(inst);
 
+
+
+                if (l == (int)ELayer::STRUCTURE) {
+                    // 배치한게 상점 천막->
+                    if (type == EModelType::STORE_WALL_EMPTY || type == EModelType::STORE_WALL_CORNER) {
+                        // 40% 확률로 가구를 스폰  20%로는 보물 스폰
+                        int randItem = GetRandomInt(0, 99);
+                        if (randItem < 40) {
+                            InstanceData prop;
+                            prop.type = EModelType::STORE_PROP;
+
+                            //
+                            prop.position = XMFLOAT3(posX, (int)ELayer::OBJECT * 0.01f, posZ);
+
+                            prop.rotationY = (float)(GetRandomInt(0, 3) * 90);
+
+                            instanceList.push_back(prop);
+                        }
+                        else if (randItem < 60) {
+                            // [2] 40~59 (20% 확률): 보이는 보물 생성
+                            InstanceData treasure;
+
+                            treasure.type = EModelType::TREASURE_VILLAGE;
+
+                            float jitter = TILE_SIZE * 0.25f;
+                            float dx = (GetRandomInt(-100, 100) / 100.0f) * jitter;
+                            float dz = (GetRandomInt(-100, 100) / 100.0f) * jitter;
+
+                            treasure.position = XMFLOAT3(posX + dx, (int)ELayer::OBJECT * 0.01f, posZ + dz);
+                            treasure.rotationY = (float)(GetRandomInt(0, 9) * 30);
+
+                            instanceList.push_back(treasure);
+                        }
+                    }
+                }
+                //벽 장식
+                if (type == EModelType::VILLAGE_WALL) {
+                    int randDeco = GetRandomInt(0, 99);
+
+                    if (randDeco < 30) {
+                        InstanceData deco;
+                        deco.type = EModelType::WALL_DECO_PROP;
+                        deco.position = XMFLOAT3(posX, (int)ELayer::OBJECT * 0.01f, posZ);
+
+                        deco.rotationY = (float)(GetRandomInt(0, 3) * 90);
+
+                        instanceList.push_back(deco);
+                    }
+
+                    if (randDeco < 70) {
+                        InstanceData vine;
+                        vine.type = EModelType::WALL_DECO_VINE;
+                        vine.position = XMFLOAT3(posX, (int)ELayer::OBJECT * 0.01f, posZ);
+
+                        vine.rotationY = (float)(GetRandomInt(0, 3) * 90);
+
+                        instanceList.push_back(vine);
+                    }
+                }
 
                 if (l == (int)ELayer::FLOOR) {
 
@@ -386,8 +461,9 @@ void MapGenerator::PlaceMediumStore(int cx, int cy) {
 
     for (int y = cy - size; y <= cy + size; y++) {
         for (int x = cx - size; x <= cx + size; x++) {
-            mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD;
+            mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::VILLAGE_ROAD_NODECO;
             mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::STORE;
+
         }
     }
 
@@ -422,28 +498,50 @@ void MapGenerator::PlaceParkPlaza(int cx, int cy) {
         for (int x = cx - size; x <= cx + size; x++)
             mapGrid[(int)ELayer::FLOOR][y][x] = EModelType::PARK_GREEN;
 
-    // 2. 중앙 벤치
-    mapGrid[(int)ELayer::OBJECT][cy][cx] = EModelType::BENCH;
 
-    // 3. 테두리 울타리 및 식생 배치
+
+    // 2. 울타리/나무 식물 등 / 벤치시소 배치
     for (int y = cy - size; y <= cy + size; y++) {
         for (int x = cx - size; x <= cx + size; x++) {
-            if (GetTile(ELayer::OBJECT, x, y) != EModelType::UNKNOWN) continue;
+            if (x == cx && y == cy) {
+                mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::BENCH; // 가운데에는 무조건 그래도 벤치 되게
+                continue;
+            }
 
             bool isEdgeX = (x == cx - size || x == cx + size);
             bool isEdgeY = (y == cy - size || y == cy + size);
+            bool isEdge = (isEdgeX || isEdgeY); // 테두리인지 여부
+            bool isCorner = (isEdgeX && isEdgeY); // 모서리인지 여부
 
-            if ((isEdgeX || isEdgeY) && !(isEdgeX && isEdgeY)) {
-                if (GetRandomInt(0, 99) < 50) {
-                    // [수정] 나무 울타리 전용 타입으로 배치
-                    mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::FENCE_WOOD_STR;
+            int randObj = GetRandomInt(0, 99);
+
+            if (isEdge) {
+                if (isCorner) {
+                    if (randObj < 30) mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::TREE;
+                    else mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
                 }
                 else {
-                    mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
+                    if (randObj < 30) {
+                        mapGrid[(int)ELayer::STRUCTURE][y][x] = EModelType::FENCE_WOOD_STR;
+                    }
+                    else if (randObj < 60) {
+                        mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
+                    }
+                    else if (randObj < 70) {
+                        mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::TREE;
+                    }
                 }
             }
-            else if (isEdgeX && isEdgeY) {
-                mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::TREE;
+            else {
+                if (randObj < 20) {
+                    mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::BENCH;
+                }
+                else if (randObj < 35) {
+                    mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::TREE;
+                }
+                else if (randObj < 70) {
+                    mapGrid[(int)ELayer::OBJECT][y][x] = EModelType::SMALL_BUSH;
+                }
             }
         }
     }
@@ -539,7 +637,7 @@ void MapGenerator::PlaceMonster() {
                 for (int dx = -size; dx <= size && !placed; dx++) {
                     int sx = cx + dx, sy = cy + dy;
                     if (!IsValid(sx, sy)) continue;
-                    if (GetTile(ELayer::FLOOR, sx, sy) != EModelType::VILLAGE_ROAD) continue;
+                    if (GetTile(ELayer::FLOOR, sx, sy) != EModelType::VILLAGE_ROAD_NODECO) continue;
                     if (GetTile(ELayer::OBJECT, sx, sy) != EModelType::UNKNOWN) continue;
                     if (IsBlockedStructure(sx, sy)) continue;
 
@@ -581,7 +679,7 @@ void MapGenerator::PlaceTreasure() {
     std::shuffle(candidates.begin(), candidates.end(), gen);
 
     const int MIN_DIST = 3;
-    const int target   = GetRandomInt(50, 60);
+    const int target = GetRandomInt(50, 60);
 
     for (const auto& c : candidates) {
         if ((int)g_treasure_positions.size() >= target) break;
@@ -753,7 +851,8 @@ bool MapGenerator::IsWalkableFloor(int x, int y) {
     EModelType tile = mapGrid[(int)ELayer::FLOOR][y][x];
     return tile == EModelType::ROAD
         || tile == EModelType::PARK_GREEN
-        || tile == EModelType::VILLAGE_ROAD;
+        || tile == EModelType::VILLAGE_ROAD
+        || tile == EModelType::VILLAGE_ROAD_NODECO;
 }
 
 bool MapGenerator::IsBlockedObject(int x, int y) {

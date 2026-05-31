@@ -107,20 +107,31 @@ void CMapAssetManager::initialize()
     id_to_file[EModelVariant::STONE_WALLDECO_3] = "stone_walldeco_3";
 
     // 카테고리별 랜덤 풀 설정 (추가 장식물용 - 파일명 기반)
-    random_pools["grass"] = { "park_grass_1", "park_grass_2", "park_grass_3"};
+    random_pools["grass"] = { "park_grass_1", "park_grass_2", "park_grass_3" };
     random_pools["stone"] = { "stone011", "stone012", "stone013", "stone014", "stone015", "stone016", "stone017",
         "stone018", "stone019", "stone020", "stone021", "stone022", "stone023", "stone024" };
     random_pools["tree"] = { "tree_1", "tree_2", "tree_3" };
-    random_pools["bench"] = { "park_bench002", "park_bench003" };
+    random_pools["bench"] = { "park_bench002", "park_bench003","seesaw001", };
     random_pools["bush"] = { "park_bush", "park_shrub" };
     random_pools["trashcan"] = { "trashcan001", "trashcan002" };
     random_pools["indoor_furniture"] = {
         "bookshelf", "sofa", "table_low", "chair.001", "table.001", "refrigerator"
     };
     random_pools["village_deco"] = { "streetlamp" };
-    random_pools["treasure"] = { "crate_1"};
+    random_pools["treasure"] = { "crate_1" };
     random_pools["treasure_village"] = { "crate_1", "crate_2", "drum" };
     random_pools["treasure_field"] = { "crate_1", "crate_2", "drum", "stone_treasure" };
+
+    //벽 장식 랜덤풀
+    random_pools["stone_walldeco"] = { "stone_walldeco_1","stone_walldeco_2","stone_walldeco_3" };
+    random_pools["stone_vine"] = { "stone_vine_1","stone_vine_2","stone_vine_3" };
+
+    //천막안에 들어갈 가구들
+    random_pools["store_props"] = {
+        "boxtable", "burlapbag", "jars", "sack_1", "sack_2",
+        "stall_fruit_1", "stall_fruit_2", "stall_grain", "stall_watermelon"
+    };
+
 
     // 모델 타입별 메쉬 매핑 (EModelType -> {EModelVariant 후보들(실제 모델 enum), 추가 풀 키})
     asset_table[EModelType::ROAD] = { {EModelVariant::PARK_ROAD}, {} };
@@ -165,6 +176,10 @@ void CMapAssetManager::initialize()
     // [집 내부 바닥] 바닥 위에 가구가 랜덤하게 생성됨
     asset_table[EModelType::HOUSE_INNTER] = { {EModelVariant::HOUSE_PLACE}, {"indoor_furniture"} };
 
+    // [마을 길] 마을 길바닥에 가로등이 가끔씩
+    asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {"village_deco"} };
+    asset_table[EModelType::VILLAGE_ROAD_NODECO] = { {EModelVariant::VILLAGE_ROAD}, {} };
+
     // [마을 길] 가로등은 MapGenerator가 빈 길 셀에만 STREETLAMP로 직접 배치하므로 여기선 데코 안 붙임
     asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {} };
 
@@ -173,6 +188,14 @@ void CMapAssetManager::initialize()
 
     asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
     asset_table[EModelType::FENCE_WOOD_STR] = { {EModelVariant::FENCE_WOOD}, {} };
+
+    //천막 가구
+    asset_table[EModelType::STORE_PROP] = { {EModelVariant::VILLAGE_ROAD}, {"store_props"} };
+
+    asset_table[EModelType::WALL_DECO_VINE] = { {}, {"stone_vine"} };
+    asset_table[EModelType::WALL_DECO_PROP] = { {}, {"stone_walldeco"} };
+
+
 }
 
 std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelVariant serverModelId)
@@ -201,12 +224,22 @@ std::vector<std::string> CMapAssetManager::GetMeshNames(EModelType type, EModelV
             if (pool_key == "village_deco") {
                 probability = 5;
             }
-            else if (type == EModelType::TREASURE || type == EModelType::TREASURE_VILLAGE || type == EModelType::TREASURE_HIDDEN || 
+            else if (type == EModelType::TREASURE || type == EModelType::TREASURE_VILLAGE || type == EModelType::TREASURE_HIDDEN ||
                 type == EModelType::PARK_GREEN || type == EModelType::BENCH || type == EModelType::TREE) {
                 probability = 100;
             }
             else if (pool_key == "indoor_furniture") {
                 probability = 45;
+
+            }
+            else if (pool_key == "store_props") {
+                probability = 100;
+            }
+            else if (pool_key == "stone_walldeco") {
+                probability = 100;
+            }
+            else if (pool_key == "stone_vine") {
+                probability = 100;
             }
 
             // 확률 체크
