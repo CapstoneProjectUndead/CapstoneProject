@@ -483,10 +483,19 @@ void CInventory::DrawItemTable(ITEM_TYPE type)
 
 					if (i < (int)filtered.size()) {
 
-						// TODO: 실제 텍스처 로드 후 ImGui::SetCursorScreenPos(slotMin) + ImGui::Image()로 교체
-						ImVec2 textPos = ImVec2(slotMin.x + slotSz * 0.5f - ImGui::CalcTextSize("[img]").x * 0.5f,
-						                        slotMin.y + slotSz * 0.5f - ImGui::GetTextLineHeight() * 0.5f);
-						dl->AddText(textPos, IM_COL32(100, 100, 100, 255), "[img]");
+						// 보물 아이콘 텍스처 (아이콘 없는 보물은 [img] 플레이스홀더 유지)
+						const std::string& iconKey = filtered[i]->GetIconPath();
+						ImTextureID tex = iconKey.empty() ? 0 : CImGuiManager::GetInstance().GetTexture(iconKey);
+						if (tex) {
+							float ip = 2.0f * scale; // 슬롯 안쪽 여백
+							dl->AddImage(tex, ImVec2(slotMin.x + ip, slotMin.y + ip),
+							                  ImVec2(slotMax.x - ip, slotMax.y - ip));
+						}
+						else {
+							ImVec2 textPos = ImVec2(slotMin.x + slotSz * 0.5f - ImGui::CalcTextSize("[img]").x * 0.5f,
+							                        slotMin.y + slotSz * 0.5f - ImGui::GetTextLineHeight() * 0.5f);
+							dl->AddText(textPos, IM_COL32(100, 100, 100, 255), "[img]");
+						}
 					}
 
 					// InvisibleButton: 클릭/드래그 감지 + 창 이동 방지

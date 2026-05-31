@@ -87,6 +87,32 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_fish",             L"../Modeling/item/image/Food_fish.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_lunch",            L"../Modeling/item/image/Food_lunch.png");
 
+    // 보물 아이템 이미지 (※ 다른 아이콘과 달리 ../Modeling/treasure/image 경로)
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Rusty_Coin",             L"../Modeling/treasure/image/C_Rusty_Coin.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Glass_Marble",           L"../Modeling/treasure/image/C_Glass_Marble.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Old_Spoon",              L"../Modeling/treasure/image/C_Old_Spoon.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Empty_Bottle",           L"../Modeling/treasure/image/C_Empty_Bottle.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Seashell",               L"../Modeling/treasure/image/C_Seashell.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Scrap_Map",              L"../Modeling/treasure/image/C_Scrap_Map.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Wooden_Doll",            L"../Modeling/treasure/image/C_Wooden_Doll.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Paper_Plane",            L"../Modeling/treasure/image/C_Paper_Plane.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Bottle_Cap",             L"../Modeling/treasure/image/C_Bottle_Cap.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Tennis_Ball",            L"../Modeling/treasure/image/C_Tennis_Ball.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Broken_Washing_Machine", L"../Modeling/treasure/image/C_Broken_Washing_Machine.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Fish_Bone",              L"../Modeling/treasure/image/C_Fish_Bone.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Wooden_Button",          L"../Modeling/treasure/image/C_Wooden_Button.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Empty_Can",              L"../Modeling/treasure/image/C_Empty_Can.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Brick",                  L"../Modeling/treasure/image/C_Brick.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Cracked_Plate",          L"../Modeling/treasure/image/C_Cracked_Plate.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Old_Boot",               L"../Modeling/treasure/image/C_Old_Boot.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Broken_Clock",           L"../Modeling/treasure/image/C_Broken_Clock.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Copper_Ring",            L"../Modeling/treasure/image/U_Copper_Ring.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Silk_Handkerchief",      L"../Modeling/treasure/image/U_Silk_Handkerchief.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Pearl_Earring",          L"../Modeling/treasure/image/U_Pearl_Earring.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Brass_Canddlestick",     L"../Modeling/treasure/image/U_Brass_Canddlestick.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Ancient_Clay_Tablet",    L"../Modeling/treasure/image/U_Ancient_Clay_Tablet.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "U_Bronze_Mirror",          L"../Modeling/treasure/image/U_Bronze_Mirror.png");
+
     // 빙의 해제 UI
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "ghost_icon", L"../Resource/GameScene/ghost.png");
 

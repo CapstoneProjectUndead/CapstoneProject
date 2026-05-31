@@ -43,6 +43,7 @@
 #include "MapUtils.h"
 
 #undef min
+#undef max
 
 CGameScene::CGameScene()
 	: CScene(SCENE_TYPE::GAME)
@@ -1168,7 +1169,7 @@ void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
 	float    yawRad = XMConvertToRadians(my_player->GetYaw());
 	pos.x          += sinf(yawRad) * 0.4f;
 	pos.z          += cosf(yawRad) * 0.4f;
-	pos.y           = max(pos.y, 0.0f);
+	pos.y           = std::max(pos.y, 0.0f);
 	uint32   worldId = world_item_id_counter; // SpawnWorldItem 호출 전에 캡처
 
 	// 장비면 현재 내구도를 보존해서 넘긴다 (재픽업 시 내구도 복구 버그 방지)
@@ -1499,6 +1500,8 @@ void CGameScene::DetectMyPlayerReturn()
 		return;
 
 	my_player->SetReturned(true);
+	my_player->SetState(PLAYER_STATE::IDLE);
+	my_player->SetVelocity(0.f, 0.f, 0.f);
 	CSoundManager::GetInstance().Play(SOUND_ID::Return);
 
 	ReturnToast toast;
@@ -1682,7 +1685,15 @@ void CGameScene::DrawSettlementModal()
 		const float headerRowH = ImGui::GetTextLineHeight() + 8.f * scale;
 		const int   visibleN   = (int)std::min<size_t>(settlement_result.entries.size(), 6);
 		const float wantTableH = headerRowH + visibleN * rowH + 6.f * scale;
-		const float useTableH  = std::min(tableH, wantTableH);
+
+		// 보물이 많아도 하단(합계 + 최종 코인 박스 + 로비 복귀 버튼)이 잘리지 않도록
+		// 테이블 높이를 "현재 남은 영역 - 푸터 예약치" 이내로 제한한다. (초과분은 테이블 내부 스크롤)
+		const float footerReserve = ImGui::GetTextLineHeightWithSpacing() * 2.0f       // 보물 합계 + 보너스 줄
+		                          + ImGui::GetTextLineHeight() * 1.45f + 8.f * scale    // 최종 코인 박스
+		                          + (30.f * scale + 12.f * scale)                       // 버튼 + 하단 패딩
+		                          + 28.f * scale;                                       // 구분선 2개 + 간격 여유
+		const float maxTableH  = std::max(rowH, ImGui::GetContentRegionAvail().y - footerReserve);
+		const float useTableH  = std::min(std::min(tableH, wantTableH), maxTableH);
 
 		ImGuiTableFlags tblFlags = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
 		if (ImGui::BeginTable("##settle_tbl", 4, tblFlags, ImVec2(ImGui::GetContentRegionAvail().x, useTableH))) {
@@ -1711,7 +1722,7 @@ void CGameScene::DrawSettlementModal()
 					ImVec2 slotMin(iconMin.x - 2.f * scale, iconMin.y - 2.f * scale);
 					ImVec2 slotMax(iconMax.x + 2.f * scale, iconMax.y + 2.f * scale);
 
-					dl->AddRectFilled(slotMin, slotMax, IM_COL32(35, 30, 22, 230), 4.f * scale);
+					dl->AddRectFilled(slotMin, slotMax, IM_COL32(210, 210, 215, 255), 4.f * scale);
 					dl->AddRect      (slotMin, slotMax, IM_COL32(190, 150, 70, 220), 4.f * scale, 0, 1.f);
 
 					ImTextureID tex = (ImTextureID)nullptr;

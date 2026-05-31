@@ -766,7 +766,7 @@
         "price": 10,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Rusty_Coin",
         "description": ""
     },
     {
@@ -779,7 +779,7 @@
         "price": 18,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Glass_Marble",
         "description": ""
     },
     {
@@ -792,7 +792,7 @@
         "price": 26,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Old_Spoon",
         "description": ""
     },
     {
@@ -805,7 +805,7 @@
         "price": 17,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Empty_Bottle",
         "description": ""
     },
     {
@@ -818,7 +818,7 @@
         "price": 25,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Seashell",
         "description": ""
     },
     {
@@ -831,7 +831,7 @@
         "price": 20,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Scrap_Map",
         "description": ""
     },
     {
@@ -844,7 +844,7 @@
         "price": 120,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Wooden_Doll",
         "description": ""
     },
     {
@@ -857,7 +857,7 @@
         "price": 3,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Paper_Plane",
         "description": ""
     },
     {
@@ -870,7 +870,7 @@
         "price": 16,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Bottle_Cap",
         "description": ""
     },
     {
@@ -883,7 +883,7 @@
         "price": 26,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Tennis_Ball",
         "description": ""
     },
     {
@@ -896,7 +896,7 @@
         "price": 350,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Broken_Washing_Machine",
         "description": ""
     },
     {
@@ -922,7 +922,7 @@
         "price": 2,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Fish_Bone",
         "description": ""
     },
     {
@@ -935,7 +935,7 @@
         "price": 8,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Wooden_Button",
         "description": ""
     },
     {
@@ -948,7 +948,7 @@
         "price": 7,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Empty_Can",
         "description": ""
     },
     {
@@ -961,7 +961,7 @@
         "price": 50,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Brick",
         "description": ""
     },
     {
@@ -974,7 +974,7 @@
         "price": 35,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Cracked_Plate",
         "description": ""
     },
     {
@@ -987,7 +987,7 @@
         "price": 25,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Old_Boot",
         "description": ""
     },
     {
@@ -1000,7 +1000,7 @@
         "price": 150,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "C_Broken_Clock",
         "description": ""
     },
     {
@@ -1013,7 +1013,7 @@
         "price": 120,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "U_Copper_Ring",
         "description": ""
     },
     {
@@ -1026,7 +1026,7 @@
         "price": 100,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "U_Silk_Handkerchief",
         "description": ""
     },
     {
@@ -1039,7 +1039,7 @@
         "price": 150,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "U_Pearl_Earring",
         "description": ""
     },
     {
@@ -1052,7 +1052,7 @@
         "price": 620,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "U_Brass_Canddlestick",
         "description": ""
     },
     {
@@ -1078,7 +1078,7 @@
         "price": 500,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "U_Ancient_Clay_Tablet",
         "description": ""
     },
     {
@@ -1091,7 +1091,7 @@
         "price": 440,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "U_Bronze_Mirror",
         "description": ""
     },
     {
