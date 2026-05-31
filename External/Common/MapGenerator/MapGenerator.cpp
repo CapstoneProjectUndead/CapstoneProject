@@ -206,6 +206,19 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
                         stone.rotationY = (float)GetRandomInt(0, 359);
                         instanceList.push_back(stone);
                     }
+
+                    // 마을 길 5% 확률로 가로등 — 단, 같은 셀에 상점(STRUCTURE)이나
+                    // 보물 등 오브젝트(OBJECT)가 있으면 겹치므로 빈 길에만 배치
+                    if (type == EModelType::VILLAGE_ROAD
+                        && GetTile(ELayer::STRUCTURE, x, y) == EModelType::UNKNOWN
+                        && GetTile(ELayer::OBJECT, x, y) == EModelType::UNKNOWN
+                        && GetRandomInt(0, 99) < 5) {
+                        InstanceData lamp;
+                        lamp.type = EModelType::STREETLAMP;
+                        lamp.position = XMFLOAT3(x * TILE_SIZE, 0.0f, y * TILE_SIZE);
+                        lamp.rotationY = (float)GetRandomInt(0, 359);
+                        instanceList.push_back(lamp);
+                    }
                 }
             }
         }

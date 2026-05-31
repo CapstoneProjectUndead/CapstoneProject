@@ -51,6 +51,9 @@ namespace MapGenerator
         // 복귀 지점 표시용 데코 (1셀, 라운드 시작부터 표시)
         MANHOLE,
 
+        // 마을 길 위 가로등 (빈 길에만 배치, 상점/오브젝트 위 제외)
+        STREETLAMP,
+
         UNKNOWN
     };
 

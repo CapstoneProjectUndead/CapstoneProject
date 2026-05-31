@@ -162,8 +162,11 @@ void CMapAssetManager::initialize()
     // [집 내부 바닥] 바닥 위에 가구가 랜덤하게 생성됨
     asset_table[EModelType::HOUSE_INNTER] = { {EModelVariant::HOUSE_PLACE}, {"indoor_furniture"} };
 
-    // [마을 길] 마을 길바닥에 가로등이 가끔씩
-    asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {"village_deco"} };
+    // [마을 길] 가로등은 MapGenerator가 빈 길 셀에만 STREETLAMP로 직접 배치하므로 여기선 데코 안 붙임
+    asset_table[EModelType::VILLAGE_ROAD] = { {EModelVariant::VILLAGE_ROAD}, {} };
+
+    // 가로등 (MapGenerator에서 빈 마을 길에 배치)
+    asset_table[EModelType::STREETLAMP] = { {EModelVariant::STREETLAMP}, {} };
 
     asset_table[EModelType::PARK_WALL] = { {EModelVariant::PARK_WALL}, {} };
     asset_table[EModelType::FENCE_WOOD_STR] = { {EModelVariant::FENCE_WOOD}, {} };
