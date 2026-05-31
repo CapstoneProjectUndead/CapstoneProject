@@ -8,6 +8,7 @@
 #include "AnimationManager.h"
 #include "KeyManager.h"
 #include "ShadowMap.h"
+#include "SkyBox.h"
 
 void CSceneManager::Init(ID3D12Device* device)
 {
@@ -18,6 +19,10 @@ void CSceneManager::Init(ID3D12Device* device)
 		std::shared_ptr<CShader> shader = std::make_unique<CShadowShader>();
 		shader->CreateShader(device);
 		shaders[EShaderName::Shadow] = std::move(shader);
+		// cubeShadow
+		std::shared_ptr<CShader> cubeShader = std::make_unique<CCubeShadowShader>();
+		cubeShader->CreateShader(device);
+		shaders[EShaderName::CubeShadow] = std::move(cubeShader);
 	}
 	{
 		// twoside(D3D12_CULL_MODE_NONE)
@@ -52,6 +57,12 @@ void CSceneManager::Init(ID3D12Device* device)
 		shader->CreateShader(device);
 		shaders[EShaderName::UI] = std::move(shader);
 	}
+	{
+		// SkyBox
+		std::shared_ptr<CShader> shader = std::make_unique<CSkyBoxShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::SkyBox] = std::move(shader);
+	}
 
 	// renderer
 	renderers.resize(EShaderName::Count);
@@ -83,24 +94,46 @@ void CSceneManager::Init(ID3D12Device* device)
 		renderers[EShaderName::Text] = std::move(textRenderer);
 	}
 
-	// shadow map
+	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
+	auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
+	// directional light shadow map
 	{
-		shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
-		auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
-		auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
+		dir_shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
 		auto shadowHeap = shaders[EShaderName::Shadow]->GetHeapManager();
 
-		shadow_map->CreateDescriptors(
-			shadowHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx),
-			shadowHeap->GetSRVGPUHandle(DescriptorSlot::ShadowMapIdx),
+		dir_shadow_map->CreateDescriptors(
+			shadowHeap->GetSRVCPUHandle(0),
+			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
 
-		shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
-		shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		dir_shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		dir_shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+	}
+	// dot light shadow map
+	{
+		auto shadowMap = std::make_shared<CCubeShadowMap>(GET_DEVICE, 1024, 1024);
+		auto shadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
+
+		shadowMap->CreateDescriptors(
+			shadowHeap->GetSRVCPUHandle(0),
+			shadowHeap->GetSRVGPUHandle(0),
+			shadowHeap->GetDSVCPUHandle(0)
+		);
+
+		shadowMap->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::Count));
+		shadowMap->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::Count));
+		cube_shadow_maps.push_back(shadowMap);
+	}
+
+	// skyBox
+	{
+		skybox = std::make_shared<CSkyBox>();
+		skybox->Initialize(device, GET_CMD_LIST, shaders[EShaderName::SkyBox]->GetHeapManager());
+		skybox->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+		skybox->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
 	}
 }
-
 
 void CSceneManager::Update()
 {

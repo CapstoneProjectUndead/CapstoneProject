@@ -22,13 +22,13 @@ public:
 
     void CreateDescriptors( D3D12_CPU_DESCRIPTOR_HANDLE srvCpu, D3D12_GPU_DESCRIPTOR_HANDLE srvGpu, D3D12_CPU_DESCRIPTOR_HANDLE dsvCpu);
     // create srv of shadow_depth_buffer in other shader
-    void CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu);
+    virtual void CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu);
 
     void OnResize(UINT newWidth, UINT newHeight);
-private:
-    void CreateResourceViews();
-    void CreateResource();
-private:
+protected:
+    virtual void CreateResourceViews();
+    virtual void CreateResource();
+protected:
     ComPtr<ID3D12Resource> shadow_depth_buffer;
     ID3D12Device* d3d_device{};
 
@@ -43,3 +43,13 @@ private:
     DXGI_FORMAT format{ DXGI_FORMAT_R24G8_TYPELESS };
 };
 
+class CCubeShadowMap : public CShadowMap {
+public:
+    CCubeShadowMap(ID3D12Device* device, UINT width, UINT height);
+    ~CCubeShadowMap() = default;
+
+    void CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu) override;
+private:
+    void CreateResourceViews() override;
+    void CreateResource() override;
+};

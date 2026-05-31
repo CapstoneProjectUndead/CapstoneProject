@@ -15,11 +15,12 @@ struct Light
 struct LightCB
 {
 	XMFLOAT4X4 shadow_transform{Matrix4x4::Identity()};
-	XMFLOAT4X4 shadow_view_proj;     // Shadow Pass¿ë (World -> NDC)
+	XMFLOAT4X4 shadow_view_proj;     // Shadow Passìš© (World -> NDC)
 	XMFLOAT4 ambient_light;
 	XMFLOAT3 eyePos_world;
-	float pad; // 16¹ÙÀÌÆ® Á¤·Ä ¸ÂÃß±â
+	float pad; // 16ë°”ì´íŠ¸ ì •ë ¬ ë§ì¶”ê¸°
 
+	XMFLOAT4X4 cube_shadow_transforms[6];
 	Light lights[MaxLights];
 };
 

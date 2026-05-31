@@ -64,7 +64,6 @@ inline void CRenderer<T>::RenderBatches(ID3D12GraphicsCommandList* commandList, 
         key.mesh->Render(commandList, key.submesh_index, count);
         currentOffset += count;
     }
-    static_batches.clear();
 
     // 2. Dynamic Batches 렌더링
     for (auto& [key, instances] : dynamic_batches) {
@@ -80,7 +79,6 @@ inline void CRenderer<T>::RenderBatches(ID3D12GraphicsCommandList* commandList, 
         key.mesh->Render(commandList, key.submesh_index, count);
         currentOffset += count;
     }
-    dynamic_batches.clear();
 }
 
 template<typename T>
@@ -180,8 +178,8 @@ void CAniRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
     auto maskBuffer = CAnimationManager::GetInstance().GetMaskBuffer();
 
-    cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
-    cmdList->SetGraphicsRootShaderResourceView(5, maskBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(5, animBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(6, maskBuffer->GetGPUVirtualAddress());
     RenderBatches(cmdList, 3);
 }
 
