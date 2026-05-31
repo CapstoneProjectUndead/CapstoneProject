@@ -293,7 +293,7 @@ void CGameScene::Update(float elapsedTime)
 
 		// (멀티 전용) 빙의 해제 / 빈사 소생 progress bar UI는 클라이언트 예측 기법 적용
 		// 본인이 빙의/빈사 중이면 C-홀드 액션 불가
-		if (!g_is_single && !my_player->GetIsPossessed() && !my_player->IsIncapacitated()) {
+		if (!g_is_single && !my_player->GetDowsing() && !my_player->GetIsPossessed() && !my_player->IsIncapacitated()) {
 			UpdateCHoldAction(elapsedTime);
 		}
 	};
