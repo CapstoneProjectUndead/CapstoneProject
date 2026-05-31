@@ -58,9 +58,20 @@
     "76": { "model": "U_Silk_Handkerchief" },
     "77": { "model": "U_Pearl_Earring" },
     "78": { "model": "U_Brass_Canddlestick" },
-
+    "79": { "model": "U_Amethyst_Shard" },
     "80": { "model": "U_Ancient_Clay_Tablet" },
-    "81": { "model": "U_Bronze_Mirror" }
+    "81": { "model": "U_Bronze_Mirror" },
+    "82": { "model": "U_Frill_Ribbon" },
+    "83": { "model": "U_Leather_Belt" },
+    "84": { "model": "U_Ceramic_Vase" },
+    "85": { "model": "U_Golden_Dice" },
+    "86": { "model": "U_Boxing_Glove" },
+    "87": { "model": "U_Car_Key" },
+    "88": { "model": "U_Luxury_Bag" },
+    "89": { "model": "R_Silver_Ring" },
+    "90": { "model": "R_Emerald_Brooch" },
+    "91": { "model": "R_Crystal_Skull" },
+    "92": { "model": "R_Viking_Helmet" }
 
   }
 }
