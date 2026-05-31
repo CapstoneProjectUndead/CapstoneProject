@@ -160,8 +160,8 @@ void CMyPlayer::PreUpdate(float elapsedTime)
 
 void CMyPlayer::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
-	// DEAD: 본인 모델 렌더링 안 함 (관전 모드)
-	if (state == PLAYER_STATE::DEAD) 
+	// DEAD 상태이거나 복귀 상태이면 본인 모델링 렌더링 x
+	if (is_returned || state == PLAYER_STATE::DEAD)
 		return;
 
 	CObject::OnCollect(renderers);

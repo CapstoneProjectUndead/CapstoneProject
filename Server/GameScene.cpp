@@ -169,6 +169,8 @@ void CGameScene::DetectPlayerReturns()
 
 		if (dx * dx + dz * dz <= rangeSq) {
 			player->SetReturned(true);
+			player->SetState(PLAYER_STATE::IDLE);   // 복귀 즉시 RUN 애니메이션 정지 (이후 입력 없어 IDLE 유지)
+			player->SetVelocity(0.f, 0.f, 0.f);     // 잔여 속도 제거 → 위치 진동/화면 흔들림 차단
 
 			S_PlayerReturned pkt;
 			pkt.player_id  = id;
