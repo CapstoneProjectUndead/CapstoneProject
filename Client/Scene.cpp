@@ -87,8 +87,8 @@ void CScene::Update(float elapsedTime)
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 {
 	auto& shadowMap = CSceneManager::GetInstance().GetShadowMap();
-	auto& cubeShadowMap = CSceneManager::GetInstance().GetCubeShadowMaps();
-	if (!shadowMap || !light || cubeShadowMap.empty()) return;
+	auto& cubeShadowMap = CSceneManager::GetInstance().GetCubeShadowMap();
+	if (!shadowMap || !light || !cubeShadowMap) return;
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
@@ -102,16 +102,19 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 
 	// cube shadow map
 	shaders[EShaderName::CubeShadow]->RenderBegin(commandList);
-	auto cubeShadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
-	D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = cubeShadowHeap->GetSRVGPUHandle(0);
-
-	for (const auto& cubeMap: cubeShadowMap) {
-		cubeMap->RenderBegin(commandList);
+	{
+		cubeShadowMap->RenderBegin(commandList);
 		light->Render(commandList);
-		commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);
-		renderers[EShaderName::Shadow]->Render(commandList);
+		auto cubeShadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
+		D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = cubeShadowHeap->GetSRVGPUHandle(0);
+		commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);	// pointShadowMap set(Commond.hlsli)
 
-		cubeMap->RenderEnd(commandList);
+		for (UINT i = 0; i < light->GetActiveDotNum(); ++i) {
+			commandList->SetGraphicsRoot32BitConstant(7, i, 0);		// gCurrentLightIndex set(ShadowShader.hlsl)
+			renderers[EShaderName::Shadow]->Render(commandList);
+		}
+
+		cubeShadowMap->RenderEnd(commandList);
 	}
 	shaders[EShaderName::CubeShadow]->RenderEnd(commandList);
 	renderers[EShaderName::Shadow]->ClearAllBatch();

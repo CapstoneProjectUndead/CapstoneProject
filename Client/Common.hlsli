@@ -72,9 +72,9 @@ cbuffer LightInfo : register(b1)
     float4x4 gShadowViewProj;
     float4 ambientLight;
     float3 eyePosWorld;
-	float pad;
+    uint activeDotNum;
     
-    float4x4 gCubeShadowTransforms[6];
+    float4x4 gCubeShadowTransforms[MaxLights - NUM_DIR_LIGHTS][6];
     Light gLights[MaxLights];
 };
 
@@ -83,7 +83,6 @@ TextureCubeArray pointShadowMap : register(t0, space3);
 
 static uint ShadowMapIdx = 69;
 static uint SkyboxMapIdx = 68;
-static uint CubeShadowMapIdx = 61;
 
 SamplerState sample : register(s0);
 SamplerComparisonState gsamShadow : register(s1);

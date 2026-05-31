@@ -4,6 +4,23 @@
 
 void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+    light.ambient_light = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+    light.active_dot_num = 2;
+
+    // dir
+    light.lights[0].direction = XMFLOAT3(0.5 , -1.0, 0.01);
+    light.lights[0].strength = XMFLOAT3(0.7f, 0.7, 0.7);
+    // dot
+    light.lights[1].position = XMFLOAT3(-1.0f, 1.5f, 3.0f); // 조명 위치
+    light.lights[1].falloff_end = 3.0f;                   // 조명 최대 반경 (FarZ로 활용)
+    light.lights[1].falloff_start = 1.0f;
+    light.lights[1].strength = XMFLOAT3(1.0f, 0.8f, 0.6f);  // 조명 색상
+
+    light.lights[2].position = XMFLOAT3(2.0f, 1.5f, 3.0f); // 조명 위치
+    light.lights[2].falloff_end = 3.0f;                   // 조명 최대 반경 (FarZ로 활용)
+    light.lights[2].falloff_start = 1.0f;
+    light.lights[2].strength = XMFLOAT3(0.0f, 0.8f, 0.6f);  // 조명 색상
+
     light_cb = CreateBufferResource(
         device,
         commandList,
@@ -14,18 +31,6 @@ void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* 
         nullptr
     );
     light_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
-
-    // light 초기화
-    light.ambient_light = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-
-    // 방향광 3개 예시
-    light.lights[0].direction = XMFLOAT3(0.5 , -1.0, 0.01);
-    light.lights[0].strength = XMFLOAT3(0.7f, 0.7, 0.7);
-
-    light.lights[1].position = XMFLOAT3(-1.0f, 1.5f, 3.0f); // 조명 위치
-    light.lights[1].falloff_end = 5.0f;                   // 조명 최대 반경 (FarZ로 활용)
-    light.lights[1].falloff_start = 1.0f;
-    light.lights[1].strength = XMFLOAT3(1.0f, 0.8f, 0.6f);  // 조명 색상
 }
 
 void CLightManager::Update(const CCamera* camera, const BoundingSphere& sceneBounds)
@@ -68,13 +73,8 @@ void CLightManager::Update(const CCamera* camera, const BoundingSphere& sceneBou
     XMStoreFloat4x4(&light.shadow_transform, XMMatrixTranspose(S));
 
     // cube shadow
-    XMVECTOR pointLightPos = XMLoadFloat3(&light.lights[1].position);
-
-    // 시야각 90도, 종횡비 1.0f의 점 조명용 원근 투영 행렬
-    XMMATRIX cubeProj = XMMatrixPerspectiveFovLH(XM_PIDIV2, 1.0f, light.lights[1].falloff_start, light.lights[1].falloff_end);
-
     // DX12 큐브맵 표준 축 방향 정의 (+X, -X, +Y, -Y, +Z, -Z)
-    XMVECTOR cubeTargets[6] = {
+    const XMVECTOR cubeTargets[6] = {
         XMVectorSet(1.0f,  0.0f,  0.0f, 0.0f), // +X
         XMVectorSet(-1.0f,  0.0f,  0.0f, 0.0f), // -X
         XMVectorSet(0.0f,  1.0f,  0.0f, 0.0f), // +Y
@@ -82,8 +82,7 @@ void CLightManager::Update(const CCamera* camera, const BoundingSphere& sceneBou
         XMVectorSet(0.0f,  0.0f,  1.0f, 0.0f), // +Z
         XMVectorSet(0.0f,  0.0f, -1.0f, 0.0f)  // -Z
     };
-
-    XMVECTOR cubeUps[6] = {
+    const XMVECTOR cubeUps[6] = {
         XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), // +X (Up: +Y)
         XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), // -X (Up: +Y)
         XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f), // +Y (Up: -Z)
@@ -92,12 +91,17 @@ void CLightManager::Update(const CCamera* camera, const BoundingSphere& sceneBou
         XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f)  // -Z (Up: +Y)
     };
 
-    // 6개 방향에 대해 뷰 * 투영 행렬을 구해 배열에 대입
-    for (int i = 0; i < 6; ++i)
-    {
-        XMMATRIX cubeView = XMMatrixLookAtLH(pointLightPos, pointLightPos + cubeTargets[i], cubeUps[i]);
-        XMMATRIX cubeVP = cubeView * cubeProj;
-        XMStoreFloat4x4(&light.cube_shadow_transforms[i], XMMatrixTranspose(cubeVP));
+    for (UINT i = 1; i < light.active_dot_num + 1; ++i) {
+        XMVECTOR pointLightPos = XMLoadFloat3(&light.lights[i].position);
+        // 시야각 90도, 종횡비 1.0f의 점 조명용 원근 투영 행렬
+        XMMATRIX cubeProj = XMMatrixPerspectiveFovLH(XM_PIDIV2, 1.0f, light.lights[i].falloff_start, light.lights[i].falloff_end);
+
+        // 6개 방향에 대해 뷰 * 투영 행렬을 구해 배열에 대입
+        for (int j = 0; j < 6; ++j) {
+            XMMATRIX cubeView = XMMatrixLookAtLH(pointLightPos, pointLightPos + cubeTargets[j], cubeUps[j]);
+            XMMATRIX cubeVP = cubeView * cubeProj;
+            XMStoreFloat4x4(&light.cube_shadow_transforms[i - 1][j], XMMatrixTranspose(cubeVP));
+        }
     }
 }
 

@@ -1,6 +1,10 @@
 #pragma once
-
+#ifndef MaxLights
 #define MaxLights 16
+#endif
+#ifndef MAX_POINT_LIGHTS
+#define MAX_POINT_LIGHTS MaxLights - 1
+#endif
 
 struct Light
 {
@@ -18,10 +22,10 @@ struct LightCB
 	XMFLOAT4X4 shadow_view_proj;     // Shadow Pass용 (World -> NDC)
 	XMFLOAT4 ambient_light;
 	XMFLOAT3 eyePos_world;
-	float pad; // 16바이트 정렬 맞추기
+	UINT active_dot_num{};
 
-	XMFLOAT4X4 cube_shadow_transforms[6];
-	Light lights[MaxLights];
+	std::array<std::array<XMFLOAT4X4,6>, MAX_POINT_LIGHTS > cube_shadow_transforms;
+	std::array<Light, MaxLights> lights;	// 0: dir, 1~: dot
 };
 
 class CCamera;
@@ -35,6 +39,7 @@ public:
 	void Update(const CCamera* camera, const BoundingSphere& sceneBounds);
 	void Render(ID3D12GraphicsCommandList* commandList);
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList);
+	UINT GetActiveDotNum()const { return light.active_dot_num; }
 private:
 	LightCB light{};
 	ComPtr<ID3D12Resource> light_cb;

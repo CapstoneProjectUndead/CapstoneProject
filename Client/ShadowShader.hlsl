@@ -43,6 +43,11 @@ struct InstanceData
     AnimationData animation;
 };
 
+cbuffer UpdateLightIndex : register(b2)
+{
+    uint gCurrentLightIndex;
+};
+
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 
@@ -100,11 +105,11 @@ void GSMain(triangle VS_SHADOW_OUTPUT input[3], inout TriangleStream<GS_SHADOW_O
     for (int face = 0; face < 6; ++face)
     {
         GS_SHADOW_OUTPUT output;
-        output.layer_index = face;
+        output.layer_index = (gCurrentLightIndex * 6) + face;
 
         for (int v = 0; v < 3; ++v)
         {
-            output.position_clip = mul(float4(input[v].position_world.xyz, 1.0f), gCubeShadowTransforms[face]);
+            output.position_clip = mul(float4(input[v].position_world.xyz, 1.0f), gCubeShadowTransforms[gCurrentLightIndex][face]);
             outStream.Append(output);
         }
         outStream.RestartStrip();

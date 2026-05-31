@@ -112,18 +112,17 @@ void CSceneManager::Init(ID3D12Device* device)
 	}
 	// dot light shadow map
 	{
-		auto shadowMap = std::make_shared<CCubeShadowMap>(GET_DEVICE, 1024, 1024);
+		cube_shadow_map = std::make_shared<CCubeShadowMap>(GET_DEVICE, 1024, 1024);
 		auto shadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
 
-		shadowMap->CreateDescriptors(
+		cube_shadow_map->CreateDescriptors(
 			shadowHeap->GetSRVCPUHandle(0),
 			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
 
-		shadowMap->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::Count));
-		shadowMap->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::Count));
-		cube_shadow_maps.push_back(shadowMap);
+		cube_shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::Count));
+		cube_shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::Count));
 	}
 
 	// skyBox

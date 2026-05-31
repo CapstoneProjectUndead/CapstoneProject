@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "ShadowMap.h"
 
+#ifndef MaxLights
+#define MaxLights 16
+#endif
+#ifndef MAX_POINT_LIGHTS
+#define MAX_POINT_LIGHTS (MaxLights - 1)
+#endif
+
 CShadowMap::CShadowMap(ID3D12Device* device, UINT width, UINT height)
 {
 	d3d_device = device;
@@ -160,8 +167,7 @@ void CCubeShadowMap::CreateResourceViews()
 	srvDesc.TextureCubeArray.MipLevels = 1;
 	srvDesc.TextureCubeArray.ResourceMinLODClamp = 0.0f;
 	srvDesc.TextureCubeArray.First2DArrayFace = 0;
-	// ✨ 핵심 수정: 배열 안에 포함될 총 큐브 맵의 개수 명시
-	srvDesc.TextureCubeArray.NumCubes = 1;
+	srvDesc.TextureCubeArray.NumCubes = MAX_POINT_LIGHTS;
 	d3d_device->CreateShaderResourceView(shadow_depth_buffer.Get(), &srvDesc, srv_cpu);
 
 	// Create DSV to resource so we can render to the shadow map.
@@ -171,7 +177,7 @@ void CCubeShadowMap::CreateResourceViews()
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 	dsvDesc.Texture2DArray.MipSlice = 0;
 	dsvDesc.Texture2DArray.FirstArraySlice = 0;
-	dsvDesc.Texture2DArray.ArraySize = 1 * 6;
+	dsvDesc.Texture2DArray.ArraySize = MAX_POINT_LIGHTS * 6;
 	d3d_device->CreateDepthStencilView(shadow_depth_buffer.Get(), &dsvDesc, dsv_cpu);
 }
 
@@ -182,7 +188,7 @@ void CCubeShadowMap::CreateResource()
 	texDesc.Alignment = 0;
 	texDesc.Width = width;
 	texDesc.Height = height;
-	texDesc.DepthOrArraySize = 6 * 1;
+	texDesc.DepthOrArraySize = 6 * MAX_POINT_LIGHTS;
 	texDesc.MipLevels = 1;
 	texDesc.Format = format;
 	texDesc.SampleDesc.Count = 1;
@@ -220,6 +226,6 @@ void CCubeShadowMap::CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpu)
 	srvDesc.TextureCubeArray.MostDetailedMip = 0;
 	srvDesc.TextureCubeArray.MipLevels = 1;
 	srvDesc.TextureCubeArray.First2DArrayFace = 0;
-	srvDesc.TextureCubeArray.NumCubes = 1;
+	srvDesc.TextureCubeArray.NumCubes = MAX_POINT_LIGHTS;
 	d3d_device->CreateShaderResourceView(shadow_depth_buffer.Get(), &srvDesc, srvCpu);
 }

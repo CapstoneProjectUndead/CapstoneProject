@@ -101,9 +101,9 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat, float3 pos, float
     }
 #endif
 #if (NUM_POINT_LIGHTS > 0)
-    for (i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; ++i)
+    for (i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS + activeDotNum; ++i)
     {
-        int shadowIdx = i - NUM_DIR_LIGHTS;
+        int shadowIdx = (i - NUM_DIR_LIGHTS);
         float pointShadow = 1.0f;
         pointShadow = CalcPointShadowFactor(shadowIdx, pos, gLights[i].position);
         result += ComputePointLight(gLights[i], mat, pos, normal, toEye) * pointShadow;
@@ -116,6 +116,5 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat, float3 pos, float
         result += ComputeSpotLight(gLights[i], mat, pos, normal, toEye);
     }
 #endif 
-
     return float4(result, 0.0f);
 }
