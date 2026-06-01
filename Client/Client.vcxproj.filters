@@ -136,6 +136,9 @@
     <Filter Include="Sound">
       <UniqueIdentifier>{25df808c-3f77-4bd5-9ab3-fb9c9ec378ec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shop">
+      <UniqueIdentifier>{9e28771e-014a-4bb0-be6b-7757c5c9c41f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -432,6 +435,9 @@
     <ClInclude Include="SkyBox.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="Shop.h">
+      <Filter>Shop</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -685,6 +691,9 @@
     </ClCompile>
     <ClCompile Include="SkyBox.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Shop.cpp">
+      <Filter>Shop</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

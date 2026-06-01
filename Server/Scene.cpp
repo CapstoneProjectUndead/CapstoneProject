@@ -401,7 +401,13 @@ void CScene::BroadcastUserEnter(shared_ptr<CPlayer> player)
 void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& pkt)
 {
 	auto mover = CAST_CS(session)->GetUser()->GetPlayer();
-	assert(mover && mover->GetID() == pkt.info.player_id);
+	//assert(mover && mover->GetID() == pkt.info.player_id);
+
+	if (!mover)
+		return;
+	
+	if (mover->GetID() != pkt.info.player_id)
+		return;
 
 	if (pkt.seq_num <= mover->GetLastSequence())
 		return;

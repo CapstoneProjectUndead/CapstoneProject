@@ -241,6 +241,7 @@ call ClientCopy.bat</Command>
     <ClInclude Include="ServerSession.h" />
     <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Shop.h" />
     <ClInclude Include="SkyBox.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="SoundManager.h" />
@@ -344,6 +345,7 @@ call ClientCopy.bat</Command>
     <ClCompile Include="ServerSession.cpp" />
     <ClCompile Include="ServerSessionManager.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Shop.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="SoundManager.cpp" />

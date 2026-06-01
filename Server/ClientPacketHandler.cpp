@@ -285,3 +285,18 @@ bool Handle_C_GIVE_UP_RESCUE(std::shared_ptr<Session> session, C_GiveUpRescue& p
 
 	return true;
 }
+
+bool Handle_C_SHOP_STATE(std::shared_ptr<Session> session, C_ShopState& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room->IsActive());
+	CScene* lobbyScene = room->GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(lobbyScene);
+
+	lobbyScene->PushPacketJob(session,
+		(CLobbyScene*)lobbyScene,
+		&CLobbyScene::Handle_C_ShopState,
+		pkt);
+
+	return true;
+}

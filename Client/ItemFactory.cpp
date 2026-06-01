@@ -87,6 +87,15 @@ namespace ItemFactory
 		}
 	}
 
+	const ItemData* GetItemData(int itemID)
+	{
+		auto it = item_db.find(itemID);
+		if (it == item_db.end())
+			return nullptr;
+
+		return &it->second.base;
+	}
+
 	std::shared_ptr<CItem> Create(int itemID)
 	{
 		auto it = item_db.find(itemID);

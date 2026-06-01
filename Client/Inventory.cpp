@@ -94,7 +94,11 @@ void CInventory::BeginDrawInventory()
 	float  titleH = 36.0f * scale;
 
 	float  margin = 20.0f * scale;
-	ImGui::SetNextWindowPos(ImVec2(screen.x - winW - margin, screen.y - winH - margin), ImGuiCond_Always);
+	// 위치 오버라이드(상점 옆 배치 등)가 있으면 그 좌표, 없으면 기본 우하단
+	ImVec2 winPos = has_pos_override
+		? ImVec2(pos_override_x, pos_override_y)
+		: ImVec2(screen.x - winW - margin, screen.y - winH - margin);
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_Always);
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize

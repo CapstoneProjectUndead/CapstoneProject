@@ -16,6 +16,7 @@
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
 #include "GameFramework.h"
+#include "Shop.h"
 
 CLobbyScene::CLobbyScene()
 	: CScene(SCENE_TYPE::LOBBY)
@@ -110,16 +111,34 @@ void CLobbyScene::Update(float elapsedTime)
 	}
 
 	if (KEY_TAP(KEY::ESC)) {
-		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
-		if (menuUI) {
-			ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+		// 상점이 열려 있으면 ESC는 상점 닫기 (메뉴보다 우선)
+		if (CShop::GetInstance().IsOpen()) {
+			CShop::GetInstance().Close();
+		}
+		else {
+			auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
+			if (menuUI) {
+				ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+			}
 		}
 	}
 
-	// C 키로 사신 상호작용
-	if (KEY_TAP(KEY::C)) {
-		InteractWithReaper();
+	// C 키로 위치 기반 상호작용 (상점이 열려 있을 땐 무시)
+	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen()) {
+		switch (GetInteractZone()) {
+		case InteractZone::Entrance:
+			InteractWithReaper();   // Ground 입구 → 게임씬 진입 준비
+			break;
+		case InteractZone::Reaper:
+			CShop::GetInstance().Open();   // 사신(상점) NPC → 상점 열기
+			break;
+		default:
+			break;
+		}
 	}
+
+	// 상점 열림/닫힘 전환 처리 (인벤토리 강제 열기/복원, 커서 모드)
+	HandleShopTransition();
 
 	if (KEY_PRESSED(KEY::LBTN)) {
 		auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
@@ -137,6 +156,102 @@ void CLobbyScene::InteractWithReaper()
 	auto text = ui_manager->GetUI<CUIText>("ReaperText");
 	if (text)
 		text->SetText(ui_manager->GetDataManager()->GetDialogue("Reaper", "Ask_Exit"));
+}
+
+CLobbyScene::InteractZone CLobbyScene::GetInteractZone() const
+{
+	if (!my_player)
+		return InteractZone::None;
+
+	// XZ 평면 제곱거리 비교, 가까운 앵커 선택
+	XMFLOAT3 pos = my_player->GetPosition();
+	float distReaperSq   = (pos.x - reaper_anchor.x)   * (pos.x - reaper_anchor.x)   + (pos.z - reaper_anchor.y)   * (pos.z - reaper_anchor.y);
+	float distEntranceSq = (pos.x - entrance_anchor.x) * (pos.x - entrance_anchor.x) + (pos.z - entrance_anchor.y) * (pos.z - entrance_anchor.y);
+
+	if (distEntranceSq <= interact_radius_sq && distEntranceSq <= distReaperSq)
+		return InteractZone::Entrance;
+	if (distReaperSq <= interact_radius_sq)
+		return InteractZone::Reaper;
+
+	return InteractZone::None;
+}
+
+void CLobbyScene::DrawInteractPrompt(InteractZone zone)
+{
+	if (zone == InteractZone::None)
+		return;
+
+	// 다이얼로그가 열려 있으면 안내를 숨겨 겹침 방지
+	auto speechCanvas = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
+	if (speechCanvas && speechCanvas->is_enable)
+		return;
+
+	ImGuiIO&    io   = ImGui::GetIO();
+	ImDrawList* dl   = ImGui::GetForegroundDrawList();
+	ImFont*     font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+	const float scale = G_RATIO_Y;
+
+	const char* text   = "Press C key";
+	const float fontPx = 32.f * scale;
+
+	ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, text);
+	ImVec2 pos      = ImVec2(io.DisplaySize.x * 0.5f - textSize.x * 0.5f, io.DisplaySize.y * 0.62f);
+
+	// 외곽선(그림자) 4방향 + 본문 (사신=하늘색, 입구=노란빛)
+	ImVec4 mainColor = (zone == InteractZone::Reaper)
+		? ImVec4(0.5f, 0.85f, 1.f, 1.f)
+		: ImVec4(1.f, 0.95f, 0.6f, 1.f);
+	ImU32 shadow = ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.7f));
+	ImU32 main   = ImGui::GetColorU32(mainColor);
+	const float off = 1.5f * scale;
+
+	dl->AddText(font, fontPx, ImVec2(pos.x - off, pos.y), shadow, text);
+	dl->AddText(font, fontPx, ImVec2(pos.x + off, pos.y), shadow, text);
+	dl->AddText(font, fontPx, ImVec2(pos.x, pos.y - off), shadow, text);
+	dl->AddText(font, fontPx, ImVec2(pos.x, pos.y + off), shadow, text);
+	dl->AddText(font, fontPx, pos, main, text);
+}
+
+void CLobbyScene::HandleShopTransition()
+{
+	bool open = CShop::GetInstance().IsOpen();
+	if (open == shop_was_open)
+		return;
+
+	auto inventory = my_player ? my_player->GetInventory() : nullptr;
+
+	if (open) {
+		// 상점 진입: 기존 인벤토리 상태 저장 후 강제로 열고 커서 모드 활성화
+		if (inventory) {
+			prev_inventory_open = inventory->IsOpen();
+			inventory->SetOpen(true);
+
+			my_player->SetVelocity(0, 0, 0);
+			my_player->SetState(PLAYER_STATE::IDLE);
+			my_player->SetPosition(reaper_anchor.x, 0.5f, reaper_anchor.y);
+		}
+		CKeyManager::GetInstance().SetMouseMode(false);   // false = UI 커서 모드
+
+		// 멀티: 서버에 "상점 이용 중" 통보 → 서버가 플레이어 정지/고정
+		if (!g_is_single && my_player) {
+			C_ShopState pkt;
+			pkt.player_id = my_player->GetID();
+			if (auto session = my_player->GetSession()) {
+				auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+				session->DoSend(sendBuffer);
+			}
+		}
+	}
+	else {
+		// 상점 종료: 위치 오버라이드 해제 + 인벤토리 이전 상태 복원
+		if (inventory) {
+			inventory->ClearPositionOverride();
+			inventory->SetOpen(prev_inventory_open);
+		}
+		CKeyManager::GetInstance().SetMouseMode(prev_inventory_open ? false : true);
+	}
+
+	shop_was_open = open;
 }
 
 void CLobbyScene::SetButtonEvents()
@@ -264,11 +379,28 @@ void CLobbyScene::Enter()
 		if (readyUI)
 			readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
 	}
+
+	// (테스트) 로비씬에 입장하면 딱 한번만 10000원 준다. (나중에 지울 것)
+	static bool once = false;
+	if (g_is_single && !once) {
+		my_player->SetGold(10000);
+		once = true;
+	}
 }
 
 void CLobbyScene::Exit()
 {
 	CScene::Exit();
+
+	// 상점이 열린 채 씬 전환되는 경우 정리
+	if (CShop::GetInstance().IsOpen())
+		CShop::GetInstance().Close();
+	if (my_player) {
+		if (auto inv = my_player->GetInventory())
+			inv->ClearPositionOverride();
+	}
+
+	shop_was_open = false;
 
 	my_player = nullptr;
 }
@@ -283,13 +415,27 @@ bool CLobbyScene::IsUIInputEnabled()
 	if (scene->GetSceneType() == SCENE_TYPE::LOBBY)
 		state = false;
 
+	// 상점이 열려 있으면 ImGui 입력(클릭/버튼)을 허용해야 함
+	if (CShop::GetInstance().IsOpen())
+		state = true;
+
 	return state;
 }
 
 void CLobbyScene::DrawUI()
 {
-	// LobbyScene은 인벤토리 조회 전용 (드래그/드롭/퀵슬롯 등록 차단)
-	if (my_player) {
+	if (!my_player)
+		return;
+
+	if (CShop::GetInstance().IsOpen()) {
+		// 상점: 좌 상점 패널 + 우 인벤토리를 함께 그림 (DrawStoreUI가 인벤토리도 그림)
+		CShop::GetInstance().DrawStoreUI(my_player);
+	}
+	else {
+		// 상호작용 구역 안이면 "Press C key" 안내 표시
+		DrawInteractPrompt(GetInteractZone());
+
+		// LobbyScene은 인벤토리 조회 전용 (드래그/드롭/퀵슬롯 등록 차단)
 		auto inventory = my_player->GetInventory();
 		if (inventory)
 			inventory->Draw(true);

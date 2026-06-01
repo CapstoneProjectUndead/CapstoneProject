@@ -19,7 +19,12 @@ public:
 	const std::unordered_map<uint32, std::shared_ptr<CItem>>& GetItems() const { return items; }
 
 	void  ToggleOpen() { is_open = !is_open; }
+	void  SetOpen(bool open) { is_open = open; }
 	bool  IsOpen() const { return is_open; }
+
+	// 상점 등에서 인벤토리를 특정 위치(좌상단)에 강제 배치할 때 사용. 해제 시 기본(우하단) 복귀.
+	void  SetPositionOverride(float x, float y) { has_pos_override = true; pos_override_x = x; pos_override_y = y; }
+	void  ClearPositionOverride() { has_pos_override = false; }
 
 	uint32 GetCurrentWeight() const { return current_weight; }
 	uint32 GetMaxWeight() const { return max_weight; }
@@ -49,6 +54,10 @@ private:
 
 	bool												is_open        = false;
 	bool												view_only      = false; // true: 드래그/드롭/퀵슬롯 등록 차단 (LobbyScene 등)
+
+	bool												has_pos_override = false; // 상점 옆 배치 등 위치 강제 여부
+	float												pos_override_x = 0.f;
+	float												pos_override_y = 0.f;
 	ITEM_TYPE											active_tab     = ITEM_TYPE::EQUIPMENT;
 
 	// 드래그 상태

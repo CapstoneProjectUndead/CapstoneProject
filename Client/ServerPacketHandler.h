@@ -76,6 +76,8 @@ enum : uint16
 	PKT_S_RETURN_ZONE_ACTIVE,
 	PKT_S_PLAYER_RETURNED,
 	PKT_S_GAME_SETTLEMENT,
+
+	PKT_C_SHOP_STATE,
 };
 
 // Custom Handlers

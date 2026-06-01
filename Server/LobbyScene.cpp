@@ -294,6 +294,16 @@ void CLobbyScene::Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt
 	BroadCast(sendBuffer);
 }
 
+void CLobbyScene::Handle_C_ShopState(shared_ptr<Session> session, const C_ShopState& pkt)
+{
+	auto player = players[pkt.player_id];
+	if (!player)
+		return;
+
+	player->SetState(PLAYER_STATE::IDLE);
+	player->SetVelocity(0, 0, 0);
+}
+
 CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)
 {
 	static const std::unordered_map<std::string, LobbyMeshName> table = {

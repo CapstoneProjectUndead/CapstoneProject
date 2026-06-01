@@ -12,6 +12,7 @@
 #include "Inventory.h"
 #include "ItemFinder.h"
 #include "QuickSlot.h"
+#include "Shop.h"
 
 #include "Movement.h"
 #include "Animator.h"
@@ -63,7 +64,7 @@ void CMyPlayer::Update(float elapsedTime)
 			CKeyManager::GetInstance().SetMouseMode(false);
 		}
 	}
-	else {
+	else if (!CShop::GetInstance().IsOpen()) {   // 상점 이용 중엔 행동 입력 차단
 		// 우클릭: 퀵슬롯에 등록된 소비 아이템 사용
 		UseItem();
 
@@ -243,13 +244,18 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 		CSoundManager::GetInstance().Play(SOUND_ID::jump12);
 
 	// 4. 예측 이동 (지금은 완전히 서버 권한 방식이라 싱글 전용이 됨)
-	if (g_is_single) {
+	if (g_is_single && !CShop::GetInstance().IsOpen()) {
 		PredictMove(current_input, elapsedTime);
 	}
 }
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
 {
+	// 상점 이용 중엔 입력을 0으로 (서버 권한 이동이 멈추도록; 얼어붙은 이동 입력 방지)
+	if (CShop::GetInstance().IsOpen()) {
+		currentInput = InputData{false, false, false, false, false, false};
+		return;
+	}
 	if (state == PLAYER_STATE::DEAD)
 		return;
 
@@ -268,7 +274,7 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 
 void CMyPlayer::ProcessRotation()
 {
-	if (state == PLAYER_STATE::DEAD) 
+	if (state == PLAYER_STATE::DEAD || CShop::GetInstance().IsOpen())
 		return;
 
 	if (ImGui::GetIO().WantCaptureMouse)

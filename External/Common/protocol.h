@@ -82,6 +82,8 @@ enum PacketType : uint16_t
 	_S_RETURN_ZONE_ACTIVE, // 서버 → 클라: 복귀존 활성화 (라운드 종료 60초 전, 1회)
 	_S_PLAYER_RETURNED,    // 서버 → 클라: 특정 플레이어가 복귀존 진입 (1회)
 	_S_GAME_SETTLEMENT,    // 서버 → 클라: 라운드 종료 정산 결과
+
+	_C_SHOP_STATE,
 };
 
 #pragma pack (push, 1)
@@ -752,5 +754,13 @@ struct S_GameSettlement : public PacketHeader
 	}
 };
 static_assert(sizeof(S_GameSettlement) == 4 + 15, "S_GameSettlement size mismatch!");
+
+struct C_ShopState : public PacketHeader
+{
+	uint64     player_id;
+
+	C_ShopState() : PacketHeader(sizeof(C_ShopState), (UINT)PacketType::_C_SHOP_STATE) {}
+};
+static_assert(sizeof(C_ShopState) == 4 + 8, "C_ShopState size mismatch!");
 
 #pragma pack (pop)

@@ -7,6 +7,9 @@ class CUser;
 class CLobbyScene :
     public CScene
 {
+    // C키 상호작용 구역
+    enum class InteractZone { None, Reaper, Entrance };
+
 public:
     CLobbyScene(uint32 roomId);
     virtual ~CLobbyScene() override;
@@ -30,6 +33,7 @@ public:
 
     virtual void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt) override;
     void         Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt);
+    void         Handle_C_ShopState(shared_ptr<Session> session, const C_ShopState& pkt);
 
 private:
     enum class LobbyMeshName {
@@ -46,5 +50,8 @@ private:
 
 private:
     int  player_ready_cnt;
+
+    XMFLOAT2 reaper_anchor = { -2.228f, 3.414f };   // 사신(상점) NPC 앞
+    static constexpr float interact_radius_sq = 1.0f * 1.0f;   // 상호작용 반경(제곱)
 };
 

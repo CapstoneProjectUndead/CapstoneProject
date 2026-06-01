@@ -28,6 +28,7 @@
 #include "Inventory.h"
 #include "QuickSlot.h"
 #include "WorldItem.h"
+#include "Shop.h"
 #include "WorldTool.h"			// (장비)파밍 도구
 #include "MineableObject.h"
 #include "Animator.h"
@@ -1833,6 +1834,9 @@ void CGameScene::DrawSettlementModal()
 		show_settlement_modal = false;
 		PlayClickSound();
 		ImGui::CloseCurrentPopup();
+
+		// 게임 종료 → 다음 로비 진입 시 상점 재고/랜덤/가격 초기화
+		CShop::GetInstance().Reset();
 
 		if (g_is_single) {
 			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
