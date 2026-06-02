@@ -226,9 +226,11 @@ void CLobbyScene::HandleShopTransition()
 			prev_inventory_open = inventory->IsOpen();
 			inventory->SetOpen(true);
 
-			my_player->SetVelocity(0, 0, 0);
-			my_player->SetState(PLAYER_STATE::IDLE);
-			my_player->SetPosition(reaper_anchor.x, 0.5f, reaper_anchor.y);
+			if (g_is_single) {
+				my_player->SetVelocity(0, 0, 0);
+				my_player->SetState(PLAYER_STATE::IDLE);
+				my_player->SetPosition(reaper_anchor.x, 0.1f, reaper_anchor.y);
+			}
 		}
 		CKeyManager::GetInstance().SetMouseMode(false);   // false = UI 커서 모드
 
@@ -468,4 +470,12 @@ void CLobbyScene::Handle_S_Ready(std::shared_ptr<Session> session, const S_Ready
 	auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(slot));
 	if (readyUI)
 		readyUI->SetColor(XMFLOAT4{ 0, 0, 1, 1 });
+}
+
+void CLobbyScene::Handle_S_RefreshStore(std::shared_ptr<Session> session, const S_RefreshStore& pkt)
+{
+	if (my_player->GetID() != pkt.player_id)
+		return;
+
+	CShop::GetInstance().Reset();
 }

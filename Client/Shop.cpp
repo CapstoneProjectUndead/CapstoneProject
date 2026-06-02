@@ -6,6 +6,8 @@
 #include "Item.h"
 #include "MyPlayer.h"
 #include "Inventory.h"
+#include "ServerSession.h"
+#include "ServerPacketHandler.h"
 
 #include <algorithm>
 #include <cmath>
@@ -17,20 +19,20 @@
 // ---- 카탈로그 설정 (아이템 추가 시 여기서 수정) ----
 // 고정 판매 아이템 (항상 판매), 각 재고 3개:
 //   1=삽, 5=도끼, 9=곡괭이, 14=야구방망이, 16=유령퇴치스프레이
-static const int   kFixedItems[]      = { 1, 5, 9, 14, 16 };
+static const int   FIXED_ITEMS[]      = { 1, 5, 9, 14, 16 };
 
 // 랜덤 장비 풀 (1개 선정), 재고 1개 (아이콘 없는 아이템 제외):
 //   15=뿅망치, 17=마법지팡이, 19=장난감칼
-static const int   kRandomEquipPool[] = { 15, 17, 19 };
+static const int   RANDOM_EQUIP_POOL[] = { 15, 17, 19 };
 
 // 랜덤 음식 id 범위 (item_type == 음식); 아이콘 있는 id 중 몇 개를 중복 없이 선정
-static constexpr int kFoodIdMin = 20;
-static constexpr int kFoodIdMax = 45;
+static constexpr int FOOD_ID_MIN = 20;
+static constexpr int FOOD_ID_MAX = 45;
 
-static constexpr int    kFixedStock      = 3;
-static constexpr int    kRandomStock     = 1;
-static constexpr int    kRandomFoodCount = 4;
-static constexpr uint32 kRefreshCost     = 500;
+static constexpr int    FIXED_STOCK      = 3;
+static constexpr int    RANDOM_STOCK     = 1;
+static constexpr int    RANDOM_FOOD_COUNT = 4;
+static constexpr uint32 REFRESH_COST     = 500;
 
 CShop::CShop()
     : rng_(std::random_device{}())
@@ -82,6 +84,7 @@ void CShop::Reset()
         const ItemData* meta = ItemFactory::GetItemData(id);
         if (!meta)
             return;
+
         ShopSlot s;
         s.item_id    = id;
         s.base_price = meta->price;
@@ -94,29 +97,29 @@ void CShop::Reset()
     };
 
     // 고정 아이템
-    for (int id : kFixedItems)
-        addSlot(id, kFixedStock, true);
+    for (int id : FIXED_ITEMS)
+        addSlot(id, FIXED_STOCK, true);
 
     // 랜덤 장비 (1개)
     {
-        std::vector<int> pool(std::begin(kRandomEquipPool), std::end(kRandomEquipPool));
+        std::vector<int> pool(std::begin(RANDOM_EQUIP_POOL), std::end(RANDOM_EQUIP_POOL));
         std::shuffle(pool.begin(), pool.end(), rng_);
         if (!pool.empty())
-            addSlot(pool[0], kRandomStock, false);
+            addSlot(pool[0], RANDOM_STOCK, false);
     }
 
     // 랜덤 음식 (아이콘 있는 것, 중복 없이)
     {
         std::vector<int> pool;
-        for (int id = kFoodIdMin; id <= kFoodIdMax; ++id) {
+        for (int id = FOOD_ID_MIN; id <= FOOD_ID_MAX; ++id) {
             const ItemData* m = ItemFactory::GetItemData(id);
             if (m && !m->icon_path.empty())
                 pool.push_back(id);
         }
         std::shuffle(pool.begin(), pool.end(), rng_);
-        int n = std::min(static_cast<int>(pool.size()), kRandomFoodCount);
+        int n = std::min(static_cast<int>(pool.size()), RANDOM_FOOD_COUNT);
         for (int i = 0; i < n; ++i)
-            addSlot(pool[i], kRandomStock, false);
+            addSlot(pool[i], RANDOM_STOCK, false);
     }
 
     selected_slot = -1;
@@ -176,8 +179,25 @@ bool CShop::Purchase(const std::shared_ptr<CMyPlayer>& player, int slotIndex, in
         s.stock -= bought;
     }
     else {
-        // (멀티): 서버에 아이템 구매 통보 및 허락 받기
+        // (멀티): 클라에서 골드/재고를 먼저 차감하고 서버에 구매를 요청한다.
+        // 아이템은 서버 응답(S_AddItemList)을 받아 인벤토리에 추가한다.
+        auto session = player->GetSession();
+        if (!session)
+            return false;
 
+        uint32 total = s.price * static_cast<uint32>(qty);
+        player->SetGold(player->GetGold() - total);
+        s.stock -= qty;
+
+        C_BuyItem buyPkt;
+        buyPkt.player_id  = player->GetID();
+        buyPkt.item_id    = static_cast<uint16>(s.item_id);
+        buyPkt.qty        = static_cast<uint16>(qty);
+        buyPkt.unit_price = s.price;
+        buyPkt.scene_type = SCENE_TYPE::LOBBY;
+
+        auto sendBuffer = MAKE_SEND_BUFFER(buyPkt);
+        session->DoSend(sendBuffer);
     }
 
     return true;
@@ -187,16 +207,25 @@ bool CShop::RefreshPaid(const std::shared_ptr<CMyPlayer>& player)
 {
     if (!player)
         return false;
-    if (player->GetGold() < kRefreshCost)
+    if (player->GetGold() < REFRESH_COST)
         return false;
 
     if (g_is_single) {
-        player->SetGold(player->GetGold() - kRefreshCost);
+        player->SetGold(player->GetGold() - REFRESH_COST);
         Reset();
     }
     else{
-        // (멀티): 서버에 코인 차감 통지 (C_SpendCoin)
+        // (멀티): 서버에 코인 차감 통지 
+        auto session = player->GetSession();
+        if (!session)
+            return false;
 
+        C_RefreshStore freshPkt;
+        freshPkt.player_id = player->GetID();
+        freshPkt.scene_type = player->GetCurrentSceneType();
+        freshPkt.spent_coin = REFRESH_COST;
+        auto sendBuffer = MAKE_SEND_BUFFER(freshPkt);
+        session->DoSend(sendBuffer);
     }
 
     return true;
@@ -213,9 +242,9 @@ void CShop::OpenQtyModal(int slotIndex)
     open_qty_modal = true;
 }
 
-// =====================================================================
+// ========================================================
 // UI
-// =====================================================================
+// ========================================================
 void CShop::DrawStoreUI(std::shared_ptr<CMyPlayer> player)
 {
     if (!player || !is_open)
@@ -323,7 +352,7 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
         float btnH = 50.f * scale;
 
         // 새로고침 = 이미지 버튼 + 옆에 500원 표시
-        bool canRefresh = (player->GetGold() >= kRefreshCost);
+        bool canRefresh = (player->GetGold() >= REFRESH_COST);
         if (!canRefresh) ImGui::BeginDisabled();
         ImTextureID refreshTex = CImGuiManager::GetInstance().GetTexture("refresh");
         // 버튼 배경 투명 처리 (아이콘만 보이게)

@@ -84,6 +84,11 @@ enum PacketType : uint16_t
 	_S_GAME_SETTLEMENT,    // 서버 → 클라: 라운드 종료 정산 결과
 
 	_C_SHOP_STATE,
+	_C_BUY_ITEM,        // 클라 → 서버: 상점에서 아이템 구매 요청
+	_C_SPEND_COIN,
+	_S_UPDATE_COIN,
+	_C_REFRESH_STORE,
+	_S_REFRESH_STORE,
 };
 
 #pragma pack (push, 1)
@@ -762,5 +767,57 @@ struct C_ShopState : public PacketHeader
 	C_ShopState() : PacketHeader(sizeof(C_ShopState), (UINT)PacketType::_C_SHOP_STATE) {}
 };
 static_assert(sizeof(C_ShopState) == 4 + 8, "C_ShopState size mismatch!");
+
+// 클라 → 서버: 상점 구매 요청 (개인 상점이라 가격은 클라가 계산, 서버는 소지금 검증에 사용)
+struct C_BuyItem : public PacketHeader
+{
+	uint64     player_id;
+	uint16     item_id;
+	uint16     qty;
+	uint32     unit_price;   // 클라가 계산한 개당 가격
+	SCENE_TYPE scene_type;
+
+	C_BuyItem() : PacketHeader(sizeof(C_BuyItem), (UINT)PacketType::_C_BUY_ITEM) {}
+};
+static_assert(sizeof(C_BuyItem) == 4 + 17, "C_BuyItem size mismatch!");
+
+struct C_SpendCoin : public PacketHeader
+{
+	uint64     player_id;
+	uint32	   spent_coin;
+	SCENE_TYPE scene_type;
+
+	C_SpendCoin() : PacketHeader(sizeof(C_SpendCoin), (UINT)PacketType::_C_SPEND_COIN) {}
+};
+static_assert(sizeof(C_SpendCoin) == 4 + 13, "C_SpendCoin size mismatch!");
+
+struct S_UpdateCoin : public PacketHeader
+{
+	uint64     player_id;
+	uint32	   coin;
+	SCENE_TYPE scene_type;
+
+	S_UpdateCoin() : PacketHeader(sizeof(S_UpdateCoin), (UINT)PacketType::_S_UPDATE_COIN) {}
+};
+static_assert(sizeof(S_UpdateCoin) == 4 + 13, "S_UpdateCoin size mismatch!");
+
+struct C_RefreshStore : public PacketHeader
+{
+	uint64     player_id;
+	uint32	   spent_coin;
+	SCENE_TYPE scene_type = SCENE_TYPE::LOBBY;
+
+	C_RefreshStore() : PacketHeader(sizeof(C_RefreshStore), (UINT)PacketType::_C_REFRESH_STORE) {}
+};
+static_assert(sizeof(C_RefreshStore) == 4 + 13, "C_RefreshStore size mismatch!");
+
+struct S_RefreshStore : public PacketHeader
+{
+	uint64     player_id;
+	SCENE_TYPE scene_type = SCENE_TYPE::LOBBY;
+
+	S_RefreshStore() : PacketHeader(sizeof(S_RefreshStore), (UINT)PacketType::_S_REFRESH_STORE) {}
+};
+static_assert(sizeof(S_RefreshStore) == 4 + 9, "S_RefreshStore size mismatch!");
 
 #pragma pack (pop)

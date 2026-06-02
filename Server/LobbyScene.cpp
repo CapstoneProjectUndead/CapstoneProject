@@ -9,6 +9,9 @@
 #include "GeometryLoader.h"
 #include "ServerObjectFactory.h"
 #include "GameScene.h"
+#include "ItemFactory.h"
+#include "Item.h"
+#include "Inventory.h"
 
 #undef min
 #undef max
@@ -296,12 +299,131 @@ void CLobbyScene::Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt
 
 void CLobbyScene::Handle_C_ShopState(shared_ptr<Session> session, const C_ShopState& pkt)
 {
+	auto it = players.find(pkt.player_id);
+	if (it == players.end() || !it->second)
+		return;
+
+	auto& player = it->second;
+
+	player->SetState(PLAYER_STATE::IDLE);
+	player->SetVelocity(0, 0, 0);
+}
+
+void CLobbyScene::Handle_C_BuyItem(shared_ptr<Session> session, const C_BuyItem& pkt)
+{
 	auto player = players[pkt.player_id];
 	if (!player)
 		return;
 
-	player->SetState(PLAYER_STATE::IDLE);
-	player->SetVelocity(0, 0, 0);
+	if (pkt.qty == 0 || pkt.item_id == 0)
+		return;
+
+	auto inventory = player->GetInventory();
+	if (!inventory)
+		return;
+
+	// 총액 = 클라가 계산한 개당 가격 × 수량 (개인 상점이라 가격은 클라 신뢰)
+	uint32 total = pkt.unit_price * static_cast<uint32>(pkt.qty);
+
+	// 소지금(coin) 검증: 부족하면 구매 거부
+	if (player->GetCoin() < total) {
+		S_UpdateCoin coinPkt;
+		coinPkt.player_id = player->GetID();
+		coinPkt.coin = player->GetCoin();
+		coinPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
+		session->DoSend(sendBuffer);
+		return;
+	}
+
+	// 아이템을 생성해 서버 인벤토리에 추가 (월드에 스폰하지 않는 단순 생성)
+	vector<shared_ptr<CItem>> bought;
+	bought.reserve(pkt.qty);
+	for (uint16 i = 0; i < pkt.qty; ++i) {
+		auto item = ItemFactory::Create(pkt.item_id);
+		if (!item)
+			break;
+		if (!inventory->AddItem(item))
+			break;
+		bought.push_back(item);
+	}
+
+	if (bought.empty())
+		return;
+
+	// 실제 추가된 수량만큼만 소지금 차감
+	uint32 amount = player->GetCoin() - pkt.unit_price * static_cast<uint32>(bought.size());
+	player->SetCoin(amount);
+
+	S_UpdateCoin coinPkt;
+	coinPkt.player_id = player->GetID();
+	coinPkt.coin = amount;
+	coinPkt.scene_type = scene_type;
+	auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
+	session->DoSend(sendBuffer);
+
+	// S_AddItemList로 묶어서 구매자에게만 통보 (클라가 인벤토리에 추가)
+	S_ADDITEMLIST_WRITE pktWriter(pkt.player_id, SCENE_TYPE::LOBBY);
+	auto list = pktWriter.ReserveItemList(static_cast<uint16>(bought.size()));
+	for (size_t i = 0; i < bought.size(); ++i) {
+		list[i].item_id      = bought[i]->GetItemId();
+		list[i].inventory_id = bought[i]->GetInventoryID();
+		list[i].item_type    = bought[i]->GetItemType();
+	}
+
+	sendBuffer = pktWriter.CloseAndReturn();
+	session->DoSend(sendBuffer);
+}
+
+void CLobbyScene::Handle_C_SpendCoin(shared_ptr<Session> session, const C_SpendCoin& pkt)
+{
+	auto it = players.find(pkt.player_id);
+	if (it == players.end() || !it->second)
+		return;
+
+	auto& player = it->second;
+
+	uint32 playerCoin = player->GetCoin();
+	if (playerCoin >= pkt.spent_coin)
+		player->SetCoin(playerCoin - pkt.spent_coin);
+
+	S_UpdateCoin coinPkt;
+	coinPkt.player_id = player->GetID();
+	coinPkt.coin = playerCoin;
+	coinPkt.scene_type = scene_type;
+	auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
+	session->DoSend(sendBuffer);
+}
+
+void CLobbyScene::Handle_C_RefreshStore(shared_ptr<Session> session, const C_RefreshStore& pkt)
+{
+	auto it = players.find(pkt.player_id);
+	if (it == players.end() || !it->second)
+		return;
+
+	auto& player = it->second;
+
+	bool success = false;
+	uint32 playerCoin = player->GetCoin();
+	if (playerCoin >= pkt.spent_coin) {
+		player->SetCoin(playerCoin - pkt.spent_coin);
+		success = true;
+	}
+
+	S_UpdateCoin coinPkt;
+	coinPkt.player_id = player->GetID();
+	coinPkt.coin = playerCoin;
+	coinPkt.scene_type = scene_type;
+	auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
+	session->DoSend(sendBuffer);
+
+	if (success) {
+		S_RefreshStore freshPkt;
+		freshPkt.player_id = player->GetID();
+		freshPkt.scene_type = player->GetCurrentSceneType();
+		sendBuffer = MAKE_SEND_BUFFER(freshPkt);
+		session->DoSend(sendBuffer);
+	}
 }
 
 CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)

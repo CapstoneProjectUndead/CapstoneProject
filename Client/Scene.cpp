@@ -4,6 +4,9 @@
 #include "Shader.h"
 #include "Scene.h"
 #include "ObjectFactory.h"
+#include "ItemFactory.h"
+#include "Item.h"
+#include "Inventory.h"
 #include "PhysicsManager.h"
 #include "Collider.h"
 
@@ -573,4 +576,33 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 void CScene::Handle_S_Scene_Change(std::shared_ptr<Session>& session, const S_SceneChange& pkt)
 {
 	CSceneManager::GetInstance().ChangeScene(pkt.target_scene);
+}
+
+void CScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemList& pkt)
+{
+	// 여러 아이템을 도감번호로 생성해 인벤토리에 추가한다.
+	// 줍기(월드 아이템)와 달리 월드 오브젝트가 없어도 되므로 로비(상점 구매)/게임 양쪽에서 사용한다.
+	S_AddItemList::ItemList itemList = pkt.GetItemList();
+
+	for (uint32 i = 0; i < pkt.item_count; ++i) {
+		auto item = ItemFactory::Create(itemList[i].item_id);
+		if (!item)
+			continue;
+
+		if (!my_player) {
+			// 씬 전환 타이밍상 my_player가 아직 이 씬에 없으면 로비씬의 것을 사용
+			my_player = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->GetMyPlayer();
+		}
+
+		if (my_player && my_player->GetInventory())
+			my_player->GetInventory()->AddItemWithId(item, itemList[i].inventory_id);
+	}
+}
+
+void CScene::Handle_S_UpdateCoin(std::shared_ptr<Session> session, S_UpdateCoin& pkt)
+{
+	if (my_player->GetID() != pkt.player_id)
+		return;
+
+	my_player->SetGold(pkt.coin);
 }

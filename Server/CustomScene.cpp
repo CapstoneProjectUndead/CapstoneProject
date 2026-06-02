@@ -69,6 +69,7 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 
 	// Player 생성 (플레이어 ID = 유저 ID)
 	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room, GetPhysicsManager());
+	player->SetCoin(10000);
 
 	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정했는데
 	// 5월 19일 기준, 이제 커스텀씬도 입장함
@@ -101,6 +102,17 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 		enterPkt.room_id = user->GetRoomID();
 		enterPkt.scene_type = player->GetCurrentSceneType();
 		auto sendBuffer = MAKE_SEND_BUFFER(enterPkt);
+		if (user->GetSession())
+			user->GetSession()->DoSend(sendBuffer);
+	}
+
+	// 6월 2일 추가
+	{
+		S_UpdateCoin coinPkt;
+		coinPkt.player_id = player->GetID();
+		coinPkt.coin = 10000;
+		coinPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 		if (user->GetSession())
 			user->GetSession()->DoSend(sendBuffer);
 	}

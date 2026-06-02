@@ -695,3 +695,47 @@ bool Handle_S_GAME_SETTLEMENT(std::shared_ptr<Session> session, S_GameSettlement
 
 	return true;
 }
+
+bool Handle_S_UPDATE_COIN(std::shared_ptr<Session> session, S_UpdateCoin& pkt)
+{
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::NONE:
+		break;
+	case SCENE_TYPE::TITLE:
+		break;
+	case SCENE_TYPE::CUSTOMS:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = (CGameScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	case SCENE_TYPE::UI:
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
+		return true;
+
+	targetScene->Handle_S_UpdateCoin(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_REFRESH_STORE(std::shared_ptr<Session> session, S_RefreshStore& pkt)
+{
+	CLobbyScene* lobbyScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	if (!lobbyScene)
+		return true;
+
+	lobbyScene->Handle_S_RefreshStore(session, pkt);
+
+	return true;
+}

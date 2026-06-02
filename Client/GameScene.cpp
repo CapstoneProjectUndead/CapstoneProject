@@ -1336,97 +1336,6 @@ void CGameScene::PlayBareHandDigSound(bool isBareHand, bool isMoving)
 	}
 }
 
-void CGameScene::Handle_S_CHoldFail(std::shared_ptr<Session> session, S_CHoldFail& pkt)
-{
-	if (my_player->GetID() != pkt.player_id)
-		return;
-
-	// C-홀드 액션(빙의 해제/빈사 소생) 실패 → 타이머·대상 모두 리셋
-	my_player->ResetCHoldTimer();
-	my_player->SetCHoldTarget(CHOLD_TARGET::NONE);
-	CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
-}
-
-void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt)
-{
-	return_active = true;
-	return_center = XMFLOAT3{ pkt.x, pkt.y, pkt.z };
-	return_range  = pkt.range;
-}
-
-void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt)
-{
-	const bool isSelf = (my_player && my_player->GetID() == pkt.player_id);
-
-	ReturnToast toast;
-	toast.is_self = isSelf;
-	toast.timer   = RETURN_TOAST_DURATION;
-
-	// ImGui는 UTF-8을 요구. 소스 인코딩 의존을 피하기 위해 한글을 UTF-8 hex 바이트로 직접 작성.
-	if (isSelf) {
-		my_player->SetReturned(true);
-
-		// "복귀 완료"
-		toast.text = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
-	}
-	else {
-		// "%llu 플레이어 복귀"
-		char buf[64];
-		snprintf(buf, sizeof(buf),
-			"%llu \xED\x94\x8C\xEB\xA0\x88\xEC\x9D\xB4\xEC\x96\xB4 \xEB\xB3\xB5\xEA\xB7\x80",
-			(unsigned long long)pkt.player_id);
-		toast.text = buf;
-	}
-
-	return_toasts.push_back(std::move(toast));
-	CSoundManager::GetInstance().Play(SOUND_ID::Return);
-}
-
-void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt)
-{
-	settlement_result = SettlementResult{};
-	settlement_result.base_coin          = pkt.base_coin;
-	settlement_result.final_coin         = pkt.final_coin;
-	settlement_result.is_returned        = pkt.is_returned;
-	settlement_result.all_returned_bonus = pkt.all_returned_bonus;
-
-	auto list = pkt.GetTreasureList();
-	for (uint16 i = 0; i < list.Count(); ++i) {
-		SettlementEntry e;
-		e.item_id = list[i].item_id;
-		e.price   = list[i].price;
-		e.count   = list[i].count;
-
-		// 이름/아이콘 조회
-		auto item = ItemFactory::Create(e.item_id);
-		if (item) {
-			e.name      = item->GetName();
-			e.icon_path = item->GetIconPath();
-		}
-		settlement_result.entries.push_back(std::move(e));
-	}
-
-	// 소지금 반영 + 인벤토리에서 보물 제거
-	if (my_player) {
-		my_player->SetGold(my_player->GetGold() + pkt.final_coin);
-
-		auto inv = my_player->GetInventory();
-		if (inv) {
-			std::vector<uint32> to_remove;
-			for (auto& [invId, item] : inv->GetItems()) {
-				if (item->GetItemType() == ITEM_TYPE::TREASURE)
-					to_remove.push_back(invId);
-			}
-			for (auto id : to_remove)
-				inv->RemoveItem(id);
-		}
-	}
-
-	show_settlement_modal = true;
-	CKeyManager::GetInstance().SetMouseMode(false);
-	CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
-}
-
 void CGameScene::TriggerSinglePlayerSettlement()
 {
 	if (show_settlement_modal || !my_player)
@@ -2195,26 +2104,6 @@ void CGameScene::Handle_S_AddItem(std::shared_ptr<Session> session, const S_AddI
 	my_player->GetInventory()->AddItemWithId(worldItem->GetItem(), pkt.inventory_id);
 }
 
-void CGameScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemList& pkt)
-{
-	S_AddItemList::ItemList itemList = pkt.GetItemList();
-	
-	for (uint32 i = 0; i < pkt.item_count; ++i) {
-		auto item = ItemFactory::Create(itemList[i].item_id);
-		if (item) {
-			if (my_player) {
-				my_player->GetInventory()->AddItemWithId(item, itemList[i].inventory_id);
-			}
-			else {
-				// 이러면 안되지만 일단 임시로...
-				// 이 패킷을 받는 시점에서 my_player가 아직 Lobby씬에 있어서 GameScene에서는 nullptr 이다.
-				my_player = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->GetMyPlayer();
-				my_player->GetInventory()->AddItemWithId(item, itemList[i].inventory_id);
-			}
-		}
-	}
-}
-
 void CGameScene::Handle_S_RemoveItem(std::shared_ptr<Session> session, const S_RemoveItem& pkt)
 {
 	if (!my_player)
@@ -2405,4 +2294,95 @@ void CGameScene::Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySoun
 				CSoundManager::GetInstance().Play((SOUND_ID)pkt.sound_id, 1, volume);
 		}
 	}
+}
+
+void CGameScene::Handle_S_CHoldFail(std::shared_ptr<Session> session, S_CHoldFail& pkt)
+{
+	if (my_player->GetID() != pkt.player_id)
+		return;
+
+	// C-홀드 액션(빙의 해제/빈사 소생) 실패 → 타이머·대상 모두 리셋
+	my_player->ResetCHoldTimer();
+	my_player->SetCHoldTarget(CHOLD_TARGET::NONE);
+	CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
+}
+
+void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt)
+{
+	return_active = true;
+	return_center = XMFLOAT3{ pkt.x, pkt.y, pkt.z };
+	return_range = pkt.range;
+}
+
+void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const S_PlayerReturned& pkt)
+{
+	const bool isSelf = (my_player && my_player->GetID() == pkt.player_id);
+
+	ReturnToast toast;
+	toast.is_self = isSelf;
+	toast.timer = RETURN_TOAST_DURATION;
+
+	// ImGui는 UTF-8을 요구. 소스 인코딩 의존을 피하기 위해 한글을 UTF-8 hex 바이트로 직접 작성.
+	if (isSelf) {
+		my_player->SetReturned(true);
+
+		// "복귀 완료"
+		toast.text = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
+	}
+	else {
+		// "%llu 플레이어 복귀"
+		char buf[64];
+		snprintf(buf, sizeof(buf),
+			"%llu \xED\x94\x8C\xEB\xA0\x88\xEC\x9D\xB4\xEC\x96\xB4 \xEB\xB3\xB5\xEA\xB7\x80",
+			(unsigned long long)pkt.player_id);
+		toast.text = buf;
+	}
+
+	return_toasts.push_back(std::move(toast));
+	CSoundManager::GetInstance().Play(SOUND_ID::Return);
+}
+
+void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_GameSettlement& pkt)
+{
+	settlement_result = SettlementResult{};
+	settlement_result.base_coin = pkt.base_coin;
+	settlement_result.final_coin = pkt.final_coin;
+	settlement_result.is_returned = pkt.is_returned;
+	settlement_result.all_returned_bonus = pkt.all_returned_bonus;
+
+	auto list = pkt.GetTreasureList();
+	for (uint16 i = 0; i < list.Count(); ++i) {
+		SettlementEntry e;
+		e.item_id = list[i].item_id;
+		e.price = list[i].price;
+		e.count = list[i].count;
+
+		// 이름/아이콘 조회
+		auto item = ItemFactory::Create(e.item_id);
+		if (item) {
+			e.name = item->GetName();
+			e.icon_path = item->GetIconPath();
+		}
+		settlement_result.entries.push_back(std::move(e));
+	}
+
+	// 소지금 반영 + 인벤토리에서 보물 제거
+	if (my_player) {
+		my_player->SetGold(my_player->GetGold() + pkt.final_coin);
+
+		auto inv = my_player->GetInventory();
+		if (inv) {
+			std::vector<uint32> to_remove;
+			for (auto& [invId, item] : inv->GetItems()) {
+				if (item->GetItemType() == ITEM_TYPE::TREASURE)
+					to_remove.push_back(invId);
+			}
+			for (auto id : to_remove)
+				inv->RemoveItem(id);
+		}
+	}
+
+	show_settlement_modal = true;
+	CKeyManager::GetInstance().SetMouseMode(false);
+	CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
 }
