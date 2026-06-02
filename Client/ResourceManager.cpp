@@ -87,7 +87,19 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_fish",             L"../Modeling/item/image/Food_fish.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Food_lunch",            L"../Modeling/item/image/Food_lunch.png");
 
-    // 보물 아이템 이미지 (※ 다른 아이콘과 달리 ../Modeling/treasure/image 경로)
+    // 기타 아이템 이미지
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_balloon", L"../Modeling/item/image/Etc_balloon.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_bananapeel", L"../Modeling/item/image/Etc_bananapeel.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_cobweb", L"../Modeling/item/image/Etc_cobweb.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_memo", L"../Modeling/item/image/Etc_memo.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_oldsocks", L"../Modeling/item/image/Etc_oldsocks.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_pail", L"../Modeling/item/image/Etc_pail.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_piggybank", L"../Modeling/item/image/Etc_piggybank.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_slime", L"../Modeling/item/image/Etc_slime.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_trap", L"../Modeling/item/image/Etc_trap.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "Etc_vuvuzela", L"../Modeling/item/image/Etc_vuvuzela.png");
+
+    // 보물 아이템 이미지 
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Rusty_Coin",             L"../Modeling/treasure/image/C_Rusty_Coin.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Glass_Marble",           L"../Modeling/treasure/image/C_Glass_Marble.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "C_Old_Spoon",              L"../Modeling/treasure/image/C_Old_Spoon.png");
