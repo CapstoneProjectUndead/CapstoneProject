@@ -444,6 +444,17 @@ void CShop::DrawShopCard(const std::shared_ptr<CMyPlayer>& player, int index, fl
         }
     }
 
+    // 품절 시 "Sold Out" 이미지 오버레이
+    if (soldOut) {
+        ImTextureID soldTex = CImGuiManager::GetInstance().GetTexture("sold_out");
+        if (soldTex) {
+            float  pad  = 6.f * scale;
+            ImVec2 sMin = ImVec2(p0.x + pad, p0.y + pad);
+            ImVec2 sMax = ImVec2(imgMax.x - pad, imgMax.y - pad);
+            dl->AddImage(soldTex, sMin, sMax);
+        }
+    }
+
     // 정보 띠: 가격(좌) / 재고(우)
     ImFont* font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
     float   fpx  = 13.f * scale;

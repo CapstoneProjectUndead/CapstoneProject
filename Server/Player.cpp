@@ -1182,6 +1182,9 @@ bool CPlayer::FindHistoryAtTime(float targetTime, ServerFrameHistory& outResult)
 
 void CPlayer::UpdateStamina(float elapsedTime)
 {
+    if (current_scene_type == SCENE_TYPE::LOBBY)
+        return;
+
     const float drainPerSec = 16.7f;        // 뛸 때 초당 감소 (6초면 바닥)
     const float regenPerSec = 15.0f;        // 쉴 때 초당 회복 
     const float recoverThreshold = 30.0f;   // 이 값 이상 회복돼야 다시 달리기 허용

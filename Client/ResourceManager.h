@@ -40,6 +40,7 @@ public:
 private:
     void LoadTitleSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
     void LoadCustomSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
+    void LoadLobbySceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
     void LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue);
     void LoadSounds();
 };

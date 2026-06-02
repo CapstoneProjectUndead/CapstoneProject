@@ -41,6 +41,9 @@ public:
 	void ProcessInputQueue(const float elapsedTime);
 	void SimulateMove(const InputData& input, float elapsedTime, bool updateState = true);
 
+	// 게임씬 입장할 때, 아이템 지급 (1회성)
+	bool get_items_once = false;
+
 public:
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }

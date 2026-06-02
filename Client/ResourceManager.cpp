@@ -11,6 +11,9 @@ void CResourceManager::LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueu
     // 커스텀 씬 관련 텍스쳐 로드
     LoadCustomSceneTextures(device, cmdQueue);
 
+    // 로비 씬 관련 텍스쳐 로드
+    LoadLobbySceneTextures(device, cmdQueue);
+
     // 게임 씬 관련 텍스처 로드
     LoadGameSceneTextures(device, cmdQueue);
 
@@ -40,6 +43,11 @@ void CResourceManager::LoadCustomSceneTextures(ID3D12Device* device, ID3D12Comma
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_dog", L"../Resource/CustomScene/Dog.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_cat", L"../Resource/CustomScene/Cat.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_bunny", L"../Resource/CustomScene/Bunny.png");
+}
+
+void CResourceManager::LoadLobbySceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
+{
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "sold_out", L"../Resource/LobbyScene/sold_out.png");
 }
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
