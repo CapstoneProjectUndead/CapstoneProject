@@ -267,8 +267,17 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 	// 컬링을 위한 sphere
 	obj->SetBoundingSphere(proto->GetBoundingSphere());
 
-	// Transform 계산
-	XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);
+	// Transform 계산 1
+	//XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);
+	//XMStoreFloat4x4(&obj->world_matrix, world);
+
+	// Transform 계산 2
+	XMMATRIX scaleMatrix = XMMatrixIdentity();
+	if (name == "tent_cloth" || name == "tent_corner_cloth" || name == "tent_corner") {
+		scaleMatrix = XMMatrixScaling(1.0f, 1.4f, 1.0f); //천막 크기 조절
+	}
+
+	XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * scaleMatrix * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);
 	XMStoreFloat4x4(&obj->world_matrix, world);
 
 	// Renderer에 Mesh/Material 설정 (땅속 보물 등 안 보이는 객체는 스킵)
@@ -389,7 +398,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 			auto proto = prototypes[name];
 
-			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE || inst.type == MapGenerator::EModelType::TREASURE_HIDDEN || 
+			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE || inst.type == MapGenerator::EModelType::TREASURE_HIDDEN ||
 				inst.type == MapGenerator::EModelType::TREASURE_VILLAGE);
 			bool isHidden = (inst.type == MapGenerator::EModelType::TREASURE_HIDDEN);
 
@@ -420,11 +429,11 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 			// collider copy (땅속 보물은 콜라이더도 스킵 - 플레이어가 위로 지나갈 수 있게)
 			if (!isHidden) {
-				for(auto protoCollider : proto->GetComponents<CColliderComponent>()) {
+				for (auto protoCollider : proto->GetComponents<CColliderComponent>()) {
 					auto copyCollider = std::make_shared<CColliderComponent>(*protoCollider);
 					obj->SetComponent(copyCollider);
 					if (isTreasure)
-						copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER});
+						copyCollider->SetFillter({ copyCollider->GetCollisionFilter().category, EColLayer::PLAYER });
 					CPhysicsManager::GetInstance().SetCollider(copyCollider);
 				}
 			}
@@ -874,6 +883,10 @@ void CObjectFactory::LoadItemFrame()
 	}
 	{
 		std::string fileName{ "../Modeling/treasure.bin" };
+		LoadNode(fileName);
+	}
+	{
+		std::string fileName{ "../Modeling/Etcitem.bin" };
 		LoadNode(fileName);
 	}
 }
