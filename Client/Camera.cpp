@@ -303,3 +303,22 @@ void CCamera::UpdateFrustum()
 	XMMATRIX viewInv = XMMatrixInverse(nullptr, XMLoadFloat4x4(&view_matrix));
 	default_frustum.Transform(frustum, viewInv);
 }
+
+void CCamera::PullInToDistance(const XMFLOAT3& lookTarget, float maxDist)
+{
+	XMVECTOR vTarget = XMLoadFloat3(&lookTarget);
+	XMVECTOR vDir = XMVectorSubtract(XMLoadFloat3(&position), vTarget);
+
+	// 타깃과 거의 같은 위치면 방향이 불안정하므로 보정하지 않음
+	if (XMVectorGetX(XMVector3Length(vDir)) < 0.0001f)
+		return;
+
+	vDir = XMVector3Normalize(vDir);
+	XMVECTOR newPos = XMVectorAdd(vTarget, XMVectorScale(vDir, maxDist));
+	XMStoreFloat3(&position, newPos);
+
+	// 당겨온 위치에서 다시 타깃을 바라보도록 뷰/절두체 갱신
+	SetLookAt(position, lookTarget, up);
+	GenerateViewMatrix();
+	UpdateFrustum();
+}

@@ -92,6 +92,10 @@ private:
     // 복귀존 월드 마커 (수평 원형 링, 카메라 view/proj로 투영)
     void DrawReturnMarker();
 
+    // 빈사 3인칭 / 사망 관전 카메라가 벽을 뚫거나 맵 밖을 비추지 않도록,
+    // 타깃과 카메라 사이에 벽이 있으면 카메라를 앞으로 당겨오는 충돌 보정.
+    void ApplyCameraCollision();
+
     // 복귀 토스트 (본인 "복귀 완료" + 타 플레이어 "{id} 플레이어 복귀")
     void DrawReturnToasts();
 

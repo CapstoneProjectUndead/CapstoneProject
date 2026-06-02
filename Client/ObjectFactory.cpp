@@ -54,6 +54,10 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, const st
 	float radius = XMVectorGetX(XMVector3Length(XMLoadFloat3(&node->mesh.bounds.Extents))) * 1.5f;
 	obj->SetBoundingSphere(node->mesh.bounds.Center, radius);
 
+	// 카메라가 콜라이더에 의존하지 않고도 벽을 뚫지 않도록 로컬 메시 AABB를 저장한다.
+	// (콜라이더는 멀티플레이에서 클라이언트에 생성되지 않기 때문)
+	obj->SetLocalAABB(node->mesh.bounds);
+
 	// MeshRendererComponent
 	auto meshRenderer = std::make_shared<CMeshRendererComponent>();
 	meshRenderer->SetShader(shaderName);
@@ -266,6 +270,9 @@ void CObjectFactory::CopyFromPrototype(std::shared_ptr<CObject> obj, const std::
 
 	// 컬링을 위한 sphere
 	obj->SetBoundingSphere(proto->GetBoundingSphere());
+
+	// 카메라 충돌용 AABB (프로토타입에서 복사; 싱글·멀티 모두 유효)
+	obj->SetLocalAABB(proto->GetLocalAABB());
 
 	// Transform 계산 1
 	//XMMATRIX world = XMLoadFloat4x4(&proto->world_matrix) * XMMatrixRotationY(XMConvertToRadians(rotationY)) * XMMatrixTranslation(position.x, position.y, position.z);

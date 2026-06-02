@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <cstdio>
 #include "GameScene.h"
 #include "SceneManager.h"
@@ -252,6 +252,10 @@ void CGameScene::Update(float elapsedTime)
 
 	CScene::Update(elapsedTime);
 
+	// 빈사/관전 3인칭 카메라가 벽을 뚫고 들어가지 않도록 한다.
+	// CScene::Update 이후에 실행되어, 이 프레임의 카메라 위치가 확정된 뒤 보정한다.
+	ApplyCameraCollision();
+
 	if (g_is_single) {
 		if (!show_settlement_modal)
 			UpdateMonsters(elapsedTime);
@@ -299,6 +303,50 @@ void CGameScene::Update(float elapsedTime)
 			UpdateCHoldAction(elapsedTime);
 		}
 	};
+}
+
+// 빈사/관전 3인칭 카메라가 벽을 뚫지 않도록, 머리->카메라 사이의 벽까지 거리를 재서 카메라를 앞으로 당긴다.
+// (정적 오브젝트의 로컬 AABB를 월드 변환해 레이 검사 - 콜라이더에 의존하지 않으므로 멀티에서도 동작)
+void CGameScene::ApplyCameraCollision()
+{
+	if (!camera || !camera->NeedsCollisionCheck())
+		return;
+
+	XMFLOAT3 target = camera->GetLookAtPoint();   // player's head being viewed
+	XMFLOAT3 camPos = camera->GetPos();
+
+	XMVECTOR vTarget = XMLoadFloat3(&target);
+	XMVECTOR vDir    = XMVectorSubtract(XMLoadFloat3(&camPos), vTarget);
+	float desiredDist = XMVectorGetX(XMVector3Length(vDir));
+	if (desiredDist < 0.0001f)
+		return;
+	vDir = XMVector3Normalize(vDir);
+
+	float closest = desiredDist;
+	for (const auto& obj : objects) {
+		if (obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
+			continue;
+
+		BoundingBox local = obj->GetLocalAABB();
+		// skip objects without a usable AABB (e.g. meshless static objects)
+		if (local.Extents.x <= 0.0f && local.Extents.y <= 0.0f && local.Extents.z <= 0.0f)
+			continue;
+
+		BoundingBox box;
+		local.Transform(box, XMLoadFloat4x4(&obj->world_matrix));
+
+		float hitDist = 0.0f;
+		if (box.Intersects(vTarget, vDir, hitDist) && hitDist < closest)
+			closest = hitDist;
+	}
+
+	if (closest < desiredDist) {
+		// keep a small gap from the wall, and never collapse fully onto the head
+		constexpr float WALL_MARGIN = 0.15f;
+		constexpr float MIN_DIST    = 0.2f;
+		float safe = std::max(closest - WALL_MARGIN, MIN_DIST);
+		camera->PullInToDistance(target, safe);
+	}
 }
 
 void CGameScene::DrawUI()

@@ -70,6 +70,17 @@ public:
 
 	void UpdateFrustum();
 	BoundingFrustum GetFrustum() const { return frustum; }
+
+	// 빈사 3인칭(orbit) / 사망 관전 처럼 카메라가 타깃 뒤에 떨어져 있는 모드인지.
+	// 이때만 벽 충돌 보정을 수행한다(1인칭 평상시엔 불필요).
+	bool NeedsCollisionCheck() const { return orbit_mode || mode == EMode::THIRD_PERSON; }
+
+	// 현재 카메라가 바라보고 있는 지점(타깃 머리). 벽 충돌 레이의 출발점으로 사용.
+	XMFLOAT3 GetLookAtPoint() const { return look_at; }
+
+	// 카메라를 lookTarget 기준 maxDist 거리로 당겨온 뒤 뷰를 다시 계산한다(벽에 막힐 때 호출).
+	void PullInToDistance(const XMFLOAT3& lookTarget, float maxDist);
+
 protected:
 	EMode mode{ EMode::THIRD_PERSON };
 	bool  orbit_mode{ false };

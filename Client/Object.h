@@ -48,6 +48,12 @@ public:
 	void SetBoundingSphere(const XMFLOAT3& center, float radius) { local_sphere.Center = center; local_sphere.Radius = radius; };
 	void SetBoundingSphere(const BoundingSphere& sphere) { local_sphere = sphere; };
 	BoundingSphere GetBoundingSphere() const { return local_sphere; };
+
+	// 로컬 메시 AABB. 정적 오브젝트는 매 프레임 Update를 돌지 않아 world AABB가 없으므로,
+	// 카메라 충돌 검사 등에서 이 로컬 박스를 world_matrix로 그때그때 변환해 사용한다.
+	void SetLocalAABB(const BoundingBox& box) { local_aabb = box; };
+	BoundingBox GetLocalAABB() const { return local_aabb; };
+
 	//
 	virtual XMVECTOR GetHeadPosition() const { return XMLoadFloat3(&position); };
 	void SetPosition(float x, float y, float z) { position = XMFLOAT3(x, y, z); }
@@ -117,6 +123,8 @@ protected:
 	// 절두체 컬링을 위한 Bounding
 	BoundingSphere local_sphere;
 	BoundingSphere world_sphere;
+	// 카메라 충돌용 로컬 메시 AABB (extents 0 = 미설정)
+	BoundingBox local_aabb{ XMFLOAT3{0.0f, 0.0f, 0.0f}, XMFLOAT3{0.0f, 0.0f, 0.0f} };
 };
 
 template<typename T>
