@@ -145,6 +145,24 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Crystal_Skull",          L"../Modeling/treasure/image/R_Crystal_Skull.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Viking_Helmet",          L"../Modeling/treasure/image/R_Viking_Helmet.png");
 
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "L_Phoenix_Feather",          L"../Modeling/treasure/image/L_Phoenix_Feather.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "L_Philosopher_Stone",          L"../Modeling/treasure/image/L_Philosopher_Stone.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "L_Imperial_crown",          L"../Modeling/treasure/image/L_Imperial_crown.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "L_Heart_of_Ocean",          L"../Modeling/treasure/image/L_Heart_of_Ocean.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "L_Excalibur",          L"../Modeling/treasure/image/L_Excalibur.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Unicorn_Horn",          L"../Modeling/treasure/image/E_Unicorn_Horn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Meteorite_Shard", L"../Modeling/treasure/image/E_Meteorite_Shard.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Golden_Chalice", L"../Modeling/treasure/image/E_Golden_Chalice.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Dinosaur_Egg_Fossil", L"../Modeling/treasure/image/E_Dinosaur_Egg_Fossil.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Diamond_Ring", L"../Modeling/treasure/image/E_Diamond_Ring.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Cursed_Totem", L"../Modeling/treasure/image/E_Cursed_Totem.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "E_Chest_of_Gold", L"../Modeling/treasure/image/E_Chest_of_Gold.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Treasure_Map", L"../Modeling/treasure/image/R_Treasure_Map.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Samurai_Katana", L"../Modeling/treasure/image/R_Samurai_Katana.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Knight_Armor", L"../Modeling/treasure/image/R_Knight_Armor.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Jade_Bangle", L"../Modeling/treasure/image/R_Jade_Bangle.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "R_Antique_Typewriter", L"../Modeling/treasure/image/R_Antique_Typewriter.png");
+
     // 빙의 해제 UI
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "ghost_icon", L"../Resource/GameScene/ghost.png");
 

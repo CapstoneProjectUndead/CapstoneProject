@@ -903,19 +903,6 @@
         "item_id": 67,
         "item_type": 3,
         "item_sub_type": 0,
-        "item_name": "망가진 자전거",
-        "weight": 32.0,
-        "grade": 0,
-        "price": 240,
-        "max_stack": 1,
-        "is_throwable": true,
-        "icon_path": "",
-        "description": ""
-    },
-    {
-        "item_id": 68,
-        "item_type": 3,
-        "item_sub_type": 0,
         "item_name": "생선 뼈",
         "weight": 1.0,
         "grade": 0,
@@ -926,7 +913,7 @@
         "description": ""
     },
     {
-        "item_id": 69,
+        "item_id": 68,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "나무 단추",
@@ -939,7 +926,7 @@
         "description": ""
     },
     {
-        "item_id": 70,
+        "item_id": 69,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "빈 깡통",
@@ -952,7 +939,7 @@
         "description": ""
     },
     {
-        "item_id": 71,
+        "item_id": 70,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "벽돌",
@@ -965,7 +952,7 @@
         "description": ""
     },
     {
-        "item_id": 72,
+        "item_id": 71,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "금 간 접시",
@@ -978,7 +965,7 @@
         "description": ""
     },
     {
-        "item_id": 73,
+        "item_id": 72,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "낡은 부츠",
@@ -991,7 +978,7 @@
         "description": ""
     },
     {
-        "item_id": 74,
+        "item_id": 73,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "고장난 시계",
@@ -1004,7 +991,7 @@
         "description": ""
     },
     {
-        "item_id": 75,
+        "item_id": 74,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "구리 반지",
@@ -1017,7 +1004,7 @@
         "description": ""
     },
     {
-        "item_id": 76,
+        "item_id": 75,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "비단 손수건",
@@ -1030,7 +1017,7 @@
         "description": ""
     },
     {
-        "item_id": 77,
+        "item_id": 76,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "진주 귀걸이",
@@ -1043,7 +1030,7 @@
         "description": ""
     },
     {
-        "item_id": 78,
+        "item_id": 77,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "황동 촛대",
@@ -1056,7 +1043,7 @@
         "description": ""
     },
     {
-        "item_id": 79,
+        "item_id": 78,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "자수정 조각",
@@ -1069,7 +1056,7 @@
         "description": ""
     },
     {
-        "item_id": 80,
+        "item_id": 79,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "고대 점토판",
@@ -1082,7 +1069,7 @@
         "description": ""
     },
     {
-        "item_id": 81,
+        "item_id": 80,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "청동 거울",
@@ -1095,7 +1082,7 @@
         "description": ""
     },
     {
-        "item_id": 82,
+        "item_id": 81,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "프릴 리본",
@@ -1108,7 +1095,7 @@
         "description": ""
     },
     {
-        "item_id": 83,
+        "item_id": 82,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "가죽 벨트",
@@ -1121,7 +1108,7 @@
         "description": ""
     },
     {
-        "item_id": 84,
+        "item_id": 83,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "도자기 화병",
@@ -1134,7 +1121,7 @@
         "description": ""
     },
     {
-        "item_id": 85,
+        "item_id": 84,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "황금 주사위",
@@ -1147,7 +1134,7 @@
         "description": ""
     },
     {
-        "item_id": 86,
+        "item_id": 85,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "복싱 글러브",
@@ -1160,7 +1147,7 @@
         "description": ""
     },
     {
-        "item_id": 87,
+        "item_id": 86,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "차 열쇠",
@@ -1173,7 +1160,7 @@
         "description": ""
     },
     {
-        "item_id": 88,
+        "item_id": 87,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "명품 가방",
@@ -1186,7 +1173,7 @@
         "description": ""
     },
     {
-        "item_id": 89,
+        "item_id": 88,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "은 반지",
@@ -1199,7 +1186,7 @@
         "description": ""
     },
     {
-        "item_id": 90,
+        "item_id": 89,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "에메랄드 브로치",
@@ -1212,7 +1199,7 @@
         "description": ""
     },
     {
-        "item_id": 91,
+        "item_id": 90,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "수정 해골",
@@ -1225,7 +1212,7 @@
         "description": ""
     },
     {
-        "item_id": 92,
+        "item_id": 91,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "바이킹 투구",
@@ -1238,7 +1225,7 @@
         "description": ""
     },
     {
-        "item_id": 93,
+        "item_id": 92,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "무사의 검",
@@ -1247,11 +1234,11 @@
         "price": 1800,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "R_Samurai_Katana",
         "description": ""
     },
     {
-        "item_id": 94,
+        "item_id": 93,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "옥 팔찌",
@@ -1260,11 +1247,11 @@
         "price": 700,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "R_Jade_Bangle",
         "description": ""
     },
     {
-        "item_id": 95,
+        "item_id": 94,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "보물 지도",
@@ -1273,11 +1260,11 @@
         "price": 240,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "R_Treasure_Map",
         "description": ""
     },
     {
-        "item_id": 96,
+        "item_id": 95,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "기사 갑옷",
@@ -1286,11 +1273,11 @@
         "price": 2950,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "R_Knight_Armor",
         "description": ""
     },
     {
-        "item_id": 97,
+        "item_id": 96,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "골동품 타자기",
@@ -1299,11 +1286,11 @@
         "price": 1350,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "R_Antique_Typewriter",
         "description": ""
     },
     {
-        "item_id": 98,
+        "item_id": 97,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "다이아몬드 반지",
@@ -1312,11 +1299,11 @@
         "price": 1500,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Diamond_Ring",
         "description": ""
     },
     {
-        "item_id": 99,
+        "item_id": 98,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "유니콘 뿔",
@@ -1325,11 +1312,11 @@
         "price": 5000,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Unicorn_Horn",
         "description": ""
     },
     {
-        "item_id": 100,
+        "item_id": 99,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "황금 성배",
@@ -1338,11 +1325,11 @@
         "price": 4520,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Golden_Chalice",
         "description": ""
     },
     {
-        "item_id": 101,
+        "item_id": 100,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "공룡 알 화석",
@@ -1351,11 +1338,11 @@
         "price": 9800,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Dinosaur_Egg_Fossil",
         "description": ""
     },
     {
-        "item_id": 102,
+        "item_id": 101,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "운석 파편",
@@ -1364,11 +1351,11 @@
         "price": 12000,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Meteorite_Shard",
         "description": ""
     },
     {
-        "item_id": 103,
+        "item_id": 102,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "저주받은 토템",
@@ -1377,24 +1364,24 @@
         "price": 7500,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Cursed_Totem",
         "description": ""
     },
     {
-        "item_id": 104,
+        "item_id": 103,
         "item_type": 3,
         "item_sub_type": 0,
-        "item_name": "금괴 상자",
+        "item_name": "금화 상자",
         "weight": 80.0,
         "grade": 3,
         "price": 19520,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "E_Chest_of_Gold",
         "description": ""
     },
     {
-        "item_id": 105,
+        "item_id": 104,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "불사조의 깃털",
@@ -1403,11 +1390,11 @@
         "price": 1000,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "L_Phoenix_Feather",
         "description": ""
     },
     {
-        "item_id": 106,
+        "item_id": 105,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "바다의 심장",
@@ -1416,11 +1403,11 @@
         "price": 37200,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "L_Heart_of_Ocean",
         "description": ""
     },
     {
-        "item_id": 107,
+        "item_id": 106,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "엑스칼리버",
@@ -1429,24 +1416,24 @@
         "price": 42890,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "L_Excalibur",
         "description": ""
     },
     {
-        "item_id": 108,
+        "item_id": 107,
         "item_type": 3,
         "item_sub_type": 0,
-        "item_name": "황제의 옥좌",
+        "item_name": "황제의 왕관",
         "weight": 150.0,
         "grade": 4,
         "price": 132460,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "L_Imperial_crown",
         "description": ""
     },
     {
-        "item_id": 109,
+        "item_id": 108,
         "item_type": 3,
         "item_sub_type": 0,
         "item_name": "현자의 돌",
@@ -1455,7 +1442,7 @@
         "price": 52520,
         "max_stack": 1,
         "is_throwable": true,
-        "icon_path": "",
+        "icon_path": "L_Philosopher_Stone",
         "description": ""
     }
 ]
