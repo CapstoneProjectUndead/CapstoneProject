@@ -886,6 +886,10 @@ void CObjectFactory::LoadItemFrame()
 		LoadNode(fileName);
 	}
 	{
+		std::string fileName{ "../Modeling/treasure2.bin" };
+		LoadNode(fileName);
+	}
+	{
 		std::string fileName{ "../Modeling/Etcitem.bin" };
 		LoadNode(fileName);
 	}

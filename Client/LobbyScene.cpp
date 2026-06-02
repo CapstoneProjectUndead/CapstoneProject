@@ -33,6 +33,8 @@ void CLobbyScene::Initialize()
 
 	if (objects.empty()) {
 		objects = factory->CreateLobby();
+
+		factory->LoadItemFrame();
 	}
 
 	// UI 생성
