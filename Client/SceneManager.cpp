@@ -67,7 +67,7 @@ void CSceneManager::Init(ID3D12Device* device)
 	// renderer
 	renderers.resize(EShaderName::Count);
 	{
-		auto shadowRenderer = std::make_unique<CAniRenderer>();
+		auto shadowRenderer = std::make_unique<CShadowRenderer>();
 		shadowRenderer->Initialize(device, 100);
 		renderers[EShaderName::Shadow] = std::move(shadowRenderer);
 

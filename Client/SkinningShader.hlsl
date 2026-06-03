@@ -3,11 +3,26 @@
 
 struct BONE_INPUT
 {
-    VS_INPUT v;
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
+    float3 tangent_local : TANGENT;
 #ifdef SKINNED
     uint4 bone_indices : BLENDINDICES;
     float4 bone_weights : BLENDWEIGHT;
 #endif
+};
+
+struct VS_OUTPUT
+{
+    float4 position_clip : SV_POSITION;
+    float4 shadow_pos : POSITION0;
+    float3 position_world : POSITION1;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
+    float3 tangent_world : TANGENT;
+
+    nointerpolation uint instanceID : INSTANCEID;
 };
 
 struct AnimationData
@@ -85,22 +100,22 @@ VS_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
     
             float4x4 blendedMatrix = lerp(matA, matB, finalWeight);
 
-            posL += weights[i] * mul(float4(input.v.position, 1.0f), blendedMatrix).xyz;
-            normalL += weights[i] * mul(input.v.normal, (float3x3) blendedMatrix);
+            posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
+            normalL += weights[i] * mul(input.normal, (float3x3) blendedMatrix);
         }
     
-        input.v.position = posL;
-        input.v.normal = normalL;
+        input.position = posL;
+        input.normal = normalL;
     }
 #endif
-    float4 posW = mul(float4(input.v.position, 1.0f), finalWorld);
+    float4 posW = mul(float4(input.position, 1.0f), finalWorld);
     output.position_world = posW.xyz;
 
-    output.normal = mul(input.v.normal, (float3x3) finalWorld);
+    output.normal = mul(input.normal, (float3x3) finalWorld);
     
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
-    output.tex = input.v.tex;
-    output.tangent_world = mul(input.v.tangent_local, (float3x3) finalWorld);
+    output.tex = input.tex;
+    output.tangent_world = mul(input.tangent_local, (float3x3) finalWorld);
     
     output.shadow_pos = mul(posW, gShadowTransform);
     
