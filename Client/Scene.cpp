@@ -105,8 +105,15 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 	shaders[EShaderName::CubeShadow]->RenderBegin(commandList);
 	cubeShadowMap->RenderBegin(commandList);
 	light->Render(commandList);
-
+	BoundingFrustum cameraFrustum;
+	if (camera) {
+		cameraFrustum = camera->GetFrustum();
+	}
 	for (UINT i = 0; i < light->GetActiveDotNum(); ++i) {
+		if (!light->IsPointLightVisible(i, cameraFrustum)) {
+			continue;
+		}
+		// 화면에 보이는 조명일 때만 6개 축 큐브맵 섀도우 드로우 콜 발행
 		commandList->SetGraphicsRoot32BitConstant(2, i, 0); // gCurrentLightIndex 세팅
 		renderers[EShaderName::Shadow]->Render(commandList);
 	}
@@ -237,6 +244,7 @@ void CScene::SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList)
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	commandList->ClearRenderTargetView(rtvHandles[0], clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandles[1], clearColor, 0, nullptr);
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 }
 

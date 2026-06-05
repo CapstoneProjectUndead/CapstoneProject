@@ -211,6 +211,25 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
 	}
+	light->ClearPointLights();
+	if (g_is_single) {
+		for (const auto& inst : factory->GetInstData()) {
+			if (inst.model == EModelVariant::STREETLAMP) {
+				XMFLOAT3 pos{ inst.position };
+				pos.y += 2.23f;
+				light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+			}
+		}
+	}
+	else {
+		for (const auto& inst : instance_data) {
+			if (inst.model == EModelVariant::STREETLAMP) {
+				XMFLOAT3 pos{ inst.position };
+				pos.y += 2.23f;
+				light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+			}
+		}
+	}
 }
 
 void CGameScene::Update(float elapsedTime)

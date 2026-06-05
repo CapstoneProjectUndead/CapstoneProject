@@ -97,6 +97,8 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
+		light->AddPointLight(XMFLOAT3(2.49913216, 1.08363628, 1.45683444), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+		light->AddPointLight(XMFLOAT3(1.83547652, 2.55953884, -2.89159632), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
 	}
 }
 

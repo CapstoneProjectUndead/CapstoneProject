@@ -5,21 +5,11 @@
 void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     light.ambient_light = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-    light.active_dot_num = 2;
+    light.active_dot_num = 0; // 초기에는 점 조명 0개
 
-    // dir
-    light.lights[0].direction = XMFLOAT3(0.5 , -1.0, 0.01);
-    light.lights[0].strength = XMFLOAT3(0.7f, 0.7, 0.7);
-    // dot
-    light.lights[1].position = XMFLOAT3(-1.0f, 1.5f, 3.0f); // 조명 위치
-    light.lights[1].falloff_end = 3.0f;                   // 조명 최대 반경 (FarZ로 활용)
-    light.lights[1].falloff_start = 1.0f;
-    light.lights[1].strength = XMFLOAT3(1.0f, 0.8f, 0.6f);  // 조명 색상
-
-    light.lights[2].position = XMFLOAT3(2.0f, 1.5f, 3.0f); // 조명 위치
-    light.lights[2].falloff_end = 3.0f;                   // 조명 최대 반경 (FarZ로 활용)
-    light.lights[2].falloff_start = 1.0f;
-    light.lights[2].strength = XMFLOAT3(0.0f, 0.8f, 0.6f);  // 조명 색상
+    // 0번은 무조건 방향성 조명(시작 조명)
+    light.lights[0].direction = XMFLOAT3(0.5f, -1.0f, 0.01f);
+    light.lights[0].strength = XMFLOAT3(0.7f, 0.7f, 0.7f);
 
     light_cb = CreateBufferResource(
         device,
@@ -33,70 +23,82 @@ void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* 
     light_cb->Map(0, nullptr, reinterpret_cast<void**>(&mapped));
 }
 
+// 기존 점조명 리셋
+void CLightManager::ClearPointLights()
+{
+    light.active_dot_num = 0;
+    for (UINT i = 1; i < MaxLights; ++i)
+    {
+        light.lights[i] = Light{};
+    }
+}
+
+// 새로운 점조명 추가 API
+bool CLightManager::AddPointLight(const XMFLOAT3& position, const XMFLOAT3& strength, float falloffStart, float falloffEnd)
+{
+    // 최대 개수(15개)를 초과하면 등록 취소
+    if (light.active_dot_num >= MAX_POINT_LIGHTS)
+        return false;
+
+    UINT nextIdx = light.active_dot_num + 1;
+
+    light.lights[nextIdx].position = position;
+    light.lights[nextIdx].strength = strength;
+    light.lights[nextIdx].falloff_start = falloffStart;
+    light.lights[nextIdx].falloff_end = falloffEnd;
+
+    light.active_dot_num++;
+    return true;
+}
+
 void CLightManager::Update(const CCamera* camera, const BoundingSphere& sceneBounds)
 {
     light.eyePos_world = camera->GetPos();
 
-    // Only the first "main" light casts a shadow.
-    XMVECTOR lightDir = XMLoadFloat3(&Vector3::Normalize( light.lights[0].direction));
+    XMVECTOR lightDir = XMLoadFloat3(&Vector3::Normalize(light.lights[0].direction));
     XMVECTOR targetPos = XMLoadFloat3(&sceneBounds.Center);
     XMVECTOR lightPos = targetPos - 2.0f * sceneBounds.Radius * lightDir;
     XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
 
-    // Transform bounding sphere to light space
     XMFLOAT3 sphereCenterLS;
     XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
 
     float l = sphereCenterLS.x - sceneBounds.Radius;
     float b = sphereCenterLS.y - sceneBounds.Radius;
-    float n = sphereCenterLS.z - sceneBounds.Radius; // Near
+    float n = sphereCenterLS.z - sceneBounds.Radius;
     float r = sphereCenterLS.x + sceneBounds.Radius;
     float t = sphereCenterLS.y + sceneBounds.Radius;
-    float f = sphereCenterLS.z + sceneBounds.Radius; // Far
+    float f = sphereCenterLS.z + sceneBounds.Radius;
 
     XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
-
     XMMATRIX vp = lightView * lightProj;
-
     XMStoreFloat4x4(&light.shadow_view_proj, XMMatrixTranspose(vp));
 
-    // Transform NDC space [-1,+1]^2 to texture space [0,1]^2(NDC to UV)
     XMMATRIX T(
         0.5f, 0.0f, 0.0f, 0.0f,
         0.0f, -0.5f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.5f, 0.5f, 0.0f, 1.0f);
-
-    // Shadow Transform (World -> View -> Proj -> Texture)
     XMMATRIX S = vp * T;
     XMStoreFloat4x4(&light.shadow_transform, XMMatrixTranspose(S));
 
-    // cube shadow
-    // DX12 큐브맵 표준 축 방향 정의 (+X, -X, +Y, -Y, +Z, -Z)
+    // 큐브 섀도우 맵 매트릭스 갱신 (현재 등록된 active_dot_num 만큼만 루프)
     const XMVECTOR cubeTargets[6] = {
-        XMVectorSet(1.0f,  0.0f,  0.0f, 0.0f), // +X
-        XMVectorSet(-1.0f,  0.0f,  0.0f, 0.0f), // -X
-        XMVectorSet(0.0f,  1.0f,  0.0f, 0.0f), // +Y
-        XMVectorSet(0.0f, -1.0f,  0.0f, 0.0f), // -Y
-        XMVectorSet(0.0f,  0.0f,  1.0f, 0.0f), // +Z
-        XMVectorSet(0.0f,  0.0f, -1.0f, 0.0f)  // -Z
+        XMVectorSet(1.0f,  0.0f,  0.0f, 0.0f), XMVectorSet(-1.0f,  0.0f,  0.0f, 0.0f),
+        XMVectorSet(0.0f,  1.0f,  0.0f, 0.0f), XMVectorSet(0.0f, -1.0f,  0.0f, 0.0f),
+        XMVectorSet(0.0f,  0.0f,  1.0f, 0.0f), XMVectorSet(0.0f,  0.0f, -1.0f, 0.0f)
     };
     const XMVECTOR cubeUps[6] = {
-        XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), // +X (Up: +Y)
-        XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), // -X (Up: +Y)
-        XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f), // +Y (Up: -Z)
-        XMVectorSet(0.0f, 0.0f,  1.0f, 0.0f), // -Y (Up: +Z)
-        XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), // +Z (Up: +Y)
-        XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f)  // -Z (Up: +Y)
+        XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f),
+        XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f), XMVectorSet(0.0f, 0.0f,  1.0f, 0.0f),
+        XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f), XMVectorSet(0.0f, 1.0f,  0.0f, 0.0f)
     };
 
-    for (UINT i = 1; i < light.active_dot_num + 1; ++i) {
+    for (UINT i = 1; i <= light.active_dot_num; ++i) {
         XMVECTOR pointLightPos = XMLoadFloat3(&light.lights[i].position);
-        // 시야각 90도, 종횡비 1.0f의 점 조명용 원근 투영 행렬
         XMMATRIX cubeProj = XMMatrixPerspectiveFovLH(XM_PIDIV2, 1.0f, light.lights[i].falloff_start, light.lights[i].falloff_end);
 
-        // 6개 방향에 대해 뷰 * 투영 행렬을 구해 배열에 대입
         for (int j = 0; j < 6; ++j) {
             XMMATRIX cubeView = XMMatrixLookAtLH(pointLightPos, pointLightPos + cubeTargets[j], cubeUps[j]);
             XMMATRIX cubeVP = cubeView * cubeProj;
@@ -113,6 +115,5 @@ void CLightManager::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList
 void CLightManager::Render(ID3D12GraphicsCommandList* commandList)
 {
     UpdateShaderVariables(commandList);
-
     commandList->SetGraphicsRootConstantBufferView(1, light_cb->GetGPUVirtualAddress());
 }

@@ -214,6 +214,13 @@ void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCo
 		shadowVertices.push_back(sv);
 	}
 
+	for (const auto& m : mesh.materials) {
+		if (!m.normalMap.empty()) {
+			CalculateTangents<CSkinnedVertex>(vertices, mesh.indices);
+			break;
+		}
+	}
+
 	// 일반 버퍼 세팅
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
 

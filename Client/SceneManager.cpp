@@ -133,7 +133,6 @@ void CSceneManager::Init(ID3D12Device* device)
 
 	// G-Buffer 셋업 및 최종 조명 합성 바인딩 데이터 연결
 	{
-
 		buffer_color = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
 		buffer_normal = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R16G16B16A16_FLOAT);
 

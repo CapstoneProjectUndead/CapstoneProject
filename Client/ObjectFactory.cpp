@@ -343,7 +343,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 	if (prototypes.empty()) LoadGameScene();
 
 	std::vector<std::shared_ptr<CObject>> objects;
-	std::vector<MapGenerator::InstanceData> instData = MapGenerator::Generate3DMap();
+	inst_data = MapGenerator::Generate3DMap();
 
 	// 맵 데이터를 순회하며 보물 좌표 + ID 부여, 몬스터 스폰 위치 추출
 	treasures.clear();
@@ -353,7 +353,7 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 
 	uint32 treasure_id = 0;
 
-	for (const auto& inst : instData) {
+	for (const auto& inst : inst_data) {
 
 		if (inst.type == MapGenerator::EModelType::TREASURE
 			|| inst.type == MapGenerator::EModelType::TREASURE_VILLAGE) {
@@ -373,12 +373,15 @@ std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateGameScene()
 		}
 	}
 
-	for (const auto& inst : instData) {
+	for (auto& inst : inst_data) {
 		std::vector<std::string> meshNames = CMapAssetManager::GetInstance().GetMeshNames(inst.type);
 		for (const std::string& name : meshNames) {
 			if (!prototypes.contains(name)) continue;
 
 			auto proto = prototypes[name];
+
+			EModelVariant model = CMapAssetManager::GetInstance().GetVariantFromName(name);
+			inst.model = model;
 
 			bool isTreasure = (inst.type == MapGenerator::EModelType::TREASURE || inst.type == MapGenerator::EModelType::TREASURE_HIDDEN || 
 				inst.type == MapGenerator::EModelType::TREASURE_VILLAGE);
