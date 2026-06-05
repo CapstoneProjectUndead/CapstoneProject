@@ -56,11 +56,11 @@ void CScene::AnimateObjects(float elapsedTime)
 	}
 
 	for (const auto& obj : objects) {
-		if(obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
+		if (obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
 			obj->Update(elapsedTime);
 	}
 
-	// 오브젝트 삭제 (4. 28 추가)
+	// 오브젝트 삭제
 	std::vector<uint64> toDelete;
 	for (const auto& obj : objects) {
 		if (obj->IsPendingDelete())
@@ -76,9 +76,9 @@ void CScene::Update(float elapsedTime)
 	CPhysicsManager::GetInstance().Update(elapsedTime);
 	AnimateObjects(elapsedTime);
 
-	if(camera)
+	if (camera)
 		camera->Update(my_player->position, elapsedTime);
-	if(light)
+	if (light)
 		light->Update(camera.get(), scene_bounds);
 
 	ui_manager->Update(elapsedTime);
@@ -92,7 +92,8 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
-	// dir shadow map
+
+	// [Directional Light Shadow Map]
 	shaders[EShaderName::Shadow]->RenderBegin(commandList);
 	shadowMap->RenderBegin(commandList);
 	light->Render(commandList);
@@ -100,23 +101,18 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 	shadowMap->RenderEnd(commandList);
 	shaders[EShaderName::Shadow]->RenderEnd(commandList);
 
-	// cube shadow map
+	// [Cube Shadow Map]
 	shaders[EShaderName::CubeShadow]->RenderBegin(commandList);
-	{
-		cubeShadowMap->RenderBegin(commandList);
-		light->Render(commandList);
-		auto cubeShadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
-		D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = cubeShadowHeap->GetSRVGPUHandle(0);
-		commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);	// pointShadowMap set(Commond.hlsli)
+	cubeShadowMap->RenderBegin(commandList);
+	light->Render(commandList);
 
-		for (UINT i = 0; i < light->GetActiveDotNum(); ++i) {
-			commandList->SetGraphicsRoot32BitConstant(7, i, 0);		// gCurrentLightIndex set(ShadowShader.hlsl)
-			renderers[EShaderName::Shadow]->Render(commandList);
-		}
-
-		cubeShadowMap->RenderEnd(commandList);
+	for (UINT i = 0; i < light->GetActiveDotNum(); ++i) {
+		commandList->SetGraphicsRoot32BitConstant(2, i, 0); // gCurrentLightIndex 세팅
+		renderers[EShaderName::Shadow]->Render(commandList);
 	}
+	cubeShadowMap->RenderEnd(commandList);
 	shaders[EShaderName::CubeShadow]->RenderEnd(commandList);
+
 	renderers[EShaderName::Shadow]->ClearAllBatch();
 }
 
@@ -129,42 +125,147 @@ void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
 
-	// Draw Phase
-	for (size_t i = 0; i < EShaderName::Count; ++i) {
-		if (!shaders[i] || i == EShaderName::Shadow) continue;
+	SetGBufferRenderTargets(commandList);
+	for (size_t i = EShaderName::Skinning; i <= EShaderName::TwoSide; ++i) {
+		if (!shaders[i]) continue;
+
 		shaders[i]->RenderBegin(commandList);
+		camera->UpdateShaderVariables(commandList, false);
 
-		if (i == EShaderName::Billboard) {
-			camera->UpdateShaderVariablesBillBoard(commandList);
-		}
-		else if (i == EShaderName::UI) {
-			camera->UpdateShaderVariables(commandList, true);
-		}
-		else {
-			camera->UpdateShaderVariables(commandList, false);
-		}
-
-		bool useLight = (i != EShaderName::UI && i != EShaderName::Billboard);
-		if (light && useLight) {
-			light->Render(commandList);
-		}
-
-		// 인스턴싱 드로우
-		if (i == EShaderName::SkyBox) {
-			CSceneManager::GetInstance().GetSkybox()->Render(commandList, shaders[EShaderName::SkyBox]->GetHeapManager());
-		}
 		if (renderers[i]) {
 			renderers[i]->Render(commandList);
 			renderers[i]->ClearAllBatch();
-			if (i == EShaderName::UI) {
-				renderers[EShaderName::Text]->Render(commandList);
-				renderers[EShaderName::Text]->ClearAllBatch();
-			}
 		}
-
 		shaders[i]->RenderEnd(commandList);
 	}
+}
 
+void CScene::RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf)
+{
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+	auto& renderers = CSceneManager::GetInstance().GetRanderers();
+	if (!shaders[EShaderName::Deferred] || !camera) return;
+
+	TransitionGBuffersToSRV(commandList);
+	TransitionDepthBuffer(commandList, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_DEPTH_READ);
+	SetBackBufferRenderTarget(commandList);
+
+	shaders[EShaderName::Deferred]->RenderBegin(commandList);
+
+	commandList->IASetVertexBuffers(0, 0, nullptr);
+	commandList->IASetIndexBuffer(nullptr);
+
+	camera->UpdateShaderVariables(commandList, false);
+	camera->UpdateShaderVariablesShadow(commandList);
+	if (light) {
+		light->Render(commandList);
+	}
+
+	commandList->DrawInstanced(3, 1, 0, 0);
+	shaders[EShaderName::Deferred]->RenderEnd(commandList);
+
+	SetBackBufferWithDepthReadOnly(commandList);
+	if (shaders[EShaderName::SkyBox]) {
+		shaders[EShaderName::SkyBox]->RenderBegin(commandList);
+		camera->UpdateShaderVariables(commandList, false);
+		if (CSceneManager::GetInstance().GetSkybox()) {
+			CSceneManager::GetInstance().GetSkybox()->Render(commandList, shaders[EShaderName::SkyBox]->GetHeapManager());
+		}
+		shaders[EShaderName::SkyBox]->RenderEnd(commandList);
+	}
+	if (shaders[EShaderName::UI] && renderers[EShaderName::UI]) {
+		shaders[EShaderName::UI]->RenderBegin(commandList);
+		camera->UpdateShaderVariables(commandList, true);
+
+		renderers[EShaderName::UI]->Render(commandList);
+		renderers[EShaderName::UI]->ClearAllBatch();
+
+		renderers[EShaderName::Text]->Render(commandList);
+		renderers[EShaderName::Text]->ClearAllBatch();
+
+		shaders[EShaderName::UI]->RenderEnd(commandList);
+	}
+
+	TransitionDepthBuffer(commandList, D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+}
+
+void CScene::Render(ID3D12GraphicsCommandList* commandList)
+{
+	RenderShadowPass(commandList);        // 1. 각 조명 시점 깊이 맵 빌드
+	RenderBasePass(commandList);          // 2. 가시 물체 렌더링 및 G-Buffer 축적 (메인 뎁스는 DEPTH_WRITE 유지)
+}
+
+void CScene::TransitionDepthBuffer(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+{
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Transition.pResource = gGameFramework.GetDepthStencilBuffer().Get();
+	barrier.Transition.StateBefore = before;
+	barrier.Transition.StateAfter = after;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	cmdList->ResourceBarrier(1, &barrier);
+}
+
+D3D12_RESOURCE_BARRIER CScene::CreateResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+{
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = resource;
+	barrier.Transition.StateBefore = stateBefore;
+	barrier.Transition.StateAfter = stateAfter;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	return barrier;
+}
+
+void CScene::SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList)
+{
+	CSceneManager& sceneManager = CSceneManager::GetInstance();
+
+	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(2, barriers);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2] = {
+		sceneManager.GetGBufferColorRTV(),
+		sceneManager.GetGBufferNormalRTV()
+	};
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = gGameFramework.GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+
+	commandList->OMSetRenderTargets(2, rtvHandles, FALSE, &dsvHandle);
+
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	commandList->ClearRenderTargetView(rtvHandles[0], clearColor, 0, nullptr);
+	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+}
+
+void CScene::TransitionGBuffersToSRV(ID3D12GraphicsCommandList* commandList)
+{
+	CSceneManager& sceneManager = CSceneManager::GetInstance();
+
+	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(2, barriers);
+}
+
+void CScene::SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE backBufferRtv = gGameFramework.GetRtvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+	backBufferRtv.ptr += (gGameFramework.GetSwapChainBufferIndex() * gGameFramework.GetRtvIncrementSize());
+
+	commandList->OMSetRenderTargets(1, &backBufferRtv, FALSE, nullptr);
+}
+
+void CScene::SetBackBufferWithDepthReadOnly(ID3D12GraphicsCommandList* commandList)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE backBufferRtv = gGameFramework.GetRtvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+	backBufferRtv.ptr += (gGameFramework.GetSwapChainBufferIndex() * gGameFramework.GetRtvIncrementSize());
+
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = gGameFramework.GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+
+	commandList->OMSetRenderTargets(1, &backBufferRtv, FALSE, &dsvHandle);
 }
 
 void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
@@ -181,32 +282,17 @@ void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
 		}
 	}
 
-	// 플레이어 수집
 	if (my_player) {
 		my_player->OnCollect(renderers);
 	}
 
-	// UI 매니저 수집
 	ui_manager->Collect(renderers);
-}
-
-void CScene::RenderBegin(ID3D12GraphicsCommandList* commandList)
-{
-	CollectObjects(commandList);
-	RenderShadowPass(commandList);
-}
-
-void CScene::Render(ID3D12GraphicsCommandList* commandList)
-{
-	RenderBasePass(commandList);
 }
 
 void CScene::Exit()
 {
 	CPhysicsManager::GetInstance().ClearCollider();
-
 	RemoveAllMonsters();
-
 	last_input_state = !last_input_state;
 }
 
@@ -222,8 +308,8 @@ void CScene::Enter()
 
 void CScene::DrawUI_Final()
 {
-	ManageIME();  // 공통 로직 (IME/포커스)
-	DrawUI();     // 자식이 구현할 구체적인 UI 로직
+	ManageIME();
+	DrawUI();
 
 	if (!ImGui::IsAnyItemHovered())
 		last_hovered_id_ = 0;

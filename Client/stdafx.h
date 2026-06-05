@@ -185,9 +185,11 @@ enum EShaderName : size_t {
 	UI,
 	Billboard,
 	Text,
+	SkyBox,
 	Shadow,
 	CubeShadow,
-	SkyBox,
+	ScreenShadow,
+	Deferred,
 	Count
 };
 

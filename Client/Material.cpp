@@ -19,9 +19,9 @@ void CMaterial::SetNormalIndex(const std::shared_ptr<CTexture>& tex)
 	material.normal_idx = srvIndex;
 }
 
-std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap)
+std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, const EShaderName shaderName)
 {
-	std::string materialKey = name + "_" + std::to_string((uintptr_t)heap);
+	std::string materialKey = name + "_" + std::to_string(shaderName);
 	auto it = materials.find(materialKey);
 	if (it != materials.end()) return it->second;
 
@@ -32,16 +32,16 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name
 	return mat;
 }
 
-std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name, CDescriptorHeapManager* heap)
+std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name, const EShaderName shaderName)
 {
-	std::string materialKey = name + "_" + std::to_string((uintptr_t)heap);
+	std::string materialKey = name + "_" + std::to_string(shaderName);
 	auto it = materials.find(materialKey);
 	if (it != materials.end()) return nullptr;
 
 	return it->second;
 }
 
-void CMaterialManager::LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap)
+void CMaterialManager::LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, const EShaderName shaderName)
 {
-	GetMaterial(name, tex, heap);
+	GetMaterial(name, tex, shaderName);
 }

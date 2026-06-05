@@ -33,10 +33,10 @@ class CMaterialManager
 {
 public:
     // 없으면 생성
-    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap);
-    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, CDescriptorHeapManager* heap);
+    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, const EShaderName shaderName);
+    std::shared_ptr<CMaterial> GetMaterial(const std::string& name, const EShaderName shaderName);
     // 미리 Load
-    void LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, CDescriptorHeapManager* heap);
+    void LoadMaterial(const std::string& name, const std::shared_ptr<CTexture>& tex, const EShaderName shaderName);
 private:
     std::unordered_map<std::string, std::shared_ptr<CMaterial>> materials;
 };

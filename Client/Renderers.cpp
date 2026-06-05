@@ -223,8 +223,8 @@ void CAniRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
     auto maskBuffer = CAnimationManager::GetInstance().GetMaskBuffer();
 
-    cmdList->SetGraphicsRootShaderResourceView(5, animBuffer->GetGPUVirtualAddress());
-    cmdList->SetGraphicsRootShaderResourceView(6, maskBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(5, maskBuffer->GetGPUVirtualAddress());
     RenderBatches(cmdList, 3);
 }
 
@@ -233,8 +233,8 @@ void CShadowRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
     auto maskBuffer = CAnimationManager::GetInstance().GetMaskBuffer();
 
-    cmdList->SetGraphicsRootShaderResourceView(5, animBuffer->GetGPUVirtualAddress());
-    cmdList->SetGraphicsRootShaderResourceView(6, maskBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(5, maskBuffer->GetGPUVirtualAddress());
     RenderShadowBatches(cmdList, 3);
 }
 

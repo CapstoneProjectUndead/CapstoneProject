@@ -432,6 +432,9 @@
     <ClInclude Include="SkyBox.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="GBufferTarget.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -686,6 +689,9 @@
     <ClCompile Include="SkyBox.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="GBufferTarget.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -725,6 +731,9 @@
     <FxCompile Include="SkyBox.hlsl">
       <Filter>D3D12\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="DeferredShader.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MeshComponent.inl">
@@ -732,6 +741,9 @@
     </None>
     <None Include="packages.config" />
     <None Include="Common.hlsli">
+      <Filter>D3D12\Shaders</Filter>
+    </None>
+    <None Include="CalShadow.hlsli">
       <Filter>D3D12\Shaders</Filter>
     </None>
   </ItemGroup>

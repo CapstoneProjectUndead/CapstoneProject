@@ -50,7 +50,7 @@ float3 ComputePointLight(Light light, Material mat, float3 pos, float3 normal, f
     float distance = length(lightVec);
     
     if(distance > light.falloff_end)
-        return 0.0f;
+        return float3(0.0, 0.0, 0.0);
     
     lightVec /= distance;
     
@@ -86,34 +86,27 @@ float3 ComputeSpotLight(Light light, Material mat, float3 pos, float3 normal, fl
     return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
 }
 
-float4 ComputeLighting(Light gLights[MaxLights], Material mat, float3 pos, float3 normal, float3 toEye, float4 shadowPosH)
+float4 ComputeLighting(Light gLights[MaxLights], Material mat, float3 pos, float3 normal, float3 toEye, float shadowFactor)
 {
     float3 result = 0.0f;
-    
-    int i = 0;
-    float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
+    uint i = 0;
     
 #if (NUM_DIR_LIGHTS > 0)
-    shadowFactor[0] = CalcShadowFactor(shadowPosH);
-    for(i = 0; i < NUM_DIR_LIGHTS; ++i) 
+    for (i = 0; i < NUM_DIR_LIGHTS; ++i)
     {
-        result += shadowFactor[i] * ComputeDirectionalLight(gLights[i], mat, normal, toEye);
+        result += shadowFactor * ComputeDirectionalLight(gLights[i], mat, normal, toEye);
     }
 #endif
 #if (NUM_POINT_LIGHTS > 0)
     for (i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS + activeDotNum; ++i)
     {
-        int shadowIdx = (i - NUM_DIR_LIGHTS);
-        float pointShadow = 1.0f;
-        pointShadow = CalcPointShadowFactor(shadowIdx, pos, gLights[i].position);
-        result += ComputePointLight(gLights[i], mat, pos, normal, toEye) * pointShadow;
+        result += shadowFactor * ComputePointLight(gLights[i], mat, pos, normal, toEye);
     }
 #endif
-
 #if (NUM_SPOT_LIGHTS > 0)
     for(i = NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS; ++i)
     {
-        result += ComputeSpotLight(gLights[i], mat, pos, normal, toEye);
+        result += shadowFactor * ComputeSpotLight(gLights[i], mat, pos, normal, toEye);
     }
 #endif 
     return float4(result, 0.0f);

@@ -40,8 +40,8 @@ std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(const std::string& name, 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
-	std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-	std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex, heapManager);
+	std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name, shaderName);
+	std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex, shaderName);
 
 	return mat;
 }
@@ -79,7 +79,7 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, const st
 		if (!material.normalMap.empty() && mat) {
 			auto shaders = CSceneManager::GetInstance().GetShaders();
 			CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
-			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, material.normalMap);
+			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, material.normalMap, shaderName);
 			mat->SetNormalIndex(tex);
 		}
 		meshRenderer->SetRenderUnit(meshComp, matComp, i);
@@ -481,8 +481,8 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 		"mouse_ganga", "mouse_nyao", "mouse_toto"
 	};
 	for (const std::string& name : resourceNames) {
-		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name);
-		matManager.LoadMaterial(name, tex, heapManager);
+		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name, EShaderName::Skinning);
+		matManager.LoadMaterial(name, tex, EShaderName::Skinning);
 	}
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
@@ -491,8 +491,8 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 			// 머티리얼 생성 및 렌더 유닛 등록 후 material return
 			auto CreateUnit = [&](const std::string& texName) {
 				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, EShaderName::Skinning);
+				auto mat = matManager.GetMaterial(texName, tex, EShaderName::Skinning);
 				matComp->SetMaterial(mat);
 
 				RenderUnit unit{ meshComp, matComp, 0 };
@@ -564,15 +564,16 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character)
 	std::string fileName{ "../Modeling/Human_monster.bin" };
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
+	EShaderName shaderName = EShaderName::Skinning;
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
+				auto mat = matManager.GetMaterial(texName, tex, shaderName);
 				matComp->SetMaterial(mat);
 				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
@@ -599,15 +600,16 @@ void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character)
 	std::string fileName{ "../Modeling/Dog.bin" };
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
+	EShaderName shaderName = EShaderName::Skinning;
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
+				auto mat = matManager.GetMaterial(texName, tex, shaderName);
 				matComp->SetMaterial(mat);
 				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
@@ -634,15 +636,16 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character)
 	std::string fileName{ "../Modeling/Ghost3.bin" };
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
+	EShaderName shaderName = EShaderName::Skinning;
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
+				auto mat = matManager.GetMaterial(texName, tex, shaderName);
 				matComp->SetMaterial(mat);
 				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
@@ -670,15 +673,16 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper()
 	std::string fileName{ "../Modeling/Reaper.bin" };
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
+	EShaderName shaderName = EShaderName::Skinning;
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
 			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
 				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName);
-				auto mat = matManager.GetMaterial(texName, tex, heapManager);
+				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
+				auto mat = matManager.GetMaterial(texName, tex, shaderName);
 				matComp->SetMaterial(mat);
 				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);

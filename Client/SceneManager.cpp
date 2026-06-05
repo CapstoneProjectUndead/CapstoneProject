@@ -63,6 +63,12 @@ void CSceneManager::Init(ID3D12Device* device)
 		shader->CreateShader(device);
 		shaders[EShaderName::SkyBox] = std::move(shader);
 	}
+	{
+		// Deferred
+		std::shared_ptr<CShader> shader = std::make_unique<CDeferredShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::Deferred] = std::move(shader);
+	}
 
 	// renderer
 	renderers.resize(EShaderName::Count);
@@ -87,15 +93,13 @@ void CSceneManager::Init(ID3D12Device* device)
 		bbRenderer->Initialize(device, 500);
 		renderers[EShaderName::Billboard] = std::move(bbRenderer);
 
-		// 20부터 font용(아직 제한X)
 		CDescriptorHeapManager* heap = shaders[EShaderName::UI]->GetHeapManager();
 		auto textRenderer = std::make_unique<CTextRenderer>();
 		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetSRVCPUHandle(20), heap->GetSRVGPUHandle(20));
 		renderers[EShaderName::Text] = std::move(textRenderer);
 	}
 
-	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
-	auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
+	auto deferredLightingHeap = shaders[EShaderName::Deferred]->GetHeapManager();
 	// directional light shadow map
 	{
 		dir_shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
@@ -106,9 +110,7 @@ void CSceneManager::Init(ID3D12Device* device)
 			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
-
-		dir_shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
-		dir_shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		dir_shadow_map->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 	}
 	// dot light shadow map
 	{
@@ -120,17 +122,27 @@ void CSceneManager::Init(ID3D12Device* device)
 			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
-
-		cube_shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::Count));
-		cube_shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::Count));
+		cube_shadow_map->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::CubeMapIdx));
 	}
-
 	// skyBox
 	{
 		skybox = std::make_shared<CSkyBox>();
 		skybox->Initialize(device, GET_CMD_LIST, shaders[EShaderName::SkyBox]->GetHeapManager());
-		skybox->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
-		skybox->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+		skybox->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+	}
+
+	// G-Buffer 셋업 및 최종 조명 합성 바인딩 데이터 연결
+	{
+
+		buffer_color = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+		buffer_normal = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R16G16B16A16_FLOAT);
+
+		buffer_color->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferColorIdx));
+		buffer_normal->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
+
+		//screen_shadow_map->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::ScreenShadowMapIdx));
+
+		CreateMainDepthSRV(device, deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
 	}
 }
 
@@ -143,26 +155,23 @@ void CSceneManager::Update()
 
 void CSceneManager::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (active_scene) {
-		active_scene->Render(commandList);
-	}
+	CScene* activeScene = GetActiveScene();
+	if (!activeScene) return;
+
+	activeScene->Render(commandList);
 }
 
 void CSceneManager::ChangeScene(SCENE_TYPE type)
 {
-	// 기존 씬에 있던 내 플레이어를 찾아온다.
-	// Title Scene에서 시작하는 경우에는 없을 수 있기 때문에, 반드시 null 체크를 해야한다. 
 	std::shared_ptr<CMyPlayer> myPlayer;
-	if (active_scene->GetMyPlayer())
+	if (active_scene && active_scene->GetMyPlayer())
 		myPlayer = active_scene->GetMyPlayer();
 
-	// 기존 씬에서 정리할게 있으면 여기서 처리
-	active_scene->Exit();
-	
-	// 바꾸고자하는 씬으로 active_scene을 변경
+	if (active_scene)
+		active_scene->Exit();
+
 	active_scene = scenes[(UINT)type].get();
 
-	// 해당 씬에 플레이어 셋팅
 	if (myPlayer && active_scene->GetSceneType() != SCENE_TYPE::TITLE)
 		active_scene->SetPlayer(myPlayer);
 
@@ -173,6 +182,39 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 		CKeyManager::GetInstance().SetMouseMode(false);
 	}
 
-	// 해당 씬에서 할 게 있으면 여기서 처리
-	active_scene->Enter();
+	if (active_scene)
+		active_scene->Enter();
+}
+
+void CSceneManager::CreateMainDepthSRV(ID3D12Device* device)
+{
+	auto deferredLightingHeap = shaders[EShaderName::Deferred]->GetHeapManager();
+
+	CreateMainDepthSRV(device, deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+}
+
+void CSceneManager::CreateMainDepthSRV(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle)
+{
+	auto depthResource = gGameFramework.GetDepthStencilBuffer().Get();
+	if (!depthResource) return;
+	auto desc = depthResource->GetDesc();
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+
+	if (depthResource->GetDesc().SampleDesc.Count > 1) {
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+	}
+	else {
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		srvDesc.Texture2D.PlaneSlice = 0;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	}
+
+	device->CreateShaderResourceView(depthResource, &srvDesc, srvCpuHandle);
 }

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -37,6 +37,8 @@ void CCamera::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 		ortho_cb->Map(0, nullptr, reinterpret_cast<void**>(&ortho_mapped));
 		billboard_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<BillboardCameraCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 		billboard_cb->Map(0, nullptr, reinterpret_cast<void**>(&billboard_mapped));
+		inv_camera_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<XMFLOAT4X4>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		inv_camera_cb->Map(0, nullptr, reinterpret_cast<void**>(&inv_camera_mapped));
 	}
 }
 
@@ -44,12 +46,14 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool
 {
 	if (isUI) {
 		XMStoreFloat4x4(&ortho_mapped->ortho_projection, XMMatrixTranspose(XMLoadFloat4x4(&ortho_matrix)));
-
 		commandList->SetGraphicsRootConstantBufferView(0, ortho_cb->GetGPUVirtualAddress());
 		return;
 	}
+
 	XMStoreFloat4x4(&mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
 	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
+	mapped->screen_resolution.x = viewport.Width;
+	mapped->screen_resolution.y = viewport.Height;
 
 	commandList->SetGraphicsRootConstantBufferView(0, camera_cb->GetGPUVirtualAddress());
 }
@@ -61,6 +65,19 @@ void CCamera::UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandL
 	billboard_mapped->pos = position;
 
 	commandList->SetGraphicsRootConstantBufferView(0, billboard_cb->GetGPUVirtualAddress());
+}
+
+void CCamera::UpdateShaderVariablesShadow(ID3D12GraphicsCommandList* commandList)
+{
+	XMMATRIX view = XMLoadFloat4x4(&view_matrix);
+	XMMATRIX proj = XMLoadFloat4x4(&projection_matrix);
+	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+
+	XMVECTOR det; // 행렬식(Determinant)을 저장할 임시 변수
+	XMMATRIX invViewProj = XMMatrixInverse(&det, viewProj);
+
+	XMStoreFloat4x4(inv_camera_mapped, XMMatrixTranspose(invViewProj));
+	commandList->SetGraphicsRootConstantBufferView(3, inv_camera_cb->GetGPUVirtualAddress());
 }
 
 void CCamera::GenerateProjectionMatrix(float nearPlaneDistance, float farPlaneDistance, float aspectRatio, float fovAngle)

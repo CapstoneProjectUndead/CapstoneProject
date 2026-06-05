@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CObject;
 
@@ -6,6 +6,7 @@ struct CameraCB
 {
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
+	XMFLOAT2   screen_resolution;
 };
 
 struct BillboardCameraCB
@@ -32,6 +33,7 @@ public:
 	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool isUI = false);
 	virtual void UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandList);
+	virtual void UpdateShaderVariablesShadow(ID3D12GraphicsCommandList* commandList);
 
 	void GenerateProjectionMatrix(float, float, float, float);
 	void GenerateOrthoProjectionMatrix(float, float, float, float);
@@ -82,9 +84,11 @@ protected:
 	ComPtr<ID3D12Resource> camera_cb;
 	ComPtr<ID3D12Resource> ortho_cb;	// UI에 필요한 값 저장
 	ComPtr<ID3D12Resource> billboard_cb;
+	ComPtr<ID3D12Resource> inv_camera_cb;	// screen shadow에 필요
 	CameraCB* mapped{};
 	OrthoCB* ortho_mapped{};
 	BillboardCameraCB* billboard_mapped{};
+	XMFLOAT4X4* inv_camera_mapped{};
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;

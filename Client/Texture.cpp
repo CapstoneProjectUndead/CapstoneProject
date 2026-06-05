@@ -21,10 +21,9 @@ void CTexture::CreateSrv(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE cpuDe
 	device->CreateShaderResourceView(texture.Get(), &srvDesc, cpuDescriptorHandle);
 }
 
-std::shared_ptr<CTexture> CTextureManager::GetTexture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, CDescriptorHeapManager* heap, const std::string& name)
+std::shared_ptr<CTexture> CTextureManager::GetTexture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, CDescriptorHeapManager* heap, const std::string& name, const EShaderName shaderName)
 {
-    ID3D12DescriptorHeap* heapPtr = heap->GetSRVHeap().GetHeap();
-    auto key = std::make_pair(name, heapPtr); // generate key
+    std::string key = name + "_" + std::to_string(shaderName);
 
     auto it = textures.find(key);
     if (it != textures.end())

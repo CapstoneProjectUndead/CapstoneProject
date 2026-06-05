@@ -23,8 +23,8 @@ public:
 	void AnimateObjects(float);
 
 	virtual void Initialize();
+	void CollectObjects(ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList*);
-	virtual void RenderBegin(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
 	// Scene 이 전환될 때, 호출 될 함수
@@ -43,12 +43,23 @@ public:
 	void CheckHoverSound();
 	void PlayClickSound();
 
+	// 상태변환
+	void TransitionDepthBuffer(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+	// main buffer set
+	void SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList);
+	// main buffer: RENDER_TARGET -> SR
+	void TransitionGBuffersToSRV(ID3D12GraphicsCommandList* commandList);
+	void SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList);
+	void SetBackBufferWithDepthReadOnly(ID3D12GraphicsCommandList* commandList);
+	// Rendering
+	void RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf);
 private:
+	D3D12_RESOURCE_BARRIER CreateResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter);
 	// Rendering
 	void RenderBasePass(ID3D12GraphicsCommandList* commandList);
 	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
-	void CollectObjects(ID3D12GraphicsCommandList* commandList);
 protected:
+
 	// UI 관련 
 	// 자식들이 각자 그릴 UI를 구현하는 순수 가상 함수
 	virtual void DrawUI() = 0;
@@ -118,4 +129,9 @@ protected:
 
 	// for shadow
 	BoundingSphere scene_bounds{};
+
+	ComPtr<ID3D12Resource> buffer_color_resource{};
+	ComPtr<ID3D12Resource> buffer_normal_resource{};
+	D3D12_CPU_DESCRIPTOR_HANDLE buffer_color_rtv_handle{};
+	D3D12_CPU_DESCRIPTOR_HANDLE buffer_normal_rtv_handle{};
 };
