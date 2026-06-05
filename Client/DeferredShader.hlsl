@@ -46,8 +46,9 @@ float4 PSMain(VS_OUT input) : SV_TARGET
         float3(0.05f, 0.05f, 0.05f),
         glossiness
     };
-
-    float4 ambient = ambientLight * albedo;
+    
+    float ao = texDiffuse[AOMapIdx].Load(texCoord).r;
+    float4 ambient = ambientLight * albedo * ao;
     float3 directLighting = 0.0f;
 #if (NUM_DIR_LIGHTS > 0)
 

@@ -49,7 +49,7 @@ public:
 
     auto& GetCubeShadowMap() { return cube_shadow_map; }
     auto& GetShadowMap() { return dir_shadow_map; }
-    auto& GetScreenShadowMap() { return screen_shadow_map; }
+    auto& GetAOBuffer() { return buffer_ssao; }
     auto& GetSkybox() { return skybox; }
     D3D12_CPU_DESCRIPTOR_HANDLE GetGBufferColorRTV() const { return buffer_color->GetRTV(); }
     D3D12_CPU_DESCRIPTOR_HANDLE GetGBufferNormalRTV() const { return buffer_normal->GetRTV(); }
@@ -63,12 +63,12 @@ private:
     std::vector<std::shared_ptr<CShader>>	shaders;
     std::vector<std::unique_ptr<IRenderer>> renderers;	// shader에 버퍼 설정하는 멤버 변수(rendering 담당)
     std::shared_ptr<CShadowMap> dir_shadow_map;
-    std::shared_ptr<CRenderTarget> screen_shadow_map;
     std::shared_ptr<CCubeShadowMap> cube_shadow_map;
 
     std::shared_ptr<CSkyBox> skybox;
     std::unique_ptr<CGBufferTarget> buffer_color{};
     std::unique_ptr<CGBufferTarget> buffer_normal{};
+    std::unique_ptr<CRenderTarget> buffer_ssao{};
 
     D3D12_CPU_DESCRIPTOR_HANDLE buffer_color_rtv_handle{};
     D3D12_CPU_DESCRIPTOR_HANDLE buffer_normal_rtv_handle{};

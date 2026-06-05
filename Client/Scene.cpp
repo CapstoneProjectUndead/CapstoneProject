@@ -123,6 +123,32 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 	renderers[EShaderName::Shadow]->ClearAllBatch();
 }
 
+void CScene::RenderSSAOPass(ID3D12GraphicsCommandList* commandList)
+{
+	auto& aoBuffer = CSceneManager::GetInstance().GetAOBuffer();
+	if (!aoBuffer) return;
+
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+	aoBuffer->RenderBegin(commandList);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv = aoBuffer->GetRTV();
+
+	commandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+
+	const float clearColor[4] = { 1.f, 1.f, 1.f, 1.f };
+
+	commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	shaders[EShaderName::SSAO]->RenderBegin(commandList);
+
+	camera->UpdateShaderVariablesShadow(commandList);
+	camera->UpdateShaderVariables(commandList, false);
+	commandList->DrawInstanced(3, 1, 0, 0);
+	shaders[EShaderName::SSAO]->RenderEnd(commandList);
+	aoBuffer->RenderEnd(commandList);
+}
+
 void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 {
 	if (camera) {
@@ -200,6 +226,7 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 {
 	RenderShadowPass(commandList);        // 1. 각 조명 시점 깊이 맵 빌드
 	RenderBasePass(commandList);          // 2. 가시 물체 렌더링 및 G-Buffer 축적 (메인 뎁스는 DEPTH_WRITE 유지)
+	RenderSSAOPass(commandList);
 }
 
 void CScene::TransitionDepthBuffer(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)

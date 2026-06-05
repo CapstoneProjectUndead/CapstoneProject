@@ -44,7 +44,6 @@ cbuffer CameraInfo : register(b0)
 {
     float4x4 viewMatrix : packoffset(c0);
     float4x4 projectionMatrix : packoffset(c4);
-    float2 gScreenResolution : packoffset(c8);
 };
 
 cbuffer LightInfo : register(b1)
@@ -64,6 +63,7 @@ static const uint GBufferColorIdx = 1;
 static const uint GBufferNormalIdx = 2;
 static const uint ShadowMapIdx = 3;
 static const uint SkyboxMapIdx = 4;
+static const uint AOMapIdx = 5;
 
 static const uint DiffuseMapCount = 70;
 

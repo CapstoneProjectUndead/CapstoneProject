@@ -6,7 +6,6 @@ struct CameraCB
 {
 	XMFLOAT4X4 view_matrix;
 	XMFLOAT4X4 projection_matrix;
-	XMFLOAT2   screen_resolution;
 };
 
 struct BillboardCameraCB

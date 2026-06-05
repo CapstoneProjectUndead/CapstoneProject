@@ -189,6 +189,7 @@ enum EShaderName : size_t {
 	Shadow,
 	CubeShadow,
 	ScreenShadow,
+	SSAO,
 	Deferred,
 	Count
 };

@@ -58,6 +58,7 @@ private:
 	// Rendering
 	void RenderBasePass(ID3D12GraphicsCommandList* commandList);
 	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
+	void RenderSSAOPass(ID3D12GraphicsCommandList* commandList);
 protected:
 
 	// UI 관련 

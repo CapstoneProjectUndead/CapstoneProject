@@ -263,17 +263,6 @@ void CGameFramework::CreateDepthStencilView()
 		depth_stencil_buffer.Get(),
 		&dsvDesc,
 		dsvCPUDesctiptorHandle);
-
-	auto desc = depth_stencil_buffer->GetDesc();
-
-	char buf[256];
-	sprintf_s(buf,
-		"Depth Resource: %p Format=%d Width=%llu Height=%u\n",
-		depth_stencil_buffer,
-		(int)desc.Format,
-		desc.Width,
-		desc.Height);
-	OutputDebugStringA(buf);
 }
 
 void CGameFramework::BuildObjects()

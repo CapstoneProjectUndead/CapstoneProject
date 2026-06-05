@@ -21,7 +21,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
-	GenerateProjectionMatrix(0.01f, 30.0f, (float)width / (float)height, 90.0f);
+	GenerateProjectionMatrix(0.01f, 20.0f, (float)width / (float)height, 90.0f);
 	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
 	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
@@ -52,8 +52,6 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool
 
 	XMStoreFloat4x4(&mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
 	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
-	mapped->screen_resolution.x = viewport.Width;
-	mapped->screen_resolution.y = viewport.Height;
 
 	commandList->SetGraphicsRootConstantBufferView(0, camera_cb->GetGPUVirtualAddress());
 }

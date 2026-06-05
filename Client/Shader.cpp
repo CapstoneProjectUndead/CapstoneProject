@@ -802,7 +802,7 @@ ID3D12RootSignature* CDeferredShader::CreateGraphicsRootSignature(ID3D12Device* 
 
 	D3D12_DESCRIPTOR_RANGE textureRange{};
 	textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	textureRange.NumDescriptors = DescriptorSlot::SkyboxMapIdx;
+	textureRange.NumDescriptors = DescriptorSlot::AOMapIdx + 1;
 	textureRange.BaseShaderRegister = 0;
 	textureRange.RegisterSpace = 0;
 	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -880,7 +880,7 @@ ID3D12RootSignature* CDeferredShader::CreateGraphicsRootSignature(ID3D12Device* 
 
 	HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 	if (FAILED(hr))
-	{
+	{ 
 		if (errorBlob)
 		{
 			::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
@@ -890,6 +890,104 @@ ID3D12RootSignature* CDeferredShader::CreateGraphicsRootSignature(ID3D12Device* 
 
 	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&graphicsRootSignature);
 	CreateDescriptorHeap(device, DescriptorSlot::CubeMapCount);
+
+	return graphicsRootSignature;
+}
+
+// CAOShader
+void CAOShader::RenderBegin(ID3D12GraphicsCommandList* commandList)
+{
+	CShader::RenderBegin(commandList);
+}
+
+D3D12_INPUT_LAYOUT_DESC CAOShader::CreateInputLayout()
+{
+	return D3D12_INPUT_LAYOUT_DESC();
+}
+
+D3D12_DEPTH_STENCIL_DESC CAOShader::CreateDepthStencilState()
+{
+	D3D12_DEPTH_STENCIL_DESC desc{};
+	desc.DepthEnable = FALSE;
+	desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	desc.StencilEnable = FALSE;
+	return desc;
+}
+
+D3D12_SHADER_BYTECODE CAOShader::CreateVertexShader(ID3DBlob** shaderBlob)
+{
+	return CompileShaderFromFile(L"SSAOShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CAOShader::CreatePixelShader(ID3DBlob** shaderBlob)
+{
+	return CompileShaderFromFile(L"SSAOShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
+}
+
+ID3D12RootSignature* CAOShader::CreateGraphicsRootSignature(ID3D12Device* device)
+{
+	ID3D12RootSignature* graphicsRootSignature{};
+
+	D3D12_DESCRIPTOR_RANGE textureRange{};
+	textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	textureRange.NumDescriptors = DescriptorSlot::GBufferNormalIdx + 1;
+	textureRange.BaseShaderRegister = 0;
+	textureRange.RegisterSpace = 0;
+	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	D3D12_ROOT_PARAMETER rootParameters[4];
+
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[0].Descriptor.ShaderRegister = 0;
+	rootParameters[0].Descriptor.RegisterSpace = 0;
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[1].Descriptor.ShaderRegister = 1;
+	rootParameters[1].Descriptor.RegisterSpace = 0;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &textureRange;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].Descriptor.ShaderRegister = 2;
+	rootParameters[3].Descriptor.RegisterSpace = 0;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	D3D12_STATIC_SAMPLER_DESC samplers[1]{};
+	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplers[0].ShaderRegister = 0;
+	samplers[0].RegisterSpace = 0;
+	samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	D3D12_ROOT_SIGNATURE_DESC desc{};
+	desc.NumParameters = _countof(rootParameters);
+	desc.pParameters = rootParameters;
+	desc.NumStaticSamplers = _countof(samplers);
+	desc.pStaticSamplers = samplers;
+	desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	ComPtr<ID3DBlob> signatureBlob;
+	ComPtr<ID3DBlob> errorBlob;
+
+	HRESULT hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+	if (FAILED(hr))
+	{
+		if (errorBlob)
+		{
+			::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		}
+		return nullptr;
+	}
+	device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&graphicsRootSignature));
+
+	CreateDescriptorHeap(device, DescriptorSlot::GBufferNormalIdx + 2); // 노이즈 자리를 위해 크기 조정
 
 	return graphicsRootSignature;
 }
