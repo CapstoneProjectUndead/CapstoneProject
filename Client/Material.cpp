@@ -36,7 +36,7 @@ std::shared_ptr<CMaterial> CMaterialManager::GetMaterial(const std::string& name
 {
 	std::string materialKey = name + "_" + std::to_string(shaderName);
 	auto it = materials.find(materialKey);
-	if (it != materials.end()) return nullptr;
+	if (it == materials.end()) return nullptr;
 
 	return it->second;
 }
