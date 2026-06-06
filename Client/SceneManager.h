@@ -50,6 +50,7 @@ public:
     auto& GetCubeShadowMap() { return cube_shadow_map; }
     auto& GetShadowMap() { return dir_shadow_map; }
     auto& GetAOBuffer() { return buffer_ssao; }
+    auto& GetAOBlurTemp() { return buffer_ssao_blur_temp; }
     auto& GetSkybox() { return skybox; }
     D3D12_CPU_DESCRIPTOR_HANDLE GetGBufferColorRTV() const { return buffer_color->GetRTV(); }
     D3D12_CPU_DESCRIPTOR_HANDLE GetGBufferNormalRTV() const { return buffer_normal->GetRTV(); }
@@ -69,6 +70,7 @@ private:
     std::unique_ptr<CGBufferTarget> buffer_color{};
     std::unique_ptr<CGBufferTarget> buffer_normal{};
     std::unique_ptr<CRenderTarget> buffer_ssao{};
+    std::unique_ptr<CRenderTarget> buffer_ssao_blur_temp{}; // buffer_ssao->buffer_ssao_blur_temp(가로블러)->buffer_ssao(최종) 순으로 Render
 
     D3D12_CPU_DESCRIPTOR_HANDLE buffer_color_rtv_handle{};
     D3D12_CPU_DESCRIPTOR_HANDLE buffer_normal_rtv_handle{};

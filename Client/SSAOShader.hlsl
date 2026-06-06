@@ -59,15 +59,14 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     float3 centerNormalWorld = normalize(texDiffuse[GBufferNormalIdx].Load(texCoord).xyz * 2.0f - 1.0f);
 
     // 월드 법선 방향을 기준으로 하는 직교 정규 기저(TBN) 행렬을 생성
-    float3 up = abs(centerNormalWorld.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+    float3 up = lerp(float3(1.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), step(abs(centerNormalWorld.z), 0.999f));
     float3 tangent = normalize(cross(up, centerNormalWorld));
     float3 bitangent = cross(centerNormalWorld, tangent);
-    
     float3x3 TBN = float3x3(tangent, bitangent, centerNormalWorld);
 
-    float radius = 0.1f; // 주변광을 차폐할 탐색 반경 (미터 단위)
+    float radius = 0.05f; // 주변광을 차폐할 탐색 반경 (미터 단위)
     float occlusion = 0.0f;
-
+    float intensity = 2.0f;
     [unroll]
     for (uint i = 0; i < 16; ++i)
     {

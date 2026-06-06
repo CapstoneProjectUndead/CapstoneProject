@@ -149,6 +149,56 @@ void CScene::RenderSSAOPass(ID3D12GraphicsCommandList* commandList)
 	aoBuffer->RenderEnd(commandList);
 }
 
+void CScene::RenderSSAOBlurPass(ID3D12GraphicsCommandList* commandList)
+{
+	auto& aoBuffer = CSceneManager::GetInstance().GetAOBuffer();          // SSAO 원본 결과물 (RT A)
+	auto& aoBlurTemp = CSceneManager::GetInstance().GetAOBlurTemp();      // 가로 블러 임시 타겟 (RT B)
+	if (!aoBuffer || !aoBlurTemp) return;
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+
+	auto ssaoBlurShader = shaders[EShaderName::SSAOBlur];
+	auto ssaoBlurHeap = ssaoBlurShader->GetHeapManager();
+
+	ssaoBlurShader->RenderBegin(commandList);
+
+	const float clearColor[4] = { 1.f, 1.f, 1.f, 1.f };
+	int width{ GET_CLIENT_WIDTH }, height{GET_CLIENT_HEIGHT};
+	float texelWidth = 1.0f / width;
+	float texelHeight = 1.0f / height;
+	// PASS 1: 가로 블러 (Horizontal Blur)
+	{
+		aoBlurTemp->RenderBegin(commandList); // 내부에서 자원 상태를 RTV로 전환
+
+		// 렌더 타겟 설정 (임시 버퍼 B)
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvTemp = aoBlurTemp->GetRTV();
+		commandList->OMSetRenderTargets(1, &rtvTemp, FALSE, nullptr);
+		commandList->ClearRenderTargetView(rtvTemp, clearColor, 0, nullptr);
+
+		camera->UpdateShaderVariablesBlur(commandList, XMFLOAT2(1.0f, 0.0f), width, height, 0);
+
+		// 드로우
+		commandList->DrawInstanced(3, 1, 0, 0);
+		aoBlurTemp->RenderEnd(commandList);
+	}
+
+	// PASS 2: 세로 블러 (Vertical Blur)
+	{
+		aoBuffer->RenderBegin(commandList);
+
+		// 렌더 타겟 설정 (최종 AO 맵)
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvFinal = aoBuffer->GetRTV();
+		commandList->OMSetRenderTargets(1, &rtvFinal, FALSE, nullptr);
+
+		camera->UpdateShaderVariablesBlur(commandList, XMFLOAT2(0.0f, 1.0f), width, height, 1);
+
+		// 최종 드로우
+		commandList->DrawInstanced(3, 1, 0, 0);
+		aoBuffer->RenderEnd(commandList);
+	}
+
+	ssaoBlurShader->RenderEnd(commandList);
+}
+
 void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 {
 	if (camera) {
@@ -227,6 +277,7 @@ void CScene::Render(ID3D12GraphicsCommandList* commandList)
 	RenderShadowPass(commandList);        // 1. 각 조명 시점 깊이 맵 빌드
 	RenderBasePass(commandList);          // 2. 가시 물체 렌더링 및 G-Buffer 축적 (메인 뎁스는 DEPTH_WRITE 유지)
 	RenderSSAOPass(commandList);
+	RenderSSAOBlurPass(commandList);
 }
 
 void CScene::TransitionDepthBuffer(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)

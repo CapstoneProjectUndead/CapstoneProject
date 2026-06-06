@@ -205,6 +205,26 @@ public:
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 };
 
+class CSSAOBlurShader : public CShader
+{
+public:
+	UINT GetNumRenderTargets() override { return 1; }
+	DXGI_FORMAT GetRTVFormat(UINT index) override
+	{
+		return DXGI_FORMAT_R8_UNORM;
+	}
+	DXGI_FORMAT GetDSVFormat() override
+	{
+		return DXGI_FORMAT_UNKNOWN; // 깊이 버퍼 쓰지 않음
+	}
+	void RenderBegin(ID3D12GraphicsCommandList* commandList) override;
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+};
+
 class CUIShader : public CShader
 {
 public:
