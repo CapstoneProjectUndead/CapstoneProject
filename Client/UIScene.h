@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Scene.h"
 
 class CUICanvas;
@@ -13,6 +13,7 @@ public:
     virtual void Update(float dt) override;
 	virtual void BuildObjects(ID3D12Device*, ID3D12GraphicsCommandList*) override;
     virtual void Render(ID3D12GraphicsCommandList*) override;
+    virtual void RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf) override {};
 
 	virtual void DrawUI() override;
 	virtual bool IsUIInputEnabled() override;

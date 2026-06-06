@@ -8,7 +8,7 @@
 #include "DataManager.h"
 
 CUIComponent::CUIComponent()
-    : world_matrix{Matrix4x4::Identity()}
+    : world_matrix{ Matrix4x4::Identity() }
 {
 }
 
@@ -60,7 +60,6 @@ void CUIComponent::Invalidate()
     }
 }
 
-// 2. 공통 행렬 계산 로직
 void CUIComponent::CalculateWorldMatrix()
 {
     Rect parentRect = GetParentRect();
@@ -70,16 +69,11 @@ void CUIComponent::CalculateWorldMatrix()
     float finalX = anchorX + transform.relative_pos.x;
     float finalY = anchorY + transform.relative_pos.y;
 
-    float depth = 0.1f;
-    if (parent_ui) {
-        depth = parent_ui->GetWorldMatrix()._43 - 0.001f;
-    }
-
     XMMATRIX matScale = XMMatrixScaling(transform.size.x, transform.size.y, 1.0f);
     float pivotOffsetX = (0.5f - transform.pivot.x) * transform.size.x;
     float pivotOffsetY = (0.5f - transform.pivot.y) * transform.size.y;
     XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, depth);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.0f);
 
     XMStoreFloat4x4(&world_matrix, matScale * matPivot * matTranslation);
 
@@ -116,7 +110,6 @@ void CUIComponent::Render(ID3D12GraphicsCommandList* commandList)
 void CUIComponent::Traverse(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
     if (!is_enable) return;
-
 
     if (renderers[GetShaderName()]) {
         Collect(renderers[GetShaderName()]);
@@ -230,12 +223,9 @@ void CUIImage::CalculateWorldMatrix()
     float finalX = anchorX + transform.relative_pos.x - (transform.pivot.x * transform.size.x);
     float finalY = anchorY + transform.relative_pos.y - (transform.pivot.y * transform.size.y);
 
-    float depth = parent_ui ? parent_ui->GetWorldMatrix()._43 - 0.001f : 0.1f;
-
-    // 행렬 연산: 스케일(fill_amount 적용) -> 위치 이동
     XMMATRIX matScale = XMMatrixScaling(transform.size.x * fill_amount, transform.size.y, 1.0f);
     XMMATRIX matTranslation = XMMatrixTranslation(finalX + (transform.size.x * fill_amount * 0.5f),
-        finalY + (transform.size.y * 0.5f), depth);
+        finalY + (transform.size.y * 0.5f), 0.0f);
 
     XMStoreFloat4x4(&world_matrix, matScale * matTranslation);
 
@@ -314,7 +304,7 @@ void CUIBillboard::Update(float deltaTime)
         XMMATRIX childOffset = XMMatrixTranslation(
             c->GetRelativePos().x * 0.01f,
             c->GetRelativePos().y * 0.01f,
-            -0.01f // 글자가 말풍선보다 살짝 카메라 앞에 오도록 Z값 조절
+            -0.01f
         );
 
         // 자식의 최종 3D 월드 행렬 = 자식 오프셋 * 부모(빌보드) 위치
@@ -342,7 +332,7 @@ void CUIText::SetText(const std::wstring& t)
 void CUIText::Collect(std::unique_ptr<IRenderer>& renderer)
 {
     if (!is_enable) return;
-    
+
     auto textRenderer = dynamic_cast<CTextRenderer*>(renderer.get());
     if (textRenderer) {
         textRenderer->AddTextInstance(current_text, world_matrix, color, is_billboard);
@@ -450,7 +440,7 @@ void CUIButton::UpdateState()
     CKeyManager& keyManager = CKeyManager::GetInstance();
     Vec2 mouseDelta = keyManager.GetMousePos();
     if (KEY_PRESSED(KEY::LBTN)) {
-        if(rect.IsPointInside(mouseDelta.x, mouseDelta.y)) {
+        if (rect.IsPointInside(mouseDelta.x, mouseDelta.y)) {
             state = EButtonState::Pressed;
             OnMouseLButtonDown();
         }
@@ -492,7 +482,7 @@ void CUIDowsingArrow::CalculateWorldMatrix()
     float pivotOffsetY = (0.5f - transform.pivot.y) * transform.size.y;
     XMMATRIX matPivot = XMMatrixTranslation(pivotOffsetX, pivotOffsetY, 0.0f);
 
-    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.1f);
+    XMMATRIX matTranslation = XMMatrixTranslation(finalX, finalY, 0.0f);
 
     XMMATRIX world = matScale * matRot * matPivot * matTranslation;
     XMStoreFloat4x4(&world_matrix, world);

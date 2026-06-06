@@ -52,7 +52,7 @@ public:
 	void SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList);
 	void SetBackBufferWithDepthReadOnly(ID3D12GraphicsCommandList* commandList);
 	// Rendering
-	void RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf);
+	virtual void RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf);
 private:
 	D3D12_RESOURCE_BARRIER CreateResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter);
 	// Rendering

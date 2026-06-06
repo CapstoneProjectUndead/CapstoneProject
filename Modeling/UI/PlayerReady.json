@@ -27,7 +27,37 @@
                                         1.0,
                                         1.0
                                     ],
-                                    "Children": [],
+                                    "Children": [
+                                        {
+                                            "Anchor": [
+                                                1.0,
+                                                1.0
+                                            ],
+                                            "Children": [],
+                                            "Color": [
+                                                0.9240924119949341,
+                                                0.0,
+                                                0.0,
+                                                1.0
+                                            ],
+                                            "FillAmount": 1.0,
+                                            "Name": "Ready4",
+                                            "Pivot": [
+                                                1.0,
+                                                0.0
+                                            ],
+                                            "RelativePos": [
+                                                0.0,
+                                                50.0
+                                            ],
+                                            "Size": [
+                                                30.0,
+                                                30.0
+                                            ],
+                                            "TextureName": "white",
+                                            "Type": "Image"
+                                        }
+                                    ],
                                     "Color": [
                                         0.9240924119949341,
                                         0.0,
@@ -35,7 +65,7 @@
                                         1.0
                                     ],
                                     "FillAmount": 1.0,
-                                    "Name": "Ready4",
+                                    "Name": "Ready3",
                                     "Pivot": [
                                         1.0,
                                         0.0
@@ -48,6 +78,7 @@
                                         30.0,
                                         30.0
                                     ],
+                                    "TextureName": "white",
                                     "Type": "Image"
                                 }
                             ],
@@ -58,7 +89,7 @@
                                 1.0
                             ],
                             "FillAmount": 1.0,
-                            "Name": "Ready3",
+                            "Name": "Ready2",
                             "Pivot": [
                                 1.0,
                                 0.0
@@ -71,60 +102,34 @@
                                 30.0,
                                 30.0
                             ],
+                            "TextureName": "white",
                             "Type": "Image"
                         }
                     ],
                     "Color": [
-                        0.9240924119949341,
+                        1.0,
                         0.0,
                         0.0,
                         1.0
                     ],
                     "FillAmount": 1.0,
-                    "Name": "Ready2",
+                    "Name": "Ready1",
                     "Pivot": [
                         1.0,
                         0.0
                     ],
                     "RelativePos": [
-                        0.0,
-                        50.0
+                        -30.0,
+                        20.0
                     ],
                     "Size": [
                         30.0,
                         30.0
                     ],
+                    "TextureName": "white",
                     "Type": "Image"
                 }
             ],
-            "Color": [
-                1.0,
-                0.0,
-                0.0,
-                1.0
-            ],
-            "FillAmount": 1.0,
-            "Name": "Ready1",
-            "Pivot": [
-                1.0,
-                0.0
-            ],
-            "RelativePos": [
-                -30.0,
-                20.0
-            ],
-            "Size": [
-                30.0,
-                30.0
-            ],
-            "Type": "Image"
-        },
-        {
-            "Anchor": [
-                1.0,
-                1.0
-            ],
-            "Children": [],
             "Color": [
                 1.0,
                 1.0,
@@ -145,6 +150,7 @@
                 100.0,
                 250.0
             ],
+            "TextureName": "white",
             "Type": "Image"
         }
     ],

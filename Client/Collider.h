@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Component.h"
 #include "CollisionAlgorithm.h"
 
@@ -16,10 +16,6 @@ public:
 
     // GJK 특정 방향으로 가장 먼 월드 좌표 점 반환
     virtual XMVECTOR GetSupport(XMVECTOR direction) const = 0;
-    // 디버그 렌더링용 (선택)
-    virtual void Render() {}
-protected:
-    std::shared_ptr<CMesh> debug;
 };
 
 // obb 기반
@@ -30,7 +26,6 @@ public:
         return std::make_unique<CBoxShape>(*this);
     }
 
-    void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
     // getter
     XMVECTOR GetSupport(XMVECTOR direction) const override {
@@ -50,7 +45,6 @@ public:
         return std::make_unique<CSphereShape>(*this);
     }
 
-    void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
     // getter
     XMVECTOR GetSupport(XMVECTOR direction) const override {
@@ -66,14 +60,11 @@ class CCapsuleShape : public CColliderShape {
 public:
     // radius: 반지름, height: 전체 길이, direction: 0=X, 1=Y, 2=Z
     CCapsuleShape(float radius, float height, int direction, XMFLOAT3 p = XMFLOAT3{});
-
     std::unique_ptr<CColliderShape> Clone() const override {
         return std::make_unique<CCapsuleShape>(*this);
     }
 
-    void Render() override;
     void Update(const XMMATRIX& worldMatrix) override;
-
     XMVECTOR GetSupport(XMVECTOR direction) const override;
 private:
     float radius;
@@ -99,7 +90,6 @@ public:
     }
     
     void Update(const XMMATRIX& worldMatrix) override;
-
     XMVECTOR GetSupport(XMVECTOR direction) const override {
         return GJKAlgorithm::GetSupport(world, direction);
     }
@@ -118,9 +108,7 @@ public:
     }
 
     XMVECTOR v[3];
-
     XMVECTOR GetSupport(XMVECTOR direction) const override;
-
     // 삼각형은 단순 점들의 집합이므로 별도의 업데이트 불필요 (이미 월드 좌표임)
     virtual void Update(const XMMATRIX& worldMatrix) override {}
 };
@@ -195,14 +183,10 @@ public:
     const CollisionFilter& GetCollisionFilter() const { return filter; }
 
     void Update(const float deltaTime) override;
-    // 디버깅용(aabb 출력)
-    void Render(ID3D12GraphicsCommandList* commandList) override;
-
     bool Intersects(const CColliderComponent* other);
 private:
     std::unique_ptr<CColliderShape> shape;
     BoundingBox local_aabb{};
     BoundingBox world_aabb{};   // for broad phase
     CollisionFilter filter;
-    std::shared_ptr<CMesh> debug;
 };
