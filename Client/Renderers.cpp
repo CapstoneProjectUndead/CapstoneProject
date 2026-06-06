@@ -132,8 +132,9 @@ inline void CRenderer<T>::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_p
     T data;
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
     XMStoreFloat4x4(&data.world_matrix, worldT);
-    if(material)
+    if (material && material->GetMaterial() != nullptr) {
         data.material = material->GetMaterial()->GetMaterialData();
+    }
     else {
         data.material = MaterialData{};
         data.material.albedo = {1, 1, 0, 1};
@@ -179,8 +180,9 @@ void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMat
     AniCB data;
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
     XMStoreFloat4x4(&data.world_matrix, worldT);
-    if (material)
+    if (material && material->GetMaterial() != nullptr) {
         data.material = material->GetMaterial()->GetMaterialData();
+    }
     else {
         data.material = MaterialData{};
         data.material.albedo = { 1, 1, 0, 1 };
