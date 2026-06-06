@@ -127,7 +127,7 @@ void CRenderer<T>::RenderShadowBatches(ID3D12GraphicsCommandList* commandList, U
 }
 
 template<typename T>
-inline void CRenderer<T>::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
+inline void CRenderer<T>::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
     T data;
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
@@ -174,7 +174,7 @@ void CInstRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     RenderBatches(cmdList, 3);
 }
 
-void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
+void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
     AniCB data;
     XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&world));
@@ -198,7 +198,7 @@ void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* 
 }
 
 // CAniRenderer
-void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData)
+void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData)
 {
     AniCB data;
     if (material)
@@ -244,7 +244,7 @@ CUIRenderer::CUIRenderer()
     quad_mesh = std::make_shared<CRectangleMesh>(GET_DEVICE, GET_CMD_LIST, 1.0f, 1.0f);
 }
 
-void CUIRenderer::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
+void CUIRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
     CRenderer<UIInstCB>::AddInstance(quad_mesh, material, world, submeshIndex, isStatic);
 }
@@ -264,7 +264,7 @@ CBillboardRenderer::CBillboardRenderer()
     b_mesh = std::make_shared<CBillboardMesh>(GET_DEVICE, GET_CMD_LIST, 1.0f, 1.0f);
 }
 
-void CBillboardRenderer::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
+void CBillboardRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
     CRenderer<BillboardInstCB>::AddInstance(b_mesh, material, world, submeshIndex, isStatic);
 }

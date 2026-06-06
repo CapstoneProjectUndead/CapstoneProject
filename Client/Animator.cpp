@@ -605,7 +605,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 	for (const RenderUnit& unit : cache.render_units) {
 		if (unit.mesh) {
 			XMMATRIX socketMat = GetSocketMatrix(type);
-			CSceneManager::GetInstance().GetRanderers()[cache.shader_name]->AddInstance(unit.mesh->GetMesh(), unit.material.get(), Matrix4x4::XMMatrixToFloat4x4(socketMat), unit.submesh_index, false);
+			CSceneManager::GetInstance().GetRanderers()[cache.shader_name]->AddInstance(unit.mesh->GetMesh(), unit.material, Matrix4x4::XMMatrixToFloat4x4(socketMat), unit.submesh_index, false);
 		}
 	}
 }

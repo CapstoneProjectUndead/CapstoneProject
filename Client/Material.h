@@ -9,7 +9,7 @@ struct MaterialData
     XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
     XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
     float glossiness{ 0.25f };
-    UINT tex_idx;
+    UINT tex_idx{};
     UINT normal_idx{ UINT_MAX };
 };
 

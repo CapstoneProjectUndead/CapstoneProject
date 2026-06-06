@@ -262,7 +262,7 @@ void CUIImage::Collect(std::unique_ptr<IRenderer>& renderer)
     if (!is_enable) return;
 
     mat_comp->GetMaterial()->material.albedo = color;
-    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, 0, true);
+    renderer->AddInstance(nullptr, mat_comp, world_matrix, 0, true);
 }
 
 json CUIImage::Serialize()
@@ -407,7 +407,7 @@ void CUIButton::Collect(std::unique_ptr<IRenderer>& renderer)
     GetColorByState();
     // 머티리얼의 albedo를 버튼 상태 색상으로 업데이트unit.submesh_index
     mat_comp->GetMaterial()->material.albedo = color;
-    renderer->AddInstance(nullptr, mat_comp.get(), world_matrix, 0, true);
+    renderer->AddInstance(nullptr, mat_comp, world_matrix, 0, true);
 }
 
 json CUIButton::Serialize()

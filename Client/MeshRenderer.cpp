@@ -9,7 +9,6 @@
 #include "GameFramework.h"
 #endif // DEBUG
 
-
 void CMeshComponent::SetMesh(std::shared_ptr<CMesh>& m)
 {
 	mesh = m;
@@ -61,10 +60,10 @@ void CMeshRendererComponent::Collect(std::unique_ptr<IRenderer>& renderer, bool 
 
 		if (animator) {
 			// 애니메이터로부터 현재 프레임 정보를 가져옴
-			renderer->AddInstance(unit.mesh->GetMesh(), unit.material.get(), owner->world_matrix, unit.submesh_index, aniData);
+			renderer->AddInstance(unit.mesh->GetMesh(), unit.material, owner->world_matrix, unit.submesh_index, aniData);
 		}
 		else
-			renderer->AddInstance(unit.mesh->GetMesh(), unit.material.get(), owner->world_matrix, unit.submesh_index, isStatic);
+			renderer->AddInstance(unit.mesh->GetMesh(), unit.material, owner->world_matrix, unit.submesh_index, isStatic);
 #ifdef DEBUG
 		auto collider = owner->GetComponents<CColliderComponent>();
 		for (auto c : collider)
