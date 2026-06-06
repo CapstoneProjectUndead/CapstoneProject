@@ -184,6 +184,13 @@ void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMat
         data.material = material->GetMaterial()->GetMaterialData();
     }
     else {
+        // [진단] material 컴포넌트는 있는데 내부 CMaterial이 null이면 손상 의심 (정상 null은 소켓 모델 등)
+        if (material && material->GetMaterial() == nullptr) {
+            CObject* o = material->GetOwner();
+            std::cout << "[AddInstance] null CMaterial! ownerId="
+                << (o ? o->GetID() : 0ull) << " name=" << (o ? o->name : std::string("?"))
+                << " submesh=" << submeshIndex << std::endl;
+        }
         data.material = MaterialData{};
         data.material.albedo = { 1, 1, 0, 1 };
         data.material.tex_idx = 0;  // texture는 white
@@ -207,6 +214,13 @@ void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMat
         data.material = material->GetMaterial()->GetMaterialData();
     }
     else {
+        // [진단] material 컴포넌트는 있는데 내부 CMaterial이 null이면 손상 의심 (정상 null은 소켓 모델 등)
+        if (material && material->GetMaterial() == nullptr) {
+            CObject* o = material->GetOwner();
+            std::cout << "[AddInstance] null CMaterial! ownerId="
+                << (o ? o->GetID() : 0ull) << " name=" << (o ? o->name : std::string("?"))
+                << " submesh=" << submeshIndex << std::endl;
+        }
         data.material = MaterialData{};
         data.material.albedo = { 1, 1, 0, 1 };
         data.material.tex_idx = 0;  // texture는 white
