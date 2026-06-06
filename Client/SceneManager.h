@@ -75,9 +75,6 @@ private:
     std::unique_ptr<CRenderTarget> buffer_ssao{};
     std::unique_ptr<CRenderTarget> buffer_ssao_blur_temp{}; // buffer_ssao->buffer_ssao_blur_temp(가로블러)->buffer_ssao(최종) 순으로 Render
 
-    D3D12_CPU_DESCRIPTOR_HANDLE buffer_color_rtv_handle{};
-    D3D12_CPU_DESCRIPTOR_HANDLE buffer_normal_rtv_handle{};
-
     std::unique_ptr<CScene> scenes[(UINT)SCENE_TYPE::END];
     CScene*                 active_scene = nullptr;
 };
