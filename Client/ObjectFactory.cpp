@@ -233,7 +233,7 @@ void CObjectFactory::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby()
 {
 	std::vector<std::shared_ptr<CObject>> objects;
-	std::string fileName{ "../Modeling/lobby_0305.bin" };
+	std::string fileName{ "../Modeling/lobby.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	for (const auto& children : frameRoot->childrens) {
@@ -907,10 +907,6 @@ void CObjectFactory::LoadItemFrame()
 	}
 	{
 		std::string fileName{ "../Modeling/treasure.bin" };
-		LoadNode(fileName);
-	}
-	{
-		std::string fileName{ "../Modeling/treasure2.bin" };
 		LoadNode(fileName);
 	}
 	{

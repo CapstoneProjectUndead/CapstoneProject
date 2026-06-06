@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 // Server쪽 LobbyScene
 #include "LobbyScene.h"
 #include "Player.h"
@@ -440,7 +440,7 @@ CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string&
 
 void CLobbyScene::CreateLobby()
 {
-	std::string fileName{ "../Modeling/lobby_0305.bin" };
+	std::string fileName{ "../Modeling/lobby.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	if (!frameRoot) {
