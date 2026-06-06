@@ -40,8 +40,8 @@ public:
     void Handle_C_GiveUpRescue(shared_ptr<Session> session, const C_GiveUpRescue& pkt);
 
     // 라운드 타이머 (정산 시스템)
-    static constexpr float ROUND_DURATION = 300.f;        
-    static constexpr float RETURN_ACTIVATE_REMAIN = 60.f; // 종료 60초 전 복귀존 활성화
+    static constexpr float ROUND_DURATION = 600.f;        
+    static constexpr float RETURN_ACTIVATE_REMAIN = 120.f; // 종료 60초 전 복귀존 활성화
     static constexpr float RETURN_RANGE = 1.0f;           // 복귀존 반경
 
     float GetRoundTimer() const { return round_timer; }
@@ -51,8 +51,8 @@ public:
     virtual float GetSyncedRoundTimer() const override { return round_started ? round_timer : -1.f; }
 
     // 채굴 가능 오브젝트 관련
-    static constexpr float MINING_RANGE = 0.45f;
-    static constexpr float BARE_HAND_MINING_RANGE = 0.3f;
+    static constexpr float MINING_RANGE = 1.f;
+    static constexpr float BARE_HAND_MINING_RANGE = 1.f;
     XMFLOAT3 FindSpawnPoint() const;
     CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range, MINEABLEOBJECT_TYPE type);
     void DestroyMineable(uint32 world_id);

@@ -662,8 +662,8 @@ XMFLOAT3 CPlayer::GetRandomPossessedTarget()
 
 void CPlayer::ProcessVisibleObjectMining(const InputData& input, float elapsedTime, bool isMoving)
 {
-    // 채굴 시작: lbtn 탭 + 정지 + 착지
-    if (input.lbtn && !isMoving && !is_possessed && !is_dowsing
+    // 채굴 시작: lbtn 탭 + 정지 + 착지 (채굴 중이면 재시작 금지: 진행 중 dig_timer 리셋으로 데미지 유실 방지)
+    if (input.lbtn && dig_timer <= 0.0f && !isMoving && !is_possessed && !is_dowsing
         && grounded_timer > 0.0f) {
         state = PLAYER_STATE::DIG;
         dig_timer = DIG_DURATION;
@@ -705,8 +705,8 @@ void CPlayer::ProcessUnVisibleObjectMining(const InputData& input, float elapsed
     bool isBareHand = (equipped_item_id == 0);
     bool isShovel = equipped_item_id >= 1 && equipped_item_id <= 4;
 
-    // 채굴 시작: lbtn 탭 + 정지 + 착지
-    if (input.lbtn && isShovel
+    // 채굴 시작: lbtn 탭 + 정지 + 착지 (채굴 중이면 재시작 금지: 진행 중 dig_timer 리셋으로 데미지 유실 방지)
+    if (input.lbtn && isShovel && dig_timer <= 0.0f
         && !isMoving && !is_possessed && !is_dowsing
         && grounded_timer > 0.0f) {
         state = PLAYER_STATE::DIG;
