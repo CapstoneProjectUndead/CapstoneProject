@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -21,7 +21,7 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 
 	SetViewport(0, 0, width, height);
 	SetScissorRect(0, 0, width, height);
-	GenerateProjectionMatrix(0.01f, 30.0f, (float)width / (float)height, 90.0f);
+	GenerateProjectionMatrix(0.01f, 20.0f, (float)width / (float)height, 90.0f);
 	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
 	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
@@ -37,6 +37,11 @@ void CCamera::CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandL
 		ortho_cb->Map(0, nullptr, reinterpret_cast<void**>(&ortho_mapped));
 		billboard_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<BillboardCameraCB>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
 		billboard_cb->Map(0, nullptr, reinterpret_cast<void**>(&billboard_mapped));
+		inv_camera_cb = CreateBufferResource(device, commandList, nullptr, CalculateConstant<XMFLOAT4X4>(), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		inv_camera_cb->Map(0, nullptr, reinterpret_cast<void**>(&inv_camera_mapped));
+		UINT blurBufferSize = CalculateConstant<CB_BlurInfo>() * 2;	// blur 1 pass 처리 전에 덮어씌움->배열로 처리
+		blur_cb = CreateBufferResource(device, commandList, nullptr, blurBufferSize, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		blur_cb->Map(0, nullptr, reinterpret_cast<void**>(&blur_mapped));
 	}
 }
 
@@ -44,10 +49,10 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool
 {
 	if (isUI) {
 		XMStoreFloat4x4(&ortho_mapped->ortho_projection, XMMatrixTranspose(XMLoadFloat4x4(&ortho_matrix)));
-
 		commandList->SetGraphicsRootConstantBufferView(0, ortho_cb->GetGPUVirtualAddress());
 		return;
 	}
+
 	XMStoreFloat4x4(&mapped->view_matrix, XMMatrixTranspose(XMLoadFloat4x4(&view_matrix)));
 	XMStoreFloat4x4(&mapped->projection_matrix, XMMatrixTranspose(XMLoadFloat4x4(&projection_matrix)));
 
@@ -61,6 +66,37 @@ void CCamera::UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandL
 	billboard_mapped->pos = position;
 
 	commandList->SetGraphicsRootConstantBufferView(0, billboard_cb->GetGPUVirtualAddress());
+}
+
+void CCamera::UpdateShaderVariablesShadow(ID3D12GraphicsCommandList* commandList)
+{
+	XMMATRIX view = XMLoadFloat4x4(&view_matrix);
+	XMMATRIX proj = XMLoadFloat4x4(&projection_matrix);
+	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+
+	XMVECTOR det; // 행렬식(Determinant)을 저장할 임시 변수
+	XMMATRIX invViewProj = XMMatrixInverse(&det, viewProj);
+
+	XMStoreFloat4x4(inv_camera_mapped, XMMatrixTranspose(invViewProj));
+	commandList->SetGraphicsRootConstantBufferView(3, inv_camera_cb->GetGPUVirtualAddress());
+}
+
+void CCamera::UpdateShaderVariablesBlur(ID3D12GraphicsCommandList* commandList, const XMFLOAT2& direction, float clientWidth, float clientHeight, UINT passIndex)
+{
+	if (!blur_mapped) return;
+
+	UINT alignmentSize = CalculateConstant<CB_BlurInfo>();
+
+	// 오프셋 위치를 계산
+	char* bytePtr = reinterpret_cast<char*>(blur_mapped) + (alignmentSize * passIndex);
+	CB_BlurInfo* currentBlurInfo = reinterpret_cast<CB_BlurInfo*>(bytePtr);
+
+	// 경계면에 데이터 작성
+	currentBlurInfo->blur_direction = direction;
+	currentBlurInfo->texel_size = XMFLOAT2(1.0f / clientWidth, 1.0f / clientHeight);
+
+	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = blur_cb->GetGPUVirtualAddress() + (alignmentSize * passIndex);
+	commandList->SetGraphicsRootConstantBufferView(3, cbAddress);
 }
 
 void CCamera::GenerateProjectionMatrix(float nearPlaneDistance, float farPlaneDistance, float aspectRatio, float fovAngle)

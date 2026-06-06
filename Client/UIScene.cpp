@@ -40,18 +40,17 @@ void CUIScene::Render(ID3D12GraphicsCommandList* commandList)
 
     ui_manager->Collect(renderers);
 
-    for(size_t i = 0; i < EShaderName::Count; ++i) {
-        if (!shaders[i]) continue;
-        shaders[i]->RenderBegin(commandList);
-
+    if (shaders[EShaderName::UI] && renderers[EShaderName::UI]) {
+        shaders[EShaderName::UI]->RenderBegin(commandList);
         camera->UpdateShaderVariables(commandList, true);
 
-        renderers[i]->Render(commandList);
-        if (i == EShaderName::UI) {
-            renderers[EShaderName::Text]->Render(commandList);
-        }
+        renderers[EShaderName::UI]->Render(commandList);
+        renderers[EShaderName::UI]->ClearAllBatch();
 
-        shaders[i]->RenderEnd(commandList);
+        renderers[EShaderName::Text]->Render(commandList);
+        renderers[EShaderName::Text]->ClearAllBatch();
+
+        shaders[EShaderName::UI]->RenderEnd(commandList);
     }
 }
 
@@ -221,6 +220,7 @@ void CUIScene::RenderInspectorWindow()
 
                         auto& shaders = CSceneManager::GetInstance().GetShaders();
 
+                        auto& factory = CSceneManager::GetInstance().GetFactory();
                         std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
                         m->SetMaterial(factory->GetMaterial(fileName, imageUI->GetShaderName()));
 

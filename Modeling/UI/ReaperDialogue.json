@@ -37,6 +37,122 @@
                     ],
                     "Text": "Hi",
                     "Type": "Text"
+                },
+                {
+                    "Anchor": [
+                        1.0,
+                        -1.0
+                    ],
+                    "Children": [
+                        {
+                            "Anchor": [
+                                -1.0,
+                                1.0
+                            ],
+                            "Children": [],
+                            "Color": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                            "Name": "Yes",
+                            "Pivot": [
+                                0.5,
+                                0.5
+                            ],
+                            "RelativePos": [
+                                75.0,
+                                25.0
+                            ],
+                            "Size": [
+                                100.0,
+                                100.0
+                            ],
+                            "Text": "응",
+                            "Type": "Text"
+                        }
+                    ],
+                    "Color": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "FillAmount": 1.0,
+                    "Name": "YesButton",
+                    "Pivot": [
+                        0.5,
+                        0.5
+                    ],
+                    "RelativePos": [
+                        -140.0,
+                        -210.0
+                    ],
+                    "Size": [
+                        200.0,
+                        100.0
+                    ],
+                    "TextureName": "green_button",
+                    "Type": "Button"
+                },
+                {
+                    "Anchor": [
+                        1.0,
+                        -1.0
+                    ],
+                    "Children": [
+                        {
+                            "Anchor": [
+                                -1.0,
+                                1.0
+                            ],
+                            "Children": [],
+                            "Color": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                            "Name": "No",
+                            "Pivot": [
+                                0.5,
+                                0.5
+                            ],
+                            "RelativePos": [
+                                59.0,
+                                25.0
+                            ],
+                            "Size": [
+                                100.0,
+                                100.0
+                            ],
+                            "Text": "아니",
+                            "Type": "Text"
+                        }
+                    ],
+                    "Color": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "FillAmount": 1.0,
+                    "Name": "NoButton",
+                    "Pivot": [
+                        0.5,
+                        0.5
+                    ],
+                    "RelativePos": [
+                        -144.0,
+                        -90.0
+                    ],
+                    "Size": [
+                        200.0,
+                        100.0
+                    ],
+                    "TextureName": "red_button",
+                    "Type": "Button"
                 }
             ],
             "Color": [

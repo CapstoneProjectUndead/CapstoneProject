@@ -548,7 +548,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 
 	// 아이템이 바뀌었을 때만 load
 	if (cache.last_item_id != itemID && itemID > 0) {
-		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
+		auto proto = CSceneManager::GetInstance().GetFactory()->GetPrototype(ItemFactory::GetModelName(itemID));
 		
 		if (proto) {
 			// item은 모두 inst rnederer 사용
@@ -560,7 +560,7 @@ void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const s
 		}
 	}
 	else if (cache.last_item_id != itemID && NULL == itemID && modelName != cache.model_name) {	// item이 아니면 modelName 사용
-		auto proto = CSceneManager::GetInstance().GetActiveScene()->GetFactory()->GetPrototype(modelName);
+		auto proto = CSceneManager::GetInstance().GetFactory()->GetPrototype(modelName);
 
 		if (proto) {
 			for (CMeshRendererComponent* renderer : proto->GetComponents<CMeshRendererComponent>()) {

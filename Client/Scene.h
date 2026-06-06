@@ -7,7 +7,6 @@ class CMyPlayer;
 class CCamera;
 class CObject;
 class CShader;
-class CObjectFactory;
 class CUIManager;
 
 class CScene
@@ -23,8 +22,8 @@ public:
 	void AnimateObjects(float);
 
 	virtual void Initialize();
+	void CollectObjects(ID3D12GraphicsCommandList* commandList);
 	virtual void Render(ID3D12GraphicsCommandList*);
-	virtual void RenderBegin(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
 	// Scene 이 전환될 때, 호출 될 함수
@@ -43,12 +42,25 @@ public:
 	void CheckHoverSound();
 	void PlayClickSound();
 
+	// 상태변환
+	void TransitionDepthBuffer(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+	// main buffer set
+	void SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList);
+	// main buffer: RENDER_TARGET -> SR
+	void TransitionGBuffersToSRV(ID3D12GraphicsCommandList* commandList);
+	void SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList);
+	void SetBackBufferWithDepthReadOnly(ID3D12GraphicsCommandList* commandList);
+	// Rendering
+	virtual void RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf);
 private:
+	D3D12_RESOURCE_BARRIER CreateResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter);
 	// Rendering
 	void RenderBasePass(ID3D12GraphicsCommandList* commandList);
 	void RenderShadowPass(ID3D12GraphicsCommandList* commandList);
-	void CollectObjects(ID3D12GraphicsCommandList* commandList);
+	void RenderSSAOPass(ID3D12GraphicsCommandList* commandList);
+	void RenderSSAOBlurPass(ID3D12GraphicsCommandList* commandList);
 protected:
+
 	// UI 관련 
 	// 자식들이 각자 그릴 UI를 구현하는 순수 가상 함수
 	virtual void DrawUI() = 0;
@@ -97,8 +109,6 @@ public:
 	std::unordered_map<uint64, size_t>&     GetIDIndex() { return id_To_Index; }
 
 	void									SetLight(std::unique_ptr<CLightManager> _light) { light = std::move(_light); }
-	
-	std::shared_ptr<CObjectFactory>&		GetFactory() { return factory; };
 protected:
 	SCENE_TYPE								scene_type;
 
@@ -109,7 +119,6 @@ protected:
 	std::unordered_map<uint64, size_t>	    id_To_Index;
 
 	std::unique_ptr<CLightManager> light;
-	std::shared_ptr<CObjectFactory> factory;
 	std::shared_ptr<CUIManager> ui_manager;
 
 	// 4월 15일 추가. 

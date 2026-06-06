@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include <cstdio>
 #include "GameScene.h"
 #include "SceneManager.h"
@@ -59,6 +59,7 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	if (objects.empty()) {
 		objects = factory->CreateGameScene();
 		treasures = factory->GetTreauseres();
@@ -69,10 +70,6 @@ void CGameScene::Initialize()
 			monster_spawn_info.push_back({ pos, MON_TYPE::GHOST, 0.f, -1.f, {} });
 		for (const auto& pos : factory->GetDogMonsterSpawnPositions())
 			monster_spawn_info.push_back({ pos, MON_TYPE::ANIMAL_MONSTER, 0.f, -1.f, {} });
-
-		factory->LoadItemFrame();
-		// 우선 게임씬에서 load
-		factory->LoadTwoSideFrame();
 	}
 
 	// menu UI
@@ -134,6 +131,7 @@ void CGameScene::Initialize()
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	// 플레이어 생성
 	if (!my_player) {
 		my_player = factory->CreateMyPlayer();
@@ -172,6 +170,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	// 싱글 전용: 몬스터 스폰
 	if (g_is_single) {
 		for (auto& info : monster_spawn_info) {
+			auto& factory = CSceneManager::GetInstance().GetFactory();
 			auto monster = factory->CreateMonster(info.type, scene_type);
 			if (!monster)
 				continue;
@@ -183,6 +182,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			if (info.type == MON_TYPE::HUMAN_MONSTER) {
 				if (auto human = std::dynamic_pointer_cast<CHumanMonster>(monster)) {
 					human->SetSpawnCallback([this](MON_TYPE type, XMFLOAT3 pos) {
+						auto& factory = CSceneManager::GetInstance().GetFactory();
 						auto dog = factory->CreateMonster(type, scene_type);
 						if (!dog)
 							return;
@@ -212,6 +212,26 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
+	}
+	light->ClearPointLights();
+	if (g_is_single) {
+		auto& factory = CSceneManager::GetInstance().GetFactory();
+		for (const auto& inst : factory->GetInstData()) {
+			if (inst.model == EModelVariant::STREETLAMP) {
+				XMFLOAT3 pos{ inst.position };
+				pos.y += 2.23f;
+				light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+			}
+		}
+	}
+	else {
+		for (const auto& inst : instance_data) {
+			if (inst.model == EModelVariant::STREETLAMP) {
+				XMFLOAT3 pos{ inst.position };
+				pos.y += 2.23f;
+				light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+			}
+		}
 	}
 }
 
@@ -507,6 +527,7 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 		info.respawn_timer -= elapsedTime;
 
 		if (info.respawn_timer <= 0.f) {
+			auto& factory = CSceneManager::GetInstance().GetFactory();
 			auto monster = factory->CreateMonster(info.type, scene_type);
 			if (monster) {
 				monster->SetPosition(info.position.x, 0.1f, info.position.z);
@@ -514,6 +535,7 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 				if (info.type == MON_TYPE::HUMAN_MONSTER) {
 					if (auto human = std::dynamic_pointer_cast<CHumanMonster>(monster)) {
 						human->SetSpawnCallback([this](MON_TYPE type, XMFLOAT3 pos) {
+							auto& factory = CSceneManager::GetInstance().GetFactory();
 							auto dog = factory->CreateMonster(type, scene_type);
 							if (!dog) return;
 							dog->SetPosition(pos.x, pos.y, pos.z);
@@ -1161,6 +1183,7 @@ void CGameScene::SprayAttack(float elapsedTime)
 // 싱글환경
 void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position, int16 dur)
 {
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	auto worldItem = factory->CreateWorldItem(itemID);
 	if (!worldItem)
 		return;
@@ -1188,6 +1211,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position, int16 dur)
 // 멀티환경
 void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position, int16 dur)
 {
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	auto worldItem = factory->CreateWorldItem(itemID);
 	if (!worldItem)
 		return;
@@ -2102,6 +2126,7 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 	id_To_Index.clear();
 	player_slot_ids.clear();	// 다음 라운드 재진입 시 상대 UI 중복(누적) 방지
 
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	objects = factory->CreateGameSceneByServer(instance_data);
 	instance_data.clear();	// 다음 라운드 재진입 시 누적 방지
 }

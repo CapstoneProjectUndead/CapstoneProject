@@ -92,7 +92,7 @@ void CDataManager::LoadRecursive(std::shared_ptr<CUIComponent> parent, const jso
     if (type == "Image" || type == "Button") {
         auto imageUI = dynamic_pointer_cast<CUIImage>(newUI);
 
-        auto& factory = CSceneManager::GetInstance().GetActiveScene()->GetFactory();
+        auto& factory = CSceneManager::GetInstance().GetFactory();
 
         std::shared_ptr<CMaterialComponent> m = std::make_shared<CMaterialComponent>();
         m->SetMaterial(factory->GetMaterial(imageUI->GetTextureName(), imageUI->GetShaderName()));

@@ -9,9 +9,11 @@
 #include "KeyManager.h"
 #include "ShadowMap.h"
 #include "SkyBox.h"
+#include "ObjectFactory.h"
 
 void CSceneManager::Init(ID3D12Device* device)
 {
+	factory = std::make_shared<CObjectFactory>();
 	// shader
 	shaders.resize(EShaderName::Count);
 	{
@@ -63,11 +65,35 @@ void CSceneManager::Init(ID3D12Device* device)
 		shader->CreateShader(device);
 		shaders[EShaderName::SkyBox] = std::move(shader);
 	}
+	{
+		// Deferred
+		std::shared_ptr<CShader> shader = std::make_unique<CDeferredShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::Deferred] = std::move(shader);
+	}
+	{
+		// SSAO
+		std::shared_ptr<CShader> shader = std::make_unique<CAOShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::SSAO] = std::move(shader);
+	}
+	{
+		// SSAO
+		std::shared_ptr<CShader> shader = std::make_unique<CSSAOBlurShader>();
+		shader->CreateShader(device);
+		shaders[EShaderName::SSAOBlur] = std::move(shader);
+	}
+	{
+		factory->GetMaterial("white", EShaderName::UI);	// 인덱스 0에 생성하기 위해 먼저 생성
+		factory->LoadTwoSideFrame();
+		factory->LoadItemFrame();
+		factory->LoadGameScene();
+	}
 
 	// renderer
 	renderers.resize(EShaderName::Count);
 	{
-		auto shadowRenderer = std::make_unique<CAniRenderer>();
+		auto shadowRenderer = std::make_unique<CShadowRenderer>();
 		shadowRenderer->Initialize(device, 100);
 		renderers[EShaderName::Shadow] = std::move(shadowRenderer);
 
@@ -87,15 +113,13 @@ void CSceneManager::Init(ID3D12Device* device)
 		bbRenderer->Initialize(device, 500);
 		renderers[EShaderName::Billboard] = std::move(bbRenderer);
 
-		// 20부터 font용(아직 제한X)
 		CDescriptorHeapManager* heap = shaders[EShaderName::UI]->GetHeapManager();
 		auto textRenderer = std::make_unique<CTextRenderer>();
 		textRenderer->Initialize(device, GET_CMD_QUEUE, heap->GetSRVCPUHandle(20), heap->GetSRVGPUHandle(20));
 		renderers[EShaderName::Text] = std::move(textRenderer);
 	}
 
-	auto skinHeap = shaders[EShaderName::Skinning]->GetHeapManager();
-	auto twosideHeap = shaders[EShaderName::TwoSide]->GetHeapManager();
+	auto deferredLightingHeap = shaders[EShaderName::Deferred]->GetHeapManager();
 	// directional light shadow map
 	{
 		dir_shadow_map = std::make_shared<CShadowMap>(GET_DEVICE, 4096, 4096);
@@ -106,32 +130,46 @@ void CSceneManager::Init(ID3D12Device* device)
 			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
-
-		dir_shadow_map->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
-		dir_shadow_map->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
+		dir_shadow_map->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::ShadowMapIdx));
 	}
 	// dot light shadow map
 	{
-		auto shadowMap = std::make_shared<CCubeShadowMap>(GET_DEVICE, 1024, 1024);
+		cube_shadow_map = std::make_shared<CCubeShadowMap>(GET_DEVICE, 1024, 1024);
 		auto shadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
 
-		shadowMap->CreateDescriptors(
+		cube_shadow_map->CreateDescriptors(
 			shadowHeap->GetSRVCPUHandle(0),
 			shadowHeap->GetSRVGPUHandle(0),
 			shadowHeap->GetDSVCPUHandle(0)
 		);
-
-		shadowMap->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::Count));
-		shadowMap->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::Count));
-		cube_shadow_maps.push_back(shadowMap);
+		cube_shadow_map->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::CubeMapIdx));
 	}
-
 	// skyBox
 	{
 		skybox = std::make_shared<CSkyBox>();
 		skybox->Initialize(device, GET_CMD_LIST, shaders[EShaderName::SkyBox]->GetHeapManager());
-		skybox->CreateSRV(skinHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
-		skybox->CreateSRV(twosideHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+		skybox->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::SkyboxMapIdx));
+	}
+
+	// G-Buffer 셋업 및 최종 조명 합성 바인딩 데이터 연결
+	{
+		buffer_color = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+		buffer_normal = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R16G16B16A16_FLOAT);
+		buffer_ssao = std::make_unique<CRenderTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8_UNORM);
+		buffer_ssao_blur_temp = std::make_unique<CRenderTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8_UNORM);
+
+		auto ssaoHeap = shaders[EShaderName::SSAO]->GetHeapManager();
+		auto ssaoBlurHeap = shaders[EShaderName::SSAOBlur]->GetHeapManager();
+		buffer_color->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferColorIdx));
+		buffer_normal->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
+		buffer_normal->CreateSRV(ssaoHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
+		buffer_ssao->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::AOMapIdx));
+		buffer_ssao->CreateSRV(ssaoBlurHeap->GetSRVCPUHandle(1));
+		buffer_ssao_blur_temp->CreateSRV(ssaoBlurHeap->GetSRVCPUHandle(2));
+
+		CreateMainDepthSRV(device, deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+		CreateMainDepthSRV(device, ssaoHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+		CreateMainDepthSRV(device, ssaoBlurHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
 	}
 }
 
@@ -144,26 +182,23 @@ void CSceneManager::Update()
 
 void CSceneManager::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (active_scene) {
-		active_scene->Render(commandList);
-	}
+	CScene* activeScene = GetActiveScene();
+	if (!activeScene) return;
+
+	activeScene->Render(commandList);
 }
 
 void CSceneManager::ChangeScene(SCENE_TYPE type)
 {
-	// 기존 씬에 있던 내 플레이어를 찾아온다.
-	// Title Scene에서 시작하는 경우에는 없을 수 있기 때문에, 반드시 null 체크를 해야한다. 
 	std::shared_ptr<CMyPlayer> myPlayer;
-	if (active_scene->GetMyPlayer())
+	if (active_scene && active_scene->GetMyPlayer())
 		myPlayer = active_scene->GetMyPlayer();
 
-	// 기존 씬에서 정리할게 있으면 여기서 처리
-	active_scene->Exit();
-	
-	// 바꾸고자하는 씬으로 active_scene을 변경
+	if (active_scene)
+		active_scene->Exit();
+
 	active_scene = scenes[(UINT)type].get();
 
-	// 해당 씬에 플레이어 셋팅
 	if (myPlayer && active_scene->GetSceneType() != SCENE_TYPE::TITLE)
 		active_scene->SetPlayer(myPlayer);
 
@@ -174,6 +209,43 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 		CKeyManager::GetInstance().SetMouseMode(false);
 	}
 
-	// 해당 씬에서 할 게 있으면 여기서 처리
-	active_scene->Enter();
+	if (active_scene)
+		active_scene->Enter();
+}
+
+void CSceneManager::CreateMainDepthSRV(ID3D12Device* device)
+{
+	auto deferredLightingHeap = shaders[EShaderName::Deferred]->GetHeapManager();
+	auto ssaoHeap = shaders[EShaderName::SSAO]->GetHeapManager();
+	auto ssaoBlurHeap = shaders[EShaderName::SSAOBlur]->GetHeapManager();
+
+	CreateMainDepthSRV(device, deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+	CreateMainDepthSRV(device, ssaoHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+	CreateMainDepthSRV(device, ssaoBlurHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+}
+
+void CSceneManager::CreateMainDepthSRV(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle)
+{
+	auto depthResource = gGameFramework.GetDepthStencilBuffer().Get();
+	if (!depthResource) return;
+	auto desc = depthResource->GetDesc();
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+
+	if (depthResource->GetDesc().SampleDesc.Count > 1) {
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+	}
+	else {
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		srvDesc.Texture2D.PlaneSlice = 0;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	}
+
+	device->CreateShaderResourceView(depthResource, &srvDesc, srvCpuHandle);
 }

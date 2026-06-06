@@ -14,8 +14,15 @@ class CCamera;
 namespace DescriptorSlot {
 	enum {
 		DiffuseIdx = 0,
-		SkyboxMapIdx = 68,
-		ShadowMapIdx = 69,
+		MainDepthIdx = 0,
+		GBufferColorIdx = 1,       // 순수 메쉬 색상 저장용
+		GBufferNormalIdx = 2,      // 월드 노말 저장용
+		// ----------------------------------
+		ShadowMapIdx = 3,
+		SkyboxMapIdx = 4,
+		AOMapIdx = 5,
+		CubeMapIdx,
+		CubeMapCount,
 		Count = 70
 	};
 }
@@ -85,6 +92,9 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**);
 	D3D12_SHADER_BYTECODE CompileShaderFromFile(WCHAR* , LPCSTR ,LPCSTR , ID3DBlob** );
 
+	virtual UINT GetNumRenderTargets() { return 1; }
+	virtual DXGI_FORMAT GetRTVFormat(UINT index) { return DXGI_FORMAT_R8G8B8A8_UNORM; }
+	virtual DXGI_FORMAT GetDSVFormat() { return DXGI_FORMAT_D24_UNORM_S8_UINT; }
 	// create graphicspipeline
 	virtual void CreateShader(ID3D12Device*);
 	// create descriptor heap, descriptor
@@ -109,7 +119,11 @@ protected:
 class CSkinningShader : public CShader
 {
 public:
-	void RenderBegin(ID3D12GraphicsCommandList*) override;
+	UINT GetNumRenderTargets() override { return 2; }
+	DXGI_FORMAT GetRTVFormat(UINT index) override {
+		if (index == 0) return DXGI_FORMAT_R8G8B8A8_UNORM;       // Color (Albedo)
+		return DXGI_FORMAT_R16G16B16A16_FLOAT;
+	}
 	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
@@ -120,7 +134,11 @@ public:
 class CInstShader : public CShader
 {
 public:
-	void RenderBegin(ID3D12GraphicsCommandList*) override;
+	UINT GetNumRenderTargets() override { return 2; }
+	DXGI_FORMAT GetRTVFormat(UINT index) override {
+		if (index == 0) return DXGI_FORMAT_R8G8B8A8_UNORM;
+		return DXGI_FORMAT_R16G16B16A16_FLOAT;
+	}
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
@@ -135,19 +153,76 @@ public:
 
 class CShadowShader : public CSkinningShader {
 public:
+	void RenderBegin(ID3D12GraphicsCommandList*) override;
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
 	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
 	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**) override;
 	D3D12_BLEND_DESC CreateBlendState() override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 	void CreateShader(ID3D12Device* device) override;
 };
 
 class CCubeShadowShader : public CShadowShader {
 public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
-	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**) override;
+};
+
+class CDeferredShader : public CSkinningShader
+{
+public:
+	void RenderBegin(ID3D12GraphicsCommandList*) override;
+	UINT GetNumRenderTargets() override { return 1; }
+	DXGI_FORMAT GetRTVFormat(UINT index) override { return DXGI_FORMAT_R8G8B8A8_UNORM; } // 흑백 마스크용
+	DXGI_FORMAT GetDSVFormat() override { return DXGI_FORMAT_UNKNOWN; } // 흑백 마스크용
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override; // 입력 레이아웃 없음(nullptr)
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override; // 깊이 쓰기 방지
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+};
+
+class CAOShader : public CSkinningShader
+{
+public:
+	UINT GetNumRenderTargets() override { return 1; }
+	DXGI_FORMAT GetRTVFormat(UINT index) override
+	{
+		return DXGI_FORMAT_R8_UNORM;
+	}
+	DXGI_FORMAT GetDSVFormat() override
+	{
+		return DXGI_FORMAT_UNKNOWN;
+	}
+	void RenderBegin(ID3D12GraphicsCommandList* commandList) override;
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
+};
+
+class CSSAOBlurShader : public CShader
+{
+public:
+	UINT GetNumRenderTargets() override { return 1; }
+	DXGI_FORMAT GetRTVFormat(UINT index) override
+	{
+		return DXGI_FORMAT_R8_UNORM;
+	}
+	DXGI_FORMAT GetDSVFormat() override
+	{
+		return DXGI_FORMAT_UNKNOWN; // 깊이 버퍼 쓰지 않음
+	}
+	void RenderBegin(ID3D12GraphicsCommandList* commandList) override;
+	D3D12_INPUT_LAYOUT_DESC CreateInputLayout() override;
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
+	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
+	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 };
 
 class CUIShader : public CShader
@@ -155,6 +230,7 @@ class CUIShader : public CShader
 public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
 	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 };

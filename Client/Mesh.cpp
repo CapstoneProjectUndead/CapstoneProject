@@ -43,7 +43,7 @@ CMesh::CMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 void CMesh::ReleaseUploadBuffer()
 {
 	if (vertex_upload_buffer) vertex_upload_buffer.Reset();
-	vertex_upload_buffer = nullptr;
+	if (shadow_vertex_upload_buffer) shadow_vertex_upload_buffer.Reset();
 }
 
 void CMesh::Render(ID3D12GraphicsCommandList* commandList, uint32 instCount)
@@ -64,6 +64,27 @@ void CMesh::Render(ID3D12GraphicsCommandList* commandList, UINT submeshIndex, ui
 	}
 	else {
 		// 렌더링(입력 조립기 작동)
+		commandList->DrawInstanced(vertex_num, instCount, offset, 0);
+	}
+}
+
+void CMesh::RenderShadow(ID3D12GraphicsCommandList* commandList, uint32 instCount)
+{
+	RenderShadow(commandList, 0, instCount);
+}
+
+void CMesh::RenderShadow(ID3D12GraphicsCommandList* commandList, UINT submeshIndex, uint32 instCount)
+{
+	commandList->IASetPrimitiveTopology(primitive_topology);
+
+	commandList->IASetVertexBuffers(slot_num, 1, &shadow_vertex_buffer_view);
+
+	if (index_buffer) {
+		auto& sm = submeshes[submeshIndex];
+		commandList->IASetIndexBuffer(&index_buffer_view); // 인덱스는 공유
+		commandList->DrawIndexedInstanced(sm.index_count, instCount, sm.start_index, base_vertex_index, 0);
+	}
+	else {
 		commandList->DrawInstanced(vertex_num, instCount, offset, 0);
 	}
 }
@@ -99,64 +120,32 @@ void CMesh::SetSubMesh(const std::vector<CGeometryLoader::SubMesh>& submesh)
 }
 
 template<>
-void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
-{
-	CGeometryLoader::Mesh& mesh{ node->mesh };
-	name = node->name;
-
-	std::vector<CSkinnedVertex> vertices;
-	size_t count = mesh.positions.size();
-	vertices.reserve(count);
-
-	for (size_t i = 0; i < count; ++i)
-	{
-		CSkinnedVertex v{};
-		v.position = mesh.positions[i];
-		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
-		v.tex = (i < mesh.texcoords.size()) ? mesh.texcoords[i] : XMFLOAT2(0, 0);
-
-		if (i < mesh.bone_weights.size())
-		{
-			v.bone_indices = mesh.bone_weights[i].bone_index;
-			v.bone_weights = mesh.bone_weights[i].weight;
-		}
-		else
-		{
-			v.bone_indices = XMUINT4(0, 0, 0, 0);
-			v.bone_weights = XMFLOAT4(1, 0, 0, 0);
-		}
-
-		vertices.push_back(v);
-	}
-
-	for (const auto& m : mesh.materials) {
-		if (!m.normalMap.empty()) {
-			CalculateTangents<CSkinnedVertex>(vertices, mesh.indices);
-			break;
-		}
-	}
-
-	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
-}
-
-template<>
 void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
 {
 	CGeometryLoader::Mesh& mesh{ node->mesh };
 	name = node->name;
 
+	// [기존 로직] 일반 렌더링용 정점 생성
 	std::vector<CMatVertex> vertices;
+	std::vector<CShadowVertex> shadowVertices;
+
 	size_t count = mesh.positions.size();
 	vertices.reserve(count);
+	shadowVertices.reserve(count);
 
 	for (size_t i = 0; i < count; ++i)
 	{
+		// 일반 정점
 		CMatVertex v{};
 		v.position = mesh.positions[i];
 		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
 		v.tex = (i < mesh.texcoords.size()) ? mesh.texcoords[i] : XMFLOAT2(0, 0);
-
 		vertices.push_back(v);
+
+		// 그림자 정점 (오직 Position만 추출)
+		CShadowVertex sv{};
+		sv.position = mesh.positions[i];
+		shadowVertices.push_back(sv);
 	}
 
 	for (const auto& m : mesh.materials) {
@@ -166,9 +155,83 @@ void CMesh::BuildVertices<CMatVertex>(ID3D12Device* device, ID3D12GraphicsComman
 		}
 	}
 
+	// 일반 버퍼 세팅
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+
+	// 그림자 버퍼 세팅 (메모리 업로드 및 뷰 생성)
+	shadow_stride = sizeof(CShadowVertex);
+	shadow_vertex_buffer = CreateBufferResource(device, commandList, shadowVertices.data(), shadow_stride * (UINT)shadowVertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, shadow_vertex_upload_buffer.GetAddressOf());
+
+	shadow_vertex_buffer_view.BufferLocation = shadow_vertex_buffer->GetGPUVirtualAddress();
+	shadow_vertex_buffer_view.StrideInBytes = shadow_stride;
+	shadow_vertex_buffer_view.SizeInBytes = shadow_stride * (UINT)shadowVertices.size();
 }
 
+// 2. 스킨드 메쉬 (CSkilledVertex) 빌드 시 그림자 버퍼 생성
+template<>
+void CMesh::BuildVertices<CSkinnedVertex>(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::unique_ptr<CGeometryLoader::FrameNode>& node)
+{
+	CGeometryLoader::Mesh& mesh{ node->mesh };
+	name = node->name;
+
+	std::vector<CSkinnedVertex> vertices;
+	std::vector<CShadowSkinnedVertex> shadowVertices; // 스킨드 그림자용
+
+	size_t count = mesh.positions.size();
+	vertices.reserve(count);
+	shadowVertices.reserve(count);
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		CSkinnedVertex v{};
+		CShadowSkinnedVertex sv{};
+
+		v.position = mesh.positions[i];
+		sv.position = mesh.positions[i];
+
+		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
+		v.tex = (i < mesh.texcoords.size()) ? mesh.texcoords[i] : XMFLOAT2(0, 0);
+
+		if (i < mesh.bone_weights.size())
+		{
+			v.bone_indices = mesh.bone_weights[i].bone_index;
+			v.bone_weights = mesh.bone_weights[i].weight;
+
+			// 그림자 정점에도 본 정보는 필수 할당
+			sv.bone_indices = mesh.bone_weights[i].bone_index;
+			sv.bone_weights = mesh.bone_weights[i].weight;
+		}
+		else
+		{
+			v.bone_indices = XMUINT4(0, 0, 0, 0);
+			v.bone_weights = XMFLOAT4(1, 0, 0, 0);
+
+			sv.bone_indices = XMUINT4(0, 0, 0, 0);
+			sv.bone_weights = XMFLOAT4(1, 0, 0, 0);
+		}
+
+		vertices.push_back(v);
+		shadowVertices.push_back(sv);
+	}
+
+	for (const auto& m : mesh.materials) {
+		if (!m.normalMap.empty()) {
+			CalculateTangents<CSkinnedVertex>(vertices, mesh.indices);
+			break;
+		}
+	}
+
+	// 일반 버퍼 세팅
+	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+
+	// 스킨드 그림자 버퍼 세팅
+	shadow_stride = sizeof(CShadowSkinnedVertex);
+	shadow_vertex_buffer = CreateBufferResource(device, commandList, shadowVertices.data(), shadow_stride * (UINT)shadowVertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, shadow_vertex_upload_buffer.GetAddressOf());
+
+	shadow_vertex_buffer_view.BufferLocation = shadow_vertex_buffer->GetGPUVirtualAddress();
+	shadow_vertex_buffer_view.StrideInBytes = shadow_stride;
+	shadow_vertex_buffer_view.SizeInBytes = shadow_stride * (UINT)shadowVertices.size();
+}
 
 // CTriangleMesh
 CTriangleMesh::CTriangleMesh(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

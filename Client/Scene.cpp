@@ -29,7 +29,6 @@
 CScene::CScene(SCENE_TYPE type)
 	: scene_type(type)
 {
-	factory = std::make_shared<CObjectFactory>();
 	ui_manager = std::make_shared<CUIManager>();
 	scene_bounds.Center = XMFLOAT3{ 0, 0.0f, 0 };
 	scene_bounds.Radius = 10;
@@ -42,7 +41,6 @@ CScene::~CScene()
 
 void CScene::Initialize()
 {
-	factory->GetMaterial("white", EShaderName::UI);	// 인덱스 0에 생성하기 위해 먼저 생성
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -59,11 +57,11 @@ void CScene::AnimateObjects(float elapsedTime)
 	}
 
 	for (const auto& obj : objects) {
-		if(obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
+		if (obj->GetObjectType() != OBJECT_TYPE::STATIC_OBJECT)
 			obj->Update(elapsedTime);
 	}
 
-	// 오브젝트 삭제 (4. 28 추가)
+	// 오브젝트 삭제
 	std::vector<uint64> toDelete;
 	for (const auto& obj : objects) {
 		if (obj->IsPendingDelete())
@@ -79,9 +77,9 @@ void CScene::Update(float elapsedTime)
 	CPhysicsManager::GetInstance().Update(elapsedTime);
 	AnimateObjects(elapsedTime);
 
-	if(camera)
+	if (camera)
 		camera->Update(my_player->position, elapsedTime);
-	if(light)
+	if (light)
 		light->Update(camera.get(), scene_bounds);
 
 	ui_manager->Update(elapsedTime);
@@ -90,12 +88,13 @@ void CScene::Update(float elapsedTime)
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 {
 	auto& shadowMap = CSceneManager::GetInstance().GetShadowMap();
-	auto& cubeShadowMap = CSceneManager::GetInstance().GetCubeShadowMaps();
-	if (!shadowMap || !light || cubeShadowMap.empty()) return;
+	auto& cubeShadowMap = CSceneManager::GetInstance().GetCubeShadowMap();
+	if (!shadowMap || !light || !cubeShadowMap) return;
 
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
-	// dir shadow map
+
+	// [Directional Light Shadow Map]
 	shaders[EShaderName::Shadow]->RenderBegin(commandList);
 	shadowMap->RenderBegin(commandList);
 	light->Render(commandList);
@@ -103,21 +102,102 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* commandList)
 	shadowMap->RenderEnd(commandList);
 	shaders[EShaderName::Shadow]->RenderEnd(commandList);
 
-	// cube shadow map
+	// [Cube Shadow Map]
 	shaders[EShaderName::CubeShadow]->RenderBegin(commandList);
-	auto cubeShadowHeap = shaders[EShaderName::CubeShadow]->GetHeapManager();
-	D3D12_GPU_DESCRIPTOR_HANDLE pointShadowHandle = cubeShadowHeap->GetSRVGPUHandle(0);
-
-	for (const auto& cubeMap: cubeShadowMap) {
-		cubeMap->RenderBegin(commandList);
-		light->Render(commandList);
-		commandList->SetGraphicsRootDescriptorTable(4, pointShadowHandle);
-		renderers[EShaderName::Shadow]->Render(commandList);
-
-		cubeMap->RenderEnd(commandList);
+	cubeShadowMap->RenderBegin(commandList);
+	light->Render(commandList);
+	BoundingFrustum cameraFrustum;
+	if (camera) {
+		cameraFrustum = camera->GetFrustum();
 	}
+	for (UINT i = 0; i < light->GetActiveDotNum(); ++i) {
+		if (!light->IsPointLightVisible(i, cameraFrustum)) {
+			continue;
+		}
+		// 화면에 보이는 조명일 때만 6개 축 큐브맵 섀도우 드로우 콜 발행
+		commandList->SetGraphicsRoot32BitConstant(2, i, 0); // gCurrentLightIndex 세팅
+		renderers[EShaderName::Shadow]->Render(commandList);
+	}
+	cubeShadowMap->RenderEnd(commandList);
 	shaders[EShaderName::CubeShadow]->RenderEnd(commandList);
+
 	renderers[EShaderName::Shadow]->ClearAllBatch();
+}
+
+void CScene::RenderSSAOPass(ID3D12GraphicsCommandList* commandList)
+{
+	auto& aoBuffer = CSceneManager::GetInstance().GetAOBuffer();
+	if (!aoBuffer) return;
+
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+	aoBuffer->RenderBegin(commandList);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv = aoBuffer->GetRTV();
+
+	commandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+
+	const float clearColor[4] = { 1.f, 1.f, 1.f, 1.f };
+
+	commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	shaders[EShaderName::SSAO]->RenderBegin(commandList);
+
+	camera->UpdateShaderVariablesShadow(commandList);
+	camera->UpdateShaderVariables(commandList, false);
+	commandList->DrawInstanced(3, 1, 0, 0);
+	shaders[EShaderName::SSAO]->RenderEnd(commandList);
+	aoBuffer->RenderEnd(commandList);
+}
+
+void CScene::RenderSSAOBlurPass(ID3D12GraphicsCommandList* commandList)
+{
+	auto& aoBuffer = CSceneManager::GetInstance().GetAOBuffer();          // SSAO 원본 결과물 (RT A)
+	auto& aoBlurTemp = CSceneManager::GetInstance().GetAOBlurTemp();      // 가로 블러 임시 타겟 (RT B)
+	if (!aoBuffer || !aoBlurTemp) return;
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+
+	auto ssaoBlurShader = shaders[EShaderName::SSAOBlur];
+	auto ssaoBlurHeap = ssaoBlurShader->GetHeapManager();
+
+	ssaoBlurShader->RenderBegin(commandList);
+
+	const float clearColor[4] = { 1.f, 1.f, 1.f, 1.f };
+	int width{ GET_CLIENT_WIDTH }, height{GET_CLIENT_HEIGHT};
+	float texelWidth = 1.0f / width;
+	float texelHeight = 1.0f / height;
+	// PASS 1: 가로 블러 (Horizontal Blur)
+	{
+		aoBlurTemp->RenderBegin(commandList); // 내부에서 자원 상태를 RTV로 전환
+
+		// 렌더 타겟 설정 (임시 버퍼 B)
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvTemp = aoBlurTemp->GetRTV();
+		commandList->OMSetRenderTargets(1, &rtvTemp, FALSE, nullptr);
+		commandList->ClearRenderTargetView(rtvTemp, clearColor, 0, nullptr);
+
+		camera->UpdateShaderVariablesBlur(commandList, XMFLOAT2(1.0f, 0.0f), width, height, 0);
+
+		// 드로우
+		commandList->DrawInstanced(3, 1, 0, 0);
+		aoBlurTemp->RenderEnd(commandList);
+	}
+
+	// PASS 2: 세로 블러 (Vertical Blur)
+	{
+		aoBuffer->RenderBegin(commandList);
+
+		// 렌더 타겟 설정 (최종 AO 맵)
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvFinal = aoBuffer->GetRTV();
+		commandList->OMSetRenderTargets(1, &rtvFinal, FALSE, nullptr);
+
+		camera->UpdateShaderVariablesBlur(commandList, XMFLOAT2(0.0f, 1.0f), width, height, 1);
+
+		// 최종 드로우
+		commandList->DrawInstanced(3, 1, 0, 0);
+		aoBuffer->RenderEnd(commandList);
+	}
+
+	ssaoBlurShader->RenderEnd(commandList);
 }
 
 void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
@@ -129,42 +209,150 @@ void CScene::RenderBasePass(ID3D12GraphicsCommandList* commandList)
 	auto& shaders = CSceneManager::GetInstance().GetShaders();
 	auto& renderers = CSceneManager::GetInstance().GetRanderers();
 
-	// Draw Phase
-	for (size_t i = 0; i < EShaderName::Count; ++i) {
-		if (!shaders[i] || i == EShaderName::Shadow) continue;
+	SetGBufferRenderTargets(commandList);
+	for (size_t i = EShaderName::Skinning; i <= EShaderName::TwoSide; ++i) {
+		if (!shaders[i]) continue;
+
 		shaders[i]->RenderBegin(commandList);
+		camera->UpdateShaderVariables(commandList, false);
 
-		if (i == EShaderName::Billboard) {
-			camera->UpdateShaderVariablesBillBoard(commandList);
-		}
-		else if (i == EShaderName::UI) {
-			camera->UpdateShaderVariables(commandList, true);
-		}
-		else {
-			camera->UpdateShaderVariables(commandList, false);
-		}
-
-		bool useLight = (i != EShaderName::UI && i != EShaderName::Billboard);
-		if (light && useLight) {
-			light->Render(commandList);
-		}
-
-		// 인스턴싱 드로우
-		if (i == EShaderName::SkyBox) {
-			CSceneManager::GetInstance().GetSkybox()->Render(commandList, shaders[EShaderName::SkyBox]->GetHeapManager());
-		}
 		if (renderers[i]) {
 			renderers[i]->Render(commandList);
 			renderers[i]->ClearAllBatch();
-			if (i == EShaderName::UI) {
-				renderers[EShaderName::Text]->Render(commandList);
-				renderers[EShaderName::Text]->ClearAllBatch();
-			}
 		}
-
 		shaders[i]->RenderEnd(commandList);
 	}
+}
 
+void CScene::RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resource* depthStencilBuf)
+{
+	auto& shaders = CSceneManager::GetInstance().GetShaders();
+	auto& renderers = CSceneManager::GetInstance().GetRanderers();
+	if (!shaders[EShaderName::Deferred] || !camera) return;
+
+	TransitionGBuffersToSRV(commandList);
+	TransitionDepthBuffer(commandList, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_DEPTH_READ);
+	SetBackBufferRenderTarget(commandList);
+
+	shaders[EShaderName::Deferred]->RenderBegin(commandList);
+
+	commandList->IASetVertexBuffers(0, 0, nullptr);
+	commandList->IASetIndexBuffer(nullptr);
+
+	camera->UpdateShaderVariables(commandList, false);
+	camera->UpdateShaderVariablesShadow(commandList);
+	if (light) {
+		light->Render(commandList);
+	}
+
+	commandList->DrawInstanced(3, 1, 0, 0);
+	shaders[EShaderName::Deferred]->RenderEnd(commandList);
+
+	SetBackBufferWithDepthReadOnly(commandList);
+	if (shaders[EShaderName::SkyBox]) {
+		shaders[EShaderName::SkyBox]->RenderBegin(commandList);
+		camera->UpdateShaderVariables(commandList, false);
+		if (CSceneManager::GetInstance().GetSkybox()) {
+			CSceneManager::GetInstance().GetSkybox()->Render(commandList, shaders[EShaderName::SkyBox]->GetHeapManager());
+		}
+		shaders[EShaderName::SkyBox]->RenderEnd(commandList);
+	}
+	if (shaders[EShaderName::UI] && renderers[EShaderName::UI]) {
+		shaders[EShaderName::UI]->RenderBegin(commandList);
+		camera->UpdateShaderVariables(commandList, true);
+
+		renderers[EShaderName::UI]->Render(commandList);
+		renderers[EShaderName::UI]->ClearAllBatch();
+
+		renderers[EShaderName::Text]->Render(commandList);
+		renderers[EShaderName::Text]->ClearAllBatch();
+
+		shaders[EShaderName::UI]->RenderEnd(commandList);
+	}
+
+	TransitionDepthBuffer(commandList, D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+}
+
+void CScene::Render(ID3D12GraphicsCommandList* commandList)
+{
+	RenderShadowPass(commandList);        // 1. 각 조명 시점 깊이 맵 빌드
+	RenderBasePass(commandList);          // 2. 가시 물체 렌더링 및 G-Buffer 축적 (메인 뎁스는 DEPTH_WRITE 유지)
+	RenderSSAOPass(commandList);
+	RenderSSAOBlurPass(commandList);
+}
+
+void CScene::TransitionDepthBuffer(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+{
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Transition.pResource = gGameFramework.GetDepthStencilBuffer().Get();
+	barrier.Transition.StateBefore = before;
+	barrier.Transition.StateAfter = after;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	cmdList->ResourceBarrier(1, &barrier);
+}
+
+D3D12_RESOURCE_BARRIER CScene::CreateResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+{
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = resource;
+	barrier.Transition.StateBefore = stateBefore;
+	barrier.Transition.StateAfter = stateAfter;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	return barrier;
+}
+
+void CScene::SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList)
+{
+	CSceneManager& sceneManager = CSceneManager::GetInstance();
+
+	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(2, barriers);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2] = {
+		sceneManager.GetGBufferColorRTV(),
+		sceneManager.GetGBufferNormalRTV()
+	};
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = gGameFramework.GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+
+	commandList->OMSetRenderTargets(2, rtvHandles, FALSE, &dsvHandle);
+
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	commandList->ClearRenderTargetView(rtvHandles[0], clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandles[1], clearColor, 0, nullptr);
+	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+}
+
+void CScene::TransitionGBuffersToSRV(ID3D12GraphicsCommandList* commandList)
+{
+	CSceneManager& sceneManager = CSceneManager::GetInstance();
+
+	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(2, barriers);
+}
+
+void CScene::SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE backBufferRtv = gGameFramework.GetRtvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+	backBufferRtv.ptr += (gGameFramework.GetSwapChainBufferIndex() * gGameFramework.GetRtvIncrementSize());
+
+	commandList->OMSetRenderTargets(1, &backBufferRtv, FALSE, nullptr);
+}
+
+void CScene::SetBackBufferWithDepthReadOnly(ID3D12GraphicsCommandList* commandList)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE backBufferRtv = gGameFramework.GetRtvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+	backBufferRtv.ptr += (gGameFramework.GetSwapChainBufferIndex() * gGameFramework.GetRtvIncrementSize());
+
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = gGameFramework.GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+
+	commandList->OMSetRenderTargets(1, &backBufferRtv, FALSE, &dsvHandle);
 }
 
 void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
@@ -181,32 +369,17 @@ void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
 		}
 	}
 
-	// 플레이어 수집
 	if (my_player) {
 		my_player->OnCollect(renderers);
 	}
 
-	// UI 매니저 수집
 	ui_manager->Collect(renderers);
-}
-
-void CScene::RenderBegin(ID3D12GraphicsCommandList* commandList)
-{
-	CollectObjects(commandList);
-	RenderShadowPass(commandList);
-}
-
-void CScene::Render(ID3D12GraphicsCommandList* commandList)
-{
-	RenderBasePass(commandList);
 }
 
 void CScene::Exit()
 {
 	CPhysicsManager::GetInstance().ClearCollider();
-
 	RemoveAllMonsters();
-
 	last_input_state = !last_input_state;
 }
 
@@ -222,8 +395,8 @@ void CScene::Enter()
 
 void CScene::DrawUI_Final()
 {
-	ManageIME();  // 공통 로직 (IME/포커스)
-	DrawUI();     // 자식이 구현할 구체적인 UI 로직
+	ManageIME();
+	DrawUI();
 
 	if (!ImGui::IsAnyItemHovered())
 		last_hovered_id_ = 0;
@@ -329,6 +502,7 @@ void CScene::RemoveAllMonsters()
 void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_SpawnPlayer& pkt)
 {
 	auto shaders = CSceneManager::GetInstance().GetShaders();
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 
 	if (pkt.is_my_player) {
 		{
@@ -380,6 +554,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 	S_PLAYER_LIST::PlayerList userList = pkt.GetPlayerList();
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	for (int i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
@@ -528,6 +703,7 @@ void CScene::Handle_S_Spawn_Monster(std::shared_ptr<Session>& session, const S_S
 	NetMonsterInfo info = pkt.info;
 	XMFLOAT3 pos{ pkt.info.x, pkt.info.y, pkt.info.z };
 	
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 	auto monster = factory->CreateMonster(type, scene_type);
 	monster->SetID(monsterId);
 	monster->SetPosition(pos);

@@ -16,7 +16,7 @@ struct VertexOut
 };
 
 SamplerState sample : register(s0);
-TextureCube envMap : register(t0, space3);
+TextureCube envMap : register(t0);
 
 VertexOut VSMain(VertexIn pin)
 {

@@ -82,6 +82,51 @@ inline void CRenderer<T>::RenderBatches(ID3D12GraphicsCommandList* commandList, 
 }
 
 template<typename T>
+void CRenderer<T>::RenderShadowBatches(ID3D12GraphicsCommandList* commandList, UINT rootSlot)
+{
+    UINT currentOffset = 0;
+
+    UINT total_instances = 0;
+    for (auto& [key, instances] : static_batches) total_instances += (UINT)instances.size();
+    for (auto& [key, instances] : dynamic_batches) total_instances += (UINT)instances.size();
+    if (total_instances == 0) return;
+
+    if (total_instances > max_capacity) {
+        ResizeBuffer(total_instances);
+    }
+
+    // 1. Static Batches 렌더링 (매 프레임 재생성 안함, 그대로 사용)
+    for (auto& [key, instances] : static_batches) {
+        UINT count = (UINT)instances.size();
+        if (count == 0) continue;
+
+        memcpy(&mapped[currentOffset], instances.data(), sizeof(T) * count);
+
+        D3D12_GPU_VIRTUAL_ADDRESS gpuAddr = inst_cb->GetGPUVirtualAddress();
+        gpuAddr += currentOffset * sizeof(T);
+        commandList->SetGraphicsRootShaderResourceView(rootSlot, gpuAddr);
+
+        key.mesh->RenderShadow(commandList, key.submesh_index, count);
+        currentOffset += count;
+    }
+
+    // 2. Dynamic Batches 렌더링
+    for (auto& [key, instances] : dynamic_batches) {
+        UINT count = (UINT)instances.size();
+        if (count == 0) continue;
+
+        memcpy(&mapped[currentOffset], instances.data(), sizeof(T) * count);
+
+        D3D12_GPU_VIRTUAL_ADDRESS gpuAddr = inst_cb->GetGPUVirtualAddress();
+        gpuAddr += currentOffset * sizeof(T);
+        commandList->SetGraphicsRootShaderResourceView(rootSlot, gpuAddr);
+
+        key.mesh->RenderShadow(commandList, key.submesh_index, count);
+        currentOffset += count;
+    }
+}
+
+template<typename T>
 inline void CRenderer<T>::AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic)
 {
     T data;
@@ -178,9 +223,19 @@ void CAniRenderer::Render(ID3D12GraphicsCommandList* cmdList)
     auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
     auto maskBuffer = CAnimationManager::GetInstance().GetMaskBuffer();
 
-    cmdList->SetGraphicsRootShaderResourceView(5, animBuffer->GetGPUVirtualAddress());
-    cmdList->SetGraphicsRootShaderResourceView(6, maskBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(5, maskBuffer->GetGPUVirtualAddress());
     RenderBatches(cmdList, 3);
+}
+
+void CShadowRenderer::Render(ID3D12GraphicsCommandList* cmdList)
+{
+    auto animBuffer = CAnimationManager::GetInstance().GetTextureResource();
+    auto maskBuffer = CAnimationManager::GetInstance().GetMaskBuffer();
+
+    cmdList->SetGraphicsRootShaderResourceView(4, animBuffer->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootShaderResourceView(5, maskBuffer->GetGPUVirtualAddress());
+    RenderShadowBatches(cmdList, 3);
 }
 
 // UIManager가 사각형 하나를 가지고 그림

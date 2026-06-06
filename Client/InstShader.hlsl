@@ -1,4 +1,22 @@
 #include "Light.hlsl"
+struct VS_INPUT
+{
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
+    float3 tangent_local : TANGENT;
+};
+
+struct VS_OUTPUT
+{
+    float4 position_clip : SV_POSITION;
+    float3 position_world : POSITION;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD;
+    float3 tangent_world : TANGENT;
+
+    nointerpolation uint instanceID : INSTANCEID;
+};
 
 struct InstanceData
 {
@@ -6,7 +24,15 @@ struct InstanceData
     MaterialData material;
 };
 
+struct PS_GBUFFER_OUT
+{
+    float4 color : SV_Target0; // GBufferColorIdx 에 연결됨
+    float4 normal : SV_Target1; // GBufferNormalIdx 에 연결됨
+};
+
+Texture2D texDiffuse[DiffuseMapCount] : register(t0);
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
+SamplerState sample : register(s0);
 
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 {
@@ -23,51 +49,31 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     output.position_clip = mul(mul(posW, viewMatrix), projectionMatrix);
     output.tex = input.tex;
     output.tangent_world = mul(input.tangent_local, (float3x3) finalWorld);
-    
-    output.shadow_pos = mul(posW, gShadowTransform);
 
     return output;
 }
 
-float4 PSMain(VS_OUTPUT input) : SV_TARGET
+PS_GBUFFER_OUT PSMain(VS_OUTPUT input)
 {
-    MaterialData instMat = gInstanceData[input.instanceID].material;
-    // texture
-    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex) * instMat.albedo;
+    PS_GBUFFER_OUT output;
 
-    // light
+    MaterialData instMat = gInstanceData[input.instanceID].material;
+    
+    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex) * instMat.albedo;
+    output.color = diffuseAlbedo;
+
     input.normal = normalize(input.normal);
     input.tangent_world = normalize(input.tangent_world);
 
     float3 bumpedNormalW = input.normal;
-    float4 normalMapSample = float4(0.5f, 0.5f, 1.0f, 1.0f);
-    if (instMat.normal_idx != 0xffffffff)   // 나중에 수정(오버헤드 큼)
+    if (instMat.normal_idx != 0xffffffff)
     {
-        normalMapSample = texDiffuse[instMat.normal_idx].Sample(sample, input.tex);
+        float4 normalMapSample = texDiffuse[instMat.normal_idx].Sample(sample, input.tex);
         bumpedNormalW = NormalSampleToWorldSpace(normalMapSample.rgb, bumpedNormalW, input.tangent_world);
     }
     
-    float3 toEyeW = normalize(eyePosWorld - input.position_world);
-    float4 ambient = ambientLight * diffuseAlbedo;
-    
-    const float shininess = instMat.glossiness * normalMapSample.a;
-    Material mat = { diffuseAlbedo, instMat.fresnel, shininess };
-    float4 directLight = ComputeLighting(gLights, mat, input.position_world, bumpedNormalW, toEyeW, input.shadow_pos);
+    // 노말 벡터(-1.0 ~ 1.0)를 텍스처에 안전하게 저장하기 위해 (0.0 ~ 1.0) 범위로 압축
+    output.normal = float4(bumpedNormalW * 0.5f + 0.5f, instMat.glossiness);
 
-    float4 litColor = ambient + directLight;
-    
-	// Add in specular reflections.
-    float3 r = reflect(-toEyeW, bumpedNormalW);
-    float4 reflectionColor = texDiffuse[SkyboxMapIdx].Sample(sample, r);
-    float3 fresnelFactor = SchlickFresnel(instMat.fresnel, bumpedNormalW, r);
-    litColor.rgb += shininess * fresnelFactor * reflectionColor.rgb;
-    
-    litColor.a = diffuseAlbedo.a;
-    return litColor;
-    
-    // debugging
-    //float4 shadowPos = input.shadow_pos;
-    //shadowPos.xyz /= shadowPos.w;
-
-    //return float4(shadowPos.xyz, 1.0f);
+    return output;
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CObject;
 
@@ -20,6 +20,11 @@ struct OrthoCB
 	XMFLOAT4X4 ortho_projection;
 };
 
+struct CB_BlurInfo	// ssao blur용. 카메라와 관련 없지만 마땅히 set할 곳이 없어서 카메라에서 set
+{
+	XMFLOAT2 blur_direction;
+	XMFLOAT2 texel_size;
+};
 
 // 생성 시 Initialize, SetTarget 호출
 class CCamera
@@ -32,6 +37,8 @@ public:
 	void CreateConstantBuffers(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool isUI = false);
 	virtual void UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandList);
+	virtual void UpdateShaderVariablesShadow(ID3D12GraphicsCommandList* commandList);
+	void UpdateShaderVariablesBlur(ID3D12GraphicsCommandList* commandList, const XMFLOAT2& direction, float clientWidth, float clientHeight, UINT passIndex);
 
 	void GenerateProjectionMatrix(float, float, float, float);
 	void GenerateOrthoProjectionMatrix(float, float, float, float);
@@ -93,9 +100,13 @@ protected:
 	ComPtr<ID3D12Resource> camera_cb;
 	ComPtr<ID3D12Resource> ortho_cb;	// UI에 필요한 값 저장
 	ComPtr<ID3D12Resource> billboard_cb;
+	ComPtr<ID3D12Resource> inv_camera_cb;	// screen shadow에 필요
+	ComPtr<ID3D12Resource> blur_cb;
 	CameraCB* mapped{};
 	OrthoCB* ortho_mapped{};
 	BillboardCameraCB* billboard_mapped{};
+	XMFLOAT4X4* inv_camera_mapped{};
+	CB_BlurInfo* blur_mapped{};
 
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissor_rect;

@@ -55,6 +55,11 @@ public:
 	int	GetClientHeight() { return client_height; }
 	bool IsFullscreen() const { return is_fullscreen; }
 
+	ComPtr<ID3D12Resource>       GetDepthStencilBuffer() { return depth_stencil_buffer; }
+	ComPtr<ID3D12DescriptorHeap> GetRtvDescriptorHeap() { return rtv_descriptor_heap; }
+	ComPtr<ID3D12DescriptorHeap> GetDsvDescriptorHeap() { return dsv_descriptor_heap; }
+	UINT                         GetRtvIncrementSize() const { return rtv_increment_size; }
+	UINT                         GetSwapChainBufferIndex() const { return swap_chain_buffer_index; }
 private:
 	int client_width{FRAME_BUFFER_WIDTH};
 	int client_height{FRAME_BUFFER_HEIGHT};

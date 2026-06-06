@@ -1,10 +1,7 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Collider.h"
 #include "Object.h"
 #include "Mesh.h"
-#ifdef DEBUG
-#include "GameFramework.h"  // 디버깅 시에 필요
-#endif
 #include "MeshRenderer.h"
 
 CBoxShape::CBoxShape(XMFLOAT3 extents, XMFLOAT3 p)
@@ -12,18 +9,7 @@ CBoxShape::CBoxShape(XMFLOAT3 extents, XMFLOAT3 p)
     local.Center = p;
     local.Extents = extents;
     world = local;
-#ifdef DEBUG
-    debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local.Extents, local.Center);
-#endif
 };
-
-void CBoxShape::Render()
-{
-#ifdef DEBUG
-    if(debug)
-        debug->Render(GET_CMD_LIST);
-#endif
-}
 
 void CBoxShape::Update(const XMMATRIX& worldMatrix)
 {
@@ -36,9 +22,6 @@ CSphereShape::CSphereShape(float r, XMFLOAT3 p)
 {
     local.Radius = r;
     local.Center = p;
-#ifdef DEBUG
-    debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
-#endif
 }
 
 CSphereShape::CSphereShape(XMFLOAT3& extents, XMFLOAT3& p)
@@ -47,17 +30,6 @@ CSphereShape::CSphereShape(XMFLOAT3& extents, XMFLOAT3& p)
 
     XMVECTOR vExtents = XMLoadFloat3(&extents);
     local.Radius = XMVectorGetX(XMVector3Length(vExtents));
-#ifdef DEBUG
-    debug = std::make_shared<CSphereMesh>(GET_DEVICE, GET_CMD_LIST, local.Radius, local.Center);
-#endif
-}
-
-void CSphereShape::Render()
-{
-#ifdef DEBUG
-    if (debug)
-        debug->Render(GET_CMD_LIST);
-#endif
 }
 
 void CSphereShape::Update(const XMMATRIX& worldMatrix)
@@ -100,14 +72,6 @@ XMVECTOR CCapsuleShape::GetSupport(XMVECTOR direction) const
 
     // 선택된 점에 방향 벡터 방향으로 반지름만큼 더함
     return bestPoint + XMVector3Normalize(direction) * radius;
-}
-
-void CCapsuleShape::Render()
-{
-#ifdef DEBUG
-    if (debug)
-        debug->Render(GET_CMD_LIST);
-#endif
 }
 
 // Convex
@@ -305,9 +269,6 @@ int CConcaveMeshShape::BuildBVHRecursive(std::vector<int>& indices, int start, i
 CColliderComponent::CColliderComponent(std::unique_ptr<CColliderShape>& otherShape, const BoundingBox& otherBox)
     : shape{ std::move(otherShape) }, local_aabb{ otherBox }, world_aabb{otherBox}
 {
-#ifdef DEBUG
-    debug = std::make_shared<CCubeMesh>(GET_DEVICE, GET_CMD_LIST, local_aabb.Extents, local_aabb.Center);
-#endif
 }
 
 CColliderComponent::CColliderComponent(const CColliderComponent& other)
@@ -324,14 +285,6 @@ void CColliderComponent::Update(const float deltaTime)
 
     local_aabb.Transform(world_aabb, worldMatrix);
     shape->Update(worldMatrix);
-}
-
-void CColliderComponent::Render(ID3D12GraphicsCommandList* commandList)
-{
-#ifdef DEBUG
-    if (debug) debug->Render(commandList);
-    if (shape) shape->Render();
-#endif
 }
 
 bool CColliderComponent::Intersects(const CColliderComponent* other)

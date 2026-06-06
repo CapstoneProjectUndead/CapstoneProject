@@ -87,6 +87,7 @@ public:
 	std::vector<XMFLOAT3>&    GetHumanMonsterSpawnPositions() { return humanMonster_spawn_positions; }
 	std::vector<XMFLOAT3>&    GetGhostSpawnPositions() { return ghost_spawn_positions; }
 	std::vector<XMFLOAT3>&    GetDogMonsterSpawnPositions() { return dog_spawn_positions; }
+	std::vector<MapGenerator::InstanceData>& GetInstData() { return inst_data; }
 
 	// 외부 참조용
 	std::shared_ptr<CObject> GetPrototype(const std::string& name) {
@@ -130,5 +131,6 @@ private:
 	std::vector<XMFLOAT3>    humanMonster_spawn_positions;
 	std::vector<XMFLOAT3>    ghost_spawn_positions;
 	std::vector<XMFLOAT3>    dog_spawn_positions;
+	std::vector<MapGenerator::InstanceData>	inst_data;
 };
 

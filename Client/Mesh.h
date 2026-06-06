@@ -7,6 +7,16 @@ namespace CGeometryLoader {
 	struct SubMesh;
 }
 
+struct CShadowVertex {
+	XMFLOAT3 position{};
+};
+
+struct CShadowSkinnedVertex {
+	XMFLOAT3 position{};
+	XMUINT4  bone_indices{ XMUINT4(0,0,0,0) };
+	XMFLOAT4 bone_weights{ XMFLOAT4(1,0,0,0) };
+};
+
 class CVertex {
 public:
 	CVertex() : position{ XMFLOAT3(0.0f, 0.0f, 0.0f) }, normal{ XMFLOAT3(0.0f, 1.0f, 0.0f)} {}
@@ -56,6 +66,8 @@ public:
 
 	virtual void Render(ID3D12GraphicsCommandList*, uint32 instCount = 1);
 	void Render(ID3D12GraphicsCommandList* commandList, UINT submeshIndex, uint32 instCount);
+	virtual void RenderShadow(ID3D12GraphicsCommandList* commandList, uint32 instCount = 1);
+	virtual void RenderShadow(ID3D12GraphicsCommandList* commandList, UINT submeshIndex, uint32 instCount);
 	void SetPrimitive(D3D12_PRIMITIVE_TOPOLOGY t) { primitive_topology = t; }
 
 	// 불러온 모델 데이터 저장용 함수
@@ -102,6 +114,12 @@ protected:
 	UINT slot_num{};
 	UINT stride{};
 	UINT offset{};
+
+	// 그림자 버퍼&뷰
+	ComPtr<ID3D12Resource> shadow_vertex_buffer{};
+	ComPtr<ID3D12Resource> shadow_vertex_upload_buffer{};
+	D3D12_VERTEX_BUFFER_VIEW shadow_vertex_buffer_view{};
+	UINT shadow_stride{};
 public:
 	// name
 	std::string name{};
@@ -164,8 +182,10 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 	name = node->name;
 
 	std::vector<T> vertices;
+	std::vector<CShadowVertex> shadowVertices;
 	size_t count = mesh.positions.size();
 	vertices.reserve(count);
+	shadowVertices.reserve(count);
 
 	for (size_t i = 0; i < count; ++i)
 	{
@@ -174,6 +194,10 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 		v.normal = (i < mesh.normals.size()) ? mesh.normals[i] : XMFLOAT3(0, 1, 0);
 
 		vertices.push_back(v);
+
+		CShadowVertex sv{};
+		sv.position = mesh.positions[i];
+		shadowVertices.push_back(sv);
 	}
 
 	for (const auto& m : mesh.materials) {
@@ -183,6 +207,13 @@ void CMesh::BuildVertices(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 		}
 	}
 	SetVertices(device, commandList, (UINT)vertices.size(), vertices);
+
+	shadow_stride = sizeof(CShadowVertex);
+	shadow_vertex_buffer = CreateBufferResource(device, commandList, shadowVertices.data(), shadow_stride * (UINT)shadowVertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, shadow_vertex_upload_buffer.GetAddressOf());
+
+	shadow_vertex_buffer_view.BufferLocation = shadow_vertex_buffer->GetGPUVirtualAddress();
+	shadow_vertex_buffer_view.StrideInBytes = shadow_stride;
+	shadow_vertex_buffer_view.SizeInBytes = shadow_stride * (UINT)shadowVertices.size();
 }
 
 template<typename T>

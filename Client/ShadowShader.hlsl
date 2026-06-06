@@ -3,7 +3,7 @@
 
 struct BONE_INPUT
 {
-    VS_INPUT v;
+    float3 position : POSITION;
 #ifdef SKINNED
     uint4 bone_indices : BLENDINDICES;
     float4 bone_weights : BLENDWEIGHT;
@@ -43,6 +43,11 @@ struct InstanceData
     AnimationData animation;
 };
 
+cbuffer UpdateLightIndex : register(b2)
+{
+    uint gCurrentLightIndex;
+};
+
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 StructuredBuffer<float4x4> gAnimBuffer : register(t1, space1);
 
@@ -77,12 +82,12 @@ VS_SHADOW_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
 
             float4x4 blendedMatrix = lerp(matA, matB, alpha);
 
-            posL += weights[i] * mul(float4(input.v.position, 1.0f), blendedMatrix).xyz;
+            posL += weights[i] * mul(float4(input.position, 1.0f), blendedMatrix).xyz;
         }
-        input.v.position = posL;
+        input.position = posL;
     }
 #endif
-    float4 posW = mul(float4(input.v.position, 1.0f), instData.world_matrix);
+    float4 posW = mul(float4(input.position, 1.0f), instData.world_matrix);
 
 #ifdef CUBE_SHADOW
     output.position_world = posW;
@@ -100,11 +105,11 @@ void GSMain(triangle VS_SHADOW_OUTPUT input[3], inout TriangleStream<GS_SHADOW_O
     for (int face = 0; face < 6; ++face)
     {
         GS_SHADOW_OUTPUT output;
-        output.layer_index = face;
+        output.layer_index = (gCurrentLightIndex * 6) + face;
 
         for (int v = 0; v < 3; ++v)
         {
-            output.position_clip = mul(float4(input[v].position_world.xyz, 1.0f), gCubeShadowTransforms[face]);
+            output.position_clip = mul(float4(input[v].position_world.xyz, 1.0f), gCubeShadowTransforms[gCurrentLightIndex][face]);
             outStream.Append(output);
         }
         outStream.RestartStrip();

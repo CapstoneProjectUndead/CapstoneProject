@@ -30,11 +30,10 @@ CLobbyScene::~CLobbyScene()
 void CLobbyScene::Initialize()
 {
 	CScene::Initialize();
+	auto& factory = CSceneManager::GetInstance().GetFactory();
 
 	if (objects.empty()) {
 		objects = factory->CreateLobby();
-
-		factory->LoadItemFrame();
 	}
 
 	// UI 생성
@@ -49,10 +48,6 @@ void CLobbyScene::Initialize()
 	auto menuUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Menu_UI.json");
 	menuUI->SetEnable(false);
 	ui_manager->AddCanvas(menuUI);
-	// 버튼 ui
-	auto YNCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/YNButton.json");
-	YNCanvas->SetEnable(false);
-	ui_manager->AddCanvas(YNCanvas);
 	// 대사 UI
 	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
 	reaperCanvas->SetEnable(false);
@@ -87,6 +82,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 {
 	// 플레이어 생성
 	if (!my_player) {
+		auto& factory = CSceneManager::GetInstance().GetFactory();
 		my_player = factory->CreateMyPlayer();
 	}
 
@@ -100,6 +96,8 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
+		light->AddPointLight(XMFLOAT3(2.49913216, 1.08363628, 1.45683444), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+		light->AddPointLight(XMFLOAT3(1.83547652, 2.55953884, -2.89159632), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
 	}
 }
 
@@ -266,18 +264,35 @@ void CLobbyScene::SetButtonEvents()
 	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
 	auto menuBackBtn = ui_manager->GetUI<CUIButton>("Back");
 
-	// 대사가 끝났을 때 버튼을 보여주는 함수 등록
+	if (yesBtn) yesBtn->SetEnable(false);
+	if (noBtn) noBtn->SetEnable(false);
+
 	if (reaperText) {
-		reaperText->onFinished = [this]() {
-			ui_manager->ToggleUI("YNCanvas", true);
+		reaperText->onFinished = [yesBtn, noBtn]() {
+			bool isGameMode = CKeyManager::GetInstance().GetMouseMode();
+			if (yesBtn) {
+				yesBtn->SetEnable(true);
+				if (isGameMode) {
+					CKeyManager::GetInstance().SetMouseMode(false);
+				}
+			}
+			if (noBtn) {
+				noBtn->SetEnable(true);
+				if (isGameMode) {
+					CKeyManager::GetInstance().SetMouseMode(false);
+				}
+			}
 			};
 	}
 
-	// 버튼 콜백 함수 등록
 	if (yesBtn) {
-		yesBtn->OnClick = [this]() {
+		yesBtn->OnClick = [this, yesBtn]() {
+			bool isGameMode = CKeyManager::GetInstance().GetMouseMode();
+			if (!isGameMode) {
+				CKeyManager::GetInstance().SetMouseMode(true);
+			}
+
 			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
-			ui_manager->ToggleUI("YNCanvas", false, true);
 			if (g_is_single) {
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 			}
@@ -293,13 +308,17 @@ void CLobbyScene::SetButtonEvents()
 					}
 				}
 			}
-		};
+			};
 	}
 
 	if (noBtn) {
-		noBtn->OnClick = [this]() {
+		noBtn->OnClick = [this, noBtn]() {
+			bool isGameMode = CKeyManager::GetInstance().GetMouseMode();
+			if (!isGameMode) {
+				CKeyManager::GetInstance().SetMouseMode(true);
+			}
+
 			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
-			ui_manager->ToggleUI("YNCanvas", false, true);
 			};
 	}
 
@@ -311,7 +330,6 @@ void CLobbyScene::SetButtonEvents()
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
 			}
 			else {
-				// 멀티는 서버 응답(S_SceneChange) 받을 때 전환됨
 				C_SceneChange changeScenePkt;
 				changeScenePkt.player_id = my_player->GetID();
 				changeScenePkt.current_scene = scene_type;

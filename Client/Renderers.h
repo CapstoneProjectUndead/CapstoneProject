@@ -41,6 +41,7 @@ public:
     void ResizeBuffer(UINT requiredSize);
     // 데이터를 버퍼에 복사하고 Draw를 호출하는 공통 루프
     void RenderBatches(ID3D12GraphicsCommandList* cmdList, UINT rootSlot);
+    void RenderShadowBatches(ID3D12GraphicsCommandList* cmdList, UINT rootSlot);
     virtual void Render(ID3D12GraphicsCommandList* cmdList) = 0;
 
     virtual void ClearAllBatch() {
@@ -88,6 +89,11 @@ class CAniRenderer : public CRenderer<AniCB> {
 public:
     void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     void AddInstance(std::shared_ptr<CMesh> mesh, CMaterialComponent* material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) override;
+    virtual void Render(ID3D12GraphicsCommandList* cmdList) override;
+};
+
+class CShadowRenderer : public CAniRenderer {
+public:
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 };
 
