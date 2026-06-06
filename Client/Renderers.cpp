@@ -201,8 +201,9 @@ void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMat
 void CAniRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData)
 {
     AniCB data;
-    if (material)
+    if (material && material->GetMaterial() != nullptr) {
         data.material = material->GetMaterial()->GetMaterialData();
+    }
     else {
         data.material = MaterialData{};
         data.material.albedo = { 1, 1, 0, 1 };
