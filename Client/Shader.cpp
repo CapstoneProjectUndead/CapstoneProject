@@ -1455,9 +1455,9 @@ ID3D12RootSignature* CSkyBoxShader::CreateGraphicsRootSignature(ID3D12Device* de
 
 	D3D12_STATIC_SAMPLER_DESC samplerDescs[1] = {};
 	samplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	samplerDescs[0].MipLODBias = 0;
 	samplerDescs[0].MaxAnisotropy = 1;
 	samplerDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
