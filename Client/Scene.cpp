@@ -645,17 +645,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		if (idx >= vec.size())
 			return;
 
-		// [진단/방어] id_To_Index가 어긋나면 엉뚱한 객체에 write되어 힙이 손상된다.
-		// 타입 체크로 stray write를 막고, 불일치 시 로그로 진범을 찍는다.
-		auto otherPlayer = std::dynamic_pointer_cast<CPlayer>(vec[idx]);
-		if (!otherPlayer) {
-			std::cout << "[S_Move_Player] id_To_Index desync! player_id=" << pkt.info.player_id
-				<< " idx=" << idx
-				<< " realType=" << (vec[idx] ? (int)vec[idx]->GetObjectType() : -1)
-				<< " realId=" << (vec[idx] ? vec[idx]->GetID() : 0ull)
-				<< " size=" << vec.size() << std::endl;
-			return;
-		}
+		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
 		otherPlayer->SetYaw(pkt.info.yaw);
 		otherPlayer->SetPitch(pkt.info.pitch);
 
@@ -745,16 +735,7 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 	if (idx >= vec.size())
 		return;
 
-	// [진단/방어] id_To_Index가 어긋나면 엉뚱한 객체에 write되어 힙이 손상된다.
-	auto monster = std::dynamic_pointer_cast<CMonster>(vec[idx]);
-	if (!monster) {
-		std::cout << "[S_Move_Monster] id_To_Index desync! monster_id=" << pkt.info.monster_id
-			<< " idx=" << idx
-			<< " realType=" << (vec[idx] ? (int)vec[idx]->GetObjectType() : -1)
-			<< " realId=" << (vec[idx] ? vec[idx]->GetID() : 0ull)
-			<< " size=" << vec.size() << std::endl;
-		return;
-	}
+	auto monster = std::static_pointer_cast<CMonster>(vec[idx]);
 
 	// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간
 	MonsterFrameHistory state{};
