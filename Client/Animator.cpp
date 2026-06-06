@@ -82,7 +82,11 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 	case OBJECT_TYPE::MONSTER:
 	{
 		sockets.resize(SOCKET_TYPE::HAND_R + 1);
-		uint8_t monType = static_cast<uint8_t>(reinterpret_cast<CMonster*>(owner)->GetMonsterType());
+
+		auto* monsterOwner = dynamic_cast<CMonster*>(owner);
+		if (!monsterOwner) return;
+
+		uint8_t monType = static_cast<uint8_t>(monsterOwner->GetMonsterType());
 		int idx = CAnimationManager::GetInstance().GetBoneIndex(objType, monType, "handR");
 		// offset matrix
 		XMMATRIX mScale = XMMatrixScalingFromVector(XMVectorSet(0.2635728f, 0.2635728f, 0.2635728f, 0.0f));
@@ -94,7 +98,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 		// Attack 상태 등록 및 전이 추가
 		if (!animSet.action.empty()) {
 			std::string attack{ "AttackState" };
-			float attackSpeed = (reinterpret_cast<CMonster*>(owner)->GetMonsterType() == MON_TYPE::HUMAN_MONSTER) ? 2.0f : 1.0f;
+			float attackSpeed = (monsterOwner->GetMonsterType() == MON_TYPE::HUMAN_MONSTER) ? 2.0f : 1.0f;
 			controller.AddState({ attack, animSet.action, attackSpeed });
 
 			// Run → Attack
@@ -102,8 +106,9 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			r2a.to_state = attack;
 			r2a.duration = 0.1f;
 			r2a.condition = [this]() {
-				if (!owner) return false;
-				return reinterpret_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_ATTACK;
+				auto* monster = dynamic_cast<CMonster*>(owner);
+				if (!monster) return false;
+				return monster->GetAIState() == AI_STATE::MONSTER_ATTACK;
 				};
 			controller.AddTransition(run, r2a);
 
@@ -112,8 +117,9 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			i2a.to_state = attack;
 			i2a.duration = 0.1f;
 			i2a.condition = [this]() {
-				if (!owner) return false;
-				return reinterpret_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_ATTACK;
+				auto* monster = dynamic_cast<CMonster*>(owner);
+				if (!monster) return false;
+				return monster->GetAIState() == AI_STATE::MONSTER_ATTACK;
 				};
 			controller.AddTransition(idle, i2a);
 
@@ -122,8 +128,9 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			a2r.to_state = run;
 			a2r.duration = 0.2f;
 			a2r.condition = [this]() {
-				if (!owner) return false;
-				auto s = reinterpret_cast<CMonster*>(owner)->GetAIState();
+				auto* monster = dynamic_cast<CMonster*>(owner);
+				if (!monster) return false;
+				auto s = monster->GetAIState();
 				return s == AI_STATE::MONSTER_TRACE || s == AI_STATE::MONSTER_FLEE;
 				};
 			controller.AddTransition(attack, a2r);
@@ -133,8 +140,9 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 			a2i.to_state = idle;
 			a2i.duration = 0.2f;
 			a2i.condition = [this]() {
-				if (!owner) return false;
-				return reinterpret_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
+				auto* monster = dynamic_cast<CMonster*>(owner);
+				if (!monster) return false;
+				return monster->GetAIState() == AI_STATE::MONSTER_IDLE;
 				};
 			controller.AddTransition(attack, a2i);
 		}
@@ -156,10 +164,13 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	i2w.condition = [this]() {
 		if (!owner) return false;
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
-			return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::WALK;
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? (player->GetState() == PLAYER_STATE::WALK) : false;
 		}
 		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
-			AI_STATE s = reinterpret_cast<CMonster*>(owner)->GetAIState();
+			auto* monster = dynamic_cast<CMonster*>(owner);
+			if (!monster) return false;
+			AI_STATE s = monster->GetAIState();
 			return s == AI_STATE::MONSTER_PATROL;
 		}
 		return false;
@@ -173,10 +184,12 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	w2i.condition = [this]() {
 		if (!owner) return false;
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
-			return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::IDLE;
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? (player->GetState() == PLAYER_STATE::IDLE) : false;
 		}
 		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
-			return reinterpret_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
+			auto* monster = dynamic_cast<CMonster*>(owner);
+			return monster ? (monster->GetAIState() == AI_STATE::MONSTER_IDLE) : false;
 		}
 		return false;
 		};
@@ -189,10 +202,13 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	w2r.condition = [this]() {
 		if (!owner) return false;
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
-			return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? (player->GetState() == PLAYER_STATE::RUN) : false;
 		}
 		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
-			auto s = reinterpret_cast<CMonster*>(owner)->GetAIState();
+			auto* monster = dynamic_cast<CMonster*>(owner);
+			if (!monster) return false;
+			auto s = monster->GetAIState();
 			return s == AI_STATE::MONSTER_TRACE || s == AI_STATE::MONSTER_FLEE;
 		}
 		return false;
@@ -206,10 +222,12 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	r2w.condition = [this]() {
 		if (!owner) return false;
 		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
-			return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::WALK;
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? (player->GetState() == PLAYER_STATE::WALK) : false;
 		}
 		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
-			return reinterpret_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_PATROL;
+			auto* monster = dynamic_cast<CMonster*>(owner);
+			return monster ? (monster->GetAIState() == AI_STATE::MONSTER_PATROL) : false;
 		}
 		return false;
 		};
@@ -221,10 +239,14 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	i2r.duration = 0.2f;
 	i2r.condition = [this]() {
 		if (!owner) return false;
-		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
-			return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::RUN;
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? (player->GetState() == PLAYER_STATE::RUN) : false;
+		}
 		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
-			auto s = reinterpret_cast<CMonster*>(owner)->GetAIState();
+			auto* monster = dynamic_cast<CMonster*>(owner);
+			if (!monster) return false;
+			auto s = monster->GetAIState();
 			return s == AI_STATE::MONSTER_TRACE || s == AI_STATE::MONSTER_FLEE;
 		}
 		return false;
@@ -237,10 +259,14 @@ void CAnimatorComponent::AddLocomotionTransitions(const std::string& idle, const
 	r2i.duration = 0.2f;
 	r2i.condition = [this]() {
 		if (!owner) return false;
-		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER)
-			return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::IDLE;
-		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER)
-			return reinterpret_cast<CMonster*>(owner)->GetAIState() == AI_STATE::MONSTER_IDLE;
+		if (owner->GetObjectType() == OBJECT_TYPE::PLAYER) {
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? (player->GetState() == PLAYER_STATE::IDLE) : false;
+		}
+		else if (owner->GetObjectType() == OBJECT_TYPE::MONSTER) {
+			auto* monster = dynamic_cast<CMonster*>(owner);
+			return monster ? (monster->GetAIState() == AI_STATE::MONSTER_IDLE) : false;
+		}
 		return false;
 		};
 	controller.AddTransition(run, r2i);
@@ -256,8 +282,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	i2d.to_state = dig;
 	i2d.duration = 0.2f;
 	i2d.condition = [this]() {
-		if (!owner) return false;
-		auto* player = reinterpret_cast<CPlayer*>(owner);
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		if (!player) return false;
 		if (player->GetState() == PLAYER_STATE::DIG) {
 			std::string targetClip = GetDigClipByItem(player->GetEquippedItemId());
 
@@ -273,8 +299,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	w2d.to_state = dig;
 	w2d.duration = 0.2f;
 	w2d.condition = [this]() {
-		if (!owner) return false;
-		auto* player = reinterpret_cast<CPlayer*>(owner);
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		if (!player) return false;
 		if (player->GetState() == PLAYER_STATE::DIG) {
 			std::string targetClip = GetDigClipByItem(player->GetEquippedItemId());
 
@@ -289,15 +315,17 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	d2i.to_state = idle;
 	d2i.duration = 0.2f;
 	d2i.condition = [this]() {
-		if (!owner) return false;
 		// 애니메이션이 끝났거나
 		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 1) {
-			auto* player = reinterpret_cast<CMyPlayer*>(owner);
-			player->SetDigAnimFinished(true);
-			player->SetState(PLAYER_STATE::IDLE);
-			return true;
+			auto* myPlayer = dynamic_cast<CMyPlayer*>(owner);
+			if (myPlayer) {
+				myPlayer->SetDigAnimFinished(true);
+				myPlayer->SetState(PLAYER_STATE::IDLE);
+				return true;
+			}
 		}
-		if (reinterpret_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::DIG) return true;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		if (!player || player->GetState() != PLAYER_STATE::DIG) return true;
 		return false;
 		};
 	controller.AddTransition(dig, d2i);
@@ -310,8 +338,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	i2j.to_state = jump;
 	i2j.duration = 0.2f;
 	i2j.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::JUMP;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() == PLAYER_STATE::JUMP) : false;
 		};
 	controller.AddTransition(idle, i2j);
 
@@ -319,8 +347,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	w2j.to_state = jump;
 	w2j.duration = 0.2f;
 	w2j.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::JUMP;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() == PLAYER_STATE::JUMP) : false;
 		};
 	controller.AddTransition(walk, w2j);
 
@@ -328,8 +356,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	r2j.to_state = jump;
 	r2j.duration = 0.2f;
 	r2j.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::JUMP;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() == PLAYER_STATE::JUMP) : false;
 		};
 	controller.AddTransition(run, r2j);
 
@@ -337,8 +365,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	j2i.to_state = idle;
 	j2i.duration = 0.2f;
 	j2i.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() != PLAYER_STATE::JUMP) : false;
 		};
 	controller.AddTransition(jump, j2i);
 
@@ -346,8 +374,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	j2w.to_state = walk;
 	j2w.duration = 0.2f;
 	j2w.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() != PLAYER_STATE::JUMP) : false;
 		};
 	controller.AddTransition(jump, j2w);
 
@@ -355,8 +383,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	j2r.to_state = run;
 	j2r.duration = 0.2f;
 	j2r.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::JUMP;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() != PLAYER_STATE::JUMP) : false;
 		};
 	controller.AddTransition(jump, j2r);
 
@@ -371,8 +399,9 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		any2p.to_state = possess;
 		any2p.duration = 0.1f;
 		any2p.condition = [this]() {
-			if (!owner) return false;
-			if (reinterpret_cast<CPlayer*>(owner)->GetIsPossessed()) {
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			if (!player) return false;
+			if (player->GetIsPossessed()) {
 				prev_action = layers[1].current_clip;
 				PlayAction("");
 				return true;
@@ -386,8 +415,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	p2i.to_state = idle;
 	p2i.duration = 0.2f;
 	p2i.condition = [this]() {
-		if (!owner) return false;
-		auto player = reinterpret_cast<CPlayer*>(owner);
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		if (!player) return false;
 		if (!player->GetIsPossessed()) {
 			PlayAction(prev_action);
 			return true;
@@ -407,8 +436,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		any2s.to_state = stunned;
 		any2s.duration = 0.2f;
 		any2s.condition = [this]() {
-			if (!owner) return false;
-			return reinterpret_cast<CPlayer*>(owner)->GetIsStunned();
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			return player ? player->GetIsStunned() : false;
 			};
 		controller.AddTransition(from, any2s);
 	}
@@ -418,8 +447,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	s2p.to_state = possess;
 	s2p.duration = 0.2f;
 	s2p.condition = [this]() {
-		if (!owner) return false;
-		auto player = reinterpret_cast<CPlayer*>(owner);
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		if (!player) return false;
 		return !player->GetIsStunned() && player->GetIsPossessed();
 		};
 	controller.AddTransition(stunned, s2p);
@@ -428,8 +457,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	s2i.to_state = idle;
 	s2i.duration = 0.2f;
 	s2i.condition = [this]() {
-		if (!owner) return false;
-		return !reinterpret_cast<CPlayer*>(owner)->GetIsStunned();
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? !player->GetIsStunned() : false;
 		};
 	controller.AddTransition(stunned, s2i);
 
@@ -446,8 +475,9 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 		any2c.to_state = collapse;
 		any2c.duration = 0.1f;
 		any2c.condition = [this]() {
-			if (!owner) return false;
-			if (reinterpret_cast<CPlayer*>(owner)->GetState() == PLAYER_STATE::ALMOST_DEAD) {
+			auto* player = dynamic_cast<CPlayer*>(owner);
+			if (!player) return false;
+			if (player->GetState() == PLAYER_STATE::ALMOST_DEAD) {
 				// 빈사 진입 시 상체 Action 레이어가 섞여서 기괴해지는 것을 방지
 				PlayAction("");
 				return true;
@@ -462,7 +492,6 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	c2ad.to_state = almostDead;
 	c2ad.duration = 0.2f;
 	c2ad.condition = [this]() {
-		if (!owner) return false;
 		if (controller.GetCurrentState() == "CollapseState" && controller.GetPlayCount() >= 1) {
 			return true;
 		}
@@ -475,8 +504,8 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	ad2i.to_state = idle;
 	ad2i.duration = 0.2f;
 	ad2i.condition = [this]() {
-		if (!owner) return false;
-		return reinterpret_cast<CPlayer*>(owner)->GetState() != PLAYER_STATE::ALMOST_DEAD;
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		return player ? (player->GetState() != PLAYER_STATE::ALMOST_DEAD) : false;
 		};
 	controller.AddTransition(almostDead, ad2i);
 }

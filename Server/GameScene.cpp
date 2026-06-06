@@ -358,12 +358,22 @@ void CGameScene::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject>>& 
 
 	bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
 	bool isMonsterPassable = (node->name == "streetlamp");
+	bool isDoor = (node->name == "wall_1_door001" || node->name == "wall_2_door001");
 
 	if (isRoad) {
 		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
 	}
 	else if (isMonsterPassable) {
 		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::OBJECT, EColLayer::PLAYER);
+	}
+	else if (isDoor) {
+		if (!node->mesh_colliders.empty()) {
+			std::unique_ptr<CColliderShape> shape = std::make_unique<CConcaveMeshShape>(node->mesh_colliders[0].positions, node->mesh_colliders[0].indices);
+			auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);
+			collider->SetFillter({ EColLayer::OBJECT, EColLayer::ALL_MOB });
+			obj->SetComponent(collider);
+			GetPhysicsManager()->SetCollider(collider);
+		}
 	}
 	else {
 		CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, node, EColLayer::OBJECT, EColLayer::ALL_MOB);
