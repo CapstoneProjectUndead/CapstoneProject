@@ -4,12 +4,12 @@
 
 void CLightManager::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    light.ambient_light = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+    light.ambient_light = XMFLOAT4(0.05f, 0.08f, 0.15f, 1.0f);
     light.active_dot_num = 0; // 초기에는 점 조명 0개
 
     // 0번은 무조건 방향성 조명(시작 조명)
     light.lights[0].direction = XMFLOAT3(0.01f, -1.0f, 0.01f);
-    light.lights[0].strength = XMFLOAT3(0.3f, 0.3f, 0.3f);
+    light.lights[0].strength = XMFLOAT3(0.5f, 0.6f, 0.75f);
 
     light_cb = CreateBufferResource(
         device,
