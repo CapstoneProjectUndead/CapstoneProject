@@ -89,6 +89,9 @@ public:
 
     void ResetAll();
 
+    // 인벤토리에서 소비 아이템 더블클릭으로 즉시 사용 (소비 아이템 전용)
+    void UseConsumableByInvId(uint32 invId);
+
 private:
     void ProcessRotation();
     void ProcessInput();

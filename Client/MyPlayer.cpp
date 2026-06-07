@@ -534,6 +534,39 @@ void CMyPlayer::UseItem()
 	}
 }
 
+void CMyPlayer::UseConsumableByInvId(uint32 invId)
+{
+	if (!inventory)
+		return;
+
+	auto& items = inventory->GetItems();
+	auto it = items.find(invId);
+	if (it == items.end())
+		return;
+
+	// 소비 아이템만 더블클릭 사용 허용
+	if (it->second->GetItemType() != ITEM_TYPE::CONSUMABLE)
+		return;
+
+	if (g_is_single) {
+		// 아이템 사용 성공 시 인벤토리에서 제거
+		if (it->second->Use(this))
+			inventory->RemoveItem(invId);
+	}
+	else if (current_scene_type == SCENE_TYPE::GAME) {
+		// 멀티: 서버에 사용 요청 → 서버가 효과 적용 + S_RemoveItem으로 인벤 제거
+		C_UseItem useItemPkt;
+		useItemPkt.player_id    = GetID();
+		useItemPkt.item_id      = it->second->GetItemId();
+		useItemPkt.inventory_id = invId;
+		useItemPkt.scene_type   = GetCurrentSceneType();
+
+		auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
+		if (auto session = GetSession())
+			session->DoSend(sendBuffer);
+	}
+}
+
 void CMyPlayer::SimulateMove(const InputData& input, float elapsedTime)
 {
 	XMFLOAT3 dir{ 0.f, 0.f, 0.f };
