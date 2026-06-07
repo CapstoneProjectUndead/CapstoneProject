@@ -79,7 +79,7 @@ void CMonster::UpdateMulti(float elapsedTime)
     CCharacter::Update(elapsedTime);
 }
 
-void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
+void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, int damage)
 {
     XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
     awayDir.y = 0.0f;
@@ -101,12 +101,12 @@ void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos)
     if (nearest)
         SetTarget(nearest);
 
-    melee_hit_count++;
+    hp -= damage;
 
     // ChangeState 먼저 (OnFleeEnter가 velocity를 0으로 초기화하므로)
     auto* ai = GetComponent<CAIComponent>();
     if (ai) {
-        if (melee_hit_count >= MAX_MELEE_HITS && !is_dead) {
+        if (hp <= 0 && !is_dead) {
             is_dead = true;
             auto cur = ai->GetCurrentState();
             if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)

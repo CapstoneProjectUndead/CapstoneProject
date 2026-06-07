@@ -121,14 +121,14 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
     return nullptr;
 }
 
-void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player)
+void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player, int damage)
 {
     XMFLOAT3 awayDir = Vector3::Subtract(position, fromPos);
     awayDir.y = 0.0f;
     float len = Vector3::Length(awayDir);
     if (len < 0.001f) 
         return;
-
+    
     target_player = player;
 
     if (monster_type == MON_TYPE::HUMAN_MONSTER) {
@@ -141,12 +141,12 @@ void CMonster::ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player
     melee_knockback_vel   = { awayDir.x / len * MELEE_KNOCKBACK_FORCE, 0.0f, awayDir.z / len * MELEE_KNOCKBACK_FORCE };
     melee_knockback_timer = MELEE_KNOCKBACK_DURATION;
 
-    melee_hit_count++;
+    hp -= damage;
 
     // ChangeState 먼저 (OnFleeEnter가 velocity를 0으로 초기화하므로)
     auto* ai = GetComponent<CAIComponent>();
     if (ai) {
-        if (melee_hit_count >= MAX_MELEE_HITS) {
+        if (hp <= 0) {
             auto cur = ai->GetCurrentState();
             if (!cur || cur->GetType() != AI_STATE::MONSTER_FLEE)
                 ai->ChangeState(AI_STATE::MONSTER_FLEE);

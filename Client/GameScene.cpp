@@ -1039,6 +1039,18 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 		if (melee_attack_timer <= 0.0f) {
 			melee_attack_timer = -1.0f;
 
+			auto qs  = my_player->GetQuickSlot();
+			auto inv = my_player->GetInventory();
+			CWeapon* weapon      = nullptr;
+			int      weaponDamage = 20;
+			if (qs && inv) {
+				auto it = inv->GetItems().find(qs->GetSelectedInvId());
+				if (it != inv->GetItems().end())
+					weapon = dynamic_cast<CWeapon*>(it->second.get());
+			}
+			if (weapon && weapon->GetAttackPower() > 0)
+				weaponDamage = static_cast<int>(weapon->GetAttackPower());
+
 			XMFLOAT3 playerPos = my_player->GetPosition();
 			XMFLOAT3 look      = my_player->look;
 			look.y = 0.0f;
@@ -1072,7 +1084,14 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 					if (lateralDist > MELEE_HALF_WIDTH) 
 						continue;
 
-					monster->ApplyMeleeHit(playerPos);
+					monster->ApplyMeleeHit(playerPos, weaponDamage);
+					if (weapon && weapon->GetMaxDurability() > 0)
+						weapon->ReduceDurability();
+				}
+
+				if (weapon && weapon->GetMaxDurability() > 0 && weapon->GetCurrentDurability() <= 0) {
+					inv->RemoveItem(qs->GetSelectedInvId());
+					my_player->SetEquippedItemId(0);
 				}
 			}
 		}

@@ -71,11 +71,16 @@ public:
 class CWeapon : public CEquipment
 {
 public:
-	CWeapon(const std::shared_ptr<ItemData> data, const uint32 maxDur);
+	CWeapon(const std::shared_ptr<ItemData> data, const uint32 maxDur, const uint32 atk);
 	virtual ~CWeapon() override;
 
 	virtual void Equip(CMyPlayer* player) override;
 	virtual void ReduceDurability() override;
+
+	uint32 GetAttackPower() const { return attack_power; }
+
+private:
+	const uint32 attack_power;
 };
 
 // 소비(회복템)
