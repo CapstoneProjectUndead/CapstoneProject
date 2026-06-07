@@ -200,4 +200,5 @@ void CResourceManager::LoadSounds()
     CSoundManager::GetInstance().LoadSound(SOUND_ID::Settlement,   "../Resource/Sound/Settlement.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::TaDa,   "../Resource/Sound/TaDa.mp3");
     CSoundManager::GetInstance().LoadSound(SOUND_ID::Return,   "../Resource/Sound/Return.mp3");
+    CSoundManager::GetInstance().LoadSound(SOUND_ID::item_use,   "../Resource/Sound/item_use.mp3");
 }

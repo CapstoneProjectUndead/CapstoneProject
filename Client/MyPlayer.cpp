@@ -493,7 +493,6 @@ void CMyPlayer::UseItem()
 
 					// 아이템 사용
 					if (it->second->Use(this)) {
-
 						// 사용한 아이템 인벤토리에서 제거
 						inventory->RemoveItem(uInvId);
 					}
@@ -518,6 +517,7 @@ void CMyPlayer::UseItem()
 				auto it = items.find(uInvId);
 
 				if (it != items.end()) {
+
 					C_UseItem useItemPkt;
 					useItemPkt.player_id = GetID();
 					useItemPkt.item_id = it->second->GetItemId();
@@ -550,10 +550,14 @@ void CMyPlayer::UseConsumableByInvId(uint32 invId)
 
 	if (g_is_single) {
 		// 아이템 사용 성공 시 인벤토리에서 제거
-		if (it->second->Use(this))
+		if (it->second->Use(this)) {
+			CSoundManager::GetInstance().Play(SOUND_ID::item_use);
 			inventory->RemoveItem(invId);
+		}
 	}
 	else if (current_scene_type == SCENE_TYPE::GAME) {
+		CSoundManager::GetInstance().Play(SOUND_ID::item_use);
+
 		// 멀티: 서버에 사용 요청 → 서버가 효과 적용 + S_RemoveItem으로 인벤 제거
 		C_UseItem useItemPkt;
 		useItemPkt.player_id    = GetID();

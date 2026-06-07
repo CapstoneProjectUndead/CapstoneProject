@@ -231,4 +231,5 @@ enum class SOUND_ID : uint16_t
 	Settlement,
 	TaDa,
 	Return,
+	item_use,
 };
