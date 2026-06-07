@@ -40,12 +40,7 @@ float4 PSMain(VS_OUT input) : SV_TARGET
 
     float3 toEyeW = normalize(eyePosWorld - fragPosWorld);
 
-    Material mat =
-    {
-        albedo,
-        float3(0.05f, 0.05f, 0.05f),
-        glossiness
-    };
+    Material mat = { albedo, float3(0.05f, 0.05f, 0.05f), glossiness };
     
     float ao = texDiffuse[AOMapIdx].Load(texCoord).r;
     float4 ambient = ambientLight * albedo * ao;
@@ -55,44 +50,22 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     float4 shadowPosH = mul(float4(fragPosWorld, 1.0f), gShadowTransform);
     float dirShadow = CalcShadowFactor(shadowPosH);
 
-    directLighting += ComputeDirectionalLight(
-        gLights[0],
-        mat,
-        worldNormal,
-        toEyeW) * dirShadow;
-
+    directLighting += ComputeDirToon(gLights[0], mat, worldNormal, toEyeW) * dirShadow;
 #endif
 #if (NUM_POINT_LIGHTS > 0)
     [loop]
     for (uint i = 0; i < activeDotNum; ++i)
     {
-        float pointShadow = CalcPointShadowFactor(
-            i,
-            fragPosWorld,
-            gLights[i + NUM_DIR_LIGHTS].position);
-
-        directLighting += ComputePointLight(
-            gLights[i + NUM_DIR_LIGHTS],
-            mat,
-            fragPosWorld,
-            worldNormal,
-            toEyeW) * pointShadow;
+        float pointShadow = CalcPointShadowFactor(i, fragPosWorld, gLights[i + NUM_DIR_LIGHTS].position);
+        directLighting += ComputePointToon(gLights[i + NUM_DIR_LIGHTS], mat, fragPosWorld, worldNormal, toEyeW) * pointShadow;
     }
-
 #endif
 #if (NUM_SPOT_LIGHTS > 0)
-
     [loop]
     for (uint i = NUM_DIR_LIGHTS + activeDotNum; i < NUM_DIR_LIGHTS + activeDotNum + NUM_SPOT_LIGHTS; ++i)
     {
-        directLighting += ComputeSpotLight(
-            gLights[i],
-            mat,
-            fragPosWorld,
-            worldNormal,
-            toEyeW);
+        directLighting += ComputeSpotLight(gLights[i], mat, fragPosWorld, worldNormal, toEyeW);
     }
-
 #endif
     float4 litColor = ambient + float4(directLighting, 0.0f);
     float3 r = reflect(-toEyeW, worldNormal);
