@@ -157,19 +157,9 @@ void CSceneManager::Init(ID3D12Device* device)
 		buffer_normal = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R16G16B16A16_FLOAT);
 		buffer_ssao = std::make_unique<CRenderTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8_UNORM);
 		buffer_ssao_blur_temp = std::make_unique<CRenderTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R8_UNORM);
+		buffer_emissive = std::make_unique<CGBufferTarget>(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
-		auto ssaoHeap = shaders[EShaderName::SSAO]->GetHeapManager();
-		auto ssaoBlurHeap = shaders[EShaderName::SSAOBlur]->GetHeapManager();
-		buffer_color->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferColorIdx));
-		buffer_normal->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
-		buffer_normal->CreateSRV(ssaoHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
-		buffer_ssao->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::AOMapIdx));
-		buffer_ssao->CreateSRV(ssaoBlurHeap->GetSRVCPUHandle(1));
-		buffer_ssao_blur_temp->CreateSRV(ssaoBlurHeap->GetSRVCPUHandle(2));
-
-		CreateMainDepthSRV(device, deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
-		CreateMainDepthSRV(device, ssaoHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
-		CreateMainDepthSRV(device, ssaoBlurHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+		CreateMainDepthSRV(device);
 	}
 }
 
@@ -215,17 +205,13 @@ void CSceneManager::ChangeScene(SCENE_TYPE type)
 
 void CSceneManager::CreateMainDepthSRV(ID3D12Device* device)
 {
-	buffer_color->Resize(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT);
-	buffer_normal->Resize(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT);
-	buffer_ssao->Resize(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT);
-	buffer_ssao_blur_temp->Resize(device, GET_CLIENT_WIDTH, GET_CLIENT_HEIGHT);
-
 	auto deferredLightingHeap = shaders[EShaderName::Deferred]->GetHeapManager();
 	auto ssaoHeap = shaders[EShaderName::SSAO]->GetHeapManager();
 	auto ssaoBlurHeap = shaders[EShaderName::SSAOBlur]->GetHeapManager();
 	buffer_color->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferColorIdx));
 	buffer_normal->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
 	buffer_normal->CreateSRV(ssaoHeap->GetSRVCPUHandle(DescriptorSlot::GBufferNormalIdx));
+	buffer_emissive->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::EmissiveMapIdx));
 	buffer_ssao->CreateSRV(deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::AOMapIdx));
 	buffer_ssao->CreateSRV(ssaoBlurHeap->GetSRVCPUHandle(1));
 	buffer_ssao_blur_temp->CreateSRV(ssaoBlurHeap->GetSRVCPUHandle(2));
@@ -233,6 +219,15 @@ void CSceneManager::CreateMainDepthSRV(ID3D12Device* device)
 	CreateMainDepthSRV(device, deferredLightingHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
 	CreateMainDepthSRV(device, ssaoHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
 	CreateMainDepthSRV(device, ssaoBlurHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
+}
+
+void CSceneManager::OnResizeBuffers(ID3D12Device* device, float width, float height)
+{
+	buffer_color->Resize(device, width, height);
+	buffer_normal->Resize(device, width, height);
+	buffer_ssao->Resize(device, width, height);
+	buffer_ssao_blur_temp->Resize(device, width, height);
+	buffer_emissive->Resize(device, width, height);
 }
 
 void CSceneManager::CreateMainDepthSRV(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle)

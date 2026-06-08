@@ -28,6 +28,7 @@ struct PS_GBUFFER_OUT
 {
     float4 color : SV_Target0; // GBufferColorIdx 에 연결됨
     float4 normal : SV_Target1; // GBufferNormalIdx 에 연결됨
+    float4 emissive : SV_Target2; // EmissiveMapIdx 에 연결됨
 };
 
 struct AnimationData
@@ -51,7 +52,6 @@ struct InstanceData
     AnimationData animation;
 };
 
-
 Texture2D texDiffuse[DiffuseMapCount] : register(t0);
 
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
@@ -68,8 +68,8 @@ VS_OUTPUT VSMain(BONE_INPUT input, uint instanceID : SV_InstanceID)
 
     // inst Data Load
     InstanceData instData = gInstanceData[instanceID];
-    float4x4 finalWorld = instData.world_matrix;
     output.instanceID = instanceID;
+    float4x4 finalWorld = instData.world_matrix;
 #ifdef SKINNED
     bool isAni = !(instData.animation.bone_count == 0);
     if (isAni) {
@@ -151,5 +151,7 @@ PS_GBUFFER_OUT PSMain(VS_OUTPUT input)
     // 노말 벡터(-1.0 ~ 1.0)를 텍스처에 안전하게 저장하기 위해 (0.0 ~ 1.0) 범위로 압축
     output.normal = float4(bumpedNormalW * 0.5f + 0.5f, instMat.glossiness);
 
+    output.emissive = instMat.emissive_color;
+    
     return output;
 }

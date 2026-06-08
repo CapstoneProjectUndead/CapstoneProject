@@ -27,7 +27,8 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     float4 albedo = texDiffuse[GBufferColorIdx].Load(texCoord);
     float4 packedNormal = texDiffuse[GBufferNormalIdx].Load(texCoord);
     float depth = texDiffuse[MainDepthIdx].Load(texCoord).r;
-
+    float4 emissiveColor = texDiffuse[EmissiveMapIdx].Load(texCoord);
+    
     float3 worldNormal = normalize(packedNormal.xyz * 2.0f - 1.0f);
     float glossiness = packedNormal.w;
 
@@ -43,13 +44,22 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     Material mat = { albedo, float3(0.05f, 0.05f, 0.05f), glossiness };
     
     float ao = texDiffuse[AOMapIdx].Load(texCoord).r;
+    
+    // 툰 스타일 전구(Emissive) 라이팅 계산
+    float3 finalEmissive = float3(0.0f, 0.0f, 0.0f);
+    float ndotv = saturate(dot(worldNormal, toEyeW));
+    float toonEmissiveGlow = smoothstep(0.3f, 0.7f, ndotv); // 외곽선 쪽은 어두워지게 컷오프
+    // 중심부는 원본 에미시브 색상보다 더 밝게(전구 필라멘트 느낌), 외곽은 살짝 알베도가 묻어나게 믹스
+    finalEmissive = lerp(emissiveColor.rgb * 0.5f, emissiveColor.rgb * 1.8f, toonEmissiveGlow);
+    float3 selfSpecular = ComputeToonSpecular(toEyeW, worldNormal, toEyeW, glossiness);
+    finalEmissive += selfSpecular * emissiveColor.rgb * 1.2f;
+
+    // 기존 앰비언트 계산에서 emissiveColor를 빼고 finalEmissive를 나중에 더해줍니다.
     float4 ambient = ambientLight * albedo * ao;
     float3 directLighting = 0.0f;
 #if (NUM_DIR_LIGHTS > 0)
-
     float4 shadowPosH = mul(float4(fragPosWorld, 1.0f), gShadowTransform);
     float dirShadow = CalcShadowFactor(shadowPosH);
-
     directLighting += ComputeDirToon(gLights[0], mat, worldNormal, toEyeW) * dirShadow;
 #endif
 #if (NUM_POINT_LIGHTS > 0)
@@ -67,7 +77,8 @@ float4 PSMain(VS_OUT input) : SV_TARGET
         directLighting += ComputeSpotLight(gLights[i], mat, fragPosWorld, worldNormal, toEyeW);
     }
 #endif
-    float4 litColor = ambient + float4(directLighting, 0.0f);
+    float4 litColor = ambient + float4(directLighting, 0.0f) + float4(finalEmissive, 0.0f);
+    
     float3 r = reflect(-toEyeW, worldNormal);
     float4 reflectionColor = texDiffuse[SkyboxMapIdx].Sample(sample, r.xy);
     litColor.rgb += glossiness * reflectionColor.rgb;

@@ -307,23 +307,26 @@ D3D12_RESOURCE_BARRIER CScene::CreateResourceBarrier(ID3D12Resource* resource, D
 void CScene::SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList)
 {
 	CSceneManager& sceneManager = CSceneManager::GetInstance();
-
-	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	
+	D3D12_RESOURCE_BARRIER barriers[3] = {};
 	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	commandList->ResourceBarrier(2, barriers);
+	barriers[2] = CreateResourceBarrier(sceneManager.GetEmissiveResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(3, barriers);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2] = {
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[3] = {
 		sceneManager.GetGBufferColorRTV(),
-		sceneManager.GetGBufferNormalRTV()
+		sceneManager.GetGBufferNormalRTV(),
+		sceneManager.GetEmissiveRTV()
 	};
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = gGameFramework.GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
 
-	commandList->OMSetRenderTargets(2, rtvHandles, FALSE, &dsvHandle);
+	commandList->OMSetRenderTargets(3, rtvHandles, FALSE, &dsvHandle);
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	commandList->ClearRenderTargetView(rtvHandles[0], clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(rtvHandles[1], clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandles[2], clearColor, 0, nullptr);
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 }
 
@@ -331,10 +334,11 @@ void CScene::TransitionGBuffersToSRV(ID3D12GraphicsCommandList* commandList)
 {
 	CSceneManager& sceneManager = CSceneManager::GetInstance();
 
-	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	D3D12_RESOURCE_BARRIER barriers[3] = {};
 	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	commandList->ResourceBarrier(2, barriers);
+	barriers[2] = CreateResourceBarrier(sceneManager.GetEmissiveResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(3, barriers);
 }
 
 void CScene::SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList)

@@ -1,4 +1,5 @@
 #include "Light.hlsl"
+
 struct VS_INPUT
 {
     float3 position : POSITION;
@@ -28,6 +29,7 @@ struct PS_GBUFFER_OUT
 {
     float4 color : SV_Target0; // GBufferColorIdx 에 연결됨
     float4 normal : SV_Target1; // GBufferNormalIdx 에 연결됨
+    float4 emissive : SV_Target2; // EmissiveMapIdx 에 연결됨
 };
 
 Texture2D texDiffuse[DiffuseMapCount] : register(t0);
@@ -39,8 +41,8 @@ VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
     VS_OUTPUT output;
     
     // load instData
-    output.instanceID = instanceID;
     InstanceData instData = gInstanceData[instanceID];
+    output.instanceID = instanceID;
     float4x4 finalWorld = instData.world_matrix;
     
     float4 posW = mul(float4(input.position, 1.0f), finalWorld);
@@ -74,6 +76,7 @@ PS_GBUFFER_OUT PSMain(VS_OUTPUT input)
     
     // 노말 벡터(-1.0 ~ 1.0)를 텍스처에 안전하게 저장하기 위해 (0.0 ~ 1.0) 범위로 압축
     output.normal = float4(bumpedNormalW * 0.5f + 0.5f, instMat.glossiness);
+    output.emissive = instMat.emissive_color;
 
     return output;
 }
