@@ -315,17 +315,20 @@ void CAnimatorComponent::PlayerSetState(const std::string& idle, const std::stri
 	d2i.to_state = idle;
 	d2i.duration = 0.2f;
 	d2i.condition = [this]() {
-		// 애니메이션이 끝났거나
+		auto* player = dynamic_cast<CPlayer*>(owner);
+		if (!player) return true;
+
+		// dig 애니메이션이 한 번 끝났으면 idle로 전이.
 		if (controller.GetCurrentState() == "DigState" && controller.GetPlayCount() >= 1) {
-			auto* myPlayer = dynamic_cast<CMyPlayer*>(owner);
-			if (myPlayer) {
+			if (auto* myPlayer = dynamic_cast<CMyPlayer*>(owner)) {
 				myPlayer->SetDigAnimFinished(true);
 				myPlayer->SetState(PLAYER_STATE::IDLE);
-				return true;
 			}
+			return true;
 		}
-		auto* player = dynamic_cast<CPlayer*>(owner);
-		if (!player || player->GetState() != PLAYER_STATE::DIG) return true;
+
+		// 서버 상태가 더 이상 DIG가 아니면 종료
+		if (player->GetState() != PLAYER_STATE::DIG) return true;
 		return false;
 		};
 	controller.AddTransition(dig, d2i);
