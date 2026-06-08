@@ -26,7 +26,7 @@ int main()
     CTimeManager::GetInstance().Init();
 
     // DB 초기화
-    //CDBManager::GetInstance().Init();
+    CDBManager::GetInstance().Init();
 
     // GameFramework 초기화
     gGameFramework = std::make_unique<CGameFramework>();
