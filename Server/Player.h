@@ -45,6 +45,13 @@ public:
 	bool get_items_once = false;
 
 public:
+	void SetGuset(bool g) { is_guest = g; }
+	bool GetIsGuest() const { return is_guest; }
+
+	// 로그인 계정 ID (저장 키). 유저에서 복사해 둔다 → 연결 끊김으로 CUser가 먼저 소멸해도 저장 가능.
+	void SetAccountId(const string& id) { account_id = id; }
+	const string& GetAccountId() const { return account_id; }
+
 	void SetLastSequence(uint64 lastSeq) { last_processed_seq = lastSeq; }
 	uint64 GetLastSequence() const { return last_processed_seq; }
 
@@ -179,6 +186,8 @@ private:
 	void MeleeAttack();
 
 private:
+	bool						is_guest;
+	string						account_id;
 	weak_ptr<CUser>				user;
 	uint64						last_processed_seq;
 	float						ping;

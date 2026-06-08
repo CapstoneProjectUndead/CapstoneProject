@@ -802,7 +802,7 @@ ID3D12RootSignature* CDeferredShader::CreateGraphicsRootSignature(ID3D12Device* 
 
 	D3D12_DESCRIPTOR_RANGE textureRange{};
 	textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	textureRange.NumDescriptors = DescriptorSlot::AOMapIdx + 1;
+	textureRange.NumDescriptors = DescriptorSlot::EmissiveMapIdx + 1;
 	textureRange.BaseShaderRegister = 0;
 	textureRange.RegisterSpace = 0;
 	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;

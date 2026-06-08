@@ -307,23 +307,26 @@ D3D12_RESOURCE_BARRIER CScene::CreateResourceBarrier(ID3D12Resource* resource, D
 void CScene::SetGBufferRenderTargets(ID3D12GraphicsCommandList* commandList)
 {
 	CSceneManager& sceneManager = CSceneManager::GetInstance();
-
-	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	
+	D3D12_RESOURCE_BARRIER barriers[3] = {};
 	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	commandList->ResourceBarrier(2, barriers);
+	barriers[2] = CreateResourceBarrier(sceneManager.GetEmissiveResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(3, barriers);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2] = {
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[3] = {
 		sceneManager.GetGBufferColorRTV(),
-		sceneManager.GetGBufferNormalRTV()
+		sceneManager.GetGBufferNormalRTV(),
+		sceneManager.GetEmissiveRTV()
 	};
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = gGameFramework.GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
 
-	commandList->OMSetRenderTargets(2, rtvHandles, FALSE, &dsvHandle);
+	commandList->OMSetRenderTargets(3, rtvHandles, FALSE, &dsvHandle);
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	commandList->ClearRenderTargetView(rtvHandles[0], clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(rtvHandles[1], clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandles[2], clearColor, 0, nullptr);
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 }
 
@@ -331,10 +334,11 @@ void CScene::TransitionGBuffersToSRV(ID3D12GraphicsCommandList* commandList)
 {
 	CSceneManager& sceneManager = CSceneManager::GetInstance();
 
-	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	D3D12_RESOURCE_BARRIER barriers[3] = {};
 	barriers[0] = CreateResourceBarrier(sceneManager.GetGBufferColorResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	barriers[1] = CreateResourceBarrier(sceneManager.GetGBufferNormalResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	commandList->ResourceBarrier(2, barriers);
+	barriers[2] = CreateResourceBarrier(sceneManager.GetEmissiveResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(3, barriers);
 }
 
 void CScene::SetBackBufferRenderTarget(ID3D12GraphicsCommandList* commandList)
@@ -645,17 +649,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		if (idx >= vec.size())
 			return;
 
-		// [진단/방어] id_To_Index가 어긋나면 엉뚱한 객체에 write되어 힙이 손상된다.
-		// 타입 체크로 stray write를 막고, 불일치 시 로그로 진범을 찍는다.
-		auto otherPlayer = std::dynamic_pointer_cast<CPlayer>(vec[idx]);
-		if (!otherPlayer) {
-			std::cout << "[S_Move_Player] id_To_Index desync! player_id=" << pkt.info.player_id
-				<< " idx=" << idx
-				<< " realType=" << (vec[idx] ? (int)vec[idx]->GetObjectType() : -1)
-				<< " realId=" << (vec[idx] ? vec[idx]->GetID() : 0ull)
-				<< " size=" << vec.size() << std::endl;
-			return;
-		}
+		auto otherPlayer = std::static_pointer_cast<CPlayer>(vec[idx]);
 		otherPlayer->SetYaw(pkt.info.yaw);
 		otherPlayer->SetPitch(pkt.info.pitch);
 
@@ -745,16 +739,7 @@ void CScene::Handle_S_Move_Monster(std::shared_ptr<Session>& session, const S_Mo
 	if (idx >= vec.size())
 		return;
 
-	// [진단/방어] id_To_Index가 어긋나면 엉뚱한 객체에 write되어 힙이 손상된다.
-	auto monster = std::dynamic_pointer_cast<CMonster>(vec[idx]);
-	if (!monster) {
-		std::cout << "[S_Move_Monster] id_To_Index desync! monster_id=" << pkt.info.monster_id
-			<< " idx=" << idx
-			<< " realType=" << (vec[idx] ? (int)vec[idx]->GetObjectType() : -1)
-			<< " realId=" << (vec[idx] ? vec[idx]->GetID() : 0ull)
-			<< " size=" << vec.size() << std::endl;
-		return;
-	}
+	auto monster = std::static_pointer_cast<CMonster>(vec[idx]);
 
 	// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간
 	MonsterFrameHistory state{};
@@ -787,6 +772,12 @@ void CScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemLis
 		if (!my_player) {
 			// 씬 전환 타이밍상 my_player가 아직 이 씬에 없으면 로비씬의 것을 사용
 			my_player = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->GetMyPlayer();
+		}
+
+		// 내구도 복원 (장비이고 내구도 값이 유효할 때만). 픽업(S_AddItem)과 동일 패턴.
+		if (itemList[i].durability > 0) {
+			if (auto equip = std::dynamic_pointer_cast<CEquipment>(item))
+				equip->SetCurrentDurability((uint16)itemList[i].durability);
 		}
 
 		if (my_player && my_player->GetInventory())

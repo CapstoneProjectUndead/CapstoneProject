@@ -59,17 +59,19 @@ CGameScene::~CGameScene()
 
 void CGameScene::Initialize()
 {
-	auto& factory = CSceneManager::GetInstance().GetFactory();
-	if (objects.empty()) {
-		objects = factory->CreateGameScene();
-		treasures = factory->GetTreauseres();
+	if (g_is_single) {
+		auto& factory = CSceneManager::GetInstance().GetFactory();
+		if (objects.empty()) {
+			objects = factory->CreateGameScene();
+			treasures = factory->GetTreauseres();
 
-		for (const auto& pos : factory->GetHumanMonsterSpawnPositions())
-			monster_spawn_info.push_back({ pos, MON_TYPE::HUMAN_MONSTER, 0.f, -1.f, {} });
-		for (const auto& pos : factory->GetGhostSpawnPositions())
-			monster_spawn_info.push_back({ pos, MON_TYPE::GHOST, 0.f, -1.f, {} });
-		for (const auto& pos : factory->GetDogMonsterSpawnPositions())
-			monster_spawn_info.push_back({ pos, MON_TYPE::ANIMAL_MONSTER, 0.f, -1.f, {} });
+			for (const auto& pos : factory->GetHumanMonsterSpawnPositions())
+				monster_spawn_info.push_back({ pos, MON_TYPE::HUMAN_MONSTER, 0.f, -1.f, {} });
+			for (const auto& pos : factory->GetGhostSpawnPositions())
+				monster_spawn_info.push_back({ pos, MON_TYPE::GHOST, 0.f, -1.f, {} });
+			for (const auto& pos : factory->GetDogMonsterSpawnPositions())
+				monster_spawn_info.push_back({ pos, MON_TYPE::ANIMAL_MONSTER, 0.f, -1.f, {} });
+		}
 	}
 
 	// menu UI
@@ -96,37 +98,11 @@ void CGameScene::Initialize()
 		});
 
 	SetButtonEvents();
-
-	// 아이템 생성 (테스트)
-	SpawnWorldItem(1, XMFLOAT3{ -1, 2, -1 });
-	SpawnWorldItem(5, XMFLOAT3{ -1, 2, -1 });
-	SpawnWorldItem(9, XMFLOAT3{ -1, 2, -2 });
-	SpawnWorldItem(14, XMFLOAT3{ -1, 2, -3 });
-	SpawnWorldItem(15, XMFLOAT3{ -1, 2, -4 });
-	SpawnWorldItem(16, XMFLOAT3{ 1, 2, 1 });
-	SpawnWorldItem(17, XMFLOAT3{ -2, 2, -1 });
-	SpawnWorldItem(19, XMFLOAT3{ -2, 2, -2 });
-
-	SpawnWorldItem(21, XMFLOAT3{ 1, 2, 2 });
-	SpawnWorldItem(22, XMFLOAT3{ 1, 2, 3 });
-	SpawnWorldItem(23, XMFLOAT3{ 1, 2, 4 });
-	SpawnWorldItem(24, XMFLOAT3{ 2, 2, 1 });
-	SpawnWorldItem(25, XMFLOAT3{ 2, 2, 2 });
-	SpawnWorldItem(26, XMFLOAT3{ 2, 2, 3 });
-	SpawnWorldItem(27, XMFLOAT3{ 2, 2, 4 });
-	SpawnWorldItem(29, XMFLOAT3{ 3, 2, 1 });
-	SpawnWorldItem(30, XMFLOAT3{ 3, 2, 2 });
-	SpawnWorldItem(31, XMFLOAT3{ 3, 2, 3 });
-	SpawnWorldItem(40, XMFLOAT3{ 3, 2, 4 });
-
-	// 테스트 (임시코드)
-	//CDescriptorHeapManager* skinningHeapManager{ CSceneManager::GetInstance().GetShaders()[EShaderName::Skinning]->GetHeapManager() };
-	//auto dog = factory->CreateMonster(skinningHeapManager, MON_TYPE::ANIMAL_MONSTER, scene_type);
-	//if (dog) {
-	//	dog->SetPosition(2, 0.1f, 2.f);
-	//	dog->SetOriginPos({ 2, 0.1f, 2.f });
-	//	AddObject(dog, dog->GetID());
-	//}
+	// light 생성
+	if (!light) {
+		light = std::make_unique<CLightManager>();
+		light->Initialize(GET_DEVICE, GET_CMD_LIST);
+	}
 }
 
 void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -208,24 +184,11 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 		camera->Initialize(device, commandList);
 	}
 
-	// light 생성
-	if (!light) {
-		light = std::make_unique<CLightManager>();
-		light->Initialize(device, commandList);
-	}
-	light->ClearPointLights();
+	
 	if (g_is_single) {
+		light->ClearPointLights();
 		auto& factory = CSceneManager::GetInstance().GetFactory();
 		for (const auto& inst : factory->GetInstData()) {
-			if (inst.model == EModelVariant::STREETLAMP) {
-				XMFLOAT3 pos{ inst.position };
-				pos.y += 2.23f;
-				light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
-			}
-		}
-	}
-	else {
-		for (const auto& inst : instance_data) {
 			if (inst.model == EModelVariant::STREETLAMP) {
 				XMFLOAT3 pos{ inst.position };
 				pos.y += 2.23f;
@@ -1039,6 +1002,18 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 		if (melee_attack_timer <= 0.0f) {
 			melee_attack_timer = -1.0f;
 
+			auto qs  = my_player->GetQuickSlot();
+			auto inv = my_player->GetInventory();
+			CWeapon* weapon      = nullptr;
+			int      weaponDamage = 20;
+			if (qs && inv) {
+				auto it = inv->GetItems().find(qs->GetSelectedInvId());
+				if (it != inv->GetItems().end())
+					weapon = dynamic_cast<CWeapon*>(it->second.get());
+			}
+			if (weapon && weapon->GetAttackPower() > 0)
+				weaponDamage = static_cast<int>(weapon->GetAttackPower());
+
 			XMFLOAT3 playerPos = my_player->GetPosition();
 			XMFLOAT3 look      = my_player->look;
 			look.y = 0.0f;
@@ -1072,7 +1047,14 @@ void CGameScene::ProcessMeleeAttack(float elapsedTime)
 					if (lateralDist > MELEE_HALF_WIDTH) 
 						continue;
 
-					monster->ApplyMeleeHit(playerPos);
+					monster->ApplyMeleeHit(playerPos, weaponDamage);
+					if (weapon && weapon->GetMaxDurability() > 0)
+						weapon->ReduceDurability();
+				}
+
+				if (weapon && weapon->GetMaxDurability() > 0 && weapon->GetCurrentDurability() <= 0) {
+					inv->RemoveItem(qs->GetSelectedInvId());
+					my_player->SetEquippedItemId(0);
 				}
 			}
 		}
@@ -2128,6 +2110,15 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 
 	auto& factory = CSceneManager::GetInstance().GetFactory();
 	objects = factory->CreateGameSceneByServer(instance_data);
+	// 조명 추가
+	light->ClearPointLights();
+	for (const auto& inst : instance_data) {
+		if (inst.model == EModelVariant::STREETLAMP) {
+			XMFLOAT3 pos{ inst.position };
+			pos.y += 2.23f;
+			light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+		}
+	}
 	instance_data.clear();	// 다음 라운드 재진입 시 누적 방지
 }
 

@@ -46,8 +46,9 @@ void CTool::ReduceDurability()
 }
 
 // 무기
-CWeapon::CWeapon(const std::shared_ptr<ItemData> data, const uint32 maxDur)
+CWeapon::CWeapon(const std::shared_ptr<ItemData> data, const uint32 maxDur, const uint32 atk)
 	: CEquipment(data, maxDur)
+	, attack_power(atk)
 {
 }
 

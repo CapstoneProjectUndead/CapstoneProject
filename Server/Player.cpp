@@ -19,6 +19,7 @@ CPlayer::CPlayer()
     , last_processed_seq(0)
     , ping(0.0f)
     , dt_ping_accumulator(0.0f)
+    , is_guest(false)
 	, state(PLAYER_STATE::IDLE)
     , equipped_item_id(0)
     , equipped_item_sub_type(ITEM_SUB_TYPE::NONE)
@@ -934,26 +935,36 @@ void CPlayer::MeleeAttack()
     constexpr float MELEE_DEPTH      = 1.3f;
     constexpr float MELEE_HALF_WIDTH = 0.6f;
 
+    // 장착 무기의 공격력 (없으면 기본 20)
+    int weaponDamage = 20;
+    if (auto weapon = std::dynamic_pointer_cast<CWeapon>(equipped_item)) {
+        if (weapon->GetAttackPower() > 0)
+            weaponDamage = static_cast<int>(weapon->GetAttackPower());
+    }
+
     for (auto& [id, monster] : scene->GetMonsters()) {
-        if (!monster) 
+        if (!monster)
             continue;
 
         MON_TYPE mType = monster->GetMonsterType();
-        if (mType != MON_TYPE::HUMAN_MONSTER && mType != MON_TYPE::ANIMAL_MONSTER) 
+        if (mType != MON_TYPE::HUMAN_MONSTER && mType != MON_TYPE::ANIMAL_MONSTER)
             continue;
 
         XMFLOAT3 toMonster = Vector3::Subtract(monster->GetPosition(), playerPos);
         toMonster.y = 0.0f;
 
         float forwardDist = playerLook.x * toMonster.x + playerLook.z * toMonster.z;
-        if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH) 
+        if (forwardDist < 0.0f || forwardDist > MELEE_DEPTH)
             continue;
 
         float lateralDist = fabsf(right.x * toMonster.x + right.z * toMonster.z);
-        if (lateralDist > MELEE_HALF_WIDTH) 
+        if (lateralDist > MELEE_HALF_WIDTH)
             continue;
 
-        monster->ApplyMeleeHit(playerPos, static_pointer_cast<CPlayer>(shared_from_this()));
+        monster->ApplyMeleeHit(playerPos, static_pointer_cast<CPlayer>(shared_from_this()), weaponDamage);
+
+        // 몬스터에 맞았을 때만 무기 내구도 소모 (0이면 자동 제거)
+        ConsumeEquippedDurability();
     }
 
     // 빙의된 플레이어 근접 공격: 넉백 + 스턴만 적용 (체력 감소 없음)

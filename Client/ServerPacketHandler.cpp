@@ -387,6 +387,7 @@ bool Handle_S_ADD_ITEM_LIST(std::shared_ptr<Session> session, S_AddItemList& pkt
 	case SCENE_TYPE::TITLE:
 		break;
 	case SCENE_TYPE::CUSTOMS:
+		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
 		break;
 	case SCENE_TYPE::LOBBY:
 		targetScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();

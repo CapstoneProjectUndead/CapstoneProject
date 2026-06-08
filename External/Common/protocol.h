@@ -158,12 +158,13 @@ static_assert(sizeof(S_SIGN_RES) == 4 + 1, "S_SIGN_RES size mismatch!");
 
 struct C_LOGIN : public PacketHeader
 {
+	bool    guest_login = false;
 	char	id[ID_SIZE];
 	char	password[PW_SIZE];
 
 	C_LOGIN() : PacketHeader(sizeof(C_LOGIN), (UINT)PacketType::_C_LOGIN) {}
 };
-static_assert(sizeof(C_LOGIN) == 4 + 80, "C_LOGIN size mismatch!");
+static_assert(sizeof(C_LOGIN) == 4 + 81, "C_LOGIN size mismatch!");
 
 struct C_LOGOUT : public PacketHeader
 {
@@ -567,6 +568,7 @@ struct S_AddItemList : public PacketHeader
 		uint16 item_id;
 		uint32 inventory_id;
 		ITEM_TYPE item_type;
+		int16 durability = -1;  // 내구도가 존재하지 않는 아이템은 -1
 	};
 
 	uint64 player_id;

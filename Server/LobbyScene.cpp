@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 // Server쪽 LobbyScene
 #include "LobbyScene.h"
 #include "Player.h"
@@ -369,6 +369,13 @@ void CLobbyScene::Handle_C_BuyItem(shared_ptr<Session> session, const C_BuyItem&
 		list[i].item_id      = bought[i]->GetItemId();
 		list[i].inventory_id = bought[i]->GetInventoryID();
 		list[i].item_type    = bought[i]->GetItemType();
+
+		// 새 Item 필드(durability)는 Reserve 시 초기화되지 않으므로 반드시 채운다.
+		// 새로 산 장비는 만땅, 비장비는 -1
+		if (auto eq = dynamic_cast<CEquipment*>(bought[i].get()))
+			list[i].durability = (int16)eq->GetCurrentDurability();
+		else
+			list[i].durability = -1;
 	}
 
 	sendBuffer = pktWriter.CloseAndReturn();
@@ -440,7 +447,7 @@ CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string&
 
 void CLobbyScene::CreateLobby()
 {
-	std::string fileName{ "../Modeling/lobby_0305.bin" };
+	std::string fileName{ "../Modeling/lobby.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	if (!frameRoot) {

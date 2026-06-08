@@ -36,14 +36,20 @@ uint32 CObjectFactory::s_monster_id_generator = 1001;
 
 std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(const std::string& name, const EShaderName shaderName)
 {
-	// SceneManager를 통해 현재 사용하고자 하는 셰이더의 HeapManager를 직접 획득
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
 	std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name, shaderName);
-	std::shared_ptr<CMaterial> mat = matManager.GetMaterial(name, tex, shaderName);
+	std::shared_ptr<CMaterial> originalMat = matManager.GetMaterial(name, tex, shaderName);
 
-	return mat;
+	if (!originalMat) return nullptr;
+
+	// 새로운 material 반환
+	auto uniqueMat = std::make_shared<CMaterial>();
+	// texture는 공유
+	uniqueMat->SetTexture(originalMat->GetTexture());
+	uniqueMat->material = originalMat->material;
+	return uniqueMat;
 }
 
 // mesh/material component set
@@ -70,13 +76,14 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, const st
 
 	// MaterialComponent
 	for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
-		auto& material = node->mesh.materials[i];
+		const auto& material = node->mesh.materials[i];
 		auto matComp = std::make_shared<CMaterialComponent>();
 		const std::string& texName = material.albedoMap;
 		std::shared_ptr<CMaterial> mat;
 		if (!texName.empty()) {
 			mat = GetMaterial(texName, shaderName); // 내부에서 shaderName 기반으로 처리
 			mat->material.albedo = material.albedoColor;
+			mat->material.emissive_color = material.emissiveColor;
 			mat->material.glossiness = material.glossiness;
 			matComp->SetMaterial(mat);
 		}
@@ -233,7 +240,7 @@ void CObjectFactory::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject
 std::vector<std::shared_ptr<CObject>> CObjectFactory::CreateLobby()
 {
 	std::vector<std::shared_ptr<CObject>> objects;
-	std::string fileName{ "../Modeling/lobby_0305.bin" };
+	std::string fileName{ "../Modeling/lobby.bin" };
 	auto frameRoot = CGeometryLoader::LoadGeometry(fileName);
 
 	for (const auto& children : frameRoot->childrens) {
@@ -907,10 +914,6 @@ void CObjectFactory::LoadItemFrame()
 	}
 	{
 		std::string fileName{ "../Modeling/treasure.bin" };
-		LoadNode(fileName);
-	}
-	{
-		std::string fileName{ "../Modeling/treasure2.bin" };
 		LoadNode(fileName);
 	}
 	{

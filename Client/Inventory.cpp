@@ -332,6 +332,10 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 	float     pad     = 4.0f * scale;
 	float     rounding = 6.0f * scale;
 
+	// 소비탭 더블클릭 사용 대상 (루프 도중 items 맵 변경/댕글링 방지 → 루프 종료 후 지연 실행)
+	bool   wantUse  = false;
+	uint32 useInvId = 0;
+
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	if (ImGui::BeginChild("##ItemScroll", ImVec2(0, -bottomH), false, ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
@@ -397,6 +401,13 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 						dragged_item = displayItem;
 					}
 
+					if (type == ITEM_TYPE::CONSUMABLE && !view_only
+						&& ImGui::IsItemHovered()
+						&& ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+						wantUse  = true;
+						useInvId = displayItem->GetInventoryID();
+					}
+
 					if (!is_dragging && ImGui::IsItemHovered())
 						DrawItemTooltip(displayItem);
 				}
@@ -411,6 +422,12 @@ void CInventory::DrawItemGrid(ITEM_TYPE type)
 	}
 	ImGui::EndChild();
 	ImGui::PopStyleColor();
+
+	// 더블클릭한 소비 아이템 사용 (루프 종료 후 실행해 items 맵 변경/포인터 무효화 회피)
+	if (wantUse) {
+		if (auto player = owner.lock())
+			player->UseConsumableByInvId(useInvId);
+	}
 }
 
 void CInventory::DrawItemTable(ITEM_TYPE type)

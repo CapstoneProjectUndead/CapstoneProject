@@ -64,7 +64,7 @@ public:
     void            SetDestInfo(const MonsterInfo& pos) { dest_info = pos; }
     void            RecordMonsterFrameHistory(const MonsterFrameHistory& state);
 
-    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos);
+    virtual void ApplyMeleeHit(const XMFLOAT3& fromPos, int damage);
 
 protected:
     void MonsterMoveSyncByInterpolation(float elapsedTime);
@@ -120,12 +120,12 @@ protected:
     float trace_speed = 3.0f;  // 추격 속도
 
     // 근접 피격
-    int       melee_hit_count       = 0;
-    float     melee_knockback_timer = 0.0f;
-    XMFLOAT3  melee_knockback_vel   = {};
-    static constexpr int   MAX_MELEE_HITS           = 5;
+    static constexpr int   MAX_HP                = 100;
     static constexpr float MELEE_KNOCKBACK_DURATION = 0.25f;
     static constexpr float MELEE_KNOCKBACK_FORCE    = 3.0f;
+    int       hp                    = MAX_HP;
+    float     melee_knockback_timer = 0.0f;
+    XMFLOAT3  melee_knockback_vel   = {};
 
     //==================================================
     // 서버쪽에서 전달받은 몬스터의 정보 (서버 관련)

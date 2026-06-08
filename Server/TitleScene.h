@@ -24,6 +24,9 @@ public:
     void Handle_C_LogOut(shared_ptr<Session> session, const C_LOGOUT& pkt);
 
 private:
+    void ProcessLogin(shared_ptr<Session> session, bool guest, string name);
+
+private:
     mutex								users_lock;
     map<uint64, shared_ptr<CUser>>		users;
 };

@@ -10,6 +10,7 @@ namespace ItemFactory
 	{
 		ItemData       base;
 		uint32         max_durability = 0;
+		uint32         attack_power   = 0;
 		uint32         heal_amount    = 0;
 		uint32         energy_amount  = 0;
 		uint32         effect_amount  = 0;
@@ -77,6 +78,7 @@ namespace ItemFactory
 			entry.base.is_throwable  = e.value("is_throwable", false);
 
 			entry.max_durability = static_cast<uint32>(e.value("max_durability", 0));
+			entry.attack_power   = static_cast<uint32>(e.value("attack_power",   0));
 			entry.heal_amount    = static_cast<uint32>(e.value("heal_amount",    0));
 			entry.energy_amount  = static_cast<uint32>(e.value("energy_amount",  0));
 			entry.effect_amount  = static_cast<uint32>(e.value("effect_amount",  0));
@@ -110,7 +112,7 @@ namespace ItemFactory
 		switch (e.base.item_type) {
 		case ITEM_TYPE::EQUIPMENT:
 			if (e.base.item_sub_type >= ITEM_SUB_TYPE::MELEE_WEAPON)
-				return std::make_shared<CWeapon>(data, e.max_durability);
+				return std::make_shared<CWeapon>(data, e.max_durability, e.attack_power);
 			else
 				return std::make_shared<CTool>(data, e.max_durability);
 		case ITEM_TYPE::CONSUMABLE:

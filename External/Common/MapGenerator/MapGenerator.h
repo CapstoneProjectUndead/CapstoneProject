@@ -92,7 +92,7 @@ namespace MapGenerator
 
     static const int WIDTH = 25;
     static const int HEIGHT = 51;
-
+    static const int LAMP_TARGET = 15; // 최적화를 위해 최대 가로등 개수 조절
     // ----------------------------
 
     static EModelType mapGrid[(int)ELayer::COUNT][HEIGHT][WIDTH];

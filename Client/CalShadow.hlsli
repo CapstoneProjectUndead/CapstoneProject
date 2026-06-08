@@ -1,6 +1,6 @@
 #include "Common.hlsli"
 
-Texture2D texDiffuse[AOMapIdx + 1] : register(t0);
+Texture2D texDiffuse[EmissiveMapIdx + 1] : register(t0);
 TextureCubeArray pointShadowMap : register(t0, space2);
 
 SamplerState sample : register(s0);

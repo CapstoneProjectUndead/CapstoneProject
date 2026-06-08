@@ -493,7 +493,6 @@ void CMyPlayer::UseItem()
 
 					// 아이템 사용
 					if (it->second->Use(this)) {
-
 						// 사용한 아이템 인벤토리에서 제거
 						inventory->RemoveItem(uInvId);
 					}
@@ -518,6 +517,7 @@ void CMyPlayer::UseItem()
 				auto it = items.find(uInvId);
 
 				if (it != items.end()) {
+
 					C_UseItem useItemPkt;
 					useItemPkt.player_id = GetID();
 					useItemPkt.item_id = it->second->GetItemId();
@@ -531,6 +531,43 @@ void CMyPlayer::UseItem()
 				}
 			}
 		}
+	}
+}
+
+void CMyPlayer::UseConsumableByInvId(uint32 invId)
+{
+	if (!inventory)
+		return;
+
+	auto& items = inventory->GetItems();
+	auto it = items.find(invId);
+	if (it == items.end())
+		return;
+
+	// 소비 아이템만 더블클릭 사용 허용
+	if (it->second->GetItemType() != ITEM_TYPE::CONSUMABLE)
+		return;
+
+	if (g_is_single) {
+		// 아이템 사용 성공 시 인벤토리에서 제거
+		if (it->second->Use(this)) {
+			CSoundManager::GetInstance().Play(SOUND_ID::item_use);
+			inventory->RemoveItem(invId);
+		}
+	}
+	else if (current_scene_type == SCENE_TYPE::GAME) {
+		CSoundManager::GetInstance().Play(SOUND_ID::item_use);
+
+		// 멀티: 서버에 사용 요청 → 서버가 효과 적용 + S_RemoveItem으로 인벤 제거
+		C_UseItem useItemPkt;
+		useItemPkt.player_id    = GetID();
+		useItemPkt.item_id      = it->second->GetItemId();
+		useItemPkt.inventory_id = invId;
+		useItemPkt.scene_type   = GetCurrentSceneType();
+
+		auto sendBuffer = MAKE_SEND_BUFFER(useItemPkt);
+		if (auto session = GetSession())
+			session->DoSend(sendBuffer);
 	}
 }
 

@@ -30,7 +30,9 @@ static constexpr int FOOD_ID_MIN = 20;
 static constexpr int FOOD_ID_MAX = 45;
 
 static constexpr int    FIXED_STOCK      = 3;
-static constexpr int    RANDOM_STOCK     = 1;
+static constexpr int    BAT_ITEM_ID      = 14;   // baseball bat: fixed item, stock 1
+static constexpr int    RANDOM_STOCK_MIN = 1;
+static constexpr int    RANDOM_STOCK_MAX = 3;
 static constexpr int    RANDOM_FOOD_COUNT = 4;
 static constexpr uint32 REFRESH_COST     = 500;
 
@@ -97,15 +99,18 @@ void CShop::Reset()
     };
 
     // 고정 아이템
+    std::uniform_int_distribution<int> stockDist(RANDOM_STOCK_MIN, RANDOM_STOCK_MAX);
+    auto randomStock = [&]() { return stockDist(rng_); };
+
     for (int id : FIXED_ITEMS)
-        addSlot(id, FIXED_STOCK, true);
+        addSlot(id, (id == BAT_ITEM_ID) ? 1 : FIXED_STOCK, true);
 
     // 랜덤 장비 (1개)
     {
         std::vector<int> pool(std::begin(RANDOM_EQUIP_POOL), std::end(RANDOM_EQUIP_POOL));
         std::shuffle(pool.begin(), pool.end(), rng_);
         if (!pool.empty())
-            addSlot(pool[0], RANDOM_STOCK, false);
+            addSlot(pool[0], randomStock(), false);
     }
 
     // 랜덤 음식 (아이콘 있는 것, 중복 없이)
@@ -119,7 +124,7 @@ void CShop::Reset()
         std::shuffle(pool.begin(), pool.end(), rng_);
         int n = std::min(static_cast<int>(pool.size()), RANDOM_FOOD_COUNT);
         for (int i = 0; i < n; ++i)
-            addSlot(pool[i], RANDOM_STOCK, false);
+            addSlot(pool[i], randomStock(), false);
     }
 
     selected_slot = -1;
