@@ -102,6 +102,15 @@ public:
 	virtual void Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt);
 	void Handle_C_Scene_Change(shared_ptr<Session> session, const C_SceneChange& pkt);
 
+	// 플레이어 상태(코인 + 인벤토리 아이템 도감번호)를 JSON 파일에 저장.
+	// 게스트이거나 계정 ID가 없으면 내부에서 저장을 건너뛴다.
+	void SavePlayerData(shared_ptr<CPlayer> player);
+
+	// 저장된 플레이어 상태(코인 + 아이템)를 파일에서 읽어 셋팅하고,
+	// 클라에 S_AddItemList로 통보한다. (반드시 S_SpawnPlayer 이후에 호출할 것)
+	// 저장 기록이 없으면 기본 코인만 지급한다.
+	void LoadPlayerInfo(shared_ptr<CPlayer> player);
+
 	virtual void Handle_C_Pickup_Item(shared_ptr<Session> session, const C_PickupItem& pkt) {};
 	virtual void Handle_C_Drop_Item(shared_ptr<Session> session, const C_DropItem& pkt) {}
 	virtual void Handle_C_Equip_Item(shared_ptr<Session> session, const C_EquipItem& pkt) {}

@@ -8,7 +8,13 @@
 #include "PhysicsManager.h"
 #include "Collider.h"
 #include "ItemManager.h"
+#include "ItemFactory.h"
 #include "Item.h"
+#include "Inventory.h"
+#include "User.h"
+#include <nlohmann/json.hpp>
+#include <filesystem>
+#include <fstream>
 
 
 CScene::CScene(SCENE_TYPE type)
@@ -430,8 +436,204 @@ void CScene::Handle_C_Player_Input(shared_ptr<Session> session, const C_Input& p
 	mover->PushInput(pInput);
 }
 
+// player_saves.json 경로 (users.json과 동일 위치/방식 — exe 기준 repo 루트 상대경로)
+static std::filesystem::path GetPlayerSaveFilePath()
+{
+	wchar_t exePath[MAX_PATH];
+	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+	std::filesystem::path repoRoot =
+		std::filesystem::path(exePath).parent_path().parent_path().parent_path();
+	return repoRoot / "External" / "Common" / "Data" / "player_saves.json";
+}
+
+void CScene::SavePlayerData(shared_ptr<CPlayer> player)
+{
+	if (!player) 
+		return;
+
+	// 게스트는 저장하지 않음
+	if (player->GetIsGuest()) 
+		return;
+
+	// 계정 ID가 저장 키. player에 보관된 값을 쓴다.
+	// (연결 끊김 경로에서는 CUser가 먼저 소멸하므로 user에서 읽으면 안 됨)
+	const std::string accountId = player->GetAccountId();
+	if (accountId.empty())
+		return;
+
+	// 저장 데이터 수집: 코인 + 인벤토리 아이템 도감번호(item_id) 목록
+	const uint32 coin = player->GetCoin();
+
+	nlohmann::json items = nlohmann::json::array();
+	if (auto inven = player->GetInventory()) {
+		for (const auto& [invId, item] : inven->GetItems()) {
+			if (!item)
+				continue;
+
+			// 보물은 게임씬 정산용 아이템 → 저장하지 않음 (로비 복귀 시 사라져야 함)
+			if (item->GetItemType() == ITEM_TYPE::TREASURE)
+				continue;
+
+			nlohmann::json itemJson;
+			itemJson["id"] = item->GetItemId();
+
+			// 내구도가 있는 장비(도구/무기)면 현재 내구도 저장, 아니면 -1
+			if (auto eq = dynamic_cast<CEquipment*>(item.get()))
+				itemJson["dur"] = (int)eq->GetCurrentDurability();
+			else
+				itemJson["dur"] = -1;
+
+			items.push_back(itemJson);
+		}
+	}
+
+	const std::filesystem::path path = GetPlayerSaveFilePath();
+
+	// 기존 파일 로드 (없거나 깨졌으면 빈 오브젝트)
+	nlohmann::json root = nlohmann::json::object();
+	{
+		std::ifstream in(path);
+		if (in.is_open()) {
+			try { 
+				in >> root; 
+			}
+			catch (...) { 
+				root = nlohmann::json::object(); 
+			}
+			if (!root.is_object()) 
+				root = nlohmann::json::object();
+		}
+	}
+
+	// 계정 ID를 키로 갱신/추가
+	nlohmann::json entry;
+	entry["coin"]  = coin;
+	entry["items"] = items;
+	root[accountId] = entry;
+
+	// 폴더 보장 후 저장
+	std::error_code ec;
+	std::filesystem::create_directories(path.parent_path(), ec);
+
+	std::ofstream out(path, std::ios::trunc);
+	if (!out.is_open()) {
+		std::cout << "[Save] player_saves.json 저장 실패: " << path.string() << "\n";
+		return;
+	}
+	out << root.dump(4);
+	std::cout << "[Save] " << accountId << " 저장 완료 (coin=" << coin
+		<< ", items=" << items.size() << ")\n";
+}
+
+void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
+{
+	if (!player)
+		return;
+
+	// 게스트는 로드하지 않음 (호출부에서도 막지만 안전하게 한 번 더)
+	if (player->GetIsGuest()) {
+		player->SetCoin(10000);
+		return;
+	}
+
+	const std::string accountId = player->GetAccountId();
+
+	// 파일 로드
+	const std::filesystem::path path = GetPlayerSaveFilePath();
+	nlohmann::json root = nlohmann::json::object();
+	if (!accountId.empty()) {
+		std::ifstream in(path);
+		if (in.is_open()) {
+			try { in >> root; }
+			catch (...) { root = nlohmann::json::object(); }
+		}
+	}
+
+	// 저장 기록이 없으면(첫 로그인 등) 기본 코인만 지급하고 종료
+	if (accountId.empty() || !root.is_object() || !root.contains(accountId)) {
+		player->SetCoin(10000);
+		return;
+	}
+
+	const nlohmann::json& entry = root[accountId];
+
+	// 코인 로드
+	player->SetCoin(entry.value("coin", 10000u));
+
+	// 아이템 로드: 서버 인벤토리에 도감번호로 생성해 추가
+	auto inventory = player->GetInventory();
+	if (!inventory)
+		return;
+
+	std::vector<std::shared_ptr<CItem>> loaded;
+	if (entry.contains("items") && entry["items"].is_array()) {
+		for (const auto& itemJson : entry["items"]) {
+			int itemId = 0;
+			int dur    = -1;
+			if (itemJson.is_object()) {
+				itemId = itemJson.value("id", 0);
+				dur    = itemJson.value("dur", -1);
+			}
+			else {
+				// 구버전 저장(도감번호만) 호환
+				itemId = itemJson.get<int>();
+			}
+			if (itemId == 0)
+				continue;
+
+			auto item = ItemFactory::Create(itemId);
+			if (!item)
+				continue;
+
+			// 내구도 복원 (장비이고 저장된 내구도가 있을 때만)
+			if (dur >= 0) {
+				if (auto eq = std::dynamic_pointer_cast<CEquipment>(item))
+					eq->SetCurrentDurability((uint16)dur);
+			}
+
+			if (!inventory->AddItem(item))   // 무게 초과 등으로 더 못 넣으면 중단
+				break;
+			loaded.push_back(item);
+		}
+	}
+
+	if (loaded.empty())
+		return;
+
+	// 클라에 통보 (이 함수는 S_SpawnPlayer 이후 호출되므로 클라에 my_player가 준비돼 있음)
+	auto session = player->GetSession();
+	if (!session)
+		return;
+
+	S_ADDITEMLIST_WRITE writer(player->GetID(), scene_type);
+	auto list = writer.ReserveItemList(static_cast<uint16>(loaded.size()));
+	for (size_t i = 0; i < loaded.size(); ++i) {
+		list[i].item_id      = loaded[i]->GetItemId();
+		list[i].inventory_id = loaded[i]->GetInventoryID();
+		list[i].item_type    = loaded[i]->GetItemType();
+
+		// 내구도 통보 (장비면 현재 내구도, 아니면 -1)
+		if (auto eq = dynamic_cast<CEquipment*>(loaded[i].get()))
+			list[i].durability = (int16)eq->GetCurrentDurability();
+		else
+			list[i].durability = -1;
+	}
+	session->DoSend(writer.CloseAndReturn());
+
+	std::cout << "[Load] " << accountId << " 로드 완료 (coin=" << player->GetCoin()
+		<< ", items=" << loaded.size() << ")\n";
+}
+
 void CScene::Handle_C_Player_Leave(shared_ptr<Session> session, const C_LeaveRoom& pkt)
 {
+	// 방을 나가기 직전에 플레이어 상태 저장.
+	// 게스트/계정없음은 SavePlayerData 내부에서 스킵된다.
+	{
+		auto it = players.find(pkt.user_id);
+		if (it != players.end())
+			SavePlayerData(it->second);
+	}
+
 	LeaveScene(pkt.user_id);
 
 	--active_player_count;

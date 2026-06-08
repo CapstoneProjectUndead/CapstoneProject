@@ -69,7 +69,12 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 
 	// Player 생성 (플레이어 ID = 유저 ID)
 	shared_ptr<CPlayer> player = CServerObjectFactory::CreatePlayer(SCENE_TYPE::CUSTOMS, session, user, room, GetPhysicsManager());
-	player->SetCoin(10000);
+	player->SetGuset(user->GetIsGuest());
+	player->SetAccountId(user->GetAccountId());   // 저장 키. 끊김 시에도 저장되도록 player에 보관
+
+	// 게스트는 기본 코인만 지급. 로그인 유저는 S_SpawnPlayer 이후 LoadPlayerInfo로 로드한다.
+	if (player->GetIsGuest())
+		player->SetCoin(10000);
 
 	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정했는데
 	// 5월 19일 기준, 이제 커스텀씬도 입장함
@@ -94,6 +99,11 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 			user->GetSession()->DoSend(sendBuffer);
 	}
 
+	// 로그인 유저는 저장된 정보(코인/아이템) 로드 + 클라 인벤토리에 통보.
+	// (S_SpawnPlayer 이후라야 클라에 my_player가 준비되어 아이템이 정상 추가됨)
+	if (!player->GetIsGuest())
+		LoadPlayerInfo(player);
+
 	// S_Enter_Room 패킷
 	// 입장 허락.
 	{
@@ -110,7 +120,7 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 	{
 		S_UpdateCoin coinPkt;
 		coinPkt.player_id = player->GetID();
-		coinPkt.coin = 10000;
+		coinPkt.coin = player->GetCoin();   // 로드된 코인 반영 (게스트는 10000 지급)
 		coinPkt.scene_type = scene_type;
 		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 		if (user->GetSession())

@@ -135,6 +135,8 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 
 				if (inputPw == pw) {
 					ProcessLogin(session, false, name);   // 로그인 성공
+					// 저장/로드 키로 쓸 계정 ID 보관 (끝 널문자 제거)
+					CAST_CS(session)->GetUser()->SetAccountId(inputId.c_str());
 				}
 				else {
 					SendLoginFail();                       // 비밀번호 불일치
@@ -162,6 +164,8 @@ void CTitleScene::Handle_C_LogIn(shared_ptr<Session> session, const C_LOGIN& pkt
 		string storedPw, storedName;
 		if (LoadUserFromFile(fileId, storedPw, storedName) && filePw == storedPw) {
 			ProcessLogin(session, false, storedName);     // 로그인 성공
+			// 저장/로드 키로 쓸 계정 ID 보관 (fileId는 이미 트림됨)
+			CAST_CS(session)->GetUser()->SetAccountId(fileId);
 		}
 		else {
 			SendLoginFail();                               // 아이디 없음 또는 비번 불일치
@@ -188,6 +192,7 @@ void CTitleScene::ProcessLogin(shared_ptr<Session> session, bool guest, string n
 	if (guest) {
 		// "player" + 숫자(ID)를 문자열로 결합. to_string 없이 더하면 포인터 연산이 되어 버그.
 		name = "player" + std::to_string(user->GetUserID());
+		user->SetGuest(true);
 	}
 
 	// 유저 이름 부여 (화면 표시용은 다시 CP949로)

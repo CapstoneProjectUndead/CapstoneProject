@@ -568,6 +568,7 @@ struct S_AddItemList : public PacketHeader
 		uint16 item_id;
 		uint32 inventory_id;
 		ITEM_TYPE item_type;
+		int16 durability = -1;  // 내구도가 존재하지 않는 아이템은 -1
 	};
 
 	uint64 player_id;

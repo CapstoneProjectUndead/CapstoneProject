@@ -770,6 +770,12 @@ void CScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemLis
 			my_player = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY]->GetMyPlayer();
 		}
 
+		// 내구도 복원 (장비이고 내구도 값이 유효할 때만). 픽업(S_AddItem)과 동일 패턴.
+		if (itemList[i].durability > 0) {
+			if (auto equip = std::dynamic_pointer_cast<CEquipment>(item))
+				equip->SetCurrentDurability((uint16)itemList[i].durability);
+		}
+
 		if (my_player && my_player->GetInventory())
 			my_player->GetInventory()->AddItemWithId(item, itemList[i].inventory_id);
 	}
