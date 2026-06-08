@@ -36,6 +36,7 @@ struct MaterialData
     float4 albedo;
     float3 fresnel;
     float glossiness;
+    float4 emissive_color;
     uint tex_idx;
     uint normal_idx;
 };
@@ -64,6 +65,7 @@ static const uint GBufferNormalIdx = 2;
 static const uint ShadowMapIdx = 3;
 static const uint SkyboxMapIdx = 4;
 static const uint AOMapIdx = 5;
+static const uint EmissiveMapIdx = 6;
 
 static const uint DiffuseMapCount = 70;
 

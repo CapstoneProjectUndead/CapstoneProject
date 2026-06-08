@@ -56,10 +56,13 @@ public:
     auto& GetSkybox() { return skybox; }
     D3D12_CPU_DESCRIPTOR_HANDLE GetGBufferColorRTV() const { return buffer_color->GetRTV(); }
     D3D12_CPU_DESCRIPTOR_HANDLE GetGBufferNormalRTV() const { return buffer_normal->GetRTV(); }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetEmissiveRTV() const { return buffer_emissive->GetRTV(); }
     ID3D12Resource* GetGBufferColorResource() const { return buffer_color->GetResource(); }
     ID3D12Resource* GetGBufferNormalResource() const { return buffer_normal->GetResource(); }
+    ID3D12Resource* GetEmissiveResource() const { return buffer_emissive->GetResource(); }
     // onResize 시 srv 삭제 됨(Gameframework에서 실행)
     void CreateMainDepthSRV(ID3D12Device* device);
+    void OnResizeBuffers(ID3D12Device* device, float width, float height);
 private:
     void CreateMainDepthSRV(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle);
 private:
@@ -72,6 +75,7 @@ private:
     std::shared_ptr<CSkyBox> skybox;
     std::unique_ptr<CGBufferTarget> buffer_color{};
     std::unique_ptr<CGBufferTarget> buffer_normal{};
+    std::unique_ptr<CGBufferTarget> buffer_emissive{};
     std::unique_ptr<CRenderTarget> buffer_ssao{};
     std::unique_ptr<CRenderTarget> buffer_ssao_blur_temp{}; // buffer_ssao->buffer_ssao_blur_temp(가로블러)->buffer_ssao(최종) 순으로 Render
 

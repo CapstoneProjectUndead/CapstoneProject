@@ -9,6 +9,7 @@ struct MaterialData
     XMFLOAT4  albedo{ 1.0f, 1.0f, 1.0f, 1.0f };
     XMFLOAT3 fresnel{ 0.01f, 0.01f,0.01f };
     float glossiness{ 0.25f };
+    XMFLOAT4 emissive_color;
     UINT tex_idx{};
     UINT normal_idx{ UINT_MAX };
 };
@@ -18,6 +19,7 @@ class CMaterial
 public:
     CMaterial() = default;
     void SetTexture(const std::shared_ptr<CTexture>& tex);
+    std::shared_ptr<CTexture> GetTexture() { return texture; };
     void SetNormalIndex(const std::shared_ptr<CTexture>& tex);
     MaterialData GetMaterialData() const { return material; }
     void SetMaterialData(MaterialData other) { material = other; }
@@ -47,7 +49,7 @@ class CMaterialComponent : public CComponent
 public:
     CMaterialComponent() = default;
     void SetMaterial(std::shared_ptr<CMaterial>& mat) { material = mat; }
-    CMaterial* GetMaterial() const { return material.get(); }
+    std::shared_ptr<CMaterial> GetMaterial() const { return material; }
 
     void Update(const float deltaTime) override {};
 private:

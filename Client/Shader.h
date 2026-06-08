@@ -21,6 +21,7 @@ namespace DescriptorSlot {
 		ShadowMapIdx = 3,
 		SkyboxMapIdx = 4,
 		AOMapIdx = 5,
+		EmissiveMapIdx = 6,
 		CubeMapIdx,
 		CubeMapCount,
 		Count = 70
@@ -119,7 +120,7 @@ protected:
 class CSkinningShader : public CShader
 {
 public:
-	UINT GetNumRenderTargets() override { return 2; }
+	UINT GetNumRenderTargets() override { return 3; }
 	DXGI_FORMAT GetRTVFormat(UINT index) override {
 		if (index == 0) return DXGI_FORMAT_R8G8B8A8_UNORM;       // Color (Albedo)
 		return DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -134,7 +135,7 @@ public:
 class CInstShader : public CShader
 {
 public:
-	UINT GetNumRenderTargets() override { return 2; }
+	UINT GetNumRenderTargets() override { return 3; }
 	DXGI_FORMAT GetRTVFormat(UINT index) override {
 		if (index == 0) return DXGI_FORMAT_R8G8B8A8_UNORM;
 		return DXGI_FORMAT_R16G16B16A16_FLOAT;

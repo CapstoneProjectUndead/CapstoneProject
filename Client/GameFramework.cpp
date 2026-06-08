@@ -384,6 +384,7 @@ void CGameFramework::OnResize()
 		}
 	}
 
+	CSceneManager::GetInstance().OnResizeBuffers(d3d_device.Get(), client_width, client_height);
 	CSceneManager::GetInstance().CreateMainDepthSRV(d3d_device.Get());
 }
 

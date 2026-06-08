@@ -24,6 +24,7 @@ struct MaterialData
     float4 albedo;
     float3 fresnel;
     float glossiness;
+    float4 emissive_color;
     uint tex_idx;
     uint normal_idx;
 };
