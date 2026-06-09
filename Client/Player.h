@@ -131,6 +131,13 @@ protected:
 
 	float smoothed_delay = 0.1f;
 
+	// [원격 위치 One-Euro 필터 상태] 서버 메시 바닥에서 오는 좌표 노이즈 제거용
+	bool     euro_init    = false;
+	float    euro_last_ts = 0.0f;
+	XMFLOAT3 euro_x_prev{};   // 직전 입력값
+	XMFLOAT3 euro_x_hat{};    // 직전 필터 출력
+	XMFLOAT3 euro_dx_hat{};   // 직전 미분 필터 출력
+
 	std::deque<OpponentFrameHistory> interpolation_deq;
 	std::vector<Buff>                buffs;
 

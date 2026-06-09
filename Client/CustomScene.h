@@ -37,8 +37,6 @@ public:
 	int eyes_idx{};
 	int mouth_idx{};
 
-	const int max_model = 3;
-
 private:
 	LoadingType  loading_type = LoadingType::None;
 	ActionResult pop_up_result;

@@ -554,6 +554,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->ChangeModelSet(pkt.info.body_type);
 		otherPlayer->ChangeEyes(pkt.info.eyes_type);
 		otherPlayer->ChangeMouth(pkt.info.mouth_type);
+		factory->UpdatePlayerTextures(otherPlayer);
 
 		AddObject(otherPlayer, otherPlayer->GetID());
 		player_slot_ids.push_back(otherPlayer->GetID());
@@ -590,6 +591,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 		otherPlayer->ChangeModelSet(userList[i].info.body_type);
 		otherPlayer->ChangeEyes(userList[i].info.eyes_type);
 		otherPlayer->ChangeMouth(userList[i].info.mouth_type);
+		factory->UpdatePlayerTextures(otherPlayer);
 
 		// Active Scene에 다른 유저 입장
 		AddObject(otherPlayer, otherPlayer->GetID());
@@ -617,8 +619,19 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 		myPlayer->SetIsGrounded((pkt.info.state != PLAYER_STATE::JUMP));
 		myPlayer->SetStaminaFromServer(pkt.stamina);
 		myPlayer->SetHp(pkt.hp);
+
+		bool prevPossessed = myPlayer->GetIsPossessed();
+		bool prevStunned   = myPlayer->GetIsStunned();
+
 		myPlayer->SetPossessed(pkt.info.is_possessed);
 		myPlayer->SetStunned(pkt.info.is_stunned);
+
+		if (prevPossessed != pkt.info.is_possessed || prevStunned != pkt.info.is_stunned ||
+			prevState != pkt.info.state) {
+			auto& factory = CSceneManager::GetInstance().GetFactory();
+			if (factory) 
+				factory->UpdateEyeTexture(myPlayer);
+		}
 
 		// 라운드 타이머 동기화 (GameScene일 때만 유효한 값이 들어옴)
 		if (pkt.round_timer >= 0.f) {
@@ -668,10 +681,21 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 				animator->PlayAction(animator->GetAttackClipByItem(otherPlayer->GetEquippedItemId()));
 		}
 
+		bool prevOtherPossessed = otherPlayer->GetIsPossessed();
+		bool prevOtherStunned   = otherPlayer->GetIsStunned();
+
+		PLAYER_STATE prevOtherState = otherPlayer->GetState();
 		otherPlayer->SetState(pkt.info.state);
 		otherPlayer->SetHp(pkt.hp);
 		otherPlayer->SetPossessed(pkt.info.is_possessed);
 		otherPlayer->SetStunned(pkt.info.is_stunned);
+
+		if (prevOtherPossessed != pkt.info.is_possessed || prevOtherStunned != pkt.info.is_stunned ||
+			prevOtherState != pkt.info.state) {
+			auto& factory = CSceneManager::GetInstance().GetFactory();
+			if (factory) 
+				factory->UpdateEyeTexture(otherPlayer);
+		}
 
 		// 회전을 위해 남겨둠
 		{
@@ -682,7 +706,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 			otherPlayer->SetDestInfo(info);
 		}
 
-		// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
+		// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간
 		OpponentFrameHistory state{};
 		state.player_id = pkt.info.player_id;
 		state.state = pkt.info.state;
