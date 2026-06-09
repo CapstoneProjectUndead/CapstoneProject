@@ -55,19 +55,19 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     finalEmissive += selfSpecular * emissiveColor.rgb * 1.2f;
 
     // ambient, light 계산
-    float4 ambient = ambientLight * albedo * ao;
+    float4 ambient = smoothstep(0.5, 1.0, ambientLight) * albedo * ao;
     float3 directLighting = 0.0f;
 #if (NUM_DIR_LIGHTS > 0)
     float4 shadowPosH = mul(float4(fragPosWorld, 1.0f), gShadowTransform);
     float dirShadow = CalcShadowFactor(shadowPosH);
-    directLighting += ComputeDirToon(gLights[0], mat, worldNormal, toEyeW) * dirShadow;
+    directLighting += ComputeDirToon(gLights[0], mat, worldNormal, toEyeW, dirShadow);
 #endif
 #if (NUM_POINT_LIGHTS > 0)
     [loop]
     for (uint i = 0; i < activeDotNum; ++i)
     {
         float pointShadow = CalcPointShadowFactor(i, fragPosWorld, gLights[i + NUM_DIR_LIGHTS].position);
-        directLighting += ComputePointToon(gLights[i + NUM_DIR_LIGHTS], mat, fragPosWorld, worldNormal, toEyeW) * pointShadow;
+        directLighting += ComputePointToon(gLights[i + NUM_DIR_LIGHTS], mat, fragPosWorld, worldNormal, toEyeW, pointShadow);
     }
 #endif
 #if (NUM_SPOT_LIGHTS > 0)

@@ -47,7 +47,7 @@ float3 ComputeToonSpecular(float3 lightVec, float3 normal, float3 toEye, float g
 {
     float3 halfVec = normalize(lightVec + toEye);
     float ndoth = saturate(dot(normal, halfVec));
-    float specPower = max(1.0f, glossiness * 64.0f);
+    float specPower = max(1.0f, glossiness * 256.0f);
     float specRaw = pow(ndoth, specPower);
     float spec = smoothstep(0.5f, 0.55f, specRaw);
 
@@ -57,8 +57,8 @@ float3 ComputeToonSpecular(float3 lightVec, float3 normal, float3 toEye, float g
 // 외각 light
 float3 ComputeToonRim(float3 lightVec, float3 normal, float3 toEye, float ndotl)
 {
-    float rimAmount = 0.716;
-    float rimThreshold = 0.05;
+    float rimAmount = 0.88f;
+    float rimThreshold = 0.25f;
     
     float rim = 1.0f - saturate(dot(normal, toEye));
     rim *= ndotl;
@@ -70,25 +70,26 @@ float3 ComputeToonRim(float3 lightVec, float3 normal, float3 toEye, float ndotl)
 float3 ToonBlinnPhong(float3 lightVec, float3 normal, float3 toEye, float3 lightColor, Material mat, float ndotl)
 {
     float3 diffuse = mat.albedo.rgb;
-    float3 specular = ComputeToonSpecular(lightVec, normal, toEye, mat.glossiness) * ndotl;
     float3 rim = ComputeToonRim(lightVec, normal, toEye, ndotl);
 
-    return (diffuse + specular + rim) * lightColor;
+    return (diffuse + rim) * lightColor;
 }
 
-float3 ComputeDirToon(Light light, Material mat, float3 normal, float3 toEye)
+float3 ComputeDirToon(Light light, Material mat, float3 normal, float3 toEye, float shadow)
 {
     float3 lightVec = normalize(-light.direction);
     float ndotl = saturate(dot(normal, lightVec));  // 0~90: 1 ~ 0, 91~: -
     float toonFactor = smoothstep(0.0f, 0.01f, ndotl);
-    
+
+    float combinedShadow = toonFactor * shadow;
+    float finalShadowFactor = lerp(0.2f, 1.0f, combinedShadow);
     // 조명 색상 벡터 생성
-    float3 finalLightColor = light.strength * toonFactor;
+    float3 finalLightColor = light.strength * finalShadowFactor;
 
     return ToonBlinnPhong(lightVec, normal, toEye, finalLightColor, mat, ndotl);
 }
 
-float3 ComputePointToon(Light light, Material mat, float3 pos, float3 normal, float3 toEye)
+float3 ComputePointToon(Light light, Material mat, float3 pos, float3 normal, float3 toEye, float shadow)
 {
     float3 lightVec = light.position - pos;
     float distance = length(lightVec);
@@ -100,10 +101,12 @@ float3 ComputePointToon(Light light, Material mat, float3 pos, float3 normal, fl
     
     float ndotl = saturate(dot(normal, lightVec));
     
-    float toonFactor = smoothstep(0.0f, 0.01f, ndotl);
     float att = CalcAttenuation(distance, light.falloff_start, light.falloff_end);
+    float toonFactor = smoothstep(0.0f, 0.01f, ndotl);
+    float combinedShadow = toonFactor * shadow;
+    float finalShadowFactor = lerp(0.2f, 1.0f, combinedShadow);
     
-    float3 finalLightColor = light.strength * toonFactor * att;
+    float3 finalLightColor = light.strength * finalShadowFactor * att;
     
     return ToonBlinnPhong(lightVec, normal, toEye, finalLightColor, mat, ndotl);
 }

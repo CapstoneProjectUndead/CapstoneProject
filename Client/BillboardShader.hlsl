@@ -1,7 +1,6 @@
 struct VS_INPUT
 {
     float3 position : POSITION;
-    uint instanceID : SV_InstanceID;
 };
 
 struct VS_OUTPUT
@@ -16,7 +15,7 @@ struct GS_OUT
     float4 posH : SV_POSITION;
     float3 posW : POSITION;
     float2 tex : TEXCOORD;
-    uint instanceID : INSTANCEID;
+    nointerpolation uint instanceID : INSTANCEID;
 };
 
 cbuffer CameraInfo : register(b0)
@@ -31,7 +30,9 @@ struct MaterialData
     float4 albedo;
     float3 fresnel;
     float glossiness;
+    float4 emissive_color;
     uint tex_idx;
+    uint normal_idx;
 };
 
 struct InstanceData

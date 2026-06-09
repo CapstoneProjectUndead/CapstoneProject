@@ -222,7 +222,7 @@ void CObjectFactory::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject
 	if (g_is_single) {
 		bool isRoad = (node->name == "park_road" || node->name == "village_road" || node->name == "park_green" || node->name == "house_place");
 		bool isMonsterPassable = (node->name == "streetlamp");
-		bool isDoor = (node->name == "wall_1_door001" || node->name == "wall_2_door001");
+		bool isHouse = (node->name == "wall_1_door001" || node->name == "wall_2_door001"|| node->name == "wall_1002"|| node->name == "wall_2001"|| node->name == "wall_1003");
 
 		if (isRoad) {
 			AddCollider(obj, node, EColLayer::GROUND, EColLayer::ALL_MOB);
@@ -230,7 +230,7 @@ void CObjectFactory::LoadFrameNode(std::map<std::string, std::shared_ptr<CObject
 		else if (isMonsterPassable) {
 			AddCollider(obj, node, EColLayer::OBJECT, EColLayer::PLAYER);
 		}
-		else if(isDoor) {
+		else if(isHouse) {
 			if (!node->mesh_colliders.empty()) {
 				std::unique_ptr<CColliderShape> shape = std::make_unique<CConcaveMeshShape>(node->mesh_colliders[0].positions, node->mesh_colliders[0].indices);
 				auto collider = std::make_shared<CColliderComponent>(shape, node->mesh.bounds);

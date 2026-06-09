@@ -243,6 +243,7 @@ public:
 	D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob**) override;
 	D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob**) override;
+	D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() override;
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device*) override;
 	void CreateShader(ID3D12Device*) override;
 	D3D12_RASTERIZER_DESC CreateRasterizerState() override;
