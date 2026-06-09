@@ -66,13 +66,11 @@ PS_GBUFFER_OUT PSMain(VS_OUTPUT input)
 
     input.normal = normalize(input.normal);
     input.tangent_world = normalize(input.tangent_world);
-
-    float3 bumpedNormalW = input.normal;
-    if (instMat.normal_idx != 0xffffffff)
-    {
-        float4 normalMapSample = texDiffuse[instMat.normal_idx].Sample(sample, input.tex);
-        bumpedNormalW = NormalSampleToWorldSpace(normalMapSample.rgb, bumpedNormalW, input.tangent_world);
-    }
+    
+    float4 normalMapSample = texDiffuse[instMat.normal_idx].Sample(sample, input.tex);
+    float isBumped = smoothstep(0.99f, 0.95f, normalMapSample.b);   // b가 거의 1.0이면 default_normal -> 0으로 변환
+    float3 bumpedNormalW = NormalSampleToWorldSpace(normalMapSample.rgb, input.normal, input.tangent_world);
+    bumpedNormalW = normalize(lerp(input.normal, bumpedNormalW, isBumped));
     
     // 노말 벡터(-1.0 ~ 1.0)를 텍스처에 안전하게 저장하기 위해 (0.0 ~ 1.0) 범위로 압축
     output.normal = float4(bumpedNormalW * 0.5f + 0.5f, instMat.glossiness);

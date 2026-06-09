@@ -62,8 +62,8 @@ public:
 public:
 	void Initialize(const std::string& charName, const std::string& AniName, OBJECT_TYPE objType, uint8_t subType);
 	// gpu buffer 생성
-	void CreateAnimationTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle);
-	void CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle);
+	void CreateAnimationTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+	void CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
 
 	// boneMask 생성
 	void SetRecursiveWeight(int boneIdx, float weight, std::vector<float>& maskWeights, const CGeometryLoader::SkeletonData& skeleton);

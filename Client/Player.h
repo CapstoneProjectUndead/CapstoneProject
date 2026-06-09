@@ -89,16 +89,22 @@ public:
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
 	void ChangeModelSet(int setIndex);
-	void ChangeEyes(int index);
-	void ChangeMouth(int index);
+	void ChangeEyes(int index) { eyes_idx = index; }
+	void ChangeMouth(int index) { mouth_idx = index; }
+	int GetModelTypeIndex() const { return model_type_idx; }
+    int GetEyesIndex() const { return eyes_idx; }
+    int GetMouthIndex() const { return mouth_idx; }
 
 	// 커스터마이즈한 캐릭터 종류(Dog/Cat/Bunny) → 상대 상태 UI 사진 매핑용
 	PLAYER_IMAGE GetPlayerImage() const { return player_image; }
 
-	std::array<std::shared_ptr<CMaterialComponent>, 3> body_materials;
+	// 부위별 단일 대표 컴포넌트 
+	std::shared_ptr<CMaterialComponent> body_material_comp;
+	std::shared_ptr<CMaterialComponent> eartail_material_comp;
+	std::shared_ptr<CMaterialComponent> eyes_material_comp;
+	std::shared_ptr<CMaterialComponent> mouth_material_comp;
+	// 0:Dog계열, 1:Cat계열, 2:Bunny계열 메시들을 담음 (2번 세트들도 뼈대와 외형 메시는 공유하므로 3개 유지)
 	std::array<std::vector<std::shared_ptr<CMeshComponent>>, 3> eartail_parts;
-	std::array<std::shared_ptr<CMaterialComponent>, 3> eyes_material;
-	std::array<std::shared_ptr<CMaterialComponent>, 3> mouth_material;
 
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 	bool GetDowsing() const { return is_dowsing; }
@@ -111,7 +117,7 @@ public:
 private:
 	void OpponentMoveSyncByInterpolation(float elapsedTime);
 	void OpponentRotateSync(float elapsedTime);
-
+	
 protected:
 	uint32 room_id; // 이 플레이어가 참여하고 있는 방 ID
 
@@ -150,6 +156,11 @@ protected:
 
 	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
 	bool        is_returned{ false };
+
+	// 커스터마이징 인덱스 변수
+	int model_type_idx = 0; // 0:Dog, 1:Cat, 2:Bunny, 3:Dog2, 4:Cat2, 5:Bunny2
+	int eyes_idx = 0;      // 0 ~ 9
+	int mouth_idx = 0;     // 0 ~ 9
 
 public:
 	bool GetIsKnockedBack() const { return is_knocked_back; }

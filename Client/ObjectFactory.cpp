@@ -52,6 +52,28 @@ std::shared_ptr<CMaterial> CObjectFactory::GetMaterial(const std::string& name, 
 	return uniqueMat;
 }
 
+std::shared_ptr<CMaterialComponent> CObjectFactory::CreateMaterialComponent(const CGeometryLoader::MaterialData& rawMatData, const EShaderName shaderName, CDescriptorHeapManager* heapManager)
+{
+	auto matComp = std::make_shared<CMaterialComponent>();
+	const std::string& texName = rawMatData.albedoMap;
+	std::shared_ptr<CMaterial> mat;
+
+	if (!texName.empty()) {
+		mat = GetMaterial(texName, shaderName);
+		mat->material.albedo = rawMatData.albedoColor;
+		mat->material.emissive_color = rawMatData.emissiveColor;
+		mat->material.glossiness = rawMatData.glossiness;
+		matComp->SetMaterial(mat);
+	}
+
+	if (mat && !rawMatData.normalMap.empty()) {
+		std::shared_ptr<CTexture> normalTex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, rawMatData.normalMap, shaderName);
+		mat->SetNormalIndex(normalTex);
+	}
+
+	return matComp;
+}
+
 // mesh/material component set
 void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, const std::unique_ptr<CGeometryLoader::FrameNode>& node, const EShaderName shaderName)
 {
@@ -74,25 +96,12 @@ void CObjectFactory::InitStaticComponents(std::shared_ptr<CObject> obj, const st
 	meshComp->SetMeshFromFile<CSkinnedVertex>(GET_DEVICE, GET_CMD_LIST, node);
 	obj->world_matrix = node->local_matrix;
 
-	// MaterialComponent
+	auto shaders = CSceneManager::GetInstance().GetShaders();
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
+
 	for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
-		const auto& material = node->mesh.materials[i];
-		auto matComp = std::make_shared<CMaterialComponent>();
-		const std::string& texName = material.albedoMap;
-		std::shared_ptr<CMaterial> mat;
-		if (!texName.empty()) {
-			mat = GetMaterial(texName, shaderName); // 내부에서 shaderName 기반으로 처리
-			mat->material.albedo = material.albedoColor;
-			mat->material.emissive_color = material.emissiveColor;
-			mat->material.glossiness = material.glossiness;
-			matComp->SetMaterial(mat);
-		}
-		if (!material.normalMap.empty() && mat) {
-			auto shaders = CSceneManager::GetInstance().GetShaders();
-			CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
-			std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, material.normalMap, shaderName);
-			mat->SetNormalIndex(tex);
-		}
+		// 헬퍼 함수 호출로 한 줄 요약
+		auto matComp = CreateMaterialComponent(node->mesh.materials[i], shaderName, heapManager);
 		meshRenderer->SetRenderUnit(meshComp, matComp, i);
 	}
 
@@ -103,9 +112,11 @@ void CObjectFactory::ProcessNode(std::shared_ptr<CCharacter> character, const st
 	std::function<void(const CGeometryLoader::FrameNode*, std::shared_ptr<CMeshComponent>, std::shared_ptr<CMeshRendererComponent>)> partProcessor, const CharacterAnimSet& aniSet, bool isPlayer,
 	EColLayer colMask)
 {
-	// Collider 설정
-	EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
-	AddCollider(character, node, category, colMask);
+	if (g_is_single) {
+		// Collider 설정
+		EColLayer category = isPlayer ? EColLayer::PLAYER : EColLayer::CHARACTER;
+		AddCollider(character, node, category, colMask);
+	}
 
 	if (node->mesh.positions.empty()) return;
 	character->world_matrix = node->local_matrix;
@@ -514,81 +525,84 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
 
-	// 기본적으로 캐릭터용 스킨드 셰이더 힙매니저 획득
 	auto shaders = CSceneManager::GetInstance().GetShaders();
-	CDescriptorHeapManager* heapManager = shaders[EShaderName::Skinning]->GetHeapManager();
+	EShaderName shaderName = EShaderName::Skinning;
+	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
-	// material 미리 Load
+	// 리소스 대량 등록 루프
 	std::vector<std::string> resourceNames = {
-		"body_ganga", "body_nyao", "body_toto",
-		"eartail",
-		"eyes_ganga", "eyes_nyao", "eyes_toto",
-		"mouse_ganga", "mouse_nyao", "mouse_toto"
+		"body_ganga", "body_nyao", "body_toto", "body_ganga2", "body_nyao2", "body_toto2",
+		"eartail", "eartail2", "eyes_dead"
 	};
+	for (int i = 1; i <= 10; ++i) resourceNames.push_back("eyes_" + std::to_string(i));
+	for (int i = 1; i <= 10; ++i) resourceNames.push_back("mouth_" + std::to_string(i));
+
 	for (const std::string& name : resourceNames) {
-		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name, EShaderName::Skinning);
-		matManager.LoadMaterial(name, tex, EShaderName::Skinning);
+		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name, shaderName);
+		matManager.LoadMaterial(name, tex, shaderName);
 	}
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 
-			// 머티리얼 생성 및 렌더 유닛 등록 후 material return
-			auto CreateUnit = [&](const std::string& texName) {
-				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, EShaderName::Skinning);
-				auto mat = matManager.GetMaterial(texName, tex, EShaderName::Skinning);
-				matComp->SetMaterial(mat);
-
-				RenderUnit unit{ meshComp, matComp, 0 };
+			auto CreateUnit = [&](const std::string& defaultTex, const CGeometryLoader::MaterialData& rawMatData, UINT submeshIndex = 0) {
+				auto matComp = CreateMaterialComponent(rawMatData, shaderName, heapManager);
+				if (matComp->GetMaterial() && !defaultTex.empty()) {
+					auto originalMat = matManager.GetMaterial(defaultTex, nullptr, shaderName);
+					if (originalMat) matComp->GetMaterial()->SetTexture(originalMat->GetTexture());
+				}
+				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
 				return matComp;
 				};
 
-			// 0: dog, 1: cat, 2: buddy
-			// 처음에 강아지만 enable true
+			CGeometryLoader::MaterialData defaultData;
+			if (!node->mesh.materials.empty()) {
+				defaultData = node->mesh.materials[0];
+			}
+
 			switch (stringToUndeadMeshName(node->name)) {
 			case UndeadMeshName::body:
-				character->body_materials[0] = CreateUnit(resourceNames[0]);
-				character->body_materials[1] = CreateUnit(resourceNames[1]);
-				character->body_materials[1]->SetEnable(false);
-				character->body_materials[2] = CreateUnit(resourceNames[2]);
-				character->body_materials[2]->SetEnable(false);
+				character->body_material_comp = CreateUnit("body_ganga", defaultData);
 				break;
+
 			case UndeadMeshName::Bunny_ear:
 			case UndeadMeshName::Bunny_tail:
-				CreateUnit(resourceNames[3]);
-				character->eartail_parts[2].push_back(meshComp);
-				meshComp->SetEnable(false);
-				break;
 			case UndeadMeshName::Cat_ear:
 			case UndeadMeshName::Cat_tail:
-				CreateUnit(resourceNames[3]);
-				character->eartail_parts[1].push_back(meshComp);
-				meshComp->SetEnable(false);
-				break;
 			case UndeadMeshName::Dog_ear:
 			case UndeadMeshName::Dog_tail:
-				CreateUnit(resourceNames[3]);
-				character->eartail_parts[0].push_back(meshComp);
-				break;
+			{
+				// 없으면 재생성
+				if (character->eartail_material_comp == nullptr) {
+					character->eartail_material_comp = CreateMaterialComponent(defaultData, shaderName, heapManager);
+					auto originalMat = matManager.GetMaterial("eartail", nullptr, shaderName);
+					if (originalMat) character->eartail_material_comp->GetMaterial()->SetTexture(originalMat->GetTexture());
+				}
+
+				RenderUnit unit{ meshComp, character->eartail_material_comp, 0 };
+				renderer->SetRenderUnit(unit);
+
+				// 파츠 분류 등록
+				int partIdx = 0;
+				if (stringToUndeadMeshName(node->name) == UndeadMeshName::Cat_ear || stringToUndeadMeshName(node->name) == UndeadMeshName::Cat_tail) partIdx = 1;
+				if (stringToUndeadMeshName(node->name) == UndeadMeshName::Bunny_ear || stringToUndeadMeshName(node->name) == UndeadMeshName::Bunny_tail) partIdx = 2;
+
+				character->eartail_parts[partIdx].push_back(meshComp);
+				if (partIdx != 0) meshComp->SetEnable(false); // Dog(0) 빼고 처음엔 다 끔
+			}
+			break;
 			case UndeadMeshName::eyes:
-				character->eyes_material[0] = CreateUnit(resourceNames[4]);
-				character->eyes_material[1] = CreateUnit(resourceNames[5]);
-				character->eyes_material[1]->SetEnable(false);
-				character->eyes_material[2] = CreateUnit(resourceNames[6]);
-				character->eyes_material[2]->SetEnable(false);
+				character->eyes_material_comp = CreateUnit("eyes_1", defaultData);
 				break;
+
 			case UndeadMeshName::mouse:
-				character->mouth_material[0] = CreateUnit(resourceNames[7]);
-				character->mouth_material[1] = CreateUnit(resourceNames[8]);
-				character->mouth_material[1]->SetEnable(false);
-				character->mouth_material[2] = CreateUnit(resourceNames[9]);
-				character->mouth_material[2]->SetEnable(false);
+				character->mouth_material_comp = CreateUnit("mouth_1", defaultData);
 				break;
+
 			case UndeadMeshName::Unknown:
-				for (auto& material : node->mesh.materials) {
-					CreateUnit(material.albedoMap);
+				for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
+					CreateUnit(node->mesh.materials[i].albedoMap, node->mesh.materials[i], i);
 				}
 				break;
 			}
@@ -602,6 +616,9 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 		true,
 		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::CHARACTER)
 	);
+
+	// 초기 생성 조립 완료 후 팩토리 기능으로 초기화 리프레시
+	UpdatePlayerTextures(character);
 }
 
 void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character)
@@ -614,19 +631,11 @@ void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character)
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
-			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
-				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
-				auto mat = matManager.GetMaterial(texName, tex, shaderName);
-				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp, submeshIndex };
-				renderer->SetRenderUnit(unit);
-				};
-
 			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
-				auto& material = node->mesh.materials[i];
-				CreateUnit(material.albedoMap, i);
+				auto matComp = CreateMaterialComponent(node->mesh.materials[i], shaderName, heapManager);
+
+				RenderUnit unit{ meshComp, matComp, i };
+				renderer->SetRenderUnit(unit);
 			}
 		};
 
@@ -650,19 +659,11 @@ void CObjectFactory::CreateDogCharacter(std::shared_ptr<CCharacter> character)
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
-			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
-				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
-				auto mat = matManager.GetMaterial(texName, tex, shaderName);
-				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp, submeshIndex };
-				renderer->SetRenderUnit(unit);
-				};
-
 			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
-				auto& material = node->mesh.materials[i];
-				CreateUnit(material.albedoMap, i);
+				auto matComp = CreateMaterialComponent(node->mesh.materials[i], shaderName, heapManager);
+
+				RenderUnit unit{ meshComp, matComp, i };
+				renderer->SetRenderUnit(unit);
 			}
 		};
 
@@ -686,19 +687,11 @@ void CObjectFactory::CreateGhostCharacter(std::shared_ptr<CCharacter> character)
 
 	auto Processor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
-			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
-				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
-				auto mat = matManager.GetMaterial(texName, tex, shaderName);
-				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp, submeshIndex };
-				renderer->SetRenderUnit(unit);
-				};
-
 			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
-				auto& material = node->mesh.materials[i];
-				CreateUnit(material.albedoMap, i);
+				auto matComp = CreateMaterialComponent(node->mesh.materials[i], shaderName, heapManager);
+
+				RenderUnit unit{ meshComp, matComp, i };
+				renderer->SetRenderUnit(unit);
 			}
 		};
 
@@ -723,21 +716,12 @@ std::shared_ptr<CCharacter> CObjectFactory::CreateReaper()
 
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
-			// 머티리얼 생성 및 렌더 유닛 등록 헬퍼
-			auto CreateUnit = [&](const std::string& texName, UINT submeshIndex) {
-				auto matComp = std::make_shared<CMaterialComponent>();
-				auto tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, texName, shaderName);
-				auto mat = matManager.GetMaterial(texName, tex, shaderName);
-				matComp->SetMaterial(mat);
-				RenderUnit unit{ meshComp, matComp, submeshIndex };
-				renderer->SetRenderUnit(unit);
-				};
-
 			for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
-				auto& material = node->mesh.materials[i];
-				CreateUnit(material.albedoMap, i);
+				auto matComp = CreateMaterialComponent(node->mesh.materials[i], shaderName, heapManager);
+
+				RenderUnit unit{ meshComp, matComp, i };
+				renderer->SetRenderUnit(unit);
 			}
-			renderer->SetShader(EShaderName::Skinning);
 		};
 
 	InitCharacterComponents(
@@ -928,6 +912,56 @@ void CObjectFactory::LoadTwoSideFrame()
 		std::string fileName{ "../Modeling/flapper.bin" };
 		LoadNode(fileName, EShaderName::TwoSide);
 	}
+}
+
+void CObjectFactory::UpdatePlayerTextures(std::shared_ptr<CPlayer> player)
+{
+	if (!player) return;
+
+	EShaderName shaderName = EShaderName::Skinning;
+	int modelIdx = player->GetModelTypeIndex(); // 0 ~ 5
+
+	// 기본 바디 텍스처 이름 매핑 (0~5 인덱스 대응)
+	std::string bodyTexName = "";
+	switch (modelIdx) {
+	case 0: bodyTexName = "body_ganga";  break;
+	case 1: bodyTexName = "body_nyao";   break;
+	case 2: bodyTexName = "body_toto";   break;
+	case 3: bodyTexName = "body_ganga2"; break;
+	case 4: bodyTexName = "body_nyao2";  break;
+	case 5: bodyTexName = "body_toto2";  break;
+	}
+
+	std::string eartailTexName = "eartail"; // 기본은 eartail
+	if (!bodyTexName.empty() && bodyTexName.back() == '2') {
+		eartailTexName = "eartail2";
+	}
+
+	// 눈 상태 분기
+	std::string eyesTexName = "";
+	if (player->GetState() == PLAYER_STATE::DEAD) {
+		eyesTexName = "eyes_dead";
+	}
+	else {
+		eyesTexName = "eyes_" + std::to_string(player->GetEyesIndex() + 1);
+	}
+
+	// 입 상태 분기
+	std::string mouthTexName = "mouth_" + std::to_string(player->GetMouthIndex() + 1);
+
+	// 매티리얼 텍스처 교체
+	auto ApplyTexture = [&](std::shared_ptr<CMaterialComponent> comp, const std::string& texName) {
+		if (!comp || !comp->GetMaterial()) return;
+		auto originalMat = matManager.GetMaterial(texName, nullptr, shaderName);
+		if (originalMat) {
+			comp->GetMaterial()->SetTexture(originalMat->GetTexture());
+		}
+		};
+
+	ApplyTexture(player->body_material_comp, bodyTexName);
+	ApplyTexture(player->eartail_material_comp, eartailTexName);
+	ApplyTexture(player->eyes_material_comp, eyesTexName);
+	ApplyTexture(player->mouth_material_comp, mouthTexName);
 }
 
 // string to enum mapping

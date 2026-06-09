@@ -19,6 +19,7 @@ struct CharacterAnimSet;
 
 namespace CGeometryLoader {
 	struct FrameNode;
+	struct MaterialData;
 }
 enum EColLayer : uint32_t;
 
@@ -89,6 +90,9 @@ public:
 	std::vector<XMFLOAT3>&    GetDogMonsterSpawnPositions() { return dog_spawn_positions; }
 	std::vector<MapGenerator::InstanceData>& GetInstData() { return inst_data; }
 
+	// 커스터마이징 Update
+	void UpdatePlayerTextures(std::shared_ptr<CPlayer> player);
+
 	// 외부 참조용
 	std::shared_ptr<CObject> GetPrototype(const std::string& name) {
 		auto it = prototypes.find(name);
@@ -114,6 +118,8 @@ private:
 		Unknown
 	};
 
+	// rawMatData를 적용
+	std::shared_ptr<CMaterialComponent> CreateMaterialComponent(const CGeometryLoader::MaterialData& rawMatData, const EShaderName shaderName, CDescriptorHeapManager* heapManager);
 	void LoadNode(const std::string fileName, EShaderName shaderName = EShaderName::Skinning);
 	// string to enum mapping
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
