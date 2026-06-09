@@ -525,18 +525,18 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 {
 	std::string fileName{ "../Modeling/undead_char.bin" };
 
-	// 기본적으로 캐릭터용 스킨드 셰이더 힙매니저 획득
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 	EShaderName shaderName = EShaderName::Skinning;
 	CDescriptorHeapManager* heapManager = shaders[shaderName]->GetHeapManager();
 
-	// material 미리 Load
+	// 리소스 대량 등록 루프
 	std::vector<std::string> resourceNames = {
-		"body_ganga", "body_nyao", "body_toto",
-		"eartail",
-		"eyes_ganga", "eyes_nyao", "eyes_toto",
-		"mouse_ganga", "mouse_nyao", "mouse_toto"
+		"body_ganga", "body_nyao", "body_toto", "body_ganga2", "body_nyao2", "body_toto2",
+		"eartail", "eartail2", "eyes_dead"
 	};
+	for (int i = 1; i <= 10; ++i) resourceNames.push_back("eyes_" + std::to_string(i));
+	for (int i = 1; i <= 10; ++i) resourceNames.push_back("mouth_" + std::to_string(i));
+
 	for (const std::string& name : resourceNames) {
 		std::shared_ptr<CTexture> tex = texManager.GetTexture(GET_DEVICE, GET_CMD_LIST, heapManager, name, shaderName);
 		matManager.LoadMaterial(name, tex, shaderName);
@@ -545,67 +545,61 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 	auto undeadProcessor = [&](const CGeometryLoader::FrameNode* node, std::shared_ptr<CMeshComponent> meshComp,
 		std::shared_ptr<CMeshRendererComponent> renderer) {
 
-			auto CreateUnit = [&](const std::string& texName, const CGeometryLoader::MaterialData& rawMatData, UINT submeshIndex = 0) {
+			auto CreateUnit = [&](const std::string& defaultTex, const CGeometryLoader::MaterialData& rawMatData, UINT submeshIndex = 0) {
 				auto matComp = CreateMaterialComponent(rawMatData, shaderName, heapManager);
-				if (matComp->GetMaterial() && !texName.empty()) {
-					// 기존 생성된 고유 매티리얼의 알베도 텍스처만 아바타 리소스에 맞게 교체
-					auto originalMat = matManager.GetMaterial(texName, nullptr, shaderName);
-					if (originalMat) {
-						matComp->GetMaterial()->SetTexture(originalMat->GetTexture());
-					}
+				if (matComp->GetMaterial() && !defaultTex.empty()) {
+					auto originalMat = matManager.GetMaterial(defaultTex, nullptr, shaderName);
+					if (originalMat) matComp->GetMaterial()->SetTexture(originalMat->GetTexture());
 				}
 				RenderUnit unit{ meshComp, matComp, submeshIndex };
 				renderer->SetRenderUnit(unit);
 				return matComp;
 				};
 
-			// 현재 노드가 바이너리에서 들고 온 원본 설정 값 추출 (노말맵, 에미시브 파라미터 백업용)
 			CGeometryLoader::MaterialData defaultData;
 			if (!node->mesh.materials.empty()) {
 				defaultData = node->mesh.materials[0];
 			}
 
-			// 0: dog, 1: cat, 2: buddy
-			// 처음에 강아지만 enable true
 			switch (stringToUndeadMeshName(node->name)) {
 			case UndeadMeshName::body:
-				character->body_materials[0] = CreateUnit(resourceNames[0], defaultData);
-				character->body_materials[1] = CreateUnit(resourceNames[1], defaultData);
-				character->body_materials[1]->SetEnable(false);
-				character->body_materials[2] = CreateUnit(resourceNames[2], defaultData);
-				character->body_materials[2]->SetEnable(false);
+				character->body_material_comp = CreateUnit("body_ganga", defaultData);
 				break;
+
 			case UndeadMeshName::Bunny_ear:
 			case UndeadMeshName::Bunny_tail:
-				CreateUnit(resourceNames[3], defaultData);
-				character->eartail_parts[2].push_back(meshComp);
-				meshComp->SetEnable(false);
-				break;
 			case UndeadMeshName::Cat_ear:
 			case UndeadMeshName::Cat_tail:
-				CreateUnit(resourceNames[3], defaultData);
-				character->eartail_parts[1].push_back(meshComp);
-				meshComp->SetEnable(false);
-				break;
 			case UndeadMeshName::Dog_ear:
 			case UndeadMeshName::Dog_tail:
-				CreateUnit(resourceNames[3], defaultData);
-				character->eartail_parts[0].push_back(meshComp);
-				break;
+			{
+				// 없으면 재생성
+				if (character->eartail_material_comp == nullptr) {
+					character->eartail_material_comp = CreateMaterialComponent(defaultData, shaderName, heapManager);
+					auto originalMat = matManager.GetMaterial("eartail", nullptr, shaderName);
+					if (originalMat) character->eartail_material_comp->GetMaterial()->SetTexture(originalMat->GetTexture());
+				}
+
+				RenderUnit unit{ meshComp, character->eartail_material_comp, 0 };
+				renderer->SetRenderUnit(unit);
+
+				// 파츠 분류 등록
+				int partIdx = 0;
+				if (stringToUndeadMeshName(node->name) == UndeadMeshName::Cat_ear || stringToUndeadMeshName(node->name) == UndeadMeshName::Cat_tail) partIdx = 1;
+				if (stringToUndeadMeshName(node->name) == UndeadMeshName::Bunny_ear || stringToUndeadMeshName(node->name) == UndeadMeshName::Bunny_tail) partIdx = 2;
+
+				character->eartail_parts[partIdx].push_back(meshComp);
+				if (partIdx != 0) meshComp->SetEnable(false); // Dog(0) 빼고 처음엔 다 끔
+			}
+			break;
 			case UndeadMeshName::eyes:
-				character->eyes_material[0] = CreateUnit(resourceNames[4], defaultData);
-				character->eyes_material[1] = CreateUnit(resourceNames[5], defaultData);
-				character->eyes_material[1]->SetEnable(false);
-				character->eyes_material[2] = CreateUnit(resourceNames[6], defaultData);
-				character->eyes_material[2]->SetEnable(false);
+				character->eyes_material_comp = CreateUnit("eyes_1", defaultData);
 				break;
+
 			case UndeadMeshName::mouse:
-				character->mouth_material[0] = CreateUnit(resourceNames[7], defaultData);
-				character->mouth_material[1] = CreateUnit(resourceNames[8], defaultData);
-				character->mouth_material[1]->SetEnable(false);
-				character->mouth_material[2] = CreateUnit(resourceNames[9], defaultData);
-				character->mouth_material[2]->SetEnable(false);
+				character->mouth_material_comp = CreateUnit("mouth_1", defaultData);
 				break;
+
 			case UndeadMeshName::Unknown:
 				for (UINT i = 0; i < node->mesh.materials.size(); ++i) {
 					CreateUnit(node->mesh.materials[i].albedoMap, node->mesh.materials[i], i);
@@ -622,6 +616,9 @@ void CObjectFactory::CreateUndeadCharacter(std::shared_ptr<CPlayer> character)
 		true,
 		static_cast<EColLayer>(EColLayer::WALL | EColLayer::OBJECT | EColLayer::GROUND | EColLayer::CHARACTER)
 	);
+
+	// 초기 생성 조립 완료 후 팩토리 기능으로 초기화 리프레시
+	UpdatePlayerTextures(character);
 }
 
 void CObjectFactory::CreateHumanCharacter(std::shared_ptr<CCharacter> character)
@@ -915,6 +912,56 @@ void CObjectFactory::LoadTwoSideFrame()
 		std::string fileName{ "../Modeling/flapper.bin" };
 		LoadNode(fileName, EShaderName::TwoSide);
 	}
+}
+
+void CObjectFactory::UpdatePlayerTextures(std::shared_ptr<CPlayer> player)
+{
+	if (!player) return;
+
+	EShaderName shaderName = EShaderName::Skinning;
+	int modelIdx = player->GetModelTypeIndex(); // 0 ~ 5
+
+	// 기본 바디 텍스처 이름 매핑 (0~5 인덱스 대응)
+	std::string bodyTexName = "";
+	switch (modelIdx) {
+	case 0: bodyTexName = "body_ganga";  break;
+	case 1: bodyTexName = "body_nyao";   break;
+	case 2: bodyTexName = "body_toto";   break;
+	case 3: bodyTexName = "body_ganga2"; break;
+	case 4: bodyTexName = "body_nyao2";  break;
+	case 5: bodyTexName = "body_toto2";  break;
+	}
+
+	std::string eartailTexName = "eartail"; // 기본은 eartail
+	if (!bodyTexName.empty() && bodyTexName.back() == '2') {
+		eartailTexName = "eartail2";
+	}
+
+	// 눈 상태 분기
+	std::string eyesTexName = "";
+	if (player->GetState() == PLAYER_STATE::DEAD) {
+		eyesTexName = "eyes_dead";
+	}
+	else {
+		eyesTexName = "eyes_" + std::to_string(player->GetEyesIndex() + 1);
+	}
+
+	// 입 상태 분기
+	std::string mouthTexName = "mouth_" + std::to_string(player->GetMouthIndex() + 1);
+
+	// 매티리얼 텍스처 교체
+	auto ApplyTexture = [&](std::shared_ptr<CMaterialComponent> comp, const std::string& texName) {
+		if (!comp || !comp->GetMaterial()) return;
+		auto originalMat = matManager.GetMaterial(texName, nullptr, shaderName);
+		if (originalMat) {
+			comp->GetMaterial()->SetTexture(originalMat->GetTexture());
+		}
+		};
+
+	ApplyTexture(player->body_material_comp, bodyTexName);
+	ApplyTexture(player->eartail_material_comp, eartailTexName);
+	ApplyTexture(player->eyes_material_comp, eyesTexName);
+	ApplyTexture(player->mouth_material_comp, mouthTexName);
 }
 
 // string to enum mapping

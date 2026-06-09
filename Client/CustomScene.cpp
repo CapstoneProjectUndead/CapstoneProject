@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "CustomScene.h"
 #include "Shader.h"
 #include "GameFramework.h"
@@ -41,6 +41,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
         light->AddPointLight(XMFLOAT3(2.49913216, 1.35, 1.45683444), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);			// Lamp on table
         light->AddPointLight(XMFLOAT3(1.83547652, 2.55953884, -2.89159632), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);	// Lamp on StoneBed
         light->AddPointLight(XMFLOAT3(-2.44799995, 0.48300001, -0.216999993), XMFLOAT3(1.0f, 0.8f, 0.6f), 0.5f, 1.5f);	// firewood
+        light->AddPointLight(XMFLOAT3(0, 0, 1), XMFLOAT3(0.5f, 0.5f, 0.5f), 1.0f, 2.0f);		// custom
     }
 }
 
@@ -102,76 +103,78 @@ void CCustomScene::DrawUI()
 void CCustomScene::DrawCustomizingWindow()
 {
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-
-    // 화면 크기에 맞게 스케일링
     float scale = G_RATIO_Y;
 
-    // 창 크기를 조금 더 줄였습니다.
-    ImVec2 winSize = ImVec2(300.0f * scale, 250.0f * scale);
+    ImVec2 winSize = ImVec2(300.0f * scale, 280.0f * scale); // 적정 크기 유지
     float margin = 30.0f * scale;
 
-    // 오른쪽 하단 여백 조정
     ImGui::SetNextWindowPos(ImVec2(screenSize.x - winSize.x - margin, screenSize.y - winSize.y - margin));
     ImGui::SetNextWindowSize(winSize);
 
-    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoBackground |
+    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground |
         ImGuiWindowFlags_NoScrollbar;
 
     if (ImGui::Begin("CustomUI", nullptr, winFlags))
     {
-        // 글씨 크기도 스케일링
         ImGui::SetWindowFontScale(scale);
 
         auto DrawSimpleSelector = [&](const char* partName, int& currentIdx, int maxCount, const char* names[], std::function<void(int)> onChange) {
             ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), partName);
-
-            // 람다 내부의 작은 좌우 화살표 버튼 크기와 높이 오프셋도 스케일링
             ImVec2 smallBtnSize = ImVec2(30.0f * scale, 30.0f * scale);
             float yOffset = 5.0f * scale;
 
-            // 왼쪽 버튼
             if (ImGui::Button((std::string("<##") + partName).c_str(), smallBtnSize)) {
                 currentIdx = (currentIdx - 1 + maxCount) % maxCount;
-                if (onChange) onChange(currentIdx); // 변경 시 콜백 호출
+                if (onChange) onChange(currentIdx);
             }
             ImGui::SameLine();
 
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() + yOffset);
-            ImGui::Text(" %s ", names[currentIdx]);
+            if (names) ImGui::Text(" %s ", names[currentIdx]);
+            else ImGui::Text(" Style %d ", currentIdx + 1);
             ImGui::SameLine();
-
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() - yOffset);
-            // 오른쪽 버튼
+
             if (ImGui::Button((std::string(">##") + partName).c_str(), smallBtnSize)) {
                 currentIdx = (currentIdx + 1) % maxCount;
-                if (onChange) onChange(currentIdx); // 변경 시 콜백 호출
+                if (onChange) onChange(currentIdx);
             }
             ImGui::Spacing();
             };
 
-        static const char* bodyNames[] = { "Dog", "Cat", "Bunny" };
-        static const char* eyeNames[] = { "Pretty", "Line", "Side"};
-        static const char* mouthNames[] = { "Ganadi","Nya", "Toto"};
+        // 모델 세트를 깔끔하게 6종으로 확장 정의
+        static const char* modelNames[] = { "Dog 1", "Cat 1", "Bunny 1", "Dog 2", "Cat 2", "Bunny 2" };
 
-        DrawSimpleSelector("BODY", body_idx, 3, bodyNames, [&](int idx) {
+        // [람다 헬퍼] 값이 바뀔 때마다 플레이어 인덱스를 수정하고 팩토리 마스터 교체 함수를 작동시킴
+        auto& factory = CSceneManager::GetInstance().GetFactory();
+        auto OnCustomChanged = [&]() {
+            if (my_player && factory) { // m_factory는 Scene이 보유한 팩토리 포인터라고 가정
+                factory->UpdatePlayerTextures(my_player);
+            }
+            };
+
+        // 1. 모델 세트 선택 (최대 카운트 6)
+        DrawSimpleSelector("MODEL SET", body_idx, 6, modelNames, [&](int idx) {
             if (my_player) my_player->ChangeModelSet(idx);
+            OnCustomChanged();
             });
 
-        DrawSimpleSelector("EYES", eyes_idx, 3, eyeNames, [&](int idx) {
+        // 2. 눈 스타일 선택 (1 ~ 10종)
+        DrawSimpleSelector("EYES STYLE", eyes_idx, 10, nullptr, [&](int idx) {
             if (my_player) my_player->ChangeEyes(idx);
+            OnCustomChanged();
             });
 
-        DrawSimpleSelector("MOUTH", mouth_idx, 3, mouthNames, [&](int idx) {
+        // 3. 입 스타일 선택 (1 ~ 10종)
+        DrawSimpleSelector("MOUTH STYLE", mouth_idx, 10, nullptr, [&](int idx) {
             if (my_player) my_player->ChangeMouth(idx);
+            OnCustomChanged();
             });
 
-        ImGui::Separator(); // 얇은 구분선 하나 추가
+        ImGui::Separator();
         ImGui::Spacing();
 
-        // 완료 버튼도 적당한 크기로 수정
         if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150 * scale, 40 * scale))) {
             if (g_is_single) {
                 ShowResultPopup(true, "설정 완료!");
@@ -181,22 +184,18 @@ void CCustomScene::DrawCustomizingWindow()
                 if (session) {
                     C_CustomSelect selectPkt;
                     selectPkt.player_id = my_player->GetID();
-                    selectPkt.body_type = body_idx;
+                    selectPkt.body_type = body_idx; // 0 ~ 5의 통합 값이 패킷으로 전송됨
                     selectPkt.eye_type = eyes_idx;
                     selectPkt.mouth_type = mouth_idx;
 
                     auto sendBuffer = MAKE_SEND_BUFFER(selectPkt);
                     session->DoSend(sendBuffer);
                 }
-
                 StartLoading(LoadingType::SelectResult);
             }
         }
-
-        // 폰트 스케일 원상 복구
         ImGui::SetWindowFontScale(1.0f);
     }
-
     ImGui::End();
 }
 

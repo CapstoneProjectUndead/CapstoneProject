@@ -288,30 +288,17 @@ void CPlayer::SetEquippedItemId(uint16 id)
 
 void CPlayer::ChangeModelSet(int setIndex)
 {
-    // 0->DOG, 1->CAT, 2->BUNNY (enum은 NONE=0 이므로 +1)
-    player_image = static_cast<PLAYER_IMAGE>(setIndex + 1);
+    model_type_idx = setIndex;
 
+    // UI 프로필 이미지 매핑
+    player_image = static_cast<PLAYER_IMAGE>((setIndex % 3) + 1);
+
+    // 귀/꼬리 메시 활성화/비활성화 제어 (0,3 -> Dog / 1,4 -> Cat / 2,5 -> Bunny)
+    int meshGroupIndex = setIndex % 3;
     for (int i = 0; i < eartail_parts.size(); ++i) {
-        bool active = (i == setIndex);
-        
-        body_materials[i]->SetEnable(active);
-
+        bool active = (i == meshGroupIndex);
         for (auto& mesh : eartail_parts[i]) {
             mesh->SetEnable(active);
         }
-    }
-}
-
-void CPlayer::ChangeEyes(int index)
-{
-    for (int i = 0; i < eyes_material.size(); ++i) {
-        eyes_material[i]->SetEnable(i == index);
-    }
-}
-
-void CPlayer::ChangeMouth(int index)
-{
-    for (int i = 0; i < mouth_material.size(); ++i) {
-        mouth_material[i]->SetEnable(i == index);
     }
 }
