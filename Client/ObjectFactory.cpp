@@ -916,7 +916,8 @@ void CObjectFactory::LoadTwoSideFrame()
 
 void CObjectFactory::UpdatePlayerTextures(std::shared_ptr<CPlayer> player)
 {
-	if (!player) return;
+	if (!player) 
+		return;
 
 	EShaderName shaderName = EShaderName::Skinning;
 	int modelIdx = player->GetModelTypeIndex(); // 0 ~ 5
@@ -937,21 +938,16 @@ void CObjectFactory::UpdatePlayerTextures(std::shared_ptr<CPlayer> player)
 		eartailTexName = "eartail2";
 	}
 
-	// 눈 상태 분기
-	std::string eyesTexName = "";
-	if (player->GetState() == PLAYER_STATE::DEAD) {
-		eyesTexName = "eyes_dead";
-	}
-	else {
-		eyesTexName = "eyes_" + std::to_string(player->GetEyesIndex() + 1);
-	}
+	// 눈 상태 분기 (우선순위: 빈사/사망 > 기절 > 빙의 > 커스터마이징)
+	std::string eyesTexName = ResolveEyeTexName(player);
 
 	// 입 상태 분기
 	std::string mouthTexName = "mouth_" + std::to_string(player->GetMouthIndex() + 1);
 
 	// 매티리얼 텍스처 교체
 	auto ApplyTexture = [&](std::shared_ptr<CMaterialComponent> comp, const std::string& texName) {
-		if (!comp || !comp->GetMaterial()) return;
+		if (!comp || !comp->GetMaterial()) 
+			return;
 		auto originalMat = matManager.GetMaterial(texName, nullptr, shaderName);
 		if (originalMat) {
 			comp->GetMaterial()->SetTexture(originalMat->GetTexture());
@@ -962,6 +958,31 @@ void CObjectFactory::UpdatePlayerTextures(std::shared_ptr<CPlayer> player)
 	ApplyTexture(player->eartail_material_comp, eartailTexName);
 	ApplyTexture(player->eyes_material_comp, eyesTexName);
 	ApplyTexture(player->mouth_material_comp, mouthTexName);
+}
+
+void CObjectFactory::UpdateEyeTexture(std::shared_ptr<CPlayer> player)
+{
+	if (!player || !player->eyes_material_comp || !player->eyes_material_comp->GetMaterial()) 
+		return;
+
+	EShaderName shaderName = EShaderName::Skinning;
+	std::string eyesTexName = ResolveEyeTexName(player);
+
+	auto originalMat = matManager.GetMaterial(eyesTexName, nullptr, shaderName);
+	if (originalMat)
+		player->eyes_material_comp->GetMaterial()->SetTexture(originalMat->GetTexture());
+}
+
+std::string CObjectFactory::ResolveEyeTexName(std::shared_ptr<CPlayer> player)
+{
+	PLAYER_STATE state = player->GetState();
+	if (state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD)
+		return "eyes_dead";
+	if (player->GetIsStunned())
+		return "eyes_5";
+	if (player->GetIsPossessed())
+		return "eyes_9";
+	return "eyes_" + std::to_string(player->GetEyesIndex() + 1);
 }
 
 // string to enum mapping

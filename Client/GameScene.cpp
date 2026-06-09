@@ -219,8 +219,10 @@ void CGameScene::Update(float elapsedTime)
 	if (g_is_single && round_active && round_timer > 0.f) {
 		round_timer -= elapsedTime;
 
-		if (round_timer <= 60.f) {
+		if (round_timer <= 120.f) {
 			// 좌표/범위는 Enter()에서 이미 확정됨. 여기선 활성화만 트리거 (노란 원 표시 시작)
+			if (!return_active)
+				return_notify_timer = 3.f;
 			return_active = true;
 		}
 
@@ -344,6 +346,35 @@ void CGameScene::DrawUI()
 		DrawReturnMarker();
 	}
 
+	// 복귀 지점 활성화 알림 (3초, 마지막 0.5초 페이드 아웃)
+	if (return_notify_timer > 0.f) {
+		ImGuiIO&    io   = ImGui::GetIO();
+		return_notify_timer -= io.DeltaTime;
+
+		ImDrawList* dl   = ImGui::GetForegroundDrawList();
+		ImFont*     font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+		const float scale  = G_RATIO_Y;
+		const float fontPx = 38.f * scale;
+		const char* msg    = "\xEC\x84\x9C\xEB\x91\x98\xEB\x9F\xAC\xEB\x9D\xBC! \xEB\xA7\xA8\xED\x99\x80\xEB\xA1\x9C \xEA\xB7\x80\xED\x99\x98\xED\x95\x98\xEB\x9D\xBC!";
+
+		float alpha = (return_notify_timer < 0.5f) ? (return_notify_timer / 0.5f) : 1.f;
+		alpha = std::max(0.f, alpha);
+
+		ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, msg);
+		ImVec2 pos      = ImVec2(io.DisplaySize.x * 0.5f - textSize.x * 0.5f,
+		                         io.DisplaySize.y * 0.25f);
+
+		ImU32 shadow = ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.75f * alpha));
+		ImU32 color  = ImGui::GetColorU32(ImVec4(1.f, 0.85f, 0.25f, alpha));
+		const float off = 2.f * scale;
+
+		dl->AddText(font, fontPx, ImVec2(pos.x - off, pos.y), shadow, msg);
+		dl->AddText(font, fontPx, ImVec2(pos.x + off, pos.y), shadow, msg);
+		dl->AddText(font, fontPx, ImVec2(pos.x, pos.y - off), shadow, msg);
+		dl->AddText(font, fontPx, ImVec2(pos.x, pos.y + off), shadow, msg);
+		dl->AddText(font, fontPx, pos, color, msg);
+	}
+
 	// 복귀 토스트 (S_PlayerReturned 받을 때마다 누적, 2.5초 자동 만료)
 	DrawReturnToasts();
 
@@ -431,7 +462,8 @@ void CGameScene::Enter()
 	}
 
 	// 복귀존 상태 리셋 (재진입 시 이전 라운드 잔여값 제거) (싱글/멀티 모두 유효)
-	return_active = false;
+	return_active       = false;
+	return_notify_timer = 0.f;
 	return_center = {};
 	return_toasts.clear();
 	my_player->SetReturned(false);
@@ -2373,6 +2405,8 @@ void CGameScene::Handle_S_CHoldFail(std::shared_ptr<Session> session, S_CHoldFai
 
 void CGameScene::Handle_S_ReturnZoneActive(std::shared_ptr<Session> session, const S_ReturnZoneActive& pkt)
 {
+	if (!return_active)
+		return_notify_timer = 3.f;
 	return_active = true;
 	return_center = XMFLOAT3{ pkt.x, pkt.y, pkt.z };
 	return_range = pkt.range;
