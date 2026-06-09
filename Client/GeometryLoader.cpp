@@ -186,7 +186,7 @@ void CGeometryLoader::LoadMaterials(BinaryReader& br, std::vector<MaterialData>&
             }
             else if (br.IsTag(tag, "<NormalMap>:")) {
                 mat.normalMap = br.ReadName();
-                if (mat.normalMap == "null") mat.normalMap.clear();
+                if (mat.normalMap == "null") mat.normalMap = "default_normal";
             }
             else if (br.IsTag(tag, "<EmissionMap>:")) {
                 mat.emissionMap = br.ReadName();

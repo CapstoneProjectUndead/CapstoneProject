@@ -11,7 +11,7 @@ struct MaterialData
     float glossiness{ 0.25f };
     XMFLOAT4 emissive_color;
     UINT tex_idx{};
-    UINT normal_idx{ UINT_MAX };
+    UINT normal_idx{};
 };
 
 class CMaterial

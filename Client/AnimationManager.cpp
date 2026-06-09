@@ -66,7 +66,7 @@ void CAnimationManager::Initialize(const std::string& charName, const std::strin
     }
 }
 
-void CAnimationManager::CreateAnimationTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle)
+void CAnimationManager::CreateAnimationTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
 {
     // 모든 클립의 행렬 데이터를 하나의 연속된 메모리로 병합
     std::vector<XMFLOAT4X4> totalMatrices;
@@ -91,25 +91,13 @@ void CAnimationManager::CreateAnimationTexture(ID3D12Device* device, ID3D12Graph
         upload_buffer.GetAddressOf()
     );
 
-    // SRV 생성
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Buffer.FirstElement = 0;
-    srvDesc.Buffer.NumElements = (UINT)totalMatrices.size();
-    srvDesc.Buffer.StructureByteStride = sizeof(XMFLOAT4X4);
-    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-
-    device->CreateShaderResourceView(texture.Get(), &srvDesc, cpuDescriptorHandle);
-
     // gpu 등록 후 cpu에서 제거
     for (auto& [name, clip] : animations) {
         clip.ClearGPUMemory();
     }
 }
 
-void CAnimationManager::CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle)
+void CAnimationManager::CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
 {
     if (bone_masks.empty()) return;
 
@@ -130,18 +118,6 @@ void CAnimationManager::CreateMaskBuffer(ID3D12Device* device, ID3D12GraphicsCom
         D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
         mask_upload_buffer.GetAddressOf()
     );
-
-    // SRV 생성
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Buffer.FirstElement = 0;
-    srvDesc.Buffer.NumElements = (UINT)totalWeight.size();
-    srvDesc.Buffer.StructureByteStride = sizeof(float);
-    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-
-    device->CreateShaderResourceView(mask_buffer.Get(), &srvDesc, cpuDescriptorHandle);
 
     for (auto& mask : bone_masks) {
         mask.name.clear();
