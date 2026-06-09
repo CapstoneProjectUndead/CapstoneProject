@@ -81,9 +81,73 @@ void CPlayer::OnAttack()
     animator->PlayAction(attackClip);
 }
 
+// One-Euro 필터 알파 계산: cutoff(Hz)이 낮을수록 더 부드럽게(많이 평활), dt는 프레임 간격
+static float EuroAlpha(float cutoff, float dt)
+{
+    constexpr float kPi = 3.14159265358979f;
+    float tau = 1.0f / (2.0f * kPi * cutoff);
+    return 1.0f / (1.0f + tau / dt);
+}
+
 void CPlayer::RecordOpponentFrameHistory(const OpponentFrameHistory& state)
 {
-    interpolation_deq.push_back(state);
+    OpponentFrameHistory filtered = state;
+
+    // [One-Euro 필터] 서버 충돌계산이 메시 바닥에서 매 틱 좌표를 흔든다(YDiag로 Y 진폭 ~2.7mm,
+    // 버스트 3~7cm 측정). 원격 플레이어는 클라에 물리·예측이 없는 표시 전용 객체이므로, 받은
+    // 좌표를 보간 입력 단계에서 평활한다. 이진 데드밴드와 달리 One-Euro는 "느리면 강하게,
+    // 빠르면 약하게" 적응 평활하므로 떨림은 잡고 빠른 이동엔 렉(고무줄)이 안 생긴다.
+    // ===== 튜닝 노브 =====
+    //  kMinCutoff : 정지/저속 시 cutoff(Hz). 낮출수록 더 부드러움(떨림↓), 너무 낮으면 반응 둔해짐.
+    //  kBeta      : 속도에 따라 cutoff를 올리는 정도. 높일수록 빠른 이동에서 렉↓(단 떨림 살짝↑).
+    constexpr float kMinCutoff = 0.3f;   // Hz
+    constexpr float kBeta      = 0.2f;
+    constexpr float kDCutoff   = 1.0f;   // Hz (미분값 평활용)
+
+    if (!euro_init) {
+        // 첫 샘플: 필터 초기화
+        euro_init    = true;
+        euro_last_ts = state.server_timestamp;
+        euro_x_prev  = state.position;
+        euro_x_hat   = state.position;
+        euro_dx_hat  = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    }
+    else {
+        // 텔레포트/리스폰: 큰 점프는 평활하지 말고 즉시 스냅(필터 리셋)
+        float jump = Vector3::Length(Vector3::Subtract(state.position, euro_x_hat));
+        if (jump > 2.0f) {
+            euro_last_ts = state.server_timestamp;
+            euro_x_prev  = state.position;
+            euro_x_hat   = state.position;
+            euro_dx_hat  = XMFLOAT3(0.0f, 0.0f, 0.0f);
+        }
+        else {
+            float dt = state.server_timestamp - euro_last_ts;
+            if (dt < 0.0001f) dt = 1.0f / 60.0f; // 동일 타임스탬프 안전장치
+            euro_last_ts = state.server_timestamp;
+
+            auto filterAxis = [&](float x, float& xPrev, float& xHat, float& dxHat) -> float {
+                // 1. 미분(속도) 추정 후 미분값 평활
+                float dx  = (x - xPrev) / dt;
+                float aD  = EuroAlpha(kDCutoff, dt);
+                float edx = aD * dx + (1.0f - aD) * dxHat;
+                dxHat = edx;
+                // 2. 속도가 클수록 cutoff를 올려 평활 약화(렉 방지)
+                float cutoff = kMinCutoff + kBeta * std::abs(edx);
+                float aX = EuroAlpha(cutoff, dt);
+                float out = aX * x + (1.0f - aX) * xHat;
+                xHat  = out;
+                xPrev = x;
+                return out;
+            };
+
+            filtered.position.x = filterAxis(state.position.x, euro_x_prev.x, euro_x_hat.x, euro_dx_hat.x);
+            filtered.position.y = filterAxis(state.position.y, euro_x_prev.y, euro_x_hat.y, euro_dx_hat.y);
+            filtered.position.z = filterAxis(state.position.z, euro_x_prev.z, euro_x_hat.z, euro_dx_hat.z);
+        }
+    }
+
+    interpolation_deq.push_back(filtered);
 
     if (interpolation_deq.size() > RENDER_BUFFER_MAX_SIZE)
         interpolation_deq.pop_front();
@@ -206,29 +270,10 @@ void CPlayer::OpponentMoveSyncByInterpolation(float elapsedTime)
                 state = PLAYER_STATE::ATTACK;
             }
             else {
-                // [보간 이동]
-                // Frame A와 Frame B 사이의 실제 이동 거리 계산
-                // (서버가 보내준 두 점 사이의 거리가 얼마나 되는가?)
-                float intervalDist = Vector3::Length(Vector3::Subtract(frameB->position, frameA->position));
-
-                // 두 패킷 사이의 거리가 1cm 미만(0.01f)이면 '사실상 멈춤'으로 간주
-                if (intervalDist < 0.01f) {
-
-                    state = PLAYER_STATE::IDLE;
-
-                    if (frameA->state == PLAYER_STATE::WALK || frameA->state == PLAYER_STATE::RUN)
-                        state = frameA->state;
-                    if (frameB->state == PLAYER_STATE::WALK || frameB->state == PLAYER_STATE::RUN)
-                        state = frameB->state;
-
-                    nextPos = position;
-                }
-                else {
-                    if (frameA->state == PLAYER_STATE::RUN)
-                        state = PLAYER_STATE::RUN;
-                    else
-                        state = PLAYER_STATE::WALK;
-                }
+                // [보간 이동] 서버가 보낸 상태(WALK/RUN/IDLE)를 그대로 사용한다.
+                // 위치 간격(intervalDist)으로 상태를 재분류하면, 서버가 가끔 보내는
+                // near-duplicate 프레임에서 RUN↔IDLE이 깜빡여 달리기 애니메이션이 부들거린다.
+                state = frameB->state;
             }
 
             // 위치 이동

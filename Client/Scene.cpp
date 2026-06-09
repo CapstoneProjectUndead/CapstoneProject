@@ -675,7 +675,7 @@ void CScene::Handle_S_Move_Player(std::shared_ptr<Session>& session, const S_Pla
 			otherPlayer->SetDestInfo(info);
 		}
 
-		// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간 
+		// 상대 캐릭터는 서버 타임스탬프 기반 엔티티 보간
 		OpponentFrameHistory state{};
 		state.player_id = pkt.info.player_id;
 		state.state = pkt.info.state;
