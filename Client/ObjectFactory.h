@@ -92,6 +92,7 @@ public:
 
 	// 커스터마이징 Update
 	void UpdatePlayerTextures(std::shared_ptr<CPlayer> player);
+	void UpdateEyeTexture(std::shared_ptr<CPlayer> player);
 
 	// 외부 참조용
 	std::shared_ptr<CObject> GetPrototype(const std::string& name) {
@@ -100,6 +101,8 @@ public:
 	}
 
 private:
+	std::string ResolveEyeTexName(std::shared_ptr<CPlayer> player);
+
 	enum class UndeadMeshName {
 		body,
 		Bunny_ear,

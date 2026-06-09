@@ -160,9 +160,10 @@ void CCustomScene::DrawCustomizingWindow()
             OnCustomChanged();
             });
 
-        // 2. 눈 스타일 선택 (1 ~ 10종)
-        DrawSimpleSelector("EYES STYLE", eyes_idx, 10, nullptr, [&](int idx) {
-            if (my_player) my_player->ChangeEyes(idx);
+        // 2. 눈 스타일 선택 (eyes_5=기절, eyes_9=빙의 전용 → 커스터마이징 제외, 8종만 노출)
+        static const int eyesMap[] = { 0, 1, 2, 3, 5, 6, 7, 9 };
+        DrawSimpleSelector("EYES STYLE", eyes_idx, 8, nullptr, [&](int idx) {
+            if (my_player) my_player->ChangeEyes(eyesMap[idx]);
             OnCustomChanged();
             });
 
@@ -185,7 +186,7 @@ void CCustomScene::DrawCustomizingWindow()
                     C_CustomSelect selectPkt;
                     selectPkt.player_id = my_player->GetID();
                     selectPkt.body_type = body_idx; // 0 ~ 5의 통합 값이 패킷으로 전송됨
-                    selectPkt.eye_type = eyes_idx;
+                    selectPkt.eye_type = my_player->GetEyesIndex(); // UI 인덱스가 아닌 실제 텍스처 인덱스 전송
                     selectPkt.mouth_type = mouth_idx;
 
                     auto sendBuffer = MAKE_SEND_BUFFER(selectPkt);
