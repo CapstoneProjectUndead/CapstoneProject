@@ -346,7 +346,7 @@ void CTitleScene::DrawLogInWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(290.0f * scale, 175.0f * scale);
+    ImVec2 winSize = ImVec2(340.0f * scale, 175.0f * scale);
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -374,18 +374,53 @@ void CTitleScene::DrawLogInWindow()
 
         ImGui::Spacing(); ImGui::Spacing();
 
-        // 버튼 크기 및 중앙 정렬 스케일링
-        float btnWidth = 250.0f * scale;
-        float btnHeight = 50.0f * scale;
+        // 버튼 크기 및 중앙 정렬 스케일링 (두 버튼을 한 줄에 나란히)
+        float btnWidth = 150.0f * scale;
+        float btnHeight = 45.0f * scale;
+        float spacing = ImGui::GetStyle().ItemSpacing.x;
+        float totalWidth = btnWidth * 2.0f + spacing;
 
-        // 동적 중앙 정렬: (현재 창의 실제 너비 - 스케일 적용된 버튼 너비) / 2
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - btnWidth) * 0.5f);
+        // 동적 중앙 정렬: (창 너비 - 두 버튼 전체 너비) / 2
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - totalWidth) * 0.5f);
 
+        // 게스트 로그인 (회원가입 없이 바로 입장) — 초록색 버튼
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.26f, 0.63f, 0.28f, 1.0f)); // 기본
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.36f, 0.73f, 0.38f, 1.0f)); // 마우스 오버
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.20f, 0.50f, 0.22f, 1.0f)); // 클릭
+        bool guestClicked = ImGui::Button("Guest Login", ImVec2(btnWidth, btnHeight));
+        ImGui::PopStyleColor(3);
+        if (guestClicked) {
+            PlayClickSound();
+
+            // guest_login=true로 전송 → 서버가 ID/PW 검사 없이 입장 처리
+            C_LOGIN loginPkt;
+            loginPkt.guest_login = true;
+            COPY_STRING(loginPkt.id, "");
+            COPY_STRING(loginPkt.password, "");
+            auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
+
+            auto serverSession = CServerSessionManager::GetInstance().GetServerSession();
+            if (serverSession)
+                serverSession->DoSend(sendBuffer);
+
+            // 로딩 시작 및 창 초기화
+            StartLoading(LoadingType::Login);
+            memset(id, 0, sizeof(id));
+            memset(pw, 0, sizeof(pw));
+
+            // 폰트 스케일 원상 복구
+            ImGui::SetWindowFontScale(1.0f);
+        }
+
+        ImGui::SameLine();
+
+        // 일반 로그인 (ID/PW로 DB·파일 인증)
         if (ImGui::Button("Connect & Login", ImVec2(btnWidth, btnHeight))) {
             PlayClickSound();
 
             // 패킷 전송
             C_LOGIN loginPkt;
+            loginPkt.guest_login = false;
             COPY_STRING(loginPkt.id, id);
             COPY_STRING(loginPkt.password, pw);
             auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_LOGIN>(loginPkt);
@@ -398,12 +433,6 @@ void CTitleScene::DrawLogInWindow()
             StartLoading(LoadingType::Login);
             memset(id, 0, sizeof(id));
             memset(pw, 0, sizeof(pw));
-
-            // (임시)
-            //ActionResult result;
-            //result.Success("로그인 성공!");
-            //SetPopUpResult(result);
-            //StopLoading();
 
             // 폰트 스케일 원상 복구
             ImGui::SetWindowFontScale(1.0f);
@@ -463,10 +492,14 @@ void CTitleScene::DrawSignUpWindow()
         if (ImGui::Button((const char*)u8"가입 신청", ImVec2(btnWidth, btnHeight))) {
             PlayClickSound();
 
+            // ImGui 입력 문자열은 UTF-8이므로, 서버 규칙(CP949 수신 → to_utf8 변환)에
+            // 맞춰 보내기 전에 CP949로 변환한다. (방 생성 코드와 동일 패턴)
+            std::string cp949Name = UTF8ToCP949(name);
+
             C_SIGNUP signUpPkt;
             COPY_STRING(signUpPkt.id, id);
             COPY_STRING(signUpPkt.password, pw);
-            COPY_STRING(signUpPkt.name, name);
+            COPY_STRING(signUpPkt.name, cp949Name.c_str());
             auto sendBuffer = CServerPacketHandler::MakeSendBuffer<C_SIGNUP>(signUpPkt);
 
             auto session = CServerSessionManager::GetInstance().GetServerSession();

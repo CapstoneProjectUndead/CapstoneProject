@@ -54,7 +54,7 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     float3 selfSpecular = ComputeToonSpecular(toEyeW, worldNormal, toEyeW, glossiness);
     finalEmissive += selfSpecular * emissiveColor.rgb * 1.2f;
 
-    // 기존 앰비언트 계산에서 emissiveColor를 빼고 finalEmissive를 나중에 더해줍니다.
+    // ambient, light 계산
     float4 ambient = ambientLight * albedo * ao;
     float3 directLighting = 0.0f;
 #if (NUM_DIR_LIGHTS > 0)

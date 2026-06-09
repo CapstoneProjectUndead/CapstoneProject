@@ -317,32 +317,32 @@ void CGameScene::EnterScene(shared_ptr<CPlayer> player)
 	// 라운드 진입 시 복귀 상태 리셋 (재라운드 대비)
 	player->SetReturned(false);
 
-	if (!player->get_items_once) {
-		uint32 itemList[14] = { 1,5,9,14,15,16,17,19,25,24,45,47,48,49 };
-		vector<shared_ptr<CItem>> items;
-		for (int i = 0; i < 14; ++i) {
-			auto item = item_manager->CreateItem(itemList[i]);
-			items.push_back(item);
-		}
-
-		S_ADDITEMLIST_WRITE pktWriter(player->GetID(), scene_type);
-		auto list = pktWriter.ReserveItemList(items.size());
-
-		uint32 i = 0;
-		for (auto& item : items) {
-			player->GetInventory()->AddItem(item);
-			list[i].item_id = item->GetItemId();
-			list[i].inventory_id = item->GetInventoryID();
-			list[i].item_type = item->GetItemType();
-			++i;
-		}
-
-		auto sendBuffer = pktWriter.CloseAndReturn();
-		if (auto s = player->GetSession())
-			s->DoSend(sendBuffer);
-
-		player->get_items_once = true;
-	}
+	//if (!player->get_items_once) {
+	//	uint32 itemList[14] = { 1,5,9,14,15,16,17,19,25,24,45,47,48,49 };
+	//	vector<shared_ptr<CItem>> items;
+	//	for (int i = 0; i < 14; ++i) {
+	//		auto item = item_manager->CreateItem(itemList[i]);
+	//		items.push_back(item);
+	//	}
+	//
+	//	S_ADDITEMLIST_WRITE pktWriter(player->GetID(), scene_type);
+	//	auto list = pktWriter.ReserveItemList(items.size());
+	//
+	//	uint32 i = 0;
+	//	for (auto& item : items) {
+	//		player->GetInventory()->AddItem(item);
+	//		list[i].item_id = item->GetItemId();
+	//		list[i].inventory_id = item->GetInventoryID();
+	//		list[i].item_type = item->GetItemType();
+	//		++i;
+	//	}
+	//
+	//	auto sendBuffer = pktWriter.CloseAndReturn();
+	//	if (auto s = player->GetSession())
+	//		s->DoSend(sendBuffer);
+	//
+	//	player->get_items_once = true;
+	//}
 }
 
 void CGameScene::LeaveScene(uint64 playerId)
