@@ -32,6 +32,12 @@ public:
             return "portrait_cat";
         case PLAYER_IMAGE::BUNNY:
             return "portrait_bunny";
+        case PLAYER_IMAGE::DOG2:
+            return "portrait_dog2";
+        case PLAYER_IMAGE::CAT2:
+            return "portrait_cat2";
+        case PLAYER_IMAGE::BUNNY2:
+            return "portrait_bunny2";
             default:
                 return nullptr;
         }

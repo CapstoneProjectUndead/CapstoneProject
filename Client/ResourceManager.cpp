@@ -43,6 +43,9 @@ void CResourceManager::LoadCustomSceneTextures(ID3D12Device* device, ID3D12Comma
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_dog", L"../Resource/CustomScene/Dog.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_cat", L"../Resource/CustomScene/Cat.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_bunny", L"../Resource/CustomScene/Bunny.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_dog2", L"../Resource/CustomScene/Dog2.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_cat2", L"../Resource/CustomScene/Cat2.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "portrait_bunny2", L"../Resource/CustomScene/Bunny2.png");
 }
 
 void CResourceManager::LoadLobbySceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)

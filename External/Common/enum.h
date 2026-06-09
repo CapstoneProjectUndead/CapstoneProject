@@ -30,6 +30,9 @@ enum class PLAYER_IMAGE : uint8_t
 	DOG,
 	CAT,
 	BUNNY,
+	DOG2,
+	CAT2,
+	BUNNY2,
 };
 
 // C키 홀드 대상 종류 (서버/클라 공용)

@@ -336,7 +336,7 @@ void CPlayer::ChangeModelSet(int setIndex)
     model_type_idx = setIndex;
 
     // UI 프로필 이미지 매핑
-    player_image = static_cast<PLAYER_IMAGE>((setIndex % 3) + 1);
+    player_image = static_cast<PLAYER_IMAGE>((setIndex % 6) + 1);
 
     // 귀/꼬리 메시 활성화/비활성화 제어 (0,3 -> Dog / 1,4 -> Cat / 2,5 -> Bunny)
     int meshGroupIndex = setIndex % 3;

@@ -847,7 +847,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 	if (isBareHand) {
 		if (KEY_PRESSED(KEY::LBTN) && !isMoving && mining_target) {
 			bare_hand_dig_timer += elapsedTime;
-			if (bare_hand_dig_timer >= 4.0f) {
+			if (bare_hand_dig_timer >= 8.0f) {
 				bare_hand_dig_timer = 0.0f;
 
 				bool stillExist = false;
