@@ -346,7 +346,7 @@ void CTitleScene::DrawLogInWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(340.0f * scale, 175.0f * scale);
+    ImVec2 winSize = ImVec2(340.0f * scale, 0.0f); // 높이 0 = 콘텐츠에 맞춰 자동(버튼 아래 빈 공간 제거)
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -415,7 +415,7 @@ void CTitleScene::DrawLogInWindow()
         ImGui::SameLine();
 
         // 일반 로그인 (ID/PW로 DB·파일 인증)
-        if (ImGui::Button("Connect & Login", ImVec2(btnWidth, btnHeight))) {
+        if (ImGui::Button("Login", ImVec2(btnWidth, btnHeight))) {
             PlayClickSound();
 
             // 패킷 전송
@@ -453,7 +453,7 @@ void CTitleScene::DrawSignUpWindow()
 
     float scale = G_RATIO_Y;
 
-    ImVec2 winSize = ImVec2(295.0f * scale, 195.0f * scale);
+    ImVec2 winSize = ImVec2(295.0f * scale, 0.0f); // 높이 0 = 콘텐츠에 맞춰 자동(버튼 아래 빈 공간 제거)
     ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.65f);
 
     ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
