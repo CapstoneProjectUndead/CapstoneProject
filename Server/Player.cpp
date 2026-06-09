@@ -873,7 +873,7 @@ void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, b
                     SendSoundPacket(false, SOUND_ID::bare_hand_dig, GetPosition(), 0, 3.33f);
                 }
 
-                if (bare_hand_dig_timer >= 4.0f) {
+                if (bare_hand_dig_timer >= 8.0f) {
                     bare_hand_dig_timer = 0.0f;
                     bare_hand_sound_timer = -1.0f;
                     state = PLAYER_STATE::IDLE;
