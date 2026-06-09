@@ -547,6 +547,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->ChangeModelSet(pkt.info.body_type);
 		otherPlayer->ChangeEyes(pkt.info.eyes_type);
 		otherPlayer->ChangeMouth(pkt.info.mouth_type);
+		factory->UpdatePlayerTextures(otherPlayer);
 
 		AddObject(otherPlayer, otherPlayer->GetID());
 		player_slot_ids.push_back(otherPlayer->GetID());
@@ -583,6 +584,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 		otherPlayer->ChangeModelSet(userList[i].info.body_type);
 		otherPlayer->ChangeEyes(userList[i].info.eyes_type);
 		otherPlayer->ChangeMouth(userList[i].info.mouth_type);
+		factory->UpdatePlayerTextures(otherPlayer);
 
 		// Active Scene에 다른 유저 입장
 		AddObject(otherPlayer, otherPlayer->GetID());
