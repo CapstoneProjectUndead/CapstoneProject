@@ -194,6 +194,10 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 				pos.y += 2.23f;
 				light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
 			}
+			else if (inst.model == EModelVariant::BOXTABLE) {
+				XMFLOAT3 pos{ inst.position };
+				light->AddPointLight(Vector3::Add(pos, XMFLOAT3(0.716000021, 0.934000015, -0.291999996)), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+			}
 		}
 	}
 }

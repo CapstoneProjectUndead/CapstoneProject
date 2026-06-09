@@ -1,6 +1,6 @@
 #ifndef __COMMON_HLSLI__
 #define __COMMON_HLSLI__
-#define MaxLights 16
+#define MaxLights 20
 
 #ifndef NUM_DIR_LIGHTS
     #define NUM_DIR_LIGHTS 1

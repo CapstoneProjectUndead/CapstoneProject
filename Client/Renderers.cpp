@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Renderers.h"
 #include "GameFramework.h"
 #include "Mesh.h"
@@ -303,7 +303,7 @@ void CTextRenderer::Initialize(ID3D12Device* device, ID3D12CommandQueue* command
     default_font = std::make_unique<SpriteFont>(
         device,
         uploadBatch,
-        L"../Modeling/font/MalgunGothic.spritefont",
+        L"../Modeling/font/gyeong.spritefont",
         cpuHandle,
         gpuHandle
     );

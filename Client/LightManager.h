@@ -1,6 +1,6 @@
 #pragma once
 #ifndef MaxLights
-#define MaxLights 16
+#define MaxLights 20
 #endif
 #ifndef MAX_POINT_LIGHTS
 #define MAX_POINT_LIGHTS MaxLights - 1

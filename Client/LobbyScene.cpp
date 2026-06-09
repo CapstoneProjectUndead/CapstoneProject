@@ -96,7 +96,7 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	if (!light) {
 		light = std::make_unique<CLightManager>();
 		light->Initialize(device, commandList);
-		light->AddPointLight(XMFLOAT3(2.49913216, 1.35, 1.45683444), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);			// Lamp on table
+		light->AddPointLight(XMFLOAT3(2.49913216, 1.5, 1.45683444), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);			// Lamp on table
 		light->AddPointLight(XMFLOAT3(1.83547652, 2.55953884, -2.89159632), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);	// Lamp on StoneBed
 		light->AddPointLight(XMFLOAT3(-2.58500004, 1.03499997, 4.06699991), XMFLOAT3(0.5f, 0.5f, 0.5f), 0.5f, 1.5f);	// reaper
 		light->AddPointLight(XMFLOAT3(-2.44799995, 0.48300001, -0.216999993), XMFLOAT3(1.0f, 0.8f, 0.6f), 0.5f, 1.5f);	// firewood
