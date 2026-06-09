@@ -393,6 +393,10 @@ void CGameScene::DrawUI()
 		if (quick_slot && (my_player->GetState() != PLAYER_STATE::DEAD))
 			quick_slot->Draw();
 
+		// 상호작용 안내 문구 (멀티 전용, 진행 중엔 자동 숨김)
+		if (!g_is_single)
+			DrawCHoldPrompt();
+
 		// 빙의 해제 / 빈사 소생 진행 바 (멀티 전용) — 대상 종류에 따라 다른 UI
 		if (!g_is_single && my_player->GetCHoldProgress() > 0.0f) {
 			CSoundManager::GetInstance().Play(SOUND_ID::clock_alarm, 0);
@@ -1396,6 +1400,63 @@ void CGameScene::DrawRescueProgressBar()
 
 	ImGui::End();
 	ImGui::PopStyleVar(3);
+}
+
+void CGameScene::DrawCHoldPrompt()
+{
+	if (!my_player) return;
+	if (my_player->IsIncapacitated() || my_player->GetIsPossessed() || my_player->GetDowsing()) return;
+	if (my_player->GetCHoldProgress() > 0.0f) return;
+
+	XMFLOAT3 myPos = my_player->GetPosition();
+	const char* text = nullptr;
+	ImVec4 mainColor;
+
+	for (auto& obj : objects) {
+		auto* player = dynamic_cast<CPlayer*>(obj.get());
+		if (!player || player == my_player.get()) continue;
+
+		bool isPossessed = player->GetIsPossessed();
+		bool isRescuable = (player->GetState() == PLAYER_STATE::ALMOST_DEAD);
+		if (!isPossessed && !isRescuable) continue;
+
+		XMFLOAT3 diff = Vector3::Subtract(player->GetPosition(), myPos);
+		diff.y = 0.0f;
+		if (Vector3::Length(diff) <= 0.9f) {
+			if (isPossessed) {
+				// 빙의 풀기
+				text = "[ C ] \xEB\xB9\x99\xEC\x9D\x98 \xED\x92\x80\xEA\xB8\xB0";
+				mainColor = ImVec4(0.5f, 0.75f, 1.f, 1.f);
+			}
+			else {
+				// 소생하기
+				text = "[ C ] \xEC\x86\x8C\xEC\x83\x9D\xED\x95\x98\xEA\xB8\xB0";
+				mainColor = ImVec4(0.4f, 0.95f, 0.4f, 1.f);
+			}
+			break;
+		}
+	}
+
+	if (!text) return;
+
+	ImGuiIO&    io   = ImGui::GetIO();
+	ImDrawList* dl   = ImGui::GetForegroundDrawList();
+	ImFont*     font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+	const float scale  = G_RATIO_Y;
+	const float fontPx = 32.f * scale;
+
+	ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, text);
+	ImVec2 pos      = ImVec2(io.DisplaySize.x * 0.5f - textSize.x * 0.5f, io.DisplaySize.y * 0.62f);
+
+	ImU32 shadow = ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.7f));
+	ImU32 main   = ImGui::GetColorU32(mainColor);
+	const float off = 1.5f * scale;
+
+	dl->AddText(font, fontPx, ImVec2(pos.x - off, pos.y), shadow, text);
+	dl->AddText(font, fontPx, ImVec2(pos.x + off, pos.y), shadow, text);
+	dl->AddText(font, fontPx, ImVec2(pos.x, pos.y - off), shadow, text);
+	dl->AddText(font, fontPx, ImVec2(pos.x, pos.y + off), shadow, text);
+	dl->AddText(font, fontPx, pos, main, text);
 }
 
 void CGameScene::PlayMeleeAttackSound()

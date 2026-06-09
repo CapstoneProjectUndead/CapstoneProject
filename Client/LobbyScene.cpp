@@ -194,7 +194,10 @@ void CLobbyScene::DrawInteractPrompt(InteractZone zone)
 	ImFont*     font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
 	const float scale = G_RATIO_Y;
 
-	const char* text   = "Press C key";
+	// Reaper=상점, Entrance=지상으로 떠나기
+	const char* text = (zone == InteractZone::Reaper)
+		? "[ C ] \xEC\x83\x81\xEC\xA0\x90 \xEC\x9D\xB4\xEC\x9A\xA9\xED\x95\x98\xEA\xB8\xB0"
+		: "[ C ] \xEC\xA7\x80\xEC\x83\x81\xEC\x9C\xBC\xEB\xA1\x9C \xEB\x8D\x94\xEB\x82\x98\xEA\xB8\xB0";
 	const float fontPx = 32.f * scale;
 
 	ImVec2 textSize = font->CalcTextSizeA(fontPx, FLT_MAX, 0.f, text);
