@@ -19,6 +19,7 @@ struct CharacterAnimSet;
 
 namespace CGeometryLoader {
 	struct FrameNode;
+	struct MaterialData;
 }
 enum EColLayer : uint32_t;
 
@@ -114,6 +115,8 @@ private:
 		Unknown
 	};
 
+	// rawMatData를 적용
+	std::shared_ptr<CMaterialComponent> CreateMaterialComponent(const CGeometryLoader::MaterialData& rawMatData, const EShaderName shaderName, CDescriptorHeapManager* heapManager);
 	void LoadNode(const std::string fileName, EShaderName shaderName = EShaderName::Skinning);
 	// string to enum mapping
 	UndeadMeshName stringToUndeadMeshName(const std::string& str);
