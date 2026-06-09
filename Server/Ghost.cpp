@@ -279,8 +279,8 @@ void CGhost::OnAttackMove(float elapsedTime)
 		velocity.z = 0.0f;
 	}
 
-	// 빙의 판정
-	if (!hit_damage_dealt && attack_timer >= 1.1f) {
+	// 빙의 판정 (targetPlayer 가드 필수: 공격 중 플레이어 접속 종료 시 lock()이 null → 역참조 크래시)
+	if (!hit_damage_dealt && attack_timer >= 1.1f && targetPlayer) {
 		XMFLOAT3 targetPos = targetPlayer->GetPosition();
 		SendSoundPacket(false, SOUND_ID::ghost_attack, targetPos);
 

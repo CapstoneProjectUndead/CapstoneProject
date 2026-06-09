@@ -549,16 +549,16 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 		}
 	}
 
-	// 저장 기록이 없으면(첫 로그인 등) 기본 코인만 지급하고 종료
+	// 저장 기록이 없으면(첫 로그인 등) 코인 0으로 시작 (게스트만 10000, ID 유저는 무일푼)
 	if (accountId.empty() || !root.is_object() || !root.contains(accountId)) {
-		player->SetCoin(10000);
+		player->SetCoin(0);
 		return;
 	}
 
 	const nlohmann::json& entry = root[accountId];
 
 	// 코인 로드
-	player->SetCoin(entry.value("coin", 10000u));
+	player->SetCoin(entry.value("coin", 0u));
 
 	// 아이템 로드: 서버 인벤토리에 도감번호로 생성해 추가
 	auto inventory = player->GetInventory();
