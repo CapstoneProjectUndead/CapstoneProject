@@ -150,3 +150,19 @@ bool CObject::IsVisible(const BoundingFrustum& frustum)
 	// DirectX의 내장 함수 사용 (가장 효율적)
 	return frustum.Intersects(world_sphere);
 }
+
+// CParticleObject
+CParticleObject::CParticleObject()
+	: CObject(OBJECT_TYPE::STATIC_OBJECT)
+{
+}
+
+CParticleObject::CParticleObject(const XMFLOAT4& color)
+	: CObject(OBJECT_TYPE::STATIC_OBJECT), color{color}
+{
+}
+
+void CParticleObject::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
+{
+	renderers[EShaderName::Billboard]->AddInstance(nullptr, color, world_matrix, true);
+}

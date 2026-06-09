@@ -84,6 +84,7 @@ void CSceneManager::Init(ID3D12Device* device)
 	}
 	{
 		factory->GetMaterial("white", EShaderName::UI);	// 인덱스 0에 생성하기 위해 먼저 생성
+		factory->GetMaterial("white", EShaderName::Billboard);	// 인덱스 0에 생성하기 위해 먼저 생성
 		factory->LoadTwoSideFrame();
 		factory->LoadItemFrame();
 		factory->LoadGameScene();

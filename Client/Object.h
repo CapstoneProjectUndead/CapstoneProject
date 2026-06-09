@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CComponent;
 class CShader;
@@ -151,3 +151,12 @@ std::vector<T*> CObject::GetComponents() const
 
 	return result;
 }
+
+class CParticleObject : public CObject {
+public:
+	CParticleObject();
+	CParticleObject(const XMFLOAT4& color);
+	void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
+private:
+	XMFLOAT4 color{ 1.0, 0,0,1 };
+};

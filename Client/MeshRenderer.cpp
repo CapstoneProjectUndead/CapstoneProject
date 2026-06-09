@@ -5,9 +5,6 @@
 #include "Collider.h"
 #include "Renderers.h"
 #include "Animator.h"
-#ifdef DEBUG
-#include "GameFramework.h"
-#endif // DEBUG
 
 void CMeshComponent::SetMesh(std::shared_ptr<CMesh>& m)
 {
@@ -35,13 +32,6 @@ void CMeshRendererComponent::Render(ID3D12GraphicsCommandList* commandList)
 	for (auto& unit : render_units) {
 		if (!unit.mesh->is_enable) continue;
 		if (unit.material && !unit.material->is_enable) continue;
-
-		//CInstRenderer::GetInstance().AddInstance(unit.mesh->GetMesh().get(), unit.material, owner->world_matrix);
-#ifdef DEBUG
-		auto collider = owner->GetComponents<CColliderComponent>();
-		for (auto c : collider)
-			c->Render(commandList);
-#endif
 	}
 }
 
@@ -64,10 +54,5 @@ void CMeshRendererComponent::Collect(std::unique_ptr<IRenderer>& renderer, bool 
 		}
 		else
 			renderer->AddInstance(unit.mesh->GetMesh(), unit.material, owner->world_matrix, unit.submesh_index, isStatic);
-#ifdef DEBUG
-		auto collider = owner->GetComponents<CColliderComponent>();
-		for (auto c : collider)
-			c->Render(GET_CMD_LIST);
-#endif
 	}
 }

@@ -257,6 +257,13 @@ void CScene::RenderDeferred(ID3D12GraphicsCommandList* commandList, ID3D12Resour
 		}
 		shaders[EShaderName::SkyBox]->RenderEnd(commandList);
 	}
+	if (shaders[EShaderName::Billboard]) {
+		shaders[EShaderName::Billboard]->RenderBegin(commandList);
+		camera->UpdateShaderVariablesBillBoard(commandList);
+		renderers[EShaderName::Billboard]->Render(commandList);
+		renderers[EShaderName::Billboard]->ClearAllBatch();
+		shaders[EShaderName::Billboard]->RenderEnd(commandList);
+	}
 	if (shaders[EShaderName::UI] && renderers[EShaderName::UI]) {
 		shaders[EShaderName::UI]->RenderBegin(commandList);
 		camera->UpdateShaderVariables(commandList, true);

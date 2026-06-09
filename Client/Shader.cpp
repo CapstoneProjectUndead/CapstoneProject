@@ -1242,6 +1242,16 @@ D3D12_SHADER_BYTECODE CBillboardShader::CreateGeometryShader(ID3DBlob** shaderBl
 	return CompileShaderFromFile(L"BillboardShader.hlsl", "GS", "gs_5_1", shaderBlob);
 }
 
+D3D12_DEPTH_STENCIL_DESC CBillboardShader::CreateDepthStencilState()
+{
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	depthStencilDesc.StencilEnable = FALSE;
+	return depthStencilDesc;
+}
+
 ID3D12RootSignature* CBillboardShader::CreateGraphicsRootSignature(ID3D12Device* device)
 {
 	ID3D12RootSignature* graphicsRootSignature{};
@@ -1339,7 +1349,6 @@ void CBillboardShader::CreateShader(ID3D12Device* device)
 	if (pipelineStateDesc.InputLayout.pInputElementDescs) delete[] pipelineStateDesc.InputLayout.pInputElementDescs;
 }
 
-
 D3D12_RASTERIZER_DESC CBillboardShader::CreateRasterizerState()
 {
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
@@ -1358,6 +1367,7 @@ D3D12_RASTERIZER_DESC CBillboardShader::CreateRasterizerState()
 	return rasterizerDesc;
 }
 
+// CSkyBoxShader
 D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout()
 {
 	const UINT inputElementDescNum = 1;
