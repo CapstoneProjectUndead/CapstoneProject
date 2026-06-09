@@ -107,7 +107,7 @@ protected:
     float trace_speed = 2.0f;  // 추격 속도
 
     // 근접 피격
-    static constexpr int   MAX_HP                = 100;
+    static constexpr int   MAX_HP                   = 100;
     static constexpr float MELEE_KNOCKBACK_DURATION = 0.25f;
     static constexpr float MELEE_KNOCKBACK_FORCE    = 3.0f;
     int       hp                    = MAX_HP;

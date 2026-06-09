@@ -129,7 +129,7 @@ private:
     uint32                  world_item_id_counter = WORLD_ITEM_ID_BASE;
 
     // 라운드 타이머
-    static constexpr float  ROUND_DURATION = 600.f; // 10분
+    static constexpr float  ROUND_DURATION = 121.f; // 10분
     static constexpr float  RETURN_RANGE   = 1.0f; // 복귀존/맨홀 반경 (시각=판정)
     float                   round_timer    = 0.f;
     bool                    round_active   = false;

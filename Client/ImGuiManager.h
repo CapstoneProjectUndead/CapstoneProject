@@ -31,8 +31,10 @@ public:
 public:
     static ImFont* vineritc_font;
     static ImFont* elephnt_font;
-    static ImFont* bold_font; 
-    static ImFont* creepster_font; 
+    static ImFont* bold_font;
+    static ImFont* creepster_font;
+    static ImFont* gyeonggi_font;
+    static ImFont* gyeonggi_batang_font;
     static bool need_reset_focus;
 
 public:

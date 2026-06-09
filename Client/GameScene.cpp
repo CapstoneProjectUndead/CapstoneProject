@@ -1761,8 +1761,8 @@ void CGameScene::DrawSettlementModal()
 
 	// 보물 합계
 	ImGui::PushFont(boldFont);
-	// "보물 합계: %u 코인"
-	snprintf(fmtBuf, sizeof(fmtBuf), "\xEB\xB3\xB4\xEB\xAC\xBC \xED\x95\xA9\xEA\xB3\x84: %u \xEC\xBD\x94\xEC\x9D\xB8",
+	// "보물 합계: %u 골드"
+	snprintf(fmtBuf, sizeof(fmtBuf), "\xEB\xB3\xB4\xEB\xAC\xBC \xED\x95\xA9\xEA\xB3\x84: %u \xEA\xB3\xA8\xEB\x93\x9C",
 	    settlement_result.base_coin);
 	rightAlignedText(fmtBuf);
 	ImGui::PopFont();
@@ -1783,11 +1783,11 @@ void CGameScene::DrawSettlementModal()
 
 	ImGui::Separator();
 
-	// === 최종 코인: 골드 하이라이트 박스 ===
+	// === 최종 골드: 골드 하이라이트 박스 ===
 	ImGui::PushFont(boldFont);
 	{
-		// "최종 코인: %u"
-		snprintf(fmtBuf, sizeof(fmtBuf), "\xEC\xB5\x9C\xEC\xA2\x85 \xEC\xBD\x94\xEC\x9D\xB8: %u", settlement_result.final_coin);
+		// "최종 골드: %u"
+		snprintf(fmtBuf, sizeof(fmtBuf), "\xEC\xB5\x9C\xEC\xA2\x85 \xEA\xB3\xA8\xEB\x93\x9C: %u", settlement_result.final_coin);
 
 		ImVec2 boxStart  = ImGui::GetCursorScreenPos();
 		float  boxLocalY = ImGui::GetCursorPosY();

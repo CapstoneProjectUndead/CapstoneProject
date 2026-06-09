@@ -19,6 +19,8 @@ ImFont* CImGuiManager::vineritc_font = nullptr;
 ImFont* CImGuiManager::elephnt_font = nullptr;
 ImFont* CImGuiManager::bold_font = nullptr;
 ImFont* CImGuiManager::creepster_font = nullptr;
+ImFont* CImGuiManager::gyeonggi_font = nullptr;
+ImFont* CImGuiManager::gyeonggi_batang_font = nullptr;
 
 CImGuiManager::CImGuiManager()
 {
@@ -37,7 +39,9 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* cm
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsLight();
 
-    // 폰트 로드
+    // 폰트 로드 (첫 번째 = 기본 폰트)
+    gyeonggi_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/gyeonggi_medium.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+    gyeonggi_batang_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/gyeonggi_batang.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     vineritc_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
     elephnt_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
@@ -303,10 +307,12 @@ void CImGuiManager::DrawRoundTimer(float remainSec)
     char buf[16];
     snprintf(buf, sizeof(buf), "%02d:%02d", m, s);
 
-    // 색상: 30초 이하 빨강 / 60초 이하 노랑 / 그 외 흰색
+    // 색상: 30초 이하 빨강 / 120초 이하 노랑 / 그 외 흰색
     ImVec4 color = ImVec4(1.f, 1.f, 1.f, 1.f);
-    if (remainSec <= 30.f) color = ImVec4(1.0f, 0.25f, 0.25f, 1.0f);
-    else if (remainSec <= 60.f) color = ImVec4(1.0f, 0.85f, 0.25f, 1.0f);
+    if (remainSec <= 30.f) 
+        color = ImVec4(1.0f, 0.25f, 0.25f, 1.0f);
+    else if (remainSec <= 120.f) 
+        color = ImVec4(1.0f, 0.85f, 0.25f, 1.0f);
 
     ImGuiIO& io = ImGui::GetIO();
     const float scale = G_RATIO_Y;

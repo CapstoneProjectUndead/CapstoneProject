@@ -232,11 +232,11 @@ void CInventory::DrawTitleBar(float winW, float titleH)
 
 		ImGui::SetWindowFontScale(scale);
 
-		// "Inventory" 텍스트 가운데 정렬 (Bold + 형광 노란색)
-		const char* title = "Inventory";
+		// "인벤토리" 텍스트 가운데 정렬 (경기천년제목 + 형광 노란색)
+		const char* title = (const char*)u8"인벤토리";
 
-		if (CImGuiManager::bold_font) 
-			ImGui::PushFont(CImGuiManager::bold_font);
+		if (CImGuiManager::gyeonggi_font)
+			ImGui::PushFont(CImGuiManager::gyeonggi_font);
 
 		float textW = ImGui::CalcTextSize(title).x;
 		ImGui::SetCursorPos(ImVec2((winW - textW) * 0.5f, (titleH - ImGui::GetTextLineHeight()) * 0.5f));
@@ -244,7 +244,7 @@ void CInventory::DrawTitleBar(float winW, float titleH)
 		ImGui::Text(title);
 		ImGui::PopStyleColor();
 
-		if (CImGuiManager::bold_font)
+		if (CImGuiManager::gyeonggi_font)
 			ImGui::PopFont();
 
 		ImGui::SetWindowFontScale(1.0f);
@@ -291,7 +291,7 @@ void CInventory::DrawTabBar()
 		}
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-		ImGui::PushFont(CImGuiManager::bold_font);
+		ImGui::PushFont(CImGuiManager::gyeonggi_font);
 
 		if (ImGui::Button(tabs[i].label, ImVec2(tabW, tabH)))
 			active_tab = tabs[i].type;
@@ -616,9 +616,9 @@ void CInventory::DrawItemTooltip(CItem* item)
 
 		ImGui::SetWindowFontScale(scale);
 
-		// ── 1. 아이템 이름 (가운데 정렬, 볼드) ─────────────────────
-		if (CImGuiManager::bold_font)
-			ImGui::PushFont(CImGuiManager::bold_font);
+		// ── 1. 아이템 이름 (가운데 정렬, 경기천년바탕) ──────────────
+		if (CImGuiManager::gyeonggi_batang_font)
+			ImGui::PushFont(CImGuiManager::gyeonggi_batang_font);
 
 		const char* name   = item->GetName().c_str();
 		float       totalW = imgSz + padX + descW;
@@ -628,8 +628,10 @@ void CInventory::DrawItemTooltip(CItem* item)
 		ImGui::Text("%s", name);
 		ImGui::PopStyleColor();
 
-		if (CImGuiManager::bold_font)
+		if (CImGuiManager::gyeonggi_batang_font)
 			ImGui::PopFont();
+
+		ImGui::Dummy(ImVec2(0.0f, padY * 0.5f));
 
 		// ── 2. 구분선 ────────────────────────────────────────────
 		ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.55f, 0.55f, 0.58f, 0.7f));
@@ -677,9 +679,11 @@ void CInventory::DrawItemTooltip(CItem* item)
 				// 설명 표시
 				const std::string& desc = item->GetDescription();
 				if (!desc.empty()) {
+					ImGui::SetWindowFontScale(scale * 0.85f);
 					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.78f, 0.88f, 1.0f, 0.92f));
 					ImGui::TextWrapped("%s", desc.c_str());
 					ImGui::PopStyleColor();
+					ImGui::SetWindowFontScale(scale);
 
 					ImGui::Dummy(ImVec2(0.0f, 3.0f * scale));
 					ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.45f, 0.45f, 0.50f, 0.5f));
@@ -699,6 +703,7 @@ void CInventory::DrawItemTooltip(CItem* item)
 				                                 : ImVec4(0.9f, 0.2f, 0.2f, 1.0f);
 
 				// 내구도 레이블 (황금색)
+				ImGui::SetWindowFontScale(scale * 0.72f);
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.88f, 0.72f, 0.35f, 1.0f));
 				ImGui::TextUnformatted((const char*)u8"내구도");
 				ImGui::PopStyleColor();
@@ -709,6 +714,7 @@ void CInventory::DrawItemTooltip(CItem* item)
 				ImGui::PushStyleColor(ImGuiCol_Text, barColor);
 				ImGui::TextUnformatted(durBuf);
 				ImGui::PopStyleColor();
+				ImGui::SetWindowFontScale(scale);
 
 				// 내구도 바
 				ImVec2 barMin = ImGui::GetCursorScreenPos();
@@ -721,10 +727,47 @@ void CInventory::DrawItemTooltip(CItem* item)
 				ImGui::Dummy(ImVec2(descW, 10.0f * scale));
 			}
 			else {
-				// 내구도 없는 장비 / 소비 / 기타 / 보물: 설명만 표시
+				// 설명 표시
 				const std::string& desc = item->GetDescription();
-				if (!desc.empty())
+				if (!desc.empty()) {
+					ImGui::SetWindowFontScale(scale * 0.85f);
 					ImGui::TextWrapped("%s", desc.c_str());
+					ImGui::SetWindowFontScale(scale);
+				}
+
+				// 소비 아이템: HP / 스태미나 회복량 표시
+				auto* consumable = dynamic_cast<CConsumable*>(item);
+				if (consumable) {
+					uint32 hp  = consumable->GetHealAmount();
+					uint32 sta = consumable->GetEnergyAmount();
+
+					if (hp > 0 || sta > 0) {
+						if (!desc.empty()) {
+							ImGui::Dummy(ImVec2(0.0f, 3.0f * scale));
+							ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.45f, 0.45f, 0.50f, 0.5f));
+							ImGui::Separator();
+							ImGui::PopStyleColor();
+							ImGui::Dummy(ImVec2(0.0f, 3.0f * scale));
+						}
+
+						ImGui::SetWindowFontScale(scale * 0.72f);
+						if (hp > 0) {
+							char buf[32];
+							snprintf(buf, sizeof(buf), "HP(+%u)", hp);
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.4f, 1.0f)); // 초록
+							ImGui::TextUnformatted(buf);
+							ImGui::PopStyleColor();
+						}
+						if (sta > 0) {
+							char buf[32];
+							snprintf(buf, sizeof(buf), (const char*)u8"스태미나(+%u)", sta);
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.7f, 1.0f, 1.0f)); // 하늘색
+							ImGui::TextUnformatted(buf);
+							ImGui::PopStyleColor();
+						}
+						ImGui::SetWindowFontScale(scale);
+					}
+				}
 			}
 
 			ImGui::PopTextWrapPos();
@@ -764,10 +807,10 @@ void CInventory::DrawBottomBar()
 		dl->AddRectFilled(wpos, ImVec2(wpos.x + wsz.x, wpos.y + wsz.y),
 		                  IM_COL32(255, 199, 0, 255), 20.0f * scale, ImDrawFlags_RoundCornersBottom);
 
-		ImGui::SetWindowFontScale(scale);
+		ImGui::SetWindowFontScale(scale * 0.7f);
 
-		if (CImGuiManager::bold_font)
-			ImGui::PushFont(CImGuiManager::bold_font);
+		if (CImGuiManager::gyeonggi_font)
+			ImGui::PushFont(CImGuiManager::gyeonggi_font);
 
 		float barH    = ImGui::GetWindowHeight();
 		float textY   = (barH - ImGui::GetTextLineHeight()) * 0.5f;
@@ -777,14 +820,14 @@ void CInventory::DrawBottomBar()
 		char goldBuf[64];
 		snprintf(goldBuf, sizeof(goldBuf), "%llu", player->GetGold());
 		std::string goldText = (const char*)u8"소지금: ";
-		std::string unit = (const char*)u8"원";
-		goldText += goldBuf + unit;
+		goldText += goldBuf;
+		goldText += " G";
 		ImGui::SetCursorPos(ImVec2(padX, textY));
 		ImGui::Text("%s", goldText.c_str());
 
 		// 가방 용량 (오른쪽)
 		char weightBuf[64];
-		snprintf(weightBuf, sizeof(weightBuf), "%u  / %u", current_weight, max_weight);
+		snprintf(weightBuf, sizeof(weightBuf), "%u  / %u un", current_weight, max_weight);
 		std::string weightText = (const char*)u8"가방:  ";
 		weightText += weightBuf;
 		float textW = ImGui::CalcTextSize(weightText.c_str()).x;
@@ -793,7 +836,7 @@ void CInventory::DrawBottomBar()
 
 		ImGui::SetWindowFontScale(1.0f);
 
-		if (CImGuiManager::bold_font)
+		if (CImGuiManager::gyeonggi_font)
 			ImGui::PopFont();
 	}
 	ImGui::EndChild();

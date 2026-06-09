@@ -16,16 +16,16 @@
 #undef min
 #undef max
 
-// ---- Ä«Å»·Î±× ¼³Á¤ (¾ÆÀÌÅÛ Ãß°¡ ½Ã ¿©±â¼­ ¼öÁ¤) ----
-// °íÁ¤ ÆÇ¸Å ¾ÆÀÌÅÛ (Ç×»ó ÆÇ¸Å), °¢ Àç°í 3°³:
-//   1=»ğ, 5=µµ³¢, 9=°î±ªÀÌ, 14=¾ß±¸¹æ¸ÁÀÌ, 16=À¯·ÉÅğÄ¡½ºÇÁ·¹ÀÌ
+// ---- ì¹´íƒˆë¡œê·¸ ì„¤ì • (ì•„ì´í…œ ì¶”ê°€ ì‹œ ì—¬ê¸°ì„œ ìˆ˜ì •) ----
+// ê³ ì • íŒë§¤ ì•„ì´í…œ (í•­ìƒ íŒë§¤), ê° ì¬ê³  3ê°œ:
+//   1=ì‚½, 5=ë„ë¼, 9=ê³¡ê´­ì´, 14=ì•¼êµ¬ë°©ë§ì´, 16=ìœ ë ¹í‡´ì¹˜ìŠ¤í”„ë ˆì´
 static const int   FIXED_ITEMS[]      = { 1, 5, 9, 14, 16 };
 
-// ·£´ı Àåºñ Ç® (1°³ ¼±Á¤), Àç°í 1°³ (¾ÆÀÌÄÜ ¾ø´Â ¾ÆÀÌÅÛ Á¦¿Ü):
-//   15=»Ğ¸ÁÄ¡, 17=¸¶¹ıÁöÆÎÀÌ, 19=Àå³­°¨Ä®
+// ëœë¤ ì¥ë¹„ í’€ (1ê°œ ì„ ì •), ì¬ê³  1ê°œ (ì•„ì´ì½˜ ì—†ëŠ” ì•„ì´í…œ ì œì™¸):
+//   15=ë¿…ë§ì¹˜, 17=ë§ˆë²•ì§€íŒ¡ì´, 19=ì¥ë‚œê°ì¹¼
 static const int   RANDOM_EQUIP_POOL[] = { 15, 17, 19 };
 
-// ·£´ı À½½Ä id ¹üÀ§ (item_type == À½½Ä); ¾ÆÀÌÄÜ ÀÖ´Â id Áß ¸î °³¸¦ Áßº¹ ¾øÀÌ ¼±Á¤
+// ëœë¤ ìŒì‹ id ë²”ìœ„ (item_type == ìŒì‹); ì•„ì´ì½˜ ìˆëŠ” id ì¤‘ ëª‡ ê°œë¥¼ ì¤‘ë³µ ì—†ì´ ì„ ì •
 static constexpr int FOOD_ID_MIN = 20;
 static constexpr int FOOD_ID_MAX = 45;
 
@@ -71,7 +71,7 @@ uint32 CShop::ApplyPriceVariation(uint32 base)
     if (base == 0)
         return 0;
 
-    // ±âÁØ°¡ÀÇ -50% ~ +100%, 10´ÜÀ§ ¹İ¿Ã¸², ÃÖ¼Ò 10
+    // ê¸°ì¤€ê°€ì˜ -50% ~ +100%, 10ë‹¨ìœ„ ë°˜ì˜¬ë¦¼, ìµœì†Œ 10
     std::uniform_real_distribution<float> dist(0.5f, 2.0f);
     float  varied  = base * dist(rng_);
     uint32 rounded = static_cast<uint32>(std::llround(varied / 10.0) * 10);
@@ -98,14 +98,14 @@ void CShop::Reset()
         slots.push_back(std::move(s));
     };
 
-    // °íÁ¤ ¾ÆÀÌÅÛ
+    // ê³ ì • ì•„ì´í…œ
     std::uniform_int_distribution<int> stockDist(RANDOM_STOCK_MIN, RANDOM_STOCK_MAX);
     auto randomStock = [&]() { return stockDist(rng_); };
 
     for (int id : FIXED_ITEMS)
         addSlot(id, (id == BAT_ITEM_ID) ? 1 : FIXED_STOCK, true);
 
-    // ·£´ı Àåºñ (1°³)
+    // ëœë¤ ì¥ë¹„ (1ê°œ)
     {
         std::vector<int> pool(std::begin(RANDOM_EQUIP_POOL), std::end(RANDOM_EQUIP_POOL));
         std::shuffle(pool.begin(), pool.end(), rng_);
@@ -113,7 +113,7 @@ void CShop::Reset()
             addSlot(pool[0], randomStock(), false);
     }
 
-    // ·£´ı À½½Ä (¾ÆÀÌÄÜ ÀÖ´Â °Í, Áßº¹ ¾øÀÌ)
+    // ëœë¤ ìŒì‹ (ì•„ì´ì½˜ ìˆëŠ” ê²ƒ, ì¤‘ë³µ ì—†ì´)
     {
         std::vector<int> pool;
         for (int id = FOOD_ID_MIN; id <= FOOD_ID_MAX; ++id) {
@@ -170,7 +170,7 @@ bool CShop::Purchase(const std::shared_ptr<CMyPlayer>& player, int slotIndex, in
             auto item = ItemFactory::Create(s.item_id);
             if (!item)
                 break;
-            if (!inventory->AddItem(item))   // ÀÎº¥Åä¸® °ÅºÎ (¿¹: °¡µæ Âü)
+            if (!inventory->AddItem(item))   // ì¸ë²¤í† ë¦¬ ê±°ë¶€ (ì˜ˆ: ê°€ë“ ì°¸)
                 break;
 
             ++bought;
@@ -184,8 +184,8 @@ bool CShop::Purchase(const std::shared_ptr<CMyPlayer>& player, int slotIndex, in
         s.stock -= bought;
     }
     else {
-        // (¸ÖÆ¼): Å¬¶ó¿¡¼­ °ñµå/Àç°í¸¦ ¸ÕÀú Â÷°¨ÇÏ°í ¼­¹ö¿¡ ±¸¸Å¸¦ ¿äÃ»ÇÑ´Ù.
-        // ¾ÆÀÌÅÛÀº ¼­¹ö ÀÀ´ä(S_AddItemList)À» ¹Ş¾Æ ÀÎº¥Åä¸®¿¡ Ãß°¡ÇÑ´Ù.
+        // (ë©€í‹°): í´ë¼ì—ì„œ ê³¨ë“œ/ì¬ê³ ë¥¼ ë¨¼ì € ì°¨ê°í•˜ê³  ì„œë²„ì— êµ¬ë§¤ë¥¼ ìš”ì²­í•œë‹¤.
+        // ì•„ì´í…œì€ ì„œë²„ ì‘ë‹µ(S_AddItemList)ì„ ë°›ì•„ ì¸ë²¤í† ë¦¬ì— ì¶”ê°€í•œë‹¤.
         auto session = player->GetSession();
         if (!session)
             return false;
@@ -220,7 +220,7 @@ bool CShop::RefreshPaid(const std::shared_ptr<CMyPlayer>& player)
         Reset();
     }
     else{
-        // (¸ÖÆ¼): ¼­¹ö¿¡ ÄÚÀÎ Â÷°¨ ÅëÁö 
+        // (ë©€í‹°): ì„œë²„ì— ì½”ì¸ ì°¨ê° í†µì§€ 
         auto session = player->GetSession();
         if (!session)
             return false;
@@ -260,17 +260,17 @@ void CShop::DrawStoreUI(std::shared_ptr<CMyPlayer> player)
     const float scale  = G_RATIO_Y;
     ImVec2      screen = ImGui::GetIO().DisplaySize;
 
-    const float invW   = 348.f * scale;   // CInventory Ã¢ Å©±â¿Í µ¿ÀÏ
+    const float invW   = 348.f * scale;   // CInventory ì°½ í¬ê¸°ì™€ ë™ì¼
     const float invH   = 460.f * scale;
     const float gap    = 16.f  * scale;
     const float margin = 20.f  * scale;
-    const float shopH  = invH;            // ³ôÀÌ ¸ÂÃã
+    const float shopH  = invH;            // ë†’ì´ ë§ì¶¤
 
-    // ÀÎº¥Åä¸®(¿ì)°¡ Àß¸®Áö ¾Êµµ·Ï »óÁ¡ ÆøÀ» È­¸é ¿©À¯¿¡ ¸ÂÃç µ¿Àû °è»ê.
-    // Ä«µå Å©±â´Â ÀÌ Æø¿¡¼­ ÆÄ»ıµÇ¹Ç·Î ÆøÀÌ ÁÙ¸é Ä«µåµµ ÇÔ²² ÀÛ¾ÆÁø´Ù.
+    // ì¸ë²¤í† ë¦¬(ìš°)ê°€ ì˜ë¦¬ì§€ ì•Šë„ë¡ ìƒì  í­ì„ í™”ë©´ ì—¬ìœ ì— ë§ì¶° ë™ì  ê³„ì‚°.
+    // ì¹´ë“œ í¬ê¸°ëŠ” ì´ í­ì—ì„œ íŒŒìƒë˜ë¯€ë¡œ í­ì´ ì¤„ë©´ ì¹´ë“œë„ í•¨ê»˜ ì‘ì•„ì§„ë‹¤.
     float shopW = (screen.x - margin * 2.f) - gap - invW;
-    shopW = std::min(shopW, 760.f * scale);            // »óÇÑ
-    if (shopW < 320.f * scale) shopW = 320.f * scale;  // ÇÏÇÑ
+    shopW = std::min(shopW, 760.f * scale);            // ìƒí•œ
+    if (shopW < 320.f * scale) shopW = 320.f * scale;  // í•˜í•œ
 
     const float groupW = shopW + gap + invW;
     float startX = (screen.x - groupW) * 0.5f;
@@ -278,10 +278,10 @@ void CShop::DrawStoreUI(std::shared_ptr<CMyPlayer> player)
     if (startX < 0.f) startX = 0.f;
     if (startY < 0.f) startY = 0.f;
 
-    // ÁÂ: »óÁ¡ ÆĞ³Î
+    // ì¢Œ: ìƒì  íŒ¨ë„
     DrawShopPanel(player, startX, startY, shopW, shopH);
 
-    // ¿ì: ÀÎº¥Åä¸® (°­Á¦·Î ¿­°í »óÁ¡ ¿·¿¡ ¹èÄ¡)
+    // ìš°: ì¸ë²¤í† ë¦¬ (ê°•ì œë¡œ ì—´ê³  ìƒì  ì˜†ì— ë°°ì¹˜)
     float invX = startX + shopW + gap;
     float invY = startY + (shopH - invH) * 0.5f;
     if (auto inventory = player->GetInventory()) {
@@ -290,7 +290,7 @@ void CShop::DrawStoreUI(std::shared_ptr<CMyPlayer> player)
         inventory->Draw(true);
     }
 
-    // ÃÖ»ó´Ü: ¼ö·® ¸ğ´Ş
+    // ìµœìƒë‹¨: ìˆ˜ëŸ‰ ëª¨ë‹¬
     DrawQuantityModal(player);
 }
 
@@ -312,7 +312,7 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
 
     if (ImGui::Begin("##shop_panel", nullptr, flags)) {
 
-        // ¿ì»ó´Ü ´İ±â(X)
+        // ìš°ìƒë‹¨ ë‹«ê¸°(X)
         float xBtn = 26.f * scale;
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - xBtn);
         ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.80f, 0.20f, 0.20f, 1.f));
@@ -323,7 +323,7 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
         }
         ImGui::PopStyleColor(3);
 
-        // ½ºÅ©·Ñ Ä«µå ±×¸®µå (3¿­, ¾à 2Çà Ç¥½Ã)
+        // ìŠ¤í¬ë¡¤ ì¹´ë“œ ê·¸ë¦¬ë“œ (3ì—´, ì•½ 2í–‰ í‘œì‹œ)
         const float footerH = 62.f * scale;
         float       gridH   = ImGui::GetContentRegionAvail().y - footerH;
         if (gridH < 50.f * scale) gridH = 50.f * scale;
@@ -348,19 +348,19 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
         ImGui::EndChild();
         ImGui::PopStyleColor();
 
-        // ---- ÇÏ´Ü: »õ·Î°íÄ§(ÁÂ) + ±¸ÀÔ(¿ì) ----
+        // ---- í•˜ë‹¨: ìƒˆë¡œê³ ì¹¨(ì¢Œ) + êµ¬ì…(ìš°) ----
         ImGui::PushFont(boldFont);
 
-        // ¹öÆ° ÇàÀ» »ìÂ¦ ¾Æ·¡·Î
+        // ë²„íŠ¼ í–‰ì„ ì‚´ì§ ì•„ë˜ë¡œ
         ImGui::Dummy(ImVec2(0, 10.f * scale));
 
         float btnH = 50.f * scale;
 
-        // »õ·Î°íÄ§ = ÀÌ¹ÌÁö ¹öÆ° + ¿·¿¡ 500¿ø Ç¥½Ã
+        // ìƒˆë¡œê³ ì¹¨ = ì´ë¯¸ì§€ ë²„íŠ¼ + ì˜†ì— 500ì› í‘œì‹œ
         bool canRefresh = (player->GetGold() >= REFRESH_COST);
         if (!canRefresh) ImGui::BeginDisabled();
         ImTextureID refreshTex = CImGuiManager::GetInstance().GetTexture("refresh");
-        // ¹öÆ° ¹è°æ Åõ¸í Ã³¸® (¾ÆÀÌÄÜ¸¸ º¸ÀÌ°Ô)
+        // ë²„íŠ¼ ë°°ê²½ íˆ¬ëª… ì²˜ë¦¬ (ì•„ì´ì½˜ë§Œ ë³´ì´ê²Œ)
         ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 1.f, 1.f, 0.15f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(1.f, 1.f, 1.f, 0.25f));
@@ -380,7 +380,7 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
         ImGui::SameLine();
         ImGui::AlignTextToFramePadding();
         ImGui::SetWindowFontScale(1.0f * scale);
-        ImGui::Text("500\xEC\x9B\x90");   // 500¿ø
+        ImGui::Text("500G");   // 500ì›
         ImGui::SetWindowFontScale(1.0f);
 
         ImGui::SameLine();
@@ -391,7 +391,7 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
 
         bool canBuy = (selected_slot >= 0 && selected_slot < static_cast<int>(slots.size())
             && slots[selected_slot].stock > 0);
-        // ±¸¸Å ¹öÆ° = ÁÖÈ²»ö
+        // êµ¬ë§¤ ë²„íŠ¼ = ì£¼í™©ìƒ‰
         ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.95f, 0.55f, 0.15f, 1.f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.00f, 0.65f, 0.25f, 1.f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.80f, 0.45f, 0.10f, 1.f));
@@ -428,12 +428,12 @@ void CShop::DrawShopCard(const std::shared_ptr<CMyPlayer>& player, int index, fl
     const float stripH = 26.f * scale;
     ImVec2      imgMax = ImVec2(p1.x, p1.y - stripH);
 
-    // ¹è°æ: ÀÌ¹ÌÁö ¿µ¿ª(ÆÄ¶õºû) + ÃÊ·Ï Á¤º¸ ¶ì
+    // ë°°ê²½: ì´ë¯¸ì§€ ì˜ì—­(íŒŒë€ë¹›) + ì´ˆë¡ ì •ë³´ ë 
     ImU32 imgBg = soldOut ? IM_COL32(120, 120, 128, 255) : IM_COL32(150, 165, 220, 255);
     dl->AddRectFilled(p0, imgMax, imgBg, 4.f * scale);
     dl->AddRectFilled(ImVec2(p0.x, imgMax.y), p1, IM_COL32(86, 150, 70, 255), 4.f * scale);
 
-    // ¾ÆÀÌÅÛ ÀÌ¹ÌÁö (Á¤»ç°¢Çü, ÀÌ¹ÌÁö ¿µ¿ª Áß¾Ó)
+    // ì•„ì´í…œ ì´ë¯¸ì§€ (ì •ì‚¬ê°í˜•, ì´ë¯¸ì§€ ì˜ì—­ ì¤‘ì•™)
     if (!s.icon_path.empty()) {
         ImTextureID tex = CImGuiManager::GetInstance().GetTexture(s.icon_path);
         if (tex) {
@@ -449,7 +449,7 @@ void CShop::DrawShopCard(const std::shared_ptr<CMyPlayer>& player, int index, fl
         }
     }
 
-    // Ç°Àı ½Ã "Sold Out" ÀÌ¹ÌÁö ¿À¹ö·¹ÀÌ
+    // í’ˆì ˆ ì‹œ "Sold Out" ì´ë¯¸ì§€ ì˜¤ë²„ë ˆì´
     if (soldOut) {
         ImTextureID soldTex = CImGuiManager::GetInstance().GetTexture("sold_out");
         if (soldTex) {
@@ -460,26 +460,26 @@ void CShop::DrawShopCard(const std::shared_ptr<CMyPlayer>& player, int index, fl
         }
     }
 
-    // Á¤º¸ ¶ì: °¡°İ(ÁÂ) / Àç°í(¿ì)
+    // ì •ë³´ ë : ê°€ê²©(ì¢Œ) / ì¬ê³ (ìš°)
     ImFont* font = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
     float   fpx  = 13.f * scale;
     char    priceBuf[48];
     char    stockBuf[48];
-    snprintf(priceBuf, sizeof(priceBuf), "\xEA\xB0\x80\xEA\xB2\xA9: %u", s.price); // °¡°İ
-    snprintf(stockBuf, sizeof(stockBuf), "\xEC\x9E\xAC\xEA\xB3\xA0: %d", s.stock); // Àç°í
+    snprintf(priceBuf, sizeof(priceBuf), "\xEA\xB0\x80\xEA\xB2\xA9: %u", s.price); // ê°€ê²©
+    snprintf(stockBuf, sizeof(stockBuf), "\xEC\x9E\xAC\xEA\xB3\xA0: %d", s.stock); // ì¬ê³ 
     ImU32 txtCol = IM_COL32(255, 255, 255, 255);
     float ty     = imgMax.y + (stripH - fpx) * 0.5f;
     dl->AddText(font, fpx, ImVec2(p0.x + 6.f * scale, ty), txtCol, priceBuf);
     float sWidth = font->CalcTextSizeA(fpx, FLT_MAX, 0.f, stockBuf).x;
     dl->AddText(font, fpx, ImVec2(p1.x - sWidth - 6.f * scale, ty), txtCol, stockBuf);
 
-    // Å×µÎ¸® (¼±ÅÃ ½Ã ±İ»ö)
+    // í…Œë‘ë¦¬ (ì„ íƒ ì‹œ ê¸ˆìƒ‰)
     if (selected)
         dl->AddRect(p0, p1, IM_COL32(255, 210, 80, 255), 4.f * scale, 0, 3.f * scale);
     else
         dl->AddRect(p0, p1, IM_COL32(60, 60, 66, 180), 4.f * scale, 0, 1.f);
 
-    // »óÈ£ÀÛ¿ë
+    // ìƒí˜¸ì‘ìš©
     ImGui::InvisibleButton(("##card" + std::to_string(index)).c_str(), ImVec2(w, h));
     if (!soldOut) {
         if (ImGui::IsItemHovered()) {
@@ -508,7 +508,7 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
     const float scale = G_RATIO_Y;
     ImGuiIO&    io    = ImGui::GetIO();
 
-    // ÀÏ¹İ À©µµ¿ì (ÆË¾÷ ½ºÅÃ ÀÇÁ¸¼º ¾øÀ½); ¸Å ÇÁ·¹ÀÓ Æ÷Ä¿½º·Î ÃÖ»ó´Ü À¯Áö
+    // ì¼ë°˜ ìœˆë„ìš° (íŒì—… ìŠ¤íƒ ì˜ì¡´ì„± ì—†ìŒ); ë§¤ í”„ë ˆì„ í¬ì»¤ìŠ¤ë¡œ ìµœìƒë‹¨ ìœ ì§€
     ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowFocus();
@@ -519,7 +519,7 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
         | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse
-        | ImGuiWindowFlags_AlwaysAutoResize;   // ÄÜÅÙÃ÷¿¡ ¸ÂÃç ÀÚµ¿ Å©±â (¿©¹é Á¦°Å)
+        | ImGuiWindowFlags_AlwaysAutoResize;   // ì½˜í…ì¸ ì— ë§ì¶° ìë™ í¬ê¸° (ì—¬ë°± ì œê±°)
 
     if (ImGui::Begin("##buy_qty_win", nullptr, flags)) {
         ImGui::SetWindowFontScale(scale);
@@ -533,11 +533,11 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
         ImGui::TextUnformatted(s.name.c_str());
         ImGui::Spacing();
 
-        // ¼ö·®À» [1, maxBuy]·Î Á¦ÇÑ
+        // ìˆ˜ëŸ‰ì„ [1, maxBuy]ë¡œ ì œí•œ
         if (buy_qty < 1) buy_qty = 1;
         if (maxBuy > 0 && buy_qty > maxBuy) buy_qty = maxBuy;
 
-        // ¼ö·® ¶óº§
+        // ìˆ˜ëŸ‰ ë¼ë²¨
         ImGui::TextUnformatted("\xEC\x88\x98\xEB\x9F\x89:");
         ImGui::SameLine();
         if (ImGui::Button("-", ImVec2(30.f * scale, 0))) {
@@ -552,7 +552,7 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
         ImGui::SameLine();
         ImGui::Text("/ %d", maxBuy);
 
-        // ÃÑ¾× ¶óº§
+        // ì´ì•¡ ë¼ë²¨
         uint32 total = s.price * static_cast<uint32>(buy_qty < 1 ? 0 : buy_qty);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.30f, 1.f));
         ImGui::Text("\xEC\xB4\x9D\xEC\x95\xA1: %u", total);
@@ -564,7 +564,7 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
         bool canBuy = (maxBuy > 0);
         if (!canBuy) ImGui::BeginDisabled();
 
-        // ±¸¸Å ¹öÆ°
+        // êµ¬ë§¤ ë²„íŠ¼
         if (ImGui::Button("\xEA\xB5\xAC\xEB\xA7\xA4", ImVec2(130.f * scale, 36.f * scale))) {
             if (Purchase(player, slot, buy_qty))
                 PlayClickSound();
@@ -573,7 +573,7 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
         if (!canBuy) ImGui::EndDisabled();
 
         ImGui::SameLine();
-        // Ãë¼Ò ¹öÆ°
+        // ì·¨ì†Œ ë²„íŠ¼
         if (ImGui::Button("\xEC\xB7\xA8\xEC\x86\x8C", ImVec2(130.f * scale, 36.f * scale))) {
             open_qty_modal = false;
         }
