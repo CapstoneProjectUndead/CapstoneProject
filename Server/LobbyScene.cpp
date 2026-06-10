@@ -445,8 +445,12 @@ void CLobbyScene::Handle_C_ExtenseInventory(shared_ptr<Session> session, const C
 	if (!inventory)
 		return;
 
-	// 골드 부족 또는 이미 최대치면 거부 (서버 권위) → 골드 현재값만 되돌려 통지
-	if (player->GetGold() < pkt.spent_coin || inventory->GetMaxWeight() >= BAG_WEIGHT_MAX) {
+	// 이미 최대치(1000)에 도달했으면 더 이상 업그레이드하지 않음 (서버 권위)
+	if (inventory->GetMaxWeight() >= BAG_WEIGHT_MAX)
+		return;
+
+	// 골드 부족이면 거부 → 골드 현재값만 되돌려 통지
+	if (player->GetGold() < pkt.spent_coin) {
 		S_UpdateGold coinPkt;
 		coinPkt.player_id = player->GetID();
 		coinPkt.gold = player->GetGold();
@@ -464,6 +468,7 @@ void CLobbyScene::Handle_C_ExtenseInventory(shared_ptr<Session> session, const C
 	{
 		S_ExtenseInventory extPkt;
 		extPkt.player_id  = player->GetID();
+		extPkt.max_weight = inventory->GetMaxWeight();   // 갱신된 절대값 통지
 		extPkt.scene_type = scene_type;
 		auto sendBuffer = MAKE_SEND_BUFFER(extPkt);
 		session->DoSend(sendBuffer);

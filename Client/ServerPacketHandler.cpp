@@ -743,11 +743,27 @@ bool Handle_S_REFRESH_STORE(std::shared_ptr<Session> session, S_RefreshStore& pk
 
 bool Handle_S_EXTENSE_INVENTORY(std::shared_ptr<Session> session, S_ExtenseInventory& pkt)
 {
-	CLobbyScene* lobbyScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
-	if (!lobbyScene)
+	CScene* targetScene = nullptr;
+
+	switch (pkt.scene_type)
+	{
+	case SCENE_TYPE::CUSTOMS:
+		targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
+		break;
+	case SCENE_TYPE::LOBBY:
+		targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+		break;
+	case SCENE_TYPE::GAME:
+		targetScene = CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::GAME].get();
+		break;
+	default:
+		break;
+	}
+
+	if (!targetScene)
 		return true;
 
-	lobbyScene->Handle_S_ExtenseInventory(session, pkt);
+	targetScene->Handle_S_ExtenseInventory(session, pkt);
 
 	return true;
 }

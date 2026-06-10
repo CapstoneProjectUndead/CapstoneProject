@@ -823,3 +823,12 @@ void CScene::Handle_S_UpdateGold(std::shared_ptr<Session> session, S_UpdateGold&
 
 	my_player->SetGold(pkt.gold);
 }
+
+void CScene::Handle_S_ExtenseInventory(std::shared_ptr<Session> session, S_ExtenseInventory& pkt)
+{
+	if (!my_player || my_player->GetID() != pkt.player_id)
+		return;
+
+	if (auto inv = my_player->GetInventory())
+		inv->SetMaxWeight(pkt.max_weight);
+}

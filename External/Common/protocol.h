@@ -837,10 +837,11 @@ static_assert(sizeof(C_ExtenseInventory) == 4 + 13, "C_ExtenseInventory size mis
 struct S_ExtenseInventory : public PacketHeader
 {
 	uint64     player_id;
+	uint32	   max_weight;   // 갱신된 무게 한도 절대값 (업그레이드/로드 공용)
 	SCENE_TYPE scene_type = SCENE_TYPE::LOBBY;
 
 	S_ExtenseInventory() : PacketHeader(sizeof(S_ExtenseInventory), (UINT)PacketType::_S_EXTENSE_INVENTORY) {}
 };
-static_assert(sizeof(S_ExtenseInventory) == 4 + 9, "S_ExtenseInventory size mismatch!");
+static_assert(sizeof(S_ExtenseInventory) == 4 + 13, "S_ExtenseInventory size mismatch!");
 
 #pragma pack (pop)

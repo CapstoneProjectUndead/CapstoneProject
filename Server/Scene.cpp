@@ -465,7 +465,9 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 	const uint32 gold = player->GetGold();
 
 	nlohmann::json items = nlohmann::json::array();
+	uint32 maxWeight = BAG_WEIGHT_START;   // 가방 무게 한도 (기본 200)
 	if (auto inven = player->GetInventory()) {
+		maxWeight = inven->GetMaxWeight();
 		for (const auto& [invId, item] : inven->GetItems()) {
 			if (!item)
 				continue;
@@ -507,8 +509,9 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 
 	// 계정 ID를 키로 갱신/추가
 	nlohmann::json entry;
-	entry["coin"]  = gold;
-	entry["items"] = items;
+	entry["coin"]       = gold;
+	entry["max_weight"] = maxWeight;
+	entry["items"]      = items;
 	root[accountId] = entry;
 
 	// 폴더 보장 후 저장
@@ -522,6 +525,7 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 	}
 	out << root.dump(4);
 	std::cout << "[Save] " << accountId << " 저장 완료 (coin=" << gold
+		<< ", max_weight=" << maxWeight
 		<< ", items=" << items.size() << ")\n";
 }
 
@@ -564,6 +568,19 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 	auto inventory = player->GetInventory();
 	if (!inventory)
 		return;
+
+	// 가방 무게 한도 복원 (기본 200). 아이템 로드 전에 설정해 용량을 먼저 확보.
+	inventory->SetMaxWeight(entry.value("max_weight", BAG_WEIGHT_START));
+
+	// 복원된 무게 한도를 클라에 통지 (아이템 유무와 무관하게). scene_type=CUSTOMS로 라우팅됨.
+	if (auto loadSession = player->GetSession()) {
+		S_ExtenseInventory extPkt;
+		extPkt.player_id  = player->GetID();
+		extPkt.max_weight = inventory->GetMaxWeight();
+		extPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(extPkt);
+		loadSession->DoSend(sendBuffer);
+	}
 
 	std::vector<std::shared_ptr<CItem>> loaded;
 	if (entry.contains("items") && entry["items"].is_array()) {
@@ -621,6 +638,7 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 	session->DoSend(writer.CloseAndReturn());
 
 	std::cout << "[Load] " << accountId << " 로드 완료 (coin=" << player->GetGold()
+		<< ", max_weight=" << inventory->GetMaxWeight()
 		<< ", items=" << loaded.size() << ")\n";
 }
 

@@ -22,6 +22,7 @@ public:
 
 	uint32 GetMaxWeight() const { return max_weight; }
 	void  UpgradeMaxWeight(float amount) { max_weight += amount; }
+	void  SetMaxWeight(uint32 weight) { max_weight = weight; }   // 절대값 설정 (로드 복원용)
 
 	const unordered_map<uint32, std::shared_ptr<CItem>>& GetItems() const { return items; }
 
