@@ -840,7 +840,7 @@ void CMyPlayer::UpdateSpectatorMode()
 	// DEAD 첫 진입: 카메라 모드/오프셋/마우스만 한 번 설정 (target은 아래 매 틱 검증이 잡음)
 	if (!spectator_camera_active) {
 		cam->SetOrbitMode(false);
-		cam->SetCameraOffset(XMFLOAT3{ 0.f, 0.f, -1.0f });
+		cam->SetCameraOffset(XMFLOAT3{ 0.f, 0.8f, -1.0f });
 		CKeyManager::GetInstance().SetMouseMode(false);
 		spectator_camera_active = true;
 	}
@@ -884,7 +884,7 @@ void CMyPlayer::UpdateIncapacitatedCamera()
 
 	if (isIncap) {
 		// 3인칭 거리 2.5, 자체 yaw/pitch로 plr 주위 궤도
-		XMFLOAT3 thirdOffset{ 0.0f, 0.0f, -2.0f };
+		XMFLOAT3 thirdOffset{ 0.0f, 0.8f, -2.0f };
 		cam->SetCameraOffset(thirdOffset);
 		// 초기 orbit 각도: 플레이어 yaw + 약간 위에서 내려다보는 pitch
 		cam->SetOrbitMode(true, yaw, 20.0f);
