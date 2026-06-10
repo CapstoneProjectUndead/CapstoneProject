@@ -155,20 +155,20 @@ void CCustomScene::DrawCustomizingWindow()
             };
 
         // 1. 모델 세트 선택 (최대 카운트 6)
-        DrawSimpleSelector("MODEL SET", body_idx, 6, modelNames, [&](int idx) {
+        DrawSimpleSelector((const char*)u8"◆ 몸", body_idx, 6, modelNames, [&](int idx) {
             if (my_player) my_player->ChangeModelSet(idx);
             OnCustomChanged();
             });
 
         // 2. 눈 스타일 선택 (eyes_5=기절, eyes_9=빙의 전용 → 커스터마이징 제외, 8종만 노출)
         static const int eyesMap[] = { 0, 1, 2, 3, 5, 6, 7, 9 };
-        DrawSimpleSelector("EYES STYLE", eyes_idx, 8, nullptr, [&](int idx) {
+        DrawSimpleSelector((const char*)u8"◆ 눈", eyes_idx, 8, nullptr, [&](int idx) {
             if (my_player) my_player->ChangeEyes(eyesMap[idx]);
             OnCustomChanged();
             });
 
         // 3. 입 스타일 선택 (1 ~ 10종)
-        DrawSimpleSelector("MOUTH STYLE", mouth_idx, 10, nullptr, [&](int idx) {
+        DrawSimpleSelector((const char*)u8"◆ 입", mouth_idx, 10, nullptr, [&](int idx) {
             if (my_player) my_player->ChangeMouth(idx);
             OnCustomChanged();
             });
@@ -176,7 +176,7 @@ void CCustomScene::DrawCustomizingWindow()
         ImGui::Separator();
         ImGui::Spacing();
 
-        if (ImGui::Button((const char*)u8"SELECT DONE", ImVec2(150 * scale, 40 * scale))) {
+        if (ImGui::Button((const char*)u8"결정", ImVec2(150 * scale, 40 * scale))) {
             if (g_is_single) {
                 ShowResultPopup(true, "설정 완료!");
             }
