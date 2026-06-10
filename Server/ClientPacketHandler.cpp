@@ -316,7 +316,7 @@ bool Handle_C_BUY_ITEM(std::shared_ptr<Session> session, C_BuyItem& pkt)
 	return true;
 }
 
-bool Handle_C_SPEND_COIN(std::shared_ptr<Session> session, C_SpendCoin& pkt)
+bool Handle_C_SPEND_GOLD(std::shared_ptr<Session> session, C_SpendGold& pkt)
 {
 	auto room = CAST_CS(session)->GetUser()->GetRoom();
 	assert(room->IsActive());
@@ -325,7 +325,7 @@ bool Handle_C_SPEND_COIN(std::shared_ptr<Session> session, C_SpendCoin& pkt)
 
 	lobbyScene->PushPacketJob(session,
 		(CLobbyScene*)lobbyScene,
-		&CLobbyScene::Handle_C_SpendCoin,
+		&CLobbyScene::Handle_C_SpendGold,
 		pkt);
 
 	return true;
@@ -341,6 +341,21 @@ bool Handle_C_REFRESH_STORE(std::shared_ptr<Session> session, C_RefreshStore& pk
 	lobbyScene->PushPacketJob(session,
 		(CLobbyScene*)lobbyScene,
 		&CLobbyScene::Handle_C_RefreshStore,
+		pkt);
+
+	return true;
+}
+
+bool Handle_C_EXTENSE_INVENTORY(std::shared_ptr<Session> session, C_ExtenseInventory& pkt)
+{
+	auto room = CAST_CS(session)->GetUser()->GetRoom();
+	assert(room->IsActive());
+	CScene* lobbyScene = room->GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	assert(lobbyScene);
+
+	lobbyScene->PushPacketJob(session,
+		(CLobbyScene*)lobbyScene,
+		&CLobbyScene::Handle_C_ExtenseInventory,
 		pkt);
 
 	return true;

@@ -85,10 +85,12 @@ enum PacketType : uint16_t
 
 	_C_SHOP_STATE,
 	_C_BUY_ITEM,        // 클라 → 서버: 상점에서 아이템 구매 요청
-	_C_SPEND_COIN,
-	_S_UPDATE_COIN,
+	_C_SPEND_GOLD,
+	_S_UPDATE_GOLD,
 	_C_REFRESH_STORE,
 	_S_REFRESH_STORE,
+	_C_EXTENSE_INVENTORY,
+	_S_EXTENSE_INVENTORY,
 };
 
 #pragma pack (push, 1)
@@ -783,25 +785,25 @@ struct C_BuyItem : public PacketHeader
 };
 static_assert(sizeof(C_BuyItem) == 4 + 17, "C_BuyItem size mismatch!");
 
-struct C_SpendCoin : public PacketHeader
+struct C_SpendGold : public PacketHeader
 {
 	uint64     player_id;
 	uint32	   spent_coin;
 	SCENE_TYPE scene_type;
 
-	C_SpendCoin() : PacketHeader(sizeof(C_SpendCoin), (UINT)PacketType::_C_SPEND_COIN) {}
+	C_SpendGold() : PacketHeader(sizeof(C_SpendGold), (UINT)PacketType::_C_SPEND_GOLD) {}
 };
-static_assert(sizeof(C_SpendCoin) == 4 + 13, "C_SpendCoin size mismatch!");
+static_assert(sizeof(C_SpendGold) == 4 + 13, "C_SpendGold size mismatch!");
 
-struct S_UpdateCoin : public PacketHeader
+struct S_UpdateGold : public PacketHeader
 {
 	uint64     player_id;
-	uint32	   coin;
+	uint32	   gold;
 	SCENE_TYPE scene_type;
 
-	S_UpdateCoin() : PacketHeader(sizeof(S_UpdateCoin), (UINT)PacketType::_S_UPDATE_COIN) {}
+	S_UpdateGold() : PacketHeader(sizeof(S_UpdateGold), (UINT)PacketType::_S_UPDATE_GOLD) {}
 };
-static_assert(sizeof(S_UpdateCoin) == 4 + 13, "S_UpdateCoin size mismatch!");
+static_assert(sizeof(S_UpdateGold) == 4 + 13, "S_UpdateGold size mismatch!");
 
 struct C_RefreshStore : public PacketHeader
 {
@@ -821,5 +823,25 @@ struct S_RefreshStore : public PacketHeader
 	S_RefreshStore() : PacketHeader(sizeof(S_RefreshStore), (UINT)PacketType::_S_REFRESH_STORE) {}
 };
 static_assert(sizeof(S_RefreshStore) == 4 + 9, "S_RefreshStore size mismatch!");
+
+struct C_ExtenseInventory : public PacketHeader
+{
+	uint64     player_id;
+	uint32	   spent_coin;
+	SCENE_TYPE scene_type = SCENE_TYPE::LOBBY;
+
+	C_ExtenseInventory() : PacketHeader(sizeof(C_ExtenseInventory), (UINT)PacketType::_C_EXTENSE_INVENTORY) {}
+};
+static_assert(sizeof(C_ExtenseInventory) == 4 + 13, "C_ExtenseInventory size mismatch!");
+
+struct S_ExtenseInventory : public PacketHeader
+{
+	uint64     player_id;
+	uint32	   max_weight;   // 갱신된 무게 한도 절대값 (업그레이드/로드 공용)
+	SCENE_TYPE scene_type = SCENE_TYPE::LOBBY;
+
+	S_ExtenseInventory() : PacketHeader(sizeof(S_ExtenseInventory), (UINT)PacketType::_S_EXTENSE_INVENTORY) {}
+};
+static_assert(sizeof(S_ExtenseInventory) == 4 + 13, "S_ExtenseInventory size mismatch!");
 
 #pragma pack (pop)

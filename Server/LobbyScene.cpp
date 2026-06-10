@@ -326,10 +326,10 @@ void CLobbyScene::Handle_C_BuyItem(shared_ptr<Session> session, const C_BuyItem&
 	uint32 total = pkt.unit_price * static_cast<uint32>(pkt.qty);
 
 	// 소지금(coin) 검증: 부족하면 구매 거부
-	if (player->GetCoin() < total) {
-		S_UpdateCoin coinPkt;
+	if (player->GetGold() < total) {
+		S_UpdateGold coinPkt;
 		coinPkt.player_id = player->GetID();
-		coinPkt.coin = player->GetCoin();
+		coinPkt.gold = player->GetGold();
 		coinPkt.scene_type = scene_type;
 		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 		session->DoSend(sendBuffer);
@@ -352,12 +352,12 @@ void CLobbyScene::Handle_C_BuyItem(shared_ptr<Session> session, const C_BuyItem&
 		return;
 
 	// 실제 추가된 수량만큼만 소지금 차감
-	uint32 amount = player->GetCoin() - pkt.unit_price * static_cast<uint32>(bought.size());
-	player->SetCoin(amount);
+	uint32 amount = player->GetGold() - pkt.unit_price * static_cast<uint32>(bought.size());
+	player->SetGold(amount);
 
-	S_UpdateCoin coinPkt;
+	S_UpdateGold coinPkt;
 	coinPkt.player_id = player->GetID();
-	coinPkt.coin = amount;
+	coinPkt.gold = amount;
 	coinPkt.scene_type = scene_type;
 	auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 	session->DoSend(sendBuffer);
@@ -382,7 +382,7 @@ void CLobbyScene::Handle_C_BuyItem(shared_ptr<Session> session, const C_BuyItem&
 	session->DoSend(sendBuffer);
 }
 
-void CLobbyScene::Handle_C_SpendCoin(shared_ptr<Session> session, const C_SpendCoin& pkt)
+void CLobbyScene::Handle_C_SpendGold(shared_ptr<Session> session, const C_SpendGold& pkt)
 {
 	auto it = players.find(pkt.player_id);
 	if (it == players.end() || !it->second)
@@ -390,13 +390,13 @@ void CLobbyScene::Handle_C_SpendCoin(shared_ptr<Session> session, const C_SpendC
 
 	auto& player = it->second;
 
-	uint32 playerCoin = player->GetCoin();
+	uint32 playerCoin = player->GetGold();
 	if (playerCoin >= pkt.spent_coin)
-		player->SetCoin(playerCoin - pkt.spent_coin);
+		player->SetGold(playerCoin - pkt.spent_coin);
 
-	S_UpdateCoin coinPkt;
+	S_UpdateGold coinPkt;
 	coinPkt.player_id = player->GetID();
-	coinPkt.coin = playerCoin;
+	coinPkt.gold = playerCoin;
 	coinPkt.scene_type = scene_type;
 	auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 	session->DoSend(sendBuffer);
@@ -411,15 +411,15 @@ void CLobbyScene::Handle_C_RefreshStore(shared_ptr<Session> session, const C_Ref
 	auto& player = it->second;
 
 	bool success = false;
-	uint32 playerCoin = player->GetCoin();
+	uint32 playerCoin = player->GetGold();
 	if (playerCoin >= pkt.spent_coin) {
-		player->SetCoin(playerCoin - pkt.spent_coin);
+		player->SetGold(playerCoin - pkt.spent_coin);
 		success = true;
 	}
 
-	S_UpdateCoin coinPkt;
+	S_UpdateGold coinPkt;
 	coinPkt.player_id = player->GetID();
-	coinPkt.coin = playerCoin;
+	coinPkt.gold = playerCoin;
 	coinPkt.scene_type = scene_type;
 	auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 	session->DoSend(sendBuffer);
@@ -429,6 +429,56 @@ void CLobbyScene::Handle_C_RefreshStore(shared_ptr<Session> session, const C_Ref
 		freshPkt.player_id = player->GetID();
 		freshPkt.scene_type = player->GetCurrentSceneType();
 		sendBuffer = MAKE_SEND_BUFFER(freshPkt);
+		session->DoSend(sendBuffer);
+	}
+}
+
+void CLobbyScene::Handle_C_ExtenseInventory(shared_ptr<Session> session, const C_ExtenseInventory& pkt)
+{
+	auto it = players.find(pkt.player_id);
+	if (it == players.end() || !it->second)
+		return;
+
+	auto& player = it->second;
+
+	auto inventory = player->GetInventory();
+	if (!inventory)
+		return;
+
+	// 이미 최대치(1000)에 도달했으면 더 이상 업그레이드하지 않음 (서버 권위)
+	if (inventory->GetMaxWeight() >= BAG_WEIGHT_MAX)
+		return;
+
+	// 골드 부족이면 거부 → 골드 현재값만 되돌려 통지
+	if (player->GetGold() < pkt.spent_coin) {
+		S_UpdateGold coinPkt;
+		coinPkt.player_id = player->GetID();
+		coinPkt.gold = player->GetGold();
+		coinPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
+		session->DoSend(sendBuffer);
+		return;
+	}
+
+	// 서버 상태 갱신
+	player->SetGold(player->GetGold() - pkt.spent_coin);
+	inventory->UpgradeMaxWeight(static_cast<float>(BAG_WEIGHT_STEP));
+
+	// 클라에 결과 통지: 무게 한도 증가(S_ExtenseInventory) + 권위 골드 잔액(S_UpdateGold)
+	{
+		S_ExtenseInventory extPkt;
+		extPkt.player_id  = player->GetID();
+		extPkt.max_weight = inventory->GetMaxWeight();   // 갱신된 절대값 통지
+		extPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(extPkt);
+		session->DoSend(sendBuffer);
+	}
+	{
+		S_UpdateGold coinPkt;
+		coinPkt.player_id  = player->GetID();
+		coinPkt.gold       = player->GetGold();
+		coinPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 		session->DoSend(sendBuffer);
 	}
 }

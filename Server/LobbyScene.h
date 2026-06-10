@@ -35,8 +35,9 @@ public:
     void         Handle_C_Ready(shared_ptr<Session> session, const C_Ready& pkt);
     void         Handle_C_ShopState(shared_ptr<Session> session, const C_ShopState& pkt);
     void         Handle_C_BuyItem(shared_ptr<Session> session, const C_BuyItem& pkt);
-    void         Handle_C_SpendCoin(shared_ptr<Session> session, const C_SpendCoin& pkt);
+    void         Handle_C_SpendGold(shared_ptr<Session> session, const C_SpendGold& pkt);
     void         Handle_C_RefreshStore(shared_ptr<Session> session, const C_RefreshStore& pkt);
+    void         Handle_C_ExtenseInventory(shared_ptr<Session> session, const C_ExtenseInventory& pkt);
 
 private:
     enum class LobbyMeshName {

@@ -462,10 +462,12 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 		return;
 
 	// 저장 데이터 수집: 코인 + 인벤토리 아이템 도감번호(item_id) 목록
-	const uint32 coin = player->GetCoin();
+	const uint32 gold = player->GetGold();
 
 	nlohmann::json items = nlohmann::json::array();
+	uint32 maxWeight = BAG_WEIGHT_START;   // 가방 무게 한도 (기본 200)
 	if (auto inven = player->GetInventory()) {
+		maxWeight = inven->GetMaxWeight();
 		for (const auto& [invId, item] : inven->GetItems()) {
 			if (!item)
 				continue;
@@ -507,8 +509,9 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 
 	// 계정 ID를 키로 갱신/추가
 	nlohmann::json entry;
-	entry["coin"]  = coin;
-	entry["items"] = items;
+	entry["coin"]       = gold;
+	entry["max_weight"] = maxWeight;
+	entry["items"]      = items;
 	root[accountId] = entry;
 
 	// 폴더 보장 후 저장
@@ -521,7 +524,8 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 		return;
 	}
 	out << root.dump(4);
-	std::cout << "[Save] " << accountId << " 저장 완료 (coin=" << coin
+	std::cout << "[Save] " << accountId << " 저장 완료 (coin=" << gold
+		<< ", max_weight=" << maxWeight
 		<< ", items=" << items.size() << ")\n";
 }
 
@@ -532,7 +536,7 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 
 	// 게스트는 로드하지 않음 (호출부에서도 막지만 안전하게 한 번 더)
 	if (player->GetIsGuest()) {
-		player->SetCoin(10000);
+		player->SetGold(10000);
 		return;
 	}
 
@@ -551,19 +555,32 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 
 	// 저장 기록이 없으면(첫 로그인 등) 코인 0으로 시작 (게스트만 10000, ID 유저는 무일푼)
 	if (accountId.empty() || !root.is_object() || !root.contains(accountId)) {
-		player->SetCoin(0);
+		player->SetGold(0);
 		return;
 	}
 
 	const nlohmann::json& entry = root[accountId];
 
 	// 코인 로드
-	player->SetCoin(entry.value("coin", 0u));
+	player->SetGold(entry.value("coin", 0u));
 
 	// 아이템 로드: 서버 인벤토리에 도감번호로 생성해 추가
 	auto inventory = player->GetInventory();
 	if (!inventory)
 		return;
+
+	// 가방 무게 한도 복원 (기본 200). 아이템 로드 전에 설정해 용량을 먼저 확보.
+	inventory->SetMaxWeight(entry.value("max_weight", BAG_WEIGHT_START));
+
+	// 복원된 무게 한도를 클라에 통지 (아이템 유무와 무관하게). scene_type=CUSTOMS로 라우팅됨.
+	if (auto loadSession = player->GetSession()) {
+		S_ExtenseInventory extPkt;
+		extPkt.player_id  = player->GetID();
+		extPkt.max_weight = inventory->GetMaxWeight();
+		extPkt.scene_type = scene_type;
+		auto sendBuffer = MAKE_SEND_BUFFER(extPkt);
+		loadSession->DoSend(sendBuffer);
+	}
 
 	std::vector<std::shared_ptr<CItem>> loaded;
 	if (entry.contains("items") && entry["items"].is_array()) {
@@ -620,7 +637,8 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 	}
 	session->DoSend(writer.CloseAndReturn());
 
-	std::cout << "[Load] " << accountId << " 로드 완료 (coin=" << player->GetCoin()
+	std::cout << "[Load] " << accountId << " 로드 완료 (coin=" << player->GetGold()
+		<< ", max_weight=" << inventory->GetMaxWeight()
 		<< ", items=" << loaded.size() << ")\n";
 }
 

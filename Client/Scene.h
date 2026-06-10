@@ -94,7 +94,8 @@ public:
 	virtual void Handle_S_DestroyMineable(std::shared_ptr<Session>& session, const S_DestroyMineable& pkt) {};
 	virtual void Handle_S_UpdateDurability(std::shared_ptr<Session>& session, const S_UpdateDurability& pkt) {};
 	virtual void Handle_S_PlaySound(std::shared_ptr<Session> session, S_PlaySound& pkt) {};
-	virtual void Handle_S_UpdateCoin(std::shared_ptr<Session> session, S_UpdateCoin& pkt);
+	virtual void Handle_S_UpdateGold(std::shared_ptr<Session> session, S_UpdateGold& pkt);
+	virtual void Handle_S_ExtenseInventory(std::shared_ptr<Session> session, S_ExtenseInventory& pkt);
 
 public:
 	// 멤버 변수 set

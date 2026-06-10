@@ -74,7 +74,7 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 
 	// 게스트는 기본 코인만 지급. 로그인 유저는 S_SpawnPlayer 이후 LoadPlayerInfo로 로드한다.
 	if (player->GetIsGuest())
-		player->SetCoin(10000);
+		player->SetGold(10000);
 
 	// Custom Scene에는 별도로 EnterScene 하지 않도록 결정했는데
 	// 5월 19일 기준, 이제 커스텀씬도 입장함
@@ -118,9 +118,9 @@ void CCustomScene::C_Handle_Enter_CustomScene(shared_ptr<Session> session, const
 
 	// 6월 2일 추가
 	{
-		S_UpdateCoin coinPkt;
+		S_UpdateGold coinPkt;
 		coinPkt.player_id = player->GetID();
-		coinPkt.coin = player->GetCoin();   // 로드된 코인 반영 (게스트는 10000 지급)
+		coinPkt.gold = player->GetGold();   // 로드된 코인 반영 (게스트는 10000 지급)
 		coinPkt.scene_type = scene_type;
 		auto sendBuffer = MAKE_SEND_BUFFER(coinPkt);
 		if (user->GetSession())

@@ -79,10 +79,12 @@ enum : uint16
 
 	PKT_C_SHOP_STATE,
 	PKT_C_BUY_ITEM,
-	PKT_C_SPEND_COIN,
-	PKT_S_UPDATE_COIN,
+	PKT_C_SPEND_GOLD,
+	PKT_S_UPDATE_GOLD,
 	PKT_C_REFRESH_STORE,
 	PKT_S_REFRESH_STORE,
+	PKT_C_EXTENSE_INVENTORY,
+	PKT_S_EXTENSE_INVENTORY,
 };
 
 // Custom Handlers
@@ -123,8 +125,9 @@ bool Handle_S_CHOLD_FAIL(std::shared_ptr<Session> session, S_CHoldFail& pkt);
 bool Handle_S_RETURN_ZONE_ACTIVE(std::shared_ptr<Session> session, S_ReturnZoneActive& pkt);
 bool Handle_S_PLAYER_RETURNED(std::shared_ptr<Session> session, S_PlayerReturned& pkt);
 bool Handle_S_GAME_SETTLEMENT(std::shared_ptr<Session> session, S_GameSettlement& pkt);
-bool Handle_S_UPDATE_COIN(std::shared_ptr<Session> session, S_UpdateCoin& pkt);
+bool Handle_S_UPDATE_GOLD(std::shared_ptr<Session> session, S_UpdateGold& pkt);
 bool Handle_S_REFRESH_STORE(std::shared_ptr<Session> session, S_RefreshStore& pkt);
+bool Handle_S_EXTENSE_INVENTORY(std::shared_ptr<Session> session, S_ExtenseInventory& pkt);
 
 class CServerPacketHandler
 {
@@ -170,8 +173,9 @@ public:
 		GPacketHandler[PKT_S_RETURN_ZONE_ACTIVE] = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_ReturnZoneActive>(Handle_S_RETURN_ZONE_ACTIVE, session, buffer, len); };
 		GPacketHandler[PKT_S_PLAYER_RETURNED]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_PlayerReturned>(Handle_S_PLAYER_RETURNED, session, buffer, len); };
 		GPacketHandler[PKT_S_GAME_SETTLEMENT]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_GameSettlement>(Handle_S_GAME_SETTLEMENT, session, buffer, len); };
-		GPacketHandler[PKT_S_UPDATE_COIN]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_UpdateCoin>(Handle_S_UPDATE_COIN, session, buffer, len); };
+		GPacketHandler[PKT_S_UPDATE_GOLD]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_UpdateGold>(Handle_S_UPDATE_GOLD, session, buffer, len); };
 		GPacketHandler[PKT_S_REFRESH_STORE]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_RefreshStore>(Handle_S_REFRESH_STORE, session, buffer, len); };
+		GPacketHandler[PKT_S_EXTENSE_INVENTORY]   = [](std::shared_ptr<Session> session, char* buffer, int32 len) { return HandlePacket<S_ExtenseInventory>(Handle_S_EXTENSE_INVENTORY, session, buffer, len); };
 	}
 
 	static bool HandlePacket(std::shared_ptr<Session> session, char* buffer, int32 len)
