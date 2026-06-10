@@ -51,6 +51,8 @@ void CResourceManager::LoadCustomSceneTextures(ID3D12Device* device, ID3D12Comma
 void CResourceManager::LoadLobbySceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
 {
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "sold_out", L"../Resource/LobbyScene/sold_out.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "inv_extense", L"../Resource/LobbyScene/Inventory_Extense_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "buy", L"../Resource/LobbyScene/Buy_Btn.png");
 }
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)

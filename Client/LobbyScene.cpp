@@ -408,10 +408,10 @@ void CLobbyScene::Enter()
 			readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
 	}
 
-	// (테스트) 로비씬에 입장하면 딱 한번만 10000원 준다. (나중에 지울 것)
+	// (테스트) 로비씬에 입장하면 딱 한번만 10000원 준다.
 	static bool once = false;
 	if (g_is_single && !once) {
-		my_player->SetGold(10000);
+		my_player->SetGold(100000000);
 		once = true;
 	}
 }

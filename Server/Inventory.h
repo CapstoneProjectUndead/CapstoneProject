@@ -30,5 +30,5 @@ private:
 	unordered_map<uint32, std::shared_ptr<CItem>>  items;
 	uint32										   inventory_id_counter;
 	uint32										   current_weight;
-	uint32										   max_weight     = 1000;
+	uint32										   max_weight     = 200;
 };

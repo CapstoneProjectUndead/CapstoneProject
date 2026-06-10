@@ -62,6 +62,10 @@ private:
     void DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player);
     void OpenQtyModal(int slotIndex);
 
+    void OpenUpgradeModal();
+    bool UpgradeBag(const std::shared_ptr<CMyPlayer>& player);
+    void DrawUpgradeModal(const std::shared_ptr<CMyPlayer>& player);
+
     void CheckHoverSound();
     void PlayClickSound();
 
@@ -74,6 +78,7 @@ private:
     bool   open_qty_modal = false;
     int    qty_modal_slot = -1;
     int    buy_qty        = 1;
+    bool   open_upgrade_modal = false;
 
     std::mt19937 rng_;
 

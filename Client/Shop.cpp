@@ -36,6 +36,30 @@ static constexpr int    RANDOM_STOCK_MAX = 3;
 static constexpr int    RANDOM_FOOD_COUNT = 4;
 static constexpr uint32 REFRESH_COST     = 500;
 
+// ---- 가방 업그레이드 설정 ----
+// 무게 한도 200에서 출발, 1회 강화 시 +50, 1000이 상한.
+// 비용은 첫 강화 500G에서 단계마다 2배(500, 1000, 2000 ...).
+static constexpr uint32 BAG_WEIGHT_START     = 200;
+static constexpr uint32 BAG_WEIGHT_MAX       = 1000;
+static constexpr uint32 BAG_WEIGHT_STEP      = 50;
+static constexpr uint32 BAG_UPGRADE_BASE     = 500;
+
+// max_weight 하나로 단계/비용을 도출한다.
+static bool BagCanUpgrade(uint32 maxWeight)
+{
+    return maxWeight < BAG_WEIGHT_MAX;
+}
+
+static uint32 BagNextUpgradeCost(uint32 maxWeight)
+{
+    if (maxWeight < BAG_WEIGHT_START)
+        maxWeight = BAG_WEIGHT_START;
+
+    uint32 level = (maxWeight - BAG_WEIGHT_START) / BAG_WEIGHT_STEP; // 지금까지 강화 횟수
+
+    return BAG_UPGRADE_BASE << level;                               // 500 * 2^level
+}
+
 CShop::CShop()
     : rng_(std::random_device{}())
 {
@@ -54,8 +78,9 @@ void CShop::Open()
 
 void CShop::Close()
 {
-    is_open        = false;
-    open_qty_modal = false;
+    is_open            = false;
+    open_qty_modal     = false;
+    open_upgrade_modal = false;
 }
 
 void CShop::EnsureInitialized()
@@ -290,8 +315,9 @@ void CShop::DrawStoreUI(std::shared_ptr<CMyPlayer> player)
         inventory->Draw(true);
     }
 
-    // 최상단: 수량 모달
+    // 최상단: 수량 모달 / 가방 업그레이드 모달
     DrawQuantityModal(player);
+    DrawUpgradeModal(player);
 }
 
 void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, float y, float w, float h)
@@ -355,6 +381,7 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
         ImGui::Dummy(ImVec2(0, 10.f * scale));
 
         float btnH = 50.f * scale;
+        float rowW = ImGui::GetContentRegionAvail().x;   // 하단 행 전체 폭 (가방 강화 버튼 중앙 정렬용)
 
         // 새로고침 = 이미지 버튼 + 옆에 500원 표시
         bool canRefresh = (player->GetGold() >= REFRESH_COST);
@@ -383,26 +410,56 @@ void CShop::DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, flo
         ImGui::Text("500G");   // 500원
         ImGui::SetWindowFontScale(1.0f);
 
+        // 가방 확장 버튼 (이미지) - 하단 행 중앙 배치
+        const float btnImgRatio = 440.f / 141.f;   // Inventory_Extense_Btn / Buy_Btn 공통 비율
+        float bagW = btnH * btnImgRatio;            // 높이=btnH 기준 비율 유지
+        ImGui::SameLine((rowW - bagW) * 0.5f, 0.f);
+        ImTextureID invExtTex = CImGuiManager::GetInstance().GetTexture("inv_extense");
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));   // 배경 투명 (이미지만)
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 1.f, 1.f, 0.15f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(1.f, 1.f, 1.f, 0.25f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));            // 크기=이미지크기 (정렬 정확)
+        bool invExtClicked = invExtTex
+            ? ImGui::ImageButton("##inv_extense_btn", invExtTex, ImVec2(bagW, btnH))
+            : ImGui::Button("\xEA\xB0\x80\xEB\xB0\xA9\x20\xED\x99\x95\xEC\x9E\xA5", ImVec2(bagW, btnH)); // 가방 확장 (폴백)
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor(3);
+        if (invExtClicked) {
+            OpenUpgradeModal();
+        }
+        CheckHoverSound();
+
         ImGui::SameLine();
-        float buyW  = 175.f * scale;
+        float buyW  = btnH * btnImgRatio;   // 이미지 비율 유지 (가방 확장과 동일 크기)
         float avail = ImGui::GetContentRegionAvail().x;
         if (avail > buyW)
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + avail - buyW);
 
         bool canBuy = (selected_slot >= 0 && selected_slot < static_cast<int>(slots.size())
             && slots[selected_slot].stock > 0);
-        // 구매 버튼 = 주황색
-        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.95f, 0.55f, 0.15f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.00f, 0.65f, 0.25f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.80f, 0.45f, 0.10f, 1.f));
-        if (!canBuy) ImGui::BeginDisabled();
-        ImGui::SetWindowFontScale(1.0f * scale);
-        if (ImGui::Button("\xEA\xB5\xAC\xEB\xA7\xA4", ImVec2(buyW, btnH))) {
+
+        // 구매 버튼 (이미지)
+        ImTextureID buyTex = CImGuiManager::GetInstance().GetTexture("buy");
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 1.f, 1.f, 0.15f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(1.f, 1.f, 1.f, 0.25f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
+
+        if (!canBuy) 
+            ImGui::BeginDisabled();
+        bool buyClicked = buyTex
+            ? ImGui::ImageButton("##buy_btn", buyTex, ImVec2(buyW, btnH))
+            : ImGui::Button("\xEA\xB5\xAC\xEB\xA7\xA4", ImVec2(buyW, btnH));
+
+        if (!canBuy) 
+            ImGui::EndDisabled();
+
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor(3);
+
+        if (buyClicked) {
             OpenQtyModal(selected_slot);
         }
-        ImGui::SetWindowFontScale(1.0f);
-        if (!canBuy) ImGui::EndDisabled();
-        ImGui::PopStyleColor(3);
         CheckHoverSound();
 
         ImGui::PopFont();
@@ -576,6 +633,126 @@ void CShop::DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player)
         // 취소 버튼
         if (ImGui::Button("\xEC\xB7\xA8\xEC\x86\x8C", ImVec2(130.f * scale, 36.f * scale))) {
             open_qty_modal = false;
+        }
+
+        ImGui::PopFont();
+    }
+    ImGui::End();
+
+    ImGui::PopStyleVar(1);
+    ImGui::PopStyleColor(2);
+}
+
+void CShop::OpenUpgradeModal()
+{
+    open_upgrade_modal = true;
+}
+
+bool CShop::UpgradeBag(const std::shared_ptr<CMyPlayer>& player)
+{
+    if (!player)
+        return false;
+
+    auto inventory = player->GetInventory();
+    if (!inventory)
+        return false;
+
+    uint32 maxW = inventory->GetMaxWeight();
+    if (!BagCanUpgrade(maxW))
+        return false;
+
+    uint32 cost = BagNextUpgradeCost(maxW);
+    if (player->GetGold() < cost)
+        return false;
+
+    if (g_is_single) {
+        player->SetGold(player->GetGold() - cost);
+        inventory->UpgradeMaxWeight(static_cast<float>(BAG_WEIGHT_STEP));
+    }
+    else {
+        // (멀티): 추후 서버 권위 동기화로 구현 예정.
+        // TODO: C_UpgradeBag 패킷 전송 → 서버에서 코인/한도 검증 후 S_UpdateCoin 등으로 반영.
+        return false;
+    }
+
+    return true;
+}
+
+void CShop::DrawUpgradeModal(const std::shared_ptr<CMyPlayer>& player)
+{
+    if (!open_upgrade_modal)
+        return;
+
+    auto inventory = player ? player->GetInventory() : nullptr;
+    if (!inventory) {
+        open_upgrade_modal = false;
+        return;
+    }
+
+    const float scale = G_RATIO_Y;
+    ImGuiIO&    io    = ImGui::GetIO();
+
+    // 화면 중앙, 매 프레임 포커스로 최상단 유지
+    ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowFocus();
+
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.16f, 0.16f, 0.18f, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_Text,     ImVec4(0.95f, 0.93f, 0.88f, 1.f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_AlwaysAutoResize;
+
+    if (ImGui::Begin("##bag_upgrade_win", nullptr, flags)) {
+        ImGui::SetWindowFontScale(scale);
+
+        ImFont* boldFont = CImGuiManager::bold_font ? CImGuiManager::bold_font : ImGui::GetFont();
+        ImGui::PushFont(boldFont);
+
+        // 제목: 가방 확장
+        ImGui::TextUnformatted("\xEA\xB0\x80\xEB\xB0\xA9\x20\xED\x99\x95\xEC\x9E\xA5");
+        ImGui::Spacing();
+
+        uint32 maxW  = inventory->GetMaxWeight();
+        bool   canUp = BagCanUpgrade(maxW);
+        uint32 cost  = canUp ? BagNextUpgradeCost(maxW) : 0;
+
+        if (!canUp) {
+            // 최대치 도달 (N)
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.30f, 1.f));
+            ImGui::Text("\xEC\xB5\x9C\xEB\x8C\x80\xEC\xB9\x98\x20\xEB\x8F\x84\xEB\x8B\xAC (%u un)", maxW);
+            ImGui::PopStyleColor();
+        }
+        else {
+            // 현재 -> 다음
+            ImGui::Text("%u  ->  %u un", maxW, maxW + BAG_WEIGHT_STEP);
+
+            // 비용: NG (부족하면 빨강)
+            bool canAfford = (player->GetGold() >= cost);
+            ImGui::PushStyleColor(ImGuiCol_Text, canAfford ? ImVec4(1.f, 0.85f, 0.30f, 1.f)
+                                                           : ImVec4(0.90f, 0.40f, 0.40f, 1.f));
+            ImGui::Text("\xEB\xB9\x84\xEC\x9A\xA9: %uG", cost); // 비용
+            ImGui::PopStyleColor();
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        bool canApply = canUp && (player->GetGold() >= cost);
+        if (!canApply) ImGui::BeginDisabled();
+        // 확장 버튼
+        if (ImGui::Button("\xED\x99\x95\xEC\x9E\xA5", ImVec2(130.f * scale, 36.f * scale))) {
+            if (UpgradeBag(player))
+                PlayClickSound();
+        }
+        if (!canApply) ImGui::EndDisabled();
+
+        ImGui::SameLine();
+        // 취소(닫기) 버튼
+        if (ImGui::Button("\xEC\xB7\xA8\xEC\x86\x8C", ImVec2(130.f * scale, 36.f * scale))) {
+            open_upgrade_modal = false;
         }
 
         ImGui::PopFont();
