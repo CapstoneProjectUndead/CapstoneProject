@@ -147,9 +147,9 @@ public:
 	void SetDowsing(bool dows) { is_dowsing = dows; }
 
 	// 코인
-	uint32 GetCoin() const { return coin; }
-	void   SetCoin(uint32 amount) { coin = amount; }
-	void   AddCoin(uint32 amount) { coin += amount; }
+	uint32 GetGold() const { return gold; }
+	void   SetGold(uint32 amount) { gold = amount; }
+	void   AddGold(uint32 amount) { gold += amount; }
 
 	// 복귀 상태 (정산 시스템)
 	bool   GetReturned() const { return is_returned; }
@@ -241,7 +241,7 @@ private:
 	float       grounded_timer{ 0.1f };
 
 	// 소지금
-	uint32      coin{ 0 };
+	uint32      gold{ 0 };
 
 	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
 	bool        is_returned{ false };

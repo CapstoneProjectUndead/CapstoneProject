@@ -36,14 +36,6 @@ static constexpr int    RANDOM_STOCK_MAX = 3;
 static constexpr int    RANDOM_FOOD_COUNT = 4;
 static constexpr uint32 REFRESH_COST     = 500;
 
-// ---- 가방 업그레이드 설정 ----
-// 무게 한도 200에서 출발, 1회 강화 시 +50, 1000이 상한.
-// 비용은 첫 강화 500G에서 단계마다 2배(500, 1000, 2000 ...).
-static constexpr uint32 BAG_WEIGHT_START     = 200;
-static constexpr uint32 BAG_WEIGHT_MAX       = 1000;
-static constexpr uint32 BAG_WEIGHT_STEP      = 50;
-static constexpr uint32 BAG_UPGRADE_BASE     = 500;
-
 // max_weight 하나로 단계/비용을 도출한다.
 static bool BagCanUpgrade(uint32 maxWeight)
 {
@@ -670,9 +662,14 @@ bool CShop::UpgradeBag(const std::shared_ptr<CMyPlayer>& player)
         inventory->UpgradeMaxWeight(static_cast<float>(BAG_WEIGHT_STEP));
     }
     else {
-        // (멀티): 추후 서버 권위 동기화로 구현 예정.
-        // TODO: C_UpgradeBag 패킷 전송 → 서버에서 코인/한도 검증 후 S_UpdateCoin 등으로 반영.
-        return false;
+        C_ExtenseInventory pkt;
+        pkt.player_id = player->GetID();
+        pkt.spent_coin = cost;
+
+        auto sendBuffer = MAKE_SEND_BUFFER(pkt);
+        if (auto s = player->GetSession()) {
+            s->DoSend(sendBuffer);
+        }
     }
 
     return true;

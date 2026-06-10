@@ -48,6 +48,7 @@ public:
     void Handle_S_MapStart(std::shared_ptr<Session> session, const S_MapStart& pkt);
     void Handle_S_Ready(std::shared_ptr<Session> session, const S_Ready& pkt);
     void Handle_S_RefreshStore(std::shared_ptr<Session> session, const S_RefreshStore& pkt);
+    void Handle_S_ExtenseInventory(std::shared_ptr<Session> session, const S_ExtenseInventory& pkt);
 
 private:
     XMFLOAT2 reaper_anchor    = { -2.228f, 3.414f };   // 사신(상점) NPC 앞

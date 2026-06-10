@@ -697,7 +697,7 @@ bool Handle_S_GAME_SETTLEMENT(std::shared_ptr<Session> session, S_GameSettlement
 	return true;
 }
 
-bool Handle_S_UPDATE_COIN(std::shared_ptr<Session> session, S_UpdateCoin& pkt)
+bool Handle_S_UPDATE_GOLD(std::shared_ptr<Session> session, S_UpdateGold& pkt)
 {
 	CScene* targetScene = nullptr;
 
@@ -725,7 +725,7 @@ bool Handle_S_UPDATE_COIN(std::shared_ptr<Session> session, S_UpdateCoin& pkt)
 	if (!targetScene)
 		return true;
 
-	targetScene->Handle_S_UpdateCoin(session, pkt);
+	targetScene->Handle_S_UpdateGold(session, pkt);
 
 	return true;
 }
@@ -737,6 +737,17 @@ bool Handle_S_REFRESH_STORE(std::shared_ptr<Session> session, S_RefreshStore& pk
 		return true;
 
 	lobbyScene->Handle_S_RefreshStore(session, pkt);
+
+	return true;
+}
+
+bool Handle_S_EXTENSE_INVENTORY(std::shared_ptr<Session> session, S_ExtenseInventory& pkt)
+{
+	CLobbyScene* lobbyScene = (CLobbyScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::LOBBY].get();
+	if (!lobbyScene)
+		return true;
+
+	lobbyScene->Handle_S_ExtenseInventory(session, pkt);
 
 	return true;
 }

@@ -44,7 +44,7 @@ CPlayer::CPlayer()
     , possession_contact_timer(0.0f)
     , possessed_spray_hit_count(0)
     , bare_hand_dig_timer(0.0f)
-    , coin(0)
+    , gold(0)
 {
 
 }

@@ -245,7 +245,7 @@ void CGameScene::TriggerSettlement()
 		float rate      = player->GetReturned() ? 1.0f : 0.5f;
 		float bonus     = all_returned ? 2.0f : 1.0f;
 		uint32 final_coin = static_cast<uint32>(base_coin * rate * bonus);
-		player->AddCoin(final_coin);
+		player->AddGold(final_coin);
 
 		// 플레이어에게 개별 정산 패킷 전송
 		uint16 entry_count = static_cast<uint16>(grouped.size());

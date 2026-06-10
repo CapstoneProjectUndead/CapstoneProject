@@ -236,3 +236,11 @@ enum class SOUND_ID : uint16_t
 	Return,
 	item_use,
 };
+
+// ---- 가방 업그레이드 설정 ----
+// 무게 한도 200에서 출발, 1회 강화 시 +50, 1000이 상한.
+// 비용은 첫 강화 500G에서 단계마다 2배(500, 1000, 2000 ...).
+static constexpr uint32 BAG_WEIGHT_START = 200;
+static constexpr uint32 BAG_WEIGHT_MAX = 1000;
+static constexpr uint32 BAG_WEIGHT_STEP = 50;
+static constexpr uint32 BAG_UPGRADE_BASE = 500;

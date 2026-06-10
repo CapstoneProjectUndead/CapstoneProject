@@ -462,7 +462,7 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 		return;
 
 	// 저장 데이터 수집: 코인 + 인벤토리 아이템 도감번호(item_id) 목록
-	const uint32 coin = player->GetCoin();
+	const uint32 gold = player->GetGold();
 
 	nlohmann::json items = nlohmann::json::array();
 	if (auto inven = player->GetInventory()) {
@@ -507,7 +507,7 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 
 	// 계정 ID를 키로 갱신/추가
 	nlohmann::json entry;
-	entry["coin"]  = coin;
+	entry["coin"]  = gold;
 	entry["items"] = items;
 	root[accountId] = entry;
 
@@ -521,7 +521,7 @@ void CScene::SavePlayerData(shared_ptr<CPlayer> player)
 		return;
 	}
 	out << root.dump(4);
-	std::cout << "[Save] " << accountId << " 저장 완료 (coin=" << coin
+	std::cout << "[Save] " << accountId << " 저장 완료 (coin=" << gold
 		<< ", items=" << items.size() << ")\n";
 }
 
@@ -532,7 +532,7 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 
 	// 게스트는 로드하지 않음 (호출부에서도 막지만 안전하게 한 번 더)
 	if (player->GetIsGuest()) {
-		player->SetCoin(10000);
+		player->SetGold(10000);
 		return;
 	}
 
@@ -551,14 +551,14 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 
 	// 저장 기록이 없으면(첫 로그인 등) 코인 0으로 시작 (게스트만 10000, ID 유저는 무일푼)
 	if (accountId.empty() || !root.is_object() || !root.contains(accountId)) {
-		player->SetCoin(0);
+		player->SetGold(0);
 		return;
 	}
 
 	const nlohmann::json& entry = root[accountId];
 
 	// 코인 로드
-	player->SetCoin(entry.value("coin", 0u));
+	player->SetGold(entry.value("coin", 0u));
 
 	// 아이템 로드: 서버 인벤토리에 도감번호로 생성해 추가
 	auto inventory = player->GetInventory();
@@ -620,7 +620,7 @@ void CScene::LoadPlayerInfo(shared_ptr<CPlayer> player)
 	}
 	session->DoSend(writer.CloseAndReturn());
 
-	std::cout << "[Load] " << accountId << " 로드 완료 (coin=" << player->GetCoin()
+	std::cout << "[Load] " << accountId << " 로드 완료 (coin=" << player->GetGold()
 		<< ", items=" << loaded.size() << ")\n";
 }
 

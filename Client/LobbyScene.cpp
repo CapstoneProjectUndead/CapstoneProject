@@ -505,3 +505,15 @@ void CLobbyScene::Handle_S_RefreshStore(std::shared_ptr<Session> session, const 
 
 	CShop::GetInstance().Reset();
 }
+
+void CLobbyScene::Handle_S_ExtenseInventory(std::shared_ptr<Session> session, const S_ExtenseInventory& pkt)
+{
+	if (!my_player)
+		return;
+
+	auto& inv = my_player->GetInventory();
+	if (!inv)
+		return;
+
+	inv->UpgradeMaxWeight(static_cast<float>(BAG_WEIGHT_STEP));
+}

@@ -816,10 +816,10 @@ void CScene::Handle_S_AddItemList(std::shared_ptr<Session> session, S_AddItemLis
 	}
 }
 
-void CScene::Handle_S_UpdateCoin(std::shared_ptr<Session> session, S_UpdateCoin& pkt)
+void CScene::Handle_S_UpdateGold(std::shared_ptr<Session> session, S_UpdateGold& pkt)
 {
 	if (my_player->GetID() != pkt.player_id)
 		return;
 
-	my_player->SetGold(pkt.coin);
+	my_player->SetGold(pkt.gold);
 }
