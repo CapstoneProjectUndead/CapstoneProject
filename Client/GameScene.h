@@ -62,6 +62,9 @@ private:
     // 멀티용 (itemID는 도감번호, itemWorldId는 ObjectID)
     void SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 position, int16 dur = -1);
 
+    // 모델 원점이 제각각이라 로컬 AABB 바닥이 groundY에 닿도록 Y를 보정 (땅에 박힘 방지)
+    void PlaceWorldItemOnGround(const std::shared_ptr<CWorldItem>& worldItem, float groundY);
+
     // 몬스터 respawn 관리
     void UpdateMonsters(float elapsedTime);
 

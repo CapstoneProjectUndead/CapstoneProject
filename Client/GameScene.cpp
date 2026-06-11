@@ -1233,6 +1233,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, XMFLOAT3 position, int16 dur)
 
 	// 아이템의 위치
 	worldItem->SetPosition(position);
+	PlaceWorldItemOnGround(worldItem, position.y);
 
 	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
 	worldItem->SetID(world_item_id_counter);
@@ -1261,6 +1262,7 @@ void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 posi
 
 	// 아이템의 위치
 	worldItem->SetPosition(position);
+	PlaceWorldItemOnGround(worldItem, position.y);
 
 	// 아이템의 ID (CObject 클래스에 정의된 obj_id)
 	worldItem->SetID(itemWorldId);
@@ -1272,6 +1274,26 @@ void CGameScene::SpawnWorldItem(uint16 itemID, uint32 itemWorldId, XMFLOAT3 posi
 
 	// Scene의 objects 컨테이너에 추가
 	AddObject(worldItem, itemWorldId);
+}
+
+// 모델 원점(pivot)이 제각각이라 고정 Y로는 모델이 땅에 박힌다.
+// 로컬 AABB를 월드로 변환해 바닥(최저 Y)이 groundY에 닿도록 Y를 끌어올린다.
+void CGameScene::PlaceWorldItemOnGround(const std::shared_ptr<CWorldItem>& worldItem, float groundY)
+{
+	BoundingBox local = worldItem->GetLocalAABB();
+
+	// 메시 AABB가 없는(extents 0) 오브젝트는 보정 불가 → 스킵
+	if (local.Extents.x <= 0.0f && local.Extents.y <= 0.0f && local.Extents.z <= 0.0f)
+		return;
+
+	BoundingBox worldBox;
+	local.Transform(worldBox, XMLoadFloat4x4(&worldItem->world_matrix));
+
+	float worldMinY = worldBox.Center.y - worldBox.Extents.y;
+
+	XMFLOAT3 p = worldItem->GetPosition();
+	p.y += (groundY - worldMinY);   // 모델 바닥을 groundY에 맞춤
+	worldItem->SetPosition(p);
 }
 
 void CGameScene::DropItemAtPlayerFeet(std::shared_ptr<CItem> item)
