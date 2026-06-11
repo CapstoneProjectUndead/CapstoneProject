@@ -22,5 +22,6 @@ public:
 private:
     MINEABLEOBJECT_TYPE type;
     int hp = 5;
-    const int max_hp = 5;
+    const int visible_max_hp = 5;
+    const int none_visible_max_hp = 4;
 };

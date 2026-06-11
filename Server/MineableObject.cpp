@@ -6,6 +6,12 @@ CMineableObject::CMineableObject(MINEABLEOBJECT_TYPE _type)
 	: CObject(OBJECT_TYPE::MINEABLE_OBJECT)
 	, type(_type)
 {
+	if (type == MINEABLEOBJECT_TYPE::VISIBLE) {
+		hp = visible_max_hp;
+	}
+	else {
+		hp = none_visible_max_hp;
+	}
 }
 
 CMineableObject::~CMineableObject()
@@ -15,8 +21,6 @@ CMineableObject::~CMineableObject()
 void CMineableObject::Initialize()
 {
 	CObject::Initialize();
-
-	hp = max_hp;
 }
 
 void CMineableObject::Update(const float dt)
