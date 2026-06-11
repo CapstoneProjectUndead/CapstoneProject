@@ -766,8 +766,12 @@ void CPlayer::ProcessToolMining()
 
             if (target) {
                 target->TakeDamage();
-                if (target->IsDestroyed())
-                    gameScene->DestroyMineable(target->GetID());
+                if (target->IsDestroyed()) {
+                    if (isShovel)
+                        gameScene->DestroyMineable(target->GetID(), position, look);
+                    else
+                        gameScene->DestroyMineable(target->GetID());
+                }
 
                 // 도구 내구도 소모 (0이면 자동 제거)
                 ConsumeEquippedDurability();
@@ -879,7 +883,7 @@ void CPlayer::ProcessBareHandMining(float elapsedTime, const InputData& input, b
                     state = PLAYER_STATE::IDLE;
                     target->DestroyImmediate();
                     if (target->IsDestroyed())
-                        gameScene->DestroyMineable(target->GetID());
+                        gameScene->DestroyMineable(target->GetID(), position, look);
                 }
             }
             else {

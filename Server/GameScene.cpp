@@ -580,7 +580,7 @@ CMineableObject* CGameScene::FindNearestMineable(const XMFLOAT3& pos, float rang
 	return nearest;
 }
 
-void CGameScene::DestroyMineable(uint32 world_id)
+void CGameScene::DestroyMineable(uint32 world_id, XMFLOAT3 playerPos, XMFLOAT3 playerLook)
 {
 	auto it = mineable_objects.find(world_id);
 	if (it == mineable_objects.end())
@@ -604,6 +604,12 @@ void CGameScene::DestroyMineable(uint32 world_id)
 
 	// 드롭 아이템 스폰 (보물) (임시)
 	// 여기는 보물 확률 계산으로 다시 수정되어야 하는 부분
+	float lookLen = sqrtf(playerLook.x * playerLook.x + playerLook.z * playerLook.z);
+	if (lookLen > 0.001f) {
+		pos.x = playerPos.x + (playerLook.x / lookLen) * 0.3f;
+		pos.z = playerPos.z + (playerLook.z / lookLen) * 0.3f;
+	}
+
 	uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
 	auto dropped = item_manager->SpawnItem(picked, pos);
 

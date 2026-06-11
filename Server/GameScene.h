@@ -55,7 +55,7 @@ public:
     static constexpr float BARE_HAND_MINING_RANGE = 0.6f;
     XMFLOAT3 FindSpawnPoint() const;
     CMineableObject* FindNearestMineable(const XMFLOAT3& pos, float range, MINEABLEOBJECT_TYPE type);
-    void DestroyMineable(uint32 world_id);
+    void DestroyMineable(uint32 world_id, XMFLOAT3 playerPos = {}, XMFLOAT3 playerLook = {});
 
     const vector<MonsterSpawnInfo>& GetMonsterSpawnInfo() const { return monster_spawn_info; }
 

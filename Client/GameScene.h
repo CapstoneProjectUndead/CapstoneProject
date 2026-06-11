@@ -118,6 +118,8 @@ private:
     // 상대 플레이어 상태 UI (오른쪽 상단, 최대 3명): 원형 사진 + HP바
     void DrawOpponentStatus();
 
+    void SpawnTreasure(XMFLOAT3& pos);
+
 private:
     std::vector<MapGenerator::InstanceData>  instance_data;
     std::vector<TreasureInfo>                treasures;

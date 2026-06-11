@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <cstdio>
 #include "GameScene.h"
 #include "SceneManager.h"
@@ -263,10 +263,11 @@ void CGameScene::Update(float elapsedTime)
 		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
 			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
 
-		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand) 
+		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand)
 			&& !my_player->GetIsPossessed()
 			&& !my_player->GetIsStunned()
-			&& !my_player->GetIsKnockedBack()) {
+			&& !my_player->GetIsKnockedBack()
+			&& !my_player->GetDowsing()) {
 
 			uint16 equippedId = my_player->GetEquippedItemId();
 			bool isShovel = equippedId >= 1 && equippedId <= 4;
@@ -282,6 +283,14 @@ void CGameScene::Update(float elapsedTime)
 		}
 		else if(!ImGui::GetIO().WantCaptureMouse && hasWeapon) {
 			ProcessAttack(elapsedTime);
+		}
+
+		// 빙의/기절/넉백/다우징 상태 진입 시 맨손 채굴 루프 사운드 강제 종료
+		if (bare_hand_dig_loop_playing &&
+			(my_player->GetIsPossessed() || my_player->GetIsStunned()
+			|| my_player->GetIsKnockedBack() || my_player->GetDowsing())) {
+			CSoundManager::GetInstance().Stop(SOUND_ID::bare_hand_dig);
+			bare_hand_dig_loop_playing = false;
 		}
 
 		my_player->BeginSendInputPacket(elapsedTime);
@@ -700,12 +709,8 @@ void CGameScene::ProcessVisibleObjectMining(float elapsedTime)
 					objects.pop_back();
 				}
 
-				// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
-				RemoveTreasureFromDowsing(pos);
-
 				pos.y = 0.05f;
-				uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
-				SpawnWorldItem(picked, pos);
+				SpawnTreasure(pos);
 			}
 		}
 		else {
@@ -756,7 +761,7 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 		dig_sound_timer += elapsedTime;
 		if (dig_sound_timer >= 0.5f) {
 			if (isShovel) {
-				CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 3.33f);
+				CSoundManager::GetInstance().Play(SOUND_ID::bare_hand_dig, 1, 3.33f);
 			}
 			dig_sound_timer = -1.0f;
 		}
@@ -834,9 +839,13 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 				// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
 				RemoveTreasureFromDowsing(pos);
 
-				pos.y = 0.05f;
-				uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
-				SpawnWorldItem(picked, pos);
+				{
+					XMFLOAT3 pPos = my_player->GetPosition();
+					XMFLOAT3 fwd  = my_player->look;
+					pos = { pPos.x + fwd.x * 0.3f, 0.05f, pPos.z + fwd.z * 0.3f };
+				}
+
+				SpawnTreasure(pos);
 			}
 		}
 		else {
@@ -894,9 +903,13 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 						// 다우징로드가 더이상 이 보물을 추적하지 않도록 갱신
 						RemoveTreasureFromDowsing(pos);
 
-						pos.y = 0.05f;
-						uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
-						SpawnWorldItem(picked, pos);
+						{
+							XMFLOAT3 pPos = my_player->GetPosition();
+							XMFLOAT3 fwd  = my_player->look;
+							pos = { pPos.x + fwd.x * 0.3f, 0.05f, pPos.z + fwd.z * 0.3f };
+						}
+
+						SpawnTreasure(pos);
 					}
 				}
 			}
@@ -930,6 +943,12 @@ void CGameScene::ProcessUnVisibleObjectMining(float elapsedTime)
 		if(mining_target)
 			my_player->SetState(PLAYER_STATE::DIG);
 	}
+}
+
+void CGameScene::SpawnTreasure(XMFLOAT3& pos)
+{
+	uint16 picked = g_TreasureTable[rand() % g_TreasureTableCount];
+	SpawnWorldItem(picked, pos);
 }
 
 void CGameScene::FindNearestMineTarget(MINEABLEOBJECT_TYPE type)
