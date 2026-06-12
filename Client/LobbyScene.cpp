@@ -114,12 +114,19 @@ void CLobbyScene::Update(float elapsedTime)
 		UpdatePlayerReadyUI();
 	}
 
+
+	bool isInvOpen = (my_player && my_player->GetInventory() && my_player->GetInventory()->IsOpen());
 	if (KEY_TAP(KEY::ESC)) {
-		// 상점이 열려 있으면 ESC는 상점 닫기 (메뉴보다 우선)
+		// 1순위: 상점이 열려 있으면 상점 닫기
 		if (CShop::GetInstance().IsOpen()) {
 			CShop::GetInstance().Close();
 		}
-		else {
+		// 2순위: 대화창이 열려 있으면 대화창 닫기
+		else if (auto reaperUI = ui_manager->GetUI<CUICanvas>("ReaperSpeechCanvas"); reaperUI && reaperUI->is_enable) {
+			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
+		}
+		// 3순위: 인벤토리가 닫혀 있을 때만 로비 메뉴를 켤 수 있음
+		else if (!isInvOpen) {
 			auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
 			if (menuUI) {
 				ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
@@ -127,28 +134,36 @@ void CLobbyScene::Update(float elapsedTime)
 		}
 	}
 
-	// C 키로 위치 기반 상호작용 (상점이 열려 있을 땐 무시)
-	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen()) {
+	// C 키로 위치 기반 상호작용 (인벤토리가 닫혀 있을 때만 작동 가능)
+	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen() && !isInvOpen) {
 		switch (GetInteractZone()) {
 		case InteractZone::Entrance:
-			InteractWithReaper();   // Ground 입구 → 게임씬 진입 준비
+			InteractWithReaper();
 			break;
 		case InteractZone::Reaper:
-			CShop::GetInstance().Open();   // 사신(상점) NPC → 상점 열기
+			CShop::GetInstance().Open();
 			break;
 		default:
 			break;
 		}
+
+		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
+		if (menuUI) {
+			ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
+		}
 	}
 
-	// 상점 열림/닫힘 전환 처리 (인벤토리 강제 열기/복원, 커서 모드)
+	// 상점 열림/닫힘 전환 처리
 	HandleShopTransition();
 
-	if (KEY_PRESSED(KEY::LBTN)) {
+	if (KEY_TAP(KEY::LBTN)) {
 		auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
-		if (reaperUI->is_enable) {
+		if (reaperUI && reaperUI->is_enable) {
 			auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
-			reaperText->Skip();	// 디버깅을 위해 스킵
+			if (reaperText) {
+				reaperText->Skip();
+				CKeyManager::GetInstance().SetMouseMode(false);
+			}
 		}
 	}
 }
@@ -276,36 +291,21 @@ void CLobbyScene::SetButtonEvents()
 
 	if (reaperText) {
 		reaperText->onFinished = [yesBtn, noBtn]() {
-			bool isGameMode = CKeyManager::GetInstance().GetMouseMode();
-			if (yesBtn) {
-				yesBtn->SetEnable(true);
-				if (isGameMode) {
-					CKeyManager::GetInstance().SetMouseMode(false);
-				}
-			}
-			if (noBtn) {
-				noBtn->SetEnable(true);
-				if (isGameMode) {
-					CKeyManager::GetInstance().SetMouseMode(false);
-				}
-			}
+			if (yesBtn) yesBtn->SetEnable(true);
+			if (noBtn) noBtn->SetEnable(true);
 			};
 	}
 
 	if (yesBtn) {
-		yesBtn->OnClick = [this, yesBtn]() {
-			bool isGameMode = CKeyManager::GetInstance().GetMouseMode();
-			if (!isGameMode) {
-				CKeyManager::GetInstance().SetMouseMode(true);
-			}
-
+		yesBtn->OnClick = [this]() {
 			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
+
 			if (g_is_single) {
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 			}
 			else {
-				std::shared_ptr<CMyPlayer>myPlayer = this->GetMyPlayer();
-				if (!myPlayer->GetIsReady()) {
+				std::shared_ptr<CMyPlayer> myPlayer = this->GetMyPlayer();
+				if (myPlayer && !myPlayer->GetIsReady()) {
 					myPlayer->SetIsReady(true);
 					C_Ready readyPkt;
 					readyPkt.player_id = myPlayer->GetID();
@@ -319,12 +319,7 @@ void CLobbyScene::SetButtonEvents()
 	}
 
 	if (noBtn) {
-		noBtn->OnClick = [this, noBtn]() {
-			bool isGameMode = CKeyManager::GetInstance().GetMouseMode();
-			if (!isGameMode) {
-				CKeyManager::GetInstance().SetMouseMode(true);
-			}
-
+		noBtn->OnClick = [this]() {
 			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
 			};
 	}

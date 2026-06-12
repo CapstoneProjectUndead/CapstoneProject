@@ -37,6 +37,7 @@ public:
 
 	// UI 관련 
 	void DrawUI_Final();
+	std::shared_ptr<CUIManager>& GetUIManager() { return ui_manager; };
 
 	// UI 버튼 누를 때 효과음
 	void CheckHoverSound();

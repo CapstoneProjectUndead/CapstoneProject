@@ -78,6 +78,11 @@ void CGameScene::Initialize()
 	auto menuUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Menu_UI.json");
 	menuUI->SetEnable(false);
 	ui_manager->AddCanvas(menuUI);
+	// 메뉴 내 ToCustom 버튼을 비활성화
+	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
+	if (menuToCustomBtn) {
+		menuToCustomBtn->SetEnable(false);
+	}
 	// Player UI
 	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
 	ui_manager->AddCanvas(playerUI);
@@ -205,9 +210,18 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 void CGameScene::Update(float elapsedTime)
 {
 	if (KEY_TAP(KEY::ESC)) {
-		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
-		if (menuUI) {
-			ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+		bool isInvOpen = (my_player && my_player->GetInventory() && my_player->GetInventory()->IsOpen());
+		// 인벤토리가 닫혀 있을 때만 ESC로 로비 메뉴를 켤 수 있도록 제한
+		if (!isInvOpen) {
+			auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
+			if (menuUI) {
+				ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
+			}
+		}
+		else {
+			// 열려있으면 인벤토리 끄기
+			my_player->GetInventory()->ToggleOpen();
+			CKeyManager::GetInstance().SetMouseMode(true);
 		}
 	}
 
