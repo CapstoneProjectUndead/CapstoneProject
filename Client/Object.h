@@ -5,6 +5,7 @@ class CShader;
 class CCamera;
 class CMesh;
 class IRenderer;
+struct BillboardInstCB;
 
 namespace CGeometryLoader {
 	struct FrameNode;
@@ -155,8 +156,14 @@ std::vector<T*> CObject::GetComponents() const
 class CParticleObject : public CObject {
 public:
 	CParticleObject();
-	CParticleObject(const XMFLOAT4& color);
+	CParticleObject(const XMFLOAT3& position);
+	CParticleObject(const XMFLOAT3& position, const XMFLOAT4& color);
+	void Update(const float) override;
 	void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
+	void InitializeParticles();
 private:
 	XMFLOAT4 color{ 1.0, 0,0,1 };
+	XMFLOAT3 size{ 0.1, 0.1, 0.1 };
+	std::vector<BillboardInstCB> particles;
+	const int particleCount = 1000; // 한 번에 관리할 파티클 개수
 };

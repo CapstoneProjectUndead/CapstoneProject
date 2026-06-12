@@ -10,6 +10,7 @@ enum class OBJECT_TYPE : uint8_t
 	MONSTER,
 	WORLD_ITEM,
 	MINEABLE_OBJECT,
+	PARTICLE_OBJECT,
 };
 
 enum class PLAYER_STATE : uint8_t

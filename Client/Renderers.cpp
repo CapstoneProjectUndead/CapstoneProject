@@ -169,6 +169,22 @@ inline void CRenderer<T>::AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT
         dynamic_batches[key].push_back(data);
 }
 
+template<typename T>
+inline void CRenderer<T>::AddInstance(std::shared_ptr<CMesh> mesh, const T& customData, UINT submeshIndex, bool isStatic)
+{
+    T data = customData;
+
+    XMMATRIX worldT = XMMatrixTranspose(XMLoadFloat4x4(&data.world_matrix));
+    XMStoreFloat4x4(&data.world_matrix, worldT);
+
+    RenderKey key{ mesh, submeshIndex };
+
+    if (isStatic)
+        static_batches[key].push_back(data);
+    else
+        dynamic_batches[key].push_back(data);
+}
+
 // CInstRenderer
 void CInstRenderer::Render(ID3D12GraphicsCommandList* cmdList)
 {
@@ -275,6 +291,11 @@ void CBillboardRenderer::AddInstance(std::shared_ptr<CMesh> mesh, std::shared_pt
 void CBillboardRenderer::AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic)
 {
     CRenderer<BillboardInstCB>::AddInstance(b_mesh, color, world, isStatic);
+}
+
+void CBillboardRenderer::AddParticleInstance(std::shared_ptr<CMesh> mesh, const BillboardInstCB& particleData, bool isStatic)
+{
+    CRenderer<BillboardInstCB>::AddInstance(b_mesh, particleData, 0, isStatic);
 }
 
 void CBillboardRenderer::Render(ID3D12GraphicsCommandList* cmdList)

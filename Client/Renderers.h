@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "GPUBufferStruct.h"
 
 class CMesh;
@@ -19,6 +19,7 @@ public:
     // white texture 사용(사용 시 힙 0번에 tex set)
     virtual void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) {};
     virtual void AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, AnimationData aniData) {};
+    virtual void AddParticleInstance(std::shared_ptr<CMesh> mesh, const BillboardInstCB& particleData, bool isStatic) {}
     virtual void ClearAllBatch() {};
     virtual void ClearStaticBatch() {};
     virtual void ClearDynamicBatch() {};
@@ -36,6 +37,7 @@ public:
     virtual void AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     // white texture 사용(사용 시 힙 0번에 tex set)
     virtual void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+    virtual void AddInstance(std::shared_ptr<CMesh> mesh, const T& customData, UINT submeshIndex, bool isStatic);
 
     void Initialize(ID3D12Device* dev, UINT instSize);
     void ResizeBuffer(UINT requiredSize);
@@ -102,6 +104,7 @@ public:
     CUIRenderer();
     void AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:
     std::shared_ptr<CRectangleMesh> quad_mesh;
@@ -112,6 +115,7 @@ public:
     CBillboardRenderer();
     void AddInstance(std::shared_ptr<CMesh> mesh, std::shared_ptr<CMaterialComponent> material, const XMFLOAT4X4& world, UINT submeshIndex, bool isStatic) override;
     void AddInstance(std::shared_ptr<CMesh> mesh, const XMFLOAT4 color, const XMFLOAT4X4& world, bool isStatic) override;
+    virtual void AddParticleInstance(std::shared_ptr<CMesh> mesh, const BillboardInstCB& particleData, bool isStatic) override;
     void Render(ID3D12GraphicsCommandList* cmdList) override;
 private:
     std::shared_ptr<CBillboardMesh> b_mesh;

@@ -37,33 +37,55 @@ struct MaterialData
 
 struct InstanceData
 {
-    float4x4 world_matrix; // UI의 위치, 크기, 피벗이 반영된 행렬
+    float4x4 world_matrix;
     MaterialData material;
+    float3 velocity; // 파티클의 이동 속도/방향
+    float spawn_time; // 생성 이후 흐른 시간 (Age)
+    float life_time; // 수명
 };
 
 StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
 
 Texture2D texDiffuse[5] : register(t0);
-SamplerState sample: register(s0);
+SamplerState sample : register(s0);
+
+// 상수
+const static float3 gravity = float3(0.0f, 1.0f, 0.0f);
+const static float PI = 3.1415926535f;
 
 VS_OUTPUT VSMain(VS_INPUT input, uint instanceID : SV_InstanceID)
 {
     VS_OUTPUT output;
     InstanceData instData = gInstanceData[instanceID];
 
-    float4 worldPos = mul(float4(input.position, 1.0f), instData.world_matrix);
-    output.centerW = worldPos.xyz;
+    float age = instData.spawn_time;
+    float lifeRatio = age / instData.life_time; // 0(탄생) ~ 1(소멸)
+
+    // 가속도 계산
+    float3 particleOffset = (instData.velocity * age) + (0.5f * gravity * age * age);
+    float3 finalLocalPos = input.position + particleOffset;
+
+    float amp = 2.0f;
+    float speed = 8.0f;
+    float sinInput = (lifeRatio * PI * 3.0f) - (age * speed);
+    float flameWave = sin(sinInput) * amp * lifeRatio;
+    finalLocalPos.x += flameWave;
+
+    float sizeScale = saturate(1.0f - lifeRatio);
     
-    output.size = float2(instData.world_matrix._11, instData.world_matrix._22);
+    float4 worldPos = mul(float4(finalLocalPos, 1.0f), instData.world_matrix);
+    
+    output.centerW = worldPos.xyz;
+    output.size = float2(instData.world_matrix._11, instData.world_matrix._22) * sizeScale;
     output.instanceID = instanceID;
     
-    return (output);
+    return output;
 }
 
 [maxvertexcount(4)]
 void GS(point VS_OUTPUT input[1], uint primID : SV_PrimitiveID, inout TriangleStream<GS_OUT> outStream)
 {
-    // GS 내부에서 좌표 계산 시
+    // 카메라를 바라보는 빌보드 좌표 계산
     float3 look = normalize(cameraPos - input[0].centerW);
     float3 right = normalize(cross(float3(0, 1, 0), look));
     float3 up = cross(look, right);
@@ -94,12 +116,24 @@ void GS(point VS_OUTPUT input[1], uint primID : SV_PrimitiveID, inout TriangleSt
 
 float4 PSMain(GS_OUT input) : SV_TARGET
 {
-    MaterialData instMat = gInstanceData[input.instanceID].material;
-    // texture
-    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex);
-
-    // 알파 테스팅 (말풍선 등 투명 영역 처리)
-    //clip(diffuseAlbedo.a - 0.1f);
+    InstanceData instData = gInstanceData[input.instanceID];
+    MaterialData instMat = instData.material;
     
-    return diffuseAlbedo * instMat.albedo;
+    float age = instData.spawn_time;
+    float lifeRatio = age / instData.life_time;
+
+    float4 diffuseAlbedo = texDiffuse[instMat.tex_idx].Sample(sample, input.tex);
+    
+    float3 fireColor = lerp(float3(2.0f, 0.15f, 0.05f), instMat.albedo.rgb, lifeRatio);
+    float4 finalColor;
+    finalColor.rgb = fireColor * diffuseAlbedo.rgb;
+    
+    float3 dynamicEmissive = lerp(float3(3.0f, 0.1f, 0.0f), instMat.emissive_color.rgb, lifeRatio);
+    finalColor.rgb += dynamicEmissive * diffuseAlbedo.a;
+    
+    // 지날 수록 투명하게
+    float finalAlpha = diffuseAlbedo.a * (1.0f - lifeRatio) * instMat.albedo.a;
+    finalColor.a = finalAlpha;
+    
+    return finalColor;
 }

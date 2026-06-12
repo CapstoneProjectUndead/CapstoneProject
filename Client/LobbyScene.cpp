@@ -34,6 +34,7 @@ void CLobbyScene::Initialize()
 
 	if (objects.empty()) {
 		objects = factory->CreateLobby();
+		objects.push_back(std::make_shared<CParticleObject>(XMFLOAT3{ -2.5, 0.17, -0.216999993 }));
 	}
 
 	// UI 생성

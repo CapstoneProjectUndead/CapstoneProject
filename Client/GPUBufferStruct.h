@@ -31,6 +31,9 @@ struct UIInstCB {
 struct BillboardInstCB {
     XMFLOAT4X4 world_matrix;
     MaterialData material;
+    XMFLOAT3   velocity;       // 파티클의 이동 속도/방향
+    float               spawn_time;      // 생성 시간
+    float               life_time;       // 수명
 };
 
 struct TextInst {

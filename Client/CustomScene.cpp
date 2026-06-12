@@ -43,6 +43,7 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
         light->AddPointLight(XMFLOAT3(-2.44799995, 0.48300001, -0.216999993), XMFLOAT3(1.0f, 0.8f, 0.6f), 0.5f, 1.5f);	// firewood
         light->AddPointLight(XMFLOAT3(0, 0, 1), XMFLOAT3(0.5f, 0.5f, 0.5f), 1.0f, 2.0f);		// custom
     }
+    objects.push_back(std::make_shared<CParticleObject>(XMFLOAT3{ -2.5, 0.17, -0.216999993 }));
 }
 
 void CCustomScene::Enter()
