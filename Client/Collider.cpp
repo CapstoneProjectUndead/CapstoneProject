@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Collider.h"
 #include "Object.h"
 #include "Mesh.h"

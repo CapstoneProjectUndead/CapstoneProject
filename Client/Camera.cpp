@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -16,11 +16,11 @@ void CCamera::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	// 카메라 객체 생성
 	RECT client_rect;
 	GetClientRect(ghWnd, &client_rect);
-	float width{ float(client_rect.right - client_rect.left) };
-	float height{ float(client_rect.bottom - client_rect.top) };
+	int width{ int(client_rect.right - client_rect.left) };
+	int height{ int(client_rect.bottom - client_rect.top) };
 
 	SetViewport(0, 0, width, height);
-	SetScissorRect(0, 0, width, height);
+	SetScissorRect(0, 0, (LONG)width, (LONG)height);
 	GenerateProjectionMatrix(0.01f, 20.0f, (float)width / (float)height, 90.0f);
 	GenerateOrthoProjectionMatrix(0.0f, 1.0f, (float)width, (float)height);
 	SetCameraOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -81,7 +81,7 @@ void CCamera::UpdateShaderVariablesShadow(ID3D12GraphicsCommandList* commandList
 	commandList->SetGraphicsRootConstantBufferView(3, inv_camera_cb->GetGPUVirtualAddress());
 }
 
-void CCamera::UpdateShaderVariablesBlur(ID3D12GraphicsCommandList* commandList, const XMFLOAT2& direction, float clientWidth, float clientHeight, UINT passIndex)
+void CCamera::UpdateShaderVariablesBlur(ID3D12GraphicsCommandList* commandList, const XMFLOAT2& direction, int clientWidth, int clientHeight, UINT passIndex)
 {
 	if (!blur_mapped) return;
 

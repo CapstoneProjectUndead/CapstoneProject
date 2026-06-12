@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 class ThreadManager
 {
@@ -9,27 +9,27 @@ public:
 	void	Launch(std::function<void(void)> callback);
 	void	Join();
 
-	//		½º·¹µå Ç® ÃÊ±âÈ­ (·ÎÁ÷¿ë ½º·¹µåµéÀ» ¹Ì¸® »ı¼º)
+	//		ìŠ¤ë ˆë“œ í’€ ì´ˆê¸°í™” (ë¡œì§ìš© ìŠ¤ë ˆë“œë“¤ì„ ë¯¸ë¦¬ ìƒì„±)
 	void	InitThreadPool(int threadCount);
 
-	//		ÀÏ°¨(Task)À» ´øÁö´Â ÇÔ¼ö
+	//		ì¼ê°(Task)ì„ ë˜ì§€ëŠ” í•¨ìˆ˜
 	void	PushTask(std::function<void()> task);
 
 	static void InitTLS();
 	static void DestroyTLS();
 
 private:
-	//      ½º·¹µåµéÀÌ ¼öÇàÇÒ ½ÇÁ¦ ·çÇÁ ÇÔ¼ö
+	//      ìŠ¤ë ˆë“œë“¤ì´ ìˆ˜í–‰í•  ì‹¤ì œ ë£¨í”„ í•¨ìˆ˜
 	void	DoWorkerJob();
 
 private:
 	std::mutex					 lock;
 	std::vector<std::thread>	 threads;
 
-	// ÀÏ°¨ Å¥¿Í µ¿±âÈ­ µµ±¸
+	// ì¼ê° íì™€ ë™ê¸°í™” ë„êµ¬
 	std::mutex					 job_queue_lock;
 	std::condition_variable		 cv;
 	std::queue<std::function<void()>> job_queue;
-	bool						 shut_down = false; // ½º·¹µå Á¾·á ÇÃ·¡±×
+	bool						 shut_down = false; // ìŠ¤ë ˆë“œ ì¢…ë£Œ í”Œë˜ê·¸
 };
 

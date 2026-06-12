@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ItemFactory.h"
 #include "Item.h"
 #include <nlohmann/json.hpp>

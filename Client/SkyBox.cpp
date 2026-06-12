@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "SkyBox.h"
 #include "Camera.h"
 #include "Shader.h"

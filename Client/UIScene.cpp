@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "UIScene.h"
 #include "UIComponent.h"
 #include "ImGuiManager.h"
@@ -22,7 +22,7 @@ void CUIScene::Update(float dt)
     ui_manager->Update(dt);
 
 	// 마우스 드래그 이동 로직 (선택된 UI가 있을 때)
-	HandleUIDragging();
+    HandleUIDragging();
 }
 
 void CUIScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

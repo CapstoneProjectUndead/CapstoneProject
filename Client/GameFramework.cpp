@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <filesystem>
 #include "Player.h"
 #include "KeyManager.h"

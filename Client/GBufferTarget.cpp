@@ -1,13 +1,13 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GBufferTarget.h"
 
-CGBufferTarget::CGBufferTarget(ID3D12Device* device, UINT width, UINT height, DXGI_FORMAT format)
+CGBufferTarget::CGBufferTarget(ID3D12Device* device, int width, int height, DXGI_FORMAT format)
     : format(format)
 {
     Resize(device, width, height);
 }
 
-void CGBufferTarget::Resize(ID3D12Device* device, UINT width, UINT height)
+void CGBufferTarget::Resize(ID3D12Device* device, int width, int height)
 {
     buffer.Reset();
     rtv_heap.Reset();
@@ -77,13 +77,13 @@ void CGBufferTarget::CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle)
 }
 
 // CRenderTarget
-CRenderTarget::CRenderTarget(ID3D12Device* device, UINT width, UINT height, DXGI_FORMAT format)
+CRenderTarget::CRenderTarget(ID3D12Device* device, int width, int height, DXGI_FORMAT format)
     : format(format)
 {
     Resize(device, width, height);
 }
 
-void CRenderTarget::Resize(ID3D12Device* device, UINT width, UINT height)
+void CRenderTarget::Resize(ID3D12Device* device, int width, int height)
 {
     buffer.Reset();
     rtv_heap.Reset();

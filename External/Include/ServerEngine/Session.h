@@ -1,12 +1,12 @@
-#pragma once
+ï»¿#pragma once
 #include "NetAddress.h"
 #include "OVER_EXP.h"
 
-enum S_STATE 
-{ 
-	ST_FREE, 
-	ST_ALLOC, 
-	ST_INGAME, 
+enum S_STATE
+{
+	ST_FREE,
+	ST_ALLOC,
+	ST_INGAME,
 };
 
 class Session : public std::enable_shared_from_this<Session>
@@ -47,7 +47,7 @@ private:
 	bool						OnRecv(BYTE* buffer, int32 numOfBytes);
 
 protected:
-	// ÄÁÅÙÃ÷ ÄÚµå¿¡¼­ ÀçÁ¤ÀÇ
+	// ì»¨í…ì¸  ì½”ë“œì—ì„œ ì¬ì •ì˜
 	virtual void			OnConnected() {}
 	virtual void			OnSend(int32 len) {}
 	virtual void			OnDisconnected() {}

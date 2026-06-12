@@ -1,12 +1,12 @@
-#pragma once
+ï»¿#pragma once
 #include <string>
 
-// ·Îµù ÆË¾÷ Á¾·ù
+// ë¡œë”© íŒì—… ì¢…ë¥˜
 enum class LoadingType
 {
     None,
 
-    // Title Scene °ü·Ã
+    // Title Scene ê´€ë ¨
     SignUp,
     Login,
     Logout,
@@ -14,15 +14,15 @@ enum class LoadingType
     RoomEnter,
     SinglePlay,
 
-    // Custom Scene °ü·Ã
+    // Custom Scene ê´€ë ¨
     SelectResult,
 
-    // LobbyScene °ü·Ã
+    // LobbyScene ê´€ë ¨
     MapLoading,
     GenerateMap,
 };
 
-// °á°ú ÆË¾÷ µ¥ÀÌÅÍ (¼º°ø/½ÇÆĞ ¸Ş½ÃÁö)
+// ê²°ê³¼ íŒì—… ë°ì´í„° (ì„±ê³µ/ì‹¤íŒ¨ ë©”ì‹œì§€)
 struct ActionResult
 {
     bool is_visible = false;

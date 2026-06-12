@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Animator.h"
 #include "Player.h"
 #include "MyPlayer.h"
@@ -62,7 +62,7 @@ void CAnimatorComponent::Init(const CharacterAnimSet& animSet)
 
 		// 다우징 로드 소켓
 		{
-			constexpr float scaleValue{ 0.005757076 };
+			constexpr float scaleValue{ 0.005757076f };
 			XMMATRIX scaleMat{ XMMatrixScaling(scaleValue, scaleValue, scaleValue) };
 			XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(XMConvertToRadians(90.0), XMConvertToRadians(0.0f), XMConvertToRadians(180.0f));
 			XMMATRIX finalMat = scaleMat * rotMat;

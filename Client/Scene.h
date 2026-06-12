@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "LightManager.h"
 #include "ImGuiManager.h"
 

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <random>
 #include <vector>
 #include <string>
@@ -6,19 +6,19 @@
 
 class CMyPlayer;
 
-// »óÁ¡ ±×¸®µå¿¡ Ç¥½ÃµÇ´Â ÆÇ¸Å Ç×¸ñ ÇÏ³ª
+// ìƒì  ê·¸ë¦¬ë“œì— í‘œì‹œë˜ëŠ” íŒë§¤ í•­ëª© í•˜ë‚˜
 struct ShopSlot
 {
     int         item_id    = 0;
-    uint32      base_price = 0;   // items.json °¡°İ (º¯µ¿ ±âÁØ°ª)
-    uint32      price      = 0;   // º¯µ¿ Àû¿ëµÈ ÇöÀç °¡°İ
+    uint32      base_price = 0;   // items.json ê°€ê²© (ë³€ë™ ê¸°ì¤€ê°’)
+    uint32      price      = 0;   // ë³€ë™ ì ìš©ëœ í˜„ì¬ ê°€ê²©
     int         stock      = 0;
     bool        is_fixed   = false;
-    std::string name;             // UI¿ë Ä³½Ã
-    std::string icon_path;        // UI¿ë Ä³½Ã
+    std::string name;             // UIìš© ìºì‹œ
+    std::string icon_path;        // UIìš© ìºì‹œ
 };
 
-// ÇÃ·¹ÀÌ¾îº° »óÁ¡. Ä«Å»·Î±×/Àç°í/°¡°İÀ» Á÷Á¢ º¸À¯ÇÏ°í UI¸¦ ±×¸°´Ù.
+// í”Œë ˆì´ì–´ë³„ ìƒì . ì¹´íƒˆë¡œê·¸/ì¬ê³ /ê°€ê²©ì„ ì§ì ‘ ë³´ìœ í•˜ê³  UIë¥¼ ê·¸ë¦°ë‹¤.
 class CShop
 {
 private:
@@ -34,29 +34,29 @@ public:
     }
 
 public:
-    // ¿­¸²/´İÈû »óÅÂ (¾À¿¡¼­ ÀÔ·Â/Ä¿¼­ Ã³¸®¿¡ »ç¿ë)
+    // ì—´ë¦¼/ë‹«í˜ ìƒíƒœ (ì”¬ì—ì„œ ì…ë ¥/ì»¤ì„œ ì²˜ë¦¬ì— ì‚¬ìš©)
     void Open();
     void Close();
     bool IsOpen() const { return is_open; }
 
-    // Ä«Å»·Î±× Àç±¸¼º: Àç°í ¸®ÇÊ + ·£´ı Àç¼±Á¤ + °¡°İ Àçº¯µ¿.
-    // °ÔÀÓ Á¾·á ½Ã, ±×¸®°í À¯·á »õ·Î°íÄ§ ½Ã È£Ãâ.
+    // ì¹´íƒˆë¡œê·¸ ì¬êµ¬ì„±: ì¬ê³  ë¦¬í•„ + ëœë¤ ì¬ì„ ì • + ê°€ê²© ì¬ë³€ë™.
+    // ê²Œì„ ì¢…ë£Œ ì‹œ, ê·¸ë¦¬ê³  ìœ ë£Œ ìƒˆë¡œê³ ì¹¨ ì‹œ í˜¸ì¶œ.
     void Reset();
 
-    // »óÁ¡ ÆĞ³Î(ÁÂ) + ÇÃ·¹ÀÌ¾î ÀÎº¥Åä¸®(¿ì)¸¦ ³ª¶õÈ÷ ±×¸°´Ù.
+    // ìƒì  íŒ¨ë„(ì¢Œ) + í”Œë ˆì´ì–´ ì¸ë²¤í† ë¦¬(ìš°)ë¥¼ ë‚˜ë€íˆ ê·¸ë¦°ë‹¤.
     void DrawStoreUI(std::shared_ptr<CMyPlayer> player);
 
-    // ÇØ´ç ½½·Ô¿¡¼­ »ì ¼ö ÀÖ´Â ÃÖ´ë ¼ö·® = min(Àç°í, º¸À¯°ñµå / °¡°İ)
+    // í•´ë‹¹ ìŠ¬ë¡¯ì—ì„œ ì‚´ ìˆ˜ ìˆëŠ” ìµœëŒ€ ìˆ˜ëŸ‰ = min(ì¬ê³ , ë³´ìœ ê³¨ë“œ / ê°€ê²©)
     int  MaxBuyable(const std::shared_ptr<CMyPlayer>& player, int slotIndex) const;
 
 private:
     void EnsureInitialized();
     bool Purchase(const std::shared_ptr<CMyPlayer>& player, int slotIndex, int qty);
-    bool RefreshPaid(const std::shared_ptr<CMyPlayer>& player); // 500°ñµå Â÷°¨ ÈÄ Reset
+    bool RefreshPaid(const std::shared_ptr<CMyPlayer>& player); // 500ê³¨ë“œ ì°¨ê° í›„ Reset
 
     uint32 ApplyPriceVariation(uint32 base);
 
-    // UI ÇïÆÛ
+    // UI í—¬í¼
     void DrawShopPanel(const std::shared_ptr<CMyPlayer>& player, float x, float y, float w, float h);
     void DrawShopCard(const std::shared_ptr<CMyPlayer>& player, int index, float w, float h);
     void DrawQuantityModal(const std::shared_ptr<CMyPlayer>& player);
@@ -74,7 +74,7 @@ private:
     bool   initialized = false;
     bool   is_open     = false;
 
-    int    selected_slot  = -1;   // ÇöÀç ¼±ÅÃµÈ Ä«µå
+    int    selected_slot  = -1;   // í˜„ì¬ ì„ íƒëœ ì¹´ë“œ
     bool   open_qty_modal = false;
     int    qty_modal_slot = -1;
     int    buy_qty        = 1;

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "UIComponent.h"
 #include "Mesh.h"
 #include "Renderers.h"

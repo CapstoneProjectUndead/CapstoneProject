@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <cstdio>
 #include "GameScene.h"
 #include "SceneManager.h"
@@ -164,7 +164,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 							return;
 						dog->SetPosition(pos.x, pos.y, pos.z);
 						dog->SetOriginPos(pos);
-						AddObject(dog, dog->GetID());
+						AddObject(dog, static_cast<UINT>(dog->GetID()));
 						// ApplySeparation이 monster_spawn_info를 순회하므로 소환몹도 등록
 						// 마지막 인자 true = 1회성 소환 (사망 시 리스폰 대신 entry 제거)
 						monster_spawn_info.push_back({ pos, type, 0.f, -1.f, dog, true });
@@ -172,7 +172,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 				}
 			}
 
-			AddObject(monster, monster->GetID());
+			AddObject(monster, static_cast<UINT>(monster->GetID()));
 			info.monster = monster;
 			info.respawn_time = monster->GetRespawnTime();
 		}
@@ -196,7 +196,7 @@ void CGameScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* c
 			}
 			else if (inst.model == EModelVariant::BOXTABLE) {
 				XMFLOAT3 pos{ inst.position };
-				light->AddPointLight(Vector3::Add(pos, XMFLOAT3(0.716000021, 0.934000015, -0.291999996)), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+				light->AddPointLight(Vector3::Add(pos, XMFLOAT3(0.716000021f, 0.934000015f, -0.291999996f)), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
 			}
 		}
 	}
@@ -389,7 +389,7 @@ void CGameScene::DrawUI()
 
 		// 인벤토리
 		auto inventory = my_player->GetInventory();
-		if (inventory);
+		if (inventory)
 			inventory->Draw();
 
 		// 퀵슬롯
@@ -543,12 +543,12 @@ void CGameScene::UpdateMonsters(float elapsedTime)
 							if (!dog) return;
 							dog->SetPosition(pos.x, pos.y, pos.z);
 							dog->SetOriginPos(pos);
-							AddObject(dog, dog->GetID());
+							AddObject(dog, static_cast<UINT>(dog->GetID()));
 							monster_spawn_info.push_back({ pos, type, 0.f, -1.f, dog, true });
 						});
 					}
 				}
-				AddObject(monster, monster->GetID());
+				AddObject(monster, static_cast<UINT>(monster->GetID()));
 				info.monster = monster;
 				info.respawn_time  = monster->GetRespawnTime();
 				info.respawn_timer = -1.f;
@@ -598,14 +598,14 @@ void CGameScene::ProcessPickup()
 
 			// 인벤토리 추가에 성공한 경우에만 월드에서 아이템을 제거한다.
 			if (inv->AddItem(worldItem->GetItem()))
-				RemoveObject(worldItem->GetID());
+				RemoveObject(static_cast<UINT>(worldItem->GetID()));
 		}
 		else {
 			// (멀티) 서버에 줍기 요청만 보낸다.
 			// 인벤토리 추가/오브젝트 제거는 서버 응답(S_AddItem, S_DeSpawnItem)에서 처리.
 			C_PickupItem pickupPkt;
 			pickupPkt.player_id = my_player->GetUser()->GetUserID();
-			pickupPkt.item_world_id = worldItem->GetID();
+			pickupPkt.item_world_id = static_cast<uint32>(worldItem->GetID());
 			pickupPkt.item_type = worldItem->GetItem()->GetItemType();
 			pickupPkt.scene_type = my_player->GetCurrentSceneType();
 
@@ -2185,8 +2185,8 @@ void CGameScene::Exit()
 
 void CGameScene::Handle_S_MapData(std::shared_ptr<Session> session, const S_MapData& pkt)
 {
-	const int cnt = pkt.data_count;	
-	for (UINT i = 0; i < cnt; ++i) {
+	const uint16 cnt = pkt.data_count;
+	for (uint16 i = 0; i < cnt; ++i) {
 		instance_data.push_back(pkt.data[i]);
 	}
 }

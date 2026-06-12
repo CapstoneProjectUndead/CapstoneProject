@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 struct Vec2
 {
@@ -123,7 +123,7 @@ public:
     Vec2 GetOldMousePos() { return old_mouse_pos; }
     Vec2 GetMouseDrag() { return drag_dir; }
 
-    void SetOldMousePos(const POINT& p) { old_mouse_pos.x = p.x; old_mouse_pos.y = p.y;}
+    void SetOldMousePos(const POINT& p) { old_mouse_pos.x = (float)p.x; old_mouse_pos.y = (float)p.y;}
     void SetMouseMode(bool gameMode);
     bool GetMouseMode() const { return is_game_mode; }
 };

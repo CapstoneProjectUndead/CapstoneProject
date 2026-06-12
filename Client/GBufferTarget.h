@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 
 class CGBufferTarget
 {
 public:
-    CGBufferTarget(ID3D12Device* device, UINT width, UINT height, DXGI_FORMAT format);
+    CGBufferTarget(ID3D12Device* device, int width, int height, DXGI_FORMAT format);
     ~CGBufferTarget() = default;
 
     // 크기 변경을 위한 메서드 추가
-    void Resize(ID3D12Device* device, UINT width, UINT height);
+    void Resize(ID3D12Device* device, int width, int height);
     void CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle);
 
     ID3D12Resource* GetResource() const { return buffer.Get(); }
@@ -23,11 +23,11 @@ private:
 class CRenderTarget
 {
 public:
-    CRenderTarget(ID3D12Device* device, UINT width, UINT height, DXGI_FORMAT format);
+    CRenderTarget(ID3D12Device* device, int width, int height, DXGI_FORMAT format);
     ~CRenderTarget() = default;
 
     // 크기 변경을 위한 메서드 추가
-    void Resize(ID3D12Device* device, UINT width, UINT height);
+    void Resize(ID3D12Device* device, int width, int height);
 
     void RenderBegin(ID3D12GraphicsCommandList* cmdList);
     void RenderEnd(ID3D12GraphicsCommandList* cmdList);

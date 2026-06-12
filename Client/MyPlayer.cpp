@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "MyPlayer.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
@@ -30,7 +30,7 @@ CMyPlayer::CMyPlayer()
 	, is_ready(false)
 	, current_input{ false, false, false, false, false, false }
 {
-    is_my_player = true;
+	is_my_player = true;
 }
 
 void CMyPlayer::Update(float elapsedTime)

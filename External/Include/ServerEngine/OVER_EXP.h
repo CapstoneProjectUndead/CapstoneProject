@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "RecvBuffer.h"
 
 class Listener;
@@ -32,7 +32,7 @@ public:
 
 	int32						recv_buffer_size;
 
-	// �۽ſ�
+	// 송신용
 	std::vector<SendBufferRef>	send_buffers;
 
 	OVER_EXP();

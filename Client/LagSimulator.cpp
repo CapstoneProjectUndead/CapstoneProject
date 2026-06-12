@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "LagSimulator.h"
 #include "NetworkClockManager.h"
 
@@ -6,7 +6,7 @@ void CLagSimulator::PushPacket(const OpponentFrameHistory& packetData)
 {
     auto now = std::chrono::steady_clock::now();
 
-    // Áö¿¬ ½Ã°£ °è»ê (±âº» ÇÎ + ·£´ı ÁöÅÍ)
+    // ì§€ì—° ì‹œê°„ ê³„ì‚° (ê¸°ë³¸ í•‘ + ëœë¤ ì§€í„°)
     int finalDelay = latency_ms;
     if (jitter_ms > 0) {
         finalDelay += (rand() % jitter_ms);
@@ -23,16 +23,16 @@ void CLagSimulator::Update(std::vector<std::pair<OpponentFrameHistory, float>>& 
 {
     auto now_chrono = std::chrono::steady_clock::now();
 
-    // ÇöÀç Å¬¶óÀÌ¾ğÆ®ÀÇ ¼­¹ö µ¿±âÈ­ ½Ã°£
+    // í˜„ì¬ í´ë¼ì´ì–¸íŠ¸ì˜ ì„œë²„ ë™ê¸°í™” ì‹œê°„
     float clientServerNow = CNetworkClockManager::GetInstance().GetServerNow();
 
     while (!delay_queue.empty()) {
         auto& front = delay_queue.front();
 
-        // ½Ã°£ÀÌ µÈ ÆĞÅ¶µé¸¸ Ã³¸®
+        // ì‹œê°„ì´ ëœ íŒ¨í‚·ë“¤ë§Œ ì²˜ë¦¬
         if (now_chrono >= front.releaseTime) {
-            // [ÇÙ½É] ÀÌ ÆĞÅ¶ÀÌ ½ÇÁ¦·Î ¹æÃâµÇ¾î¾ß Çß´ø "³í¸®Àû ½ÃÁ¡"À» °è»ê
-            // ÇöÀç ½Ã°£¿¡¼­ (Áö±İ - ¹æÃâ¿¹Á¤½Ã°£)À» »©¼­ Á¤È®ÇÑ ¹æÃâ ½ÃÁ¡À» º¹±¸ÇÕ´Ï´Ù.
+            // [í•µì‹¬] ì´ íŒ¨í‚·ì´ ì‹¤ì œë¡œ ë°©ì¶œë˜ì–´ì•¼ í–ˆë˜ "ë…¼ë¦¬ì  ì‹œì "ì„ ê³„ì‚°
+            // í˜„ì¬ ì‹œê°„ì—ì„œ (ì§€ê¸ˆ - ë°©ì¶œì˜ˆì •ì‹œê°„)ì„ ë¹¼ì„œ ì •í™•í•œ ë°©ì¶œ ì‹œì ì„ ë³µêµ¬í•©ë‹ˆë‹¤.
             auto delayDiff = std::chrono::duration_cast<std::chrono::microseconds>(now_chrono - front.releaseTime).count() / 1000000.0f;
             float logicReleaseTime = clientServerNow - delayDiff;
 

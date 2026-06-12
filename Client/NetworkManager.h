@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Player.h"
 #include "JitterMeasurer.h"
 
@@ -27,7 +27,7 @@ public:
 	CJitterMeasurer* GetJitterMeasurer() const { return jitter_measurer.get(); }
 
 public:
-	// [¼ö½ÅºÎ]
+	// [ìˆ˜ì‹ ë¶€]
 	void OnRecvOpponentPos(const OpponentFrameHistory& packet);
 	void UpdateDelayPacket();
 

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Shop.h"
 #include "SoundManager.h"
 #include "ImGuiManager.h"

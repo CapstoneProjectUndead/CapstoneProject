@@ -38,12 +38,12 @@ void CCustomScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList*
     if (!light) {
         light = std::make_unique<CLightManager>();
         light->Initialize(device, commandList);
-        light->AddPointLight(XMFLOAT3(2.49913216, 1.35, 1.45683444), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);			// Lamp on table
-        light->AddPointLight(XMFLOAT3(1.83547652, 2.55953884, -2.89159632), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);	// Lamp on StoneBed
-        light->AddPointLight(XMFLOAT3(-2.44799995, 0.48300001, -0.216999993), XMFLOAT3(1.0f, 0.8f, 0.6f), 0.5f, 1.5f);	// firewood
-        light->AddPointLight(XMFLOAT3(0, 0, 1), XMFLOAT3(0.5f, 0.5f, 0.5f), 1.0f, 2.0f);		// custom
+        light->AddPointLight(XMFLOAT3(2.49913216f, 1.35f, 1.45683444f), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);			// Lamp on table
+        light->AddPointLight(XMFLOAT3(1.83547652f, 2.55953884f, -2.89159632f), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 2.0f);	// Lamp on StoneBed
+        light->AddPointLight(XMFLOAT3(-2.44799995f, 0.48300001f, -0.216999993f), XMFLOAT3(1.0f, 0.8f, 0.6f), 0.5f, 1.5f);	// firewood
+        light->AddPointLight(XMFLOAT3(.0f, .0f, 1.0f), XMFLOAT3(0.5f, 0.5f, 0.5f), 1.0f, 2.0f);		// custom
     }
-    objects.push_back(std::make_shared<CParticleObject>(XMFLOAT3{ -2.5, 0.17, -0.216999993 }));
+    objects.push_back(std::make_shared<CParticleObject>(XMFLOAT3{ -2.5f, 0.17f, -0.216999993f }));
 }
 
 void CCustomScene::Enter()

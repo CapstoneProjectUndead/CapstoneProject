@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef MaxLights
 #define MaxLights 20
 #endif

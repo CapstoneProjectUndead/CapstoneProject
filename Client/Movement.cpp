@@ -205,7 +205,7 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
     // 벽/오브젝트 충돌 처리
     auto* col = owner->GetComponent<CColliderComponent>();
     uint32_t wallMask = col ? (col->filter.mask & ~EColLayer::GROUND) : (EColLayer::WALL | EColLayer::OBJECT);
-    const float stepHeight = 0.2; // 오를 수 있는 최대 높이
+    const float stepHeight = 0.2f; // 오를 수 있는 최대 높이
 
     // Iterative Slide
     for (int i = 0; i < 3; ++i) {

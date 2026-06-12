@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "AnimationController.h"
 #include "AnimationManager.h"
 struct AnimationData;
-struct CMeshComponent;
-struct CMaterialComponent;
+class CMeshComponent;
+class CMaterialComponent;
 struct RenderUnit;
 
 struct AnimLayer {

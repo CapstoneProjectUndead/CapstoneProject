@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Material.h"
 
 // GPU에 넘겨줄 배열 구조체

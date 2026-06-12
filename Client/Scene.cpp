@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Camera.h"
 #include "MyPlayer.h"
 #include "Shader.h"
@@ -567,7 +567,7 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 	auto& factory = CSceneManager::GetInstance().GetFactory();
-	for (int i = 0; i < pkt.player_count; ++i) {
+	for (uint32 i = 0; i < pkt.player_count; ++i) {
 
 		// 다른 유저의 Player 생성
 		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer();

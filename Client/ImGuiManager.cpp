@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ImGuiManager.h"
 #include <WICTextureLoader.h>
 #include "d3dx12.h"
@@ -279,7 +279,7 @@ void CImGuiManager::LoadingIndicatorCircle(const char* label, const float indica
     ImGui::ItemSize(bb);
     if (!ImGui::ItemAdd(bb, id)) return;
 
-    const float t = g.Time;
+    const float t = float(g.Time);
     const auto degree_offset = 2.0f * IM_PI / circle_count;
 
     for (int i = 0; i < circle_count; ++i) {

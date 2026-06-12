@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DogMonster.h"
 #include "Player.h"
 #include "AIComponent.h"

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ObjectFactory.h"
 #include "ItemFactory.h"
 #include "WorldItem.h"

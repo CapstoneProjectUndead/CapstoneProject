@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Player.h"
 #include "NetworkManager.h"
 #include "Movement.h"
