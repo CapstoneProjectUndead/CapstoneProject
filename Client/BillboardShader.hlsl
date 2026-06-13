@@ -116,6 +116,11 @@ void GS(point VS_OUTPUT input[1], uint primID : SV_PrimitiveID, inout TriangleSt
 
 float4 PSMain(GS_OUT input) : SV_TARGET
 {
+    float dist = distance(input.tex, float2(0.5f, 0.5f));
+    
+    clip(0.5f - dist);
+
+
     InstanceData instData = gInstanceData[input.instanceID];
     MaterialData instMat = instData.material;
     
