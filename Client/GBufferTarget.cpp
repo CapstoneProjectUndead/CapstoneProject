@@ -107,10 +107,10 @@ void CRenderTarget::Resize(ID3D12Device* device, int width, int height)
 
     D3D12_CLEAR_VALUE clearValue = {};
     clearValue.Format = format;
-    clearValue.Color[0] = 0.0f;
-    clearValue.Color[1] = 0.0f;
-    clearValue.Color[2] = 0.0f;
-    clearValue.Color[3] = 0.0f;
+    clearValue.Color[0] = 1.0f;
+    clearValue.Color[1] = 1.0f;
+    clearValue.Color[2] = 1.0f;
+    clearValue.Color[3] = 1.0f;
 
     HRESULT hr = device->CreateCommittedResource(
         &heapProps,

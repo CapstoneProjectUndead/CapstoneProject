@@ -25,7 +25,7 @@ public:
 	// swap chain state 변경 (보더리스 전체화면 토글)
 	void ChangeSwapChainState();
 	// 창 크기 변경 시 스왑체인/DSV 버퍼 재생성
-	void OnResize();
+	void OnResize(UINT width, UINT height);
 
 	// 동기화
 	void waitForGpuComplete();

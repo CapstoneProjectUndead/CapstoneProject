@@ -42,6 +42,7 @@ public:
     void Update();
     void Render(ID3D12GraphicsCommandList* cmdList);
     void Release();
+    void OnResize(ID3D12Device* device);
 
     // 4월 3일 추가
     // PNG/JPG 등 WIC 포맷 텍스처를 ImGui 힙에 로드. name은 이후 GetTexture()로 참조할 키.

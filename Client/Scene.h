@@ -26,6 +26,8 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
+	// 해상도 변경 시 호출(UI 초기화)
+	void OnResize();
 	// Scene 이 전환될 때, 호출 될 함수
 	virtual void Enter();
 	virtual void Exit();

@@ -387,6 +387,14 @@ void CScene::CollectObjects(ID3D12GraphicsCommandList* commandList)
 	ui_manager->Collect(renderers);
 }
 
+void CScene::OnResize()
+{
+	if (ui_manager) {
+		ui_manager->Invalidate();
+		ui_manager->Update(0.0f);
+	}
+}
+
 void CScene::Exit()
 {
 	CPhysicsManager::GetInstance().ClearCollider();

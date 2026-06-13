@@ -81,7 +81,6 @@ bool CCustomScene::IsUIInputEnabled()
     return state;
 }
 
-
 void CCustomScene::DrawUI()
 {
 	CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();

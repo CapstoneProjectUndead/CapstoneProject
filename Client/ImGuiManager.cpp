@@ -232,6 +232,44 @@ void CImGuiManager::Release()
     }
 }
 
+void CImGuiManager::OnResize(ID3D12Device* device)
+{
+    if (srv_desc_heap) {
+        srv_desc_heap->Release();
+        srv_desc_heap = nullptr;
+    }
+
+    // 새 서술자 힙 생성 (사이즈는 기존 설정 유지)
+    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = MAX_DESCRIPTORS;
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&srv_desc_heap));
+
+    // 슬롯 인덱스 초기화
+    next_slot = 0;
+
+    ImGui_ImplDX12_NewFrame(); // 안전을 위해 백엔드 프레임 버퍼를 비워줌
+
+    ImGui_ImplDX12_InvalidateDeviceObjects();
+    ImGui_ImplDX12_CreateDeviceObjects();
+
+    for (auto& pair : textures) {
+        UINT slot = next_slot++;
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = pair.second.resource->GetDesc().Format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels = pair.second.resource->GetDesc().MipLevels;
+
+        // 새 힙의 CPU 핸들 위치에 SRV 재생성
+        device->CreateShaderResourceView(pair.second.resource.Get(), &srvDesc, GetCPUHandle(slot));
+
+        pair.second.tex_id = (ImTextureID)GetGPUHandle(slot).ptr;
+    }
+}
+
 void CImGuiManager::ResetIMEState(HWND hwnd)
 {
     HIMC himc = ImmGetContext(hwnd);
