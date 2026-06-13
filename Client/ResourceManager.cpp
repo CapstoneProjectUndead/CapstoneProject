@@ -57,6 +57,9 @@ void CResourceManager::LoadLobbySceneTextures(ID3D12Device* device, ID3D12Comman
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
 {
+    // 플레이어 HUD 가방 아이콘 (CPlayerHUD에서 사용)
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "backpack", L"../Modeling/UI/backpack.png");
+
     // 상대 플레이어 상태 아이콘 (사망/빈사/빙의)
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "status_death",       L"../Resource/GameScene/death.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "status_almost_dead", L"../Resource/GameScene/almost_dead.png");

@@ -53,25 +53,7 @@ void CLobbyScene::Initialize()
 	// Ready UI
 	auto ReadyCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/PlayerReady.json");
 	ui_manager->AddCanvas(ReadyCanvas);
-	// Player UI
-	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
-	ui_manager->AddCanvas(playerUI);
-	// player data와 연동
-	auto hpBar = ui_manager->GetUI<CUIImage>("HP_UI");
-	// 0 ~ 1 사이 값으로 변환
-	hpBar->BindFillAmount([this]() -> float {
-		if (!my_player) return 0.0f;
-		float current = static_cast<float>(my_player->GetHp());
-		float max = static_cast<float>(my_player->GetMaxHp());
-		return current / max;
-		});
-	auto energyBar = ui_manager->GetUI<CUIImage>("ENERGY_UI");
-	energyBar->BindFillAmount([this]() -> float {
-		if (!my_player) return 0.0f;
-		float current = static_cast<float>(my_player->GetStamina());
-		float max = static_cast<float>(my_player->GetMaxStamina());
-		return current / max;
-		});
+	// 플레이어 UI(HP/스태미나/가방/조준점)는 CPlayerHUD(ImGui)로 그림 — Player_UI.json 로드하지 않음
 
 	SetButtonEvents();
 }
@@ -410,6 +392,9 @@ void CLobbyScene::DrawUI()
 {
 	if (!my_player)
 		return;
+
+	// 플레이어 HUD (HP/스태미나/가방/조준점)
+	my_player->DrawHUD();
 
 	if (CShop::GetInstance().IsOpen()) {
 		// 상점: 좌 상점 패널 + 우 인벤토리를 함께 그림 (DrawStoreUI가 인벤토리도 그림)

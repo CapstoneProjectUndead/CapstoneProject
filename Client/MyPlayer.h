@@ -15,17 +15,21 @@ struct ClientFrameHistory
 class CUser;
 class CInventory;
 class CQuickSlot;
+class CPlayerHUD;
 
 class CMyPlayer :
     public CPlayer
 {
 public:
     CMyPlayer();
-    ~CMyPlayer() {};
+    ~CMyPlayer();   
 
     virtual void Update(float elapsedTime) override;
     inline void PreUpdate(float elapsedTime);
     virtual void OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers) override;
+
+    // 플레이어 HUD(HP/스태미나/가방/조준점) 렌더 — 씬 DrawUI에서 호출
+    void DrawHUD();
 
 public:
     std::weak_ptr<Session>   GetSessionWeak() const { return session; }
@@ -143,6 +147,7 @@ private:
 
     std::shared_ptr<CInventory>       inventory;
     std::shared_ptr<CQuickSlot>       quick_slot;
+    std::unique_ptr<CPlayerHUD>       player_hud;   // 플레이어 소유 HUD
     uint64                            gold;      // 소지금
 
     bool                              is_ready;

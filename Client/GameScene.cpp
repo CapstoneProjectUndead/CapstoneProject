@@ -75,24 +75,7 @@ void CGameScene::Initialize()
 	}
 
 	// ESC 메뉴는 ImGui(DrawMenu)로 직접 그림 — Menu_UI.json 로드하지 않음
-	// Player UI
-	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
-	ui_manager->AddCanvas(playerUI);
-	// player data와 연동
-	auto hpBar = ui_manager->GetUI<CUIImage>("HP_UI");
-	hpBar->BindFillAmount([this]() -> float {
-		if (!my_player) return 0.0f;
-		float current = static_cast<float>(my_player->GetHp());
-		float max = static_cast<float>(my_player->GetMaxHp());
-		return current / max;
-		});
-	auto energyBar = ui_manager->GetUI<CUIImage>("ENERGY_UI");
-	energyBar->BindFillAmount([this]() -> float {
-		if (!my_player) return 0.0f;
-		float current = static_cast<float>(my_player->GetStamina());
-		float max = static_cast<float>(my_player->GetMaxStamina());
-		return current / max;
-		});
+	// 플레이어 UI(HP/스태미나/가방/조준점)는 CPlayerHUD(ImGui)로 그림 — Player_UI.json 로드하지 않음
 
 	SetButtonEvents();
 	// light 생성
@@ -226,11 +209,7 @@ void CGameScene::Update(float elapsedTime)
 		return;
 	}
 
-	// DEAD 진입 시 Player_UI 캔버스 끄기 (HP/스태미나/가방/조준점 일괄)
-	if (my_player && my_player->GetState() == PLAYER_STATE::DEAD && !player_ui_disabled) {
-		ui_manager->ToggleUI("Player_UI", false, true);
-		player_ui_disabled = true;
-	}
+	// (HP/스태미나/가방/조준점 HUD는 CPlayerHUD가 DEAD 시 자체적으로 숨김 — 별도 토글 불필요)
 
 	// 라운드 타이머 진행
 	// - 싱글: 클라가 자체 카운트
@@ -413,6 +392,9 @@ void CGameScene::DrawUI()
 
 	if (my_player) {
 
+		// 플레이어 HUD (HP/스태미나/가방/조준점)
+		my_player->DrawHUD();
+
 		// 인벤토리
 		auto inventory = my_player->GetInventory();
 		if (inventory)
@@ -550,11 +532,7 @@ void CGameScene::Enter()
 	show_settlement_modal = false;
 	settlement_result     = SettlementResult{};
 
-	// Player_UI 캔버스 복원 (이전 라운드에서 DEAD로 인해 꺼졌을 수 있음)
-	if (ui_manager) {
-		ui_manager->ToggleUI("Player_UI", true, false);
-	}
-	player_ui_disabled = false;
+	// (HP/스태미나/가방/조준점 HUD는 CPlayerHUD가 DEAD 상태에 따라 자동 표시/숨김)
 
 	if (my_player) {
 		my_player->SetCurrentSceneType(SCENE_TYPE::GAME);

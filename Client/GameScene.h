@@ -144,9 +144,6 @@ private:
     float                   round_timer    = 0.f;
     bool                    round_active   = false;
 
-    // DEAD 진입 시 Player_UI 캔버스 (HP/스태미나/가방/조준점) 끄기 edge-trigger flag
-    bool                    player_ui_disabled = false;
-
     // ESC 메뉴 열림 상태
     bool                    menu_open = false;
 

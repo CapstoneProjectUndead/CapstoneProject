@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "MyPlayer.h"
+#include "PlayerHUD.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
 
@@ -32,10 +33,23 @@ CMyPlayer::CMyPlayer()
 	, current_input{ false, false, false, false, false, false }
 {
 	is_my_player = true;
+	player_hud = std::make_unique<CPlayerHUD>(this);
+}
+
+CMyPlayer::~CMyPlayer() = default;
+
+void CMyPlayer::DrawHUD()
+{
+	if (player_hud)
+		player_hud->Draw();
 }
 
 void CMyPlayer::Update(float elapsedTime)
 {
+	// HUD 상태 갱신 (그리기는 씬 DrawUI 단계의 DrawHUD에서 수행)
+	if (player_hud)
+		player_hud->Update(elapsedTime);
+
 	// 1초 주기로 서버와 Ping-Pong
 	// 서버와 시간대를 맞추기 위한 작업
 	SendPingToServer(elapsedTime);
