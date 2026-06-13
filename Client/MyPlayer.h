@@ -154,7 +154,7 @@ private:
     // 현재 C-홀드 중인 대상 종류 (POSSESSION/RESCUE) — UI 분기 + 임계 시간 결정에 사용
     CHOLD_TARGET                      c_hold_target{ CHOLD_TARGET::NONE };
 
-    float grounded_timer{ 0.1 };
+    float grounded_timer{ 0.1f };
     float accumulate_stamina{ 100.0f };
     bool  stamina_exhausted{ false };
     bool  start_jump{ false };

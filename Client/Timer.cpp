@@ -1,9 +1,9 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "Timer.h"
 
 CTimer::CTimer()
 {
-	// ¼º´É ÁÖÆÄ¼ö¸¦ »ç¿ëÇÒ ¼ö ¾øÀ¸¸é ¸ÖÆ¼ ¹Ìµğ¾î Å¸ÀÌ¸Ó »ç¿ë
+	// ì„±ëŠ¥ ì£¼íŒŒìˆ˜ë¥¼ ì‚¬ìš©í•  ìˆ˜ ì—†ìœ¼ë©´ ë©€í‹° ë¯¸ë””ì–´ íƒ€ì´ë¨¸ ì‚¬ìš©
 	if (QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency)) {
 		used_performance_counter = true;
 		QueryPerformanceCounter((LARGE_INTEGER*)&last_performance_counter);
@@ -34,7 +34,7 @@ void CTimer::Tick(float lockFps)
 
 	if (lockFps > 0.0f)
 	{
-		// ¿øÇÏ´Â delta timeÀÌ ¾Æ´Ï¸é loop
+		// ì›í•˜ëŠ” delta timeì´ ì•„ë‹ˆë©´ loop
 		while (timeElapse < (1.0f / lockFps))
 		{
 			if (used_performance_counter)
@@ -48,7 +48,7 @@ void CTimer::Tick(float lockFps)
 
 	last_performance_counter = current_performance_counter;
 
-	// ¸¶Áö¸· ÇÁ·¹ÀÓ Ã³¸® ½Ã°£°ú ÇöÀç ÇÁ·¹ÀÓ Ã³¸® ½Ã°£ÀÇ Â÷ÀÌ°¡ 1ÃÊº¸´Ù ÀÛÀ¸¸é ÇöÀç ÇÁ·¹ÀÓ Ã³¸® ½Ã°£À» frame_time[0]¿¡ ÀúÀå
+	// ë§ˆì§€ë§‰ í”„ë ˆì„ ì²˜ë¦¬ ì‹œê°„ê³¼ í˜„ì¬ í”„ë ˆì„ ì²˜ë¦¬ ì‹œê°„ì˜ ì°¨ì´ê°€ 1ì´ˆë³´ë‹¤ ì‘ìœ¼ë©´ í˜„ì¬ í”„ë ˆì„ ì²˜ë¦¬ ì‹œê°„ì„ frame_time[0]ì— ì €ì¥
 	if (fabsf(timeElapse - time_elapsed) < 1.0f)
 	{
 		::memmove(&frame_time[1], frame_time, (kMaxSampleCount - 1) * sizeof(float));
@@ -56,16 +56,16 @@ void CTimer::Tick(float lockFps)
 		if (sample_cnt < kMaxSampleCount) ++sample_cnt;
 	}
 
-	// ÇÁ·¹ÀÓ++, ÇöÀç ÇÁ·¹ÀÓ Ã³¸® ½Ã°£À» ´©Àû ÇÏ°í ÀúÀå
+	// í”„ë ˆì„++, í˜„ì¬ í”„ë ˆì„ ì²˜ë¦¬ ì‹œê°„ì„ ëˆ„ì  í•˜ê³  ì €ì¥
 	++frame_per_seconds;
 	fps_time_elapsed += timeElapse;
 	if (fps_time_elapsed > 1.0f) {
-		current_frame_rate = frame_per_seconds;
+		current_frame_rate = static_cast<size_t>(frame_per_seconds);
 		frame_per_seconds = 0;
 		fps_time_elapsed = 0.0f;
 	}
 
-	// »ùÇÃ¸µ
+	// ìƒ˜í”Œë§
 	timeElapse = 0.0f;
 	for (ULONG i = 0; i < sample_cnt; i++) time_elapsed += frame_time[i];
 	if (sample_cnt > 0) time_elapsed /= sample_cnt;
@@ -74,7 +74,7 @@ void CTimer::Tick(float lockFps)
 size_t CTimer::GetFrameRate(LPTSTR title, int frame)
 {
 	if (title) {
-		_itow_s(current_frame_rate, title, frame, 10);
+		_itow_s(static_cast<int>(current_frame_rate), title, frame, 10);
 		wcscat_s(title, frame, _T(" FPS)"));
 	}
 

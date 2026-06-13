@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "MyPlayer.h"
 #include "KeyManager.h"
 #include "ImGuiManager.h"
@@ -20,6 +20,7 @@
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Camera.h"
+#include "UIComponent.h"
 
 #undef min
 #undef max
@@ -30,7 +31,7 @@ CMyPlayer::CMyPlayer()
 	, is_ready(false)
 	, current_input{ false, false, false, false, false, false }
 {
-    is_my_player = true;
+	is_my_player = true;
 }
 
 void CMyPlayer::Update(float elapsedTime)
@@ -71,8 +72,28 @@ void CMyPlayer::Update(float elapsedTime)
 		// "E" 키를 누르면 인벤토리를 열고/닫기
 		if (KEY_TAP(KEY::E)
 			&& (current_scene_type == SCENE_TYPE::LOBBY || current_scene_type == SCENE_TYPE::GAME)) {
-			CKeyManager::GetInstance().SetMouseMode(!CKeyManager::GetInstance().GetMouseMode());
+
+			CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
+			if (currentScene) {
+				auto uiMgr = currentScene->GetUIManager();
+				if (uiMgr) {
+					auto reaperUI = uiMgr->GetUI<CUICanvas>("ReaperSpeechCanvas");
+					auto menuUI = uiMgr->GetUI<CUICanvas>("LobbyMenuCanvas");
+
+					// 대화창, 상점, 혹은 로비메뉴가 이미 켜져 있다면 인벤토리를 열지 못하게 차단
+					// (단, 이미 인벤토리가 열려있어서 '닫으려고' 할 때는 통과해야 하므로 !inventory->IsOpen() 일 때만 체크)
+					if (!inventory->IsOpen()) {
+						if (CShop::GetInstance().IsOpen() ||
+							(reaperUI && reaperUI->is_enable) ||
+							(menuUI && menuUI->is_enable)) {
+							return;
+						}
+					}
+				}
+			}
+			bool willOpen = !inventory->IsOpen();
 			inventory->ToggleOpen();
+			CKeyManager::GetInstance().SetMouseMode(!willOpen);
 		}
 
 		if (KEY_TAP(KEY::F)) {

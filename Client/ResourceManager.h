@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ImGui에서 사용하는 모든 텍스처를 한 곳에서 로드한다.
 // 씬별로 함수를 분리하여 관리한다.

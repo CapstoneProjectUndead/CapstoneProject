@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "Timer.h"
@@ -221,8 +221,13 @@ void CSceneManager::CreateMainDepthSRV(ID3D12Device* device)
 	CreateMainDepthSRV(device, ssaoBlurHeap->GetSRVCPUHandle(DescriptorSlot::MainDepthIdx));
 }
 
-void CSceneManager::OnResizeBuffers(ID3D12Device* device, float width, float height)
+void CSceneManager::OnResizeBuffers(ID3D12Device* device, int width, int height)
 {
+	for (auto& scene : scenes) {
+		if(scene)
+			scene->OnResize();
+	}
+
 	buffer_color->Resize(device, width, height);
 	buffer_normal->Resize(device, width, height);
 	buffer_ssao->Resize(device, width, height);

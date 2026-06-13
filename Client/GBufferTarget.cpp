@@ -1,13 +1,13 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GBufferTarget.h"
 
-CGBufferTarget::CGBufferTarget(ID3D12Device* device, UINT width, UINT height, DXGI_FORMAT format)
+CGBufferTarget::CGBufferTarget(ID3D12Device* device, int width, int height, DXGI_FORMAT format)
     : format(format)
 {
     Resize(device, width, height);
 }
 
-void CGBufferTarget::Resize(ID3D12Device* device, UINT width, UINT height)
+void CGBufferTarget::Resize(ID3D12Device* device, int width, int height)
 {
     buffer.Reset();
     rtv_heap.Reset();
@@ -77,13 +77,13 @@ void CGBufferTarget::CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle)
 }
 
 // CRenderTarget
-CRenderTarget::CRenderTarget(ID3D12Device* device, UINT width, UINT height, DXGI_FORMAT format)
+CRenderTarget::CRenderTarget(ID3D12Device* device, int width, int height, DXGI_FORMAT format)
     : format(format)
 {
     Resize(device, width, height);
 }
 
-void CRenderTarget::Resize(ID3D12Device* device, UINT width, UINT height)
+void CRenderTarget::Resize(ID3D12Device* device, int width, int height)
 {
     buffer.Reset();
     rtv_heap.Reset();
@@ -107,10 +107,10 @@ void CRenderTarget::Resize(ID3D12Device* device, UINT width, UINT height)
 
     D3D12_CLEAR_VALUE clearValue = {};
     clearValue.Format = format;
-    clearValue.Color[0] = 0.0f;
-    clearValue.Color[1] = 0.0f;
-    clearValue.Color[2] = 0.0f;
-    clearValue.Color[3] = 0.0f;
+    clearValue.Color[0] = 1.0f;
+    clearValue.Color[1] = 1.0f;
+    clearValue.Color[2] = 1.0f;
+    clearValue.Color[3] = 1.0f;
 
     HRESULT hr = device->CreateCommittedResource(
         &heapProps,

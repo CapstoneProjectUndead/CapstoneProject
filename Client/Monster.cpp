@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Monster.h"
 #include "NetworkManager.h"
 #include "NetworkClockManager.h"

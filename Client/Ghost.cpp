@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Ghost.h"
 #include "Player.h"
 #include "AIComponent.h"
@@ -33,7 +33,7 @@ void CGhost::Update(float elapsedTime)
     //    auto& clip = CAnimationManager::GetInstance().GetClip("Ghost_attack");
     //    std::cout << "Ghost_attack total_frames: " << clip.total_frames << std::endl;
     //    printed = true;
-    //}
+    //} 
 
     CMonster::Update(elapsedTime);
 

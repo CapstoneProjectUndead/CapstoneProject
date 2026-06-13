@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class CObject;
 
@@ -38,7 +38,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* commandList, bool isUI = false);
 	virtual void UpdateShaderVariablesBillBoard(ID3D12GraphicsCommandList* commandList);
 	virtual void UpdateShaderVariablesShadow(ID3D12GraphicsCommandList* commandList);
-	void UpdateShaderVariablesBlur(ID3D12GraphicsCommandList* commandList, const XMFLOAT2& direction, float clientWidth, float clientHeight, UINT passIndex);
+	void UpdateShaderVariablesBlur(ID3D12GraphicsCommandList* commandList, const XMFLOAT2& direction, int clientWidth, int clientHeight, UINT passIndex);
 
 	void GenerateProjectionMatrix(float, float, float, float);
 	void GenerateOrthoProjectionMatrix(float, float, float, float);

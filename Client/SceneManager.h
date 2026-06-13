@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Scene.h"
 #include "TitleScene.h"
@@ -62,7 +62,7 @@ public:
     ID3D12Resource* GetEmissiveResource() const { return buffer_emissive->GetResource(); }
     // onResize 시 srv 삭제 됨(Gameframework에서 실행)
     void CreateMainDepthSRV(ID3D12Device* device);
-    void OnResizeBuffers(ID3D12Device* device, float width, float height);
+    void OnResizeBuffers(ID3D12Device* device, int width, int height);
 private:
     void CreateMainDepthSRV(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle);
 private:

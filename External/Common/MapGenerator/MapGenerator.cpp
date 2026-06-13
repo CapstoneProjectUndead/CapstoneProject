@@ -1,4 +1,4 @@
-#ifdef CLIENT
+﻿#ifdef CLIENT
 #include "stdafx.h"
 #else
 #include "pch.h"

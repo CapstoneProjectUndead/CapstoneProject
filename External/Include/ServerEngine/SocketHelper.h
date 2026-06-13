@@ -1,6 +1,6 @@
-#pragma once
+ï»¿#pragma once
 
-// ¼ÒÄÏ °ü·Ã ÇÔ¼ö¸¦ Á¦°øÇÏ´Â Å¬·¡½º
+// ì†Œì¼“ ê´€ë ¨ í•¨ìˆ˜ë¥¼ ì œê³µí•˜ëŠ” í´ë˜ìŠ¤
 
 class SocketHelper
 {
@@ -16,19 +16,19 @@ public:
 	static bool		BindWindowsFunction(SOCKET socket, GUID guid, LPVOID* fn);
 	static SOCKET	CreateSocket();
 
-	// ¼ÒÄÏ Á¾·á ½Ã, ÀÜ·ù µ¥ÀÌÅÍ Ã³¸® ¹æ½Ä(Linger ¿É¼Ç)À» ¼³Á¤ÇÏ´Â ÇÔ¼ö
+	// ì†Œì¼“ ì¢…ë£Œ ì‹œ, ì”ë¥˜ ë°ì´í„° ì²˜ë¦¬ ë°©ì‹(Linger ì˜µì…˜)ì„ ì„¤ì •í•˜ëŠ” í•¨ìˆ˜
 	static bool		SetLinger(SOCKET socket, uint16 onoff, uint16 linger);
 
-	// ¼­¹ö°¡ °­Á¦ Á¾·áµÇ¾úÀ» ¶§µµ °°Àº Æ÷Æ® ¹øÈ£¸¦ ¹Ù·Î ´Ù½Ã »ç¿ëÇÒ ¼ö ÀÖµµ·Ï ÇØÁÖ´Â ¿É¼Ç
+	// ì„œë²„ê°€ ê°•ì œ ì¢…ë£Œë˜ì—ˆì„ ë•Œë„ ê°™ì€ í¬íŠ¸ ë²ˆí˜¸ë¥¼ ë°”ë¡œ ë‹¤ì‹œ ì‚¬ìš©í•  ìˆ˜ ìˆë„ë¡ í•´ì£¼ëŠ” ì˜µì…˜
 	static bool		SetReuseAddress(SOCKET socket, bool flag);
 
 	static bool		SetRecvBufferSize(SOCKET socket, int32 size);
 	static bool		SetSendBufferSize(SOCKET socket, int32 size);
 
-	// Nagle ¾Ë°í¸®Áò On/Off
+	// Nagle ì•Œê³ ë¦¬ì¦˜ On/Off
 	static bool		SetTcpNoDelay(SOCKET socket, bool flag);
 
-	// AcceptEx()·Î ¿¬°áµÈ ¼ÒÄÏÀ» ÀÏ¹İÀûÀÎ ¼ÒÄÏÃ³·³ »ç¿ëÇÒ ¼ö ÀÖ°Ô ¸¸µé¾îÁÖ´Â ÇÊ¼ö ÀÛ¾÷
+	// AcceptEx()ë¡œ ì—°ê²°ëœ ì†Œì¼“ì„ ì¼ë°˜ì ì¸ ì†Œì¼“ì²˜ëŸ¼ ì‚¬ìš©í•  ìˆ˜ ìˆê²Œ ë§Œë“¤ì–´ì£¼ëŠ” í•„ìˆ˜ ì‘ì—…
 	static bool		SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket);
 
 	static bool		Bind(SOCKET socket, class NetAddress netAddr);
@@ -43,16 +43,16 @@ static inline bool SetSockOpt(SOCKET socket, int32 level, int32 optName, T optVa
 	return SOCKET_ERROR != ::setsockopt(socket, level, optName, reinterpret_cast<char*>(&optVal), sizeof(T));
 }
 
-// 1. ¼­¹ö ÁÖ¼Ò Á¤º¸¸¦ ´ãÀ» ±¸Á¶Ã¼ ¼±¾ğ
+// 1. ì„œë²„ ì£¼ì†Œ ì •ë³´ë¥¼ ë‹´ì„ êµ¬ì¡°ì²´ ì„ ì–¸
 
-// 2. ±¸Á¶Ã¼ÀÇ ¸ğµç ¹ÙÀÌÆ®¸¦ 0À¸·Î ÃÊ±âÈ­ (¿¹»óÄ¡ ¸øÇÑ ¾²·¹±â°ª ¹æÁö)
+// 2. êµ¬ì¡°ì²´ì˜ ëª¨ë“  ë°”ì´íŠ¸ë¥¼ 0ìœ¼ë¡œ ì´ˆê¸°í™” (ì˜ˆìƒì¹˜ ëª»í•œ ì“°ë ˆê¸°ê°’ ë°©ì§€)
 
-// 3. ÁÖ¼Ò Ã¼°è(AF_INET = IPv4)¸¦ ¼³Á¤
+// 3. ì£¼ì†Œ ì²´ê³„(AF_INET = IPv4)ë¥¼ ì„¤ì •
 
-// 4. Æ÷Æ® ¹øÈ£ ¼³Á¤ (³×Æ®¿öÅ© ¹ÙÀÌÆ® ¼ø¼­·Î º¯È¯)
+// 4. í¬íŠ¸ ë²ˆí˜¸ ì„¤ì • (ë„¤íŠ¸ì›Œí¬ ë°”ì´íŠ¸ ìˆœì„œë¡œ ë³€í™˜)
 
-// 5. IP ÁÖ¼Ò ¼³Á¤ (INADDR_ANY´Â ¸ğµç NIC(³×Æ®¿öÅ© ÀÎÅÍÆäÀÌ½º)¿¡¼­ ¼ö½Å Çã¿ë)
+// 5. IP ì£¼ì†Œ ì„¤ì • (INADDR_ANYëŠ” ëª¨ë“  NIC(ë„¤íŠ¸ì›Œí¬ ì¸í„°í˜ì´ìŠ¤)ì—ì„œ ìˆ˜ì‹  í—ˆìš©)
 
-// 6. ¹ÙÀÎµù: ¼­¹ö ¼ÒÄÏ¿¡ IP¿Í Æ÷Æ® ¼³Á¤
+// 6. ë°”ì¸ë”©: ì„œë²„ ì†Œì¼“ì— IPì™€ í¬íŠ¸ ì„¤ì •
 
-// 7. ¸®½¼ »óÅÂ·Î ÀüÈ¯: Å¬¶óÀÌ¾ğÆ®ÀÇ Á¢¼ÓÀ» ¼ö½Å ´ë±â
+// 7. ë¦¬ìŠ¨ ìƒíƒœë¡œ ì „í™˜: í´ë¼ì´ì–¸íŠ¸ì˜ ì ‘ì†ì„ ìˆ˜ì‹  ëŒ€ê¸°

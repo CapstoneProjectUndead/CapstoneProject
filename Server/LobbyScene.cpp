@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 // Server쪽 LobbyScene
 #include "LobbyScene.h"
 #include "Player.h"
@@ -486,9 +486,7 @@ void CLobbyScene::Handle_C_ExtenseInventory(shared_ptr<Session> session, const C
 CLobbyScene::LobbyMeshName CLobbyScene::stringToLobbyMeshName(const std::string& str)
 {
 	static const std::unordered_map<std::string, LobbyMeshName> table = {
-		{"Wall",        LobbyMeshName::Wall},
-		{"Floor",       LobbyMeshName::Floor},
-		{"GroundPipe",  LobbyMeshName::GroundPipe},
+		{"Wall", LobbyMeshName::Wall},
 	};
 
 	auto it = table.find(str);
@@ -526,10 +524,6 @@ void CLobbyScene::CreateLobby()
 				GetPhysicsManager()->SetCollider(collider);
 			}
 		}
-		break;
-		case LobbyMeshName::Floor:
-		case LobbyMeshName::GroundPipe:
-			CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, children, EColLayer::GROUND, EColLayer::ALL_MOB);
 			break;
 		default:
 			CServerObjectFactory::AddCollider(GetPhysicsManager(), obj, children, EColLayer::OBJECT, EColLayer::ALL_MOB);

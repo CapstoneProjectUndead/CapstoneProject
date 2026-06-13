@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 
 template<typename T, typename C>
@@ -15,7 +15,7 @@ public:
 	PacketIterator		operator++(int32) { PacketIterator ret = *this; ++index; return ret; }
 
 private:
-	C&				container;
+	C& container;
 	uint16			index;
 };
 
@@ -34,7 +34,7 @@ public:
 
 	uint16 Count() { return count; }
 
-	// ranged-base for Áö¿ø
+	// ranged-base for ì§€ì›
 	PacketIterator<T, PacketList<T>> begin() { return PacketIterator<T, PacketList<T>>(*this, 0); }
 	PacketIterator<T, PacketList<T>> end() { return PacketIterator<T, PacketList<T>>(*this, count); }
 

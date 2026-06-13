@@ -28,7 +28,7 @@ public:
 
 	uint32 GetCurrentWeight() const { return current_weight; }
 	uint32 GetMaxWeight() const { return max_weight; }
-	void   UpgradeMaxWeight(float amount) { max_weight += amount; }
+	void   UpgradeMaxWeight(float amount) { max_weight += static_cast<uint32>(amount); }
 	void   SetMaxWeight(uint32 weight) { max_weight = weight; }   // 절대값 설정 (서버 동기화/로드용)
 
 	void  Draw(bool viewOnly = false); // view_only=true: 드래그/드롭/퀵슬롯 등록 차단 (LobbyScene 등 조회 전용)

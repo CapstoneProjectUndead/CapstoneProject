@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 // Server쪽 Lobbycene
 #include "Scene.h"
 
@@ -42,8 +42,6 @@ public:
 private:
     enum class LobbyMeshName {
         Wall,
-        Floor,
-        GroundPipe,
         Unknown
     };
 

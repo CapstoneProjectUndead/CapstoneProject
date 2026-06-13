@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // 애니메이션 상태 정보
 struct State {

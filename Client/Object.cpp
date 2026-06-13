@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 
 #include "Camera.h"
@@ -152,17 +152,101 @@ bool CObject::IsVisible(const BoundingFrustum& frustum)
 }
 
 // CParticleObject
+std::random_device rd;
+std::mt19937 gen(rd());
+
+std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+std::uniform_real_distribution<float> speedModifier(0.8f, 1.2f);
+
 CParticleObject::CParticleObject()
-	: CObject(OBJECT_TYPE::STATIC_OBJECT)
+	: CObject(OBJECT_TYPE::PARTICLE_OBJECT)
 {
+	XMMATRIX scaleMatrix = XMMatrixScaling(size.x, size.y, size.z);
+	XMStoreFloat4x4(&world_matrix, scaleMatrix);
+
+	InitializeParticles();
 }
 
-CParticleObject::CParticleObject(const XMFLOAT4& color)
-	: CObject(OBJECT_TYPE::STATIC_OBJECT), color{color}
+CParticleObject::CParticleObject(const XMFLOAT3& position)
+	: CObject(OBJECT_TYPE::PARTICLE_OBJECT)
 {
+	XMMATRIX scaleMatrix = XMMatrixScaling(size.x, size.y, size.z);
+	XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
+	XMStoreFloat4x4(&world_matrix, scaleMatrix * translationMatrix);
+
+	InitializeParticles();
+}
+
+CParticleObject::CParticleObject(const XMFLOAT3& position, const XMFLOAT4& color)
+	: CObject(OBJECT_TYPE::PARTICLE_OBJECT), color(color)
+{
+	XMMATRIX scaleMatrix = XMMatrixScaling(size.x, size.y, size.z);
+	XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
+	XMStoreFloat4x4(&world_matrix, scaleMatrix * translationMatrix);
+
+	InitializeParticles();
+}
+
+void CParticleObject::InitializeParticles()
+{
+	particles.clear();
+	particles.resize(particleCount);
+
+	// 생성 반경 범위를 결정
+	std::uniform_real_distribution<float> posOffsetDist(-0.1f, 0.1f);
+
+	for (int i = 0; i < particleCount; ++i) {
+		particles[i].material = MaterialData{};
+		particles[i].material.albedo = color;
+		particles[i].material.emissive_color = color;
+
+		particles[i].spawn_time = 0.0f;
+		std::uniform_real_distribution<float> lifeDist(0.8f, 1.5f);
+		particles[i].life_time = lifeDist(gen);
+
+		// 불길 속도 세팅
+		float randX = dis(gen);
+		std::uniform_real_distribution<float> upSpeed(3.0f, 7.0f);
+		float randY = upSpeed(gen);
+		float randZ = dis(gen);
+		particles[i].velocity = XMFLOAT3(randX, randY, randZ);
+
+		XMFLOAT3 objPos = GetPosition();
+
+		// 파티클의 최종 월드 위치 = (오브젝트 기본 위치 + 랜덤 오프셋)
+		float offsetX = posOffsetDist(gen);
+		float offsetY = std::abs(posOffsetDist(gen)) * 0.5f;
+		float offsetZ = posOffsetDist(gen);
+
+		XMMATRIX finalTranslation = XMMatrixTranslation(
+			objPos.x + offsetX,
+			objPos.y + offsetY,
+			objPos.z + offsetZ
+		);
+
+		XMMATRIX scaleMatrix = XMMatrixScaling(size.x, size.y, size.z);
+		XMStoreFloat4x4(&particles[i].world_matrix, scaleMatrix * finalTranslation);
+	}
+}
+
+void CParticleObject::Update(const float elapsedTime)
+{
+	CObject::Update(elapsedTime);
+
+	for (int i = 0; i < particleCount; ++i) {
+		particles[i].spawn_time += elapsedTime;
+
+		if (particles[i].spawn_time > particles[i].life_time) {
+			particles[i].spawn_time = 0.0f;
+		}
+	}
 }
 
 void CParticleObject::OnCollect(std::vector<std::unique_ptr<IRenderer>>& renderers)
 {
-	renderers[EShaderName::Billboard]->AddInstance(nullptr, color, world_matrix, true);
+	for (int i = 0; i < particleCount; ++i) {
+		if (particles[i].spawn_time > particles[i].life_time)
+			continue;
+		renderers[EShaderName::Billboard]->AddParticleInstance(nullptr, particles[i], false);
+	}
 }

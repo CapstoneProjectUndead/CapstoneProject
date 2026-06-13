@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <filesystem>
 #include "Player.h"
 #include "KeyManager.h"
@@ -326,7 +326,7 @@ void CGameFramework::ChangeSwapChainState()
 		::SetWindowPos(ghWnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, w, h, SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 		is_fullscreen = true;
-		OnResize();
+		OnResize(w, h);
 	}
 	else {
 		int w = windowed_rect.right - windowed_rect.left;
@@ -336,11 +336,10 @@ void CGameFramework::ChangeSwapChainState()
 		::SetWindowPos(ghWnd, HWND_TOP, windowed_rect.left, windowed_rect.top, w, h, SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 		is_fullscreen = false;
-		OnResize();
 	}
 }
 
-void CGameFramework::OnResize()
+void CGameFramework::OnResize(UINT width, UINT height)
 {
 	if (!swap_chain)
 		return;
@@ -355,16 +354,14 @@ void CGameFramework::OnResize()
 
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
 	swap_chain->GetDesc(&swapChainDesc);
-	ThrowIfFailed(swap_chain->ResizeBuffers(swap_chain_buffer_num, 0, 0, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+	ThrowIfFailed(swap_chain->ResizeBuffers(swap_chain_buffer_num, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
 	swap_chain_buffer_index = swap_chain->GetCurrentBackBufferIndex();
 
 	CreateRenderTargetViews();
 
-	DXGI_SWAP_CHAIN_DESC sd;
-	swap_chain->GetDesc(&sd);
-	client_width = sd.BufferDesc.Width;
-	client_height = sd.BufferDesc.Height;
+	client_width = (int)width;
+	client_height = (int)height;
 
 	CreateDepthStencilView();
 
@@ -386,6 +383,7 @@ void CGameFramework::OnResize()
 
 	CSceneManager::GetInstance().OnResizeBuffers(d3d_device.Get(), client_width, client_height);
 	CSceneManager::GetInstance().CreateMainDepthSRV(d3d_device.Get());
+	CImGuiManager::GetInstance().OnResize(d3d_device.Get());
 }
 
 void CGameFramework::MoveToNextFrame()

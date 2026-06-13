@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "FleeState.h"
 #include "AIComponent.h"
 #include "Monster.h"
@@ -38,7 +38,7 @@ void CFleeState::Enter()
 	{
 	case OBJECT_TYPE::MONSTER:
 	{
-		// ¸ó½ºÅÍ¿¡°Ô °ø°İ »óÅÂ ÁøÀÔÀ» ¾Ë¸²
+		// ëª¬ìŠ¤í„°ì—ê²Œ ê³µê²© ìƒíƒœ ì§„ì…ì„ ì•Œë¦¼
 		auto monster = static_cast<CMonster*>(GetAI()->GetOwner());
 		monster->SetAIState(AI_STATE::MONSTER_FLEE);
 		monster->OnFleeEnter();

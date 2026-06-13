@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "NetworkManager.h"
 #include "ServerSession.h"
 #include "ServerPacketHandler.h"
@@ -32,8 +32,8 @@ void CNetworkManager::ServiceStart(std::wstring address, uint16 port)
     lag_simulator->SetJitter(50);
 #endif 
 
-    // ¼­¹ö·ÎºÎÅÍ ¹ŞÀº ÆĞÅ¶À» Ã³¸®ÇÏ´Â 
-    // ÇïÆÛ Å¬·¡½º¸¦ ÃÊ±âÈ­
+    // ì„œë²„ë¡œë¶€í„° ë°›ì€ íŒ¨í‚·ì„ ì²˜ë¦¬í•˜ëŠ” 
+    // í—¬í¼ í´ë˜ìŠ¤ë¥¼ ì´ˆê¸°í™”
     CServerPacketHandler::Init();
 
 	client_service = std::make_shared<TcpClientService>(
@@ -61,16 +61,16 @@ void CNetworkManager::OnRecvOpponentPos(const OpponentFrameHistory& packet)
 
 void CNetworkManager::UpdateDelayPacket()
 {
-    // pair.first: ÆĞÅ¶ µ¥ÀÌÅÍ, pair.second: ³í¸®Àû ¹æÃâ ½Ã°£(float)
+    // pair.first: íŒ¨í‚· ë°ì´í„°, pair.second: ë…¼ë¦¬ì  ë°©ì¶œ ì‹œê°„(float)
     std::vector<std::pair<OpponentFrameHistory, float>> readyPackets;
     lag_simulator->Update(readyPackets);
 
     for (auto& pair : readyPackets) {
-        // 1. ½Ã¹Ä·¹ÀÌÅÍ°¡ °è»êÇØÁØ "¹æÃâ ½Ã°£"À¸·Î ÁöÅÍ ÃøÁ¤
-        // ÀÌ·¸°Ô ÇØ¾ß ÃøÁ¤±â°¡ 200ms+ÁöÅÍÀÇ ·ºÀ» °¨ÁöÇÕ´Ï´Ù.
+        // 1. ì‹œë®¬ë ˆì´í„°ê°€ ê³„ì‚°í•´ì¤€ "ë°©ì¶œ ì‹œê°„"ìœ¼ë¡œ ì§€í„° ì¸¡ì •
+        // ì´ë ‡ê²Œ í•´ì•¼ ì¸¡ì •ê¸°ê°€ 200ms+ì§€í„°ì˜ ë ‰ì„ ê°ì§€í•©ë‹ˆë‹¤.
         CNetworkManager::GetInstance().GetJitterMeasurer()->OnPacketArrival(pair.second);
 
-        // 2. ÇØ´ç ÇÃ·¹ÀÌ¾î¸¦ Ã£¾Æ ÀåºÎ¿¡ µ¥ÀÌÅÍ »ğÀÔ
+        // 2. í•´ë‹¹ í”Œë ˆì´ì–´ë¥¼ ì°¾ì•„ ì¥ë¶€ì— ë°ì´í„° ì‚½ì…
         auto scene = CSceneManager::GetInstance().GetActiveScene();
         if (scene) {
             auto& indexMap = scene->GetIDIndex();

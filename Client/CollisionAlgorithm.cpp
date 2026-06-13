@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "CollisionAlgorithm.h"
 #include "Collider.h"
 

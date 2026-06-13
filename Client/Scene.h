@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "LightManager.h"
 #include "ImGuiManager.h"
 
@@ -26,6 +26,8 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList*);
 	virtual void Update(float elapsedTime);
 
+	// 해상도 변경 시 호출(UI 초기화)
+	void OnResize();
 	// Scene 이 전환될 때, 호출 될 함수
 	virtual void Enter();
 	virtual void Exit();
@@ -37,6 +39,7 @@ public:
 
 	// UI 관련 
 	void DrawUI_Final();
+	std::shared_ptr<CUIManager>& GetUIManager() { return ui_manager; };
 
 	// UI 버튼 누를 때 효과음
 	void CheckHoverSound();

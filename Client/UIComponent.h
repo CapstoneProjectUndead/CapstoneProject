@@ -14,9 +14,10 @@ struct UITransform {
 };
 
 // UIManager로 관리, 각자의 world_matrix가 존재
-class CUIComponent : public CComponent{
+class CUIComponent : public CComponent, public std::enable_shared_from_this<CUIComponent>
+{
 public:
-	struct Rect {
+    struct Rect {
         float left{ 0.0f };
         float top{ 0.0f };
         float right{ 0.0f };
@@ -33,6 +34,7 @@ public:
     enum class EButtonState { Normal, Hover, Pressed, Disabled };
 
     CUIComponent();
+    virtual ~CUIComponent() = default;
 
     // json data
     virtual json Serialize();
@@ -59,10 +61,12 @@ public:
     XMFLOAT2 GetAnchor() { return transform.anchor; }
     XMFLOAT4 GetColor() { return color; }
     XMFLOAT4X4 GetWorldMatrix() const { return world_matrix; }
-
+    std::shared_ptr<CUIComponent> GetParentUI() const {
+        return parent_ui.lock();
+    }
     // setter
     void AddChild(std::shared_ptr<CUIComponent> newChild) {
-        newChild->parent_ui = this; // 부모 연결
+        newChild->parent_ui = shared_from_this();
         child.push_back(newChild);
     }
     void SetRelativePos(const XMFLOAT2& p) { transform.relative_pos = p; Invalidate(); }
@@ -81,12 +85,12 @@ protected:
     std::string name{ "UI_Element" };
     EButtonState state{ EButtonState::Disabled };
     UITransform transform{};
-    XMFLOAT4 color{1, 1, 1, 1};
+    XMFLOAT4 color{ 1, 1, 1, 1 };
 
-	XMFLOAT2 final_screen_pos{ .0f, .0f };
-    Rect rect{ transform.relative_pos.x - transform.size.x / 2, transform.relative_pos.y - transform.size.y / 2};
+    XMFLOAT2 final_screen_pos{ .0f, .0f };
+    Rect rect{};
     std::vector<std::shared_ptr<CUIComponent>> child;
-    CUIComponent* parent_ui{ nullptr }; // 부모 UI 참조 (순환 참조 방지를 위해 생포인터)
+    std::weak_ptr<CUIComponent> parent_ui;
 
     bool is_dirty{ true };
     XMFLOAT4X4 world_matrix; // UI의 위치, 크기, 회전이 담긴 행렬
@@ -139,16 +143,16 @@ mainCanvas->AddChild(billboard);
 */
 class CUIBillboard : public CUIImage {
 public:
-    CUIBillboard(CObject* obj) :target{obj} {}
+    CUIBillboard(std::weak_ptr<CObject> obj) :target{ obj } {}
     // 타겟 위치로 Update. 자식의 위치 업데이트도 수행
     virtual void Update(float deltaTime) override;
 
     // 빌보드를 띄울 타겟(말하는 주체)
-    void SetTarget(CObject* obj);
+    void SetTarget(std::weak_ptr<CObject>);
     virtual EShaderName GetShaderName() const { return EShaderName::Billboard; }
 private:
     XMFLOAT3 offset{ 1.0f, 1.0f, -0.1f }; // 머리 위 높이 조절
-    CObject* target{};
+    std::weak_ptr<CObject> target;
 };
 
 class CUIText : public CUIComponent {
@@ -173,7 +177,7 @@ private:
     UINT current_index{};
     float timer{};
     float typing_speed{ 0.3f }; // 글자당 속도
-    bool is_finished{true};
+    bool is_finished{ true };
     bool is_billboard{};
 };
 
@@ -197,8 +201,10 @@ private:
 // 비활성화를 위해 owner가 필요
 class CUIDowsingArrow : public CUIImage {
 public:
-    CUIDowsingArrow(float* angle) : CUIImage(), target_angle{angle}
-    { name = "Dowsing_Arrow"; }
+    CUIDowsingArrow(float* angle) : CUIImage(), target_angle{ angle }
+    {
+        name = "Dowsing_Arrow";
+    }
 
     // 외부에서 계산한 각도를 주입 (라디안 값)
     void SetTargeAngle(float* radian) { target_angle = radian; }
@@ -248,8 +254,12 @@ public:
     // 캐시된 UI를 즉시 반환 (없으면 찾아보고 캐싱)
     template <typename T>
     std::shared_ptr<T> GetUI(const std::string& name) {
-        if (ui_cache.find(name) != ui_cache.end())
-            return std::dynamic_pointer_cast<T>(ui_cache[name]);
+        if (ui_cache.find(name) != ui_cache.end()) {
+            // 캐시된 포인터가 아직 메모리에 살아있는지 유효성 검사
+            if (auto aliveUI = ui_cache[name].lock()) {
+                return std::dynamic_pointer_cast<T>(aliveUI);
+            }
+        }
 
         auto found = FindUI<T>(name);
         if (found) ui_cache[name] = found;
@@ -258,6 +268,7 @@ public:
 
     // 특정 UI를 껐다 켰다 하는 관리 함수(setMouseMode - true: gameMode)
     void ToggleUI(const std::string& name, bool enable, bool setMouseMode = false);
+    void Invalidate();
 private:
     template <typename T>
     std::shared_ptr<T> FindRecursive(std::shared_ptr<CUIComponent> parent, const std::string& name) {
@@ -271,5 +282,5 @@ private:
 private:
     std::vector<std::shared_ptr<CUICanvas>> canvases;
     std::shared_ptr<CDataManager> data_manager;
-    std::map<std::string, std::shared_ptr<CUIComponent>> ui_cache;
+    std::map<std::string, std::weak_ptr<CUIComponent>> ui_cache;
 };

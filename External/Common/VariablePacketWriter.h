@@ -1,9 +1,9 @@
 #pragma once
 //==================================
-// **** í´ë¼/ì„œë²„ ê³µìš© í—¤ë” íŒŒì¼ ****
-//==================================
+// **** Å¬¶ó/¼­¹ö °ø¿ë Çì´õ ÆÄÀÏ ****
+//=================================+
 
-// ì•ìœ¼ë¡œ ê°€ë³€ê¸¸ì´ íŒ¨í‚·ì€ ì—¬ê¸°ì„œ ì²˜ë¦¬í•œë‹¤.
+// ¾ÕÀ¸·Î °¡º¯±æÀÌ ÆĞÅ¶Àº ¿©±â¼­ Ã³¸®ÇÑ´Ù.
 
 template<typename T>
 class S_WRITE
@@ -11,7 +11,7 @@ class S_WRITE
 public:
 	SendBufferRef CloseAndReturn()
 	{
-		// íŒ¨í‚· ì‚¬ì´ì¦ˆ ê³„ì‚°
+		// ÆĞÅ¶ »çÀÌÁî °è»ê
 		pkt->SetPacketSize(bw.WriteSize());
 
 		sendBuffer->Close(bw.WriteSize());
@@ -31,8 +31,8 @@ public:
 	using User = S_PLAYER_LIST::Player;
 	using UserList = PacketList<S_PLAYER_LIST::Player>;
 
-	// ê³ ì •ëœ ë¶€ë¶„ë“¤ì€ ìƒì„±ì ì¸ìë¡œ ë°›ì•„ì„œ
-	// ìƒì„±ì ë‚´ë¶€ì—ì„œ ì§ë ¬í™”í•œë‹¤. 
+	// °íÁ¤µÈ ºÎºĞµéÀº »ı¼ºÀÚ ÀÎÀÚ·Î ¹Ş¾Æ¼­
+	// »ı¼ºÀÚ ³»ºÎ¿¡¼­ Á÷·ÄÈ­ÇÑ´Ù. 
 	S_PLAYERLIST_WRITE()
 	{
 		//_sendBuffer = GSendBufferManager->Open(4096);
@@ -81,8 +81,8 @@ public:
 	using Room = S_Room_List::Room;
 	using RoomList = PacketList<S_Room_List::Room>;
 
-	// ê³ ì •ëœ ë¶€ë¶„ë“¤ì€ ìƒì„±ì ì¸ìë¡œ ë°›ì•„ì„œ
-	// ìƒì„±ì ë‚´ë¶€ì—ì„œ ì§ë ¬í™”í•œë‹¤. 
+	// °íÁ¤µÈ ºÎºĞµéÀº »ı¼ºÀÚ ÀÎÀÚ·Î ¹Ş¾Æ¼­
+	// »ı¼ºÀÚ ³»ºÎ¿¡¼­ Á÷·ÄÈ­ÇÑ´Ù. 
 	S_ROOMLIST_WRITE()
 	{
 		sendBuffer = std::make_shared<SendBuffer>(4096);

@@ -1,27 +1,27 @@
-#pragma once
+ï»¿#pragma once
 #include "Player.h"
 
 struct DelayedPacket 
 {
-    // ÆĞÅ¶ µ¥ÀÌÅÍ (»ç¿ëÀÚ´ÔÀÇ ÆĞÅ¶ ±¸Á¶Ã¼³ª ¹ÙÀÌÆ® ¹è¿­)
-    // ¿©±â¼­´Â ¿¹½Ã·Î »ó´ë¹æÀÇ »óÅÂ µ¥ÀÌÅÍ¶ó°í °¡Á¤ÇÕ´Ï´Ù.
+    // íŒ¨í‚· ë°ì´í„° (ì‚¬ìš©ìë‹˜ì˜ íŒ¨í‚· êµ¬ì¡°ì²´ë‚˜ ë°”ì´íŠ¸ ë°°ì—´)
+    // ì—¬ê¸°ì„œëŠ” ì˜ˆì‹œë¡œ ìƒëŒ€ë°©ì˜ ìƒíƒœ ë°ì´í„°ë¼ê³  ê°€ì •í•©ë‹ˆë‹¤.
     OpponentFrameHistory data;
 
-    // ÀÌ ÆĞÅ¶ÀÌ ½ÇÁ¦·Î "Ã³¸®µÇ¾î¾ß ÇÒ" ½Ã°£ (ÇöÀç ½Ã°£ + Áö¿¬ ½Ã°£)
+    // ì´ íŒ¨í‚·ì´ ì‹¤ì œë¡œ "ì²˜ë¦¬ë˜ì–´ì•¼ í• " ì‹œê°„ (í˜„ì¬ ì‹œê°„ + ì§€ì—° ì‹œê°„)
     std::chrono::steady_clock::time_point releaseTime;
 };
 
 class CLagSimulator
 {
 public:
-    // Áö¿¬ ½Ã°£ ¼³Á¤ (¹Ğ¸®ÃÊ ´ÜÀ§)
+    // ì§€ì—° ì‹œê°„ ì„¤ì • (ë°€ë¦¬ì´ˆ ë‹¨ìœ„)
     void SetLatency(int ms) { latency_ms = ms; }
-    void SetJitter(int ms) { jitter_ms = ms; } // ÁöÅÍ(º¯µ¿Æø) Ãß°¡ ½Ã
+    void SetJitter(int ms) { jitter_ms = ms; } // ì§€í„°(ë³€ë™í­) ì¶”ê°€ ì‹œ
 
-    // ÆĞÅ¶À» ¹ŞÀ¸¸é Áï½Ã Ã³¸®ÇÏÁö ¾Ê°í Å¥¿¡ ³ÖÀ½
+    // íŒ¨í‚·ì„ ë°›ìœ¼ë©´ ì¦‰ì‹œ ì²˜ë¦¬í•˜ì§€ ì•Šê³  íì— ë„£ìŒ
     void PushPacket(const OpponentFrameHistory& packetData);
 
-    // ¸Å ÇÁ·¹ÀÓ ¾÷µ¥ÀÌÆ®ÇÏ¸ç ½Ã°£ÀÌ µÈ ÆĞÅ¶µéÀ» ¹İÈ¯
+    // ë§¤ í”„ë ˆì„ ì—…ë°ì´íŠ¸í•˜ë©° ì‹œê°„ì´ ëœ íŒ¨í‚·ë“¤ì„ ë°˜í™˜
     void Update(std::vector<std::pair<OpponentFrameHistory, float>>& outPackets);
 
 private:
