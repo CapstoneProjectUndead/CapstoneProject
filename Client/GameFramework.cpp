@@ -336,6 +336,7 @@ void CGameFramework::ChangeSwapChainState()
 		::SetWindowPos(ghWnd, HWND_TOP, windowed_rect.left, windowed_rect.top, w, h, SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 		is_fullscreen = false;
+		OnResize(w, h);
 	}
 }
 
@@ -383,7 +384,6 @@ void CGameFramework::OnResize(UINT width, UINT height)
 
 	CSceneManager::GetInstance().OnResizeBuffers(d3d_device.Get(), client_width, client_height);
 	CSceneManager::GetInstance().CreateMainDepthSRV(d3d_device.Get());
-	CImGuiManager::GetInstance().OnResize(d3d_device.Get());
 }
 
 void CGameFramework::MoveToNextFrame()
