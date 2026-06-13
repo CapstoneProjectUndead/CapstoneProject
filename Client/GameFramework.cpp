@@ -336,7 +336,12 @@ void CGameFramework::ChangeSwapChainState()
 		::SetWindowPos(ghWnd, HWND_TOP, windowed_rect.left, windowed_rect.top, w, h, SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 		is_fullscreen = false;
-		OnResize(w, h);
+
+		// windowed_rect는 테두리/타이틀바를 포함한 창 전체 크기.
+		// 백버퍼/DisplaySize는 ImGui가 매 프레임 쓰는 GetClientRect(클라이언트 영역)와 맞춰야 어긋나지 않음.
+		RECT rc;
+		::GetClientRect(ghWnd, &rc);
+		OnResize(rc.right - rc.left, rc.bottom - rc.top);
 	}
 }
 

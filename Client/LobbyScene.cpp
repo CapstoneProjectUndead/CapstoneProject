@@ -45,10 +45,7 @@ void CLobbyScene::Initialize()
 
 	// LoadData
 	ui_manager->GetDataManager()->LoadScripts("../Modeling/UI/Reaper.json");
-	// menu UI
-	auto menuUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Menu_UI.json");
-	menuUI->SetEnable(false);
-	ui_manager->AddCanvas(menuUI);
+	// ESC 메뉴는 ImGui(DrawMenu)로 직접 그림 — Menu_UI.json 로드하지 않음
 	// 대사 UI
 	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
 	reaperCanvas->SetEnable(false);
@@ -107,6 +104,16 @@ void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void CLobbyScene::Update(float elapsedTime)
 {
+	// ESC 메뉴가 열려 있으면 일시정지: 씬 업데이트/입력 전송 차단. ESC로 닫기만 처리.
+	if (paused) {
+		if (KEY_TAP(KEY::ESC)) {
+			ui_state = LobbyUIState::None;
+			paused   = false;
+			CKeyManager::GetInstance().SetMouseMode(true);   // 게임 커서 모드 복귀
+		}
+		return;
+	}
+
 	CScene::Update(elapsedTime);
 
 	if (my_player) {
@@ -125,12 +132,11 @@ void CLobbyScene::Update(float elapsedTime)
 		else if (auto reaperUI = ui_manager->GetUI<CUICanvas>("ReaperSpeechCanvas"); reaperUI && reaperUI->is_enable) {
 			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
 		}
-		// 3순위: 인벤토리가 닫혀 있을 때만 로비 메뉴를 켤 수 있음
+		// 3순위: 인벤토리가 닫혀 있을 때만 ESC 메뉴를 켬 (일시정지)
 		else if (!isInvOpen) {
-			auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
-			if (menuUI) {
-				ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
-			}
+			ui_state = LobbyUIState::Menu;
+			paused   = true;
+			CKeyManager::GetInstance().SetMouseMode(false);  // UI 커서 모드
 		}
 	}
 
@@ -145,11 +151,6 @@ void CLobbyScene::Update(float elapsedTime)
 			break;
 		default:
 			break;
-		}
-
-		auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
-		if (menuUI) {
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
 		}
 	}
 
@@ -283,8 +284,6 @@ void CLobbyScene::SetButtonEvents()
 	auto reaperText = ui_manager->GetUI<CUIText>("ReaperText");
 	auto yesBtn = ui_manager->GetUI<CUIButton>("YesButton");
 	auto noBtn = ui_manager->GetUI<CUIButton>("NoButton");
-	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
-	auto menuBackBtn = ui_manager->GetUI<CUIButton>("Back");
 
 	if (yesBtn) yesBtn->SetEnable(false);
 	if (noBtn) noBtn->SetEnable(false);
@@ -321,45 +320,6 @@ void CLobbyScene::SetButtonEvents()
 	if (noBtn) {
 		noBtn->OnClick = [this]() {
 			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
-			};
-	}
-
-	if (menuToCustomBtn) {
-		menuToCustomBtn->OnClick = [this]() {
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
-
-			if (g_is_single) {
-				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
-			}
-			else {
-				C_SceneChange changeScenePkt;
-				changeScenePkt.player_id = my_player->GetID();
-				changeScenePkt.current_scene = scene_type;
-				changeScenePkt.target_scene = SCENE_TYPE::CUSTOMS;
-
-				auto session = GET_SERVER_SESSION;
-				assert(session);
-
-				auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
-				session->DoSend(sendBuffer);
-			}
-			};
-	}
-
-	if (menuBackBtn) {
-		menuBackBtn->OnClick = [this]() {
-			if (!g_is_single) {
-				C_LeaveRoom leavePkt;
-				leavePkt.user_id = my_player->GetID();
-
-				auto session = GET_SERVER_SESSION;
-				assert(session);
-
-				auto sendBuffer = MAKE_SEND_BUFFER(leavePkt);
-				session->DoSend(sendBuffer);
-			}
-			ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
-			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
 			};
 	}
 }
@@ -463,6 +423,135 @@ void CLobbyScene::DrawUI()
 		auto inventory = my_player->GetInventory();
 		if (inventory)
 			inventory->Draw(true);
+	}
+
+	// ESC 메뉴 (최상위 오버레이)
+	if (ui_state == LobbyUIState::Menu)
+		DrawMenu();
+}
+
+void CLobbyScene::DrawMenu()
+{
+	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+	float  scale      = G_RATIO_Y;
+
+	// 배경 디밍: 화면 전체를 75% 불투명 어두운 회색으로 덮음 (블러 아님)
+	ImGui::GetBackgroundDrawList()->AddRectFilled(
+		ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.75f)));
+
+	// 창을 화면 정중앙에 배치
+	ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+	ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
+
+	if (ImGui::Begin("Lobby Menu", nullptr, menuFlags)) {
+		ImGui::SetWindowFontScale(scale);
+
+		ImVec2 btnSize = ImVec2(200.0f * scale, 60.0f * scale);
+
+		ImGui::Spacing(); ImGui::Spacing();
+
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.5f, 0.5f, 0.5f, 1.0f));   // 평소
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));   // 호버
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.6f, 0.1f, 0.1f, 1.0f));   // 클릭
+
+		// [커스텀] 버튼 → 커스텀 씬으로 이동
+		if (ImGui::Button((const char*)u8"커스텀", btnSize)) {
+			ui_state = LobbyUIState::None;
+			paused   = false;
+
+			if (g_is_single) {
+				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::CUSTOMS);
+			}
+			else {
+				// 멀티: C_SceneChange만 송신, 서버의 S_SceneChange 응답을 기다림 (로컬 ChangeScene 금지)
+				C_SceneChange changeScenePkt;
+				changeScenePkt.player_id     = my_player->GetID();
+				changeScenePkt.current_scene = scene_type;
+				changeScenePkt.target_scene  = SCENE_TYPE::CUSTOMS;
+
+				auto session = GET_SERVER_SESSION;
+				assert(session);
+
+				auto sendBuffer = MAKE_SEND_BUFFER(changeScenePkt);
+				session->DoSend(sendBuffer);
+			}
+		}
+
+		ImGui::Spacing(); ImGui::Spacing();
+
+		// [나가기] 버튼 → 확인 팝업
+		if (ImGui::Button((const char*)u8"나가기", btnSize)) {
+			ImGui::OpenPopup((const char*)u8"LeaveConfirmPopup");
+		}
+
+		ImGui::Spacing(); ImGui::Spacing();
+		ImGui::PopStyleColor(3);
+		ImGui::SetWindowFontScale(1.0f);
+
+		DrawRoomLeavePopUp();
+	}
+	ImGui::End();
+}
+
+void CLobbyScene::DrawRoomLeavePopUp()
+{
+	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+	float  scale      = G_RATIO_Y;
+
+	ImVec2 popupCenter = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+	ImGui::SetNextWindowPos(popupCenter, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal((const char*)u8"LeaveConfirmPopup", NULL,
+		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar)) {
+
+		ImGui::SetWindowFontScale(scale);
+
+		ImGui::Text((const char*)u8"정말로 나가시겠습니까?");
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImVec2 popupBtnSize = ImVec2(100.0f * scale, 40.0f * scale);
+
+		// [확인] → 방 나가고 타이틀로
+		if (ImGui::Button((const char*)u8"확인", popupBtnSize)) {
+
+			// 멀티일 때만 서버에 방 나가기 통보 (서버가 마지막 유저면 방 삭제)
+			if (!g_is_single) {
+				C_LeaveRoom leavePkt;
+				leavePkt.user_id = my_player->GetID();
+
+				auto session = GET_SERVER_SESSION;
+				assert(session);
+
+				auto sendBuffer = MAKE_SEND_BUFFER(leavePkt);
+				session->DoSend(sendBuffer);
+			}
+
+			// 커스터마이징 인덱스 초기화
+			CCustomScene* customScene = (CCustomScene*)CSceneManager::GetInstance().GetScenes()[(UINT)SCENE_TYPE::CUSTOMS].get();
+			customScene->body_idx  = 0;
+			customScene->eyes_idx  = 0;
+			customScene->mouth_idx = 0;
+
+			ui_state = LobbyUIState::None;
+			paused   = false;
+
+			ImGui::CloseCurrentPopup();
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+		}
+
+		ImGui::SameLine();
+
+		// [취소] → 팝업만 닫기 (ESC 메뉴는 유지)
+		if (ImGui::Button((const char*)u8"취소", popupBtnSize)) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SetWindowFontScale(1.0f);
+		ImGui::EndPopup();
 	}
 }
 

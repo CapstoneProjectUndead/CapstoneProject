@@ -27,9 +27,14 @@ public:
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
+    virtual bool IsMenuOpen() const override { return ui_state == LobbyUIState::Menu; }
 public:
     void InteractWithReaper();
     void SetButtonEvents();
+
+    // ESC 메뉴 (ImGui). paused일 때 씬 업데이트/입력 전송을 멈춰 일시정지처럼 동작.
+    void DrawMenu();
+    void DrawRoomLeavePopUp();
 
     // 플레이어가 준비되었는지 체크 후 UI 변경
     void UpdatePlayerReadyUI();
@@ -57,5 +62,9 @@ private:
     // 상점 전환 추적
     bool shop_was_open       = false;
     bool prev_inventory_open = false;
+
+    // ESC 메뉴 상태
+    LobbyUIState ui_state = LobbyUIState::None;
+    bool         paused   = false;
 };
 

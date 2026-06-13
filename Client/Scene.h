@@ -37,9 +37,13 @@ public:
 
 	void RemoveAllMonsters();
 
-	// UI 관련 
+	// UI 관련
 	void DrawUI_Final();
 	std::shared_ptr<CUIManager>& GetUIManager() { return ui_manager; };
+
+	// ESC 메뉴 등 모달 UI가 열려 있는지 (기본 false, 씬에서 오버라이드).
+	// 메뉴 열림 중 인벤토리 등 다른 입력 차단 판단에 사용.
+	virtual bool IsMenuOpen() const { return false; }
 
 	// UI 버튼 누를 때 효과음
 	void CheckHoverSound();
