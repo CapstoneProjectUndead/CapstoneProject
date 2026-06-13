@@ -271,8 +271,12 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 
 void CMyPlayer::CaptureInput(InputData& currentInput)
 {
-	// 상점 이용 중엔 입력을 0으로 (서버 권한 이동이 멈추도록; 얼어붙은 이동 입력 방지)
-	if (CShop::GetInstance().IsOpen()) {
+	// 상점 이용 중 or ESC 메뉴 열림 → 입력을 0으로 (서버 권한 이동/행동이 멈추도록).
+	// 멀티에서 메뉴를 열면 내 입력만 0으로 보내 내 캐릭터만 멈추고, 월드는 서버가 계속 진행.
+	// (아예 안 보내면 서버가 직전 입력을 유지해 계속 움직일 수 있으므로 0으로 채워 보냄)
+	CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
+	bool menuOpen = activeScene && activeScene->IsMenuOpen();
+	if (CShop::GetInstance().IsOpen() || menuOpen) {
 		currentInput = InputData{false, false, false, false, false, false};
 		return;
 	}
@@ -294,7 +298,10 @@ void CMyPlayer::CaptureInput(InputData& currentInput)
 
 void CMyPlayer::ProcessRotation()
 {
-	if (state == PLAYER_STATE::DEAD || CShop::GetInstance().IsOpen())
+	// ESC 메뉴 열림 중엔 카메라/시점 회전도 차단 (상점과 동일 처리)
+	CScene* activeScene = CSceneManager::GetInstance().GetActiveScene();
+	bool menuOpen = activeScene && activeScene->IsMenuOpen();
+	if (state == PLAYER_STATE::DEAD || CShop::GetInstance().IsOpen() || menuOpen)
 		return;
 
 	if (ImGui::GetIO().WantCaptureMouse)

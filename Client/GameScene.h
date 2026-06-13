@@ -22,6 +22,7 @@ public:
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
+    virtual bool IsMenuOpen() const override { return menu_open; }
     void SetButtonEvents();
 public:
     // 서버 패킷 처리 관련 함수들
@@ -121,6 +122,9 @@ private:
     // 상대 플레이어 상태 UI (오른쪽 상단, 최대 3명): 원형 사진 + HP바
     void DrawOpponentStatus();
 
+    // ESC 메뉴 (ImGui). "타이틀로" 버튼만. 싱글은 일시정지, 멀티는 오버레이만.
+    void DrawMenu();
+
     void SpawnTreasure(XMFLOAT3& pos);
 
 private:
@@ -142,6 +146,9 @@ private:
 
     // DEAD 진입 시 Player_UI 캔버스 (HP/스태미나/가방/조준점) 끄기 edge-trigger flag
     bool                    player_ui_disabled = false;
+
+    // ESC 메뉴 열림 상태
+    bool                    menu_open = false;
 
     // 복귀존 (서버 패킷으로 활성화)
     bool      return_active        = false;

@@ -74,15 +74,7 @@ void CGameScene::Initialize()
 		}
 	}
 
-	// menu UI
-	auto menuUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Menu_UI.json");
-	menuUI->SetEnable(false);
-	ui_manager->AddCanvas(menuUI);
-	// 메뉴 내 ToCustom 버튼을 비활성화
-	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
-	if (menuToCustomBtn) {
-		menuToCustomBtn->SetEnable(false);
-	}
+	// ESC 메뉴는 ImGui(DrawMenu)로 직접 그림 — Menu_UI.json 로드하지 않음
 	// Player UI
 	auto playerUI = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/Player_UI.json");
 	ui_manager->AddCanvas(playerUI);
@@ -211,18 +203,27 @@ void CGameScene::Update(float elapsedTime)
 {
 	if (KEY_TAP(KEY::ESC)) {
 		bool isInvOpen = (my_player && my_player->GetInventory() && my_player->GetInventory()->IsOpen());
-		// 인벤토리가 닫혀 있을 때만 ESC로 로비 메뉴를 켤 수 있도록 제한
-		if (!isInvOpen) {
-			auto menuUI = ui_manager->GetUI<CUICanvas>("LobbyMenuCanvas");
-			if (menuUI) {
-				ui_manager->ToggleUI("LobbyMenuCanvas", !menuUI->is_enable, menuUI->is_enable);
-			}
+		if (menu_open) {
+			// 메뉴 닫기
+			menu_open = false;
+			CKeyManager::GetInstance().SetMouseMode(true);
 		}
-		else {
-			// 열려있으면 인벤토리 끄기
+		else if (isInvOpen) {
+			// 인벤토리가 열려 있으면 인벤토리부터 닫기
 			my_player->GetInventory()->ToggleOpen();
 			CKeyManager::GetInstance().SetMouseMode(true);
 		}
+		else {
+			// 메뉴 열기 (UI 커서 모드)
+			menu_open = true;
+			CKeyManager::GetInstance().SetMouseMode(false);
+		}
+	}
+
+	// 싱글: 메뉴 열려있으면 게임 일시정지 (이후 타이머/입력/업데이트 전부 스킵)
+	// 멀티: 서버 권위라 멈출 수 없으므로 오버레이만 띄우고 게임은 계속 진행
+	if (menu_open && g_is_single) {
+		return;
 	}
 
 	// DEAD 진입 시 Player_UI 캔버스 끄기 (HP/스태미나/가방/조준점 일괄)
@@ -267,8 +268,9 @@ void CGameScene::Update(float elapsedTime)
 
 	if (my_player) {
 
-		// 아이템 줍기
-		ProcessPickup();
+		// 아이템 줍기 (ESC 메뉴 중엔 차단)
+		if (!menu_open)
+			ProcessPickup();
 
 		// 플레이어가 장착하고 있는 아이템에 따라 행동 분기
 		auto qs = my_player->GetQuickSlot();
@@ -277,7 +279,8 @@ void CGameScene::Update(float elapsedTime)
 		bool hasWeapon = qs && (qs->GetSelectedSubType() == ITEM_SUB_TYPE::MELEE_WEAPON
 			|| qs->GetSelectedSubType() == ITEM_SUB_TYPE::RANGED_WEAPON);
 
-		if (!ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand)
+		// ESC 메뉴 열려있으면 채굴/공격 입력 차단 (디밍 영역 클릭으로 행동 새는 것 방지)
+		if (!menu_open && !ImGui::GetIO().WantCaptureMouse && (hasTool || isBareHand)
 			&& !my_player->GetIsPossessed()
 			&& !my_player->GetIsStunned()
 			&& !my_player->GetIsKnockedBack()
@@ -295,7 +298,7 @@ void CGameScene::Update(float elapsedTime)
 				ProcessVisibleObjectMining(elapsedTime);
 			}
 		}
-		else if(!ImGui::GetIO().WantCaptureMouse && hasWeapon) {
+		else if(!menu_open && !ImGui::GetIO().WantCaptureMouse && hasWeapon) {
 			ProcessAttack(elapsedTime);
 		}
 
@@ -439,30 +442,67 @@ void CGameScene::DrawUI()
 
 	// 상대 플레이어 상태 UI (오른쪽 상단)
 	DrawOpponentStatus();
+
+	// ESC 메뉴 (최상위 오버레이)
+	if (menu_open)
+		DrawMenu();
 }
 
 void CGameScene::SetButtonEvents()
 {
-	auto menuToCustomBtn = ui_manager->GetUI<CUIButton>("ToCustom");
-	auto menuBackBtn = ui_manager->GetUI<CUIButton>("Back");
+	// ESC 메뉴를 ImGui(DrawMenu)로 직접 그리므로 더 이상 설정할 JSON 버튼 없음
+}
 
-	if (menuToCustomBtn) {
-		menuToCustomBtn->OnClick = [this]() {
-			if (g_is_single) {
-				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::LOBBY);
-				ui_manager->ToggleUI("LobbyMenuCanvas", false, true);
-			}
-		};
-	}
+void CGameScene::DrawMenu()
+{
+	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+	float  scale      = G_RATIO_Y;
 
-	if (menuBackBtn) {
-		menuBackBtn->OnClick = [this]() {
-			if (g_is_single) {
-				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
-				ui_manager->ToggleUI("LobbyMenuCanvas", false, false);
+	// 배경 디밍: 화면 전체를 75% 불투명 어두운 회색으로 덮음 (블러 아님)
+	ImGui::GetBackgroundDrawList()->AddRectFilled(
+		ImVec2(0, 0), screenSize, ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.15f, 0.75f)));
+
+	// 창을 화면 정중앙에 배치
+	ImVec2 centerPos = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+	ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
+
+	if (ImGui::Begin("Game Menu", nullptr, menuFlags)) {
+		ImGui::SetWindowFontScale(scale);
+
+		ImVec2 btnSize = ImVec2(200.0f * scale, 60.0f * scale);
+
+		ImGui::Spacing(); ImGui::Spacing();
+
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.5f, 0.5f, 0.5f, 1.0f));   // 평소
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));   // 호버
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.6f, 0.1f, 0.1f, 1.0f));   // 클릭
+
+		// [타이틀로] → 게임 종료하고 타이틀로
+		if (ImGui::Button((const char*)u8"타이틀로", btnSize)) {
+			menu_open = false;
+			CKeyManager::GetInstance().SetMouseMode(true);
+
+			// 멀티: 방 나가기 통보 (서버가 플레이어 제거 + 빈 방이면 삭제 → 고스트 방 방지)
+			if (!g_is_single && my_player) {
+				C_LeaveRoom leavePkt;
+				leavePkt.user_id = my_player->GetID();
+				if (auto s = my_player->GetSession()) {
+					auto sendBuffer = MAKE_SEND_BUFFER(leavePkt);
+					s->DoSend(sendBuffer);
+				}
 			}
-		};
+
+			CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::TITLE);
+		}
+
+		ImGui::Spacing(); ImGui::Spacing();
+		ImGui::PopStyleColor(3);
+		ImGui::SetWindowFontScale(1.0f);
 	}
+	ImGui::End();
 }
 
 bool CGameScene::IsUIInputEnabled()

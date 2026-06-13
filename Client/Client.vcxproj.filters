@@ -437,9 +437,12 @@
     </ClInclude>
     <ClInclude Include="Shop.h">
       <Filter>Shop</Filter>
-	</ClInclude>
-	<ClInclude Include="GBufferTarget.h">
+    </ClInclude>
+    <ClInclude Include="GBufferTarget.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerHUD.h">
+      <Filter>Object\MyPlayer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -697,9 +700,12 @@
     </ClCompile>
     <ClCompile Include="Shop.cpp">
       <Filter>Shop</Filter>
-	</ClCompile>
-	<ClCompile Include="GBufferTarget.cpp">
+    </ClCompile>
+    <ClCompile Include="GBufferTarget.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerHUD.cpp">
+      <Filter>Object\MyPlayer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
