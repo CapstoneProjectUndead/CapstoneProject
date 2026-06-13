@@ -303,6 +303,15 @@ void CGhost::OnAttackMove(float elapsedTime)
     attack_timer += elapsedTime;
     auto targetPlayer = target_player.lock();
 
+    // 대상이 사라졌거나 빈사/복귀/이미 빙의됨 → 공격 중단하고 추격 상태로 복귀
+    if (!targetPlayer || targetPlayer->IsIncapacitated() || targetPlayer->GetReturned() || targetPlayer->GetIsPossessed()) {
+        velocity.x = 0.0f;
+        velocity.z = 0.0f;
+        if (auto ai = GetComponent<CAIComponent>())
+            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+        return;
+    }
+
     // 돌진: STOP_DIST 이상이면 달리고, 코앞에 닿으면 즉시 멈추고 스턴
     if (attack_timer < DASH_DURATION && targetPlayer) {
         XMFLOAT3 dir = Vector3::Subtract(targetPlayer->position, position);
