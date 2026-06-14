@@ -190,8 +190,10 @@ void CTitleScene::ProcessLogin(shared_ptr<Session> session, bool guest, string n
 	shared_ptr<CUser> user = make_shared<CUser>();
 
 	if (guest) {
-		// "player" + 숫자(ID)를 문자열로 결합. to_string 없이 더하면 포인터 연산이 되어 버그.
-		name = "player" + std::to_string(user->GetUserID());
+		// 게스트 표시 이름: 한글 "플레이어" + 숫자(ID).
+		// to_ansi가 UTF-8→CP949로 변환하므로 한글은 UTF-8 바이트로 작성(소스 인코딩 의존 회피).
+		// to_string 없이 더하면 포인터 연산이 되어 버그.
+		name = "\xED\x94\x8C\xEB\xA0\x88\xEC\x9D\xB4\xEC\x96\xB4" + std::to_string(user->GetUserID());
 		user->SetGuest(true);
 	}
 

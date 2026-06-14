@@ -317,9 +317,16 @@ void CLobbyScene::DrawReadyPanel()
 	rows.push_back({ CP949ToUTF8(my_player->GetName()), my_player->GetIsReady(), true });
 
 	// 슬롯2~4: 타인 (player_slot_ids 순서, ID로 객체 해석)
+	// player_slot_ids는 RemoveObject로 정리되지 않아 중복 id가 남을 수 있으므로 표시 단계에서 중복/본인 제외.
 	auto& objects  = GetObjects();
 	auto& indexMap = GetIDIndex();
+	std::unordered_set<uint64> seen;
+	seen.insert(my_player->GetID());	// 본인 id는 슬롯1에서 이미 처리
+
 	for (uint64 id : player_slot_ids) {
+		if (!seen.insert(id).second)
+			continue;	// 이미 표시한 id(중복) → 건너뜀
+
 		auto it = indexMap.find(id);
 		if (it == indexMap.end() || it->second >= objects.size())
 			continue;	// 이미 나간 플레이어 등 → 건너뜀

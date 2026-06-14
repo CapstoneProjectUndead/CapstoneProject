@@ -555,6 +555,11 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		}
 	}
 	else {
+		// 씬 재진입 등으로 같은 플레이어가 다시 전송되면 중복 생성/등록 방지
+		// (id_To_Index/player_slot_ids는 로비에서 clear되지 않으므로 여기서 멱등 처리)
+		if (id_To_Index.find(pkt.info.player_id) != id_To_Index.end())
+			return;
+
 		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer();
 		otherPlayer->SetID(pkt.info.player_id);
 		otherPlayer->SetRoomID(pkt.room_id);
@@ -580,6 +585,10 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 	auto shaders = CSceneManager::GetInstance().GetShaders();
 	auto& factory = CSceneManager::GetInstance().GetFactory();
 	for (uint32 i = 0; i < pkt.player_count; ++i) {
+
+		// 이미 존재하는 플레이어면 중복 생성/등록 방지 (씬 재진입 시 목록 재전송 대비)
+		if (id_To_Index.find(userList[i].info.player_id) != id_To_Index.end())
+			continue;
 
 		// 다른 유저의 Player 생성
 		std::shared_ptr<CPlayer> otherPlayer = factory->CreatePlayer();

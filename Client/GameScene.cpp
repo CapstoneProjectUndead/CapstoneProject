@@ -2566,12 +2566,25 @@ void CGameScene::Handle_S_PlayerReturned(std::shared_ptr<Session> session, const
 		toast.text = "\xEB\xB3\xB5\xEA\xB7\x80 \xEC\x99\x84\xEB\xA3\x8C";
 	}
 	else {
-		// "%llu 플레이어 복귀"
-		char buf[64];
-		snprintf(buf, sizeof(buf),
-			"%llu \xED\x94\x8C\xEB\xA0\x88\xEC\x9D\xB4\xEC\x96\xB4 \xEB\xB3\xB5\xEA\xB7\x80",
-			(unsigned long long)pkt.player_id);
-		toast.text = buf;
+		// 타 플레이어: 이름으로 표시. 이름은 CP949 저장 → ImGui용 UTF-8로 변환.
+		// (게스트는 서버에서 이름이 한글 "플레이어<id>"로 지정됨)
+		std::string nameUtf8;
+		auto& indexMap = GetIDIndex();
+		auto& objects  = GetObjects();
+		auto it = indexMap.find(pkt.player_id);
+		if (it != indexMap.end() && it->second < objects.size()) {
+			if (auto other = std::static_pointer_cast<CPlayer>(objects[it->second]))
+				nameUtf8 = CP949ToUTF8(other->GetName());
+		}
+		if (nameUtf8.empty()) {
+			// 이름을 못 찾으면 id로 폴백
+			char idbuf[32];
+			snprintf(idbuf, sizeof(idbuf), "%llu", (unsigned long long)pkt.player_id);
+			nameUtf8 = idbuf;
+		}
+
+		// "<이름>님이 복귀하였습니다!"
+		toast.text = nameUtf8 + "\xEB\x8B\x98\xEC\x9D\xB4\x20\xEB\xB3\xB5\xEA\xB7\x80\xED\x95\x98\xEC\x98\x80\xEC\x8A\xB5\xEB\x8B\x88\xEB\x8B\xA4\x21";
 	}
 
 	return_toasts.push_back(std::move(toast));

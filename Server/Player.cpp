@@ -360,6 +360,9 @@ void CPlayer::ApplyStun(float time)
 
 void CPlayer::ApplyPossession()
 {
+    if (is_returned || IsIncapacitated())
+        return;
+
     is_possessed    = true;
     possession_timer = 30.0f;
 
@@ -619,7 +622,7 @@ shared_ptr<CPlayer> CPlayer::FindNearestOtherPlayer()
 
         if (!player || id == obj_id)
             continue;
-        if (player->GetIsPossessed() || player->IsIncapacitated())
+        if (player->GetIsPossessed() || player->IsIncapacitated() || player->is_returned)
             continue;
 
         XMFLOAT3 dir = Vector3::Subtract(player->GetPosition(), position);
