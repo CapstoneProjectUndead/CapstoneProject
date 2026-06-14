@@ -85,6 +85,10 @@ public:
 	// 빈사/사망: 무력 상태 (입력 차단 공용)
 	bool   IsIncapacitated() const { return state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD; }
 
+	// 서버가 알려준 플레이어 이름 (닉네임 표시용)
+	const std::string& GetName() const { return player_name; }
+	void  SetName(const std::string& n) { player_name = n; }
+
 public:
 	// 커스터마이징용
 	// 0: dog, 1: cat, 2: buddy
@@ -156,6 +160,9 @@ protected:
 
 	// 복귀 상태 (정산 시스템): 복귀존 진입 후 true. 이동/공격 입력 차단 + 몬스터 타겟 제외
 	bool        is_returned{ false };
+
+	// 서버가 알려준 플레이어 이름 (본인은 S_LOGIN, 타인은 S_SpawnPlayer/S_PLAYER_LIST)
+	std::string player_name;
 
 	// 커스터마이징 인덱스 변수
 	int model_type_idx = 0; // 0:Dog, 1:Cat, 2:Bunny, 3:Dog2, 4:Cat2, 5:Bunny2

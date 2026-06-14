@@ -211,6 +211,7 @@ void CTitleScene::ProcessLogin(shared_ptr<Session> session, bool guest, string n
 	S_LOGIN loginPkt;
 	loginPkt.success = true;
 	loginPkt.user_id = user->GetUserID();
+	COPY_STRING(loginPkt.name, user->GetName().c_str());   // 본인 이름 통보
 	SendBufferRef sendBuffer = CClientPacketHandler::MakeSendBuffer(loginPkt);
 	session->DoSend(sendBuffer);
 

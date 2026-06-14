@@ -547,6 +547,9 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 
 					// player는 user를 약한 참조
 					my_player->SetUser(SERVER_SESSION->GetUser());
+
+					// 본인 이름은 S_LOGIN으로 받아 CUser에 저장돼 있음 → my_player에 반영
+					my_player->SetName(user->GetName());
 				}
 			}
 		}
@@ -558,6 +561,7 @@ void CScene::Handle_S_Spawn_Player(std::shared_ptr<Session>& session, const S_Sp
 		otherPlayer->SetPosition(XMFLOAT3(pkt.info.x, pkt.info.y, pkt.info.z));
 		otherPlayer->SetState(pkt.info.state);
 		otherPlayer->SetCurrentSceneType(pkt.scene_type);
+		otherPlayer->SetName(pkt.name);   // 신규 입장 타인 이름
 
 		otherPlayer->ChangeModelSet(pkt.info.body_type);
 		otherPlayer->ChangeEyes(pkt.info.eyes_type);
@@ -594,6 +598,9 @@ void CScene::Handle_S_PLAYER_LIST(S_PLAYER_LIST& pkt)
 
 		// 굳이이긴 하나, 그래도 그냥 set 한다.
 		otherPlayer->SetRoomID(pkt.room_id);
+
+		// 기존 유저 이름
+		otherPlayer->SetName(userList[i].name);
 
 		// 다른 플레이어의 캐릭터 커스터마이즈
 		otherPlayer->ChangeModelSet(userList[i].info.body_type);

@@ -374,7 +374,11 @@ void CScene::SendExistingUsers(shared_ptr<CPlayer> player)
 				, otherPlayer->GetPosition().x, pl.second->GetPosition().y
 				, pl.second->GetPosition().z };
 
-			userList[idx++] = { info };
+			// otherUser를 지역에 잡아둬 c_str() 수명을 보장 (CUser는 세션이 강참조)
+			auto otherUser = otherPlayer->GetUser();
+			const char* otherName = otherUser ? otherUser->GetName().c_str() : "";
+
+			userList[idx++] = { info, otherName };
 		}
 
 		SendBufferRef sendBuffer = pktWriter.CloseAndReturn();
@@ -398,6 +402,12 @@ void CScene::BroadcastUserEnter(shared_ptr<CPlayer> player)
 	spawnPkt.info.x = player->GetPosition().x;
 	spawnPkt.info.y = player->GetPosition().y;
 	spawnPkt.info.z = player->GetPosition().z;
+
+	// 입장한 플레이어의 이름을 기존 유저들에게 통보
+	// (COPY_STRING은 무중괄호 다중 문장 매크로라 반드시 { }로 감쌀 것)
+	if (auto user = player->GetUser()) {
+		COPY_STRING(spawnPkt.name, user->GetName().c_str());
+	}
 
 	auto sendBuffer = MAKE_SEND_BUFFER(spawnPkt);
 	BroadCast(sendBuffer, player->GetID());

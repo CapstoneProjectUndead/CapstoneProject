@@ -4,6 +4,13 @@
 //==================================
 
 #include <ServerEngine/PacketUtils.h>
+#include <cstring>
+
+// 고정 크기 char 배열에 문자열 복사 (널 초기화 후 복사)
+// 클라/서버 공용. Server/macro.h에도 같은 정의가 있어 #ifndef로 중복정의 방지.
+#ifndef COPY_STRING
+#define COPY_STRING(dest, src)  memset(dest, 0, sizeof(dest)); memcpy(dest, src, strlen(src));
+#endif
 
 constexpr int PORT_NUM = 7777;
 constexpr int ID_SIZE = 40;
@@ -264,14 +271,15 @@ static_assert(sizeof(S_Room_List) == 4 + 4, "S_Room_List size mismatch!");
 // 내 플레이어 또는 상대 플레이어를 보낼 때
 struct S_SpawnPlayer : public PacketHeader
 {
-	bool is_my_player;		// 아래 NetPlayerInfo 구조체에도 있지만, 까먹을까봐 여기서 처리한다. 
+	bool is_my_player;		// 아래 NetPlayerInfo 구조체에도 있지만, 까먹을까봐 여기서 처리한다.
 	NetPlayerInfo info;
 	uint32     room_id;
 	SCENE_TYPE scene_type;
+	char       name[NAME_SIZE] = {};	// 타인 스폰 시(is_my_player=false) 해당 플레이어 이름. 본인은 S_LOGIN으로 받음.
 
 	S_SpawnPlayer() : PacketHeader(sizeof(S_SpawnPlayer), (UINT)PacketType::_S_SPAWN_PLAYER) {}
 };
-static_assert(sizeof(S_SpawnPlayer) == 4 + 71, "S_SpawnPlayer size mismatch!");
+static_assert(sizeof(S_SpawnPlayer) == 4 + 91, "S_SpawnPlayer size mismatch!");
 
 // 가변인자 패킷
 // 여러 유저를 패킷에 담아서 보낸다.
@@ -280,16 +288,18 @@ struct S_PLAYER_LIST : public PacketHeader
 	struct Player
 	{
 		NetPlayerInfo info;
-		//char	name[NAME_SIZE];
+		char	name[NAME_SIZE];
 
 		Player(NetPlayerInfo _info)
 			: info(_info)
-		{ }
+		{
+			memset(name, 0, sizeof(name));
+		}
 
 		Player(NetPlayerInfo _info, const char* _name)
 			: info(_info)
 		{
-			//COPY_STRING(name, _name);
+			COPY_STRING(name, _name);
 		}
 	};
 

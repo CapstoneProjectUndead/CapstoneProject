@@ -76,8 +76,8 @@ void CGameScene::Initialize()
 
 	// ESC 메뉴는 ImGui(DrawMenu)로 직접 그림 — Menu_UI.json 로드하지 않음
 	// 플레이어 UI(HP/스태미나/가방/조준점)는 CPlayerHUD(ImGui)로 그림 — Player_UI.json 로드하지 않음
-
 	SetButtonEvents();
+
 	// light 생성
 	if (!light) {
 		light = std::make_unique<CLightManager>();

@@ -975,6 +975,9 @@ void CTitleScene::Handle_S_Login(std::shared_ptr<Session>& session, const S_LOGI
         user->SetSession(session);
         user->SetUserID(pkt.user_id);
 
+        // 서버가 보내준 본인 이름 저장
+        user->SetName(pkt.name);
+
         // User Refcount 증가
         SERVER_SESSION->SetUser(user);
     }
