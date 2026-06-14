@@ -1230,7 +1230,7 @@ void CPlayer::UpdateStamina(float elapsedTime)
         }
     }
     else {
-        if (!is_grounded)
+        if (!is_grounded || state == PLAYER_STATE::ATTACK)
             return;
 
         accumulate_stamina += regenPerSec * elapsedTime;
