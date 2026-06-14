@@ -255,6 +255,9 @@ void CCamera::AddOrbitDelta(float yawDelta, float pitchDelta)
 
 void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 {
+	if (!target_object) 
+		return;
+
 	// 캐릭터의 머리 위치를 기준
 	XMVECTOR localEye = target_object->GetHeadPosition();
 	XMMATRIX world = XMLoadFloat4x4(&target_object->world_matrix);

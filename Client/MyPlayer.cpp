@@ -74,10 +74,8 @@ void CMyPlayer::Update(float elapsedTime)
 
 	// 빈사/사망: 행동 입력 차단 + 인벤토리 강제 닫기
 	if (IsIncapacitated()) {
-		if (inventory && inventory->IsOpen()) {
+		if (inventory && inventory->IsOpen())
 			inventory->ToggleOpen();
-			CKeyManager::GetInstance().SetMouseMode(false);
-		}
 	}
 	else if (!CShop::GetInstance().IsOpen()) {   // 상점 이용 중엔 행동 입력 차단
 		// 우클릭: 퀵슬롯에 등록된 소비 아이템 사용
@@ -89,24 +87,16 @@ void CMyPlayer::Update(float elapsedTime)
 
 			CScene* currentScene = CSceneManager::GetInstance().GetActiveScene();
 			if (currentScene) {
-				auto uiMgr = currentScene->GetUIManager();
-				if (uiMgr) {
-					auto reaperUI = uiMgr->GetUI<CUICanvas>("ReaperSpeechCanvas");
-
-					// 대화창, 상점, 혹은 ESC 메뉴가 이미 켜져 있다면 인벤토리를 열지 못하게 차단
-					// (단, 이미 인벤토리가 열려있어서 '닫으려고' 할 때는 통과해야 하므로 !inventory->IsOpen() 일 때만 체크)
-					if (!inventory->IsOpen()) {
-						if (CShop::GetInstance().IsOpen() ||
-							(reaperUI && reaperUI->is_enable) ||
-							currentScene->IsMenuOpen()) {
-							return;
-						}
+				// 대화창, 상점, 혹은 ESC 메뉴가 이미 켜져 있다면 인벤토리를 열지 못하게 차단
+				// (단, 이미 인벤토리가 열려있어서 '닫으려고' 할 때는 통과해야 하므로 !inventory->IsOpen() 일 때만 체크)
+				if (!inventory->IsOpen()) {
+					if (CShop::GetInstance().IsOpen() || currentScene->IsMenuOpen()) {
+						return;
 					}
 				}
 			}
-			bool willOpen = !inventory->IsOpen();
+
 			inventory->ToggleOpen();
-			CKeyManager::GetInstance().SetMouseMode(!willOpen);
 		}
 
 		if (KEY_TAP(KEY::F)) {
@@ -882,7 +872,6 @@ void CMyPlayer::UpdateSpectatorMode()
 	if (!spectator_camera_active) {
 		cam->SetOrbitMode(false);
 		cam->SetCameraOffset(XMFLOAT3{ 0.f, 0.8f, -1.0f });
-		CKeyManager::GetInstance().SetMouseMode(false);
 		spectator_camera_active = true;
 	}
 
@@ -900,9 +889,14 @@ void CMyPlayer::UpdateSpectatorMode()
 		}
 	}
 
-	// 매 틱 대상 검증 (대상이 빈사/복귀하면 자동으로 다음 alive로 전환)
+	// 매 틱 대상 검증 (대상이 빈사/복귀하거나 퇴장하면 자동으로 갱신)
 	auto t = FindSpectatorTarget(0);
-	if (t && t->GetID() != spectator_target_id) {
+	if (!t) {
+		// 관전할 살아있는 플레이어가 없음 (전원 퇴장 등) → 댕글링 포인터 방지
+		spectator_target_id = 0;
+		cam->SetTarget(nullptr);
+	}
+	else if (t->GetID() != spectator_target_id) {
 		spectator_target_id = t->GetID();
 		cam->SetTarget(t);
 	}
@@ -935,16 +929,11 @@ void CMyPlayer::UpdateIncapacitatedCamera()
 		SetCHoldTarget(CHOLD_TARGET::NONE);
 		CSoundManager::GetInstance().Stop(SOUND_ID::clock_alarm);
 
-		// 구조 포기 버튼 클릭을 위해 마우스 커서 노출 (UI 모드)
-		CKeyManager::GetInstance().SetMouseMode(false);
 	}
 	else {
 		cam->SetOrbitMode(false);
 		XMFLOAT3 firstOffset{ 0.0f, 0.0f, 0.0f };
 		cam->SetCameraOffset(firstOffset);
-
-		// 게임 모드 복귀 (커서 숨김)
-		CKeyManager::GetInstance().SetMouseMode(true);
 	}
 
 	incap_camera_active = isIncap;
