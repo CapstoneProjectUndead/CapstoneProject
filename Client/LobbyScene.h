@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Scene.h"
+#include <unordered_set>
 
 enum class LobbyUIState
 {
@@ -36,8 +37,8 @@ public:
     void DrawMenu();
     void DrawRoomLeavePopUp();
 
-    // 플레이어가 준비되었는지 체크 후 UI 변경
-    void UpdatePlayerReadyUI();
+    // 준비 상태 패널(ImGui): 참가자 이름 + 준비 색박스(준비완료=초록/대기중=빨강). 멀티 전용.
+    void DrawReadyPanel();
 
     // 현재 플레이어가 속한 상호작용 구역(가까운 앵커, 반경 내) 반환
     InteractZone GetInteractZone() const;
@@ -66,5 +67,8 @@ private:
     // ESC 메뉴 상태
     LobbyUIState ui_state = LobbyUIState::None;
     bool         paused   = false;
+
+    // 준비 완료한 타인 플레이어 ID (본인은 my_player->GetIsReady() 사용). Enter에서 clear.
+    std::unordered_set<uint64> ready_player_ids;
 };
 

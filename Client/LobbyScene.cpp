@@ -45,15 +45,13 @@ void CLobbyScene::Initialize()
 
 	// LoadData
 	ui_manager->GetDataManager()->LoadScripts("../Modeling/UI/Reaper.json");
-	// ESC 메뉴는 ImGui(DrawMenu)로 직접 그림 — Menu_UI.json 로드하지 않음
+
 	// 대사 UI
 	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
 	reaperCanvas->SetEnable(false);
 	ui_manager->AddCanvas(reaperCanvas);
-	// Ready UI
-	auto ReadyCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/PlayerReady.json");
-	ui_manager->AddCanvas(ReadyCanvas);
-	// 플레이어 UI(HP/스태미나/가방/조준점)는 CPlayerHUD(ImGui)로 그림 — Player_UI.json 로드하지 않음
+
+	// 준비 상태 UI는 ImGui(DrawReadyPanel)로 그림 — PlayerReady.json 로드하지 않음
 
 	SetButtonEvents();
 }
@@ -100,7 +98,6 @@ void CLobbyScene::Update(float elapsedTime)
 
 	if (my_player) {
 		my_player->BeginSendInputPacket(elapsedTime);
-		UpdatePlayerReadyUI();
 	}
 
 
@@ -306,25 +303,97 @@ void CLobbyScene::SetButtonEvents()
 	}
 }
 
-void CLobbyScene::UpdatePlayerReadyUI()
+void CLobbyScene::DrawReadyPanel()
 {
-	if (!g_is_single) 
+	// 준비 플로우는 멀티 전용
+	if (g_is_single || !my_player)
 		return;
 
-	auto SetReadyUIColor = [this](int playerIdx, bool isReady) {
-		// 이름 규칙: "Ready1", "Ready2", "Ready3"...
-		std::string uiName = "Ready" + std::to_string(playerIdx + 1);
-		auto readyUI = ui_manager->FindUI<CUIImage>(uiName);
+	// 표시할 참가자 목록 구성: (이름(UTF-8), 준비 여부, 본인 여부)
+	struct Row { std::string name; bool ready; bool isSelf; };
+	std::vector<Row> rows;
 
-		if (readyUI) {
-			XMVECTOR color = isReady ? XMVectorSet(0, 0, 1, 1) : XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
-			XMFLOAT4 finalColor;
-			XMStoreFloat4(&finalColor, color);
-			readyUI->SetColor(finalColor);
+	// 슬롯1: 본인
+	rows.push_back({ CP949ToUTF8(my_player->GetName()), my_player->GetIsReady(), true });
+
+	// 슬롯2~4: 타인 (player_slot_ids 순서, ID로 객체 해석)
+	auto& objects  = GetObjects();
+	auto& indexMap = GetIDIndex();
+	for (uint64 id : player_slot_ids) {
+		auto it = indexMap.find(id);
+		if (it == indexMap.end() || it->second >= objects.size())
+			continue;	// 이미 나간 플레이어 등 → 건너뜀
+
+		auto other = std::static_pointer_cast<CPlayer>(objects[it->second]);
+		if (!other)
+			continue;
+
+		rows.push_back({ CP949ToUTF8(other->GetName()), ready_player_ids.count(id) > 0, false });
+	}
+
+	// 우상단 배치
+	ImVec2 screen = ImGui::GetIO().DisplaySize;
+	ImGui::SetNextWindowPos(ImVec2(screen.x - 10.0f * G_RATIO_X, 20.0f * G_RATIO_Y),
+		ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+	ImGui::SetNextWindowSize(ImVec2(200.0f * G_RATIO_X, 0.0f), ImGuiCond_Always);
+
+	// 밝은 패널 배경 (행 영역). 헤더 띠는 아래에서 별도 색으로 덮음.
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.90f, 0.91f, 0.94f, 0.94f));
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing
+		| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs;
+
+	if (ImGui::Begin("ReadyPanel", nullptr, flags)) {
+		ImGui::SetWindowFontScale(G_RATIO_Y);
+
+		ImDrawList*       dl    = ImGui::GetWindowDrawList();
+		const ImGuiStyle& style = ImGui::GetStyle();
+
+		// ── 헤더 띠: 창 폭 전체를 짙은 남색으로 덮고 흰 글자 (행 배경과 구분) ──
+		{
+			char header[32];
+			sprintf_s(header, (const char*)u8"참가자 (%d/4)", (int)rows.size());
+
+			ImVec2 winPos  = ImGui::GetWindowPos();
+			float  winW    = ImGui::GetWindowSize().x;
+			ImVec2 textPos = ImGui::GetCursorScreenPos();
+			float  lineH   = ImGui::GetTextLineHeight();
+
+			dl->AddRectFilled(
+				ImVec2(winPos.x, textPos.y - style.WindowPadding.y),
+				ImVec2(winPos.x + winW, textPos.y + lineH + style.WindowPadding.y * 0.5f),
+				IM_COL32(40, 52, 74, 255));   // 짙은 남색 띠
+
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			ImGui::TextUnformatted(header);
+			ImGui::PopStyleColor();
 		}
-	};
 
-	SetReadyUIColor(0, my_player->GetIsReady());
+		ImGui::Spacing();
+
+		// ── 참가자 행: 색박스 + 이름(어두운 글자) ──
+		const float box = 14.0f * G_RATIO_Y;
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.10f, 0.11f, 0.14f, 1.0f));   // 어두운 글자
+		for (const auto& r : rows) {
+			ImVec2 p   = ImGui::GetCursorScreenPos();
+			ImU32  col = r.ready ? IM_COL32(46, 184, 92, 255)    // 준비완료 = 초록
+								 : IM_COL32(214, 64, 64, 255);    // 대기중   = 빨강
+			dl->AddRectFilled(p, ImVec2(p.x + box, p.y + box), col);
+
+			ImGui::Dummy(ImVec2(box, box));
+			ImGui::SameLine();
+
+			std::string label = r.name;
+			if (r.isSelf)
+				label += (const char*)u8" (나)";
+			ImGui::TextUnformatted(label.c_str());
+		}
+		ImGui::PopStyleColor();
+	}
+	ImGui::End();
+
+	ImGui::PopStyleColor();
 }
 
 void CLobbyScene::Enter()
@@ -340,11 +409,8 @@ void CLobbyScene::Enter()
 		my_player->SetPosition(XMFLOAT3{ 0, 0, 0 });
 	}
 
-	for (int i = 1; i <= 4; ++i) {
-		auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(i));
-		if (readyUI)
-			readyUI->SetColor(XMFLOAT4{ 1, 0, 0, 1 });
-	}
+	// 준비 상태 초기화 (재진입 시 이전 준비 잔재 제거)
+	ready_player_ids.clear();
 
 	// (테스트) 로비씬에 입장하면 딱 한번만 10000원 준다.
 	static bool once = false;
@@ -395,6 +461,9 @@ void CLobbyScene::DrawUI()
 
 	// 플레이어 HUD (HP/스태미나/가방/조준점)
 	my_player->DrawHUD();
+
+	// 준비 상태 패널 (멀티 전용, 우상단)
+	DrawReadyPanel();
 
 	if (CShop::GetInstance().IsOpen()) {
 		// 상점: 좌 상점 패널 + 우 인벤토리를 함께 그림 (DrawStoreUI가 인벤토리도 그림)
@@ -548,24 +617,14 @@ void CLobbyScene::Handle_S_MapStart(std::shared_ptr<Session> session, const S_Ma
 
 void CLobbyScene::Handle_S_Ready(std::shared_ptr<Session> session, const S_Ready& pkt)
 {
-	int slot = -1;
-
+	// 본인은 my_player->GetIsReady()로 판단하므로 타인만 집합에 기록.
+	// (본인 id가 와도 넣어두면 무해하나, DrawReadyPanel은 본인을 GetIsReady로 본다)
 	if (my_player && pkt.player_id == my_player->GetID()) {
-		slot = 1;  // 본인은 항상 Ready1
-	}
-	else {
-		auto it = std::find(player_slot_ids.begin(), player_slot_ids.end(), pkt.player_id);
-		if (it == player_slot_ids.end()) 
-			return;
-
-		slot = (int)std::distance(player_slot_ids.begin(), it) + 2;  // 1-based
-		if (slot < 1 || slot > 4) 
-			return;
+		my_player->SetIsReady(true);
+		return;
 	}
 
-	auto readyUI = ui_manager->GetUI<CUIImage>("Ready" + std::to_string(slot));
-	if (readyUI)
-		readyUI->SetColor(XMFLOAT4{ 0, 0, 1, 1 });
+	ready_player_ids.insert(pkt.player_id);
 }
 
 void CLobbyScene::Handle_S_RefreshStore(std::shared_ptr<Session> session, const S_RefreshStore& pkt)
