@@ -100,6 +100,31 @@ void CQuickSlot::Draw()
 
 	ImGui::PopStyleVar(2);
 
+	// Key hints above quickslot
+	{
+		ImDrawList* dl    = ImGui::GetBackgroundDrawList();
+		ImFont*     font  = ImGui::GetFont();
+		const float fs    = 14.0f * scale;
+		const float lineH = fs + 3.0f * scale;
+		const float hx    = winX;
+		const float hy    = winY - lineH * 2.0f - 6.0f * scale;
+
+		static const char* hints[2] = {
+			"[F] \xEB\x8B\xA4\xEC\x9A\xB0\xEC\xA7\x95\xEB\xA1\x9C\xEB\x93\x9C",  // [F] 다우징로드
+			"[Z] \xEC\xA4\x8D\xEA\xB8\xB0"                                          // [Z] 줍기
+		};
+
+		const ImU32 shadow = IM_COL32(0,   0,   0,   180);
+		const ImU32 col    = IM_COL32(255, 255, 255, 220);
+		const float off    = 1.0f * scale;
+
+		for (int i = 0; i < 2; ++i) {
+			float ly = hy + i * lineH;
+			dl->AddText(font, fs, ImVec2(hx + off, ly + off), shadow, hints[i]);
+			dl->AddText(font, fs, ImVec2(hx, ly), col, hints[i]);
+		}
+	}
+
 	// 1~4 key: select slot (같은 키 재입력 시 해제)
 	KEY keys[SLOT_COUNT] = { KEY::_1, KEY::_2, KEY::_3, KEY::_4 };
 
