@@ -28,14 +28,17 @@ public:
 
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
-    virtual bool IsMenuOpen() const override { return ui_state == LobbyUIState::Menu; }
+    // ESC 메뉴 또는 사신 대화창이 열려 있으면 모달 → 플레이어 이동/회전 입력 차단
+    virtual bool IsMenuOpen() const override { return ui_state == LobbyUIState::Menu || reaper_dialog_open; }
 public:
     void InteractWithReaper();
-    void SetButtonEvents();
 
     // ESC 메뉴 (ImGui). paused일 때 씬 업데이트/입력 전송을 멈춰 일시정지처럼 동작.
     void DrawMenu();
     void DrawRoomLeavePopUp();
+
+    // 사신 대화창(ImGui): 입구 C키로 열림. 대사 + 예/아니오. (구 ReaperSpeech 캔버스 대체)
+    void DrawReaperDialog();
 
     // 준비 상태 패널(ImGui): 참가자 이름 + 준비 색박스(준비완료=초록/대기중=빨강). 멀티 전용.
     void DrawReadyPanel();
@@ -70,5 +73,9 @@ private:
 
     // 준비 완료한 타인 플레이어 ID (본인은 my_player->GetIsReady() 사용). Enter에서 clear.
     std::unordered_set<uint64> ready_player_ids;
+
+    // 사신 대화창 상태
+    bool        reaper_dialog_open = false;
+    std::string reaper_dialog_text;          // 열 때 Ask_Exit 3줄 중 랜덤 1줄(UTF-8)
 };
 

@@ -37,23 +37,13 @@ void CLobbyScene::Initialize()
 		objects.push_back(std::make_shared<CParticleObject>(XMFLOAT3{ -2.5f, 0.17f, -0.216999993f }));
 	}
 
-	// UI 생성
-	auto mainCanvas = ui_manager->CreateCanvas();
+	// 사신(저승사자) NPC 오브젝트 생성
 	auto repeaper = factory->CreateReaper();
 
 	objects.push_back(repeaper);
 
-	// LoadData
-	ui_manager->GetDataManager()->LoadScripts("../Modeling/UI/Reaper.json");
-
-	// 대사 UI
-	auto reaperCanvas = ui_manager->GetDataManager()->LoadFromFile("../Modeling/UI/ReaperDialogue.json");
-	reaperCanvas->SetEnable(false);
-	ui_manager->AddCanvas(reaperCanvas);
-
-	// 준비 상태 UI는 ImGui(DrawReadyPanel)로 그림 — PlayerReady.json 로드하지 않음
-
-	SetButtonEvents();
+	// 사신 대화창은 ImGui(DrawReaperDialog)로 그림 — Reaper.json/ReaperDialogue.json 로드하지 않음
+	// 준비 상태 UI도 ImGui(DrawReadyPanel) — PlayerReady.json 로드하지 않음
 }
 
 void CLobbyScene::BuildObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -107,9 +97,10 @@ void CLobbyScene::Update(float elapsedTime)
 		if (CShop::GetInstance().IsOpen()) {
 			CShop::GetInstance().Close();
 		}
-		// 2순위: 대화창이 열려 있으면 대화창 닫기
-		else if (auto reaperUI = ui_manager->GetUI<CUICanvas>("ReaperSpeechCanvas"); reaperUI && reaperUI->is_enable) {
-			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
+		// 2순위: 사신 대화창이 열려 있으면 닫기
+		else if (reaper_dialog_open) {
+			reaper_dialog_open = false;
+			CKeyManager::GetInstance().SetMouseMode(true);   // 게임 커서 모드 복귀
 		}
 		// 3순위: 인벤토리가 닫혀 있을 때만 ESC 메뉴를 켬 (일시정지)
 		else if (!isInvOpen) {
@@ -119,8 +110,8 @@ void CLobbyScene::Update(float elapsedTime)
 		}
 	}
 
-	// C 키로 위치 기반 상호작용 (인벤토리가 닫혀 있을 때만 작동 가능)
-	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen() && !isInvOpen) {
+	// C 키로 위치 기반 상호작용 (인벤토리/대화창이 닫혀 있을 때만 작동 가능)
+	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen() && !isInvOpen && !reaper_dialog_open) {
 		switch (GetInteractZone()) {
 		case InteractZone::Entrance:
 			InteractWithReaper();
@@ -135,26 +126,20 @@ void CLobbyScene::Update(float elapsedTime)
 
 	// 상점 열림/닫힘 전환 처리
 	HandleShopTransition();
-
-	if (KEY_TAP(KEY::LBTN)) {
-		auto reaperUI = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
-		if (reaperUI && reaperUI->is_enable) {
-			auto reaperText = ui_manager->FindUI<CUIText>("ReaperText");
-			if (reaperText) {
-				reaperText->Skip();
-				CKeyManager::GetInstance().SetMouseMode(false);
-			}
-		}
-	}
 }
 
 void CLobbyScene::InteractWithReaper()
 {
-	// 찾은 대사를 UI 텍스트 컴포넌트에 전달
-	ui_manager->ToggleUI("ReaperSpeechCanvas", true, true);
-	auto text = ui_manager->GetUI<CUIText>("ReaperText");
-	if (text)
-		text->SetText(ui_manager->GetDataManager()->GetDialogue("Reaper", "Ask_Exit"));
+	// 사신 "Ask_Exit" 대사 3줄 중 랜덤 1줄 (구 Reaper.json GetDialogue의 rand 동작 유지)
+	static const char* kAskExit[] = {
+		(const char*)u8"산 자들의 땅으로 발을 들이겠나?",
+		(const char*)u8"준비는 끝났겠지.",
+		(const char*)u8"떠날 것인가?",
+	};
+	reaper_dialog_text = kAskExit[rand() % 3];
+
+	reaper_dialog_open = true;
+	CKeyManager::GetInstance().SetMouseMode(false);   // UI 커서 모드(버튼 클릭용)
 }
 
 CLobbyScene::InteractZone CLobbyScene::GetInteractZone() const
@@ -180,9 +165,8 @@ void CLobbyScene::DrawInteractPrompt(InteractZone zone)
 	if (zone == InteractZone::None)
 		return;
 
-	// 다이얼로그가 열려 있으면 안내를 숨겨 겹침 방지
-	auto speechCanvas = ui_manager->FindUI<CUICanvas>("ReaperSpeechCanvas");
-	if (speechCanvas && speechCanvas->is_enable)
+	// 사신 대화창이 열려 있으면 안내를 숨겨 겹침 방지
+	if (reaper_dialog_open)
 		return;
 
 	ImGuiIO&    io   = ImGui::GetIO();
@@ -258,31 +242,61 @@ void CLobbyScene::HandleShopTransition()
 	shop_was_open = open;
 }
 
-void CLobbyScene::SetButtonEvents()
+void CLobbyScene::DrawReaperDialog()
 {
-	auto reaperText = ui_manager->GetUI<CUIText>("ReaperText");
-	auto yesBtn = ui_manager->GetUI<CUIButton>("YesButton");
-	auto noBtn = ui_manager->GetUI<CUIButton>("NoButton");
+	ImVec2 screen = ImGui::GetIO().DisplaySize;
 
-	if (yesBtn) yesBtn->SetEnable(false);
-	if (noBtn) noBtn->SetEnable(false);
+	// 하단 1/3을 꽉 채우는 가로 바
+	float  barH   = screen.y / 3.0f;
+	ImGui::SetNextWindowPos(ImVec2(0.0f, screen.y - barH), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(screen.x, barH), ImGuiCond_Always);
 
-	if (reaperText) {
-		reaperText->onFinished = [yesBtn, noBtn]() {
-			if (yesBtn) yesBtn->SetEnable(true);
-			if (noBtn) noBtn->SetEnable(true);
-			};
-	}
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.62f, 0.62f, 0.64f, 0.96f));   // 회색 바
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,   0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,    ImVec2(0.0f, 0.0f));
 
-	if (yesBtn) {
-		yesBtn->OnClick = [this]() {
-			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
+	if (ImGui::Begin("ReaperDialog", nullptr, flags)) {
+		ImGui::SetWindowFontScale(G_RATIO_Y);
+
+		// 버튼(오른쪽 세로 2개) 영역
+		float bw    = 160.0f * G_RATIO_X;
+		float bh    = 52.0f  * G_RATIO_Y;
+		float vgap  = 20.0f  * G_RATIO_Y;
+		float rmarg = 70.0f  * G_RATIO_X;
+		float btnX  = screen.x - bw - rmarg;
+		float btnY0 = (barH - (2.0f * bh + vgap)) * 0.5f;
+
+		// 사신 대사 (왼쪽, 세로 중앙, 버튼 앞까지 wrap)
+		float textX    = 60.0f * G_RATIO_X;
+		float textWrap = btnX - 40.0f * G_RATIO_X;
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.10f, 0.10f, 0.12f, 1.0f));
+		ImVec2 textSize = ImGui::CalcTextSize(reaper_dialog_text.c_str(), nullptr, false, textWrap - textX);
+		ImGui::SetCursorPos(ImVec2(textX, (barH - textSize.y) * 0.5f));
+		ImGui::PushTextWrapPos(textWrap);
+		ImGui::TextUnformatted(reaper_dialog_text.c_str());
+		ImGui::PopTextWrapPos();
+		ImGui::PopStyleColor();
+
+		// 버튼 색 (파랑 계열)
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.26f, 0.45f, 0.85f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.36f, 0.55f, 0.95f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.20f, 0.35f, 0.70f, 1.0f));
+
+		// [예] → 싱글: 게임 시작 / 멀티: 준비완료(C_Ready) 전송
+		ImGui::SetCursorPos(ImVec2(btnX, btnY0));
+		if (ImGui::Button((const char*)u8"예", ImVec2(bw, bh))) {
+			reaper_dialog_open = false;
+			CKeyManager::GetInstance().SetMouseMode(true);
 
 			if (g_is_single) {
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
 			}
 			else {
-				std::shared_ptr<CMyPlayer> myPlayer = this->GetMyPlayer();
+				std::shared_ptr<CMyPlayer> myPlayer = GetMyPlayer();
 				if (myPlayer && !myPlayer->GetIsReady()) {
 					myPlayer->SetIsReady(true);
 					C_Ready readyPkt;
@@ -293,14 +307,21 @@ void CLobbyScene::SetButtonEvents()
 					}
 				}
 			}
-			};
-	}
+		}
 
-	if (noBtn) {
-		noBtn->OnClick = [this]() {
-			ui_manager->ToggleUI("ReaperSpeechCanvas", false, true);
-			};
+		// [아니오] → 닫기
+		ImGui::SetCursorPos(ImVec2(btnX, btnY0 + bh + vgap));
+		if (ImGui::Button((const char*)u8"아니오", ImVec2(bw, bh))) {
+			reaper_dialog_open = false;
+			CKeyManager::GetInstance().SetMouseMode(true);
+		}
+
+		ImGui::PopStyleColor(3);
 	}
+	ImGui::End();
+
+	ImGui::PopStyleVar(3);
+	ImGui::PopStyleColor();
 }
 
 void CLobbyScene::DrawReadyPanel()
@@ -485,6 +506,10 @@ void CLobbyScene::DrawUI()
 		if (inventory)
 			inventory->Draw(true);
 	}
+
+	// 사신 대화창 (입구 C키)
+	if (reaper_dialog_open)
+		DrawReaperDialog();
 
 	// ESC 메뉴 (최상위 오버레이)
 	if (ui_state == LobbyUIState::Menu)
