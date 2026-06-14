@@ -45,6 +45,12 @@ public:
 	// 메뉴 열림 중 인벤토리 등 다른 입력 차단 판단에 사용.
 	virtual bool IsMenuOpen() const { return false; }
 
+	// 마우스 커서가 보여야 하는지 (UI가 하나라도 열려 있으면 true). 씬에서 오버라이드.
+	virtual bool NeedsCursorVisible() const { return IsMenuOpen(); }
+
+	// 매 프레임 NeedsCursorVisible() 결과로 커서 모드를 자동 동기화 (상태가 달라질 때만 SetMouseMode 호출)
+	void SyncMouseMode();
+
 	// UI 버튼 누를 때 효과음
 	void CheckHoverSound();
 	void PlayClickSound();

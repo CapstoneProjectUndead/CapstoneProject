@@ -15,6 +15,7 @@
 #include "User.h"
 #include "NetworkClockManager.h"
 #include "ImGuiManager.h"
+#include "KeyManager.h"
 #include "Monster.h"
 #include "GameScene.h"
 
@@ -419,6 +420,15 @@ void CScene::DrawUI_Final()
 
 	if (!ImGui::IsAnyItemHovered())
 		last_hovered_id_ = 0;
+}
+
+void CScene::SyncMouseMode()
+{
+	bool need = NeedsCursorVisible();
+	bool isGameMode = CKeyManager::GetInstance().GetMouseMode(); // true = 게임(커서 숨김)
+
+	if (need == isGameMode) // 불일치: 커서 필요한데 게임모드, 또는 커서 불필요한데 UI모드
+		CKeyManager::GetInstance().SetMouseMode(!need);
 }
 
 void CScene::ManageIME()

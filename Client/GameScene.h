@@ -23,6 +23,7 @@ public:
     virtual void DrawUI() override;
     virtual bool IsUIInputEnabled() override;
     virtual bool IsMenuOpen() const override { return menu_open; }
+    virtual bool NeedsCursorVisible() const override;
     void SetButtonEvents();
 public:
     // 서버 패킷 처리 관련 함수들

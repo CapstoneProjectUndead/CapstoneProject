@@ -189,22 +189,21 @@ void CGameScene::Update(float elapsedTime)
 		if (menu_open) {
 			// 메뉴 닫기
 			menu_open = false;
-			CKeyManager::GetInstance().SetMouseMode(true);
 		}
 		else if (isInvOpen) {
 			// 인벤토리가 열려 있으면 인벤토리부터 닫기
 			my_player->GetInventory()->ToggleOpen();
-			CKeyManager::GetInstance().SetMouseMode(true);
 		}
 		else {
-			// 메뉴 열기 (UI 커서 모드)
+			// 메뉴 열기
 			menu_open = true;
-			CKeyManager::GetInstance().SetMouseMode(false);
 		}
 	}
 
 	// 싱글: 메뉴 열려있으면 게임 일시정지 (이후 타이머/입력/업데이트 전부 스킵)
 	// 멀티: 서버 권위라 멈출 수 없으므로 오버레이만 띄우고 게임은 계속 진행
+	SyncMouseMode();
+
 	if (menu_open && g_is_single) {
 		return;
 	}
@@ -227,7 +226,6 @@ void CGameScene::Update(float elapsedTime)
 		if (round_timer <= 0.f || my_player->GetReturned()
 			|| my_player->GetState() == PLAYER_STATE::DEAD) {
 			round_timer = 0.f;
-			CKeyManager::GetInstance().SetMouseMode(false);
 			TriggerSinglePlayerSettlement();
 			CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
 		}
@@ -297,6 +295,8 @@ void CGameScene::Update(float elapsedTime)
 			UpdateCHoldAction(elapsedTime);
 		}
 	};
+
+	SyncMouseMode();
 }
 
 // 빈사/관전 3인칭 카메라가 벽을 뚫지 않도록, 머리->카메라 사이의 벽까지 거리를 재서 카메라를 앞으로 당긴다.
@@ -430,6 +430,27 @@ void CGameScene::DrawUI()
 		DrawMenu();
 }
 
+bool CGameScene::NeedsCursorVisible() const
+{
+	if (CScene::NeedsCursorVisible()) 
+		return true;
+
+	if (show_settlement_modal) 
+		return true;
+
+	if (my_player) {
+		auto inv = my_player->GetInventory();
+		if (inv && inv->IsOpen()) 
+			return true;
+		if (my_player->IsIncapacitated()) 
+			return true;
+		if (my_player->GetState() == PLAYER_STATE::DEAD) 
+			return true;
+	}
+
+	return false;
+}
+
 void CGameScene::SetButtonEvents()
 {
 	// ESC 메뉴를 ImGui(DrawMenu)로 직접 그리므로 더 이상 설정할 JSON 버튼 없음
@@ -462,7 +483,6 @@ void CGameScene::DrawMenu()
 		// [타이틀로] → 게임 종료하고 타이틀로
 		if (ImageButtonWithText((long long)toTitleTex, "##game_to_title", btnSize)) {
 			menu_open = false;
-			CKeyManager::GetInstance().SetMouseMode(true);
 
 			// 멀티: 방 나가기 통보 (서버가 플레이어 제거 + 빈 방이면 삭제 → 고스트 방 방지)
 			if (!g_is_single && my_player) {
@@ -2628,6 +2648,5 @@ void CGameScene::Handle_S_GameSettlement(std::shared_ptr<Session> session, S_Gam
 	}
 
 	show_settlement_modal = true;
-	CKeyManager::GetInstance().SetMouseMode(false);
 	CSoundManager::GetInstance().Play(SOUND_ID::Settlement);
 }

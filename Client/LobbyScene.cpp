@@ -79,8 +79,8 @@ void CLobbyScene::Update(float elapsedTime)
 		if (KEY_TAP(KEY::ESC)) {
 			ui_state = LobbyUIState::None;
 			paused   = false;
-			CKeyManager::GetInstance().SetMouseMode(true);   // 게임 커서 모드 복귀
 		}
+		SyncMouseMode();
 		return;
 	}
 
@@ -100,18 +100,16 @@ void CLobbyScene::Update(float elapsedTime)
 		// 2순위: 사신 대화창이 열려 있으면 닫기
 		else if (reaper_dialog_open) {
 			reaper_dialog_open = false;
-			CKeyManager::GetInstance().SetMouseMode(true);   // 게임 커서 모드 복귀
 		}
 		// 3순위: 인벤토리가 닫혀 있을 때만 ESC 메뉴를 켬 (일시정지)
 		else if (!isInvOpen) {
 			ui_state = LobbyUIState::Menu;
 			paused   = true;
-			CKeyManager::GetInstance().SetMouseMode(false);  // UI 커서 모드
 		}
 	}
 
-	// C 키로 위치 기반 상호작용 (인벤토리/대화창이 닫혀 있을 때만 작동 가능)
-	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen() && !isInvOpen && !reaper_dialog_open) {
+	// C 키로 위치 기반 상호작용 (대화창/상점이 닫혀 있을 때만 작동 가능)
+	if (KEY_TAP(KEY::C) && my_player && !CShop::GetInstance().IsOpen() && !reaper_dialog_open) {
 		switch (GetInteractZone()) {
 		case InteractZone::Entrance:
 			InteractWithReaper();
@@ -126,6 +124,8 @@ void CLobbyScene::Update(float elapsedTime)
 
 	// 상점 열림/닫힘 전환 처리
 	HandleShopTransition();
+
+	SyncMouseMode();
 }
 
 void CLobbyScene::InteractWithReaper()
@@ -136,15 +136,29 @@ void CLobbyScene::InteractWithReaper()
 		(const char*)u8"준비는 끝났겠지.",
 		(const char*)u8"떠날 것인가?",
 	};
+
 	reaper_dialog_text = kAskExit[rand() % 3];
 
 	reaper_dialog_open = true;
-	CKeyManager::GetInstance().SetMouseMode(false);   // UI 커서 모드(버튼 클릭용)
+}
+
+bool CLobbyScene::NeedsCursorVisible() const
+{
+	if (CScene::NeedsCursorVisible()) 
+		return true;
+
+	if (CShop::GetInstance().IsOpen()) 
+		return true;
+
+	if (my_player && my_player->GetInventory() && my_player->GetInventory()->IsOpen()) 
+		return true;
+
+	return false;
 }
 
 CLobbyScene::InteractZone CLobbyScene::GetInteractZone() const
 {
-	if (!my_player)
+	if (!my_player || paused)
 		return InteractZone::None;
 
 	// XZ 평면 제곱거리 비교, 가까운 앵커 선택
@@ -162,7 +176,7 @@ CLobbyScene::InteractZone CLobbyScene::GetInteractZone() const
 
 void CLobbyScene::DrawInteractPrompt(InteractZone zone)
 {
-	if (zone == InteractZone::None)
+	if (zone == InteractZone::None || paused)
 		return;
 
 	// 사신 대화창이 열려 있으면 안내를 숨겨 겹침 방지
@@ -218,8 +232,6 @@ void CLobbyScene::HandleShopTransition()
 				my_player->SetPosition(reaper_anchor.x, 0.1f, reaper_anchor.y);
 			}
 		}
-		CKeyManager::GetInstance().SetMouseMode(false);   // false = UI 커서 모드
-
 		// 멀티: 서버에 "상점 이용 중" 통보 → 서버가 플레이어 정지/고정
 		if (!g_is_single && my_player) {
 			C_ShopState pkt;
@@ -236,7 +248,6 @@ void CLobbyScene::HandleShopTransition()
 			inventory->ClearPositionOverride();
 			inventory->SetOpen(prev_inventory_open);
 		}
-		CKeyManager::GetInstance().SetMouseMode(prev_inventory_open ? false : true);
 	}
 
 	shop_was_open = open;
@@ -295,7 +306,6 @@ void CLobbyScene::DrawReaperDialog()
 		ImGui::SetCursorPos(ImVec2(btnX, btnY0));
 		if (ImageButtonWithText((long long)yesTex, "##reaper_yes", ImVec2(bw, bh))) {
 			reaper_dialog_open = false;
-			CKeyManager::GetInstance().SetMouseMode(true);
 
 			if (g_is_single) {
 				CSceneManager::GetInstance().ChangeScene(SCENE_TYPE::GAME);
@@ -318,7 +328,6 @@ void CLobbyScene::DrawReaperDialog()
 		ImGui::SetCursorPos(ImVec2(btnX, btnY0 + bh + vgap));
 		if (ImageButtonWithText((long long)noTex, "##reaper_no", ImVec2(bw, bh))) {
 			reaper_dialog_open = false;
-			CKeyManager::GetInstance().SetMouseMode(true);
 		}
 	}
 	ImGui::End();

@@ -109,8 +109,9 @@ void CImGuiManager::LoadTexture(ID3D12Device* device, ID3D12CommandQueue* cmdQue
         return; // 중복 로드 방지
 
     // WIC는 COM 기반 — 초기화가 안 된 상태면 첫 로드가 E_NOINTERFACE로 실패함
+    // RPC_E_CHANGED_MODE: 이미 다른 모드로 초기화됨 → 무시하고 계속 진행
     HRESULT res = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    assert(SUCCEEDED(res) && "CoInitializeEx Failed");
+    assert((SUCCEEDED(res) || res == RPC_E_CHANGED_MODE) && "CoInitializeEx Failed");
 
     // 1. WIC로 PNG 디코딩 + D3D12 리소스 헤더 생성 (CPU 단계)
     ComPtr<ID3D12Resource> resource;

@@ -30,6 +30,7 @@ public:
     virtual bool IsUIInputEnabled() override;
     // ESC 메뉴 또는 사신 대화창이 열려 있으면 모달 → 플레이어 이동/회전 입력 차단
     virtual bool IsMenuOpen() const override { return ui_state == LobbyUIState::Menu || reaper_dialog_open; }
+    virtual bool NeedsCursorVisible() const override;
 public:
     void InteractWithReaper();
 

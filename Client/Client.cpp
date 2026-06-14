@@ -129,7 +129,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     // 디버그 콘솔 생성
 #ifdef _DEBUG
-    CreateDebugConsole();
+    //CreateDebugConsole();
 #endif // DEBUG
     //hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
     ghWnd = CreateWindow(szWindowClass, szTitle, dwstyle,
