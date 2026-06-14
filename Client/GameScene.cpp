@@ -2304,6 +2304,10 @@ void CGameScene::Handle_S_MapEnd(std::shared_ptr<Session> session, const S_MapEn
 			pos.y += 2.23f;
 			light->AddPointLight(pos, XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
 		}
+		else if (inst.model == EModelVariant::BOXTABLE) {
+			XMFLOAT3 pos{ inst.position };
+			light->AddPointLight(Vector3::Add(pos, XMFLOAT3(0.716000021f, 0.934000015f, -0.291999996f)), XMFLOAT3(1.0f, 0.8f, 0.6f), 1.0f, 3.0f);
+		}
 	}
 	instance_data.clear();	// 다음 라운드 재진입 시 누적 방지
 }
