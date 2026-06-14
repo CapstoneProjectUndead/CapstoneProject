@@ -17,6 +17,9 @@ void CResourceManager::LoadAll(ID3D12Device* device, ID3D12CommandQueue* cmdQueu
     // 게임 씬 관련 텍스처 로드
     LoadGameSceneTextures(device, cmdQueue);
 
+    // 메뉴 버튼 관련 텍스처 로드
+    LoadMenuButtonTextures(device, cmdQueue);
+
     // 사운드 리소스 로드
     LoadSounds();
 }
@@ -53,6 +56,7 @@ void CResourceManager::LoadLobbySceneTextures(ID3D12Device* device, ID3D12Comman
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "sold_out", L"../Resource/LobbyScene/sold_out.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "inv_extense", L"../Resource/LobbyScene/Inventory_Extense_Btn.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "buy", L"../Resource/LobbyScene/Buy_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "reaper_dialog", L"../Resource/LobbyScene/reaper_dialog.png");
 }
 
 void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
@@ -177,6 +181,14 @@ void CResourceManager::LoadGameSceneTextures(ID3D12Device* device, ID3D12Command
     // 구조 UI
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "heal_icon", L"../Resource/GameScene/heal.png");
     CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "giveup", L"../Resource/GameScene/giveup_btn.png");
+}
+
+void CResourceManager::LoadMenuButtonTextures(ID3D12Device* device, ID3D12CommandQueue* cmdQueue)
+{
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "custom", L"../Resource/Menu/Custom_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "to_title", L"../Resource/Menu/To_Title_Btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "yes", L"../Resource/Menu/yes_btn.png");
+    CImGuiManager::GetInstance().LoadTexture(device, cmdQueue, "no", L"../Resource/Menu/no_btn.png");
 }
 
 void CResourceManager::LoadSounds()

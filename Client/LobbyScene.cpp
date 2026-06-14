@@ -251,7 +251,7 @@ void CLobbyScene::DrawReaperDialog()
 	ImGui::SetNextWindowPos(ImVec2(0.0f, screen.y - barH), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(screen.x, barH), ImGuiCond_Always);
 
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.62f, 0.62f, 0.64f, 0.96f));   // 회색 바
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));   // 투명(배경 이미지 사용)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,   0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,    ImVec2(0.0f, 0.0f));
@@ -262,18 +262,25 @@ void CLobbyScene::DrawReaperDialog()
 	if (ImGui::Begin("ReaperDialog", nullptr, flags)) {
 		ImGui::SetWindowFontScale(G_RATIO_Y);
 
+		// 대화창 배경 이미지
+		ImTextureID bgTex = CImGuiManager::GetInstance().GetTexture("reaper_dialog");
+		if (bgTex) {
+			ImVec2 wp = ImGui::GetWindowPos();
+			ImGui::GetWindowDrawList()->AddImage(bgTex, wp, ImVec2(wp.x + screen.x, wp.y + barH));
+		}
+
 		// 버튼(오른쪽 세로 2개) 영역
-		float bw    = 160.0f * G_RATIO_X;
+		float bw    = 150.0f * G_RATIO_X;
 		float bh    = 52.0f  * G_RATIO_Y;
-		float vgap  = 20.0f  * G_RATIO_Y;
-		float rmarg = 70.0f  * G_RATIO_X;
+		float vgap  = 16.0f  * G_RATIO_Y;
+		float rmarg = 80.0f  * G_RATIO_X;
 		float btnX  = screen.x - bw - rmarg;
 		float btnY0 = (barH - (2.0f * bh + vgap)) * 0.5f;
 
 		// 사신 대사 (왼쪽, 세로 중앙, 버튼 앞까지 wrap)
 		float textX    = 60.0f * G_RATIO_X;
 		float textWrap = btnX - 40.0f * G_RATIO_X;
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.10f, 0.10f, 0.12f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.92f, 0.80f, 1.0f));   // 밝은 금빛 텍스트
 		ImVec2 textSize = ImGui::CalcTextSize(reaper_dialog_text.c_str(), nullptr, false, textWrap - textX);
 		ImGui::SetCursorPos(ImVec2(textX, (barH - textSize.y) * 0.5f));
 		ImGui::PushTextWrapPos(textWrap);
@@ -281,14 +288,12 @@ void CLobbyScene::DrawReaperDialog()
 		ImGui::PopTextWrapPos();
 		ImGui::PopStyleColor();
 
-		// 버튼 색 (파랑 계열)
-		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.26f, 0.45f, 0.85f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.36f, 0.55f, 0.95f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.20f, 0.35f, 0.70f, 1.0f));
-
 		// [예] → 싱글: 게임 시작 / 멀티: 준비완료(C_Ready) 전송
+		ImTextureID yesTex = CImGuiManager::GetInstance().GetTexture("yes");
+		ImTextureID noTex  = CImGuiManager::GetInstance().GetTexture("no");
+
 		ImGui::SetCursorPos(ImVec2(btnX, btnY0));
-		if (ImGui::Button((const char*)u8"예", ImVec2(bw, bh))) {
+		if (ImageButtonWithText((long long)yesTex, "##reaper_yes", ImVec2(bw, bh))) {
 			reaper_dialog_open = false;
 			CKeyManager::GetInstance().SetMouseMode(true);
 
@@ -311,12 +316,10 @@ void CLobbyScene::DrawReaperDialog()
 
 		// [아니오] → 닫기
 		ImGui::SetCursorPos(ImVec2(btnX, btnY0 + bh + vgap));
-		if (ImGui::Button((const char*)u8"아니오", ImVec2(bw, bh))) {
+		if (ImageButtonWithText((long long)noTex, "##reaper_no", ImVec2(bw, bh))) {
 			reaper_dialog_open = false;
 			CKeyManager::GetInstance().SetMouseMode(true);
 		}
-
-		ImGui::PopStyleColor(3);
 	}
 	ImGui::End();
 
@@ -535,16 +538,14 @@ void CLobbyScene::DrawMenu()
 	if (ImGui::Begin("Lobby Menu", nullptr, menuFlags)) {
 		ImGui::SetWindowFontScale(scale);
 
-		ImVec2 btnSize = ImVec2(200.0f * scale, 60.0f * scale);
+		ImVec2 btnSize = ImVec2(240.0f * scale, 80.0f * scale);
+		ImTextureID customTex  = CImGuiManager::GetInstance().GetTexture("custom");
+		ImTextureID toTitleTex = CImGuiManager::GetInstance().GetTexture("to_title");
 
 		ImGui::Spacing(); ImGui::Spacing();
 
-		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.5f, 0.5f, 0.5f, 1.0f));   // 평소
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));   // 호버
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.6f, 0.1f, 0.1f, 1.0f));   // 클릭
-
 		// [커스텀] 버튼 → 커스텀 씬으로 이동
-		if (ImGui::Button((const char*)u8"커스텀", btnSize)) {
+		if (ImageButtonWithText((long long)customTex, "##lobby_custom", btnSize)) {
 			ui_state = LobbyUIState::None;
 			paused   = false;
 
@@ -568,13 +569,12 @@ void CLobbyScene::DrawMenu()
 
 		ImGui::Spacing(); ImGui::Spacing();
 
-		// [나가기] 버튼 → 확인 팝업
-		if (ImGui::Button((const char*)u8"나가기", btnSize)) {
+		// [나가기] 버튼 → 확인 팝업 (타이틀로 이미지 사용)
+		if (ImageButtonWithText((long long)toTitleTex, "##lobby_leave", btnSize)) {
 			ImGui::OpenPopup((const char*)u8"LeaveConfirmPopup");
 		}
 
 		ImGui::Spacing(); ImGui::Spacing();
-		ImGui::PopStyleColor(3);
 		ImGui::SetWindowFontScale(1.0f);
 
 		DrawRoomLeavePopUp();
@@ -599,10 +599,12 @@ void CLobbyScene::DrawRoomLeavePopUp()
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		ImVec2 popupBtnSize = ImVec2(100.0f * scale, 40.0f * scale);
+		ImVec2 popupBtnSize = ImVec2(120.0f * scale, 50.0f * scale);
+		ImTextureID yesTex = CImGuiManager::GetInstance().GetTexture("yes");
+		ImTextureID noTex  = CImGuiManager::GetInstance().GetTexture("no");
 
 		// [확인] → 방 나가고 타이틀로
-		if (ImGui::Button((const char*)u8"확인", popupBtnSize)) {
+		if (ImageButtonWithText((long long)yesTex, "##popup_yes", popupBtnSize)) {
 
 			// 멀티일 때만 서버에 방 나가기 통보 (서버가 마지막 유저면 방 삭제)
 			if (!g_is_single) {
@@ -632,7 +634,7 @@ void CLobbyScene::DrawRoomLeavePopUp()
 		ImGui::SameLine();
 
 		// [취소] → 팝업만 닫기 (ESC 메뉴는 유지)
-		if (ImGui::Button((const char*)u8"취소", popupBtnSize)) {
+		if (ImageButtonWithText((long long)noTex, "##popup_no", popupBtnSize)) {
 			ImGui::CloseCurrentPopup();
 		}
 

@@ -454,16 +454,13 @@ void CGameScene::DrawMenu()
 	if (ImGui::Begin("Game Menu", nullptr, menuFlags)) {
 		ImGui::SetWindowFontScale(scale);
 
-		ImVec2 btnSize = ImVec2(200.0f * scale, 60.0f * scale);
+		ImVec2 btnSize = ImVec2(240.0f * scale, 80.0f * scale);
+		ImTextureID toTitleTex = CImGuiManager::GetInstance().GetTexture("to_title");
 
 		ImGui::Spacing(); ImGui::Spacing();
 
-		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.5f, 0.5f, 0.5f, 1.0f));   // 평소
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));   // 호버
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.6f, 0.1f, 0.1f, 1.0f));   // 클릭
-
 		// [타이틀로] → 게임 종료하고 타이틀로
-		if (ImGui::Button((const char*)u8"타이틀로", btnSize)) {
+		if (ImageButtonWithText((long long)toTitleTex, "##game_to_title", btnSize)) {
 			menu_open = false;
 			CKeyManager::GetInstance().SetMouseMode(true);
 
@@ -481,7 +478,6 @@ void CGameScene::DrawMenu()
 		}
 
 		ImGui::Spacing(); ImGui::Spacing();
-		ImGui::PopStyleColor(3);
 		ImGui::SetWindowFontScale(1.0f);
 	}
 	ImGui::End();
