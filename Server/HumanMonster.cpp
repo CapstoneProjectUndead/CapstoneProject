@@ -299,13 +299,14 @@ void CHumanMonster::OnAttackMove(float elapsedTime)
     if (melee_knockback_timer > 0.0f)
         return;
 
-    // 대상이 사라졌거나 빈사/복귀 → 공격 중단하고 추격 상태로 복귀
+    // 대상이 사라졌거나 빈사/복귀 → 공격 중단하고 IDLE로 복귀
     auto targetPlayer = target_player.lock();
     if (!targetPlayer || targetPlayer->GetReturned() || targetPlayer->IsIncapacitated()) {
         velocity.x = 0.0f;
         velocity.z = 0.0f;
+        target_player.reset();
         if (auto ai = GetComponent<CAIComponent>())
-            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+            ai->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 

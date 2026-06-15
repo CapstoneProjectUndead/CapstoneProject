@@ -303,12 +303,13 @@ void CGhost::OnAttackMove(float elapsedTime)
     attack_timer += elapsedTime;
     auto targetPlayer = target_player.lock();
 
-    // 대상이 사라졌거나 빈사/복귀/이미 빙의됨 → 공격 중단하고 추격 상태로 복귀
+    // 대상이 사라졌거나 빈사/복귀/이미 빙의됨 → 공격 중단하고 IDLE로 복귀
     if (!targetPlayer || targetPlayer->IsIncapacitated() || targetPlayer->GetReturned() || targetPlayer->GetIsPossessed()) {
         velocity.x = 0.0f;
         velocity.z = 0.0f;
+        target_player.reset();
         if (auto ai = GetComponent<CAIComponent>())
-            ai->ChangeState(AI_STATE::MONSTER_TRACE);
+            ai->ChangeState(AI_STATE::MONSTER_IDLE);
         return;
     }
 
