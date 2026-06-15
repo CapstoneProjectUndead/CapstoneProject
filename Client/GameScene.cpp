@@ -2100,31 +2100,43 @@ void CGameScene::DrawOpponentStatus()
 		dl->AddRect(barMin, barMax,
 			ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.9f)), 3.f * sy, 0, 1.5f * sy);
 
-		// ── 상태 아이콘 (HP바 바로 위, 우선순위: 사망 > 빈사 > 빙의 / 정상이면 없음) ──
+		// ── 플레이어 이름 (HP바 위 왼쪽) ──
+		{
+			const std::string nameUtf8 = CP949ToUTF8(player->GetName());
+			ImFont* font   = ImGui::GetFont();
+			const float fs = 12.f * sy;
+			const float nameY = barY - fs - 4.f * sy;
+			dl->AddText(font, fs, ImVec2(barX + 1.f * sx, nameY + 1.f * sy),
+				IM_COL32(0, 0, 0, 180), nameUtf8.c_str());
+			dl->AddText(font, fs, ImVec2(barX, nameY),
+				IM_COL32(255, 255, 255, 230), nameUtf8.c_str());
+		}
+
+		// ── 상태 아이콘 (HP바 위 오른쪽 끝, 우선순위: 사망 > 빈사 > 빙의 / 정상이면 없음) ──
 		const char* statusKey = nullptr;
 		if      (player->GetState() == PLAYER_STATE::DEAD)        statusKey = "status_death";
 		else if (player->GetState() == PLAYER_STATE::ALMOST_DEAD) statusKey = "status_almost_dead";
-		else if (player->GetIsPossessed())                       statusKey = "status_possessed";
+		else if (player->GetIsPossessed())                        statusKey = "status_possessed";
 
 		if (statusKey) {
 			ImTextureID statusTex = CImGuiManager::GetInstance().GetTexture(statusKey);
 			if (statusTex) {
 				const float iconSize = 18.f * sy;
-				const float iconX = barX + 5.f * sx;           // HP바 왼쪽에서 오른쪽으로 약간
-				const float iconY = barY - iconSize - 6.f * sy; // HP바 위 (배지 여백 포함)
+				const float pad      = 4.f * sy;
+				const float iconX    = barX + barW - iconSize - pad;  // HP바 오른쪽 끝
+				const float iconY    = barY - iconSize - 6.f * sy;
 
-				// 배경 배지: 검정 아이콘이 또렷하게 보이도록 / 사망만 빨강, 그 외는 밝은 파랑
-				const float  pad        = 4.f * sy;
+				// 배경 배지
 				const float  badgeRound = 6.f * sy;
 				const ImVec2 badgeMin = ImVec2(iconX - pad, iconY - pad);
 				const ImVec2 badgeMax = ImVec2(iconX + iconSize + pad, iconY + iconSize + pad);
 				const ImVec4 badgeColor = (player->GetState() == PLAYER_STATE::DEAD)
-					? ImVec4(0.92f, 0.30f, 0.30f, 0.95f)   // 사망: 빨강
-					: ImVec4(0.82f, 0.88f, 1.0f, 0.95f);   // 그 외: 밝은 파랑
+					? ImVec4(0.92f, 0.30f, 0.30f, 0.95f)
+					: ImVec4(0.82f, 0.88f, 1.0f, 0.95f);
 				dl->AddRectFilled(badgeMin, badgeMax,
 					ImGui::GetColorU32(badgeColor), badgeRound);
 
-				// 아이콘 (배지 위)
+				// 아이콘
 				dl->AddImage(statusTex,
 					ImVec2(iconX, iconY),
 					ImVec2(iconX + iconSize, iconY + iconSize));
