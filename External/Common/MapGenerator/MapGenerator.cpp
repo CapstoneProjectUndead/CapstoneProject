@@ -586,6 +586,27 @@ void MapGenerator::PlaceMonster() {
     const int ndx[] = { 0, 0, -1, 1 };
     const int ndy[] = { -1, 1,  0, 0 };
 
+    // 플레이어 스폰 지점(원점 최근접 walkable 셀) 계산 — 이 주변엔 몬스터를 두지 않는다.
+    // FindSpawnPoint()와 동일 로직. 보물/몬스터 배치 순서와 무관하도록 FLOOR/STRUCTURE만 기준.
+    int spawnX = 1, spawnY = 1;
+    {
+        float minDist = FLT_MAX;
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                if (!IsWalkableFloor(x, y)) continue;
+                if (IsBlockedStructure(x, y)) continue;
+                float wx = x * 2.0f, wz = y * 2.0f;
+                float dist = wx * wx + wz * wz;
+                if (dist < minDist) { minDist = dist; spawnX = x; spawnY = y; }
+            }
+        }
+    }
+    const int SPAWN_SAFE_RADIUS = 5; // 타일 단위 안전 반경
+    auto nearSpawn = [&](int x, int y) {
+        int dx = x - spawnX, dy = y - spawnY;
+        return dx * dx + dy * dy <= SPAWN_SAFE_RADIUS * SPAWN_SAFE_RADIUS;
+    };
+
     const int BLOCK_SIZE = 8;
     for (int by = 0; by < HEIGHT / 2; by += BLOCK_SIZE) {
         for (int bx = 0; bx < WIDTH; bx += BLOCK_SIZE) {
@@ -596,6 +617,7 @@ void MapGenerator::PlaceMonster() {
                 if (GetTile(ELayer::FLOOR, rx, ry) != EModelType::ROAD) continue;
                 if (GetTile(ELayer::OBJECT, rx, ry) != EModelType::UNKNOWN) continue;
                 if (IsBlockedStructure(rx, ry)) continue;
+                if (nearSpawn(rx, ry)) continue;
 
                 mapGrid[(int)ELayer::OBJECT][ry][rx] = EModelType::MONSTER_GHOST;
                 break;
@@ -624,6 +646,7 @@ void MapGenerator::PlaceMonster() {
                     if (floor == EModelType::WALL || floor == EModelType::HOUSE_INNTER) continue;
                     if (GetTile(ELayer::OBJECT, nx, ny) != EModelType::UNKNOWN) continue;
                     if (IsBlockedStructure(nx, ny)) continue;
+                    if (nearSpawn(nx, ny)) continue;
 
                     mapGrid[(int)ELayer::OBJECT][ny][nx] = EModelType::MONSTER_HUMAN;
                     placed = true;
@@ -639,6 +662,7 @@ void MapGenerator::PlaceMonster() {
                     if (GetTile(ELayer::FLOOR, sx, sy) != EModelType::VILLAGE_ROAD_NODECO) continue;
                     if (GetTile(ELayer::OBJECT, sx, sy) != EModelType::UNKNOWN) continue;
                     if (IsBlockedStructure(sx, sy)) continue;
+                    if (nearSpawn(sx, sy)) continue;
 
                     mapGrid[(int)ELayer::OBJECT][sy][sx] = EModelType::MONSTER_HUMAN;
                     placed = true;
@@ -657,6 +681,7 @@ void MapGenerator::PlaceMonster() {
             if (!IsWalkableFloor(nx, ny)) continue;
             if (IsBlockedStructure(nx, ny)) continue;
             if (GetTile(ELayer::OBJECT, nx, ny) != EModelType::UNKNOWN) continue;
+            if (nearSpawn(nx, ny)) continue;
 
             mapGrid[(int)ELayer::OBJECT][ny][nx] = EModelType::MONSTER_DOG;
             break;
