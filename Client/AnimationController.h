@@ -21,7 +21,11 @@ class CAnimationController {
 public:
     CAnimationController() = default;
 
-    void ResetPlayCount() { current_play_count = 0; current_clip_time = 0.0f; }
+    void ResetPlayCount() {
+        current_play_count = 0;
+        current_state_time = 0.0f;
+        next_state_time = 0.0f;
+    }
     void AddState(const State& state) {
         states[state.name] = state;
         if (current_state_name.empty()) current_state_name = state.name;
@@ -35,18 +39,24 @@ public:
 
     // Getter
     std::string GetCurrentState() const { return current_state_name; }
+    std::string GetNextState() const { return next_state_name; }
+
     int GetPlayCount() const { return current_play_count; }
-    float GetCurrentClipTime() const { return current_clip_time; }
+    float GetCurrentClipTime() const { return current_state_time; }
+    float GetNextClipTime() const { return next_state_time; }
+
     bool IsBlending() const { return is_blending; }
     // 0~1 사이값
     float GetWeight() const { return is_blending ? (blend_timer / blend_duration) : 0.0f; }
 
     std::string GetCurrentClip() const {
-        return states.at(current_state_name).clip_name;
+        auto it = states.find(current_state_name);
+        return (it != states.end()) ? it->second.clip_name : "";
     }
     std::string GetNextClip() const {
         if (!is_blending) return "";
-        return states.at(next_state_name).clip_name;
+        auto it = states.find(next_state_name);
+        return (it != states.end()) ? it->second.clip_name : "";
     }
     void ModifyStateClip(const std::string& stateName, const std::string& aniName) { states[stateName].clip_name = aniName; }
 private:
@@ -60,6 +70,7 @@ private:
     float blend_duration{};
     bool is_blending{};
 
-    float current_clip_time{}; // 현재 애니메이션 재생 시간
+    float current_state_time{ 0.0f };
+    float next_state_time{ 0.0f };
     int current_play_count{};
 };

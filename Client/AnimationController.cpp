@@ -4,46 +4,67 @@
 
 void CAnimationController::Update(float dt)
 {
+    // 현재 상태 시간 진행
+    if (!current_state_name.empty()) {
+        auto& state = states[current_state_name];
+        auto& anim = CAnimationManager::GetInstance().GetClip(state.clip_name);
+
+        if (anim.total_frames > 0) {
+            float duration = (float)anim.total_frames / 60.0f;
+            current_state_time += (dt * state.play_speed);
+
+            if (current_state_time >= duration) {
+                current_play_count++;
+                if (state.is_loop && (state.max_play_count == -1 || current_play_count < state.max_play_count)) {
+                    current_state_time = fmod(current_state_time, duration) + state.loop_start_time;
+                }
+                else {
+                    current_state_time = duration;
+                }
+            }
+        }
+    }
+
+    // 블렌딩 중일 때 다음 상태 시간 진행 및 완료 처리
     if (is_blending) {
         blend_timer += dt;
+
+        if (!next_state_name.empty()) {
+            auto& nextState = states[next_state_name];
+            auto& nextAnim = CAnimationManager::GetInstance().GetClip(nextState.clip_name);
+
+            if (nextAnim.total_frames > 0) {
+                float nextDuration = (float)nextAnim.total_frames / 60.0f;
+                next_state_time += (dt * nextState.play_speed);
+
+                if (next_state_time >= nextDuration) {
+                    if (nextState.is_loop) {
+                        next_state_time = fmod(next_state_time, nextDuration) + nextState.loop_start_time;
+                    }
+                    else {
+                        next_state_time = nextDuration;
+                    }
+                }
+            }
+        }
+
+        // 블렌딩 종료 전환
         if (blend_timer >= blend_duration) {
-            // 블렌딩 완료 시점에 확실히 교체
             current_state_name = next_state_name;
+            current_state_time = next_state_time; // 전환된 시간 이관
+
             next_state_name = "";
+            next_state_time = 0.0f;
             is_blending = false;
             blend_timer = 0.0f;
         }
     }
 
-    // 전이 조건 체크 (블렌딩 중이 아닐 때만)
+    // 전이 조건 체크 (블렌딩 중이 아닐 때)
     if (!is_blending && !current_state_name.empty()) {
-        auto& state = states[current_state_name];
-        auto& anim = CAnimationManager::GetInstance().GetClip(state.clip_name);
-        float duration = (float)anim.total_frames / 60.0f; // 60fps 기준
-
-        // 재생 시간 누적
-        current_clip_time += (dt * state.play_speed);
-
-        // 루프 및 횟수 체크
-        if (current_clip_time >= duration) {
-            current_play_count++;
-
-            // 루프 설정 확인
-            if (state.is_loop && (state.max_play_count == -1 || current_play_count < state.max_play_count)) {
-                // 루프 시작 시간부터 다시 시작 (loop_start_time 적용)
-                current_clip_time = state.loop_start_time;
-            }
-            else {
-                // 종료 시 마지막 프레임에 고정
-                current_clip_time = duration;
-            }
-        }
-
-        // 전이
         auto it = transitions.find(current_state_name);
         if (it != transitions.end()) {
             for (auto& trans : it->second) {
-                // 조건이 있고 조건이 성립하면
                 if (trans.condition && trans.condition()) {
                     TransitionTo(trans.to_state, trans.duration);
                     break;
@@ -56,11 +77,16 @@ void CAnimationController::Update(float dt)
 void CAnimationController::TransitionTo(const std::string& nextStateName, float duration)
 {
     if (states.find(nextStateName) == states.end()) return;
-    if (current_state_name == nextStateName) return;
+    if (current_state_name == nextStateName && !is_blending) {
+        // 이미 진행 중인 동일 애니메이션이면 블렌딩 없이 계속 재생
+        return;
+    }
 
-    ResetPlayCount();
+    // 블렌딩 시작
     next_state_name = nextStateName;
+    next_state_time = 0.0f;
     blend_duration = (duration > 0.0f) ? duration : 0.001f;
     blend_timer = 0.0f;
     is_blending = true;
+    current_play_count = 0;
 }

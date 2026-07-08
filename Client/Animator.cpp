@@ -573,29 +573,34 @@ XMVECTOR CAnimatorComponent::GetHeadPosition()
 XMMATRIX CAnimatorComponent::GetSocketMatrix(SOCKET_TYPE type)
 {
 	XMMATRIX worldMatrix = XMLoadFloat4x4(&owner->world_matrix);
+	// 유효한지 확인
 	if (static_cast<size_t>(type) >= sockets.size()) return worldMatrix;
-
-	// 인덱스가 유효한지 확인
 	const auto& socket = sockets[type];
 	if (socket.bone_index == -1) return worldMatrix;
 
-	auto& manager = CAnimationManager::GetInstance();
+	std::string targetClip = "";
+	float targetTime = 0.0f;
 
-	// 행렬 계산(base + action)
-	// Layer 0 (Base)
-	float relTime0 = layers[0].elapsed_time;
-	XMMATRIX mat0 = manager.GetBoneSocketMatrix(layers[0].current_clip, relTime0, socket.bone_index);
-
-	XMMATRIX finalLocalMat = mat0;
-
-	// Layer 1 (Action)이 재생 중이라면 블렌딩
-	if (!layers[1].current_clip.empty() && layers[1].weight > 0.0f) {
-		float relTime1 = layers[1].elapsed_time;
-		XMMATRIX mat1 = manager.GetBoneSocketMatrix(layers[1].current_clip, relTime1, socket.bone_index);
-		finalLocalMat = mat0 * (1.0f - layers[1].weight) + mat1 * layers[1].weight;
+	// Action(Layer 1) 애니메이션이 활성화되어 있고 상반신 가중치가 높은 경우 우선 참조
+	if (!layers[1].current_clip.empty() && layers[1].weight > 0.5f) {
+		targetClip = layers[1].current_clip;
+		targetTime = layers[1].elapsed_time;
 	}
-	
-	return socket.local_offset * finalLocalMat * worldMatrix;
+	// Base 애니메이션 블렌딩 중이고 다음 Clip 영향력이 더 커진 경우 (Weight > 0.5)
+	else if (controller.IsBlending() && controller.GetWeight() > 0.5f) {
+		targetClip = controller.GetNextClip();
+		targetTime = controller.GetNextClipTime();
+	}
+	// 기본 상태 (Base Layer)
+	else {
+		targetClip = controller.GetCurrentClip();
+		targetTime = controller.GetCurrentClipTime();
+	}
+	if (targetClip.empty()) return XMMatrixIdentity();
+	XMMATRIX boneToRoot = CAnimationManager::GetInstance().GetBoneSocketMatrix(
+		targetClip, targetTime, socket.bone_index
+	);
+	return socket.local_offset * boneToRoot * worldMatrix;
 }
 
 void CAnimatorComponent::RenderSocketModel(SOCKET_TYPE type, int itemID, const std::string& modelName)
@@ -689,14 +694,14 @@ AnimationData CAnimatorComponent::GetAnimationData()
 	AnimationData data{};
 	auto& manager = CAnimationManager::GetInstance();
 
-	// 베이스 애니메이션 (Layer 0)
 	std::string baseClip = layers[0].current_clip;
 	if (baseClip.empty()) return data;
 
 	auto& animA = manager.GetClip(baseClip);
 	data.start_offset_A = animA.start_matrix_offset;
 
-	float relativeTimeA = layers[0].elapsed_time;
+	// controller의 고유 state time 사용
+	float relativeTimeA = controller.GetCurrentClipTime();
 	data.cur_frame_A = (uint32_t)(relativeTimeA * 60.0f) % animA.total_frames;
 	data.bone_count = animA.bone_count;
 
@@ -723,12 +728,15 @@ AnimationData CAnimatorComponent::GetAnimationData()
 		data.blend_weight = layers[1].weight;
 		data.mask_id = layers[1].mask_id;
 	}
-	else if (controller.IsBlending()) {	// blending 처리
+	else if (controller.IsBlending()) { // blending 처리
 		std::string clipB = controller.GetNextClip();
 		if (!clipB.empty()) {
 			auto& animB = manager.GetClip(clipB);
 			data.start_offset_B = animB.start_matrix_offset;
-			data.cur_frame_B = (uint32_t)(current_time * 60.0f) % animB.total_frames;
+
+			float relativeTimeB = controller.GetNextClipTime();
+			data.cur_frame_B = (uint32_t)(relativeTimeB * 60.0f) % animB.total_frames;
+
 			data.blend_weight = controller.GetWeight();
 			data.mask_id = -1;
 		}
