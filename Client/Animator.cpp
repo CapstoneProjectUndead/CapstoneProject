@@ -746,7 +746,7 @@ AnimationData CAnimatorComponent::GetAnimationData()
 		else data.start_offset_B = down_clip.start_matrix_offset;
 		data.cur_frame_B = 0;
 		data.blend_weight = pitchWeight;
-		data.mask_id = 0;	// 상반신 마스크 ID 적용 (상체만 고개 들게)
+		data.mask_id = 1;
 	}
 	else {
 		data.blend_weight = 0.0f;

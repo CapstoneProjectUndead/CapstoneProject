@@ -68,6 +68,7 @@ public:
 	// boneMask 생성
 	void SetRecursiveWeight(int boneIdx, float weight, std::vector<float>& maskWeights, const CGeometryLoader::SkeletonData& skeleton);
 	BoneMask CreateUpperBodyMask(const CGeometryLoader::SkeletonData& skeleton);
+	BoneMask CreateHeadPitchMask(const CGeometryLoader::SkeletonData& skeleton);
 
 	// 특정 본(머리 등)의 현재 월드 위치를 반환하는 함수
 	XMMATRIX CAnimationManager::GetBoneSocketMatrix(const std::string& clipName, float currentTime, int boneIdx);

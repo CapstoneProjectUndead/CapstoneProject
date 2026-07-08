@@ -33,6 +33,29 @@ BoneMask CAnimationManager::CreateUpperBodyMask(const CGeometryLoader::SkeletonD
     return mask;
 }
 
+BoneMask CAnimationManager::CreateHeadPitchMask(const CGeometryLoader::SkeletonData& skeleton)
+{
+    uint32_t boneCount = (uint32_t)skeleton.bone_names.size();
+    BoneMask mask;
+    mask.name = "HeadPitchOnly";
+    mask.weights.resize(boneCount, 0.0f); // 기본값 0 (전혀 영향 안 줌)
+
+    // Neck(목) 본부터 자식(Head 등)으로 재귀적 가중치 1.0 적용
+    int neckIdx = skeleton.GetBoneIndex("neck");
+    if (neckIdx != -1) {
+        SetRecursiveWeight(neckIdx, 1.0f, mask.weights, skeleton);
+    }
+    else {
+        // "neck" 이 없으면 "head" 본에 직접 적용
+        int headIdx = skeleton.GetBoneIndex("head");
+        if (headIdx != -1) {
+            SetRecursiveWeight(headIdx, 1.0f, mask.weights, skeleton);
+        }
+    }
+
+    return mask;
+}
+
 void CAnimationManager::Initialize(const std::string& charName, const std::string& AniName, OBJECT_TYPE objType, uint8_t subType)
 {
     // load skeletonData
@@ -56,6 +79,7 @@ void CAnimationManager::Initialize(const std::string& charName, const std::strin
     }
 
     bone_masks.push_back(CreateUpperBodyMask(skeleton));
+    bone_masks.push_back(CreateHeadPitchMask(skeleton));
 
     // load animation(boneMatrixes)
     auto newAnimations = CGeometryLoader::LoadAnimations(AniName, boneCount);
