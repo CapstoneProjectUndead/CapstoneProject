@@ -749,7 +749,9 @@ bool MapGenerator::IsBlockedStructure(int x, int y) {
         t == EModelType::STORE ||
         t == EModelType::HOUSE_WALL_STRAIGHT ||
         t == EModelType::HOUSE_WALL_CORNER ||
+        t == EModelType::HOUSE_WALL_EMPTY ||
         t == EModelType::STORE_WALL_CORNER ||
+        t == EModelType::STORE_WALL_EMPTY ||
         t == EModelType::FENCE_WOOD_STR);
 }
 
