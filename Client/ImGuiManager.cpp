@@ -42,10 +42,10 @@ void CImGuiManager::Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* cm
     // 폰트 로드 (첫 번째 = 기본 폰트)
     gyeonggi_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/gyeonggi_medium.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     gyeonggi_batang_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/gyeonggi_batang.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
-    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
-    vineritc_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\VINERITC.TTF", 270.0f);
-    elephnt_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ELEPHNT.TTF", 80.0f);
-    bold_font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\malgunbd.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+    io.Fonts->AddFontFromFileTTF("../Modeling/font/malgun.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
+    vineritc_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/VINERITC.TTF", 270.0f);
+    elephnt_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/ELEPHNT.TTF", 80.0f);
+    bold_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/malgunbd.ttf", 22.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     creepster_font = io.Fonts->AddFontFromFileTTF("../Modeling/font/Creepster-Regular.ttf", 270.0f);
 
     // Win32 초기화
