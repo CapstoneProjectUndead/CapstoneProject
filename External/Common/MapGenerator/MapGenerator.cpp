@@ -751,7 +751,6 @@ bool MapGenerator::IsBlockedStructure(int x, int y) {
         t == EModelType::HOUSE_WALL_CORNER ||
         t == EModelType::HOUSE_WALL_EMPTY ||
         t == EModelType::STORE_WALL_CORNER ||
-        t == EModelType::STORE_WALL_EMPTY ||
         t == EModelType::FENCE_WOOD_STR);
 }
 
@@ -990,6 +989,8 @@ namespace
         if (!IsWalkableFloor(x, y)) return false;
         if (IsBlockedObject(x, y)) return false;
         if (IsBlockedStructure(x, y)) return false;
+        // 상점 천막(STORE_WALL_EMPTY)은 몬스터 스폰/경로 때문에 IsBlockedStructure에 못 넣음 → 맨홀만 별도 제외
+        if (IsStoreBuilding(x, y)) return false;
         // OBJECT 점유 가드: 보물/몬스터 마커가 있는 셀은 후보에서 제외 (덮어쓰기 방지)
         if (GetTile(ELayer::OBJECT, x, y) != EModelType::UNKNOWN) return false;
         return true;
@@ -1011,13 +1012,54 @@ namespace
         CommitManholeAt(bestX, bestY);
     }
 
+    // 플레이어 스폰 지점(원점 최근접 walkable 셀)에서 BFS로 도달 가능한 셀 표시.
+    // 펜스/덤불로 완전히 봉쇄된 공원 내부 등은 false → 맨홀 후보에서 제외하기 위함.
+    std::vector<std::vector<bool>> BuildReachableFromSpawn() {
+        int spawnX = 1, spawnY = 1;
+        float minDist = FLT_MAX;
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                if (!IsWalkableFloor(x, y)) continue;
+                if (IsBlockedStructure(x, y)) continue;
+                float wx = x * MANHOLE_TILE_SIZE, wz = y * MANHOLE_TILE_SIZE;
+                float dist = wx * wx + wz * wz;
+                if (dist < minDist) { minDist = dist; spawnX = x; spawnY = y; }
+            }
+        }
+
+        std::vector<std::vector<bool>> visited(HEIGHT, std::vector<bool>(WIDTH, false));
+        std::queue<Cell> q;
+        q.push({ spawnX, spawnY });
+        visited[spawnY][spawnX] = true;
+
+        const int ndx[] = { 0, 0, -1, 1 };
+        const int ndy[] = { -1, 1,  0, 0 };
+        while (!q.empty()) {
+            Cell cur = q.front(); q.pop();
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x + ndx[i], ny = cur.y + ndy[i];
+                if (!IsValid(nx, ny) || visited[ny][nx]) continue;
+                if (!IsWalkableFloor(nx, ny)) continue;
+                if (IsBlockedStructure(nx, ny)) continue;
+                if (IsBlockedObject(nx, ny)) continue;
+                visited[ny][nx] = true;
+                q.push({ nx, ny });
+            }
+        }
+        return visited;
+    }
+
     // [랜덤] 후보 셀 풀에서 랜덤 선택. 후보가 0개일 때만 (1,1) fallback.
     void PlaceManholeRandom() {
+        auto reachable = BuildReachableFromSpawn();
+
         std::vector<Cell> candidates;
         candidates.reserve(WIDTH * HEIGHT / 4);
         for (int y = 0; y < HEIGHT; ++y) {
             for (int x = 0; x < WIDTH; ++x) {
-                if (IsManholeCandidate(x, y)) candidates.push_back({ x, y });
+                if (!IsManholeCandidate(x, y)) continue;
+                if (!reachable[y][x]) continue; // 스폰에서 걸어서 못 가는 셀 제외
+                candidates.push_back({ x, y });
             }
         }
         if (candidates.empty()) {
