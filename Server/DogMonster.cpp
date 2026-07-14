@@ -215,7 +215,8 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 
 	attack_cooldown_timer += elapsedTime;
 
-	if (dist > recog_range) {
+	// 우회 중 잠깐 멀어져도 추격을 유지하도록 감지 거리(recog_range)보다 큰 값 사용
+	if (dist > CHASE_KEEP_RANGE) {
 		target_player.reset();
 		AIComp->ChangeState(AI_STATE::MONSTER_IDLE);
 		return;
@@ -239,6 +240,35 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 	XMFLOAT3 targetPos = targetPlayer->GetPosition();
 	int ex = (int)roundf(targetPos.x / TILE_SIZE);
 	int ez = (int)roundf(targetPos.z / TILE_SIZE);
+
+	// 플레이어가 나무/울타리에 딱 붙어 있으면 반올림된 목적지가 장애물 타일이 될 수 있음
+	// → 이웃 8칸 중 통행 가능하면서 플레이어 실제 좌표에 가장 가까운 타일로 목적지 보정
+	auto isPassableTile = [](int x, int z) {
+		return MapGenerator::IsWalkableFloor(x, z)
+			&& !MapGenerator::IsBlockedStructure(x, z)
+			&& !MapGenerator::IsBlockedObject(x, z);
+		};
+	if (!isPassableTile(ex, ez)) {
+		float bestDistSq = 1e9f;
+		int bestX = ex, bestZ = ez;
+		for (int oz = -1; oz <= 1; oz++) {
+			for (int ox = -1; ox <= 1; ox++) {
+				if (ox == 0 && oz == 0) continue;
+				int nx = ex + ox, nz = ez + oz;
+				if (!isPassableTile(nx, nz)) continue;
+				float wx = nx * TILE_SIZE - targetPos.x;
+				float wz = nz * TILE_SIZE - targetPos.z;
+				float distSq = wx * wx + wz * wz;
+				if (distSq < bestDistSq) {
+					bestDistSq = distSq;
+					bestX = nx;
+					bestZ = nz;
+				}
+			}
+		}
+		ex = bestX;
+		ez = bestZ;
+	}
 
 	// 항상 BFS로 경로 탐색
 	path_refresh_timer += elapsedTime;
@@ -303,7 +333,38 @@ void CDogMonster::OnTraceMove(float elapsedTime)
 		}
 	}
 
-	path_fail_timer = 0.0f;
+	// 이동 명령은 있는데 콜라이더에 막혀 전진 못 하는 경우 감지 (나무·벤치 틈에 낀 플레이어)
+	trace_stuck_timer += elapsedTime;
+	if (trace_stuck_timer >= STUCK_CHECK_INTERVAL) {
+		XMFLOAT3 moved = Vector3::Subtract(position, trace_last_pos);
+		moved.y = 0.0f;
+		if (Vector3::Length(moved) < STUCK_MOVE_EPSILON) {
+			if (dist <= STUCK_LUNGE_RANGE) {
+				// 사거리 살짝 밖이지만 달려들어 공격 (명중 여부는 공격 히트박스가 판정)
+				if (attack_cooldown_timer >= 0.4f) {
+					AIComp->ChangeState(AI_STATE::MONSTER_ATTACK);
+					return;
+				}
+			}
+			else {
+				path_fail_timer += STUCK_CHECK_INTERVAL;
+				if (path_fail_timer >= CHASE_GIVE_UP_TIME) {
+					velocity.x = 0.0f;
+					velocity.z = 0.0f;
+					path_fail_timer  = 0.0f;
+					give_up_cooldown = GIVE_UP_COOLDOWN;
+					target_player.reset();
+					AIComp->ChangeState(AI_STATE::MONSTER_IDLE);
+					return;
+				}
+			}
+		}
+		else {
+			path_fail_timer = 0.0f;
+		}
+		trace_last_pos    = position;
+		trace_stuck_timer = 0.0f;
+	}
 
 	float targetYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
 	SetYaw(targetYaw);
@@ -396,6 +457,8 @@ void CDogMonster::OnTraceEnter()
 	nav_path.clear();
 	path_refresh_timer = 0.0f;
 	path_fail_timer    = 0.0f;
+	trace_stuck_timer  = 0.0f;
+	trace_last_pos     = position;
 }
 
 void CDogMonster::OnAttackEnter()
