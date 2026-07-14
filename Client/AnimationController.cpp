@@ -77,16 +77,23 @@ void CAnimationController::Update(float dt)
 void CAnimationController::TransitionTo(const std::string& nextStateName, float duration)
 {
     if (states.find(nextStateName) == states.end()) return;
-    if (current_state_name == nextStateName && !is_blending) {
-        // 이미 진행 중인 동일 애니메이션이면 블렌딩 없이 계속 재생
+
+    // 이미 같은 상태이거나, 재생할 클립이 동일하다면 블렌딩을 하지 않음
+    std::string currentClip = GetCurrentClip();
+    std::string nextClip = states[nextStateName].clip_name;
+
+    if (current_state_name == nextStateName || currentClip == nextClip)
+    {
+        // 동일 애니메이션일 때는 상태 이름만 바꾸고 시간/블렌딩은 튀지 않게 유지
+        current_state_name = nextStateName;
+        is_blending = false;
+        blend_timer = 0.0f;
         return;
     }
 
-    // 블렌딩 시작
+    // 서로 다른 클립일 때만 블렌딩 시작
     next_state_name = nextStateName;
-    next_state_time = 0.0f;
-    blend_duration = (duration > 0.0f) ? duration : 0.001f;
+    blend_duration = duration;
     blend_timer = 0.0f;
     is_blending = true;
-    current_play_count = 0;
 }
