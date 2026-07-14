@@ -409,18 +409,58 @@ void CPlayer::UpdatePossession(float elapsedTime)
         dirVec.y = 0.0f;
         float dist = Vector3::Length(dirVec);
 
-        if (dist > 0.001f) {
-            float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
-            SetYaw(targetYaw);
-            SetYawPitch(targetYaw, 0.0f);
+        constexpr float DIRECT_CHASE_DIST = 3.0f; // 이 거리 이내면 직선 돌진, 밖이면 BFS 경로 추격
+        constexpr float FAR_CHASE_SPEED   = 6.5f; // 원거리 추격 전용 속도 (근접 돌진/배회는 POSSESS_SPEED 유지)
+
+        XMFLOAT3 moveDir = dirVec;
+
+        if (dist > DIRECT_CHASE_DIST) {
+
+            possessed_path_refresh_timer += elapsedTime;
+
+            if (possessed_path_refresh_timer >= 0.2f || possessed_nav_path.empty()) {
+
+                possessed_path_refresh_timer = 0.0f;
+                int sx = (int)roundf(position.x / TILE_SIZE);
+                int sz = (int)roundf(position.z / TILE_SIZE);
+                int ex = (int)roundf(nearOther->GetPosition().x / TILE_SIZE);
+                int ez = (int)roundf(nearOther->GetPosition().z / TILE_SIZE);
+                possessed_nav_path = MapGenerator::FindPath(sx, sz, ex, ez);
+            }
+
+            if (!possessed_nav_path.empty()) {
+
+                XMFLOAT3 wpWorld = { possessed_nav_path[0].x * TILE_SIZE, position.y, possessed_nav_path[0].y * TILE_SIZE };
+                XMFLOAT3 toWp    = Vector3::Subtract(wpWorld, position);
+                toWp.y = 0.0f;
+
+                if (Vector3::Length(toWp) > 0.1f)
+                    moveDir = toWp;
+            }
+        }
+        else {
+            possessed_nav_path.clear();
         }
 
         if (possession_contact_timer >= ATTACK_INTERVAL) {
-            velocity.x = look.x * POSSESS_SPEED;
-            velocity.z = look.z * POSSESS_SPEED;
+
+            float moveYaw = XMConvertToDegrees(atan2f(moveDir.x, moveDir.z));
+            SetYaw(moveYaw);
+            SetYawPitch(moveYaw, 0.0f);
+
+            float chaseSpeed = (dist > DIRECT_CHASE_DIST) ? FAR_CHASE_SPEED : POSSESS_SPEED;
+            velocity.x = look.x * chaseSpeed;
+            velocity.z = look.z * chaseSpeed;
             state      = PLAYER_STATE::RUN;
         }
         else {
+            // 공격 후 대기: 타겟을 바라보며 정지
+            if (dist > 0.001f) {
+                float targetYaw = XMConvertToDegrees(atan2f(dirVec.x, dirVec.z));
+                SetYaw(targetYaw);
+                SetYawPitch(targetYaw, 0.0f);
+            }
+
             velocity.x = 0.0f;
             velocity.z = 0.0f;
             state      = PLAYER_STATE::IDLE;
