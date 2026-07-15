@@ -10,16 +10,23 @@ void CAnimationController::Update(float dt)
         auto& anim = CAnimationManager::GetInstance().GetClip(state.clip_name);
 
         if (anim.total_frames > 0) {
-            float duration = (float)anim.total_frames / 60.0f;
+            // 부동소수점 오차 및 프레임 초과 방지를 위해 max_duration 계산
+            // 루프가 아닌 경우 마지막 프레임 시곡점까지만 오도록 설정
+            float max_duration = state.is_loop
+                ? ((float)anim.total_frames / 60.0f)
+                : ((float)(anim.total_frames - 1) / 60.0f);
+
             current_state_time += (dt * state.play_speed);
 
-            if (current_state_time >= duration) {
+            if (current_state_time >= max_duration) {
                 current_play_count++;
                 if (state.is_loop && (state.max_play_count == -1 || current_play_count < state.max_play_count)) {
-                    current_state_time = fmod(current_state_time, duration) + state.loop_start_time;
+                    float loop_duration = (float)anim.total_frames / 60.0f;
+                    current_state_time = fmod(current_state_time, loop_duration) + state.loop_start_time;
                 }
                 else {
-                    current_state_time = duration;
+                    // 단발성 액션은 max_duration(마지막 프레임 위치)에 고정
+                    current_state_time = max_duration;
                 }
             }
         }
@@ -78,22 +85,15 @@ void CAnimationController::TransitionTo(const std::string& nextStateName, float 
 {
     if (states.find(nextStateName) == states.end()) return;
 
-    // 이미 같은 상태이거나, 재생할 클립이 동일하다면 블렌딩을 하지 않음
-    std::string currentClip = GetCurrentClip();
-    std::string nextClip = states[nextStateName].clip_name;
-
-    if (current_state_name == nextStateName || currentClip == nextClip)
-    {
-        // 동일 애니메이션일 때는 상태 이름만 바꾸고 시간/블렌딩은 튀지 않게 유지
-        current_state_name = nextStateName;
-        is_blending = false;
-        blend_timer = 0.0f;
+    if (current_state_name == nextStateName && !is_blending) {
         return;
     }
 
     // 서로 다른 클립일 때만 블렌딩 시작
     next_state_name = nextStateName;
-    blend_duration = duration;
+    blend_duration = (duration > 0.0f) ? duration : 0.001f;
+    next_state_time = 0.0f;
     blend_timer = 0.0f;
     is_blending = true;
+    current_play_count = 0;
 }
