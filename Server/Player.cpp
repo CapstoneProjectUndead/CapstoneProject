@@ -73,8 +73,14 @@ void CPlayer::Update(const float elapsedTime)
 
 void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_targetDT(16.6ms)
 {
+    // 이 시간 안에 새 패킷이 안 오면 키를 뗀 것으로 간주 (클라 프리즈/끊김 대비)
+    constexpr float INPUT_HOLD_TIMEOUT = 0.25f;
+    // 큐가 이 이상 쌓이면(버스트/시계 드리프트) 한 틱에 몰아서 처리해 입력 지연 누적을 막음
+    constexpr size_t INPUT_QUEUE_BURST = 4;
+
     if (is_possessed) {
         input_queue.clear();
+        input_hold_timer = INPUT_HOLD_TIMEOUT; // 빙의 해제 직후 이전 입력이 재생되지 않도록 만료 처리
         InputData emptyInput{ false, false, false, false, false, false };
         SimulateMove(emptyInput, elapsedTime, false);
         return;
@@ -82,20 +88,23 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 
     if (!input_queue.empty())
     {
-        // 쌓인 패킷이 있다면, 각 패킷마다 시뮬레이션을 돌림
-        while (!input_queue.empty())
+        // 틱당 1개씩만 소비. 패킷이 버스트로 도착해도 틱마다 g_targetDT씩만
+        // 시뮬레이션되어 이동 속도가 클라 전송 타이밍과 무관하게 일정해짐
+        do
         {
             PendingInput pending = input_queue.front();
             input_queue.pop_front();
 
             // (가속 -> 속도제한 -> 이동 -> 감속)
             last_c_input = pending.input.c;
+            last_input = pending.input;
+            input_hold_timer = 0.0f;
             SimulateMove(pending.input, elapsedTime);
 
             // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
             last_processed_seq = pending.seq_num;
 
-            // 장부 기록 
+            // 장부 기록
             ServerFrameHistory frame{};
             frame.input = pending.input;
             frame.seq_num = last_processed_seq;
@@ -106,21 +115,34 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
             RecordServerFrameHistory(frame);
 
             last_simulated_time += g_targetDT;
-        }
+        } while (input_queue.size() >= INPUT_QUEUE_BURST);
     }
     else
     {
-        // 입력이 없어도 마찰/중력 계산을 위해 1회 업데이트 (state는 변경하지 않음)
-        InputData emptyInput{ false, false, false, false, false, false, false };
-        emptyInput.c = last_c_input;
-        SimulateMove(emptyInput, elapsedTime, false);
+        input_hold_timer += elapsedTime;
+
+        // 패킷이 안 왔다고 키를 뗀 게 아님 (저FPS 클라는 전송률이 서버 틱보다 낮음)
+        // → 타임아웃 내에는 마지막 키 상태가 유지되고 있다고 보고 일반 입력 틱과 동일하게 시뮬레이션
+        bool holdInput = (input_hold_timer <= INPUT_HOLD_TIMEOUT);
+
+        InputData tickInput{ false, false, false, false, false, false };
+        tickInput.c = last_c_input;
+
+        if (holdInput) {
+            tickInput = last_input;
+            tickInput.space = false; // 1회성 입력은 유지하지 않음 (반복 점프/공격 방지)
+            tickInput.lbtn = false;
+        }
+
+        // 타임아웃 후에는 기존처럼 마찰/중력 계산만 1회 업데이트 (state는 변경하지 않음)
+        SimulateMove(tickInput, elapsedTime, holdInput);
 
         if (last_simulated_time < g_server_total_time)
             last_simulated_time = static_cast<float>(g_server_total_time);
 
-        // 장부 기록 
+        // 장부 기록
         ServerFrameHistory frame{};
-        frame.input = emptyInput;
+        frame.input = tickInput;
         frame.seq_num = last_processed_seq;
         frame.position = position;
         frame.state = state;
