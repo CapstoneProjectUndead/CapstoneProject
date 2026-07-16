@@ -227,6 +227,7 @@ private:
 	InputData    last_input{ false, false, false, false, false, false };  // 마지막으로 수신한 입력 (빈 틱에 키 홀드 상태 유지용)
 	float        input_hold_timer{ 1000.0f };                             // 마지막 입력 수신 후 경과 시간 (첫 수신 전에는 유지 비활성)
 	bool         start_jump;
+	float        jump_buffer_timer{ 0.0f };  // 점프 버퍼: 공중 틱에 도착한 space를 기억했다가 착지 시 점프
 	int          possessed_spray_hit_count;
 	float        bare_hand_dig_timer;
 

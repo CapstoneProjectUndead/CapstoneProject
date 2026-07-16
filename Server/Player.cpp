@@ -75,8 +75,9 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 {
     // 이 시간 안에 새 패킷이 안 오면 키를 뗀 것으로 간주 (클라 프리즈/끊김 대비)
     constexpr float INPUT_HOLD_TIMEOUT = 0.25f;
-    // 큐가 이 이상 쌓이면(버스트/시계 드리프트) 한 틱에 몰아서 처리해 입력 지연 누적을 막음
-    constexpr size_t INPUT_QUEUE_BURST = 4;
+    // 큐 최대 보유량. 초과분(버스트/시계 드리프트로 밀린 옛 패킷)은 시뮬레이션 없이 폐기
+    // — 몰아서 시뮬레이션하면 한 틱에 여러 틱치를 이동해 캐릭터가 팍 튀는 현상이 됨
+    constexpr size_t INPUT_QUEUE_KEEP = 3;
 
     if (is_possessed) {
         input_queue.clear();
@@ -88,34 +89,42 @@ void CPlayer::ProcessInputQueue(const float elapsedTime) // elapsedTime == g_tar
 
     if (!input_queue.empty())
     {
-        // 틱당 1개씩만 소비. 패킷이 버스트로 도착해도 틱마다 g_targetDT씩만
-        // 시뮬레이션되어 이동 속도가 클라 전송 타이밍과 무관하게 일정해짐
-        do
-        {
-            PendingInput pending = input_queue.front();
+        // 밀린 옛 패킷 폐기. 이동키 홀드 상태는 뒤 패킷에도 담겨 있어 버려도 안전하지만,
+        // 1회성 입력(점프/공격)은 유실되지 않도록 살아남는 패킷에 합쳐 준다
+        bool droppedSpace = false;
+        bool droppedLbtn = false;
+        while (input_queue.size() > INPUT_QUEUE_KEEP) {
+            droppedSpace |= input_queue.front().input.space;
+            droppedLbtn |= input_queue.front().input.lbtn;
             input_queue.pop_front();
+        }
 
-            // (가속 -> 속도제한 -> 이동 -> 감속)
-            last_c_input = pending.input.c;
-            last_input = pending.input;
-            input_hold_timer = 0.0f;
-            SimulateMove(pending.input, elapsedTime);
+        // 틱당 정확히 1개만 소비 — 이동 속도가 클라 전송 타이밍과 무관하게 일정해짐
+        PendingInput pending = input_queue.front();
+        input_queue.pop_front();
+        pending.input.space = pending.input.space || droppedSpace;
+        pending.input.lbtn = pending.input.lbtn || droppedLbtn;
 
-            // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
-            last_processed_seq = pending.seq_num;
+        // (가속 -> 속도제한 -> 이동 -> 감속)
+        last_c_input = pending.input.c;
+        last_input = pending.input;
+        input_hold_timer = 0.0f;
+        SimulateMove(pending.input, elapsedTime);
 
-            // 장부 기록
-            ServerFrameHistory frame{};
-            frame.input = pending.input;
-            frame.seq_num = last_processed_seq;
-            frame.position = position;
-            frame.state = state;
-            frame.timestamp = static_cast<float>(last_simulated_time);
+        // 서버가 해당 시퀀스넘버의 클라 입력을 처리했다.
+        last_processed_seq = pending.seq_num;
 
-            RecordServerFrameHistory(frame);
+        // 장부 기록
+        ServerFrameHistory frame{};
+        frame.input = pending.input;
+        frame.seq_num = last_processed_seq;
+        frame.position = position;
+        frame.state = state;
+        frame.timestamp = static_cast<float>(last_simulated_time);
 
-            last_simulated_time += g_targetDT;
-        } while (input_queue.size() >= INPUT_QUEUE_BURST);
+        RecordServerFrameHistory(frame);
+
+        last_simulated_time += g_targetDT;
     }
     else
     {
@@ -189,14 +198,27 @@ void CPlayer::SimulateMove(const InputData& input, float elapsedTime, bool updat
     if (input.d) dir.x++;
 
     // 점프 (빈사/사망 시 차단)
+    // 점프 버퍼링: 스텝업/바닥 요철로 is_grounded가 잠깐 꺼진 틱에 space가 도착해도
+    // 즉시 버리지 않고 잠시 기억해 뒀다가 착지 틱에 점프 (저FPS 클라는 space 패킷이 1~2개뿐이라 씹히기 쉬움)
+    constexpr float JUMP_BUFFER_TIME = 0.15f;
+
     if (state == PLAYER_STATE::ALMOST_DEAD || state == PLAYER_STATE::DEAD) {
         start_jump = false;
+        jump_buffer_timer = 0.0f;
     }
     else {
-        start_jump = (input.space && is_grounded && !stamina_exhausted);
-        if (input.space && !stamina_exhausted) {
-            if (auto move = GetComponent<CMovementComponent>())
-                move->Jump();
+        if (input.space && !stamina_exhausted)
+            jump_buffer_timer = JUMP_BUFFER_TIME;
+
+        start_jump = false;
+        if (jump_buffer_timer > 0.0f) {
+            jump_buffer_timer -= elapsedTime;
+            if (is_grounded && !stamina_exhausted) {
+                start_jump = true;          // 스태미나 차감(UpdateStamina)은 실제 점프가 나간 틱에만
+                jump_buffer_timer = 0.0f;
+                if (auto move = GetComponent<CMovementComponent>())
+                    move->Jump();
+            }
         }
     }
 
