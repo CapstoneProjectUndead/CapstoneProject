@@ -94,10 +94,10 @@ shared_ptr<CPlayer> CMonster::FindNearestPlayer()
             if (!player)
                 continue;
 
-            // 추가 조건: 빈사/사망 또는 빙의 상태라면 무시
+            // 추가 조건: 빈사/사망 또는 빙의 상태라면 무시 (빙의자는 몬스터 종류에 따라 타겟 허용)
             if (player->IsIncapacitated())
                 continue;
-            if (player->GetIsPossessed())
+            if (player->GetIsPossessed() && !CanTargetPossessed())
                 continue;
             // 복귀 완료 플레이어는 안전지대로 간주하여 타겟 후보 제외
             if (player->GetReturned())

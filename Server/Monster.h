@@ -52,6 +52,9 @@ public:
 
     virtual void ApplyMeleeHit(const XMFLOAT3& fromPos, shared_ptr<CPlayer> player, int damage);
 
+    // 빙의된 플레이어도 타겟으로 삼을지 여부 (기본: 무시. 유령 계열은 빙의자를 아군으로 취급)
+    virtual bool CanTargetPossessed() const { return false; }
+
     CScene* GetScene() const { return current_scene; }
     void    SetScene(CScene* scene) { current_scene = scene; }
 

@@ -25,6 +25,9 @@ public:
     virtual void OnFleeMove(float elapsedTime) override;
     virtual void OnFleeExit() override;
 
+    // Dog는 빙의된 플레이어도 추격/공격
+    virtual bool CanTargetPossessed() const override { return true; }
+
 private:
     bool  hit_damage_dealt      = false;
     float attack_cooldown_timer = 9999.f;
