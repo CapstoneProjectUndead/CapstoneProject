@@ -116,17 +116,17 @@ D3D12_DEPTH_STENCIL_DESC CShader::CreateDepthStencilState()
 
 D3D12_SHADER_BYTECODE CShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"Shaders.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/Shaders.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"Shaders.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/Shaders.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CShader::CreateGeometryShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"Shaders.hlsl", "PSMain", "gs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/Shaders.hlsl", "PSMain", "gs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CShader::CompileShaderFromFile(WCHAR* fileName, LPCSTR shaderName, LPCSTR shaderProfile, ID3DBlob** shaderBlob)
@@ -304,12 +304,12 @@ D3D12_INPUT_LAYOUT_DESC CSkinningShader::CreateInputLayout()
 
 D3D12_SHADER_BYTECODE CSkinningShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SkinningShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SkinningShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CSkinningShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SkinningShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SkinningShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* device)
@@ -401,12 +401,12 @@ ID3D12RootSignature* CSkinningShader::CreateGraphicsRootSignature(ID3D12Device* 
 // CInstShader
 D3D12_SHADER_BYTECODE CInstShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"InstShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/InstShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CInstShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"InstShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/InstShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 ID3D12RootSignature* CInstShader::CreateGraphicsRootSignature(ID3D12Device* device)
@@ -575,7 +575,7 @@ D3D12_RASTERIZER_DESC CShadowShader::CreateRasterizerState()
 
 D3D12_SHADER_BYTECODE CShadowShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"ShadowShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/ShadowShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CShadowShader::CreatePixelShader(ID3DBlob**)
@@ -721,7 +721,7 @@ D3D12_SHADER_BYTECODE CCubeShadowShader::CreateVertexShader(ID3DBlob** shaderBlo
 	};
 
 	ComPtr<ID3DBlob> error;
-	D3DCompileFromFile(L"ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+	D3DCompileFromFile(L"Shaders/ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"VSMain", "vs_5_1", compileFlags, 0, shaderBlob, error.GetAddressOf());
 
 	if (error) {
@@ -749,7 +749,7 @@ D3D12_SHADER_BYTECODE CCubeShadowShader::CreateGeometryShader(ID3DBlob** shaderB
 	};
 
 	ComPtr<ID3DBlob> error;
-	D3DCompileFromFile(L"ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+	D3DCompileFromFile(L"Shaders/ShadowShader.hlsl", defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"GSMain", "gs_5_1", compileFlags, 0, shaderBlob, error.GetAddressOf());
 
 	if (error) {
@@ -788,12 +788,12 @@ D3D12_DEPTH_STENCIL_DESC CDeferredShader::CreateDepthStencilState()
 
 D3D12_SHADER_BYTECODE CDeferredShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"DeferredShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/DeferredShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CDeferredShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"DeferredShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/DeferredShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 ID3D12RootSignature* CDeferredShader::CreateGraphicsRootSignature(ID3D12Device* device)
@@ -916,12 +916,12 @@ D3D12_DEPTH_STENCIL_DESC CAOShader::CreateDepthStencilState()
 
 D3D12_SHADER_BYTECODE CAOShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SSAOShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SSAOShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CAOShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SSAOShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SSAOShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 ID3D12RootSignature* CAOShader::CreateGraphicsRootSignature(ID3D12Device* device)
@@ -1013,12 +1013,12 @@ D3D12_DEPTH_STENCIL_DESC CSSAOBlurShader::CreateDepthStencilState()
 
 D3D12_SHADER_BYTECODE CSSAOBlurShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SSAOBlur.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SSAOBlur.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CSSAOBlurShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SSAOBlur.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SSAOBlur.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 ID3D12RootSignature* CSSAOBlurShader::CreateGraphicsRootSignature(ID3D12Device* device)
@@ -1093,12 +1093,12 @@ ID3D12RootSignature* CSSAOBlurShader::CreateGraphicsRootSignature(ID3D12Device* 
 // CUIShader
 D3D12_SHADER_BYTECODE CUIShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"UI.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/UI.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CUIShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"UI.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/UI.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 D3D12_DEPTH_STENCIL_DESC CUIShader::CreateDepthStencilState()
@@ -1229,17 +1229,17 @@ D3D12_INPUT_LAYOUT_DESC CBillboardShader::CreateInputLayout()
 
 D3D12_SHADER_BYTECODE CBillboardShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"BillboardShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/BillboardShader.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CBillboardShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"BillboardShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/BillboardShader.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CBillboardShader::CreateGeometryShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"BillboardShader.hlsl", "GS", "gs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/BillboardShader.hlsl", "GS", "gs_5_1", shaderBlob);
 }
 
 D3D12_DEPTH_STENCIL_DESC CBillboardShader::CreateDepthStencilState()
@@ -1386,12 +1386,12 @@ D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout()
 
 D3D12_SHADER_BYTECODE CSkyBoxShader::CreateVertexShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SkyBox.hlsl", "VSMain", "vs_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SkyBox.hlsl", "VSMain", "vs_5_1", shaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CSkyBoxShader::CreatePixelShader(ID3DBlob** shaderBlob)
 {
-	return CompileShaderFromFile(L"SkyBox.hlsl", "PSMain", "ps_5_1", shaderBlob);
+	return CompileShaderFromFile(L"Shaders/SkyBox.hlsl", "PSMain", "ps_5_1", shaderBlob);
 }
 
 D3D12_DEPTH_STENCIL_DESC CSkyBoxShader::CreateDepthStencilState()

@@ -64,9 +64,6 @@
     <Filter Include="Scene\CustomScene">
       <UniqueIdentifier>{4b07fed5-088a-4c45-a77a-cdc1605c2b4b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3D12\Shaders">
-      <UniqueIdentifier>{17c5f955-415f-476e-a38f-b904d0352472}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Component\AI">
       <UniqueIdentifier>{cc7b4d14-22ec-4f8e-b036-7bb73814975a}</UniqueIdentifier>
     </Filter>
@@ -138,6 +135,9 @@
     </Filter>
     <Filter Include="Shop">
       <UniqueIdentifier>{9e28771e-014a-4bb0-be6b-7757c5c9c41f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Shader">
+      <UniqueIdentifier>{c4b8ef8b-233f-4019-9bb1-a4a5a7e1e7a6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -722,50 +722,50 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="BillboardShader.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Light.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SkinningShader.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="InstShader.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="UI.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="ShadowShader.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SkyBox.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShader.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SSAOShader.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SSAOBlur.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="MeshComponent.inl">
       <Filter>Component\Rendering</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="Common.hlsli">
-      <Filter>D3D12\Shaders</Filter>
+    <None Include="Shaders\CalShadow.hlsli">
+      <Filter>D3D12\Shader</Filter>
     </None>
-    <None Include="CalShadow.hlsli">
-      <Filter>D3D12\Shaders</Filter>
+    <None Include="Shaders\Common.hlsli">
+      <Filter>D3D12\Shader</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\BillboardShader.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DeferredShader.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\InstShader.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Light.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Shaders.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ShadowShader.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SkinningShader.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SkyBox.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SSAOBlur.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SSAOShader.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\UI.hlsl">
+      <Filter>D3D12\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
