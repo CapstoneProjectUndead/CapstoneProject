@@ -187,7 +187,11 @@ std::vector<InstanceData> MapGenerator::Generate3DMap() {
 
                 if (l == (int)ELayer::STRUCTURE) {
                     // 배치한게 상점 천막->
-                    if (type == EModelType::STORE_WALL_EMPTY || type == EModelType::STORE_WALL_CORNER) {
+                    // 단, 이미 OBJECT 레이어를 쓰는 타일(HumanMonster 스폰 지점 등)은 제외한다.
+                    // 겹치면 몬스터가 가구 위에 얹혀 스폰되어 내려오지 못한다.
+                    bool tileOccupied = (mapGrid[(int)ELayer::OBJECT][y][x] != EModelType::UNKNOWN);
+                    if (!tileOccupied &&
+                        (type == EModelType::STORE_WALL_EMPTY || type == EModelType::STORE_WALL_CORNER)) {
                         // 40% 확률로 가구를 스폰  20%로는 보물 스폰
                         int randItem = GetRandomInt(0, 99);
                         if (randItem < 40) {
