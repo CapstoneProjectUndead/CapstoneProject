@@ -45,12 +45,18 @@ private:
     void     InitStoreCenter();
     void     UpdateStoreAlert(float elapsedTime);
 
+    // 순찰 중 상점 내부 배회/장애물 우회용
+    XMFLOAT3 prev_patrol_pos = {};
+    float    stuck_timer     = 0.0f;
+
     std::function<void(MON_TYPE, XMFLOAT3)> spawn_callback;
 
     void SpawnCallDogs();
 
     static constexpr float  DOG_SPAWN_DELAY       = 1.5f;
     static constexpr int    STORE_TRIGGER_TILES   = 1;
+    // 상점 3x3(타일 2.0 x 3 = 중심 기준 ±3.0) 안쪽으로만 배회. 콜라이더 여유분을 빼고 2.4
+    static constexpr float  STORE_WANDER_BOUND    = 2.4f;
     static constexpr float  FLEE_DURATION  = 1.0f;
     static constexpr float  FLEE_SPEED     = 0.5f;
 };

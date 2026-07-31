@@ -176,6 +176,9 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
     if (melee_knockback_timer > 0.0f)
         return;
 
+    if (!has_store_center)
+        InitStoreCenter();
+
     patrol_timer += elapsedTime;
     turn_timer += elapsedTime;
 
@@ -187,16 +190,50 @@ void CHumanMonster::OnPatrolMove(float elapsedTime)
         return;
     }
 
-    // 방향 전환 (6초)
-    if (turn_timer >= 6.0f) {
-        float newYaw = yaw + 180.0f;
+    const float walk_speed = 0.4f;
+
+    // 방향 전환 (3초): 좁은 상점 내부를 자연스럽게 서성이도록 90~270도 랜덤 회전
+    if (turn_timer >= 3.0f) {
+        float newYaw = yaw + 90.0f + (float)(rand() % 181);
+        SetYaw(newYaw);
+        SetYawPitch(newYaw, 0.0f);
+        turn_timer = 0.0f;
+    }
+
+    // 상점 경계 이탈 방지: 다음 위치가 상점 밖이면 상점 중심 쪽(±30도)으로 방향 재설정
+    float nextX = position.x + look.x * walk_speed * elapsedTime;
+    float nextZ = position.z + look.z * walk_speed * elapsedTime;
+    if (fabsf(nextX - store_center_world.x) > STORE_WANDER_BOUND ||
+        fabsf(nextZ - store_center_world.z) > STORE_WANDER_BOUND) {
+        XMFLOAT3 toCenter = Vector3::Subtract(store_center_world, position);
+        toCenter.y = 0.0f;
+        float centerYaw = XMConvertToDegrees(atan2f(toCenter.x, toCenter.z));
+        centerYaw += (float)(rand() % 61) - 30.0f;
+        SetYaw(centerYaw);
+        SetYawPitch(centerYaw, 0.0f);
+        turn_timer = 0.0f;
+    }
+
+    // 끼임 감지: 걷는 중인데 실제 이동량이 기대치(30%)에 못 미치는 상태가 지속되면
+    // 상점 내 오브젝트에 막힌 것 → 90~270도 랜덤 회전으로 우회
+    float movedX = position.x - prev_patrol_pos.x;
+    float movedZ = position.z - prev_patrol_pos.z;
+    float expected = walk_speed * elapsedTime * 0.3f;
+    if (movedX * movedX + movedZ * movedZ < expected * expected)
+        stuck_timer += elapsedTime;
+    else
+        stuck_timer = 0.0f;
+    prev_patrol_pos = position;
+
+    if (stuck_timer >= 0.35f) {
+        stuck_timer = 0.0f;
+        float newYaw = yaw + 90.0f + (float)(rand() % 181);
         SetYaw(newYaw);
         SetYawPitch(newYaw, 0.0f);
         turn_timer = 0.0f;
     }
 
     // 이동 처리
-    float walk_speed = 0.4f;
     velocity.x = look.x * walk_speed;
     velocity.z = look.z * walk_speed;
 }
@@ -452,6 +489,8 @@ void CHumanMonster::OnPatrolEnter()
 {
     // 순찰 타이머 리셋
     ResetPatrolTimers();
+    prev_patrol_pos = position;
+    stuck_timer = 0.0f;
 }
 
 void CHumanMonster::OnTraceEnter()
