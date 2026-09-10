@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "MyPlayer.h"
 #include "PlayerHUD.h"
 #include "KeyManager.h"
@@ -262,7 +262,7 @@ void CMyPlayer::ServerAuthorityMove(const float elapsedTime)
 	ProcessRotation();
 
 	// 3. 점프 시작 판정 + 효과음 (싱글/멀티 공통, 서버 허락 없이 즉시)
-	start_jump = (current_input.space && is_grounded && !stamina_exhausted && !is_possessed 
+	start_jump = (current_input.space && (is_grounded || fabsf(velocity.y) < 0.2f) && !stamina_exhausted && !is_possessed 
 		&& state != PLAYER_STATE::ALMOST_DEAD && state != PLAYER_STATE::DEAD);
 	if (start_jump)
 		CSoundManager::GetInstance().Play(SOUND_ID::jump12);

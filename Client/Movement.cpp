@@ -73,8 +73,9 @@ void CMovementComponent::Slide(const XMVECTOR& normal)
 
 void CMovementComponent::Jump()
 {
-    if (owner->is_grounded) {
+    if (owner->is_grounded || fabsf(owner->velocity.y) < 0.2f) {
         owner->velocity.y = owner->jump_power; // 예: 10.0f 처럼 즉시 대입
+        owner->is_grounded = false;
     }
 }
 
@@ -110,7 +111,7 @@ void CMovementComponent::Update(const float deltaTime)
         }
     }
 
-    // --- 아래는 기존 물리 엔진 로직 (건드리지 않음) ---
+    // --- 아래는 기존 물리 엔진 로직 ---
     if (is_fly) {
         CPhysicsManager::GetInstance().ApplyFriction(owner, deltaTime);
         owner->position = Vector3::Add(owner->position, owner->velocity);
@@ -118,40 +119,40 @@ void CMovementComponent::Update(const float deltaTime)
     }
 
     auto* col = owner->GetComponent<CColliderComponent>();
+    float prevY = owner->position.y;
 
-    // 1. 수평 이동 및 벽 충돌 처리 (새로운 위치 계산)
-    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + CalculatePlatform(deltaTime);
+    // 2. 중력 및 지면 보정 적용 (점프 상승 중이면 공중 상태로 중력 가속)
+    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+
+    // 3. 이동 위치 계산 (기존 위치 + 바닥 보정 + 외부 발판)
+    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
+
+    // 4. 플레이어 운동량 (수평 속도 + 점프/수직 속도)
     XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
+
+    // 5. 벽/오브젝트 충돌 해결 (벽 슬라이딩, 턱 오르기)
     ResolveCollisions(finalPos, internalMotion, deltaTime);
 
-    // 2. 이동한 새 수평 위치를 임시 반영하여 콜라이더 갱신
-    XMStoreFloat3(&owner->position, finalPos);
-    if (col) col->Update(0.0f);
+    ClampSpeed();
 
-    // 3. 새로 이동한 자리의 바닥면에 정확히 맞춰 지면 및 중력 보정 적용
-    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
-    finalPos += groundSeparation;
-
-    // 4. [서버 스타일 보간: 지면 수직 평활화]
+    // 6. [서버 스타일 지면 수직 평활화]
     // 지상 이동 시 바닥 메쉬 요철/단차로 인한 Y축 진동을 부드럽게 평활화 (Lerp)
+    // (점프 중이거나 공중 체공 중일 때는 즉시 실제 높이 반영)
     if (owner->is_grounded && owner->velocity.y <= 0.1f)
     {
-        float currentY = owner->position.y;
         float targetY = XMVectorGetY(finalPos);
-        float deltaY = targetY - currentY;
+        float deltaY = targetY - prevY;
 
         // 15cm 이내의 미세 요철은 부드럽게 보간 (점프나 큰 낙하는 즉시 반영)
         if (fabsf(deltaY) < 0.15f)
         {
             float lerpRate = min(20.0f * deltaTime, 1.0f);
-            float smoothedY = currentY + deltaY * lerpRate;
+            float smoothedY = prevY + deltaY * lerpRate;
             finalPos = XMVectorSetY(finalPos, smoothedY);
         }
     }
 
-    ClampSpeed();
-
-    // 5. 최종 위치 적용 및 콜라이더 갱신
+    // 7. 최종 위치 적용 및 콜라이더 갱신
     XMStoreFloat3(&owner->position, finalPos);
     if (col) col->Update(0.0f);
 
@@ -238,6 +239,13 @@ void CMovementComponent::ResolveCollisions(XMVECTOR& outPos, XMVECTOR remainingM
 
         CollisionInfo info{};
         if (CPhysicsManager::GetInstance().Overlap(owner, Vector3::XMVectorToFloat3(remainingMotion), info, wallMask)) {
+            // [중요] 충돌한 면의 법선이 위를 향하고 있는 경우(지면/바닥):
+            // 이는 벽 충돌이 아닌 바닥면이므로 벽 슬라이딩으로 점프/수직속도를 깎지 않도록 예외 처리
+            if (XMVectorGetY(info.normal) > 0.5f) {
+                outPos += remainingMotion;
+                break;
+            }
+
             // 1. step up
             if (TryStepUp(outPos, remainingMotion, info, stepHeight, wallMask)) {
                 break;

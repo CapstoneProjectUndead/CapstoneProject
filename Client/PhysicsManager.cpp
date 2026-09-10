@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "PhysicsManager.h"
 #include "Collider.h"
 #include "Object.h"
@@ -167,7 +167,14 @@ bool CPhysicsManager::Raycast(const XMFLOAT3& origin, const XMFLOAT3& direction,
 XMVECTOR CPhysicsManager::ApplyGravity(CObject* obj, float dt)
 {
     auto* col = obj->GetComponent<CColliderComponent>();
-    if (!col) return XMVectorZero();;
+    if (!col) return XMVectorZero();
+
+    // 점프 상승 중인 경우: 바닥 접지 체크를 건너뛰고 순수 공중 상태로 중력 적용
+    if (obj->velocity.y > 0.1f) {
+        obj->is_grounded = false;
+        obj->velocity.y += gravity * dt;
+        return XMVectorZero();
+    }
 
     // 지면 체크 (아주 살짝 아래 방향으로 Overlap 체크)
     // 오브젝트의 실제 충돌 마스크와 교집합: Ghost처럼 OBJECT 통과 설정이면 나무를 지면으로 잘못 인식하지 않음
