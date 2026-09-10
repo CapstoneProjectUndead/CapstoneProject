@@ -1,8 +1,10 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Timer.h"
 
 CTimer::CTimer()
 {
+	::timeBeginPeriod(1);
+
 	// 성능 주파수를 사용할 수 없으면 멀티 미디어 타이머 사용
 	if (QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency)) {
 		used_performance_counter = true;
@@ -14,7 +16,11 @@ CTimer::CTimer()
 		last_performance_counter = timeGetTime();
 		time_sacle = 0.001f;	// miilisecond
 	}
+}
 
+CTimer::~CTimer()
+{
+	::timeEndPeriod(1);
 }
 
 void CTimer::Tick(float lockFps)
@@ -34,9 +40,23 @@ void CTimer::Tick(float lockFps)
 
 	if (lockFps > 0.0f)
 	{
-		// 원하는 delta time이 아니면 loop
-		while (timeElapse < (1.0f / lockFps))
+		const float targetDelta = 1.0f / lockFps;
+
+		// 원하는 delta time이 될 때까지 대기
+		while (timeElapse < targetDelta)
 		{
+			float remaining = targetDelta - timeElapse;
+			// 남은 시간이 2ms 이상이면 Sleep(1)로 CPU 과점유 방지
+			if (remaining > 0.002f)
+			{
+				::Sleep(1);
+			}
+			else
+			{
+				// 2ms 이하로 남았을 때는 고정밀 스핀락(YieldProcessor)으로 정확한 타이밍 맞춤
+				::YieldProcessor();
+			}
+
 			if (used_performance_counter)
 				::QueryPerformanceCounter((LARGE_INTEGER*)&current_performance_counter);
 			else
@@ -65,10 +85,18 @@ void CTimer::Tick(float lockFps)
 		fps_time_elapsed = 0.0f;
 	}
 
-	// 샘플링
-	timeElapse = 0.0f;
-	for (ULONG i = 0; i < sample_cnt; i++) time_elapsed += frame_time[i];
-	if (sample_cnt > 0) time_elapsed /= sample_cnt;
+	// 샘플링 및 delta time 결정
+	if (lockFps > 0.0f)
+	{
+		// 프레임 고정 모드일 때는 물리 진동 방지를 위해 고정 delta time(1/lockFps) 공급
+		time_elapsed = 1.0f / lockFps;
+	}
+	else
+	{
+		time_elapsed = 0.0f;
+		for (ULONG i = 0; i < sample_cnt; i++) time_elapsed += frame_time[i];
+		if (sample_cnt > 0) time_elapsed /= sample_cnt;
+	}
 }
 
 size_t CTimer::GetFrameRate(LPTSTR title, int frame)

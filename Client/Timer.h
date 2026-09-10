@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CTimer {
 public:
@@ -15,6 +15,7 @@ public:
 	size_t GetFrameRate(LPTSTR, int);
 	float GetTimeElapsed() { return time_elapsed; }
 	void Reset();
+	~CTimer();
 private:
 	CTimer();
 

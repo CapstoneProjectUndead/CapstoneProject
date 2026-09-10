@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CComponent;
 class CShader;
@@ -62,6 +62,7 @@ public:
 	XMFLOAT3 GetPosition() const { return position; }
 
 	void SetIsGrounded(bool ground) { is_grounded = ground; }
+	bool GetIsGrounded() const { return is_grounded; }
 
 	XMFLOAT3 GetVelocity() { return velocity; }
 	void     SetVelocity(const XMFLOAT3& vel) { velocity = vel; }

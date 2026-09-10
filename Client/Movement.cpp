@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Movement.h"
 #include "Object.h"
 #include "Collider.h"
@@ -117,20 +117,44 @@ void CMovementComponent::Update(const float deltaTime)
         return;
     }
 
-    // 중력 및 바닥 보정
-    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
-    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + groundSeparation + CalculatePlatform(deltaTime);
+    auto* col = owner->GetComponent<CColliderComponent>();
 
-    // 이동량 계산
+    // 1. 수평 이동 및 벽 충돌 처리 (새로운 위치 계산)
+    XMVECTOR finalPos = XMLoadFloat3(&owner->position) + CalculatePlatform(deltaTime);
     XMVECTOR internalMotion = XMLoadFloat3(&owner->velocity) * deltaTime;
-
-    // 충돌 처리 (벽 슬라이딩, 턱 오르기)
     ResolveCollisions(finalPos, internalMotion, deltaTime);
+
+    // 2. 이동한 새 수평 위치를 임시 반영하여 콜라이더 갱신
+    XMStoreFloat3(&owner->position, finalPos);
+    if (col) col->Update(0.0f);
+
+    // 3. 새로 이동한 자리의 바닥면에 정확히 맞춰 지면 및 중력 보정 적용
+    XMVECTOR groundSeparation = CPhysicsManager::GetInstance().ApplyGravity(owner, deltaTime);
+    finalPos += groundSeparation;
+
+    // 4. [서버 스타일 보간: 지면 수직 평활화]
+    // 지상 이동 시 바닥 메쉬 요철/단차로 인한 Y축 진동을 부드럽게 평활화 (Lerp)
+    if (owner->is_grounded && owner->velocity.y <= 0.1f)
+    {
+        float currentY = owner->position.y;
+        float targetY = XMVectorGetY(finalPos);
+        float deltaY = targetY - currentY;
+
+        // 15cm 이내의 미세 요철은 부드럽게 보간 (점프나 큰 낙하는 즉시 반영)
+        if (fabsf(deltaY) < 0.15f)
+        {
+            float lerpRate = min(20.0f * deltaTime, 1.0f);
+            float smoothedY = currentY + deltaY * lerpRate;
+            finalPos = XMVectorSetY(finalPos, smoothedY);
+        }
+    }
 
     ClampSpeed();
 
-    // 최종 위치 적용
+    // 5. 최종 위치 적용 및 콜라이더 갱신
     XMStoreFloat3(&owner->position, finalPos);
+    if (col) col->Update(0.0f);
+
     ClampY();
 }
 

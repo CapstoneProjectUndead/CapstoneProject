@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Object.h"
 #include "Camera.h"
 
@@ -303,14 +303,38 @@ void CCamera::Update(XMFLOAT3& lookAt, float elapsedTime)
 
 	switch (mode) {
 	case CCamera::EMode::FIRST_PERSON:
-		// 위치를 head로 고정
-		XMStoreFloat3(&position, eyePos);
+	{
+		XMFLOAT3 newEye;
+		XMStoreFloat3(&newEye, eyePos);
+
+		// [카메라 수직 스무딩 (1인칭 뷰 덜덜거림 방지)]
+		// 지상 이동 시 바닥 요철/애니메이션으로 인한 카메라 시점의 상하 진동을 부드럽게 보간
+		if (target_object->GetIsGrounded() && target_object->GetVelocity().y <= 0.1f && position.y != 0.0f)
+		{
+			float diffY = newEye.y - position.y;
+			if (fabsf(diffY) < 0.2f)
+			{
+				float smoothRate = min(18.0f * elapsedTime, 1.0f);
+				position.x = newEye.x;
+				position.z = newEye.z;
+				position.y = position.y + diffY * smoothRate;
+			}
+			else
+			{
+				position = newEye;
+			}
+		}
+		else
+		{
+			position = newEye;
+		}
 
 		// 시선 방향 업데이트
 		XMStoreFloat3(&look, finalRotate.r[2]);
 		XMStoreFloat3(&up, finalRotate.r[1]);
 		XMStoreFloat3(&right, finalRotate.r[0]);
 		break;
+	}
 	case CCamera::EMode::THIRD_PERSON:
 		// 머리 위치를 기준으로 오프셋만큼 뒤로 보냄
 		XMVECTOR xmvOffset = XMVector3TransformCoord(XMLoadFloat3(&offset), finalRotate);

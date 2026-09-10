@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include <filesystem>
 #include "Player.h"
 #include "KeyManager.h"
@@ -405,7 +405,7 @@ void CGameFramework::MoveToNextFrame()
 
 void CGameFramework::Update()
 {
-	timer.Tick(0.0f);
+	timer.Tick(60.0f);
 
 	g_client_total_time += timer.GetTimeElapsed();
 
